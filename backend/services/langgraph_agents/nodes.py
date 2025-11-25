@@ -1,0 +1,549 @@
+"""
+Node implementations for the Fitness Coach LangGraph agent.
+
+Uses proper LangGraph tool calling - the LLM decides which tools to use.
+"""
+import json
+from typing import Dict, Any, Literal
+
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
+
+from .state import FitnessCoachState
+from .tools import ALL_TOOLS
+from models.chat import CoachIntent
+from services.openai_service import OpenAIService
+from services.rag_service import RAGService
+from core.config import get_settings
+from core.logger import get_logger
+
+logger = get_logger(__name__)
+settings = get_settings()
+
+
+async def intent_extractor_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Extract intent from user message using OpenAI.
+    """
+    logger.info(f"[Intent Node] Extracting intent from: {state['user_message'][:50]}...")
+
+    openai_service = OpenAIService()
+    extraction = await openai_service.extract_intent(state['user_message'])
+
+    logger.info(f"[Intent Node] Detected intent: {extraction.intent.value}")
+    if extraction.exercises:
+        logger.info(f"[Intent Node] Exercises: {extraction.exercises}")
+
+    return {
+        "intent": extraction.intent,
+        "extracted_exercises": extraction.exercises,
+        "extracted_muscle_groups": extraction.muscle_groups,
+        "modification": extraction.modification,
+        "body_part": extraction.body_part,
+    }
+
+
+async def rag_context_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Retrieve similar past conversations using RAG.
+    """
+    logger.info("[RAG Node] Retrieving similar conversations...")
+
+    openai_service = OpenAIService()
+    rag_service = RAGService(openai_service=openai_service)
+
+    similar_docs = await rag_service.find_similar(
+        query=state['user_message'],
+        user_id=state['user_id'],
+        n_results=3
+    )
+
+    formatted_context = rag_service.format_context(similar_docs)
+
+    logger.info(f"[RAG Node] Found {len(similar_docs)} similar conversations")
+
+    return {
+        "rag_documents": similar_docs,
+        "rag_context_formatted": formatted_context,
+        "rag_context_used": len(similar_docs) > 0,
+        "similar_questions": [
+            doc.get("metadata", {}).get("question", "")
+            for doc in similar_docs[:3]
+        ],
+    }
+
+
+def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
+    """
+    Determine if we should use tools or just respond.
+
+    If there's a workout, always go to agent and let the LLM with bound tools decide.
+    This is the proper LangGraph way - don't second-guess the LLM's intent.
+    """
+    has_workout = state.get("current_workout") is not None
+
+    if has_workout:
+        logger.info("[Router] Workout present -> agent (let LLM with tools decide)")
+        return "agent"
+    else:
+        logger.info("[Router] No workout -> respond (simple response)")
+        return "respond"
+
+
+def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:
+    """Format workout schedule for AI context with workout IDs for modification."""
+    if not schedule:
+        return ""
+
+    parts = ["\nWORKOUT SCHEDULE (use these workout_ids when modifying):"]
+
+    def format_workout_with_id(w: Dict[str, Any], label: str) -> str:
+        if not w:
+            return f"- {label}: No workout scheduled"
+        exercises = w.get("exercises", [])
+        exercise_count = len(exercises)
+        exercise_names = [e.get("name", "Unknown") for e in exercises[:3]]
+        status = "COMPLETED" if w.get("is_completed") else "scheduled"
+        workout_id = w.get("id", "N/A")
+        return f"- {label} (ID: {workout_id}): \"{w.get('name', 'Unknown')}\" - {exercise_count} exercises ({', '.join(exercise_names)}{'...' if exercise_count > 3 else ''}) - {status}"
+
+    parts.append(format_workout_with_id(schedule.get("yesterday"), "Yesterday"))
+    parts.append(format_workout_with_id(schedule.get("today"), "Today"))
+    parts.append(format_workout_with_id(schedule.get("tomorrow"), "Tomorrow"))
+
+    this_week = schedule.get("thisWeek", [])
+    if this_week:
+        parts.append("\nTHIS WEEK'S WORKOUTS:")
+        for w in this_week:
+            scheduled = w.get("scheduled_date", "")
+            # Extract just the date part if it's a full datetime
+            if scheduled and "T" in scheduled:
+                scheduled = scheduled.split("T")[0]
+            status = "COMPLETED" if w.get("is_completed") else "scheduled"
+            parts.append(f"  - ID {w.get('id')}: \"{w.get('name', 'Unknown')}\" on {scheduled} ({status})")
+
+    recent = schedule.get("recentCompleted", [])
+    if recent:
+        recent_info = [f"{w.get('name', 'Unknown')} (ID: {w.get('id')})" for w in recent[:3]]
+        parts.append(f"\nRecently completed: {', '.join(recent_info)}")
+
+    return "\n".join(parts)
+
+
+async def agent_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    The main agent node - uses LLM with bound tools.
+
+    The LLM will decide which tools to call based on the user's request.
+    This is the PROPER LangGraph way to handle tool calling.
+    """
+    logger.info("[Agent Node] LLM deciding which tools to use...")
+
+    # Get workout context
+    workout = state.get("current_workout", {})
+    workout_id = workout.get("id")
+    exercises = workout.get("exercises", [])
+    exercise_names = [e.get("name", "Unknown") for e in exercises]
+
+    # Build context for LLM
+    context_parts = []
+
+    if state.get("user_profile"):
+        profile = state["user_profile"]
+        context_parts.append(f"User fitness level: {profile.get('fitness_level', 'beginner')}")
+        context_parts.append(f"User goals: {', '.join(profile.get('goals', []))}")
+        if profile.get("active_injuries"):
+            context_parts.append(f"User injuries: {', '.join(profile['active_injuries'])}")
+
+    context_parts.append(f"\nCurrent workout ID: {workout_id}")
+    context_parts.append(f"Current workout name: {workout.get('name', 'Unknown')}")
+    context_parts.append(f"Current exercises: {', '.join(exercise_names)}")
+
+    # Add workout schedule context
+    if state.get("workout_schedule"):
+        context_parts.append(format_workout_schedule_context(state["workout_schedule"]))
+
+    if state.get("rag_context_formatted"):
+        context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
+
+    context = "\n".join(context_parts)
+
+    # Create LLM with tools bound
+    llm = ChatOpenAI(
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        temperature=0.7,
+    )
+    llm_with_tools = llm.bind_tools(ALL_TOOLS)
+
+    # Build messages
+    system_message = SystemMessage(content=f"""You are an expert AI fitness coach. You help users modify their workouts.
+
+CONTEXT:
+{context}
+
+CRITICAL TOOL INSTRUCTIONS - SELECTING THE RIGHT WORKOUT:
+1. The user may want to modify ANY workout from the schedule above, not just today's.
+2. When the user mentions a specific day (e.g., "tomorrow's workout", "Tuesday workout", "leg day"), look up the correct workout_id from the WORKOUT SCHEDULE above.
+3. If the user doesn't specify a day, default to TODAY's workout (ID: {workout_id}).
+4. Look at the workout names to match requests like "modify the leg day" or "change my push workout".
+
+AVAILABLE TOOLS:
+- add_exercise_to_workout(workout_id=X, exercise_names=[...]) - Add exercises to a workout
+- remove_exercise_from_workout(workout_id=X, exercise_names=[...]) - Remove exercises from a workout
+- modify_workout_intensity(workout_id=X, modification="easier|harder|shorter|longer") - Change intensity
+- reschedule_workout(workout_id=X, new_date="YYYY-MM-DD", reason="...") - Move workout to a different date
+
+EXAMPLES:
+- "Add pull-ups to tomorrow's workout" → Use the workout_id for tomorrow from the schedule
+- "Make leg day easier" → Find the leg workout in the schedule and use its ID
+- "Remove squats from today's workout" → Use ID {workout_id}
+- "Move Thursday's workout to Friday" → Use reschedule_workout with the Thursday workout ID
+
+You can call MULTIPLE tools in a single response if the user asks for multiple changes.
+
+Always be helpful and explain what you're doing, including which workout you're modifying.""")
+
+    # Include conversation history
+    messages = [system_message]
+    for msg in state.get("conversation_history", []):
+        if msg.get("role") == "user":
+            messages.append(HumanMessage(content=msg["content"]))
+        elif msg.get("role") == "assistant":
+            messages.append(AIMessage(content=msg["content"]))
+
+    messages.append(HumanMessage(content=state["user_message"]))
+
+    # Call LLM - it will decide which tools to use
+    response = await llm_with_tools.ainvoke(messages)
+
+    logger.info(f"[Agent Node] LLM response type: {type(response)}")
+
+    # Check if LLM wants to call tools
+    if hasattr(response, 'tool_calls') and response.tool_calls:
+        logger.info(f"[Agent Node] LLM wants to call {len(response.tool_calls)} tools")
+        for tc in response.tool_calls:
+            logger.info(f"[Agent Node] Tool: {tc['name']} with args: {tc['args']}")
+
+        return {
+            "messages": messages + [response],
+            "tool_calls": response.tool_calls,
+            "ai_response": response.content or "",
+        }
+    else:
+        logger.info("[Agent Node] LLM chose not to use tools")
+        return {
+            "messages": messages + [response],
+            "tool_calls": [],
+            "ai_response": response.content or "",
+            "final_response": response.content or "",
+        }
+
+
+async def tool_executor_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Execute the tools that the LLM decided to call.
+
+    The AI can now modify ANY workout, not just the current one.
+    We trust the AI's workout_id selection since the prompt provides the full schedule.
+    """
+    logger.info("[Tool Executor] Executing tools...")
+
+    tool_calls = state.get("tool_calls", [])
+    tool_results = []
+    tool_messages = []
+
+    # Get current workout info for reference (but don't force override)
+    current_workout = state.get("current_workout", {})
+    current_workout_id = current_workout.get("id") if current_workout else None
+
+    # Build a set of valid workout IDs from the schedule for validation
+    valid_workout_ids = set()
+    if current_workout_id:
+        valid_workout_ids.add(current_workout_id)
+    workout_schedule = state.get("workout_schedule", {})
+    for key in ["yesterday", "today", "tomorrow"]:
+        w = workout_schedule.get(key)
+        if w and w.get("id"):
+            valid_workout_ids.add(w.get("id"))
+    for w in workout_schedule.get("thisWeek", []):
+        if w.get("id"):
+            valid_workout_ids.add(w.get("id"))
+    for w in workout_schedule.get("recentCompleted", []):
+        if w.get("id"):
+            valid_workout_ids.add(w.get("id"))
+
+    # Create a map of tool names to tool functions
+    tools_map = {tool.name: tool for tool in ALL_TOOLS}
+
+    for tool_call in tool_calls:
+        tool_name = tool_call.get("name")
+        tool_args = tool_call.get("args", {}).copy()  # Copy to avoid mutating original
+        tool_id = tool_call.get("id", tool_name)
+
+        # If AI provided a workout_id, validate it's in the user's schedule
+        # If invalid or missing, fall back to current workout
+        if "workout_id" in tool_args:
+            ai_workout_id = tool_args["workout_id"]
+            if ai_workout_id in valid_workout_ids:
+                logger.info(f"[Tool Executor] Using AI-selected workout_id: {ai_workout_id}")
+            elif current_workout_id is not None:
+                logger.warning(f"[Tool Executor] AI workout_id {ai_workout_id} not in schedule, falling back to current: {current_workout_id}")
+                tool_args["workout_id"] = current_workout_id
+            # else: let it fail with the invalid ID so the error is clear
+
+        if tool_name in tools_map:
+            logger.info(f"[Tool Executor] Running: {tool_name} with args: {tool_args}")
+            try:
+                tool_fn = tools_map[tool_name]
+                result = tool_fn.invoke(tool_args)
+                tool_results.append(result)
+
+                # Create ToolMessage for the LLM
+                tool_messages.append(ToolMessage(
+                    content=json.dumps(result),
+                    tool_call_id=tool_id,
+                ))
+
+                logger.info(f"[Tool Executor] Result: {result.get('message', 'Done')}")
+            except Exception as e:
+                logger.error(f"[Tool Executor] Error: {e}")
+                error_result = {"success": False, "error": str(e)}
+                tool_results.append(error_result)
+                tool_messages.append(ToolMessage(
+                    content=json.dumps(error_result),
+                    tool_call_id=tool_id,
+                ))
+        else:
+            logger.warning(f"[Tool Executor] Unknown tool: {tool_name}")
+
+    return {
+        "tool_results": tool_results,
+        "tool_messages": tool_messages,
+    }
+
+
+async def response_after_tools_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Generate final response after tools have been executed.
+    Ensures the response is natural and conversational, not technical.
+    """
+    logger.info("[Response After Tools] Generating final response...")
+
+    openai_service = OpenAIService()
+
+    # Build context from state for natural response
+    context_parts = []
+
+    if state.get("user_profile"):
+        profile = state["user_profile"]
+        context_parts.append("USER PROFILE:")
+        context_parts.append(f"- Name: {profile.get('name', 'User')}")
+        context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
+
+    if state.get("current_workout"):
+        workout = state["current_workout"]
+        context_parts.append("")
+        context_parts.append(f"WORKOUT BEING MODIFIED: {workout.get('name', 'Current Workout')}")
+
+    # Summarize tool results for context
+    if state.get("tool_results"):
+        context_parts.append("")
+        context_parts.append("ACTIONS COMPLETED:")
+        for result in state.get("tool_results", []):
+            if isinstance(result, dict):
+                if result.get("success"):
+                    action = result.get("action", "modification")
+                    context_parts.append(f"- Successfully {action}")
+                    if "exercises_added" in result:
+                        context_parts.append(f"  Added: {', '.join(result['exercises_added'])}")
+                    if "exercises_removed" in result:
+                        context_parts.append(f"  Removed: {', '.join(result['exercises_removed'])}")
+
+    full_context = "\n".join(context_parts)
+
+    # Get proper system prompt with instructions for natural response
+    base_prompt = openai_service.get_coach_system_prompt(full_context)
+    system_prompt = base_prompt + """
+
+CRITICAL RESPONSE INSTRUCTIONS:
+- The workout modifications have been completed successfully.
+- Respond naturally as a supportive fitness coach explaining what was done.
+- NEVER mention tool names, function calls, API calls, or technical details.
+- NEVER use phrases like "Call remove_exercise_from_workout" or show code/JSON.
+- Instead, say things like "I've updated your workout! I removed X and added Y because..."
+- Be warm, encouraging, and explain WHY the changes help the user.
+- If exercises were removed due to injury, show empathy and explain how new exercises are safer."""
+
+    # Get the messages including tool results
+    messages = state.get("messages", [])
+    tool_messages = state.get("tool_messages", [])
+
+    # Build messages with system prompt at the beginning
+    messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
+
+    # Call LLM to generate natural response
+    llm = ChatOpenAI(
+        model=settings.openai_model,
+        api_key=settings.openai_api_key,
+        temperature=0.7,
+    )
+
+    response = await llm.ainvoke(messages_with_system)
+
+    logger.info(f"[Response After Tools] Final response: {response.content[:100]}...")
+
+    return {
+        "ai_response": response.content,
+        "final_response": response.content,
+    }
+
+
+async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Generate response without tools (for questions, etc.)
+    """
+    logger.info("[Simple Response] Generating response without tools...")
+
+    openai_service = OpenAIService()
+
+    # Build context
+    context_parts = []
+
+    if state.get("user_profile"):
+        profile = state["user_profile"]
+        context_parts.append("USER PROFILE:")
+        context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
+        context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+
+    if state.get("current_workout"):
+        workout = state["current_workout"]
+        exercises = workout.get("exercises", [])
+        exercise_names = [e.get("name", "Unknown") for e in exercises]
+        context_parts.append("")
+        context_parts.append("CURRENT WORKOUT:")
+        context_parts.append(f"- Name: {workout.get('name', 'Unknown')}")
+        context_parts.append(f"- Exercises: {', '.join(exercise_names)}")
+
+    # Add workout schedule context (crucial for answering about past/future workouts)
+    if state.get("workout_schedule"):
+        context_parts.append(format_workout_schedule_context(state["workout_schedule"]))
+
+    if state.get("rag_context_formatted"):
+        context_parts.append("")
+        context_parts.append(state["rag_context_formatted"])
+
+    full_context = "\n".join(context_parts)
+    system_prompt = openai_service.get_coach_system_prompt(full_context)
+
+    conversation_history = [
+        {"role": msg["role"], "content": msg["content"]}
+        for msg in state.get("conversation_history", [])
+    ]
+
+    response = await openai_service.chat(
+        user_message=state["user_message"],
+        system_prompt=system_prompt,
+        conversation_history=conversation_history,
+    )
+
+    logger.info(f"[Simple Response] Response: {response[:100]}...")
+
+    return {
+        "ai_response": response,
+        "final_response": response,
+    }
+
+
+async def storage_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Store the Q&A pair in RAG for future context.
+    """
+    logger.info("[Storage Node] Storing Q&A in RAG...")
+
+    openai_service = OpenAIService()
+    rag_service = RAGService(openai_service=openai_service)
+
+    intent_value = state.get("intent")
+    if intent_value and hasattr(intent_value, "value"):
+        intent_value = intent_value.value
+    else:
+        intent_value = "question"
+
+    await rag_service.add_qa_pair(
+        question=state["user_message"],
+        answer=state.get("final_response", ""),
+        intent=intent_value,
+        user_id=state["user_id"],
+        metadata={
+            "exercises": json.dumps(state.get("extracted_exercises", [])),
+            "muscle_groups": json.dumps(state.get("extracted_muscle_groups", [])),
+        }
+    )
+
+    logger.info("[Storage Node] Q&A stored successfully")
+    return {}
+
+
+async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
+    """
+    Build action_data for the frontend based on tool results.
+    Now supports actions on any workout, not just the current one.
+    """
+    intent = state.get("intent")
+    current_workout = state.get("current_workout")
+    tool_results = state.get("tool_results", [])
+
+    # Build action data from tool results
+    action_data = None
+
+    for result in tool_results:
+        action = result.get("action")
+        # Use the workout_id from the tool result, which may be different from current workout
+        result_workout_id = result.get("workout_id")
+
+        if action == "add_exercise":
+            action_data = {
+                "action": "add_exercise",
+                "workout_id": result_workout_id,
+                "exercise_names": result.get("exercises_added", []),
+            }
+        elif action == "remove_exercise":
+            action_data = {
+                "action": "remove_exercise",
+                "workout_id": result_workout_id,
+                "exercise_names": result.get("exercises_removed", []),
+            }
+        elif action == "modify_intensity":
+            action_data = {
+                "action": "modify_intensity",
+                "workout_id": result_workout_id,
+                "modification": result.get("modification", ""),
+            }
+        elif action == "reschedule":
+            action_data = {
+                "action": "reschedule",
+                "workout_id": result_workout_id,
+                "old_date": result.get("old_date"),
+                "new_date": result.get("new_date"),
+                "swapped_with": result.get("swapped_with"),
+                "success": result.get("success", False),
+            }
+
+    # If no tool results, use intent (fallback to current workout if available)
+    if not action_data and intent and current_workout:
+        workout_id = current_workout.get("id")
+        if intent == CoachIntent.ADD_EXERCISE:
+            action_data = {
+                "action": "add_exercise",
+                "workout_id": workout_id,
+                "exercise_names": state.get("extracted_exercises", []),
+            }
+        elif intent == CoachIntent.REMOVE_EXERCISE:
+            action_data = {
+                "action": "remove_exercise",
+                "workout_id": workout_id,
+                "exercise_names": state.get("extracted_exercises", []),
+            }
+
+    return {"action_data": action_data}

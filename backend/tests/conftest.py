@@ -1,0 +1,204 @@
+"""
+Pytest configuration and fixtures for backend tests.
+
+These fixtures provide mock services and test data that can be used
+across all test files.
+"""
+import pytest
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
+
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from main import app
+from services.openai_service import OpenAIService
+from services.rag_service import RAGService
+from services.coach_service import CoachService
+from models.chat import (
+    ChatRequest, ChatResponse, IntentExtraction, CoachIntent,
+    UserProfile, WorkoutContext
+)
+
+
+# Configure pytest-asyncio
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for each test case."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+# ============ Mock Services ============
+
+@pytest.fixture
+def mock_openai_service():
+    """Mock OpenAI service that returns predictable responses."""
+    service = MagicMock(spec=OpenAIService)
+
+    # Mock chat method
+    async def mock_chat(user_message, system_prompt=None, conversation_history=None):
+        return f"Mock response to: {user_message[:50]}"
+    service.chat = AsyncMock(side_effect=mock_chat)
+
+    # Mock intent extraction
+    async def mock_extract_intent(user_message):
+        # Determine intent based on keywords
+        message_lower = user_message.lower()
+        if "add" in message_lower:
+            intent = CoachIntent.ADD_EXERCISE
+            exercises = ["push-ups"]
+        elif "remove" in message_lower:
+            intent = CoachIntent.REMOVE_EXERCISE
+            exercises = ["squats"]
+        elif "swap" in message_lower or "different" in message_lower:
+            intent = CoachIntent.SWAP_WORKOUT
+            exercises = []
+        elif "easier" in message_lower or "harder" in message_lower:
+            intent = CoachIntent.MODIFY_INTENSITY
+            exercises = []
+        elif "hurt" in message_lower or "pain" in message_lower:
+            intent = CoachIntent.REPORT_INJURY
+            exercises = []
+        else:
+            intent = CoachIntent.QUESTION
+            exercises = []
+
+        return IntentExtraction(
+            intent=intent,
+            exercises=exercises,
+            muscle_groups=[],
+            modification="easier" if "easier" in message_lower else None,
+            body_part="shoulder" if "shoulder" in message_lower else None,
+        )
+    service.extract_intent = AsyncMock(side_effect=mock_extract_intent)
+
+    # Mock embedding
+    async def mock_get_embedding(text):
+        # Return a fake embedding vector (1536 dimensions for ada-002)
+        return [0.1] * 1536
+    service.get_embedding = AsyncMock(side_effect=mock_get_embedding)
+
+    # Mock system prompt
+    service.get_coach_system_prompt = MagicMock(return_value="You are a fitness coach.")
+
+    return service
+
+
+@pytest.fixture
+def mock_rag_service(mock_openai_service):
+    """Mock RAG service."""
+    service = MagicMock(spec=RAGService)
+
+    # Mock find_similar
+    async def mock_find_similar(query, n_results=5, user_id=None, intent_filter=None):
+        return [
+            {
+                "id": "test-doc-1",
+                "document": "Q: How do I build muscle?\nA: Focus on progressive overload.",
+                "metadata": {
+                    "question": "How do I build muscle?",
+                    "answer": "Focus on progressive overload and eating enough protein.",
+                    "intent": "question",
+                    "user_id": 1,
+                },
+                "similarity": 0.85,
+            }
+        ]
+    service.find_similar = AsyncMock(side_effect=mock_find_similar)
+
+    # Mock add_qa_pair
+    async def mock_add_qa_pair(question, answer, intent, user_id, metadata=None):
+        return "mock-doc-id-123"
+    service.add_qa_pair = AsyncMock(side_effect=mock_add_qa_pair)
+
+    # Mock format_context
+    service.format_context = MagicMock(return_value="RELEVANT PAST CONVERSATIONS:\n1. User asked: \"test\"\n")
+
+    # Mock get_stats
+    service.get_stats = MagicMock(return_value={"total_documents": 10, "persist_dir": "/tmp/test"})
+
+    # Mock clear_all
+    service.clear_all = AsyncMock()
+
+    return service
+
+
+@pytest.fixture
+def mock_coach_service(mock_openai_service, mock_rag_service):
+    """Mock coach service using mock dependencies."""
+    return CoachService(mock_openai_service, mock_rag_service)
+
+
+# ============ Test Data ============
+
+@pytest.fixture
+def sample_user_profile():
+    """Sample user profile for testing."""
+    return UserProfile(
+        id=1,
+        fitness_level="intermediate",
+        goals=["build muscle", "lose fat"],
+        equipment=["dumbbells", "barbell", "pull-up bar"],
+        active_injuries=["shoulder"],
+    )
+
+
+@pytest.fixture
+def sample_workout_context():
+    """Sample workout context for testing."""
+    return WorkoutContext(
+        id=1,
+        name="Upper Body Strength",
+        type="strength",
+        difficulty="medium",
+        exercises=[
+            {"name": "Bench Press", "sets": 4, "reps": 8},
+            {"name": "Barbell Rows", "sets": 4, "reps": 8},
+            {"name": "Overhead Press", "sets": 3, "reps": 10},
+        ],
+    )
+
+
+@pytest.fixture
+def sample_chat_request(sample_user_profile, sample_workout_context):
+    """Sample chat request for testing."""
+    return ChatRequest(
+        message="Add push-ups to my workout",
+        user_id=1,
+        user_profile=sample_user_profile,
+        current_workout=sample_workout_context,
+        conversation_history=[],
+    )
+
+
+# ============ FastAPI Test Client ============
+
+@pytest.fixture
+def client():
+    """Synchronous test client for FastAPI."""
+    return TestClient(app)
+
+
+@pytest.fixture
+async def async_client():
+    """Async test client for FastAPI."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+# ============ Environment Setup ============
+
+@pytest.fixture(autouse=True)
+def mock_env(monkeypatch):
+    """Mock environment variables for testing."""
+    monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
+    monkeypatch.setenv("OPENAI_MODEL", "gpt-4")
+    monkeypatch.setenv("USE_MOCK_DATA", "true")

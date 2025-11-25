@@ -1,0 +1,1 @@
+CHROME_EXECUTABLE="/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge" flutter run -d web-server --web-port=8080

@@ -1,0 +1,58 @@
+"""
+Configuration settings for the AI Fitness Coach backend.
+Easy to modify - just update the Settings class or .env file.
+"""
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+from typing import Optional
+
+
+class Settings(BaseSettings):
+    """
+    Application settings loaded from environment variables.
+
+    To modify:
+    1. Add new setting as a class attribute
+    2. Add to .env file
+    3. Access via get_settings().your_setting
+    """
+
+    # OpenAI Configuration
+    openai_api_key: str
+    openai_model: str = "gpt-4"
+    openai_embedding_model: str = "text-embedding-3-small"
+    openai_max_tokens: int = 2000
+    openai_temperature: float = 0.7
+
+    # Server Configuration
+    host: str = "0.0.0.0"
+    port: int = 8000
+    debug: bool = True
+
+    # Database
+    database_url: str = "sqlite+aiosqlite:///./data/fitness_coach.db"
+
+    # RAG Configuration
+    chroma_persist_dir: str = "./data/chroma"
+    rag_top_k: int = 5  # Number of similar docs to retrieve
+    rag_min_similarity: float = 0.7  # Minimum similarity threshold
+
+    # CORS (for Flutter app)
+    cors_origins: list[str] = ["*"]
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+@lru_cache()
+def get_settings() -> Settings:
+    """
+    Get cached settings instance.
+    Call this anywhere you need config values.
+
+    Example:
+        settings = get_settings()
+        api_key = settings.openai_api_key
+    """
+    return Settings()
