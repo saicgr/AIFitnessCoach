@@ -6,6 +6,9 @@ import WorkoutDetails from './pages/WorkoutDetails';
 import ActiveWorkout from './pages/ActiveWorkout';
 import Chat from './pages/Chat';
 import Settings from './pages/Settings';
+import DemoLogin from './pages/DemoLogin';
+import Profile from './pages/Profile';
+import Metrics from './pages/Metrics';
 
 function App() {
   const { user } = useAppStore();
@@ -20,13 +23,16 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={isValidUser ? <Home /> : <Navigate to="/onboarding" replace />}
+        element={isValidUser ? <Home /> : <Navigate to="/login" replace />}
       />
+      <Route path="/login" element={<DemoLogin />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/workout/:id" element={<WorkoutDetails />} />
       <Route path="/workout/:id/active" element={<ActiveWorkout />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/metrics" element={<Metrics />} />
     </Routes>
   );
 }

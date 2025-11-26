@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { getWorkout, deleteWorkout } from '../api/client';
 import { useAppStore } from '../store';
 import type { Workout } from '../types';
+import { GlassCard } from '../components/ui';
 
 export default function WorkoutDetails() {
   const { id } = useParams<{ id: string }>();
@@ -40,7 +41,7 @@ export default function WorkoutDetails() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-gray-500">Loading workout...</div>
+        <div className="text-text-secondary">Loading workout...</div>
       </div>
     );
   }
@@ -49,7 +50,7 @@ export default function WorkoutDetails() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Workout not found</p>
+          <p className="text-text-secondary mb-4">Workout not found</p>
           <Link to="/" className="text-primary font-semibold hover:underline">
             Go back home
           </Link>
@@ -108,48 +109,48 @@ export default function WorkoutDetails() {
 
         {/* Exercises */}
         <section>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <h2 className="text-lg font-bold text-primary mb-4">
             Exercises ({workout.exercises.length})
           </h2>
           <div className="space-y-3">
             {workout.exercises.map((exercise, index) => (
-              <div
+              <GlassCard
                 key={index}
-                className="bg-white p-4 rounded-xl border border-gray-200"
+                className="p-4"
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
+                      <span className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                         {index + 1}
                       </span>
-                      <h3 className="font-semibold text-gray-900">{exercise.name}</h3>
+                      <h3 className="font-semibold text-text">{exercise.name}</h3>
                     </div>
-                    <div className="mt-2 text-sm text-gray-600 ml-8">
+                    <div className="mt-2 text-sm text-text-secondary ml-8">
                       {exercise.sets} sets × {exercise.reps} reps
                       {exercise.weight && ` @ ${exercise.weight} lbs`}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-text-muted">
                     Rest: {exercise.rest_seconds}s
                   </div>
                 </div>
                 {exercise.notes && (
-                  <p className="mt-2 text-sm text-gray-500 ml-8 italic">
+                  <p className="mt-2 text-sm text-text-muted ml-8 italic">
                     {exercise.notes}
                   </p>
                 )}
-              </div>
+              </GlassCard>
             ))}
           </div>
         </section>
 
         {/* Notes */}
         {workout.notes && (
-          <section className="bg-white p-4 rounded-xl border border-gray-200">
-            <h2 className="font-semibold text-gray-900 mb-2">Notes</h2>
-            <p className="text-gray-600">{workout.notes}</p>
-          </section>
+          <GlassCard className="p-4">
+            <h2 className="font-semibold text-text mb-2">Notes</h2>
+            <p className="text-text-secondary">{workout.notes}</p>
+          </GlassCard>
         )}
 
         {/* Delete Button */}
@@ -160,7 +161,7 @@ export default function WorkoutDetails() {
             }
           }}
           disabled={deleteMutation.isPending}
-          className="w-full py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+          className="w-full py-3 text-coral hover:bg-coral/10 rounded-xl transition-colors"
         >
           {deleteMutation.isPending ? 'Deleting...' : 'Delete Workout'}
         </button>

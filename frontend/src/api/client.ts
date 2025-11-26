@@ -12,10 +12,14 @@ import type {
   GenerateMonthlyResponse,
   ChatRequest,
   ChatResponse,
+  ChatHistoryItem,
   Exercise,
   PerformanceLog,
   PerformanceStats,
   HealthResponse,
+  HealthMetrics,
+  MetricsInput,
+  ActiveInjury,
 } from '../types';
 import { parseUser, parseWorkout } from '../types';
 import { createLogger } from '../utils/logger';
@@ -65,6 +69,17 @@ export const checkHealth = async (): Promise<HealthResponse> => {
   return data;
 };
 
+// Auth
+export const signup = async (username: string, password: string, name?: string): Promise<User> => {
+  const { data } = await api.post<UserBackend>('/users/signup', { username, password, name });
+  return parseUser(data);
+};
+
+export const login = async (username: string, password: string): Promise<User> => {
+  const { data } = await api.post<UserBackend>('/users/login', { username, password });
+  return parseUser(data);
+};
+
 // Users
 export const createUser = async (user: CreateUserRequest): Promise<User> => {
   const { data } = await api.post<UserBackend>('/users/', user);
@@ -77,12 +92,17 @@ export const getUser = async (userId: number): Promise<User> => {
 };
 
 export const updateUser = async (userId: number, updates: UpdateUserRequest): Promise<User> => {
-  const { data } = await api.patch<UserBackend>(`/users/${userId}`, updates);
+  const { data } = await api.put<UserBackend>(`/users/${userId}`, updates);
   return parseUser(data);
 };
 
 export const resetUser = async (userId: number): Promise<void> => {
   await api.delete(`/users/${userId}/reset`);
+};
+
+export const loginAsDemoUser = async (): Promise<User> => {
+  const { data } = await api.post<UserBackend>('/users/demo');
+  return parseUser(data);
 };
 
 // Workouts
@@ -170,6 +190,11 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
   return data;
 };
 
+export const getChatHistory = async (userId: number, limit: number = 100): Promise<ChatHistoryItem[]> => {
+  const { data } = await api.get<ChatHistoryItem[]>(`/chat/history/${userId}?limit=${limit}`);
+  return data;
+};
+
 // Performance
 export const logPerformance = async (log: Omit<PerformanceLog, 'id' | 'logged_at'>): Promise<PerformanceLog> => {
   const { data } = await api.post('/performance/log', log);
@@ -188,6 +213,59 @@ export const getPerformanceHistory = async (
   const params = exerciseId ? `?exercise_id=${exerciseId}` : '';
   const { data } = await api.get(`/performance/history/${userId}${params}`);
   return data;
+};
+
+// Health Metrics
+export const calculateHealthMetrics = async (input: MetricsInput): Promise<HealthMetrics> => {
+  const { data } = await api.post('/metrics/calculate', {
+    user_id: input.userId,
+    weight_kg: input.weightKg,
+    height_cm: input.heightCm,
+    age: input.age,
+    gender: input.gender,
+    activity_level: input.activityLevel,
+    target_weight_kg: input.targetWeightKg,
+    waist_cm: input.waistCm,
+    hip_cm: input.hipCm,
+    neck_cm: input.neckCm,
+    body_fat_percent: input.bodyFatPercent,
+  });
+  return {
+    bmi: data.bmi,
+    bmiCategory: data.bmi_category,
+    targetBmi: data.target_bmi,
+    idealBodyWeightDevine: data.ideal_body_weight_devine,
+    idealBodyWeightRobinson: data.ideal_body_weight_robinson,
+    idealBodyWeightMiller: data.ideal_body_weight_miller,
+    bmrMifflin: data.bmr_mifflin,
+    bmrHarris: data.bmr_harris,
+    tdee: data.tdee,
+    waistToHeightRatio: data.waist_to_height_ratio,
+    waistToHipRatio: data.waist_to_hip_ratio,
+    bodyFatNavy: data.body_fat_navy,
+    leanBodyMass: data.lean_body_mass,
+    ffmi: data.ffmi,
+  };
+};
+
+// Active Injuries
+export const getActiveInjuries = async (userId: number): Promise<ActiveInjury[]> => {
+  const { data } = await api.get(`/metrics/injuries/active/${userId}`);
+  return data.injuries?.map((injury: Record<string, unknown>) => ({
+    id: injury.id,
+    bodyPart: injury.body_part,
+    severity: injury.severity,
+    reportedAt: injury.reported_at,
+    expectedRecoveryDate: injury.expected_recovery_date,
+    currentPhase: injury.current_phase,
+    phaseDescription: injury.phase_description,
+    allowedIntensity: injury.allowed_intensity,
+    daysSinceInjury: injury.days_since_injury,
+    daysRemaining: injury.days_remaining,
+    progressPercent: injury.progress_percent,
+    painLevel: injury.pain_level,
+    rehabExercises: injury.rehab_exercises || [],
+  })) || [];
 };
 
 export default api;

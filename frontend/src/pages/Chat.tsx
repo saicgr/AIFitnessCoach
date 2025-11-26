@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
-import { sendChatMessage } from '../api/client';
+import { sendChatMessage, getChatHistory } from '../api/client';
 import type { ChatMessage, UserProfile, WorkoutContext, WorkoutScheduleContext, Workout } from '../types';
 import { createLogger } from '../utils/logger';
 import ChatActions from '../components/chat/ChatActions';
 import { isSameDay, isThisWeek, getYesterday, getTomorrow, getTodayStart } from '../utils/dateUtils';
+import { GlassCard, GlassButton } from '../components/ui';
 
 const log = createLogger('chat');
 
@@ -19,22 +20,52 @@ function MessageBubble({ message, workoutId }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} fade-in-up`}>
+      {!isUser && (
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mr-3 flex-shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+        </div>
+      )}
       <div
-        className={`max-w-[80%] p-4 rounded-2xl ${
-          isUser
-            ? 'bg-primary text-white rounded-br-md'
-            : 'bg-gray-100 text-gray-900 rounded-bl-md'
-        }`}
+        className={`
+          max-w-[80%] p-4 rounded-2xl
+          ${isUser
+            ? 'bg-gradient-to-br from-primary to-primary-dark text-white rounded-br-md shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+            : 'bg-white/10 backdrop-blur-sm border border-white/10 text-text rounded-bl-md'
+          }
+        `}
       >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
         {!isUser && message.intent && (
-          <ChatActions
-            intent={message.intent}
-            actionData={message.actionData}
-            workoutId={workoutId}
-          />
+          <div className="mt-3">
+            <ChatActions
+              intent={message.intent}
+              actionData={message.actionData}
+              workoutId={workoutId}
+            />
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="flex justify-start fade-in-up">
+      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mr-3 flex-shrink-0">
+        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      </div>
+      <div className="bg-white/10 backdrop-blur-sm border border-white/10 text-text-secondary px-4 py-3 rounded-2xl rounded-bl-md">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
       </div>
     </div>
   );
@@ -42,17 +73,23 @@ function MessageBubble({ message, workoutId }: MessageBubbleProps) {
 
 export default function Chat() {
   const navigate = useNavigate();
-  const { user, currentWorkout, workouts, chatHistory, addChatMessage, clearChatHistory } = useAppStore();
+  const { user, workouts, chatHistory, setChatHistory, addChatMessage, clearChatHistory, onboardingData } = useAppStore();
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  // Use currentWorkout if available, otherwise use first uncompleted workout from workouts list
-  const activeWorkout = currentWorkout || workouts.find(w => !w.completed_at) || null;
+  const today = new Date().toISOString().split('T')[0];
+
+  const todaysWorkout = workouts.find(w => {
+    const scheduledDate = w.scheduled_date?.split('T')[0];
+    return scheduledDate === today && !w.completed_at;
+  }) || null;
 
   log.info('Chat context', {
-    hasCurrentWorkout: !!currentWorkout,
-    hasActiveWorkout: !!activeWorkout,
-    workoutName: activeWorkout?.name,
-    exerciseCount: activeWorkout?.exercises.length,
+    today,
+    hasTodaysWorkout: !!todaysWorkout,
+    workoutName: todaysWorkout?.name,
+    exerciseCount: todaysWorkout?.exercises.length,
   });
+
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,9 +97,60 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const { isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['chatHistory', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const history = await getChatHistory(user.id);
+      const messages: ChatMessage[] = history.map(item => ({
+        role: item.role,
+        content: item.content,
+        actionData: item.action_data,
+      }));
+      setChatHistory(messages);
+      setHistoryLoaded(true);
+      log.info('Loaded chat history from database', { count: messages.length });
+      return messages;
+    },
+    enabled: !!user?.id,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory]);
+
+  useEffect(() => {
+    if (!historyLoaded && user?.id) return;
+
+    const lastVisitDate = localStorage.getItem('lastChatVisitDate');
+    const isFirstVisitToday = lastVisitDate !== today;
+
+    if (isFirstVisitToday && chatHistory.length === 0) {
+      localStorage.setItem('lastChatVisitDate', today);
+
+      const hour = new Date().getHours();
+      let timeGreeting = 'Hello';
+      if (hour < 12) timeGreeting = 'Good morning';
+      else if (hour < 17) timeGreeting = 'Good afternoon';
+      else timeGreeting = 'Good evening';
+
+      const userName = onboardingData?.name || 'there';
+
+      let greetingMessage = '';
+      if (todaysWorkout) {
+        greetingMessage = `${timeGreeting}, ${userName}! I see you have "${todaysWorkout.name}" scheduled for today with ${todaysWorkout.exercises.length} exercises. Ready to crush it? Let me know if you need any modifications or have questions!`;
+      } else {
+        greetingMessage = `${timeGreeting}, ${userName}! You don't have a workout scheduled for today. Would you like me to help you with anything? You can ask about your upcoming workouts, report an injury, or get fitness tips.`;
+      }
+
+      addChatMessage({
+        role: 'assistant',
+        content: greetingMessage,
+      });
+    }
+  }, [today, todaysWorkout, chatHistory.length, onboardingData?.name, addChatMessage, historyLoaded, user?.id]);
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -76,19 +164,18 @@ export default function Chat() {
           }
         : undefined;
 
-      const workoutContext: WorkoutContext | undefined = activeWorkout
+      const workoutContext: WorkoutContext | undefined = todaysWorkout
         ? {
-            id: activeWorkout.id,
-            name: activeWorkout.name,
-            type: activeWorkout.type,
-            difficulty: activeWorkout.difficulty,
-            exercises: activeWorkout.exercises,
+            id: todaysWorkout.id,
+            name: todaysWorkout.name,
+            type: todaysWorkout.type,
+            difficulty: todaysWorkout.difficulty,
+            exercises: todaysWorkout.exercises,
           }
         : undefined;
 
-      // Build workout schedule context for AI
       const yesterday = getYesterday();
-      const today = getTodayStart();
+      const todayDate = getTodayStart();
       const tomorrow = getTomorrow();
 
       const toWorkoutContext = (w: Workout): WorkoutContext => ({
@@ -110,7 +197,7 @@ export default function Chat() {
 
       const workoutSchedule: WorkoutScheduleContext = {
         yesterday: findWorkoutForDate(yesterday),
-        today: findWorkoutForDate(today),
+        today: findWorkoutForDate(todayDate),
         tomorrow: findWorkoutForDate(tomorrow),
         thisWeek: workouts
           .filter(w => w.scheduled_date && isThisWeek(new Date(w.scheduled_date)))
@@ -180,49 +267,95 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Background decorations */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl" />
+      </div>
+
       {/* Header */}
-      <header className="bg-primary text-white p-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-white/70 hover:text-white"
-          >
-            ← Back
-          </button>
-          <span className="font-semibold">AI Coach</span>
-          <button
-            onClick={clearChatHistory}
-            className="text-white/70 hover:text-white text-sm"
-          >
-            Clear
-          </button>
+      <header className="relative z-10 glass-heavy safe-area-top">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="font-semibold text-text">AI Coach</h1>
+                <p className="text-xs text-text-secondary">Always here to help</p>
+              </div>
+            </div>
+            <button
+              onClick={clearChatHistory}
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
+              title="Clear chat"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-2xl mx-auto space-y-4">
-          {chatHistory.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                AI
+      <main className="flex-1 overflow-y-auto relative z-10">
+        <div className="max-w-2xl mx-auto p-4 space-y-4">
+          {isLoadingHistory ? (
+            <div className="flex justify-center py-12">
+              <div className="flex items-center gap-3 text-text-secondary">
+                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Loading conversation...</span>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+            </div>
+          ) : chatHistory.length === 0 ? (
+            <div className="text-center py-12 fade-in-up">
+              <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(6,182,212,0.4)]">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-text mb-2">
                 Hey there!
               </h2>
-              <p className="text-gray-600 mb-6">
+              <p className="text-text-secondary mb-8 max-w-sm mx-auto">
                 I'm your AI fitness coach. Ask me to modify your workout,
                 get exercise tips, or report any injuries.
               </p>
-              {activeWorkout && (
-                <div className="bg-white p-4 rounded-xl border border-gray-200 mb-6 text-left">
-                  <p className="text-sm text-gray-500 mb-1">Current Workout</p>
-                  <p className="font-semibold text-gray-900">{activeWorkout.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {activeWorkout.exercises.length} exercises
-                  </p>
-                </div>
+
+              {todaysWorkout && (
+                <GlassCard className="p-4 mb-6 text-left inline-block max-w-sm" variant="default">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-secondary mb-0.5">Today's Workout</p>
+                      <p className="font-semibold text-text">{todaysWorkout.name}</p>
+                      <p className="text-sm text-text-secondary">
+                        {todaysWorkout.exercises.length} exercises
+                      </p>
+                    </div>
+                  </div>
+                </GlassCard>
               )}
+
               <div className="flex flex-wrap gap-2 justify-center">
                 {suggestedMessages.map((msg) => (
                   <button
@@ -231,7 +364,7 @@ export default function Chat() {
                       addChatMessage({ role: 'user', content: msg });
                       chatMutation.mutate(msg);
                     }}
-                    className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-text-secondary hover:bg-white/10 hover:text-text transition-all"
                   >
                     {msg}
                   </button>
@@ -241,15 +374,9 @@ export default function Chat() {
           ) : (
             <>
               {chatHistory.map((msg, index) => (
-                <MessageBubble key={index} message={msg} workoutId={activeWorkout?.id} />
+                <MessageBubble key={index} message={msg} workoutId={todaysWorkout?.id} />
               ))}
-              {chatMutation.isPending && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 text-gray-500 p-4 rounded-2xl rounded-bl-md">
-                    Thinking...
-                  </div>
-                </div>
-              )}
+              {chatMutation.isPending && <TypingIndicator />}
               <div ref={messagesEndRef} />
             </>
           )}
@@ -257,23 +384,35 @@ export default function Chat() {
       </main>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="max-w-2xl mx-auto flex gap-3">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask your AI coach..."
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || chatMutation.isPending}
-            className="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Send
-          </button>
+      <div className="relative z-10 glass-heavy safe-area-bottom">
+        <div className="max-w-2xl mx-auto p-4">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask your AI coach..."
+              className="
+                flex-1 px-4 py-3
+                bg-white/5 border border-white/10
+                rounded-xl text-text placeholder:text-text-muted
+                focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30
+                transition-all
+              "
+            />
+            <GlassButton
+              onClick={handleSend}
+              disabled={!input.trim() || chatMutation.isPending}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              }
+            >
+              Send
+            </GlassButton>
+          </div>
         </div>
       </div>
     </div>

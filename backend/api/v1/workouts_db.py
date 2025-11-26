@@ -106,20 +106,21 @@ def row_to_workout(row) -> Workout:
         scheduled_date=row[5],
         is_completed=row[6],
         exercises_json=row[7],
-        created_at=row[8],
-        generation_method=row[9],
-        generation_source=row[10],
-        generation_metadata=row[11],
-        generated_at=row[12],
-        last_modified_method=row[13],
-        last_modified_at=row[14],
-        modification_history=row[15],
+        duration_minutes=row[8] if row[8] is not None else 45,
+        created_at=row[9],
+        generation_method=row[10],
+        generation_source=row[11],
+        generation_metadata=row[12],
+        generated_at=row[13],
+        last_modified_method=row[14],
+        last_modified_at=row[15],
+        modification_history=row[16],
     )
 
 
 WORKOUT_COLUMNS = """
     id, user_id, name, type, difficulty, scheduled_date, is_completed,
-    exercises_json, created_at, generation_method, generation_source,
+    exercises_json, duration_minutes, created_at, generation_method, generation_source,
     generation_metadata, generated_at, last_modified_method, last_modified_at,
     modification_history
 """
@@ -140,12 +141,12 @@ async def create_workout(workout: WorkoutCreate):
         db.conn.execute("""
             INSERT INTO workouts (
                 id, user_id, name, type, difficulty, scheduled_date,
-                exercises_json, generation_method, generation_source, generation_metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                exercises_json, duration_minutes, generation_method, generation_source, generation_metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [
             workout_id, workout.user_id, workout.name, workout.type,
             workout.difficulty, workout.scheduled_date, workout.exercises_json,
-            workout.generation_method, workout.generation_source, workout.generation_metadata,
+            workout.duration_minutes, workout.generation_method, workout.generation_source, workout.generation_metadata,
         ])
 
         # Fetch created workout
@@ -488,8 +489,8 @@ async def generate_workout(request: GenerateWorkoutRequest):
         db.conn.execute("""
             INSERT INTO workouts (
                 id, user_id, name, type, difficulty, scheduled_date,
-                exercises_json, generation_method, generation_source, generation_metadata
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                exercises_json, duration_minutes, generation_method, generation_source, generation_metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [
             workout_id,
             request.user_id,
@@ -498,6 +499,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             difficulty,
             now,
             json.dumps(exercises),
+            request.duration_minutes or 45,
             "ai",
             "openai_generation",
             json.dumps({
@@ -768,8 +770,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
             db.conn.execute("""
                 INSERT INTO workouts (
                     id, user_id, name, type, difficulty, scheduled_date,
-                    exercises_json, generation_method, generation_source, generation_metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    exercises_json, duration_minutes, generation_method, generation_source, generation_metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, [
                 workout_id,
                 request.user_id,
@@ -778,6 +780,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 difficulty,
                 workout_date,
                 json.dumps(exercises),
+                request.duration_minutes or 45,
                 "ai",
                 "weekly_generation",
                 json.dumps({
@@ -1009,8 +1012,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 db.conn.execute("""
                     INSERT INTO workouts (
                         id, user_id, name, type, difficulty, scheduled_date,
-                        exercises_json, generation_method, generation_source, generation_metadata
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        exercises_json, duration_minutes, generation_method, generation_source, generation_metadata
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, [
                     workout_id,
                     request.user_id,
@@ -1019,6 +1022,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     result["difficulty"],
                     result["workout_date"],
                     json.dumps(result["exercises"]),
+                    request.duration_minutes or 45,
                     "ai",
                     "monthly_generation",
                     json.dumps({
@@ -1228,8 +1232,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 db.conn.execute("""
                     INSERT INTO workouts (
                         id, user_id, name, type, difficulty, scheduled_date,
-                        exercises_json, generation_method, generation_source, generation_metadata
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        exercises_json, duration_minutes, generation_method, generation_source, generation_metadata
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, [
                     workout_id,
                     request.user_id,
@@ -1238,6 +1242,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     result["difficulty"],
                     result["workout_date"],
                     json.dumps(result["exercises"]),
+                    request.duration_minutes or 45,
                     "ai",
                     "background_generation",
                     json.dumps({

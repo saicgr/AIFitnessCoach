@@ -1,6 +1,9 @@
 // User types - matches backend schema
 export interface UserBackend {
   id: number;
+  username?: string;
+  name?: string;
+  onboarding_completed?: boolean;
   fitness_level: string;
   goals: string;  // JSON string
   equipment: string;  // JSON string
@@ -12,6 +15,8 @@ export interface UserBackend {
 // Frontend-friendly User with parsed arrays
 export interface User {
   id: number;
+  username?: string;
+  name?: string;
   fitness_level: string;
   goals: string[];
   equipment: string[];
@@ -34,17 +39,20 @@ export interface UpdateUserRequest {
   equipment?: string;  // JSON string
   preferences?: string;
   active_injuries?: string;
+  onboarding_completed?: boolean;
 }
 
 // Helper to convert backend user to frontend user
 export function parseUser(backend: UserBackend): User {
   return {
     id: backend.id,
+    username: backend.username,
+    name: backend.name,
     fitness_level: backend.fitness_level,
     goals: JSON.parse(backend.goals || '[]'),
     equipment: JSON.parse(backend.equipment || '[]'),
     active_injuries: JSON.parse(backend.active_injuries || '[]'),
-    onboarding_completed: true,
+    onboarding_completed: backend.onboarding_completed ?? true,
     created_at: backend.created_at,
   };
 }
@@ -190,6 +198,7 @@ export type CoachIntent =
   | 'modify_intensity'
   | 'reschedule'
   | 'report_injury'
+  | 'delete_workout'
   | 'question';
 
 export interface UserProfile {
@@ -242,6 +251,15 @@ export interface ChatResponse {
   similar_questions: string[];
 }
 
+// Chat history item from database
+export interface ChatHistoryItem {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  action_data?: Record<string, unknown>;
+}
+
 // Performance types
 export interface PerformanceLog {
   id: number;
@@ -275,6 +293,15 @@ export interface OnboardingData {
   weightKg: number;
   targetWeightKg?: number;
 
+  // Screen 2b: Advanced Body Measurements (collapsible/optional)
+  waistCircumferenceCm?: number;
+  hipCircumferenceCm?: number;
+  neckCircumferenceCm?: number;
+  bodyFatPercent?: number;
+  restingHeartRate?: number;
+  bloodPressureSystolic?: number;
+  bloodPressureDiastolic?: number;
+
   // Screen 3: Fitness Background
   fitnessLevel: 'beginner' | 'intermediate' | 'advanced';
   goals: string[];
@@ -296,6 +323,87 @@ export interface OnboardingData {
   activeInjuries: string[];
   healthConditions: string[];
   activityLevel: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
+}
+
+// Health Metrics types (calculated from body measurements)
+export interface HealthMetrics {
+  // BMI
+  bmi: number;
+  bmiCategory: 'underweight' | 'normal' | 'overweight' | 'obese';
+  targetBmi?: number;
+
+  // Ideal Body Weight (multiple formulas)
+  idealBodyWeightDevine: number;
+  idealBodyWeightRobinson: number;
+  idealBodyWeightMiller: number;
+
+  // Metabolic rates
+  bmrMifflin: number;  // Mifflin-St Jeor (most accurate)
+  bmrHarris: number;   // Harris-Benedict (alternative)
+  tdee: number;        // Total Daily Energy Expenditure
+
+  // Body composition (optional - requires additional measurements)
+  waistToHeightRatio?: number;
+  waistToHipRatio?: number;
+  bodyFatNavy?: number;  // Calculated via Navy method
+  leanBodyMass?: number;
+  ffmi?: number;  // Fat-Free Mass Index
+}
+
+export interface MetricsInput {
+  userId: number;
+  weightKg: number;
+  heightCm: number;
+  age: number;
+  gender: 'male' | 'female';
+  activityLevel: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active';
+  targetWeightKg?: number;
+  waistCm?: number;
+  hipCm?: number;
+  neckCm?: number;
+  bodyFatPercent?: number;
+}
+
+export interface MetricsHistoryEntry {
+  id: number;
+  userId: number;
+  recordedAt: string;
+  weightKg?: number;
+  waistCm?: number;
+  hipCm?: number;
+  neckCm?: number;
+  bodyFatMeasured?: number;
+  restingHeartRate?: number;
+  bloodPressureSystolic?: number;
+  bloodPressureDiastolic?: number;
+  bmi?: number;
+  bmiCategory?: string;
+  bmr?: number;
+  tdee?: number;
+  bodyFatCalculated?: number;
+  leanBodyMass?: number;
+  ffmi?: number;
+  waistToHeightRatio?: number;
+  waistToHipRatio?: number;
+  idealBodyWeight?: number;
+  notes?: string;
+}
+
+// Injury types
+export interface ActiveInjury {
+  id: number;
+  bodyPart: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  reportedAt: string;
+  expectedRecoveryDate: string;
+  currentPhase: 'acute' | 'subacute' | 'recovery' | 'healed';
+  phaseDescription: string;
+  allowedIntensity: 'none' | 'light' | 'moderate' | 'full';
+  daysSinceInjury: number;
+  daysRemaining: number;
+  progressPercent: number;
+  painLevel?: number;
+  rehabExercises: string[];
 }
 
 // API Response types

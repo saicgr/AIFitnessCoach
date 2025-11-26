@@ -3,9 +3,11 @@ Chat API endpoints.
 
 ENDPOINTS:
 - POST /api/v1/chat/send - Send a message to the AI coach
+- GET  /api/v1/chat/history/{user_id} - Get chat history for a user
 - GET  /api/v1/chat/rag/stats - Get RAG system statistics
 - POST /api/v1/chat/rag/search - Search similar past conversations
 """
+import json
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
@@ -14,6 +16,7 @@ from services.openai_service import OpenAIService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
+from core.duckdb_database import get_db
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -62,9 +65,94 @@ async def send_message(
     try:
         response = await coach.process_message(request)
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}")
+
+        # Save chat message to database for persistence
+        try:
+            db = get_db()
+            # Include intent in context_json for complete tracking
+            context_data = {
+                "intent": response.intent,
+                "action_data": response.action_data,
+                "rag_context_used": response.rag_context_used,
+            }
+            context_json = json.dumps(context_data)
+            db.conn.execute("""
+                INSERT INTO chat_history (id, user_id, user_message, ai_response, context_json)
+                VALUES (nextval('chat_history_id_seq'), ?, ?, ?, ?)
+            """, [request.user_id, request.message, response.message, context_json])
+            logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}")
+        except Exception as db_error:
+            # Log but don't fail the request if DB save fails
+            logger.warning(f"Failed to save chat to database: {db_error}")
+
         return response
     except Exception as e:
         logger.error(f"Failed to process message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ChatHistoryItem(BaseModel):
+    """Single chat history item."""
+    id: int
+    role: str  # 'user' or 'assistant'
+    content: str
+    timestamp: str
+    action_data: Optional[dict] = None
+
+
+@router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
+async def get_chat_history(user_id: int, limit: int = 100):
+    """
+    Get chat history for a user.
+
+    Returns messages in chronological order (oldest first).
+    Each DB row contains both user message and AI response,
+    so we expand them into separate items.
+    """
+    logger.info(f"Fetching chat history for user {user_id}, limit={limit}")
+    try:
+        db = get_db()
+        result = db.conn.execute("""
+            SELECT id, user_message, ai_response, context_json, timestamp
+            FROM chat_history
+            WHERE user_id = ?
+            ORDER BY timestamp ASC
+            LIMIT ?
+        """, [user_id, limit]).fetchall()
+
+        messages: List[ChatHistoryItem] = []
+        for row in result:
+            row_id, user_message, ai_response, context_json, timestamp = row
+            timestamp_str = str(timestamp) if timestamp else ""
+
+            # Add user message
+            messages.append(ChatHistoryItem(
+                id=row_id,
+                role="user",
+                content=user_message,
+                timestamp=timestamp_str,
+            ))
+
+            # Add assistant response
+            action_data = None
+            if context_json:
+                try:
+                    action_data = json.loads(context_json)
+                except json.JSONDecodeError:
+                    pass
+
+            messages.append(ChatHistoryItem(
+                id=row_id,
+                role="assistant",
+                content=ai_response,
+                timestamp=timestamp_str,
+                action_data=action_data,
+            ))
+
+        logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
+        return messages
+    except Exception as e:
+        logger.error(f"Failed to fetch chat history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

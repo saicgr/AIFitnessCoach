@@ -13,6 +13,12 @@ echo "🧹 Cleaning up old processes..."
 lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
 lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true
 
+# Create a session reset marker with timestamp
+# Frontend will detect this and clear localStorage
+echo "🔄 Marking session for reset..."
+RESET_MARKER_FILE="frontend/public/session-reset.json"
+echo "{\"resetAt\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"version\": \"$(date +%s)\"}" > "$RESET_MARKER_FILE"
+
 # Create named pipes for log prefixing
 BACKEND_PIPE=$(mktemp -u)
 FRONTEND_PIPE=$(mktemp -u)

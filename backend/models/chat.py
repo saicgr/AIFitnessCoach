@@ -16,6 +16,7 @@ class CoachIntent(str, Enum):
     MODIFY_INTENSITY = "modify_intensity"
     RESCHEDULE = "reschedule"
     REPORT_INJURY = "report_injury"
+    DELETE_WORKOUT = "delete_workout"
     QUESTION = "question"
 
 

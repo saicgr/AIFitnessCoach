@@ -35,14 +35,35 @@ class DuckDBManager:
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
+                username VARCHAR UNIQUE,
+                password_hash VARCHAR,
+                name VARCHAR,
+                onboarding_completed BOOLEAN DEFAULT FALSE,
                 fitness_level VARCHAR NOT NULL,
                 goals VARCHAR NOT NULL,
                 equipment VARCHAR NOT NULL,
                 preferences VARCHAR DEFAULT '{}',
                 active_injuries VARCHAR DEFAULT '[]',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                -- Extended body measurements (Feature A)
+                height_cm DOUBLE,
+                weight_kg DOUBLE,
+                target_weight_kg DOUBLE,
+                age INTEGER,
+                gender VARCHAR DEFAULT 'prefer_not_to_say',
+                activity_level VARCHAR DEFAULT 'lightly_active',
+                waist_circumference_cm DOUBLE,
+                hip_circumference_cm DOUBLE,
+                neck_circumference_cm DOUBLE,
+                body_fat_percent DOUBLE,
+                resting_heart_rate INTEGER,
+                blood_pressure_systolic INTEGER,
+                blood_pressure_diastolic INTEGER
             )
         """)
+
+        # Migration: Add auth columns to existing users table if they don't exist
+        self._migrate_users_table()
 
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS exercises (
@@ -88,6 +109,7 @@ class DuckDBManager:
                 scheduled_date TIMESTAMP NOT NULL,
                 is_completed BOOLEAN DEFAULT FALSE,
                 exercises_json VARCHAR NOT NULL,
+                duration_minutes INTEGER DEFAULT 45,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 generation_method VARCHAR DEFAULT 'algorithm',
                 generation_source VARCHAR DEFAULT 'onboarding',
@@ -99,6 +121,9 @@ class DuckDBManager:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         """)
+
+        # Migration: Add duration_minutes column to existing workouts table
+        self._migrate_workouts_table()
 
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS workout_logs (
@@ -195,6 +220,68 @@ class DuckDBManager:
             )
         """)
 
+        # User metrics history table (Feature B - Auto-calculated metrics)
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_metrics (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                -- Input measurements
+                weight_kg DOUBLE,
+                waist_cm DOUBLE,
+                hip_cm DOUBLE,
+                neck_cm DOUBLE,
+                body_fat_measured DOUBLE,
+                resting_heart_rate INTEGER,
+                blood_pressure_systolic INTEGER,
+                blood_pressure_diastolic INTEGER,
+                -- Calculated metrics
+                bmi DOUBLE,
+                bmi_category VARCHAR,
+                bmr DOUBLE,
+                tdee DOUBLE,
+                body_fat_calculated DOUBLE,
+                lean_body_mass DOUBLE,
+                ffmi DOUBLE,
+                waist_to_height_ratio DOUBLE,
+                waist_to_hip_ratio DOUBLE,
+                ideal_body_weight DOUBLE,
+                -- Tracking
+                notes VARCHAR,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+
+        # Enhanced injury history table (Feature C - Smart Injury Handling)
+        self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS injury_history (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                body_part VARCHAR NOT NULL,
+                severity VARCHAR DEFAULT 'moderate',
+                reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expected_recovery_date TIMESTAMP,
+                actual_recovery_date TIMESTAMP,
+                duration_planned_weeks INTEGER DEFAULT 3,
+                duration_actual_days INTEGER,
+                -- Workout modifications tracking
+                workouts_modified_count INTEGER DEFAULT 0,
+                exercises_removed VARCHAR DEFAULT '[]',
+                rehab_exercises_added VARCHAR DEFAULT '[]',
+                -- Progress tracking
+                pain_level_initial INTEGER,
+                pain_level_current INTEGER,
+                improvement_notes VARCHAR,
+                -- Analysis fields
+                ai_recommendations_followed BOOLEAN,
+                user_feedback VARCHAR,
+                recovery_phase VARCHAR DEFAULT 'acute',
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        """)
+
         # Workout changes audit log for tracking all modifications
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS workout_changes (
@@ -243,6 +330,51 @@ class DuckDBManager:
         self._conn.execute("""
             CREATE SEQUENCE IF NOT EXISTS workout_changes_id_seq START 1
         """)
+        self._conn.execute("""
+            CREATE SEQUENCE IF NOT EXISTS user_metrics_id_seq START 1
+        """)
+        self._conn.execute("""
+            CREATE SEQUENCE IF NOT EXISTS injury_history_id_seq START 1
+        """)
+
+    def _migrate_users_table(self):
+        """Add authentication columns to users table if they don't exist."""
+        # Check if username column exists
+        try:
+            result = self._conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'users' AND column_name = 'username'
+            """).fetchone()
+
+            if result is None:
+                # Add the new auth columns
+                print("Migrating users table: adding auth columns...")
+                self._conn.execute("ALTER TABLE users ADD COLUMN username VARCHAR")
+                self._conn.execute("ALTER TABLE users ADD COLUMN password_hash VARCHAR")
+                self._conn.execute("ALTER TABLE users ADD COLUMN name VARCHAR")
+                self._conn.execute("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN DEFAULT TRUE")
+
+                # Update existing users to have onboarding_completed = true
+                self._conn.execute("UPDATE users SET onboarding_completed = TRUE WHERE onboarding_completed IS NULL")
+                print("Migration complete: auth columns added to users table")
+        except Exception as e:
+            # Table might not exist yet, which is fine
+            print(f"Migration check skipped: {e}")
+
+    def _migrate_workouts_table(self):
+        """Add duration_minutes column to workouts table if it doesn't exist."""
+        try:
+            result = self._conn.execute("""
+                SELECT column_name FROM information_schema.columns
+                WHERE table_name = 'workouts' AND column_name = 'duration_minutes'
+            """).fetchone()
+
+            if result is None:
+                print("Migrating workouts table: adding duration_minutes column...")
+                self._conn.execute("ALTER TABLE workouts ADD COLUMN duration_minutes INTEGER DEFAULT 45")
+                print("Migration complete: duration_minutes column added to workouts table")
+        except Exception as e:
+            print(f"Workouts migration check skipped: {e}")
 
     def close(self):
         """Close the database connection."""

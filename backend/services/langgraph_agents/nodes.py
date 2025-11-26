@@ -4,6 +4,7 @@ Node implementations for the Fitness Coach LangGraph agent.
 Uses proper LangGraph tool calling - the LLM decides which tools to use.
 """
 import json
+from datetime import datetime
 from typing import Dict, Any, Literal
 
 from langchain_openai import ChatOpenAI
@@ -90,12 +91,35 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
         return "respond"
 
 
+def format_date_with_day(date_str: str) -> str:
+    """Format a date string to include the day of the week.
+
+    Args:
+        date_str: Date string in format YYYY-MM-DD or with time component
+
+    Returns:
+        Formatted string like "Friday, 2025-11-28"
+    """
+    if not date_str:
+        return ""
+    # Extract just the date part if it's a full datetime
+    if "T" in date_str:
+        date_str = date_str.split("T")[0]
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        day_name = date_obj.strftime("%A")  # Full day name (Monday, Tuesday, etc.)
+        return f"{day_name}, {date_str}"
+    except ValueError:
+        return date_str
+
+
 def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:
     """Format workout schedule for AI context with workout IDs for modification."""
     if not schedule:
         return ""
 
     parts = ["\nWORKOUT SCHEDULE (use these workout_ids when modifying):"]
+    parts.append("IMPORTANT: When mentioning dates in your response, ALWAYS include the day of the week (e.g., 'Friday, 2025-11-28' not just '2025-11-28').")
 
     def format_workout_with_id(w: Dict[str, Any], label: str) -> str:
         if not w:
@@ -105,7 +129,10 @@ def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:
         exercise_names = [e.get("name", "Unknown") for e in exercises[:3]]
         status = "COMPLETED" if w.get("is_completed") else "scheduled"
         workout_id = w.get("id", "N/A")
-        return f"- {label} (ID: {workout_id}): \"{w.get('name', 'Unknown')}\" - {exercise_count} exercises ({', '.join(exercise_names)}{'...' if exercise_count > 3 else ''}) - {status}"
+        scheduled_date = w.get("scheduled_date", "")
+        date_display = format_date_with_day(scheduled_date) if scheduled_date else ""
+        date_info = f" ({date_display})" if date_display else ""
+        return f"- {label}{date_info} (ID: {workout_id}): \"{w.get('name', 'Unknown')}\" - {exercise_count} exercises ({', '.join(exercise_names)}{'...' if exercise_count > 3 else ''}) - {status}"
 
     parts.append(format_workout_with_id(schedule.get("yesterday"), "Yesterday"))
     parts.append(format_workout_with_id(schedule.get("today"), "Today"))
@@ -116,11 +143,9 @@ def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:
         parts.append("\nTHIS WEEK'S WORKOUTS:")
         for w in this_week:
             scheduled = w.get("scheduled_date", "")
-            # Extract just the date part if it's a full datetime
-            if scheduled and "T" in scheduled:
-                scheduled = scheduled.split("T")[0]
+            formatted_date = format_date_with_day(scheduled)
             status = "COMPLETED" if w.get("is_completed") else "scheduled"
-            parts.append(f"  - ID {w.get('id')}: \"{w.get('name', 'Unknown')}\" on {scheduled} ({status})")
+            parts.append(f"  - ID {w.get('id')}: \"{w.get('name', 'Unknown')}\" on {formatted_date} ({status})")
 
     recent = schedule.get("recentCompleted", [])
     if recent:
@@ -177,7 +202,7 @@ async def agent_node(state: FitnessCoachState) -> Dict[str, Any]:
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
 
     # Build messages
-    system_message = SystemMessage(content=f"""You are an expert AI fitness coach. You help users modify their workouts.
+    system_message = SystemMessage(content=f"""You are an expert AI fitness coach. You help users modify their workouts and manage injuries.
 
 CONTEXT:
 {context}
@@ -188,21 +213,54 @@ CRITICAL TOOL INSTRUCTIONS - SELECTING THE RIGHT WORKOUT:
 3. If the user doesn't specify a day, default to TODAY's workout (ID: {workout_id}).
 4. Look at the workout names to match requests like "modify the leg day" or "change my push workout".
 
-AVAILABLE TOOLS:
+AVAILABLE WORKOUT TOOLS:
 - add_exercise_to_workout(workout_id=X, exercise_names=[...]) - Add exercises to a workout
 - remove_exercise_from_workout(workout_id=X, exercise_names=[...]) - Remove exercises from a workout
 - modify_workout_intensity(workout_id=X, modification="easier|harder|shorter|longer") - Change intensity
 - reschedule_workout(workout_id=X, new_date="YYYY-MM-DD", reason="...") - Move workout to a different date
+- delete_workout(workout_id=X, reason="...") - Delete/cancel a workout (use when user wants to skip or cancel)
+
+INJURY MANAGEMENT TOOLS:
+- report_injury(user_id, body_part, severity="mild|moderate|severe", duration_weeks=N, pain_level=1-10, notes="...") - Report a new injury
+  * Supported body parts: back, shoulder, knee, hip, ankle, wrist, elbow, neck
+  * Default severity is "moderate" (3 weeks recovery)
+  * severity durations: mild=2 weeks, moderate=3 weeks, severe=5 weeks
+  * User can override duration with duration_weeks parameter
+- clear_injury(user_id, body_part="...", injury_id=N, user_feedback="...") - Mark an injury as healed/recovered
+- get_active_injuries(user_id) - Get user's current active injuries with recovery status
+- update_injury_status(user_id, body_part="...", pain_level=N, improvement_notes="...") - Update pain level or add notes
+
+INJURY HANDLING INSTRUCTIONS:
+1. When a user reports an injury (e.g., "I hurt my back", "my shoulder is sore"):
+   - Ask them to rate the severity (mild/moderate/severe) if not specified
+   - Ask about pain level (1-10) to track progress
+   - Use report_injury tool to record it - this automatically modifies upcoming workouts!
+2. The system will automatically:
+   - Remove exercises that stress the injured area
+   - Add appropriate rehab exercises based on recovery phase
+   - Track recovery progress over time
+3. When user says they're recovered (e.g., "my back feels better", "I'm healed"):
+   - Use clear_injury to restore full exercise capability
+   - Ask for feedback about their recovery
+4. Recovery phases (automatically determined by days since injury):
+   - Acute (Week 1): Rest only - no exercises for injured area
+   - Subacute (Week 2): Light stretches and mobility only
+   - Recovery (Week 3): Gentle strengthening exercises
+   - Healed (After 3 weeks): Full capability restored
 
 EXAMPLES:
 - "Add pull-ups to tomorrow's workout" → Use the workout_id for tomorrow from the schedule
 - "Make leg day easier" → Find the leg workout in the schedule and use its ID
 - "Remove squats from today's workout" → Use ID {workout_id}
 - "Move Thursday's workout to Friday" → Use reschedule_workout with the Thursday workout ID
+- "Delete today's workout" / "Cancel my workout" / "Skip today" → Use delete_workout with today's workout ID and reason
+- "I hurt my back" → Ask about severity, then use report_injury(user_id={state['user_id']}, body_part="back", ...)
+- "My knee is better now" → Use clear_injury(user_id={state['user_id']}, body_part="knee")
+- "How's my injury recovery going?" → Use get_active_injuries(user_id={state['user_id']})
 
 You can call MULTIPLE tools in a single response if the user asks for multiple changes.
 
-Always be helpful and explain what you're doing, including which workout you're modifying.""")
+Always be helpful, empathetic about injuries, and explain what you're doing, including which workout you're modifying.""")
 
     # Include conversation history
     messages = [system_message]
@@ -489,6 +547,7 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     Build action_data for the frontend based on tool results.
     Now supports actions on any workout, not just the current one.
+    Also supports injury management actions.
     """
     intent = state.get("intent")
     current_workout = state.get("current_workout")
@@ -527,6 +586,57 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
                 "old_date": result.get("old_date"),
                 "new_date": result.get("new_date"),
                 "swapped_with": result.get("swapped_with"),
+                "success": result.get("success", False),
+            }
+        elif action == "delete_workout":
+            action_data = {
+                "action": "delete_workout",
+                "workout_id": result_workout_id,
+                "workout_name": result.get("workout_name"),
+                "scheduled_date": result.get("scheduled_date"),
+                "reason": result.get("reason"),
+                "success": result.get("success", False),
+            }
+        # Injury management actions
+        elif action == "report_injury":
+            action_data = {
+                "action": "report_injury",
+                "injury_id": result.get("injury_id"),
+                "user_id": result.get("user_id"),
+                "body_part": result.get("body_part"),
+                "severity": result.get("severity"),
+                "recovery_weeks": result.get("recovery_weeks"),
+                "expected_recovery_date": result.get("expected_recovery_date"),
+                "current_phase": result.get("current_phase"),
+                "workouts_modified": result.get("workouts_modified"),
+                "exercises_removed": result.get("exercises_removed", []),
+                "rehab_exercises": result.get("rehab_exercises", []),
+                "success": result.get("success", False),
+            }
+        elif action == "clear_injury":
+            action_data = {
+                "action": "clear_injury",
+                "injury_id": result.get("injury_id"),
+                "user_id": result.get("user_id"),
+                "body_part": result.get("body_part"),
+                "recovery_duration_days": result.get("recovery_duration_days"),
+                "recovery_status": result.get("recovery_status"),
+                "success": result.get("success", False),
+            }
+        elif action == "get_active_injuries":
+            action_data = {
+                "action": "get_active_injuries",
+                "user_id": result.get("user_id"),
+                "injuries": result.get("injuries", []),
+                "count": result.get("count", 0),
+                "success": result.get("success", False),
+            }
+        elif action == "update_injury_status":
+            action_data = {
+                "action": "update_injury_status",
+                "injury_id": result.get("injury_id"),
+                "body_part": result.get("body_part"),
+                "pain_level": result.get("pain_level"),
                 "success": result.get("success", False),
             }
 

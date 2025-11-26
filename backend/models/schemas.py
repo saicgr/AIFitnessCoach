@@ -50,6 +50,7 @@ class UserUpdate(BaseModel):
     equipment: Optional[str] = None
     preferences: Optional[str] = None
     active_injuries: Optional[str] = None
+    onboarding_completed: Optional[bool] = None  # Set to True after onboarding
     # Extended onboarding fields
     days_per_week: Optional[int] = None
     workout_duration: Optional[int] = None
@@ -72,6 +73,9 @@ class UserUpdate(BaseModel):
 
 class User(BaseModel):
     id: int
+    username: Optional[str] = None
+    name: Optional[str] = None
+    onboarding_completed: bool = False
     fitness_level: str
     goals: str
     equipment: str
@@ -130,6 +134,7 @@ class WorkoutCreate(BaseModel):
     difficulty: str
     scheduled_date: datetime
     exercises_json: str
+    duration_minutes: int = 45
     generation_method: str = "algorithm"
     generation_source: str = "onboarding"
     generation_metadata: str = "{}"
@@ -154,6 +159,7 @@ class Workout(BaseModel):
     scheduled_date: datetime
     is_completed: bool
     exercises_json: str
+    duration_minutes: int = 45
     created_at: datetime
     generation_method: str
     generation_source: str

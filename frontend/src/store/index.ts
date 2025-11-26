@@ -3,6 +3,11 @@ import { persist } from 'zustand/middleware';
 import type { User, Workout, ChatMessage, OnboardingData } from '../types';
 
 interface AppState {
+  // Theme state
+  theme: 'dark' | 'light';
+  setTheme: (theme: 'dark' | 'light') => void;
+  toggleTheme: () => void;
+
   // User state
   user: User | null;
   setUser: (user: User | null) => void;
@@ -19,6 +24,7 @@ interface AppState {
 
   // Chat history
   chatHistory: ChatMessage[];
+  setChatHistory: (messages: ChatMessage[]) => void;
   addChatMessage: (message: ChatMessage) => void;
   clearChatHistory: () => void;
 
@@ -46,6 +52,15 @@ const defaultOnboarding: OnboardingData = {
   weightKg: 70,
   targetWeightKg: undefined,
 
+  // Screen 2b: Advanced Body Measurements (collapsible/optional)
+  waistCircumferenceCm: undefined,
+  hipCircumferenceCm: undefined,
+  neckCircumferenceCm: undefined,
+  bodyFatPercent: undefined,
+  restingHeartRate: undefined,
+  bloodPressureSystolic: undefined,
+  bloodPressureDiastolic: undefined,
+
   // Screen 3: Fitness Background
   fitnessLevel: 'beginner',
   goals: [],
@@ -69,11 +84,35 @@ const defaultOnboarding: OnboardingData = {
   activityLevel: 'lightly_active',
 };
 
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 4;
+
+// Helper to apply theme class to document
+const applyThemeToDocument = (theme: 'dark' | 'light') => {
+  if (typeof document !== 'undefined') {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    } else {
+      document.documentElement.classList.remove('light-mode');
+    }
+  }
+};
 
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      // Theme
+      theme: 'dark',
+      setTheme: (theme) => {
+        applyThemeToDocument(theme);
+        set({ theme });
+      },
+      toggleTheme: () =>
+        set((state) => {
+          const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+          applyThemeToDocument(newTheme);
+          return { theme: newTheme };
+        }),
+
       // User
       user: null,
       setUser: (user) => set({ user }),
@@ -93,6 +132,7 @@ export const useAppStore = create<AppState>()(
 
       // Chat
       chatHistory: [],
+      setChatHistory: (messages) => set({ chatHistory: messages }),
       addChatMessage: (message) =>
         set((state) => ({
           chatHistory: [...state.chatHistory, message],
@@ -123,13 +163,20 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         user: state.user,
         onboardingData: state.onboardingData,
+        theme: state.theme,
       }),
       migrate: (persistedState, version) => {
         // Clear old data if version mismatch
         if (version < STORAGE_VERSION) {
-          return { user: null, onboardingData: defaultOnboarding };
+          return { user: null, onboardingData: defaultOnboarding, theme: 'dark' as const };
         }
-        return persistedState as { user: User | null; onboardingData: OnboardingData };
+        return persistedState as { user: User | null; onboardingData: OnboardingData; theme: 'dark' | 'light' };
+      },
+      onRehydrateStorage: () => (state) => {
+        // Apply theme when store rehydrates from localStorage
+        if (state?.theme) {
+          applyThemeToDocument(state.theme);
+        }
       },
     }
   )
@@ -139,6 +186,7 @@ export const useAppStore = create<AppState>()(
 export const clearAppStorage = () => {
   localStorage.removeItem('fitness-coach-storage');
   useAppStore.setState({
+    theme: 'dark',
     user: null,
     onboardingData: defaultOnboarding,
     workouts: [],
@@ -147,4 +195,5 @@ export const clearAppStorage = () => {
     activeWorkoutId: null,
     exerciseProgress: {},
   });
+  applyThemeToDocument('dark');
 };

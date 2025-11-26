@@ -11,3 +11,4 @@ FUTURE
 NutritionAgent - meal planning, macros
 InjuryAgent - rehab exercises, modifications
 ProgressAgent - analytics, goal tracking
+4. Lifetime subscription discount during holidays, PromoCode offers etc

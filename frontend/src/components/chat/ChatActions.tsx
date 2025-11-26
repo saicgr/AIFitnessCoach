@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { deleteWorkout } from '../../api/client';
 import type { CoachIntent } from '../../types';
 
 interface ActionButton {
   label: string;
   action: () => void;
   primary?: boolean;
+  variant?: 'primary' | 'secondary' | 'danger';
 }
 
 interface ChatActionsProps {
@@ -17,6 +20,25 @@ interface ChatActionsProps {
 export default function ChatActions({ intent, actionData, workoutId }: ChatActionsProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+
+  const handleDeleteWorkout = async (workoutIdToDelete: number) => {
+    setIsDeleting(true);
+    try {
+      await deleteWorkout(workoutIdToDelete);
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      setDeleteConfirmed(true);
+      // Navigate to home after deletion
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+    } catch (error) {
+      console.error('Failed to delete workout:', error);
+      setIsDeleting(false);
+    }
+  };
 
   const getActions = (): ActionButton[] => {
     const targetWorkoutId = actionData?.workout_id as number || workoutId;
@@ -28,11 +50,13 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
             {
               label: 'View Workout',
               action: () => navigate(`/workout/${targetWorkoutId}`),
+              variant: 'secondary',
             },
             {
               label: 'Start Workout',
               action: () => navigate(`/workout/${targetWorkoutId}/active`),
               primary: true,
+              variant: 'primary',
             },
           ];
         }
@@ -52,6 +76,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
                 navigate(`/workout/${targetWorkoutId}`);
               },
               primary: true,
+              variant: 'primary',
             },
           ];
         }
@@ -65,6 +90,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
               label: 'View New Workout',
               action: () => navigate(`/workout/${newWorkoutId}`),
               primary: true,
+              variant: 'primary',
             },
           ];
         }
@@ -80,8 +106,40 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
               navigate('/');
             },
             primary: true,
+            variant: 'primary',
           },
         ];
+
+      case 'delete_workout':
+        // Show confirmation buttons for delete
+        if (targetWorkoutId && !deleteConfirmed) {
+          return [
+            {
+              label: isDeleting ? 'Deleting...' : 'Confirm Delete',
+              action: () => handleDeleteWorkout(targetWorkoutId),
+              variant: 'danger',
+            },
+            {
+              label: 'Keep Workout',
+              action: () => {
+                // Just navigate back to home without deleting
+                navigate('/');
+              },
+              variant: 'secondary',
+            },
+          ];
+        }
+        if (deleteConfirmed) {
+          return [
+            {
+              label: 'View Schedule',
+              action: () => navigate('/'),
+              primary: true,
+              variant: 'primary',
+            },
+          ];
+        }
+        return [];
 
       case 'report_injury':
         // When user reports injury, AI modifies their workout - show button to view the updated workout
@@ -95,6 +153,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
                 navigate(`/workout/${targetWorkoutId}`);
               },
               primary: true,
+              variant: 'primary',
             },
           ];
         }
@@ -111,17 +170,28 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
     return null;
   }
 
+  const getButtonClasses = (action: ActionButton) => {
+    const baseClasses = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200';
+
+    switch (action.variant) {
+      case 'danger':
+        return `${baseClasses} bg-coral text-white hover:bg-coral/80 shadow-[0_0_15px_rgba(244,63,94,0.3)]`;
+      case 'secondary':
+        return `${baseClasses} bg-white/10 text-text-secondary hover:bg-white/20 border border-white/10`;
+      case 'primary':
+      default:
+        return `${baseClasses} bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]`;
+    }
+  };
+
   return (
-    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
+    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/10">
       {actions.map((action, index) => (
         <button
           key={index}
           onClick={action.action}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            action.primary
-              ? 'bg-primary text-white hover:bg-primary-dark'
-              : 'bg-primary/10 text-primary hover:bg-primary/20'
-          }`}
+          disabled={isDeleting && action.variant === 'danger'}
+          className={getButtonClasses(action)}
         >
           {action.label}
         </button>
