@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
-import { getWorkouts, calculateHealthMetrics, getActiveInjuries } from '../api/client';
+import { getWorkouts, calculateHealthMetrics, getActiveInjuries, getStrengthRecords, getWeeklyVolumes } from '../api/client';
 import { createLogger } from '../utils/logger';
-import type { HealthMetrics, ActiveInjury, Workout } from '../types';
+import type { HealthMetrics, ActiveInjury, Workout, StrengthRecord, WeeklyVolume } from '../types';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 
 const log = createLogger('metrics');
@@ -152,6 +152,22 @@ export default function Metrics() {
   const { data: workoutsData } = useQuery({
     queryKey: ['workouts', user?.id],
     queryFn: () => getWorkouts(user!.id),
+    enabled: !!user,
+  });
+
+  // Fetch strength records (PRs)
+  const { data: strengthRecords } = useQuery({
+    queryKey: ['strength-records', user?.id],
+    queryFn: () => getStrengthRecords(user!.id.toString(), undefined, true),
+    enabled: !!user,
+  });
+
+  // Fetch weekly volumes from backend
+  const currentWeek = Math.ceil((new Date().getDate()) / 7);
+  const currentYear = new Date().getFullYear();
+  const { data: weeklyVolumes } = useQuery({
+    queryKey: ['weekly-volumes', user?.id, currentWeek, currentYear],
+    queryFn: () => getWeeklyVolumes(user!.id.toString(), currentWeek, currentYear),
     enabled: !!user,
   });
 
@@ -473,47 +489,136 @@ export default function Metrics() {
           </div>
         </GlassCard>
 
-        {/* Volume by Muscle Group */}
-        {Object.keys(muscleVolume).length > 0 && (
+        {/* Personal Records Section */}
+        <GlassCard className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-amber-500/20 rounded-xl text-amber-400">
+              <Icons.Trophy />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-text">Personal Records</h2>
+              <p className="text-xs text-text-secondary">Your all-time bests</p>
+            </div>
+          </div>
+
+          {strengthRecords && strengthRecords.length > 0 ? (
+            <div className="space-y-3">
+              {strengthRecords.slice(0, 5).map((record) => (
+                <div
+                  key={record.id}
+                  className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-4 border border-amber-500/20"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-text">{record.exercise_name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xl font-bold text-amber-400">
+                          {record.weight_kg.toFixed(1)} kg
+                        </span>
+                        <span className="text-text-secondary">×</span>
+                        <span className="text-lg font-semibold text-text">
+                          {record.reps} reps
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-text-muted">Est. 1RM</p>
+                      <p className="text-lg font-bold text-primary">
+                        {record.estimated_1rm.toFixed(1)} kg
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-text-muted mt-2">
+                    Achieved {new Date(record.achieved_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-4xl mb-3">🏆</div>
+              <p className="text-text-secondary mb-2">No personal records yet</p>
+              <p className="text-xs text-text-muted">
+                Complete workouts with the active workout tracker to log your PRs
+              </p>
+            </div>
+          )}
+        </GlassCard>
+
+        {/* Volume by Muscle Group - Use backend data if available */}
+        {(weeklyVolumes && weeklyVolumes.length > 0) || Object.keys(muscleVolume).length > 0 ? (
           <GlassCard className="p-6">
-            <SectionHeader title="Volume by Muscle" subtitle="Sets completed this month" />
+            <SectionHeader title="Volume by Muscle" subtitle="Sets completed this week" />
 
             <div className="space-y-1">
-              {Object.entries(muscleVolume)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 6)
-                .map(([muscle, sets]) => (
-                  <VolumeBar
-                    key={muscle}
-                    label={muscle}
-                    value={sets}
-                    maxValue={maxMuscleVolume}
-                    target={10}
-                  />
-                ))}
+              {weeklyVolumes && weeklyVolumes.length > 0 ? (
+                // Use backend weekly volumes
+                weeklyVolumes
+                  .sort((a, b) => b.total_sets - a.total_sets)
+                  .slice(0, 6)
+                  .map((vol) => (
+                    <VolumeBar
+                      key={vol.muscle_group}
+                      label={vol.muscle_group}
+                      value={vol.total_sets}
+                      maxValue={Math.max(...weeklyVolumes.map(v => v.total_sets), 15)}
+                      target={vol.target_sets || 10}
+                    />
+                  ))
+              ) : (
+                // Fall back to calculated from workouts
+                Object.entries(muscleVolume)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 6)
+                  .map(([muscle, sets]) => (
+                    <VolumeBar
+                      key={muscle}
+                      label={muscle}
+                      value={sets}
+                      maxValue={maxMuscleVolume}
+                      target={10}
+                    />
+                  ))
+              )}
             </div>
-
-            {Object.keys(muscleVolume).length === 0 && (
-              <p className="text-center text-text-muted py-4">
-                Complete workouts to see volume breakdown
-              </p>
-            )}
+          </GlassCard>
+        ) : (
+          <GlassCard className="p-6">
+            <SectionHeader title="Volume by Muscle" subtitle="Sets completed this week" />
+            <p className="text-center text-text-muted py-4">
+              Complete workouts to see volume breakdown
+            </p>
           </GlassCard>
         )}
 
-        {/* Active Injuries */}
-        {activeInjuries.length > 0 && (
-          <GlassCard className="p-6 border-orange/30">
-            <div className="flex items-center gap-3 mb-4">
+        {/* Active Injuries / Report Injury */}
+        <GlassCard className="p-6 border-orange/30">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
               <div className="p-2 bg-orange/20 rounded-xl text-orange">
                 <Icons.Bandage />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-text">Recovery Status</h2>
-                <p className="text-xs text-text-secondary">{activeInjuries.length} active injuries</p>
+                <p className="text-xs text-text-secondary">
+                  {activeInjuries.length > 0
+                    ? `${activeInjuries.length} active injuries`
+                    : 'No active injuries'}
+                </p>
               </div>
             </div>
+            <button
+              onClick={() => navigate('/chat', { state: { prefillMessage: 'I want to report a new injury' } })}
+              className="px-3 py-1.5 bg-orange/20 hover:bg-orange/30 text-orange rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Report Injury
+            </button>
+          </div>
 
+          {activeInjuries.length > 0 ? (
             <div className="space-y-3">
               {activeInjuries.map(injury => (
                 <div key={injury.id} className="bg-orange/10 rounded-xl p-4 border border-orange/20">
@@ -543,8 +648,15 @@ export default function Metrics() {
                 </div>
               ))}
             </div>
-          </GlassCard>
-        )}
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-text-muted text-sm">
+                Tap "Report Injury" to let the AI coach know about any pain or injuries.
+                It will automatically adjust your workouts.
+              </p>
+            </div>
+          )}
+        </GlassCard>
 
         {/* Quick Actions */}
         <div className="flex gap-3">

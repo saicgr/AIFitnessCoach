@@ -90,6 +90,24 @@ function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, on
               )}
             </div>
           )}
+
+          {/* Equipment */}
+          {workout.equipment && workout.equipment.length > 0 && (
+            <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+              <span className="text-text-muted text-xs mr-0.5">Equipment:</span>
+              {workout.equipment.slice(0, 3).map((item, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded-full capitalize"
+                >
+                  {item}
+                </span>
+              ))}
+              {workout.equipment.length > 3 && (
+                <span className="text-xs text-text-muted">+{workout.equipment.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

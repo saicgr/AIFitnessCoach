@@ -20,6 +20,14 @@ import type {
   HealthMetrics,
   MetricsInput,
   ActiveInjury,
+  // New types for performance tracking
+  WorkoutLogCreate,
+  WorkoutLog,
+  PerformanceLogCreate,
+  PerformanceLogDetailed,
+  StrengthRecordCreate,
+  StrengthRecord,
+  WeeklyVolume,
 } from '../types';
 import { parseUser, parseWorkout } from '../types';
 import { createLogger } from '../utils/logger';
@@ -318,6 +326,113 @@ export const parseOnboardingResponse = async (request: ParseOnboardingRequest): 
 
 export const saveOnboardingConversation = async (request: SaveConversationRequest): Promise<{ success: boolean; message: string }> => {
   const { data } = await api.post('/onboarding/save-conversation', request);
+  return data;
+};
+
+// ============================================
+// Workout Logs (records completed workout sessions)
+// ============================================
+
+export const createWorkoutLog = async (data: WorkoutLogCreate): Promise<WorkoutLog> => {
+  const { data: response } = await api.post<WorkoutLog>('/performance-db/workout-logs', data);
+  return response;
+};
+
+export const getWorkoutLogs = async (userId: string): Promise<WorkoutLog[]> => {
+  const { data } = await api.get<WorkoutLog[]>(`/performance-db/workout-logs?user_id=${userId}`);
+  return data;
+};
+
+// ============================================
+// Performance Logs (individual set data)
+// ============================================
+
+export const createPerformanceLog = async (data: PerformanceLogCreate): Promise<PerformanceLogDetailed> => {
+  const { data: response } = await api.post<PerformanceLogDetailed>('/performance-db/logs', data);
+  return response;
+};
+
+export const getPerformanceLogs = async (
+  userId: string,
+  exerciseId?: string
+): Promise<PerformanceLogDetailed[]> => {
+  const params = new URLSearchParams();
+  params.append('user_id', userId);
+  if (exerciseId) params.append('exercise_id', exerciseId);
+  const { data } = await api.get<PerformanceLogDetailed[]>(`/performance-db/logs?${params.toString()}`);
+  return data;
+};
+
+export const getExerciseHistory = async (
+  userId: string,
+  exerciseId: string,
+  limit: number = 5
+): Promise<PerformanceLogDetailed[]> => {
+  const { data } = await api.get<PerformanceLogDetailed[]>(
+    `/performance-db/logs?user_id=${userId}&exercise_id=${exerciseId}&limit=${limit}`
+  );
+  return data;
+};
+
+// ============================================
+// Strength Records (Personal Records / PRs)
+// ============================================
+
+export const getStrengthRecords = async (
+  userId: string,
+  exerciseId?: string,
+  prsOnly: boolean = false
+): Promise<StrengthRecord[]> => {
+  const params = new URLSearchParams();
+  params.append('user_id', userId);
+  if (exerciseId) params.append('exercise_id', exerciseId);
+  if (prsOnly) params.append('prs_only', 'true');
+  const { data } = await api.get<StrengthRecord[]>(`/performance-db/strength-records?${params.toString()}`);
+  return data;
+};
+
+export const createStrengthRecord = async (data: StrengthRecordCreate): Promise<StrengthRecord> => {
+  const { data: response } = await api.post<StrengthRecord>('/performance-db/strength-records', data);
+  return response;
+};
+
+// ============================================
+// Weekly Volume Tracking
+// ============================================
+
+export const getWeeklyVolumes = async (
+  userId: string,
+  week?: number,
+  year?: number
+): Promise<WeeklyVolume[]> => {
+  const params = new URLSearchParams();
+  params.append('user_id', userId);
+  if (week !== undefined) params.append('week_number', week.toString());
+  if (year !== undefined) params.append('year', year.toString());
+  const { data } = await api.get<WeeklyVolume[]>(`/performance-db/weekly-volume?${params.toString()}`);
+  return data;
+};
+
+export const updateWeeklyVolume = async (
+  userId: string,
+  muscleGroup: string,
+  weekNumber: number,
+  year: number,
+  sets: number,
+  reps: number,
+  volumeKg: number
+): Promise<WeeklyVolume> => {
+  const { data } = await api.post<WeeklyVolume>('/performance-db/weekly-volume', {
+    user_id: userId,
+    muscle_group: muscleGroup,
+    week_number: weekNumber,
+    year: year,
+    total_sets: sets,
+    total_reps: reps,
+    total_volume_kg: volumeKg,
+    frequency: 1,
+    recovery_status: 'optimal',
+  });
   return data;
 };
 

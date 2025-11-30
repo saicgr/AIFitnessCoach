@@ -82,6 +82,7 @@ export interface WorkoutExercise {
   notes?: string;
   completed?: boolean;
   muscle_group?: string;  // Primary muscle targeted by this exercise
+  equipment?: string;     // Equipment needed for this exercise
 }
 
 // Backend workout type (has exercises_json as string)
@@ -95,7 +96,8 @@ export interface WorkoutBackend {
   exercises_json: string;
   target_muscles_json?: string;  // JSON string of target muscles
   scheduled_date?: string;
-  completed_at?: string;
+  is_completed?: boolean;        // Backend uses boolean flag
+  completed_at?: string;         // Legacy field (may not be set)
   notes?: string;
   created_at: string;
 }
@@ -110,10 +112,21 @@ export interface Workout {
   duration_minutes: number;
   exercises: WorkoutExercise[];
   target_muscles?: string[];  // Primary muscles targeted by this workout
+  equipment?: string[];       // Equipment needed for this workout
   scheduled_date?: string;
   completed_at?: string;
   notes?: string;
   created_at: string;
+}
+
+// Helper to extract parent muscle name from format like "Quadriceps (Quadriceps Femoris)"
+function extractParentMuscle(muscle: string): string {
+  // Remove anything in parentheses and trim
+  const parenthesisIndex = muscle.indexOf('(');
+  if (parenthesisIndex > 0) {
+    return muscle.substring(0, parenthesisIndex).trim();
+  }
+  return muscle.trim();
 }
 
 // Helper to convert backend workout to frontend workout
@@ -122,21 +135,42 @@ export function parseWorkout(backend: WorkoutBackend): Workout {
 
   // Extract target muscles from target_muscles_json if available,
   // otherwise derive from exercise muscle_group fields
+  // Also simplify to parent muscle names only
   let target_muscles: string[] | undefined;
   if (backend.target_muscles_json) {
-    target_muscles = JSON.parse(backend.target_muscles_json);
+    const rawMuscles = JSON.parse(backend.target_muscles_json) as string[];
+    const simplifiedMuscles = new Set<string>();
+    rawMuscles.forEach(m => {
+      const parent = extractParentMuscle(m).toLowerCase();
+      if (parent) simplifiedMuscles.add(parent);
+    });
+    target_muscles = Array.from(simplifiedMuscles);
   } else {
     // Derive from exercises' muscle_group field
     const muscleSet = new Set<string>();
     exercises.forEach(ex => {
       if (ex.muscle_group) {
-        muscleSet.add(ex.muscle_group.toLowerCase());
+        const parent = extractParentMuscle(ex.muscle_group).toLowerCase();
+        if (parent) muscleSet.add(parent);
       }
     });
     if (muscleSet.size > 0) {
       target_muscles = Array.from(muscleSet);
     }
   }
+
+  // Extract unique equipment from exercises
+  const equipmentSet = new Set<string>();
+  exercises.forEach(ex => {
+    if (ex.equipment && ex.equipment.toLowerCase() !== 'body weight') {
+      equipmentSet.add(ex.equipment.toLowerCase());
+    }
+  });
+  const equipment = equipmentSet.size > 0 ? Array.from(equipmentSet) : undefined;
+
+  // Derive completed_at from is_completed flag if not already set
+  // Backend uses is_completed boolean, frontend expects completed_at timestamp
+  const completed_at = backend.completed_at || (backend.is_completed ? new Date().toISOString() : undefined);
 
   return {
     id: backend.id,
@@ -147,8 +181,9 @@ export function parseWorkout(backend: WorkoutBackend): Workout {
     duration_minutes: backend.duration_minutes ?? 45, // Default to 45 min if missing
     exercises,
     target_muscles,
+    equipment,
     scheduled_date: backend.scheduled_date,
-    completed_at: backend.completed_at,
+    completed_at,
     notes: backend.notes,
     created_at: backend.created_at,
   };
@@ -415,4 +450,132 @@ export interface HealthResponse {
   status: string;
   database: string;
   version: string;
+}
+
+// ============================================
+// Active Workout & Performance Tracking Types
+// ============================================
+
+// Set tracking during active workout
+export interface ActiveSet {
+  setNumber: number;
+  setType: 'warmup' | 'working' | 'failure';
+  targetWeight: number;
+  targetReps: number;
+  actualWeight: number | null;
+  actualReps: number | null;
+  isCompleted: boolean;
+  previousWeight?: number;
+  previousReps?: number;
+}
+
+// Workout log for backend (records a completed workout session)
+export interface WorkoutLogCreate {
+  workout_id: string;
+  user_id: string;
+  sets_json: string;  // JSON stringified array of all sets data
+  total_time_seconds: number;
+}
+
+export interface WorkoutLog {
+  id: string;
+  workout_id: string;
+  user_id: string;
+  sets_json: string;
+  completed_at: string;
+  total_time_seconds: number;
+}
+
+// Performance log for backend (individual set data)
+export interface PerformanceLogCreate {
+  workout_log_id: string;
+  user_id: string;
+  exercise_id: string;
+  exercise_name: string;
+  set_number: number;
+  reps_completed: number;
+  weight_kg: number;
+  rpe?: number;
+  rir?: number;  // Reps in reserve
+  is_completed: boolean;
+  failed_at_rep?: number;
+  notes?: string;
+}
+
+export interface PerformanceLogDetailed {
+  id: string;
+  workout_log_id: string;
+  user_id: string;
+  exercise_id: string;
+  exercise_name: string;
+  set_number: number;
+  reps_completed: number;
+  weight_kg: number;
+  rpe?: number;
+  rir?: number;
+  is_completed: boolean;
+  failed_at_rep?: number;
+  notes?: string;
+  recorded_at: string;
+}
+
+// ============================================
+// Strength Records (Personal Records / PRs)
+// ============================================
+
+export interface StrengthRecordCreate {
+  user_id: string;
+  exercise_id: string;
+  exercise_name: string;
+  weight_kg: number;
+  reps: number;
+  estimated_1rm: number;
+  rpe?: number;
+  is_pr?: boolean;
+}
+
+export interface StrengthRecord {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  exercise_name: string;
+  weight_kg: number;
+  reps: number;
+  estimated_1rm: number;
+  rpe?: number;
+  is_pr: boolean;
+  achieved_at: string;
+}
+
+// ============================================
+// Weekly Volume Tracking
+// ============================================
+
+export interface WeeklyVolume {
+  id: string;
+  user_id: string;
+  muscle_group: string;
+  week_number: number;
+  year: number;
+  total_sets: number;
+  total_reps: number;
+  total_volume_kg: number;
+  frequency: number;
+  target_sets?: number;
+  recovery_status: string;
+  updated_at: string;
+}
+
+// ============================================
+// Exercise History (for "Previous" column)
+// ============================================
+
+export interface ExerciseHistoryEntry {
+  workout_date: string;
+  sets: {
+    set_number: number;
+    weight_kg: number;
+    reps: number;
+    rpe?: number;
+  }[];
 }

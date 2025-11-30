@@ -210,7 +210,7 @@ class GenerateMonthlyResponse(BaseModel):
 
 
 class SwapWorkoutsRequest(BaseModel):
-    workout_id: int
+    workout_id: str  # UUID string from Supabase
     new_date: str  # ISO date, e.g., "2024-11-25"
     reason: Optional[str] = None
 
@@ -220,7 +220,7 @@ class SwapWorkoutsRequest(BaseModel):
 # ============================================
 
 class WorkoutLogCreate(BaseModel):
-    workout_id: int
+    workout_id: str  # UUID string from Supabase
     user_id: str  # UUID string from Supabase
     sets_json: str
     total_time_seconds: int

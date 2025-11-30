@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
 import { sendChatMessage, getChatHistory } from '../api/client';
@@ -73,8 +73,12 @@ function TypingIndicator() {
 
 export default function Chat() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, workouts, chatHistory, setChatHistory, addChatMessage, clearChatHistory, onboardingData } = useAppStore();
   const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // Get prefilled message from navigation state (e.g., from Metrics page "Report Injury" button)
+  const prefillMessage = (location.state as { prefillMessage?: string })?.prefillMessage;
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -90,7 +94,7 @@ export default function Chat() {
     exerciseCount: todaysWorkout?.exercises.length,
   });
 
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(prefillMessage || '');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
