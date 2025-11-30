@@ -50,7 +50,7 @@ export default function AuthCallback() {
           if (user.onboarding_completed) {
             navigate('/', { replace: true });
           } else {
-            navigate('/onboarding', { replace: true });
+            navigate('/onboarding/chat', { replace: true });
           }
         }, 500);
       } catch (err) {

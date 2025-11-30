@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 from api.v1 import chat, health, workouts, performance
 from api.v1 import users, exercises, workouts_db, performance_db
-from api.v1 import metrics, videos
+from api.v1 import metrics, videos, onboarding
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -24,3 +24,6 @@ router.include_router(metrics.router, tags=["Health Metrics"])
 
 # S3 video streaming endpoints
 router.include_router(videos.router, tags=["Videos"])
+
+# Conversational AI onboarding endpoints
+router.include_router(onboarding.router, prefix="/onboarding", tags=["Onboarding"])

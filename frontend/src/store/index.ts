@@ -38,6 +38,26 @@ interface AppState {
   setOnboardingData: (data: Partial<OnboardingData>) => void;
   resetOnboarding: () => void;
 
+  // Conversational Onboarding
+  conversationalOnboarding: {
+    isActive: boolean;
+    messages: Array<{
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp: string;
+      quickReplies?: Array<{ label: string; value: any; icon?: string }>;
+      multiSelect?: boolean;
+      component?: 'day_picker' | 'unit_input' | 'health_checklist';
+      extractedData?: Partial<OnboardingData>;
+    }>;
+    collectedData: Partial<OnboardingData>;
+    completedFields: string[];
+  };
+  setConversationalOnboarding: (data: Partial<AppState['conversationalOnboarding']>) => void;
+  addConversationalMessage: (message: AppState['conversationalOnboarding']['messages'][0]) => void;
+  updateCollectedData: (data: Partial<OnboardingData>) => void;
+  resetConversationalOnboarding: () => void;
+
   // Active workout session
   activeWorkoutId: number | null;
   setActiveWorkoutId: (id: number | null) => void;
@@ -155,6 +175,41 @@ export const useAppStore = create<AppState>()(
           onboardingData: { ...state.onboardingData, ...data },
         })),
       resetOnboarding: () => set({ onboardingData: defaultOnboarding }),
+
+      // Conversational Onboarding
+      conversationalOnboarding: {
+        isActive: false,
+        messages: [],
+        collectedData: {},
+        completedFields: [],
+      },
+      setConversationalOnboarding: (data) =>
+        set((state) => ({
+          conversationalOnboarding: { ...state.conversationalOnboarding, ...data },
+        })),
+      addConversationalMessage: (message) =>
+        set((state) => ({
+          conversationalOnboarding: {
+            ...state.conversationalOnboarding,
+            messages: [...state.conversationalOnboarding.messages, message],
+          },
+        })),
+      updateCollectedData: (data) =>
+        set((state) => ({
+          conversationalOnboarding: {
+            ...state.conversationalOnboarding,
+            collectedData: { ...state.conversationalOnboarding.collectedData, ...data },
+          },
+        })),
+      resetConversationalOnboarding: () =>
+        set({
+          conversationalOnboarding: {
+            isActive: false,
+            messages: [],
+            collectedData: {},
+            completedFields: [],
+          },
+        }),
 
       // Active workout
       activeWorkoutId: null,

@@ -278,4 +278,47 @@ export const getActiveInjuries = async (userId: number): Promise<ActiveInjury[]>
   })) || [];
 };
 
+// Conversational Onboarding
+export interface ParseOnboardingRequest {
+  user_id: string;
+  message: string;
+  current_data: Record<string, any>;
+  conversation_history?: Array<{ role: string; content: string }>;
+}
+
+export interface ParseOnboardingResponse {
+  extracted_data: Record<string, any>;
+  next_question: {
+    question: string | null;
+    type: string;
+    field_target?: string;
+    quick_replies?: Array<{ label: string; value: any; icon?: string }>;
+    multi_select?: boolean;
+    component?: string;
+    complete?: boolean;
+  };
+  is_complete: boolean;
+  missing_fields: string[];
+}
+
+export interface SaveConversationRequest {
+  user_id: string;
+  conversation: Array<{
+    role: string;
+    content: string;
+    timestamp: string;
+    extracted_data?: Record<string, any>;
+  }>;
+}
+
+export const parseOnboardingResponse = async (request: ParseOnboardingRequest): Promise<ParseOnboardingResponse> => {
+  const { data } = await api.post('/onboarding/parse-response', request);
+  return data;
+};
+
+export const saveOnboardingConversation = async (request: SaveConversationRequest): Promise<{ success: boolean; message: string }> => {
+  const { data } = await api.post('/onboarding/save-conversation', request);
+  return data;
+};
+
 export default api;

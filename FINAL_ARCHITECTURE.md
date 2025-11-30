@@ -65,5 +65,3 @@ Observability & Logs
 	•	API Gateway access logs (optional)
 	•	Supabase Logs:
 	•	DB queries, auth events, errors
-	•	Optional:
-	•	Frontend logging (e.g. Sentry) later

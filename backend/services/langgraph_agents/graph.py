@@ -20,6 +20,13 @@ from .nodes import (
     storage_node,
     build_action_data_node,
 )
+from .onboarding import (
+    OnboardingState,
+    check_completion_node,
+    onboarding_agent_node,
+    extract_data_node,
+    determine_next_step,
+)
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -122,5 +129,64 @@ def build_fitness_coach_graph():
     compiled_graph = graph.compile()
 
     logger.info("Fitness coach graph built successfully (with proper tool calling)")
+
+    return compiled_graph
+
+
+def build_onboarding_agent_graph():
+    """
+    Build and compile the onboarding agent graph.
+
+    AI-DRIVEN ONBOARDING FLOW (NO HARDCODED QUESTIONS):
+        START
+          ↓
+        extract_data (extract data from user message using AI)
+          ↓
+        check_completion (determine what's missing)
+          ↓
+        router (determine_next_step)
+          ├─→ ask_question (onboarding_agent generates next question)
+          │     ↓
+          │   (loops back to user input, then extract_data)
+          │
+          └─→ complete (onboarding finished)
+                ↓
+               END
+
+    Key: The AI DECIDES what to ask based on missing data and context.
+    No hardcoded question templates!
+    """
+    logger.info("Building onboarding agent graph (AI-driven, no hardcoded questions)...")
+
+    # Create the graph with onboarding state schema
+    graph = StateGraph(OnboardingState)
+
+    # Add nodes
+    graph.add_node("extract_data", extract_data_node)
+    graph.add_node("check_completion", check_completion_node)
+    graph.add_node("ask_question", onboarding_agent_node)
+
+    # Linear flow: START → extract_data → check_completion
+    graph.add_edge(START, "extract_data")
+    graph.add_edge("extract_data", "check_completion")
+
+    # Conditional: are we done or need more data?
+    graph.add_conditional_edges(
+        "check_completion",
+        determine_next_step,
+        {
+            "ask_question": "ask_question",  # Need more data
+            "complete": END,  # Onboarding complete
+        }
+    )
+
+    # After asking question, we END and wait for user's next message
+    # The next user message will start the flow again from START
+    graph.add_edge("ask_question", END)
+
+    # Compile the graph
+    compiled_graph = graph.compile()
+
+    logger.info("Onboarding agent graph built successfully (AI-driven)")
 
     return compiled_graph

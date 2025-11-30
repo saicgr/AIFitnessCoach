@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './store';
 import { supabase } from './lib/supabase';
 import Onboarding from './pages/Onboarding';
+import OnboardingSelector from './pages/OnboardingSelector';
+import ConversationalOnboarding from './pages/ConversationalOnboarding';
 import Home from './pages/Home';
 import WorkoutDetails from './pages/WorkoutDetails';
 import ActiveWorkout from './pages/ActiveWorkout';
@@ -50,7 +52,30 @@ function App() {
       />
       <Route path="/login" element={<DemoLogin />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/onboarding" element={<Onboarding />} />
+      <Route
+        path="/onboarding/selector"
+        element={
+          user?.onboarding_completed
+            ? <Navigate to="/" replace />
+            : <OnboardingSelector />
+        }
+      />
+      <Route
+        path="/onboarding/chat"
+        element={
+          user?.onboarding_completed
+            ? <Navigate to="/" replace />
+            : <ConversationalOnboarding />
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          user?.onboarding_completed
+            ? <Navigate to="/" replace />
+            : <Onboarding />
+        }
+      />
       <Route path="/workout/:id" element={<WorkoutDetails />} />
       <Route path="/workout/:id/active" element={<ActiveWorkout />} />
       <Route path="/chat" element={<Chat />} />
