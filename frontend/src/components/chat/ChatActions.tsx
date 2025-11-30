@@ -14,7 +14,7 @@ interface ActionButton {
 interface ChatActionsProps {
   intent: CoachIntent;
   actionData?: Record<string, unknown>;
-  workoutId?: number;
+  workoutId?: string;
 }
 
 export default function ChatActions({ intent, actionData, workoutId }: ChatActionsProps) {
@@ -23,7 +23,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
 
-  const handleDeleteWorkout = async (workoutIdToDelete: number) => {
+  const handleDeleteWorkout = async (workoutIdToDelete: string) => {
     setIsDeleting(true);
     try {
       await deleteWorkout(workoutIdToDelete);
@@ -41,7 +41,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
   };
 
   const getActions = (): ActionButton[] => {
-    const targetWorkoutId = actionData?.workout_id as number || workoutId;
+    const targetWorkoutId = actionData?.workout_id as string || workoutId;
 
     switch (intent) {
       case 'question':
@@ -83,7 +83,7 @@ export default function ChatActions({ intent, actionData, workoutId }: ChatActio
         return [];
 
       case 'swap_workout':
-        const newWorkoutId = actionData?.new_workout_id as number || targetWorkoutId;
+        const newWorkoutId = actionData?.new_workout_id as string || targetWorkoutId;
         if (newWorkoutId) {
           return [
             {

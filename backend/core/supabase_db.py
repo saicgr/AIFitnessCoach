@@ -63,7 +63,7 @@ class SupabaseDB:
 
     # ==================== WORKOUTS ====================
 
-    def get_workout(self, workout_id: int) -> Optional[Dict[str, Any]]:
+    def get_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
         """Get a workout by ID."""
         result = self.client.table("workouts").select("*").eq("id", workout_id).execute()
         return result.data[0] if result.data else None
@@ -95,12 +95,12 @@ class SupabaseDB:
         result = self.client.table("workouts").insert(data).execute()
         return result.data[0] if result.data else None
 
-    def update_workout(self, workout_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_workout(self, workout_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Update a workout."""
         result = self.client.table("workouts").update(data).eq("id", workout_id).execute()
         return result.data[0] if result.data else None
 
-    def delete_workout(self, workout_id: int) -> bool:
+    def delete_workout(self, workout_id: str) -> bool:
         """Delete a workout."""
         self.client.table("workouts").delete().eq("id", workout_id).execute()
         return True
@@ -189,7 +189,7 @@ class SupabaseDB:
         result = self.client.table("workout_logs").insert(data).execute()
         return result.data[0] if result.data else None
 
-    def delete_workout_logs_by_workout(self, workout_id: int) -> bool:
+    def delete_workout_logs_by_workout(self, workout_id: str) -> bool:
         """Delete all workout logs for a workout."""
         self.client.table("workout_logs").delete().eq("workout_id", workout_id).execute()
         return True
@@ -442,7 +442,7 @@ class SupabaseDB:
         result = self.client.table("workout_changes").insert(data).execute()
         return result.data[0] if result.data else None
 
-    def delete_workout_changes_by_workout(self, workout_id: int) -> bool:
+    def delete_workout_changes_by_workout(self, workout_id: str) -> bool:
         """Delete all workout changes for a workout."""
         self.client.table("workout_changes").delete().eq("workout_id", workout_id).execute()
         return True

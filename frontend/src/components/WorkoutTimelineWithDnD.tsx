@@ -29,7 +29,7 @@ interface WorkoutCardProps {
   isPast: boolean;
   isDragging?: boolean;
   onClick?: () => void;
-  onDelete?: (workoutId: number) => void;
+  onDelete?: (workoutId: string) => void;
 }
 
 function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, onDelete }: WorkoutCardProps) {
@@ -133,8 +133,8 @@ interface DraggableWorkoutCardProps {
   workout: Workout;
   isToday: boolean;
   isPast: boolean;
-  onNavigate: (workoutId: number) => void;
-  onDelete: (workoutId: number) => void;
+  onNavigate: (workoutId: string) => void;
+  onDelete: (workoutId: string) => void;
 }
 
 function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete }: DraggableWorkoutCardProps) {
@@ -369,9 +369,9 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [pendingSwap, setPendingSwap] = useState<{ workoutId: number; newDate: string } | null>(null);
+  const [pendingSwap, setPendingSwap] = useState<{ workoutId: string; newDate: string } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<{ workoutId: number; workoutName: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ workoutId: string; workoutName: string } | null>(null);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -410,7 +410,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
 
   // Swap mutation
   const swapMutation = useMutation({
-    mutationFn: async (params: { workout_id: number; new_date: string; reason?: string }) => {
+    mutationFn: async (params: { workout_id: string; new_date: string; reason?: string }) => {
       return await swapWorkout(params);
     },
     onSuccess: () => {
@@ -426,7 +426,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: async (workoutId: number) => {
+    mutationFn: async (workoutId: string) => {
       return await deleteWorkout(workoutId);
     },
     onSuccess: (_, workoutId) => {
@@ -444,12 +444,12 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
   });
 
   // Navigation handler
-  const handleNavigate = (workoutId: number) => {
+  const handleNavigate = (workoutId: string) => {
     navigate(`/workout/${workoutId}`);
   };
 
   // Delete handler - shows confirmation modal
-  const handleDeleteRequest = (workoutId: number) => {
+  const handleDeleteRequest = (workoutId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (workout) {
       setPendingDelete({ workoutId, workoutName: workout.name });
@@ -476,7 +476,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     if (!over || active.id === over.id) return;
 
     const newDate = over.id as string;
-    const workoutId = active.id as number;
+    const workoutId = active.id as string;
 
     // Don't allow moving to the same date
     const currentWorkout = workouts.find((w) => w.id === workoutId);

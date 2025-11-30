@@ -74,7 +74,7 @@ async def index_workout_to_rag(workout: Workout):
 
 
 def log_workout_change(
-    workout_id: int,
+    workout_id: str,
     user_id: str,
     change_type: str,
     field_changed: str = None,
@@ -213,7 +213,7 @@ async def list_workouts(
 
 
 @router.get("/{workout_id}", response_model=Workout)
-async def get_workout(workout_id: int):
+async def get_workout(workout_id: str):
     """Get a workout by ID."""
     logger.debug(f"Fetching workout: id={workout_id}")
     try:
@@ -234,7 +234,7 @@ async def get_workout(workout_id: int):
 
 
 @router.put("/{workout_id}", response_model=Workout)
-async def update_workout(workout_id: int, workout: WorkoutUpdate):
+async def update_workout(workout_id: str, workout: WorkoutUpdate):
     """Update a workout."""
     logger.info(f"Updating workout: id={workout_id}")
     try:
@@ -290,7 +290,7 @@ async def update_workout(workout_id: int, workout: WorkoutUpdate):
 
 
 @router.delete("/{workout_id}")
-async def delete_workout(workout_id: int):
+async def delete_workout(workout_id: str):
     """Delete a workout and all related records."""
     logger.info(f"Deleting workout: id={workout_id}")
     try:
@@ -317,7 +317,7 @@ async def delete_workout(workout_id: int):
 
 
 @router.post("/{workout_id}/complete", response_model=Workout)
-async def complete_workout(workout_id: int):
+async def complete_workout(workout_id: str):
     """Mark a workout as completed."""
     logger.info(f"Completing workout: id={workout_id}")
     try:

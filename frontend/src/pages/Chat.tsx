@@ -13,7 +13,7 @@ const log = createLogger('chat');
 
 interface MessageBubbleProps {
   message: ChatMessage;
-  workoutId?: number;
+  workoutId?: string;
 }
 
 function MessageBubble({ message, workoutId }: MessageBubbleProps) {

@@ -13,7 +13,7 @@ export default function WorkoutDetails() {
 
   const { data: workout, isLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
-    queryFn: () => getWorkout(Number(id)),
+    queryFn: () => getWorkout(id!),
     enabled: !!id,
   });
 
@@ -24,9 +24,9 @@ export default function WorkoutDetails() {
   }, [workout, setCurrentWorkout]);
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteWorkout(Number(id)),
+    mutationFn: () => deleteWorkout(id!),
     onSuccess: () => {
-      removeWorkout(Number(id));
+      removeWorkout(id!);
       navigate('/');
     },
   });

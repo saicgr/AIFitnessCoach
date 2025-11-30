@@ -121,7 +121,7 @@ export const getWorkouts = async (userId: number): Promise<Workout[]> => {
   return data.map(parseWorkout);
 };
 
-export const getWorkout = async (workoutId: number): Promise<Workout> => {
+export const getWorkout = async (workoutId: string): Promise<Workout> => {
   const { data } = await api.get<WorkoutBackend>(`/workouts-db/${workoutId}`);
   return parseWorkout(data);
 };
@@ -152,20 +152,20 @@ export const generateRemainingWorkouts = async (request: GenerateMonthlyRequest)
   };
 };
 
-export const completeWorkout = async (workoutId: number): Promise<Workout> => {
+export const completeWorkout = async (workoutId: string): Promise<Workout> => {
   const { data } = await api.post<WorkoutBackend>(`/workouts-db/${workoutId}/complete`);
   return parseWorkout(data);
 };
 
-export const deleteWorkout = async (workoutId: number): Promise<void> => {
+export const deleteWorkout = async (workoutId: string): Promise<void> => {
   await api.delete(`/workouts-db/${workoutId}`);
 };
 
 export const swapWorkout = async (params: {
-  workout_id: number;
+  workout_id: string;
   new_date: string;
   reason?: string;
-}): Promise<{ success: boolean; old_date: string; new_date: string; swapped_with?: number }> => {
+}): Promise<{ success: boolean; old_date: string; new_date: string; swapped_with?: string }> => {
   const { data } = await api.post('/workouts-db/swap', params);
   return data;
 };

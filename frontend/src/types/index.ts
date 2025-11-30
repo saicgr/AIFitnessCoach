@@ -86,8 +86,8 @@ export interface WorkoutExercise {
 
 // Backend workout type (has exercises_json as string)
 export interface WorkoutBackend {
-  id: number;
-  user_id: number;
+  id: string;  // UUID string from Supabase
+  user_id: string;  // UUID string from Supabase
   name: string;
   type: 'strength' | 'cardio' | 'flexibility' | 'hiit' | 'mixed';
   difficulty: 'easy' | 'medium' | 'hard';
@@ -102,8 +102,8 @@ export interface WorkoutBackend {
 
 // Frontend-friendly Workout with parsed exercises array
 export interface Workout {
-  id: number;
-  user_id: number;
+  id: string;  // UUID string from Supabase
+  user_id: string;  // UUID string from Supabase
   name: string;
   type: 'strength' | 'cardio' | 'flexibility' | 'hiit' | 'mixed';
   difficulty: 'easy' | 'medium' | 'hard';
@@ -263,8 +263,8 @@ export interface ChatHistoryItem {
 // Performance types
 export interface PerformanceLog {
   id: number;
-  user_id: number;
-  workout_id: number;
+  user_id: string;  // UUID string from Supabase
+  workout_id: string;  // UUID string from Supabase
   exercise_id: string;
   sets_completed: number;
   reps_completed: number[];

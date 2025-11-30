@@ -25,7 +25,7 @@ interface AppState {
   workouts: Workout[];
   setWorkouts: (workouts: Workout[]) => void;
   addWorkout: (workout: Workout) => void;
-  removeWorkout: (workoutId: number) => void;
+  removeWorkout: (workoutId: string) => void;
 
   // Chat history
   chatHistory: ChatMessage[];
@@ -59,8 +59,8 @@ interface AppState {
   resetConversationalOnboarding: () => void;
 
   // Active workout session
-  activeWorkoutId: number | null;
-  setActiveWorkoutId: (id: number | null) => void;
+  activeWorkoutId: string | null;
+  setActiveWorkoutId: (id: string | null) => void;
   exerciseProgress: Record<string, boolean>;
   setExerciseComplete: (exerciseId: string, complete: boolean) => void;
   resetExerciseProgress: () => void;

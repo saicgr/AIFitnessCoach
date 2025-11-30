@@ -21,7 +21,7 @@ export default function ActiveWorkout() {
 
   const { data: workout } = useQuery<Workout>({
     queryKey: ['workout', id],
-    queryFn: () => getWorkout(Number(id)),
+    queryFn: () => getWorkout(id!),
     enabled: !!id,
   });
 
@@ -32,7 +32,7 @@ export default function ActiveWorkout() {
   }, [workout, setCurrentWorkout]);
 
   const completeMutation = useMutation({
-    mutationFn: () => completeWorkout(Number(id)),
+    mutationFn: () => completeWorkout(id!),
     onSuccess: () => {
       resetExerciseProgress();
       navigate('/');
