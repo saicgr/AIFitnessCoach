@@ -408,6 +408,131 @@ Requirements:
             print(f"Workout generation failed: {e}")
             raise
 
+    async def generate_workout_from_library(
+        self,
+        exercises: List[Dict],
+        fitness_level: str,
+        goals: List[str],
+        duration_minutes: int = 45,
+        focus_areas: Optional[List[str]] = None,
+        avoid_name_words: Optional[List[str]] = None,
+        workout_date: Optional[str] = None
+    ) -> Dict:
+        """
+        Generate a workout plan using exercises from the exercise library.
+
+        Instead of having AI invent exercises, this method takes pre-selected
+        exercises from the library and asks AI to create a creative workout
+        name and organize them appropriately.
+
+        Args:
+            exercises: List of exercises from the exercise library
+            fitness_level: beginner, intermediate, or advanced
+            goals: List of fitness goals
+            duration_minutes: Target workout duration
+            focus_areas: Optional specific areas to focus on
+            avoid_name_words: Words to avoid in workout name
+            workout_date: Optional date for holiday theming
+
+        Returns:
+            Dict with workout structure
+        """
+        if not exercises:
+            raise ValueError("No exercises provided")
+
+        difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
+
+        # Build avoid words instruction
+        avoid_instruction = ""
+        if avoid_name_words and len(avoid_name_words) > 0:
+            avoid_instruction = f"\n\n⚠️ Do NOT use these words in the workout name: {', '.join(avoid_name_words[:15])}"
+
+        # Check for holiday theming
+        holiday_theme = self._get_holiday_theme(workout_date)
+        holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
+
+        # Format exercises for the prompt
+        exercise_list = "\n".join([
+            f"- {ex.get('name', 'Unknown')}: targets {ex.get('muscle_group', 'unknown')}, equipment: {ex.get('equipment', 'bodyweight')}"
+            for ex in exercises
+        ])
+
+        prompt = f"""I have selected these exercises for a {duration_minutes}-minute {focus_areas[0] if focus_areas else 'full body'} workout:
+
+{exercise_list}
+
+User profile:
+- Fitness Level: {fitness_level}
+- Goals: {', '.join(goals) if goals else 'General fitness'}
+
+Create a CREATIVE and MOTIVATING workout name (3-4 words) that ends with the body part focus.
+
+Examples of good names:
+- "Thunder Strike Legs"
+- "Phoenix Power Chest"
+- "Savage Wolf Back"
+- "Iron Storm Arms"
+{holiday_instruction}{avoid_instruction}
+
+Return ONLY a JSON object with:
+{{
+  "name": "Your creative workout name here",
+  "type": "strength",
+  "difficulty": "{difficulty}",
+  "notes": "A brief motivational tip for this workout (1-2 sentences)"
+}}"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.8,
+                max_tokens=300
+            )
+
+            content = response.choices[0].message.content.strip()
+
+            # Clean markdown
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            ai_response = json.loads(content.strip())
+
+            # Combine AI response with our exercises
+            return {
+                "name": ai_response.get("name", "Power Workout"),
+                "type": ai_response.get("type", "strength"),
+                "difficulty": difficulty,
+                "duration_minutes": duration_minutes,
+                "target_muscles": list(set([ex.get('muscle_group', '') for ex in exercises if ex.get('muscle_group')])),
+                "exercises": exercises,
+                "notes": ai_response.get("notes", "Focus on proper form and controlled movements.")
+            }
+
+        except Exception as e:
+            print(f"Error generating workout name: {e}")
+            # Fallback - still return the workout with a generic name
+            focus = focus_areas[0] if focus_areas else "Full Body"
+            return {
+                "name": f"Power {focus.title()} Workout",
+                "type": "strength",
+                "difficulty": difficulty,
+                "duration_minutes": duration_minutes,
+                "target_muscles": list(set([ex.get('muscle_group', '') for ex in exercises if ex.get('muscle_group')])),
+                "exercises": exercises,
+                "notes": "Focus on proper form and controlled movements."
+            }
+
     def get_coach_system_prompt(self, context: str = "") -> str:
         """
         Get the system prompt for the AI coach.

@@ -23,7 +23,7 @@ import {
   saveOnboardingConversation,
   createUser,
   updateUser,
-  generateWorkout,
+  generateMonthlyWorkouts,
 } from '../api/client';
 import MessageBubble from '../components/chat/MessageBubble';
 import QuickReplyButtons from '../components/chat/QuickReplyButtons';
@@ -185,12 +185,28 @@ const ConversationalOnboarding: FC = () => {
   };
 
   // Check if a message looks like a completion message
+  // Must be explicit completion phrases, NOT question-like messages
   const isCompletionMessage = (content: string) => {
     const lowerContent = content.toLowerCase();
-    return [
-      "get started", "let's go", "ready to", "put together a plan", "create your plan",
-      "fitness journey", "all set", "got everything", "thanks for sharing"
-    ].some(keyword => lowerContent.includes(keyword));
+
+    // Don't show "Let's Go" if the message is asking a question
+    if (lowerContent.includes('?')) {
+      return false;
+    }
+
+    // Only match explicit completion phrases
+    const completionPhrases = [
+      "let's get started",
+      "ready to begin",
+      "ready to create your plan",
+      "put together a plan",
+      "create your workout plan",
+      "all set",
+      "got everything i need",
+      "ready to go"
+    ];
+
+    return completionPhrases.some(phrase => lowerContent.includes(phrase));
   };
 
   // Handle "Let's Go" button - manually trigger completion
@@ -244,6 +260,7 @@ const ConversationalOnboarding: FC = () => {
         goals: JSON.stringify(finalData.goals || []),
         equipment: JSON.stringify(finalData.equipment || []),
         active_injuries: JSON.stringify(injuries),
+        onboarding_completed: true,
         preferences: JSON.stringify({
           name: finalData.name,
           age: finalData.age,
@@ -273,20 +290,55 @@ const ConversationalOnboarding: FC = () => {
       setUser(savedUser);
       log.info('User saved:', savedUser);
 
-      // Generate first workout
-      const todayDay = new Date().getDay();
-      const isTodayWorkoutDay = (finalData.selected_days || []).includes(todayDay === 0 ? 6 : todayDay - 1);
+      // Generate workouts for the month
+      log.info('Generating monthly workouts...');
+      try {
+        // Convert day names to indices (0=Mon, 1=Tue, ..., 6=Sun)
+        const dayNameToIndex: Record<string, number> = {
+          'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+          'Friday': 4, 'Saturday': 5, 'Sunday': 6
+        };
 
-      if (isTodayWorkoutDay) {
-        log.info('Generating first workout...');
-        await generateWorkout({
+        let selectedDayIndices: number[] = [];
+        const rawDays = finalData.selected_days || [];
+
+        log.info('Raw selected_days from finalData:', rawDays);
+
+        if (rawDays.length > 0) {
+          if (typeof rawDays[0] === 'string') {
+            // Convert day names to indices
+            selectedDayIndices = rawDays
+              .map((day: string) => dayNameToIndex[day])
+              .filter((idx: number | undefined) => idx !== undefined);
+            log.info('Converted day names to indices:', selectedDayIndices);
+          } else {
+            // Already indices
+            selectedDayIndices = rawDays;
+            log.info('Days already as indices:', selectedDayIndices);
+          }
+        }
+
+        // Default to 3 days if none selected
+        if (selectedDayIndices.length === 0) {
+          log.warn('No selected days found, defaulting to Mon/Wed/Fri');
+          selectedDayIndices = [0, 2, 4]; // Mon, Wed, Fri
+        }
+
+        const today = new Date();
+        const monthStartDate = today.toISOString().split('T')[0];
+
+        log.info('Selected day indices:', selectedDayIndices);
+
+        const result = await generateMonthlyWorkouts({
           user_id: savedUser.id,
+          month_start_date: monthStartDate,
           duration_minutes: finalData.workout_duration || 45,
-          fitness_level: finalData.fitness_level || 'beginner',
-          goals: finalData.goals || [],
-          equipment: finalData.equipment || [],
+          selected_days: selectedDayIndices,
         });
-        log.info('First workout generated!');
+        log.info(`Generated ${result.total_generated} workouts!`);
+      } catch (workoutErr) {
+        log.error('Failed to generate workouts:', workoutErr);
+        // Don't fail onboarding if workout generation fails
       }
 
       // Success! Navigate to home

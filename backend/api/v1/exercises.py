@@ -7,6 +7,8 @@ ENDPOINTS:
 - GET  /api/v1/exercises/{id} - Get exercise by ID
 - GET  /api/v1/exercises/external/{external_id} - Get exercise by external ID
 - DELETE /api/v1/exercises/{id} - Delete exercise
+- POST /api/v1/exercises/index - Index all exercises for RAG search
+- GET  /api/v1/exercises/rag/stats - Get RAG index statistics
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
@@ -14,6 +16,7 @@ from typing import List, Optional
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Exercise, ExerciseCreate
+from services.exercise_rag_service import get_exercise_rag_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -184,4 +187,54 @@ async def delete_exercise(exercise_id: int):
         raise
     except Exception as e:
         logger.error(f"Error deleting exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/index")
+async def index_exercises_for_rag():
+    """
+    Index all exercises from exercise_library into the RAG vector store.
+
+    This endpoint should be called once to populate the vector store,
+    or periodically to update it with new exercises.
+
+    Returns:
+        Number of exercises indexed
+    """
+    logger.info("🔄 Starting exercise library indexing for RAG...")
+    try:
+        rag_service = get_exercise_rag_service()
+        indexed_count = await rag_service.index_all_exercises()
+
+        logger.info(f"✅ Indexed {indexed_count} exercises for RAG")
+        return {
+            "success": True,
+            "message": f"Successfully indexed {indexed_count} exercises",
+            "indexed_count": indexed_count,
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Failed to index exercises: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rag/stats")
+async def get_rag_stats():
+    """
+    Get statistics about the exercise RAG index.
+
+    Returns:
+        Current stats including total indexed exercises
+    """
+    try:
+        rag_service = get_exercise_rag_service()
+        stats = rag_service.get_stats()
+
+        return {
+            "success": True,
+            "stats": stats,
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting RAG stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))

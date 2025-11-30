@@ -337,7 +337,8 @@ export default function Home() {
   if (!user) return null;
 
   const completedWorkouts = workouts.filter((w) => w.completed_at);
-  const userName = onboardingData?.name || 'there';
+  // Get user's name from backend user object first, then onboardingData, then fallback
+  const userName = user?.name || onboardingData?.name || 'there';
 
   const handleOpenGenerateModal = () => {
     setGenerateError(null);

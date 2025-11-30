@@ -128,7 +128,7 @@ class Exercise(ExerciseCreate):
 # ============================================
 
 class WorkoutCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     name: str
     type: str
     difficulty: str
@@ -151,8 +151,8 @@ class WorkoutUpdate(BaseModel):
 
 
 class Workout(BaseModel):
-    id: int
-    user_id: int
+    id: str  # UUID string from Supabase
+    user_id: str  # UUID string from Supabase
     name: str
     type: str
     difficulty: str
@@ -160,18 +160,18 @@ class Workout(BaseModel):
     is_completed: bool
     exercises_json: str
     duration_minutes: int = 45
-    created_at: datetime
-    generation_method: str
-    generation_source: str
-    generation_metadata: str
-    generated_at: datetime
-    last_modified_method: Optional[str]
-    last_modified_at: Optional[datetime]
-    modification_history: str
+    created_at: Optional[datetime] = None
+    generation_method: Optional[str] = None
+    generation_source: Optional[str] = None
+    generation_metadata: Optional[str] = None  # Will be JSON stringified
+    generated_at: Optional[datetime] = None
+    last_modified_method: Optional[str] = None
+    last_modified_at: Optional[datetime] = None
+    modification_history: Optional[str] = None  # Will be JSON stringified
 
 
 class GenerateWorkoutRequest(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     workout_type: Optional[str] = None
     duration_minutes: Optional[int] = 45
     focus_areas: Optional[List[str]] = None
@@ -184,7 +184,7 @@ class GenerateWorkoutRequest(BaseModel):
 
 class GenerateWeeklyRequest(BaseModel):
     """Request to generate workouts for multiple days in a week."""
-    user_id: int
+    user_id: str  # UUID string from Supabase
     week_start_date: str  # ISO date string, e.g., "2024-11-25"
     selected_days: List[int]  # 0=Mon, 1=Tue, etc.
     duration_minutes: Optional[int] = 45
@@ -197,7 +197,7 @@ class GenerateWeeklyResponse(BaseModel):
 
 class GenerateMonthlyRequest(BaseModel):
     """Request to generate workouts for a full month."""
-    user_id: int
+    user_id: str  # UUID string from Supabase
     month_start_date: str  # ISO date string, e.g., "2024-11-01"
     selected_days: List[int]  # 0=Mon, 1=Tue, ..., 6=Sun
     duration_minutes: Optional[int] = 45
@@ -221,7 +221,7 @@ class SwapWorkoutsRequest(BaseModel):
 
 class WorkoutLogCreate(BaseModel):
     workout_id: int
-    user_id: int
+    user_id: str  # UUID string from Supabase
     sets_json: str
     total_time_seconds: int
 
@@ -237,7 +237,7 @@ class WorkoutLog(WorkoutLogCreate):
 
 class PerformanceLogCreate(BaseModel):
     workout_log_id: int
-    user_id: int
+    user_id: str  # UUID string from Supabase
     exercise_id: str
     exercise_name: str
     set_number: int
@@ -261,7 +261,7 @@ class PerformanceLog(PerformanceLogCreate):
 # ============================================
 
 class StrengthRecordCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     exercise_id: str
     exercise_name: str
     weight_kg: float
@@ -281,7 +281,7 @@ class StrengthRecord(StrengthRecordCreate):
 # ============================================
 
 class WeeklyVolumeCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     muscle_group: str
     week_number: int
     year: int
@@ -303,7 +303,7 @@ class WeeklyVolume(WeeklyVolumeCreate):
 # ============================================
 
 class ChatCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     user_message: str
     ai_response: str
     context_json: Optional[str] = None
@@ -319,7 +319,7 @@ class ChatHistory(ChatCreate):
 # ============================================
 
 class InjuryCreate(BaseModel):
-    user_id: int
+    user_id: str  # UUID string from Supabase
     body_part: str
     severity: str
     onset_date: datetime

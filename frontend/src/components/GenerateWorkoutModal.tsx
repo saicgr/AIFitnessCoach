@@ -110,15 +110,28 @@ export default function GenerateWorkoutModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={isGenerating ? undefined : onClose}
       />
 
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        {/* Loading Overlay */}
+        {isGenerating && (
+          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10">
+            <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Workouts</h3>
+            <p className="text-sm text-gray-600 text-center px-4">
+              Creating {selectedDays.length} personalized workout{selectedDays.length !== 1 ? 's' : ''}...
+            </p>
+            <p className="text-xs text-gray-400 mt-2">This may take 30-60 seconds</p>
+          </div>
+        )}
+
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          disabled={isGenerating}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 disabled:opacity-50"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

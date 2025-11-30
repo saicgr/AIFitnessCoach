@@ -179,7 +179,7 @@ export interface GenerateWeeklyResponse {
 }
 
 export interface GenerateMonthlyRequest {
-  user_id: number;
+  user_id: string;  // UUID string from Supabase
   month_start_date: string;  // ISO date string, e.g., "2024-11-01"
   selected_days: number[];   // 0=Mon, 1=Tue, ..., 6=Sun
   duration_minutes?: number;

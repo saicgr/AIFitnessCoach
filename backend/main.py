@@ -22,6 +22,7 @@ from api.v1 import chat as chat_module
 from services.openai_service import OpenAIService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
+from services.exercise_rag_service import get_exercise_rag_service
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -78,6 +79,23 @@ async def lifespan(app: FastAPI):
 
     logger.info("Initializing LangGraph Coach service...")
     chat_module.langgraph_coach_service = LangGraphCoachService()
+
+    # Auto-index exercises for RAG if not already indexed
+    logger.info("Checking Exercise RAG index (Chroma Cloud)...")
+    try:
+        exercise_rag = get_exercise_rag_service()
+        stats = exercise_rag.get_stats()
+        indexed_count = stats.get("total_exercises", 0)
+
+        if indexed_count == 0:
+            logger.info("🔄 No exercises indexed in Chroma Cloud. Starting auto-indexing...")
+            indexed = await exercise_rag.index_all_exercises()
+            logger.info(f"✅ Auto-indexed {indexed} exercises to Chroma Cloud")
+        else:
+            logger.info(f"✅ Exercise RAG ready with {indexed_count} exercises in Chroma Cloud")
+    except Exception as e:
+        logger.error(f"⚠️ Failed to initialize Exercise RAG: {e}")
+        logger.error("Workouts will fall back to AI-generated exercises")
 
     logger.info("All services initialized (LangGraph agents ready)")
     logger.info(f"Server running at http://{settings.host}:{settings.port}")

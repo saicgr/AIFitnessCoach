@@ -30,6 +30,11 @@ CRITICAL RULES:
 - NEVER ask "which days" until you have "days_per_week"
 - For goals and equipment, use language like "What are your fitness goals?" or "What equipment do you have?" to allow multiple selections
 
+COMMON SENSE VALIDATION:
+- If user said they want to work out X days, but then selects Y days (Y != X), politely ask for clarification
+- Example: User says "1 day" but selects "Sunday and Tuesday" → Ask "You mentioned 1 day earlier but picked 2 days. Would you like to update to 2 days per week, or pick just one day?"
+- Be helpful, not robotic - understand user intent and guide them
+
 QUESTION ORDER:
 1. name, age, gender, height, weight (collected via form)
 2. goals - "What are your fitness goals?" (can select multiple)
@@ -213,7 +218,16 @@ QUICK_REPLIES = {
         {"label": "60 min", "value": "60"},
         {"label": "90 min", "value": "90"},
     ],
-    # selected_days uses day_picker component instead of quick replies for multi-select
+    # selected_days - quick reply fallback for when day_picker doesn't trigger
+    "selected_days": [
+        {"label": "Monday", "value": "Monday"},
+        {"label": "Tuesday", "value": "Tuesday"},
+        {"label": "Wednesday", "value": "Wednesday"},
+        {"label": "Thursday", "value": "Thursday"},
+        {"label": "Friday", "value": "Friday"},
+        {"label": "Saturday", "value": "Saturday"},
+        {"label": "Sunday", "value": "Sunday"},
+    ],
     "age": [
         {"label": "18-25", "value": "21"},
         {"label": "26-35", "value": "30"},

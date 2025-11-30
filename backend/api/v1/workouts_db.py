@@ -19,9 +19,23 @@ from core.logger import get_logger
 from models.schemas import Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest, SwapWorkoutsRequest, GenerateWeeklyRequest, GenerateWeeklyResponse, GenerateMonthlyRequest, GenerateMonthlyResponse
 from services.openai_service import OpenAIService
 from services.rag_service import WorkoutRAGService
+from services.exercise_library_service import get_exercise_library_service
+from services.exercise_rag_service import get_exercise_rag_service
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+def parse_json_field(value, default):
+    """Parse a field that could be a JSON string or already parsed."""
+    if value is None:
+        return default
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return default
+    return value if isinstance(value, (list, dict)) else default
 
 # Initialize workout RAG service (lazy loading)
 _workout_rag_service: Optional[WorkoutRAGService] = None
@@ -96,9 +110,18 @@ def row_to_workout(row: dict) -> Workout:
     elif exercises_json is None:
         exercises_json = "[]"
 
+    # Convert dict/list fields to JSON strings
+    generation_metadata = row.get("generation_metadata")
+    if isinstance(generation_metadata, (dict, list)):
+        generation_metadata = json.dumps(generation_metadata)
+
+    modification_history = row.get("modification_history")
+    if isinstance(modification_history, (dict, list)):
+        modification_history = json.dumps(modification_history)
+
     return Workout(
-        id=row.get("id"),
-        user_id=row.get("user_id"),
+        id=str(row.get("id")),  # Ensure string for UUID
+        user_id=str(row.get("user_id")),
         name=row.get("name"),
         type=row.get("type"),
         difficulty=row.get("difficulty"),
@@ -109,11 +132,11 @@ def row_to_workout(row: dict) -> Workout:
         created_at=row.get("created_at"),
         generation_method=row.get("generation_method"),
         generation_source=row.get("generation_source"),
-        generation_metadata=row.get("generation_metadata"),
+        generation_metadata=generation_metadata,
         generated_at=row.get("generated_at"),
         last_modified_method=row.get("last_modified_method"),
         last_modified_at=row.get("last_modified_at"),
-        modification_history=row.get("modification_history"),
+        modification_history=modification_history,
     )
 
 
@@ -132,7 +155,7 @@ async def create_workout(workout: WorkoutCreate):
             "type": workout.type,
             "difficulty": workout.difficulty,
             "scheduled_date": str(workout.scheduled_date),
-            "exercises": exercises,
+            "exercises_json": exercises,
             "duration_minutes": workout.duration_minutes,
             "generation_method": workout.generation_method,
             "generation_source": workout.generation_source,
@@ -389,7 +412,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             "type": workout_type,
             "difficulty": difficulty,
             "scheduled_date": datetime.now().isoformat(),
-            "exercises": exercises,
+            "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
             "generation_method": "ai",
             "generation_source": "openai_generation",
@@ -489,36 +512,60 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        fitness_level = user.get("fitness_level")
-        goals = user.get("goals", [])
-        equipment = user.get("equipment", [])
-        preferences = user.get("preferences", {})
-        training_split = preferences.get("training_split", "full_body") if isinstance(preferences, dict) else "full_body"
+        fitness_level = user.get("fitness_level") or "intermediate"
+        goals = parse_json_field(user.get("goals"), [])
+        equipment = parse_json_field(user.get("equipment"), [])
+        preferences = parse_json_field(user.get("preferences"), {})
+        training_split = preferences.get("training_split", "full_body")
 
         workout_focus_map = get_workout_focus(training_split, request.selected_days)
         generated_workouts = []
         openai_service = OpenAIService()
+        exercise_rag = get_exercise_rag_service()
+        used_exercises: List[str] = []
 
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
 
             try:
-                workout_data = await openai_service.generate_workout_plan(
+                # Use RAG to intelligently select exercises
+                rag_exercises = await exercise_rag.select_exercises_for_workout(
+                    focus_area=focus,
+                    equipment=equipment if isinstance(equipment, list) else [],
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
-                    focus_areas=[focus],
-                    workout_date=workout_date.isoformat()
+                    count=6,
+                    avoid_exercises=used_exercises,
                 )
+
+                if rag_exercises:
+                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+                    workout_data = await openai_service.generate_workout_from_library(
+                        exercises=rag_exercises,
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        workout_date=workout_date.isoformat()
+                    )
+                else:
+                    workout_data = await openai_service.generate_workout_plan(
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        workout_date=workout_date.isoformat()
+                    )
 
                 exercises = workout_data.get("exercises", [])
                 workout_name = workout_data.get("name", f"{focus.title()} Workout")
                 workout_type = workout_data.get("type", "strength")
                 difficulty = workout_data.get("difficulty", "medium")
 
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error generating workout: {e}")
                 exercises = [{"name": "Push-ups", "sets": 3, "reps": 12}, {"name": "Squats", "sets": 3, "reps": 15}]
                 workout_name = f"{focus.title()} Workout"
                 workout_type = "strength"
@@ -530,7 +577,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 "type": workout_type,
                 "difficulty": difficulty,
                 "scheduled_date": workout_date.isoformat(),
-                "exercises": exercises,
+                "exercises_json": exercises,
                 "duration_minutes": request.duration_minutes or 45,
                 "generation_method": "ai",
                 "generation_source": "weekly_generation",
@@ -589,13 +636,21 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        fitness_level = user.get("fitness_level")
-        goals = user.get("goals", [])
-        equipment = user.get("equipment", [])
-        preferences = user.get("preferences", {})
-        training_split = preferences.get("training_split", "full_body") if isinstance(preferences, dict) else "full_body"
+        fitness_level = user.get("fitness_level") or "intermediate"
+        goals = parse_json_field(user.get("goals"), [])
+        equipment = parse_json_field(user.get("equipment"), [])
+        preferences = parse_json_field(user.get("preferences"), {})
+        training_split = preferences.get("training_split", "full_body")
+
+        logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}")
 
         workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days)
+        logger.info(f"Calculated {len(workout_dates)} workout dates for days {request.selected_days}")
+
+        if not workout_dates:
+            logger.warning("No workout dates calculated - returning empty response")
+            return GenerateMonthlyResponse(workouts=[], total_generated=0)
+
         workout_focus_map = get_workout_focus(training_split, request.selected_days)
 
         used_name_words: List[str] = []
@@ -604,20 +659,54 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
         BATCH_SIZE = 4
 
+        # Get exercise RAG service for intelligent selection
+        exercise_rag = get_exercise_rag_service()
+
+        # Track used exercises for variety
+        used_exercises: List[str] = []
+
         async def generate_single_workout(workout_date: datetime, index: int, avoid_words: List[str]):
+            nonlocal used_exercises
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
             try:
-                workout_data = await openai_service.generate_workout_plan(
+                # Use RAG to intelligently select exercises
+                rag_exercises = await exercise_rag.select_exercises_for_workout(
+                    focus_area=focus,
+                    equipment=equipment if isinstance(equipment, list) else [],
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
-                    focus_areas=[focus],
-                    avoid_name_words=avoid_words[:20],
-                    workout_date=workout_date.isoformat()
+                    count=6,
+                    avoid_exercises=used_exercises[-30:],  # Avoid recent exercises for variety
                 )
+
+                if rag_exercises:
+                    # Track used exercises
+                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+
+                    # Use AI to create a creative workout name
+                    workout_data = await openai_service.generate_workout_from_library(
+                        exercises=rag_exercises,
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        avoid_name_words=avoid_words[:20],
+                        workout_date=workout_date.isoformat()
+                    )
+                else:
+                    # Fallback to direct AI generation if RAG fails
+                    logger.warning(f"RAG returned no exercises for {focus}, falling back to AI generation")
+                    workout_data = await openai_service.generate_workout_plan(
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        avoid_name_words=avoid_words[:20],
+                        workout_date=workout_date.isoformat()
+                    )
 
                 return {
                     "success": True,
@@ -629,7 +718,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "exercises": workout_data.get("exercises", []),
                 }
 
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error generating workout for {workout_date}: {e}")
                 return {
                     "success": False,
                     "workout_date": workout_date,
@@ -660,7 +750,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "type": result["type"],
                     "difficulty": result["difficulty"],
                     "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises": result["exercises"],
+                    "exercises_json": result["exercises"],
                     "duration_minutes": request.duration_minutes or 45,
                     "generation_method": "ai",
                     "generation_source": "monthly_generation",
@@ -694,11 +784,11 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        fitness_level = user.get("fitness_level")
-        goals = user.get("goals", [])
-        equipment = user.get("equipment", [])
-        preferences = user.get("preferences", {})
-        training_split = preferences.get("training_split", "full_body") if isinstance(preferences, dict) else "full_body"
+        fitness_level = user.get("fitness_level") or "intermediate"
+        goals = parse_json_field(user.get("goals"), [])
+        equipment = parse_json_field(user.get("equipment"), [])
+        preferences = parse_json_field(user.get("preferences"), {})
+        training_split = preferences.get("training_split", "full_body")
 
         all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days)
 
@@ -730,23 +820,48 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
         generated_workouts = []
         openai_service = OpenAIService()
+        exercise_rag = get_exercise_rag_service()
+        used_exercises: List[str] = []
 
         BATCH_SIZE = 4
 
         async def generate_single_workout(workout_date: datetime, avoid_words: List[str]):
+            nonlocal used_exercises
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
             try:
-                workout_data = await openai_service.generate_workout_plan(
+                # Use RAG to intelligently select exercises
+                rag_exercises = await exercise_rag.select_exercises_for_workout(
+                    focus_area=focus,
+                    equipment=equipment if isinstance(equipment, list) else [],
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
-                    focus_areas=[focus],
-                    avoid_name_words=avoid_words[:20],
-                    workout_date=workout_date.isoformat()
+                    count=6,
+                    avoid_exercises=used_exercises[-30:],
                 )
+
+                if rag_exercises:
+                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+                    workout_data = await openai_service.generate_workout_from_library(
+                        exercises=rag_exercises,
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        avoid_name_words=avoid_words[:20],
+                        workout_date=workout_date.isoformat()
+                    )
+                else:
+                    workout_data = await openai_service.generate_workout_plan(
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        duration_minutes=request.duration_minutes or 45,
+                        focus_areas=[focus],
+                        avoid_name_words=avoid_words[:20],
+                        workout_date=workout_date.isoformat()
+                    )
 
                 return {
                     "workout_date": workout_date,
@@ -757,7 +872,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "exercises": workout_data.get("exercises", []),
                 }
 
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error generating remaining workout: {e}")
                 return {
                     "workout_date": workout_date,
                     "focus": focus,
@@ -787,7 +903,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "type": result["type"],
                     "difficulty": result["difficulty"],
                     "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises": result["exercises"],
+                    "exercises_json": result["exercises"],
                     "duration_minutes": request.duration_minutes or 45,
                     "generation_method": "ai",
                     "generation_source": "background_generation",

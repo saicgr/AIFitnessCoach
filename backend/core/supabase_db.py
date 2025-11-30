@@ -31,6 +31,11 @@ class SupabaseDB:
         result = self.client.table("users").select("*").eq("id", user_id).execute()
         return result.data[0] if result.data else None
 
+    def get_all_users(self) -> List[Dict[str, Any]]:
+        """Get all users."""
+        result = self.client.table("users").select("*").execute()
+        return result.data or []
+
     def get_user_by_auth_id(self, auth_id: str) -> Optional[Dict[str, Any]]:
         """Get a user by Supabase auth_id (UUID)."""
         result = self.client.table("users").select("*").eq("auth_id", auth_id).execute()

@@ -109,7 +109,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     # Check if AI is asking about specific days (not just "how many days")
     is_asking_specific_days = any(keyword in question_lower for keyword in [
-        "which days", "what days", "which day", "select days", "choose days",
+        "which days", "what days", "which day", "what day", "select days", "choose days",
+        "day of the week", "days of the week", "works best for you",
         "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
     ])
 
@@ -170,22 +171,42 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         logger.info(f"[Onboarding Agent] 🔍 DEBUG: is_asking_goals = {is_asking_goals}")
         logger.info(f"[Onboarding Agent] 🔍 DEBUG: is_completion_message = {is_completion_message}")
 
-        # PRIORITY 0: If AI sent a completion-like message, don't show any quick replies
-        # This prevents showing wrong quick replies when AI thinks it's done
+        # PRIORITY 0: If AI sent a completion-like message but fields are still missing,
+        # OVERRIDE the AI response and ask for the next missing field
         if is_completion_message:
-            logger.info(f"[Onboarding Agent] ⚠️ AI sent completion message but still missing fields: {missing} - no quick replies")
-            # Don't set any quick_replies - let the frontend handle the completion flow
+            logger.info(f"[Onboarding Agent] ⚠️ AI sent completion message but still missing fields: {missing}")
 
-        # PRIORITY 1: If AI is asking about specific days and we have days_per_week, show day picker
+            # Override AI response - ask for next missing field
+            if "days_per_week" in missing:
+                response.content = "Almost there! How many days per week would you like to work out?"
+                quick_replies = QUICK_REPLIES.get("days_per_week")
+                logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for days_per_week")
+            elif "selected_days" in missing:
+                response.content = "Great! Which specific days work best for you?"
+                component = "day_picker"
+                logger.info(f"[Onboarding Agent] ✅ Overriding AI: showing day_picker")
+            elif "workout_duration" in missing:
+                response.content = "How long would you like each workout to be?"
+                quick_replies = QUICK_REPLIES.get("workout_duration")
+                logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for workout_duration")
+            elif next_field in QUICK_REPLIES:
+                response.content = f"One more thing - please tell me about your {next_field.replace('_', ' ')}."
+                quick_replies = QUICK_REPLIES[next_field]
+                is_multi_select = next_field in multi_select_fields
+                logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for {next_field}")
+
+        # PRIORITY 1: If AI is asking about specific days and we have days_per_week, show quick replies for days
         elif is_asking_specific_days and "selected_days" in missing and "days_per_week" not in missing:
-            component = "day_picker"
-            days_count = collected.get("days_per_week", 3)
-            logger.info(f"[Onboarding Agent] ✅ Triggering day picker component for {days_count} days")
+            quick_replies = QUICK_REPLIES["selected_days"]
+            is_multi_select = True  # Days is multi-select
+            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: selected_days (multi_select=True)")
 
         # PRIORITY 2: If AI is asking about specific days but we don't have days_per_week yet,
-        # don't show any quick replies - let the AI handle it conversationally
-        elif is_asking_specific_days:
-            logger.info(f"[Onboarding Agent] ⚠️ AI asking about specific days but days_per_week not collected yet - no quick replies")
+        # show quick replies anyway - user might be skipping ahead
+        elif is_asking_specific_days and "selected_days" in missing:
+            quick_replies = QUICK_REPLIES["selected_days"]
+            is_multi_select = True
+            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: selected_days (days_per_week not yet collected, multi_select=True)")
 
         # PRIORITY 3: Match quick replies based on what AI is actually asking about
         elif is_asking_equipment and "equipment" in missing:
@@ -245,7 +266,17 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
     user_message = state["user_message"]
     collected_data = state.get("collected_data", {})
-    missing = state.get("missing_fields", [])
+
+    # Calculate what's missing based on collected_data (missing_fields may not be set yet)
+    from .prompts import REQUIRED_FIELDS
+    missing = []
+    for field in REQUIRED_FIELDS:
+        value = collected_data.get(field)
+        if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
+            missing.append(field)
+
+    logger.info(f"[Extract Data] Current missing fields: {missing}")
+    logger.info(f"[Extract Data] User message: {user_message}")
 
     # PRE-PROCESSING: Handle common simple patterns before AI extraction
     extracted = {}
@@ -267,6 +298,27 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         elif user_message.strip().lower() in ["30 min", "45 min", "60 min", "90 min"]:
             extracted["workout_duration"] = int(user_message.split()[0])
             logger.info(f"[Extract Data] ✅ Pre-processed: workout_duration = {extracted['workout_duration']}")
+
+    # If missing selected_days and user says day names
+    if "selected_days" in missing:
+        day_name_to_index = {
+            'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
+            'friday': 4, 'saturday': 5, 'sunday': 6,
+            'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6
+        }
+        user_lower = user_message.strip().lower()
+
+        # Check for single day or comma-separated days
+        selected_indices = []
+        for day_name, idx in day_name_to_index.items():
+            if day_name in user_lower:
+                if idx not in selected_indices:
+                    selected_indices.append(idx)
+
+        if selected_indices:
+            selected_indices.sort()
+            extracted["selected_days"] = selected_indices
+            logger.info(f"[Extract Data] ✅ Pre-processed: selected_days = {extracted['selected_days']}")
 
     # If we found simple patterns, skip AI extraction for those fields
     if extracted:

@@ -4,15 +4,15 @@ User API endpoints.
 ENDPOINTS:
 - POST /api/v1/users/auth/google - Authenticate with Google OAuth via Supabase
 - POST /api/v1/users/ - Create a new user
+- GET  /api/v1/users/ - Get all users
 - GET  /api/v1/users/{id} - Get user by ID
 - PUT  /api/v1/users/{id} - Update user
 - DELETE /api/v1/users/{id} - Delete user
 - DELETE /api/v1/users/{id}/reset - Full reset (delete all user data)
-- POST /api/v1/users/demo - Create/get demo user
 """
 import json
 from fastapi import APIRouter, HTTPException
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -207,6 +207,19 @@ async def create_user(user: UserCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/", response_model=List[User])
+async def get_all_users():
+    """Get all users."""
+    logger.info("Fetching all users")
+    try:
+        db = get_supabase_db()
+        rows = db.get_all_users()
+        return [row_to_user(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Failed to get users: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{user_id}", response_model=User)
 async def get_user(user_id: str):
     """Get a user by ID."""
@@ -312,57 +325,6 @@ async def delete_user(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete user: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/demo", response_model=User)
-async def create_demo_user():
-    """
-    Create or get a demo user with pre-populated data.
-    Demo user is identified by email 'demo@aifitnesscoach.app'.
-    If already exists, returns existing user.
-    """
-    DEMO_EMAIL = "demo@aifitnesscoach.app"
-    logger.info("Creating/getting demo user")
-
-    try:
-        db = get_supabase_db()
-
-        # Check if demo user already exists by email
-        existing = db.get_user_by_email(DEMO_EMAIL)
-
-        if existing:
-            logger.info(f"Demo user already exists: id={existing['id']}")
-            return row_to_user(existing)
-
-        # Create demo user with rich profile data (let Supabase auto-generate ID)
-        demo_data = {
-            "email": DEMO_EMAIL,
-            "name": "Demo User",
-            "onboarding_completed": True,
-            "fitness_level": "intermediate",
-            "goals": ["Build Muscle", "Improve Endurance", "Stay Healthy"],
-            "equipment": ["Dumbbells", "Barbell", "Pull-up Bar", "Bench", "Resistance Bands"],
-            "preferences": {
-                "days_per_week": 4,
-                "workout_duration": 60,
-                "training_split": "push_pull_legs",
-                "intensity_preference": "moderate",
-                "preferred_time": "morning",
-                "selected_days": [0, 1, 3, 4],
-                "name": "Demo User",
-                "workout_variety": "varied"
-            },
-            "active_injuries": [],
-        }
-
-        created = db.create_user(demo_data)
-        logger.info(f"Demo user created: id={created['id']}")
-
-        return row_to_user(created)
-
-    except Exception as e:
-        logger.error(f"Failed to create demo user: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
