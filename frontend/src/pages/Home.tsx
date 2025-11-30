@@ -147,7 +147,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/onboarding');
+      navigate('/login');
     }
   }, [user, navigate]);
 

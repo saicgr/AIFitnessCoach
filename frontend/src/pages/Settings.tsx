@@ -257,7 +257,7 @@ export default function Settings() {
   };
 
   if (!user) {
-    navigate('/onboarding');
+    navigate('/login');
     return null;
   }
 

@@ -5,7 +5,8 @@ Handles adding/removing exercises and modifying workouts based on AI intent.
 """
 import json
 from typing import List, Optional, Dict, Any
-from core.duckdb_database import get_db
+from datetime import datetime
+from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.chat import CoachIntent
 
@@ -16,7 +17,7 @@ class WorkoutModifier:
     """Service to modify workouts based on AI coach intent."""
 
     def __init__(self):
-        self.db = get_db()
+        self.db = get_supabase_db()
 
     def add_exercises_to_workout(
         self,
@@ -31,20 +32,26 @@ class WorkoutModifier:
         """
         try:
             # Fetch current workout
-            workout_row = self.db.conn.execute(
-                "SELECT exercises_json, modification_history FROM workouts WHERE id = ?",
-                [workout_id]
-            ).fetchone()
+            workout = self.db.get_workout(workout_id)
 
-            if not workout_row:
+            if not workout:
                 logger.error(f"Workout {workout_id} not found")
                 return False
 
-            exercises_json = workout_row[0]
-            modification_history = workout_row[1] or "[]"
+            exercises_data = workout.get("exercises")
+            modification_history = workout.get("modification_history") or []
 
-            # Parse existing exercises
-            exercises = json.loads(exercises_json) if exercises_json else []
+            # Handle exercises (could be string or list)
+            if isinstance(exercises_data, str):
+                exercises = json.loads(exercises_data) if exercises_data else []
+            else:
+                exercises = exercises_data or []
+
+            # Handle modification_history (could be string or list)
+            if isinstance(modification_history, str):
+                history = json.loads(modification_history) if modification_history else []
+            else:
+                history = modification_history or []
 
             logger.info(f"Adding {len(exercise_names)} exercises to workout {workout_id}")
 
@@ -67,23 +74,32 @@ class WorkoutModifier:
                     logger.info(f"Exercise already exists: {exercise_name}")
 
             # Update modification history
-            history = json.loads(modification_history)
             history.append({
                 "type": "add_exercises",
                 "exercises": exercise_names,
-                "timestamp": "now()",
+                "timestamp": datetime.now().isoformat(),
                 "method": "ai_coach"
             })
 
             # Update workout in database
-            self.db.conn.execute("""
-                UPDATE workouts
-                SET exercises_json = ?,
-                    modification_history = ?,
-                    last_modified_method = 'ai_coach',
-                    last_modified_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            """, [json.dumps(exercises), json.dumps(history), workout_id])
+            update_data = {
+                "exercises": exercises,
+                "modification_history": history,
+                "last_modified_method": "ai_coach",
+            }
+
+            self.db.update_workout(workout_id, update_data)
+
+            # Log the workout change
+            self._log_workout_change(
+                workout_id=workout_id,
+                user_id=workout.get("user_id"),
+                change_type="add_exercises",
+                field_changed="exercises",
+                new_value=json.dumps({"added": exercise_names}),
+                change_source="ai_coach",
+                change_reason="User requested to add exercises"
+            )
 
             logger.info(f"Successfully updated workout {workout_id} with {len(exercise_names)} exercises")
             return True
@@ -104,20 +120,26 @@ class WorkoutModifier:
         """
         try:
             # Fetch current workout
-            workout_row = self.db.conn.execute(
-                "SELECT exercises_json, modification_history FROM workouts WHERE id = ?",
-                [workout_id]
-            ).fetchone()
+            workout = self.db.get_workout(workout_id)
 
-            if not workout_row:
+            if not workout:
                 logger.error(f"Workout {workout_id} not found")
                 return False
 
-            exercises_json = workout_row[0]
-            modification_history = workout_row[1] or "[]"
+            exercises_data = workout.get("exercises")
+            modification_history = workout.get("modification_history") or []
 
-            # Parse existing exercises
-            exercises = json.loads(exercises_json) if exercises_json else []
+            # Handle exercises (could be string or list)
+            if isinstance(exercises_data, str):
+                exercises = json.loads(exercises_data) if exercises_data else []
+            else:
+                exercises = exercises_data or []
+
+            # Handle modification_history (could be string or list)
+            if isinstance(modification_history, str):
+                history = json.loads(modification_history) if modification_history else []
+            else:
+                history = modification_history or []
 
             logger.info(f"Removing {len(exercise_names)} exercises from workout {workout_id}")
 
@@ -131,24 +153,33 @@ class WorkoutModifier:
             removed_count = original_count - len(exercises)
 
             # Update modification history
-            history = json.loads(modification_history)
             history.append({
                 "type": "remove_exercises",
                 "exercises": exercise_names,
                 "removed_count": removed_count,
-                "timestamp": "now()",
+                "timestamp": datetime.now().isoformat(),
                 "method": "ai_coach"
             })
 
             # Update workout in database
-            self.db.conn.execute("""
-                UPDATE workouts
-                SET exercises_json = ?,
-                    modification_history = ?,
-                    last_modified_method = 'ai_coach',
-                    last_modified_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            """, [json.dumps(exercises), json.dumps(history), workout_id])
+            update_data = {
+                "exercises": exercises,
+                "modification_history": history,
+                "last_modified_method": "ai_coach",
+            }
+
+            self.db.update_workout(workout_id, update_data)
+
+            # Log the workout change
+            self._log_workout_change(
+                workout_id=workout_id,
+                user_id=workout.get("user_id"),
+                change_type="remove_exercises",
+                field_changed="exercises",
+                new_value=json.dumps({"removed": exercise_names, "count": removed_count}),
+                change_source="ai_coach",
+                change_reason="User requested to remove exercises"
+            )
 
             logger.info(f"Successfully removed {removed_count} exercises from workout {workout_id}")
             return True
@@ -169,20 +200,26 @@ class WorkoutModifier:
         """
         try:
             # Fetch current workout
-            workout_row = self.db.conn.execute(
-                "SELECT exercises_json, modification_history FROM workouts WHERE id = ?",
-                [workout_id]
-            ).fetchone()
+            workout = self.db.get_workout(workout_id)
 
-            if not workout_row:
+            if not workout:
                 logger.error(f"Workout {workout_id} not found")
                 return False
 
-            exercises_json = workout_row[0]
-            modification_history = workout_row[1] or "[]"
+            exercises_data = workout.get("exercises")
+            modification_history = workout.get("modification_history") or []
 
-            # Parse existing exercises
-            exercises = json.loads(exercises_json) if exercises_json else []
+            # Handle exercises (could be string or list)
+            if isinstance(exercises_data, str):
+                exercises = json.loads(exercises_data) if exercises_data else []
+            else:
+                exercises = exercises_data or []
+
+            # Handle modification_history (could be string or list)
+            if isinstance(modification_history, str):
+                history = json.loads(modification_history) if modification_history else []
+            else:
+                history = modification_history or []
 
             logger.info(f"Modifying intensity for workout {workout_id}: {modification}")
 
@@ -201,23 +238,32 @@ class WorkoutModifier:
                     ex["rest_seconds"] = max(30, ex.get("rest_seconds", 60) - 10)
 
             # Update modification history
-            history = json.loads(modification_history)
             history.append({
                 "type": "modify_intensity",
                 "modification": modification,
-                "timestamp": "now()",
+                "timestamp": datetime.now().isoformat(),
                 "method": "ai_coach"
             })
 
             # Update workout in database
-            self.db.conn.execute("""
-                UPDATE workouts
-                SET exercises_json = ?,
-                    modification_history = ?,
-                    last_modified_method = 'ai_coach',
-                    last_modified_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            """, [json.dumps(exercises), json.dumps(history), workout_id])
+            update_data = {
+                "exercises": exercises,
+                "modification_history": history,
+                "last_modified_method": "ai_coach",
+            }
+
+            self.db.update_workout(workout_id, update_data)
+
+            # Log the workout change
+            self._log_workout_change(
+                workout_id=workout_id,
+                user_id=workout.get("user_id"),
+                change_type="modify_intensity",
+                field_changed="exercises",
+                new_value=json.dumps({"modification": modification}),
+                change_source="ai_coach",
+                change_reason=f"User requested intensity modification: {modification}"
+            )
 
             logger.info(f"Successfully modified intensity for workout {workout_id}")
             return True
@@ -225,3 +271,31 @@ class WorkoutModifier:
         except Exception as e:
             logger.error(f"Failed to modify intensity for workout {workout_id}: {e}")
             return False
+
+    def _log_workout_change(
+        self,
+        workout_id: int,
+        user_id: int,
+        change_type: str,
+        field_changed: str,
+        new_value: str,
+        change_source: str = "ai_coach",
+        change_reason: Optional[str] = None,
+        old_value: Optional[str] = None
+    ):
+        """Log a workout change to the workout_changes table."""
+        try:
+            change_data = {
+                "workout_id": workout_id,
+                "user_id": user_id,
+                "change_type": change_type,
+                "field_changed": field_changed,
+                "old_value": old_value,
+                "new_value": new_value,
+                "change_source": change_source,
+                "change_reason": change_reason,
+            }
+            self.db.create_workout_change(change_data)
+            logger.debug(f"Logged workout change: {change_type} for workout {workout_id}")
+        except Exception as e:
+            logger.warning(f"Failed to log workout change: {e}")

@@ -72,7 +72,7 @@ class UserUpdate(BaseModel):
 
 
 class User(BaseModel):
-    id: int
+    id: str  # UUID from Supabase
     username: Optional[str] = None
     name: Optional[str] = None
     onboarding_completed: bool = False

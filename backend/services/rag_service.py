@@ -4,17 +4,12 @@ RAG (Retrieval Augmented Generation) Service.
 This service stores Q&A pairs and retrieves similar past conversations
 to provide better context to the AI.
 
-EASY TO MODIFY:
-- Change similarity threshold: Update RAG_MIN_SIMILARITY in .env
-- Change number of results: Update RAG_TOP_K in .env
-- Modify storage: The ChromaDB client can be swapped for Pinecone, etc.
+Uses Chroma Cloud (cloud-hosted vector database) for all deployments.
 """
-import chromadb
-from chromadb.config import Settings as ChromaSettings
 from typing import List, Dict, Any, Optional
 import uuid
-import os
 from core.config import get_settings
+from core.chroma_cloud import get_chroma_cloud_client
 from services.openai_service import OpenAIService
 
 settings = get_settings()
@@ -35,20 +30,9 @@ class RAGService:
     def __init__(self, openai_service: OpenAIService):
         self.openai_service = openai_service
 
-        # Ensure persist directory exists
-        os.makedirs(settings.chroma_persist_dir, exist_ok=True)
-
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=settings.chroma_persist_dir,
-            settings=ChromaSettings(anonymized_telemetry=False),
-        )
-
-        # Create/get the Q&A collection
-        self.collection = self.client.get_or_create_collection(
-            name="fitness_qa",
-            metadata={"description": "Fitness coach Q&A pairs for RAG"},
-        )
+        # Get Chroma Cloud client
+        self.chroma_client = get_chroma_cloud_client()
+        self.collection = self.chroma_client.get_rag_collection()
 
         print(f"✅ RAG initialized with {self.collection.count()} documents")
 
@@ -187,16 +171,13 @@ class RAGService:
         """Get RAG system statistics."""
         return {
             "total_documents": self.collection.count(),
-            "persist_dir": settings.chroma_persist_dir,
+            "storage": "chroma_cloud",
         }
 
     async def clear_all(self):
         """Clear all stored documents (use carefully!)."""
-        self.client.delete_collection("fitness_qa")
-        self.collection = self.client.create_collection(
-            name="fitness_qa",
-            metadata={"description": "Fitness coach Q&A pairs for RAG"},
-        )
+        self.chroma_client.delete_collection(self.chroma_client.rag_collection_name)
+        self.collection = self.chroma_client.get_rag_collection()
         print("🗑️ Cleared all RAG documents")
 
 
@@ -213,25 +194,15 @@ class WorkoutRAGService:
     def __init__(self, openai_service: OpenAIService):
         self.openai_service = openai_service
 
-        # Ensure persist directory exists
-        os.makedirs(settings.chroma_persist_dir, exist_ok=True)
-
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=settings.chroma_persist_dir,
-            settings=ChromaSettings(anonymized_telemetry=False),
-        )
+        # Get Chroma Cloud client
+        self.chroma_client = get_chroma_cloud_client()
 
         # Collection for workout documents
-        self.workout_collection = self.client.get_or_create_collection(
-            name="workout_history",
-            metadata={"description": "User workout history for RAG"},
-        )
+        self.workout_collection = self.chroma_client.get_workout_collection()
 
-        # Collection for workout changes/modifications
-        self.changes_collection = self.client.get_or_create_collection(
-            name="workout_changes",
-            metadata={"description": "Workout modifications and changes for RAG"},
+        # Collection for workout changes (using a custom collection name)
+        self.changes_collection = self.chroma_client.get_or_create_collection(
+            "workout_changes"
         )
 
         print(f"✅ Workout RAG initialized: {self.workout_collection.count()} workouts, {self.changes_collection.count()} changes")
@@ -489,5 +460,5 @@ class WorkoutRAGService:
         return {
             "total_workouts": self.workout_collection.count(),
             "total_changes": self.changes_collection.count(),
-            "persist_dir": settings.chroma_persist_dir,
+            "storage": "chroma_cloud",
         }

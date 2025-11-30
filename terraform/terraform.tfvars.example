@@ -1,0 +1,27 @@
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "production"
+
+# Lambda Configuration
+lambda_function_name = "ai-fitness-coach-api"
+lambda_memory_size   = 1024
+lambda_timeout       = 60
+
+# API Gateway Configuration
+api_gateway_name = "ai-fitness-coach-api-gateway"
+
+# Supabase Configuration
+supabase_url              = "https://hpbzfahijszqmgsybuor.supabase.co"
+supabase_anon_key         = "your-supabase-anon-key-here"
+supabase_service_role_key = "your-supabase-service-role-key-here"
+database_url              = "postgresql+asyncpg://postgres:your-password@db.hpbzfahijszqmgsybuor.supabase.co:5432/postgres"
+
+# OpenAI Configuration
+openai_api_key = "sk-your-openai-api-key-here"
+
+# Chroma Cloud Configuration
+chroma_cloud_host    = "api.trychroma.com"
+chroma_cloud_api_key = "your-chroma-cloud-api-key-here"
+
+# S3 Configuration
+s3_bucket_name = "ai-fitness-coach"

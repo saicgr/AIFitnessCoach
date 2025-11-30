@@ -211,7 +211,7 @@ export default function Metrics() {
   }, [user]);
 
   if (!user) {
-    navigate('/onboarding');
+    navigate('/login');
     return null;
   }
 

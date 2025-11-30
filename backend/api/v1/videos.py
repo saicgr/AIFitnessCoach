@@ -1,0 +1,156 @@
+"""
+Video streaming endpoint using S3 presigned URLs.
+
+S3 Bucket Structure:
+  s3://ai-fitness-coach/VERTICAL VIDEOS/
+    ├── subfolder1/
+    │   ├── video1.mp4
+    │   └── video2.mp4
+    └── subfolder2/
+        └── video3.mp4
+"""
+from fastapi import APIRouter, HTTPException
+import boto3
+from botocore.exceptions import ClientError
+import os
+
+router = APIRouter()
+
+# Initialize S3 client
+s3_client = boto3.client(
+    's3',
+    region_name=os.getenv('AWS_REGION_NAME', 'us-east-1')
+)
+
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'ai-fitness-coach')
+VIDEO_BASE_PREFIX = "VERTICAL VIDEOS/"  # Base folder for all videos
+PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
+
+
+@router.get("/videos/{video_path:path}")
+async def get_video_url(video_path: str):
+    """
+    Generate a presigned URL for a video in S3.
+
+    Args:
+        video_path: Path to the video file relative to "VERTICAL VIDEOS/" folder
+                   Examples:
+                   - "Upper Body/Chest/bench_press.mp4"
+                   - "Lower Body/Legs/squats.mp4"
+
+    Returns:
+        Presigned URL valid for 1 hour
+    """
+    try:
+        # Construct full S3 key with base prefix
+        full_key = f"{VIDEO_BASE_PREFIX}{video_path}"
+
+        # Generate presigned URL
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': BUCKET_NAME,
+                'Key': full_key
+            },
+            ExpiresIn=PRESIGNED_URL_EXPIRATION
+        )
+
+        return {
+            "url": url,
+            "expires_in": PRESIGNED_URL_EXPIRATION,
+            "video_path": video_path,
+            "full_s3_key": full_key
+        }
+
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'NoSuchKey':
+            raise HTTPException(status_code=404, detail=f"Video not found: {full_key}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to generate video URL: {str(e)}")
+
+
+@router.get("/videos/list/")
+async def list_videos(subfolder: str = ""):
+    """
+    List all videos in S3 bucket under "VERTICAL VIDEOS/" folder.
+
+    Args:
+        subfolder: Optional subfolder within "VERTICAL VIDEOS/" to filter
+                  Examples: "Upper Body/Chest", "Lower Body/Legs"
+
+    Returns:
+        List of videos with their paths and metadata
+    """
+    try:
+        # Build the full prefix
+        if subfolder:
+            full_prefix = f"{VIDEO_BASE_PREFIX}{subfolder}/"
+        else:
+            full_prefix = VIDEO_BASE_PREFIX
+
+        response = s3_client.list_objects_v2(
+            Bucket=BUCKET_NAME,
+            Prefix=full_prefix
+        )
+
+        if 'Contents' not in response:
+            return {"videos": [], "count": 0, "subfolder": subfolder}
+
+        videos = []
+        for obj in response['Contents']:
+            # Only include video files
+            if obj['Key'].lower().endswith(('.mp4', '.mov', '.avi', '.webm', '.mkv')):
+                # Remove the base prefix to get relative path
+                relative_path = obj['Key'].replace(VIDEO_BASE_PREFIX, '', 1)
+
+                videos.append({
+                    "relative_path": relative_path,  # Path without "VERTICAL VIDEOS/"
+                    "full_s3_key": obj['Key'],       # Full S3 key
+                    "size_bytes": obj['Size'],
+                    "size_mb": round(obj['Size'] / (1024 * 1024), 2),
+                    "last_modified": obj['LastModified'].isoformat()
+                })
+
+        return {
+            "videos": videos,
+            "count": len(videos),
+            "subfolder": subfolder,
+            "base_prefix": VIDEO_BASE_PREFIX
+        }
+
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list videos: {str(e)}")
+
+
+@router.get("/videos/folders/")
+async def list_folders():
+    """
+    List all subfolders under "VERTICAL VIDEOS/" in S3.
+
+    Returns:
+        List of unique subfolder paths
+    """
+    try:
+        response = s3_client.list_objects_v2(
+            Bucket=BUCKET_NAME,
+            Prefix=VIDEO_BASE_PREFIX,
+            Delimiter='/'
+        )
+
+        folders = []
+
+        # Get immediate subfolders
+        if 'CommonPrefixes' in response:
+            for prefix in response['CommonPrefixes']:
+                folder_path = prefix['Prefix'].replace(VIDEO_BASE_PREFIX, '', 1).rstrip('/')
+                folders.append(folder_path)
+
+        return {
+            "folders": sorted(folders),
+            "count": len(folders),
+            "base_prefix": VIDEO_BASE_PREFIX
+        }
+
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list folders: {str(e)}")

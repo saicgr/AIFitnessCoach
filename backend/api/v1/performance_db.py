@@ -1,5 +1,5 @@
 """
-Performance logging API endpoints with DuckDB.
+Performance logging API endpoints with Supabase.
 
 ENDPOINTS:
 - POST /api/v1/performance-db/logs - Create performance log
@@ -13,7 +13,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 from datetime import datetime
 
-from core.duckdb_database import get_db
+from core.supabase_db import get_supabase_db
+from core.logger import get_logger
 from models.schemas import (
     PerformanceLog, PerformanceLogCreate,
     WorkoutLog, WorkoutLogCreate,
@@ -22,6 +23,74 @@ from models.schemas import (
 )
 
 router = APIRouter()
+logger = get_logger(__name__)
+
+
+def row_to_performance_log(row: dict) -> PerformanceLog:
+    """Convert a Supabase row dict to PerformanceLog model."""
+    return PerformanceLog(
+        id=row.get("id"),
+        workout_log_id=row.get("workout_log_id"),
+        user_id=row.get("user_id"),
+        exercise_id=row.get("exercise_id"),
+        exercise_name=row.get("exercise_name"),
+        set_number=row.get("set_number"),
+        reps_completed=row.get("reps_completed"),
+        weight_kg=row.get("weight_kg"),
+        rpe=row.get("rpe"),
+        rir=row.get("rir"),
+        tempo=row.get("tempo"),
+        is_completed=row.get("is_completed"),
+        failed_at_rep=row.get("failed_at_rep"),
+        notes=row.get("notes"),
+        recorded_at=row.get("recorded_at"),
+    )
+
+
+def row_to_workout_log(row: dict) -> WorkoutLog:
+    """Convert a Supabase row dict to WorkoutLog model."""
+    return WorkoutLog(
+        id=row.get("id"),
+        workout_id=row.get("workout_id"),
+        user_id=row.get("user_id"),
+        sets_json=row.get("sets_json"),
+        completed_at=row.get("completed_at"),
+        total_time_seconds=row.get("total_time_seconds"),
+    )
+
+
+def row_to_strength_record(row: dict) -> StrengthRecord:
+    """Convert a Supabase row dict to StrengthRecord model."""
+    return StrengthRecord(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        exercise_id=row.get("exercise_id"),
+        exercise_name=row.get("exercise_name"),
+        weight_kg=row.get("weight_kg"),
+        reps=row.get("reps"),
+        estimated_1rm=row.get("estimated_1rm"),
+        rpe=row.get("rpe"),
+        is_pr=row.get("is_pr"),
+        achieved_at=row.get("achieved_at"),
+    )
+
+
+def row_to_weekly_volume(row: dict) -> WeeklyVolume:
+    """Convert a Supabase row dict to WeeklyVolume model."""
+    return WeeklyVolume(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        muscle_group=row.get("muscle_group"),
+        week_number=row.get("week_number"),
+        year=row.get("year"),
+        total_sets=row.get("total_sets"),
+        total_reps=row.get("total_reps"),
+        total_volume_kg=row.get("total_volume_kg"),
+        frequency=row.get("frequency"),
+        target_sets=row.get("target_sets"),
+        recovery_status=row.get("recovery_status"),
+        updated_at=row.get("updated_at"),
+    )
 
 
 # ============ Performance Logs ============
@@ -30,39 +99,30 @@ router = APIRouter()
 async def create_performance_log(log: PerformanceLogCreate):
     """Create a performance log entry."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        result = db.conn.execute("SELECT nextval('performance_logs_id_seq')").fetchone()
-        log_id = result[0]
+        log_data = {
+            "workout_log_id": log.workout_log_id,
+            "user_id": log.user_id,
+            "exercise_id": log.exercise_id,
+            "exercise_name": log.exercise_name,
+            "set_number": log.set_number,
+            "reps_completed": log.reps_completed,
+            "weight_kg": log.weight_kg,
+            "rpe": log.rpe,
+            "rir": log.rir,
+            "tempo": log.tempo,
+            "is_completed": log.is_completed,
+            "failed_at_rep": log.failed_at_rep,
+            "notes": log.notes,
+        }
 
-        db.conn.execute("""
-            INSERT INTO performance_logs (
-                id, workout_log_id, user_id, exercise_id, exercise_name,
-                set_number, reps_completed, weight_kg, rpe, rir, tempo,
-                is_completed, failed_at_rep, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            log_id, log.workout_log_id, log.user_id, log.exercise_id,
-            log.exercise_name, log.set_number, log.reps_completed, log.weight_kg,
-            log.rpe, log.rir, log.tempo, log.is_completed, log.failed_at_rep, log.notes,
-        ])
-
-        row = db.conn.execute("""
-            SELECT id, workout_log_id, user_id, exercise_id, exercise_name,
-                   set_number, reps_completed, weight_kg, rpe, rir, tempo,
-                   is_completed, failed_at_rep, notes, recorded_at
-            FROM performance_logs WHERE id = ?
-        """, [log_id]).fetchone()
-
-        return PerformanceLog(
-            id=row[0], workout_log_id=row[1], user_id=row[2], exercise_id=row[3],
-            exercise_name=row[4], set_number=row[5], reps_completed=row[6],
-            weight_kg=row[7], rpe=row[8], rir=row[9], tempo=row[10],
-            is_completed=row[11], failed_at_rep=row[12], notes=row[13], recorded_at=row[14],
-        )
+        created = db.create_performance_log(log_data)
+        logger.info(f"Performance log created: id={created['id']}, user_id={log.user_id}")
+        return row_to_performance_log(created)
 
     except Exception as e:
-        print(f"❌ Error creating performance log: {e}")
+        logger.error(f"Error creating performance log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -74,34 +134,17 @@ async def list_performance_logs(
 ):
     """List performance logs for a user."""
     try:
-        db = get_db()
-
-        query = """
-            SELECT id, workout_log_id, user_id, exercise_id, exercise_name,
-                   set_number, reps_completed, weight_kg, rpe, rir, tempo,
-                   is_completed, failed_at_rep, notes, recorded_at
-            FROM performance_logs WHERE user_id = ?
-        """
-        params = [user_id]
-
-        if exercise_id:
-            query += " AND exercise_id = ?"
-            params.append(exercise_id)
-
-        query += " ORDER BY recorded_at DESC LIMIT ?"
-        params.append(limit)
-
-        rows = db.conn.execute(query, params).fetchall()
-
-        return [PerformanceLog(
-            id=row[0], workout_log_id=row[1], user_id=row[2], exercise_id=row[3],
-            exercise_name=row[4], set_number=row[5], reps_completed=row[6],
-            weight_kg=row[7], rpe=row[8], rir=row[9], tempo=row[10],
-            is_completed=row[11], failed_at_rep=row[12], notes=row[13], recorded_at=row[14],
-        ) for row in rows]
+        db = get_supabase_db()
+        rows = db.list_performance_logs(
+            user_id=user_id,
+            exercise_id=exercise_id,
+            limit=limit,
+        )
+        logger.info(f"Listed {len(rows)} performance logs for user {user_id}")
+        return [row_to_performance_log(row) for row in rows]
 
     except Exception as e:
-        print(f"❌ Error listing performance logs: {e}")
+        logger.error(f"Error listing performance logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -111,28 +154,21 @@ async def list_performance_logs(
 async def create_workout_log(log: WorkoutLogCreate):
     """Create a workout log entry."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        result = db.conn.execute("SELECT nextval('workout_logs_id_seq')").fetchone()
-        log_id = result[0]
+        log_data = {
+            "workout_id": log.workout_id,
+            "user_id": log.user_id,
+            "sets_json": log.sets_json,
+            "total_time_seconds": log.total_time_seconds,
+        }
 
-        db.conn.execute("""
-            INSERT INTO workout_logs (id, workout_id, user_id, sets_json, total_time_seconds)
-            VALUES (?, ?, ?, ?, ?)
-        """, [log_id, log.workout_id, log.user_id, log.sets_json, log.total_time_seconds])
-
-        row = db.conn.execute("""
-            SELECT id, workout_id, user_id, sets_json, completed_at, total_time_seconds
-            FROM workout_logs WHERE id = ?
-        """, [log_id]).fetchone()
-
-        return WorkoutLog(
-            id=row[0], workout_id=row[1], user_id=row[2], sets_json=row[3],
-            completed_at=row[4], total_time_seconds=row[5],
-        )
+        created = db.create_workout_log(log_data)
+        logger.info(f"Workout log created: id={created['id']}, user_id={log.user_id}")
+        return row_to_workout_log(created)
 
     except Exception as e:
-        print(f"❌ Error creating workout log: {e}")
+        logger.error(f"Error creating workout log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -143,21 +179,13 @@ async def list_workout_logs(
 ):
     """List workout logs for a user."""
     try:
-        db = get_db()
-
-        rows = db.conn.execute("""
-            SELECT id, workout_id, user_id, sets_json, completed_at, total_time_seconds
-            FROM workout_logs WHERE user_id = ?
-            ORDER BY completed_at DESC LIMIT ?
-        """, [user_id, limit]).fetchall()
-
-        return [WorkoutLog(
-            id=row[0], workout_id=row[1], user_id=row[2], sets_json=row[3],
-            completed_at=row[4], total_time_seconds=row[5],
-        ) for row in rows]
+        db = get_supabase_db()
+        rows = db.list_workout_logs(user_id=user_id, limit=limit)
+        logger.info(f"Listed {len(rows)} workout logs for user {user_id}")
+        return [row_to_workout_log(row) for row in rows]
 
     except Exception as e:
-        print(f"❌ Error listing workout logs: {e}")
+        logger.error(f"Error listing workout logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -167,35 +195,25 @@ async def list_workout_logs(
 async def create_strength_record(record: StrengthRecordCreate):
     """Create a strength record entry."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        result = db.conn.execute("SELECT nextval('strength_records_id_seq')").fetchone()
-        record_id = result[0]
+        record_data = {
+            "user_id": record.user_id,
+            "exercise_id": record.exercise_id,
+            "exercise_name": record.exercise_name,
+            "weight_kg": record.weight_kg,
+            "reps": record.reps,
+            "estimated_1rm": record.estimated_1rm,
+            "rpe": record.rpe,
+            "is_pr": record.is_pr,
+        }
 
-        db.conn.execute("""
-            INSERT INTO strength_records (
-                id, user_id, exercise_id, exercise_name, weight_kg,
-                reps, estimated_1rm, rpe, is_pr
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            record_id, record.user_id, record.exercise_id, record.exercise_name,
-            record.weight_kg, record.reps, record.estimated_1rm, record.rpe, record.is_pr,
-        ])
-
-        row = db.conn.execute("""
-            SELECT id, user_id, exercise_id, exercise_name, weight_kg,
-                   reps, estimated_1rm, rpe, is_pr, achieved_at
-            FROM strength_records WHERE id = ?
-        """, [record_id]).fetchone()
-
-        return StrengthRecord(
-            id=row[0], user_id=row[1], exercise_id=row[2], exercise_name=row[3],
-            weight_kg=row[4], reps=row[5], estimated_1rm=row[6], rpe=row[7],
-            is_pr=row[8], achieved_at=row[9],
-        )
+        created = db.create_strength_record(record_data)
+        logger.info(f"Strength record created: id={created['id']}, user_id={record.user_id}")
+        return row_to_strength_record(created)
 
     except Exception as e:
-        print(f"❌ Error creating strength record: {e}")
+        logger.error(f"Error creating strength record: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -208,35 +226,18 @@ async def list_strength_records(
 ):
     """List strength records for a user."""
     try:
-        db = get_db()
-
-        query = """
-            SELECT id, user_id, exercise_id, exercise_name, weight_kg,
-                   reps, estimated_1rm, rpe, is_pr, achieved_at
-            FROM strength_records WHERE user_id = ?
-        """
-        params = [user_id]
-
-        if exercise_id:
-            query += " AND exercise_id = ?"
-            params.append(exercise_id)
-
-        if prs_only:
-            query += " AND is_pr = TRUE"
-
-        query += " ORDER BY achieved_at DESC LIMIT ?"
-        params.append(limit)
-
-        rows = db.conn.execute(query, params).fetchall()
-
-        return [StrengthRecord(
-            id=row[0], user_id=row[1], exercise_id=row[2], exercise_name=row[3],
-            weight_kg=row[4], reps=row[5], estimated_1rm=row[6], rpe=row[7],
-            is_pr=row[8], achieved_at=row[9],
-        ) for row in rows]
+        db = get_supabase_db()
+        rows = db.list_strength_records(
+            user_id=user_id,
+            exercise_id=exercise_id,
+            prs_only=prs_only,
+            limit=limit,
+        )
+        logger.info(f"Listed {len(rows)} strength records for user {user_id}")
+        return [row_to_strength_record(row) for row in rows]
 
     except Exception as e:
-        print(f"❌ Error listing strength records: {e}")
+        logger.error(f"Error listing strength records: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -246,58 +247,27 @@ async def list_strength_records(
 async def upsert_weekly_volume(volume: WeeklyVolumeCreate):
     """Create or update weekly volume entry."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        # Check if exists
-        existing = db.conn.execute("""
-            SELECT id FROM weekly_volumes
-            WHERE user_id = ? AND muscle_group = ? AND week_number = ? AND year = ?
-        """, [volume.user_id, volume.muscle_group, volume.week_number, volume.year]).fetchone()
+        volume_data = {
+            "user_id": volume.user_id,
+            "muscle_group": volume.muscle_group,
+            "week_number": volume.week_number,
+            "year": volume.year,
+            "total_sets": volume.total_sets,
+            "total_reps": volume.total_reps,
+            "total_volume_kg": volume.total_volume_kg,
+            "frequency": volume.frequency,
+            "target_sets": volume.target_sets,
+            "recovery_status": volume.recovery_status,
+        }
 
-        if existing:
-            db.conn.execute("""
-                UPDATE weekly_volumes SET
-                    total_sets = ?, total_reps = ?, total_volume_kg = ?,
-                    frequency = ?, target_sets = ?, recovery_status = ?,
-                    updated_at = ?
-                WHERE id = ?
-            """, [
-                volume.total_sets, volume.total_reps, volume.total_volume_kg,
-                volume.frequency, volume.target_sets, volume.recovery_status,
-                datetime.now(), existing[0],
-            ])
-            volume_id = existing[0]
-        else:
-            result = db.conn.execute("SELECT nextval('weekly_volumes_id_seq')").fetchone()
-            volume_id = result[0]
-
-            db.conn.execute("""
-                INSERT INTO weekly_volumes (
-                    id, user_id, muscle_group, week_number, year,
-                    total_sets, total_reps, total_volume_kg, frequency,
-                    target_sets, recovery_status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                volume_id, volume.user_id, volume.muscle_group, volume.week_number,
-                volume.year, volume.total_sets, volume.total_reps, volume.total_volume_kg,
-                volume.frequency, volume.target_sets, volume.recovery_status,
-            ])
-
-        row = db.conn.execute("""
-            SELECT id, user_id, muscle_group, week_number, year,
-                   total_sets, total_reps, total_volume_kg, frequency,
-                   target_sets, recovery_status, updated_at
-            FROM weekly_volumes WHERE id = ?
-        """, [volume_id]).fetchone()
-
-        return WeeklyVolume(
-            id=row[0], user_id=row[1], muscle_group=row[2], week_number=row[3],
-            year=row[4], total_sets=row[5], total_reps=row[6], total_volume_kg=row[7],
-            frequency=row[8], target_sets=row[9], recovery_status=row[10], updated_at=row[11],
-        )
+        created = db.upsert_weekly_volume(volume_data)
+        logger.info(f"Weekly volume upserted: id={created['id']}, user_id={volume.user_id}")
+        return row_to_weekly_volume(created)
 
     except Exception as e:
-        print(f"❌ Error upserting weekly volume: {e}")
+        logger.error(f"Error upserting weekly volume: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -309,33 +279,15 @@ async def list_weekly_volumes(
 ):
     """List weekly volumes for a user."""
     try:
-        db = get_db()
-
-        query = """
-            SELECT id, user_id, muscle_group, week_number, year,
-                   total_sets, total_reps, total_volume_kg, frequency,
-                   target_sets, recovery_status, updated_at
-            FROM weekly_volumes WHERE user_id = ?
-        """
-        params = [user_id]
-
-        if week_number:
-            query += " AND week_number = ?"
-            params.append(week_number)
-        if year:
-            query += " AND year = ?"
-            params.append(year)
-
-        query += " ORDER BY year DESC, week_number DESC, muscle_group"
-
-        rows = db.conn.execute(query, params).fetchall()
-
-        return [WeeklyVolume(
-            id=row[0], user_id=row[1], muscle_group=row[2], week_number=row[3],
-            year=row[4], total_sets=row[5], total_reps=row[6], total_volume_kg=row[7],
-            frequency=row[8], target_sets=row[9], recovery_status=row[10], updated_at=row[11],
-        ) for row in rows]
+        db = get_supabase_db()
+        rows = db.list_weekly_volumes(
+            user_id=user_id,
+            week_number=week_number,
+            year=year,
+        )
+        logger.info(f"Listed {len(rows)} weekly volumes for user {user_id}")
+        return [row_to_weekly_volume(row) for row in rows]
 
     except Exception as e:
-        print(f"❌ Error listing weekly volumes: {e}")
+        logger.error(f"Error listing weekly volumes: {e}")
         raise HTTPException(status_code=500, detail=str(e))

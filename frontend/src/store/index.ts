@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { Session } from '@supabase/supabase-js';
 import type { User, Workout, ChatMessage, OnboardingData } from '../types';
 
 interface AppState {
@@ -7,6 +8,10 @@ interface AppState {
   theme: 'dark' | 'light';
   setTheme: (theme: 'dark' | 'light') => void;
   toggleTheme: () => void;
+
+  // Auth state
+  session: Session | null;
+  setSession: (session: Session | null) => void;
 
   // User state
   user: User | null;
@@ -113,6 +118,10 @@ export const useAppStore = create<AppState>()(
           return { theme: newTheme };
         }),
 
+      // Auth
+      session: null,
+      setSession: (session) => set({ session }),
+
       // User
       user: null,
       setUser: (user) => set({ user }),
@@ -162,15 +171,16 @@ export const useAppStore = create<AppState>()(
       version: STORAGE_VERSION,
       partialize: (state) => ({
         user: state.user,
+        session: state.session,
         onboardingData: state.onboardingData,
         theme: state.theme,
       }),
       migrate: (persistedState, version) => {
         // Clear old data if version mismatch
         if (version < STORAGE_VERSION) {
-          return { user: null, onboardingData: defaultOnboarding, theme: 'dark' as const };
+          return { user: null, session: null, onboardingData: defaultOnboarding, theme: 'dark' as const };
         }
-        return persistedState as { user: User | null; onboardingData: OnboardingData; theme: 'dark' | 'light' };
+        return persistedState as { user: User | null; session: Session | null; onboardingData: OnboardingData; theme: 'dark' | 'light' };
       },
       onRehydrateStorage: () => (state) => {
         // Apply theme when store rehydrates from localStorage
@@ -187,6 +197,7 @@ export const clearAppStorage = () => {
   localStorage.removeItem('fitness-coach-storage');
   useAppStore.setState({
     theme: 'dark',
+    session: null,
     user: null,
     onboardingData: defaultOnboarding,
     workouts: [],

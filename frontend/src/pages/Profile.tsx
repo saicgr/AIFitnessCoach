@@ -325,7 +325,7 @@ export default function Profile() {
   };
 
   if (!user) {
-    navigate('/onboarding');
+    navigate('/login');
     return null;
   }
 

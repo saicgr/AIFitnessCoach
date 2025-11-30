@@ -1,5 +1,5 @@
 """
-Exercise API endpoints with DuckDB.
+Exercise API endpoints with Supabase.
 
 ENDPOINTS:
 - POST /api/v1/exercises/ - Create a new exercise
@@ -11,95 +11,91 @@ ENDPOINTS:
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 
-from core.duckdb_database import get_db
+from core.supabase_db import get_supabase_db
+from core.logger import get_logger
 from models.schemas import Exercise, ExerciseCreate
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
-def row_to_exercise(row) -> Exercise:
-    """Convert a database row to Exercise model."""
+def row_to_exercise(row: dict) -> Exercise:
+    """Convert a Supabase row dict to Exercise model."""
     return Exercise(
-        id=row[0],
-        external_id=row[1],
-        name=row[2],
-        category=row[3],
-        subcategory=row[4],
-        difficulty_level=row[5],
-        primary_muscle=row[6],
-        secondary_muscles=row[7],
-        equipment_required=row[8],
-        body_part=row[9],
-        equipment=row[10],
-        target=row[11],
-        default_sets=row[12],
-        default_reps=row[13],
-        default_duration_seconds=row[14],
-        default_rest_seconds=row[15],
-        min_weight_kg=row[16],
-        calories_per_minute=row[17],
-        instructions=row[18],
-        tips=row[19],
-        contraindicated_injuries=row[20],
-        gif_url=row[21],
-        video_url=row[22],
-        is_compound=row[23],
-        is_unilateral=row[24],
-        tags=row[25],
-        is_custom=row[26],
-        created_by_user_id=row[27],
-        created_at=row[28],
+        id=row.get("id"),
+        external_id=row.get("external_id"),
+        name=row.get("name"),
+        category=row.get("category"),
+        subcategory=row.get("subcategory"),
+        difficulty_level=row.get("difficulty_level"),
+        primary_muscle=row.get("primary_muscle"),
+        secondary_muscles=row.get("secondary_muscles"),
+        equipment_required=row.get("equipment_required"),
+        body_part=row.get("body_part"),
+        equipment=row.get("equipment"),
+        target=row.get("target"),
+        default_sets=row.get("default_sets"),
+        default_reps=row.get("default_reps"),
+        default_duration_seconds=row.get("default_duration_seconds"),
+        default_rest_seconds=row.get("default_rest_seconds"),
+        min_weight_kg=row.get("min_weight_kg"),
+        calories_per_minute=row.get("calories_per_minute"),
+        instructions=row.get("instructions"),
+        tips=row.get("tips"),
+        contraindicated_injuries=row.get("contraindicated_injuries"),
+        gif_url=row.get("gif_url"),
+        video_url=row.get("video_url"),
+        is_compound=row.get("is_compound"),
+        is_unilateral=row.get("is_unilateral"),
+        tags=row.get("tags"),
+        is_custom=row.get("is_custom"),
+        created_by_user_id=row.get("created_by_user_id"),
+        created_at=row.get("created_at"),
     )
-
-
-EXERCISE_COLUMNS = """
-    id, external_id, name, category, subcategory, difficulty_level,
-    primary_muscle, secondary_muscles, equipment_required, body_part,
-    equipment, target, default_sets, default_reps, default_duration_seconds,
-    default_rest_seconds, min_weight_kg, calories_per_minute, instructions,
-    tips, contraindicated_injuries, gif_url, video_url, is_compound,
-    is_unilateral, tags, is_custom, created_by_user_id, created_at
-"""
 
 
 @router.post("/", response_model=Exercise)
 async def create_exercise(exercise: ExerciseCreate):
     """Create a new exercise."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        # Get next ID
-        result = db.conn.execute("SELECT nextval('exercises_id_seq')").fetchone()
-        exercise_id = result[0]
+        exercise_data = {
+            "external_id": exercise.external_id,
+            "name": exercise.name,
+            "category": exercise.category,
+            "subcategory": exercise.subcategory,
+            "difficulty_level": exercise.difficulty_level,
+            "primary_muscle": exercise.primary_muscle,
+            "secondary_muscles": exercise.secondary_muscles,
+            "equipment_required": exercise.equipment_required,
+            "body_part": exercise.body_part,
+            "equipment": exercise.equipment,
+            "target": exercise.target,
+            "default_sets": exercise.default_sets,
+            "default_reps": exercise.default_reps,
+            "default_duration_seconds": exercise.default_duration_seconds,
+            "default_rest_seconds": exercise.default_rest_seconds,
+            "min_weight_kg": exercise.min_weight_kg,
+            "calories_per_minute": exercise.calories_per_minute,
+            "instructions": exercise.instructions,
+            "tips": exercise.tips,
+            "contraindicated_injuries": exercise.contraindicated_injuries,
+            "gif_url": exercise.gif_url,
+            "video_url": exercise.video_url,
+            "is_compound": exercise.is_compound,
+            "is_unilateral": exercise.is_unilateral,
+            "tags": exercise.tags,
+            "is_custom": exercise.is_custom,
+            "created_by_user_id": exercise.created_by_user_id,
+        }
 
-        # Insert exercise
-        db.conn.execute("""
-            INSERT INTO exercises (
-                id, external_id, name, category, subcategory, difficulty_level,
-                primary_muscle, secondary_muscles, equipment_required, body_part,
-                equipment, target, default_sets, default_reps, default_duration_seconds,
-                default_rest_seconds, min_weight_kg, calories_per_minute, instructions,
-                tips, contraindicated_injuries, gif_url, video_url, is_compound,
-                is_unilateral, tags, is_custom, created_by_user_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            exercise_id, exercise.external_id, exercise.name, exercise.category,
-            exercise.subcategory, exercise.difficulty_level, exercise.primary_muscle,
-            exercise.secondary_muscles, exercise.equipment_required, exercise.body_part,
-            exercise.equipment, exercise.target, exercise.default_sets, exercise.default_reps,
-            exercise.default_duration_seconds, exercise.default_rest_seconds,
-            exercise.min_weight_kg, exercise.calories_per_minute, exercise.instructions,
-            exercise.tips, exercise.contraindicated_injuries, exercise.gif_url,
-            exercise.video_url, exercise.is_compound, exercise.is_unilateral,
-            exercise.tags, exercise.is_custom, exercise.created_by_user_id,
-        ])
-
-        # Fetch created exercise
-        row = db.conn.execute(f"SELECT {EXERCISE_COLUMNS} FROM exercises WHERE id = ?", [exercise_id]).fetchone()
-        return row_to_exercise(row)
+        created = db.create_exercise(exercise_data)
+        logger.info(f"Exercise created: id={created['id']}, name={exercise.name}")
+        return row_to_exercise(created)
 
     except Exception as e:
-        print(f"❌ Error creating exercise: {e}")
+        logger.error(f"Error creating exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -114,32 +110,20 @@ async def list_exercises(
 ):
     """List exercises with optional filters."""
     try:
-        db = get_db()
-
-        query = f"SELECT {EXERCISE_COLUMNS} FROM exercises WHERE 1=1"
-        params = []
-
-        if category:
-            query += " AND category = ?"
-            params.append(category)
-        if body_part:
-            query += " AND body_part = ?"
-            params.append(body_part)
-        if equipment:
-            query += " AND equipment = ?"
-            params.append(equipment)
-        if difficulty_level:
-            query += " AND difficulty_level = ?"
-            params.append(difficulty_level)
-
-        query += " ORDER BY name LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
-
-        rows = db.conn.execute(query, params).fetchall()
+        db = get_supabase_db()
+        rows = db.list_exercises(
+            category=category,
+            body_part=body_part,
+            equipment=equipment,
+            difficulty_level=difficulty_level,
+            limit=limit,
+            offset=offset,
+        )
+        logger.info(f"Listed {len(rows)} exercises")
         return [row_to_exercise(row) for row in rows]
 
     except Exception as e:
-        print(f"❌ Error listing exercises: {e}")
+        logger.error(f"Error listing exercises: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -147,9 +131,8 @@ async def list_exercises(
 async def get_exercise(exercise_id: int):
     """Get an exercise by ID."""
     try:
-        db = get_db()
-
-        row = db.conn.execute(f"SELECT {EXERCISE_COLUMNS} FROM exercises WHERE id = ?", [exercise_id]).fetchone()
+        db = get_supabase_db()
+        row = db.get_exercise(exercise_id)
 
         if not row:
             raise HTTPException(status_code=404, detail="Exercise not found")
@@ -159,7 +142,7 @@ async def get_exercise(exercise_id: int):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error getting exercise: {e}")
+        logger.error(f"Error getting exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -167,9 +150,8 @@ async def get_exercise(exercise_id: int):
 async def get_exercise_by_external_id(external_id: str):
     """Get an exercise by external ID."""
     try:
-        db = get_db()
-
-        row = db.conn.execute(f"SELECT {EXERCISE_COLUMNS} FROM exercises WHERE external_id = ?", [external_id]).fetchone()
+        db = get_supabase_db()
+        row = db.get_exercise_by_external_id(external_id)
 
         if not row:
             raise HTTPException(status_code=404, detail="Exercise not found")
@@ -179,7 +161,7 @@ async def get_exercise_by_external_id(external_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error getting exercise: {e}")
+        logger.error(f"Error getting exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -187,18 +169,19 @@ async def get_exercise_by_external_id(external_id: str):
 async def delete_exercise(exercise_id: int):
     """Delete an exercise."""
     try:
-        db = get_db()
+        db = get_supabase_db()
 
-        existing = db.conn.execute("SELECT id FROM exercises WHERE id = ?", [exercise_id]).fetchone()
+        existing = db.get_exercise(exercise_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Exercise not found")
 
-        db.conn.execute("DELETE FROM exercises WHERE id = ?", [exercise_id])
+        db.delete_exercise(exercise_id)
+        logger.info(f"Exercise deleted: id={exercise_id}")
 
         return {"message": "Exercise deleted successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Error deleting exercise: {e}")
+        logger.error(f"Error deleting exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))

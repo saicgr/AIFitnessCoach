@@ -5,6 +5,10 @@
 
 set -e
 
+# Load nvm if available
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 echo "🚀 AI Fitness Coach - Starting Services..."
 echo ""
 

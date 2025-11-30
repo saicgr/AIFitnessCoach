@@ -9,7 +9,7 @@ from typing import Optional, List
 from datetime import datetime
 
 from services.metrics_calculator import MetricsCalculator, HealthMetrics
-from core.duckdb_database import get_db
+from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 class MetricsInput(BaseModel):
     """Input for metrics calculation."""
-    user_id: int
+    user_id: str  # UUID from Supabase
     weight_kg: float = Field(..., gt=0, description="Weight in kilograms")
     height_cm: float = Field(..., gt=0, description="Height in centimeters")
     age: int = Field(..., ge=1, le=120, description="Age in years")
@@ -82,6 +82,21 @@ class MetricsHistoryItem(BaseModel):
     bmr: Optional[float]
     tdee: Optional[float]
     body_fat: Optional[float]
+
+
+def row_to_metrics_history_item(row: dict) -> MetricsHistoryItem:
+    """Convert a Supabase row dict to MetricsHistoryItem model."""
+    body_fat = row.get("body_fat_measured") or row.get("body_fat_calculated")
+    return MetricsHistoryItem(
+        id=row.get("id"),
+        recorded_at=row.get("recorded_at"),
+        weight_kg=row.get("weight_kg"),
+        bmi=row.get("bmi"),
+        bmi_category=row.get("bmi_category"),
+        bmr=row.get("bmr"),
+        tdee=row.get("tdee"),
+        body_fat=body_fat,
+    )
 
 
 @router.post("/calculate", response_model=MetricsResponse)
@@ -166,45 +181,32 @@ async def record_metrics(input: MetricsInput):
     )
 
     # Store in database
-    db = get_db()
+    db = get_supabase_db()
 
-    # Get next ID
-    result = db.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM user_metrics").fetchone()
-    next_id = result[0]
+    metrics_data = {
+        "user_id": input.user_id,
+        "weight_kg": input.weight_kg,
+        "waist_cm": input.waist_cm,
+        "hip_cm": input.hip_cm,
+        "neck_cm": input.neck_cm,
+        "body_fat_measured": input.body_fat_percent,
+        "resting_heart_rate": input.resting_heart_rate,
+        "blood_pressure_systolic": input.blood_pressure_systolic,
+        "blood_pressure_diastolic": input.blood_pressure_diastolic,
+        "bmi": metrics.bmi,
+        "bmi_category": metrics.bmi_category,
+        "bmr": metrics.bmr_mifflin,
+        "tdee": metrics.tdee,
+        "body_fat_calculated": metrics.body_fat_navy,
+        "lean_body_mass": metrics.lean_body_mass,
+        "ffmi": metrics.ffmi,
+        "waist_to_height_ratio": metrics.waist_to_height_ratio,
+        "waist_to_hip_ratio": metrics.waist_to_hip_ratio,
+        "ideal_body_weight": metrics.ideal_body_weight_devine,
+    }
 
-    db.conn.execute("""
-        INSERT INTO user_metrics (
-            id, user_id, weight_kg, waist_cm, hip_cm, neck_cm,
-            body_fat_measured, resting_heart_rate,
-            blood_pressure_systolic, blood_pressure_diastolic,
-            bmi, bmi_category, bmr, tdee, body_fat_calculated,
-            lean_body_mass, ffmi, waist_to_height_ratio, waist_to_hip_ratio,
-            ideal_body_weight
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, [
-        next_id,
-        input.user_id,
-        input.weight_kg,
-        input.waist_cm,
-        input.hip_cm,
-        input.neck_cm,
-        input.body_fat_percent,
-        input.resting_heart_rate,
-        input.blood_pressure_systolic,
-        input.blood_pressure_diastolic,
-        metrics.bmi,
-        metrics.bmi_category,
-        metrics.bmr_mifflin,
-        metrics.tdee,
-        metrics.body_fat_navy,
-        metrics.lean_body_mass,
-        metrics.ffmi,
-        metrics.waist_to_height_ratio,
-        metrics.waist_to_hip_ratio,
-        metrics.ideal_body_weight_devine,  # Using Devine as default
-    ])
-
-    logger.info(f"Recorded metrics with ID {next_id} for user {input.user_id}")
+    created = db.create_user_metrics(metrics_data)
+    logger.info(f"Recorded metrics with ID {created['id']} for user {input.user_id}")
 
     # Calculate average IBW
     ibw_avg = round(
@@ -240,7 +242,7 @@ async def record_metrics(input: MetricsInput):
 
 
 @router.get("/history/{user_id}", response_model=List[MetricsHistoryItem])
-async def get_metrics_history(user_id: int, limit: int = 30):
+async def get_metrics_history(user_id: str, limit: int = 30):
     """
     Get user's metrics history for progress tracking.
 
@@ -248,33 +250,14 @@ async def get_metrics_history(user_id: int, limit: int = 30):
     """
     logger.info(f"Fetching metrics history for user {user_id}")
 
-    db = get_db()
-    rows = db.conn.execute("""
-        SELECT id, recorded_at, weight_kg, bmi, bmi_category, bmr, tdee,
-               COALESCE(body_fat_measured, body_fat_calculated) as body_fat
-        FROM user_metrics
-        WHERE user_id = ?
-        ORDER BY recorded_at DESC
-        LIMIT ?
-    """, [user_id, limit]).fetchall()
+    db = get_supabase_db()
+    rows = db.list_user_metrics(user_id=user_id, limit=limit)
 
-    return [
-        MetricsHistoryItem(
-            id=row[0],
-            recorded_at=row[1],
-            weight_kg=row[2],
-            bmi=row[3],
-            bmi_category=row[4],
-            bmr=row[5],
-            tdee=row[6],
-            body_fat=row[7],
-        )
-        for row in rows
-    ]
+    return [row_to_metrics_history_item(row) for row in rows]
 
 
 @router.get("/latest/{user_id}")
-async def get_latest_metrics(user_id: int):
+async def get_latest_metrics(user_id: str):
     """
     Get the most recent metrics for a user.
 
@@ -282,51 +265,41 @@ async def get_latest_metrics(user_id: int):
     """
     logger.info(f"Fetching latest metrics for user {user_id}")
 
-    db = get_db()
-    row = db.conn.execute("""
-        SELECT id, recorded_at, weight_kg, bmi, bmi_category, bmr, tdee,
-               COALESCE(body_fat_measured, body_fat_calculated) as body_fat,
-               lean_body_mass, ffmi, waist_to_height_ratio, waist_to_hip_ratio,
-               ideal_body_weight
-        FROM user_metrics
-        WHERE user_id = ?
-        ORDER BY recorded_at DESC
-        LIMIT 1
-    """, [user_id]).fetchone()
+    db = get_supabase_db()
+    row = db.get_latest_user_metrics(user_id=user_id)
 
     if not row:
         return {"message": "No metrics history found", "has_metrics": False}
 
+    body_fat = row.get("body_fat_measured") or row.get("body_fat_calculated")
+
     return {
         "has_metrics": True,
-        "id": row[0],
-        "recorded_at": row[1],
-        "weight_kg": row[2],
-        "bmi": row[3],
-        "bmi_category": row[4],
-        "bmr": row[5],
-        "tdee": row[6],
-        "body_fat": row[7],
-        "lean_body_mass": row[8],
-        "ffmi": row[9],
-        "waist_to_height_ratio": row[10],
-        "waist_to_hip_ratio": row[11],
-        "ideal_body_weight": row[12],
+        "id": row.get("id"),
+        "recorded_at": row.get("recorded_at"),
+        "weight_kg": row.get("weight_kg"),
+        "bmi": row.get("bmi"),
+        "bmi_category": row.get("bmi_category"),
+        "bmr": row.get("bmr"),
+        "tdee": row.get("tdee"),
+        "body_fat": body_fat,
+        "lean_body_mass": row.get("lean_body_mass"),
+        "ffmi": row.get("ffmi"),
+        "waist_to_height_ratio": row.get("waist_to_height_ratio"),
+        "waist_to_hip_ratio": row.get("waist_to_hip_ratio"),
+        "ideal_body_weight": row.get("ideal_body_weight"),
     }
 
 
 @router.delete("/history/{user_id}/{metric_id}")
-async def delete_metric_entry(user_id: int, metric_id: int):
+async def delete_metric_entry(user_id: str, metric_id: int):
     """Delete a specific metrics entry."""
     logger.info(f"Deleting metric {metric_id} for user {user_id}")
 
-    db = get_db()
-    result = db.conn.execute("""
-        DELETE FROM user_metrics
-        WHERE id = ? AND user_id = ?
-    """, [metric_id, user_id])
+    db = get_supabase_db()
+    deleted = db.delete_user_metrics(metric_id=metric_id, user_id=user_id)
 
-    if result.rowcount == 0:
+    if not deleted:
         raise HTTPException(status_code=404, detail="Metric entry not found")
 
     return {"message": "Metric entry deleted successfully"}
@@ -338,7 +311,7 @@ from services.injury_service import get_injury_service, Injury
 
 
 @router.get("/injuries/active/{user_id}")
-async def get_active_injuries(user_id: int):
+async def get_active_injuries(user_id: str):
     """
     Get all active injuries for a user with recovery status.
 
@@ -346,29 +319,31 @@ async def get_active_injuries(user_id: int):
     """
     logger.info(f"Fetching active injuries for user {user_id}")
 
-    db = get_db()
+    db = get_supabase_db()
     injury_service = get_injury_service()
 
     # Get active injuries from database
-    rows = db.conn.execute("""
-        SELECT id, user_id, body_part, severity, reported_at, expected_recovery_date,
-               pain_level_current as pain_level, improvement_notes as notes
-        FROM injury_history
-        WHERE user_id = ? AND is_active = true
-        ORDER BY reported_at DESC
-    """, [user_id]).fetchall()
+    rows = db.get_active_injuries(user_id=user_id)
 
     injuries = []
     for row in rows:
+        reported_at = row.get("reported_at")
+        if isinstance(reported_at, str):
+            reported_at = datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
+
+        expected_recovery = row.get("expected_recovery_date")
+        if isinstance(expected_recovery, str):
+            expected_recovery = datetime.fromisoformat(expected_recovery.replace("Z", "+00:00"))
+
         injury = Injury(
-            id=row[0],
-            user_id=row[1],
-            body_part=row[2],
-            severity=row[3],
-            reported_at=row[4] if isinstance(row[4], datetime) else datetime.fromisoformat(str(row[4])),
-            expected_recovery_date=row[5] if isinstance(row[5], datetime) else datetime.fromisoformat(str(row[5])),
-            pain_level=row[6],
-            notes=row[7],
+            id=row.get("id"),
+            user_id=row.get("user_id"),
+            body_part=row.get("body_part"),
+            severity=row.get("severity"),
+            reported_at=reported_at,
+            expected_recovery_date=expected_recovery,
+            pain_level=row.get("pain_level_current"),
+            notes=row.get("improvement_notes"),
         )
 
         # Get recovery summary from service

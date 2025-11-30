@@ -16,7 +16,7 @@ from services.openai_service import OpenAIService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
-from core.duckdb_database import get_db
+from core.supabase_db import get_supabase_db
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -68,18 +68,23 @@ async def send_message(
 
         # Save chat message to database for persistence
         try:
-            db = get_db()
-            # Include intent in context_json for complete tracking
-            context_data = {
+            db = get_supabase_db()
+            chat_data = {
+                "user_id": request.user_id,
+                "role": "user",
+                "content": request.message,
                 "intent": response.intent,
-                "action_data": response.action_data,
-                "rag_context_used": response.rag_context_used,
             }
-            context_json = json.dumps(context_data)
-            db.conn.execute("""
-                INSERT INTO chat_history (id, user_id, user_message, ai_response, context_json)
-                VALUES (nextval('chat_history_id_seq'), ?, ?, ?, ?)
-            """, [request.user_id, request.message, response.message, context_json])
+            db.create_chat_message(chat_data)
+
+            # Also save assistant response
+            assistant_data = {
+                "user_id": request.user_id,
+                "role": "assistant",
+                "content": response.message,
+                "intent": response.intent,
+            }
+            db.create_chat_message(assistant_data)
             logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}")
         except Exception as db_error:
             # Log but don't fail the request if DB save fails
@@ -106,47 +111,20 @@ async def get_chat_history(user_id: int, limit: int = 100):
     Get chat history for a user.
 
     Returns messages in chronological order (oldest first).
-    Each DB row contains both user message and AI response,
-    so we expand them into separate items.
     """
     logger.info(f"Fetching chat history for user {user_id}, limit={limit}")
     try:
-        db = get_db()
-        result = db.conn.execute("""
-            SELECT id, user_message, ai_response, context_json, timestamp
-            FROM chat_history
-            WHERE user_id = ?
-            ORDER BY timestamp ASC
-            LIMIT ?
-        """, [user_id, limit]).fetchall()
+        db = get_supabase_db()
+        result = db.list_chat_history(user_id, limit=limit)
 
         messages: List[ChatHistoryItem] = []
         for row in result:
-            row_id, user_message, ai_response, context_json, timestamp = row
-            timestamp_str = str(timestamp) if timestamp else ""
-
-            # Add user message
             messages.append(ChatHistoryItem(
-                id=row_id,
-                role="user",
-                content=user_message,
-                timestamp=timestamp_str,
-            ))
-
-            # Add assistant response
-            action_data = None
-            if context_json:
-                try:
-                    action_data = json.loads(context_json)
-                except json.JSONDecodeError:
-                    pass
-
-            messages.append(ChatHistoryItem(
-                id=row_id,
-                role="assistant",
-                content=ai_response,
-                timestamp=timestamp_str,
-                action_data=action_data,
+                id=row.get("id"),
+                role=row.get("role", "user"),
+                content=row.get("content", ""),
+                timestamp=str(row.get("created_at", "")),
+                action_data=None,
             ))
 
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")

@@ -23,6 +23,7 @@ import type {
 } from '../types';
 import { parseUser, parseWorkout } from '../types';
 import { createLogger } from '../utils/logger';
+import { useAppStore } from '../store';
 
 const log = createLogger('api');
 
@@ -32,6 +33,20 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Add auth token to requests
+api.interceptors.request.use(
+  (config) => {
+    const session = useAppStore.getState().session;
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Request interceptor - log outgoing requests
 api.interceptors.request.use(
@@ -70,13 +85,8 @@ export const checkHealth = async (): Promise<HealthResponse> => {
 };
 
 // Auth
-export const signup = async (username: string, password: string, name?: string): Promise<User> => {
-  const { data } = await api.post<UserBackend>('/users/signup', { username, password, name });
-  return parseUser(data);
-};
-
-export const login = async (username: string, password: string): Promise<User> => {
-  const { data } = await api.post<UserBackend>('/users/login', { username, password });
+export const googleAuth = async (accessToken: string): Promise<User> => {
+  const { data } = await api.post<UserBackend>('/users/auth/google', { access_token: accessToken });
   return parseUser(data);
 };
 

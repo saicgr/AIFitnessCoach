@@ -13,6 +13,8 @@ Bad practice:
 Good practice:
 ```
 ✅ Write code → Test parsing logic → Test API calls → Deploy to device
+✅ DO NOT USE FALL BACK
+✅ DO NOT USE MOCK DATA
 ```
 
 ### Testing Checklist

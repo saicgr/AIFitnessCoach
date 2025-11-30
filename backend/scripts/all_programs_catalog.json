@@ -1,0 +1,6075 @@
+[
+  {
+    "program_name": "Brad Pitt Fight Club Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Actor Transformation",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Brad Pitt",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Muscle Definition",
+      "Functional Fitness"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Lose Fat"
+    ],
+    "description": "Get Brad Pitt's lean, defined Fight Club physique through high-intensity training and targeted strength work.",
+    "short_description": "Brad Pitt's lean Fight Club look"
+  },
+  {
+    "program_name": "Henry Cavill Superman Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Henry Cavill",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Celebrity",
+      "Muscle Building",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build superhero mass like Henry Cavill through heavy compound lifts and progressive overload.",
+    "short_description": "Superman's powerful physique"
+  },
+  {
+    "program_name": "Chris Hemsworth Thor Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Chris Hemsworth",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Celebrity",
+      "Muscle Building",
+      "Functional Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Build the massive, functional physique of Thor through intense training and compound movements.",
+    "short_description": "Thor's godly physique"
+  },
+  {
+    "program_name": "Dwayne The Rock Johnson Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bodybuilding",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Dwayne Johnson",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Celebrity",
+      "Muscle Mass",
+      "High Volume"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Train like The Rock with high-volume bodybuilding splits and intense dedication.",
+    "short_description": "The Rock's massive build"
+  },
+  {
+    "program_name": "Michael B Jordan Creed Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Boxing Physique",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Michael B Jordan",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Celebrity",
+      "Boxing",
+      "Functional Fitness"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Develop a boxer's physique like Adonis Creed with boxing-focused training.",
+    "short_description": "Creed's fighter physique"
+  },
+  {
+    "program_name": "Jason Momoa Aquaman Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Jason Momoa",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 80,
+    "tags": [
+      "Celebrity",
+      "Functional Strength",
+      "Explosive Power"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build Aquaman's warrior physique through climbing-inspired functional training.",
+    "short_description": "Aquaman's warrior build"
+  },
+  {
+    "program_name": "Zac Efron Baywatch Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Beach Body",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Zac Efron",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Aesthetic",
+      "Six Pack"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Lose Fat"
+    ],
+    "description": "Achieve the ultimate beach body aesthetic with focused ab work and definition training.",
+    "short_description": "Baywatch beach body"
+  },
+  {
+    "program_name": "Ryan Reynolds Deadpool Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Ryan Reynolds",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 70,
+    "tags": [
+      "Celebrity",
+      "Lean Muscle",
+      "Functional"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Lose Fat"
+    ],
+    "description": "Build Deadpool's lean, athletic physique through varied training methods.",
+    "short_description": "Deadpool's lean build"
+  },
+  {
+    "program_name": "Chris Pratt Star-Lord Transformation",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Weight Loss Transformation",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Chris Pratt",
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Fat Loss",
+      "Transformation"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Build Muscle"
+    ],
+    "description": "Transform your body like Chris Pratt's dramatic Star-Lord transformation.",
+    "short_description": "Star-Lord transformation"
+  },
+  {
+    "program_name": "Tom Holland Spider-Man Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Tom Holland",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Gymnastics",
+      "Calisthenics"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Build Spider-Man's agile, acrobatic physique through gymnastics and bodyweight training.",
+    "short_description": "Spider-Man's agility"
+  },
+  {
+    "program_name": "Hugh Jackman Wolverine Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Hugh Jackman",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Celebrity",
+      "Muscle Building",
+      "Power"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build Wolverine's powerful, muscular physique through heavy lifting and high intensity.",
+    "short_description": "Wolverine's power"
+  },
+  {
+    "program_name": "Arnold Schwarzenegger Classic Bodybuilding",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bodybuilding",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Arnold Schwarzenegger",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Celebrity",
+      "Bodybuilding",
+      "Classic"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Train using Arnold's legendary bodybuilding methods from the Golden Era.",
+    "short_description": "Arnold's classic routine"
+  },
+  {
+    "program_name": "Chadwick Boseman Black Panther Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Chadwick Boseman",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 70,
+    "tags": [
+      "Celebrity",
+      "Martial Arts",
+      "Functional"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Develop Black Panther's warrior physique through martial arts-inspired training.",
+    "short_description": "Black Panther's warrior build"
+  },
+  {
+    "program_name": "Chris Evans Captain America Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Chris Evans",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 80,
+    "tags": [
+      "Celebrity",
+      "Muscle Building",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build Captain America's superhero physique through compound strength training.",
+    "short_description": "Cap's super soldier build"
+  },
+  {
+    "program_name": "Will Smith Ali Boxing Transformation",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Boxing Physique",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Will Smith",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Celebrity",
+      "Boxing",
+      "Conditioning"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like Muhammad Ali with boxing-focused conditioning and strength work.",
+    "short_description": "Ali's boxing physique"
+  },
+  {
+    "program_name": "MS Dhoni Cricket Fitness",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cricket",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "MS Dhoni",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Cricket",
+      "Endurance",
+      "Explosiveness"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like Captain Cool with cricket-specific fitness and mental toughness training.",
+    "short_description": "Dhoni's cricket fitness"
+  },
+  {
+    "program_name": "Virat Kohli Fitness Regime",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cricket",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Virat Kohli",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Cricket",
+      "Athletic",
+      "Discipline"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Follow Virat Kohli's intense fitness philosophy with focus on discipline and performance.",
+    "short_description": "Kohli's athletic regime"
+  },
+  {
+    "program_name": "Hrithik Roshan Transformation",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Hrithik Roshan",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Bollywood",
+      "Aesthetic",
+      "Dance Fitness"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Lose Fat"
+    ],
+    "description": "Achieve Bollywood's most aesthetic physique through Hrithik's intense training methods.",
+    "short_description": "Hrithik's Greek God look"
+  },
+  {
+    "program_name": "John Abraham Power Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "John Abraham",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Bollywood",
+      "Muscle",
+      "Power"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build massive muscle like John Abraham through heavy compound movements.",
+    "short_description": "John's powerful build"
+  },
+  {
+    "program_name": "Tiger Shroff Martial Arts Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Tiger Shroff",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Bollywood",
+      "Martial Arts",
+      "Flexibility"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like Tiger Shroff with martial arts, gymnastics, and incredible flexibility work.",
+    "short_description": "Tiger's martial arts fitness"
+  },
+  {
+    "program_name": "Ranveer Singh Energy Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Ranveer Singh",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 70,
+    "tags": [
+      "Bollywood",
+      "Functional",
+      "High Energy"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Match Ranveer's explosive energy with dynamic, fun, and intense workouts.",
+    "short_description": "Ranveer's dynamic training"
+  },
+  {
+    "program_name": "Akshay Kumar Martial Arts Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Akshay Kumar",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Bollywood",
+      "Martial Arts",
+      "Discipline"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Flexibility"
+    ],
+    "description": "Follow Akshay Kumar's disciplined martial arts and functional fitness approach.",
+    "short_description": "Akshay's martial discipline"
+  },
+  {
+    "program_name": "Shahid Kapoor Fighter Physique",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Shahid Kapoor",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 80,
+    "tags": [
+      "Bollywood",
+      "Lean Muscle",
+      "Aesthetic"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Lose Fat"
+    ],
+    "description": "Achieve Shahid's lean, muscular fighter physique through intense training.",
+    "short_description": "Shahid's fighter look"
+  },
+  {
+    "program_name": "Sushant Singh Rajput MS Dhoni Transformation",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Sushant Singh Rajput",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Bollywood",
+      "Cricket Fitness",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Transform into an athlete like Sushant did for the Dhoni biopic.",
+    "short_description": "Sushant's athlete transformation"
+  },
+  {
+    "program_name": "Farhan Akhtar Bhaag Milkha Bhaag",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Farhan Akhtar",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Bollywood",
+      "Running",
+      "Endurance"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Train like a champion sprinter with Farhan's Milkha Singh transformation program.",
+    "short_description": "Farhan's sprinter training"
+  },
+  {
+    "program_name": "Deepika Padukone Athletic Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Deepika Padukone",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Bollywood",
+      "Women",
+      "Athletic"
+    ],
+    "goals": [
+      "Toning",
+      "Athletic Performance"
+    ],
+    "description": "Achieve Deepika's tall, athletic, and graceful physique through balanced training.",
+    "short_description": "Deepika's athletic grace"
+  },
+  {
+    "program_name": "Katrina Kaif Dance Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Katrina Kaif",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Bollywood",
+      "Women",
+      "Dance"
+    ],
+    "goals": [
+      "Toning",
+      "Flexibility"
+    ],
+    "description": "Train like Katrina with dance-based cardio, flexibility, and toning work.",
+    "short_description": "Katrina's dance fitness"
+  },
+  {
+    "program_name": "Shilpa Shetty Yoga Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Shilpa Shetty",
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Bollywood",
+      "Yoga",
+      "Wellness"
+    ],
+    "goals": [
+      "Flexibility",
+      "Wellness"
+    ],
+    "description": "Follow Shilpa Shetty's yoga-focused wellness and fitness approach.",
+    "short_description": "Shilpa's yoga wellness"
+  },
+  {
+    "program_name": "PV Sindhu Badminton Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Badminton",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "PV Sindhu",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Badminton",
+      "Women",
+      "Agility"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Train with Olympic medalist PV Sindhu's badminton-specific conditioning program.",
+    "short_description": "Sindhu's badminton training"
+  },
+  {
+    "program_name": "Mary Kom Boxing Fitness",
+    "program_category": "Sport Training",
+    "program_subcategory": "Boxing",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Mary Kom",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Boxing",
+      "Women",
+      "Strength"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like a champion boxer with Mary Kom's intense boxing conditioning.",
+    "short_description": "Mary Kom's boxing power"
+  },
+  {
+    "program_name": "Pregnancy First Trimester Safe Workout",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pregnancy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Pregnancy",
+      "Women",
+      "Safe Exercise"
+    ],
+    "goals": [
+      "Health",
+      "Wellness"
+    ],
+    "description": "Safe, gentle exercises for the first trimester of pregnancy focusing on low-impact movement.",
+    "short_description": "First trimester safe exercise"
+  },
+  {
+    "program_name": "Pregnancy Second Trimester Strength",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pregnancy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Pregnancy",
+      "Women",
+      "Strength"
+    ],
+    "goals": [
+      "Health",
+      "Maintain Fitness"
+    ],
+    "description": "Modified strength training safe for second trimester with focus on maintaining fitness.",
+    "short_description": "Second trimester strength"
+  },
+  {
+    "program_name": "Pregnancy Third Trimester Mobility",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pregnancy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Pregnancy",
+      "Women",
+      "Mobility"
+    ],
+    "goals": [
+      "Health",
+      "Flexibility"
+    ],
+    "description": "Gentle mobility and stretching for third trimester comfort and birth preparation.",
+    "short_description": "Third trimester mobility"
+  },
+  {
+    "program_name": "Postpartum Recovery 0-6 Weeks",
+    "program_category": "Women's Health",
+    "program_subcategory": "Postpartum",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Postpartum",
+      "Women",
+      "Recovery"
+    ],
+    "goals": [
+      "Health",
+      "Recovery"
+    ],
+    "description": "Gentle postpartum recovery exercises focusing on pelvic floor and core healing.",
+    "short_description": "Early postpartum recovery"
+  },
+  {
+    "program_name": "Postpartum Rebuild 6-12 Weeks",
+    "program_category": "Women's Health",
+    "program_subcategory": "Postpartum",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Postpartum",
+      "Women",
+      "Rebuild"
+    ],
+    "goals": [
+      "Health",
+      "Regain Strength"
+    ],
+    "description": "Rebuild core and pelvic floor strength after clearance from healthcare provider.",
+    "short_description": "Postpartum rebuild"
+  },
+  {
+    "program_name": "Postpartum Body Transformation 3-6 Months",
+    "program_category": "Women's Health",
+    "program_subcategory": "Postpartum",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Postpartum",
+      "Women",
+      "Fat Loss"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Build Muscle"
+    ],
+    "description": "Return to fitness and transform your body safely after postpartum recovery period.",
+    "short_description": "Postpartum transformation"
+  },
+  {
+    "program_name": "PCOS Weight Management",
+    "program_category": "Women's Health",
+    "program_subcategory": "Hormonal Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "PCOS",
+      "Women",
+      "Weight Loss"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Hormonal Balance"
+    ],
+    "description": "Exercise program designed to manage PCOS symptoms and support healthy weight loss.",
+    "short_description": "PCOS weight management"
+  },
+  {
+    "program_name": "PCOS Strength & Insulin Sensitivity",
+    "program_category": "Women's Health",
+    "program_subcategory": "Hormonal Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 55,
+    "tags": [
+      "PCOS",
+      "Women",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Hormonal Balance"
+    ],
+    "description": "Build muscle and improve insulin sensitivity with PCOS-friendly strength training.",
+    "short_description": "PCOS strength training"
+  },
+  {
+    "program_name": "Menopause Fitness Foundation",
+    "program_category": "Women's Health",
+    "program_subcategory": "Menopause",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Menopause",
+      "Women",
+      "Bone Health"
+    ],
+    "goals": [
+      "Health",
+      "Maintain Fitness"
+    ],
+    "description": "Foundation fitness program for managing menopause symptoms and maintaining health.",
+    "short_description": "Menopause fitness basics"
+  },
+  {
+    "program_name": "Menopause Strength & Bone Density",
+    "program_category": "Women's Health",
+    "program_subcategory": "Menopause",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Menopause",
+      "Women",
+      "Bone Health"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Bone Density"
+    ],
+    "description": "Combat bone density loss and build strength during menopause with resistance training.",
+    "short_description": "Menopause strength"
+  },
+  {
+    "program_name": "Women's Pelvic Floor Beginner",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pelvic Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Women",
+      "Pelvic Floor",
+      "Core"
+    ],
+    "goals": [
+      "Health",
+      "Pelvic Strength"
+    ],
+    "description": "Introduction to pelvic floor exercises for women to prevent and treat dysfunction.",
+    "short_description": "Women's pelvic floor basics"
+  },
+  {
+    "program_name": "Women's Pelvic Floor Advanced",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pelvic Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Women",
+      "Pelvic Floor",
+      "Core Strength"
+    ],
+    "goals": [
+      "Pelvic Strength",
+      "Core Stability"
+    ],
+    "description": "Advanced pelvic floor strengthening integrated with functional movement patterns.",
+    "short_description": "Advanced pelvic floor"
+  },
+  {
+    "program_name": "Diastasis Recti Recovery",
+    "program_category": "Women's Health",
+    "program_subcategory": "Postpartum",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Postpartum",
+      "Women",
+      "Core Recovery"
+    ],
+    "goals": [
+      "Health",
+      "Core Healing"
+    ],
+    "description": "Heal diastasis recti with targeted exercises and proper core reconnection.",
+    "short_description": "Diastasis recti healing"
+  },
+  {
+    "program_name": "Women's Hormone Balance Yoga",
+    "program_category": "Women's Health",
+    "program_subcategory": "Hormonal Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Women",
+      "Yoga",
+      "Hormones"
+    ],
+    "goals": [
+      "Hormonal Balance",
+      "Wellness"
+    ],
+    "description": "Yoga sequences designed to support hormonal balance throughout the menstrual cycle.",
+    "short_description": "Hormone balance yoga"
+  },
+  {
+    "program_name": "Women's Aesthetic Lean Toning",
+    "program_category": "Women's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Women",
+      "Toning",
+      "Lean Muscle"
+    ],
+    "goals": [
+      "Toning",
+      "Lose Fat"
+    ],
+    "description": "Build lean, toned muscle with a focus on aesthetic goals for women.",
+    "short_description": "Women's lean toning"
+  },
+  {
+    "program_name": "Women's Glute Building Program",
+    "program_category": "Women's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 55,
+    "tags": [
+      "Women",
+      "Glutes",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Toning"
+    ],
+    "description": "Build strong, sculpted glutes with progressive overload and targeted exercises.",
+    "short_description": "Women's glute building"
+  },
+  {
+    "program_name": "Women's Full Body Strength",
+    "program_category": "Women's Health",
+    "program_subcategory": "Strength Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Women",
+      "Strength",
+      "Full Body"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Comprehensive full-body strength training program designed for women.",
+    "short_description": "Women's full body strength"
+  },
+  {
+    "program_name": "Women's Upper Body Strength",
+    "program_category": "Women's Health",
+    "program_subcategory": "Strength Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Women",
+      "Upper Body",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build upper body strength and confidence with women-focused programming.",
+    "short_description": "Women's upper body"
+  },
+  {
+    "program_name": "Women's Bodyweight Home Workout",
+    "program_category": "Women's Health",
+    "program_subcategory": "Home Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Women",
+      "Bodyweight",
+      "Home"
+    ],
+    "goals": [
+      "Toning",
+      "Fitness"
+    ],
+    "description": "Effective bodyweight training for women that can be done at home with minimal equipment.",
+    "short_description": "Women's home bodyweight"
+  },
+  {
+    "program_name": "Women's HIIT Fat Loss",
+    "program_category": "Women's Health",
+    "program_subcategory": "Fat Loss",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Women",
+      "HIIT",
+      "Fat Loss"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "High-intensity interval training designed for women's fat loss goals.",
+    "short_description": "Women's HIIT fat loss"
+  },
+  {
+    "program_name": "Men's Pelvic Floor Beginner",
+    "program_category": "Men's Health",
+    "program_subcategory": "Pelvic Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Men",
+      "Pelvic Floor",
+      "Health"
+    ],
+    "goals": [
+      "Health",
+      "Pelvic Strength"
+    ],
+    "description": "Introduction to pelvic floor exercises for men to improve bladder control and core stability.",
+    "short_description": "Men's pelvic floor basics"
+  },
+  {
+    "program_name": "Men's Pelvic Floor Advanced",
+    "program_category": "Men's Health",
+    "program_subcategory": "Pelvic Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Men",
+      "Pelvic Floor",
+      "Core"
+    ],
+    "goals": [
+      "Pelvic Strength",
+      "Core Stability"
+    ],
+    "description": "Advanced pelvic floor training for men integrated with functional strength work.",
+    "short_description": "Advanced men's pelvic floor"
+  },
+  {
+    "program_name": "Men's Testosterone Boosting Workout",
+    "program_category": "Men's Health",
+    "program_subcategory": "Hormonal Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Testosterone",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Hormonal Health"
+    ],
+    "description": "Compound lift-focused program designed to naturally support testosterone levels.",
+    "short_description": "Testosterone boosting"
+  },
+  {
+    "program_name": "Men Over 40 Fitness",
+    "program_category": "Men's Health",
+    "program_subcategory": "Age-Specific",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Men",
+      "Over 40",
+      "Health"
+    ],
+    "goals": [
+      "Maintain Fitness",
+      "Health"
+    ],
+    "description": "Age-appropriate fitness program for men over 40 focusing on longevity and vitality.",
+    "short_description": "Men's 40+ fitness"
+  },
+  {
+    "program_name": "Men Over 50 Strength & Mobility",
+    "program_category": "Men's Health",
+    "program_subcategory": "Age-Specific",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Men",
+      "Over 50",
+      "Mobility"
+    ],
+    "goals": [
+      "Maintain Fitness",
+      "Mobility"
+    ],
+    "description": "Strength and mobility program for men over 50 to maintain independence and function.",
+    "short_description": "Men's 50+ strength"
+  },
+  {
+    "program_name": "Men's Core & Abs Definition",
+    "program_category": "Men's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Men",
+      "Abs",
+      "Core"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Core Strength"
+    ],
+    "description": "Build visible abs and core strength with targeted training and conditioning.",
+    "short_description": "Men's abs definition"
+  },
+  {
+    "program_name": "Men's Chest & Arms Hypertrophy",
+    "program_category": "Men's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Chest",
+      "Arms"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Aesthetic"
+    ],
+    "description": "Build impressive chest and arm muscles with focused hypertrophy training.",
+    "short_description": "Chest & arms growth"
+  },
+  {
+    "program_name": "Men's Power & Explosiveness",
+    "program_category": "Men's Health",
+    "program_subcategory": "Athletic Performance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Power",
+      "Explosive"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Increase Strength"
+    ],
+    "description": "Develop explosive power and athleticism with Olympic lifts and plyometrics.",
+    "short_description": "Men's explosive power"
+  },
+  {
+    "program_name": "Men's Functional Fitness",
+    "program_category": "Men's Health",
+    "program_subcategory": "Functional Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 55,
+    "tags": [
+      "Men",
+      "Functional",
+      "Real World"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Functional Strength"
+    ],
+    "description": "Build functional strength for real-world activities and everyday performance.",
+    "short_description": "Men's functional training"
+  },
+  {
+    "program_name": "Men's Beginner Muscle Building",
+    "program_category": "Men's Health",
+    "program_subcategory": "Beginner Programs",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Men",
+      "Beginner",
+      "Muscle"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Learn Fundamentals"
+    ],
+    "description": "Perfect introduction to muscle building for men new to weight training.",
+    "short_description": "Beginner muscle building"
+  },
+  {
+    "program_name": "Dad Bod to Fit Dad",
+    "program_category": "Men's Health",
+    "program_subcategory": "Body Transformation",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Men",
+      "Fat Loss",
+      "Transformation"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Build Muscle"
+    ],
+    "description": "Transform from dad bod to fit dad with balanced training and realistic progression.",
+    "short_description": "Dad bod transformation"
+  },
+  {
+    "program_name": "Men's Strongman Training",
+    "program_category": "Men's Health",
+    "program_subcategory": "Strength Sports",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Men",
+      "Strongman",
+      "Strength"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Build Muscle"
+    ],
+    "description": "Train like a strongman with event training and maximal strength development.",
+    "short_description": "Strongman training"
+  },
+  {
+    "program_name": "Men's Powerlifting Foundation",
+    "program_category": "Men's Health",
+    "program_subcategory": "Strength Sports",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Men",
+      "Powerlifting",
+      "Strength"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Competition Prep"
+    ],
+    "description": "Build a foundation in powerlifting with focus on squat, bench, and deadlift.",
+    "short_description": "Powerlifting basics"
+  },
+  {
+    "program_name": "Men's Calisthenics Mastery",
+    "program_category": "Men's Health",
+    "program_subcategory": "Bodyweight Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Men",
+      "Calisthenics",
+      "Bodyweight"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Master advanced calisthenics skills and build impressive bodyweight strength.",
+    "short_description": "Calisthenics mastery"
+  },
+  {
+    "program_name": "Men's Athletic Conditioning",
+    "program_category": "Men's Health",
+    "program_subcategory": "Athletic Performance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Conditioning",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Conditioning"
+    ],
+    "description": "Elite athletic conditioning program for men seeking peak performance.",
+    "short_description": "Elite conditioning"
+  },
+  {
+    "program_name": "Beginner Yoga Fundamentals",
+    "program_category": "Yoga",
+    "program_subcategory": "Beginner",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Yoga",
+      "Beginner",
+      "Flexibility"
+    ],
+    "goals": [
+      "Flexibility",
+      "Wellness"
+    ],
+    "description": "Introduction to yoga with foundational poses and breathing techniques for complete beginners.",
+    "short_description": "Start your yoga journey"
+  },
+  {
+    "program_name": "Gentle Yoga for Beginners",
+    "program_category": "Yoga",
+    "program_subcategory": "Beginner",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Yoga",
+      "Gentle",
+      "Stress Relief"
+    ],
+    "goals": [
+      "Flexibility",
+      "Stress Relief"
+    ],
+    "description": "Gentle yoga practice perfect for absolute beginners focusing on relaxation and basic poses.",
+    "short_description": "Gentle beginner yoga"
+  },
+  {
+    "program_name": "Morning Yoga Flow Beginner",
+    "program_category": "Yoga",
+    "program_subcategory": "Beginner",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 4,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Yoga",
+      "Morning",
+      "Energy"
+    ],
+    "goals": [
+      "Flexibility",
+      "Energy"
+    ],
+    "description": "Start your day with energizing beginner yoga flows to improve flexibility and boost energy.",
+    "short_description": "Morning beginner yoga"
+  },
+  {
+    "program_name": "Power Yoga for Strength",
+    "program_category": "Yoga",
+    "program_subcategory": "Power Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Power",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Flexibility"
+    ],
+    "description": "Athletic yoga focusing on strength, stamina, and flexibility through dynamic sequences.",
+    "short_description": "Build strength through power yoga"
+  },
+  {
+    "program_name": "Vinyasa Flow Intermediate",
+    "program_category": "Yoga",
+    "program_subcategory": "Vinyasa",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Yoga",
+      "Vinyasa",
+      "Flow"
+    ],
+    "goals": [
+      "Flexibility",
+      "Conditioning"
+    ],
+    "description": "Flowing vinyasa sequences linking breath and movement for intermediate practitioners.",
+    "short_description": "Vinyasa flow practice"
+  },
+  {
+    "program_name": "Advanced Vinyasa Mastery",
+    "program_category": "Yoga",
+    "program_subcategory": "Vinyasa",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Yoga",
+      "Advanced",
+      "Inversions"
+    ],
+    "goals": [
+      "Flexibility",
+      "Skill Mastery"
+    ],
+    "description": "Advanced vinyasa practice with inversions, arm balances, and complex transitions.",
+    "short_description": "Master advanced vinyasa"
+  },
+  {
+    "program_name": "Yin Yoga Deep Stretch",
+    "program_category": "Yoga",
+    "program_subcategory": "Yin Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Yin",
+      "Deep Stretch"
+    ],
+    "goals": [
+      "Flexibility",
+      "Relaxation"
+    ],
+    "description": "Slow-paced yin yoga with long-held poses targeting deep connective tissues.",
+    "short_description": "Deep yin stretching"
+  },
+  {
+    "program_name": "Restorative Yoga for Recovery",
+    "program_category": "Yoga",
+    "program_subcategory": "Restorative",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Yoga",
+      "Restorative",
+      "Recovery"
+    ],
+    "goals": [
+      "Recovery",
+      "Stress Relief"
+    ],
+    "description": "Gentle restorative yoga for deep relaxation and nervous system recovery.",
+    "short_description": "Restorative recovery yoga"
+  },
+  {
+    "program_name": "Bedtime Yoga for Sleep",
+    "program_category": "Yoga",
+    "program_subcategory": "Restorative",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 4,
+    "sessions_per_week": 7,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Yoga",
+      "Sleep",
+      "Relaxation"
+    ],
+    "goals": [
+      "Sleep Quality",
+      "Stress Relief"
+    ],
+    "description": "Calming evening yoga sequences to prepare body and mind for deep sleep.",
+    "short_description": "Yoga for better sleep"
+  },
+  {
+    "program_name": "Hot Yoga Beginner",
+    "program_category": "Yoga",
+    "program_subcategory": "Hot Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Hot Yoga",
+      "Detox"
+    ],
+    "goals": [
+      "Flexibility",
+      "Lose Fat"
+    ],
+    "description": "Introduction to hot yoga in heated room for increased flexibility and detoxification.",
+    "short_description": "Beginner hot yoga"
+  },
+  {
+    "program_name": "Bikram Yoga 26 & 2",
+    "program_category": "Yoga",
+    "program_subcategory": "Bikram",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Yoga",
+      "Bikram",
+      "Hot"
+    ],
+    "goals": [
+      "Flexibility",
+      "Endurance"
+    ],
+    "description": "Traditional Bikram yoga sequence of 26 postures and 2 breathing exercises in heated room.",
+    "short_description": "Classic Bikram sequence"
+  },
+  {
+    "program_name": "Yoga for Back Pain Relief",
+    "program_category": "Yoga",
+    "program_subcategory": "Therapeutic",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Yoga",
+      "Back Pain",
+      "Therapeutic"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Flexibility"
+    ],
+    "description": "Therapeutic yoga sequences specifically designed to relieve and prevent back pain.",
+    "short_description": "Yoga for back pain"
+  },
+  {
+    "program_name": "Yoga for Athletes",
+    "program_category": "Yoga",
+    "program_subcategory": "Athletic",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Yoga",
+      "Athletes",
+      "Recovery"
+    ],
+    "goals": [
+      "Flexibility",
+      "Recovery"
+    ],
+    "description": "Yoga designed for athletes focusing on mobility, recovery, and injury prevention.",
+    "short_description": "Athletic yoga practice"
+  },
+  {
+    "program_name": "Prenatal Yoga All Trimesters",
+    "program_category": "Yoga",
+    "program_subcategory": "Prenatal",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 36,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Yoga",
+      "Pregnancy",
+      "Women"
+    ],
+    "goals": [
+      "Health",
+      "Flexibility"
+    ],
+    "description": "Safe prenatal yoga adapted for all trimesters supporting pregnancy health and birth preparation.",
+    "short_description": "Prenatal yoga journey"
+  },
+  {
+    "program_name": "Daily 10-Minute Stretches Easy",
+    "program_category": "Stretching",
+    "program_subcategory": "Easy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 4,
+    "sessions_per_week": 7,
+    "session_duration_minutes": 10,
+    "tags": [
+      "Stretching",
+      "Daily",
+      "Beginner"
+    ],
+    "goals": [
+      "Flexibility",
+      "Mobility"
+    ],
+    "description": "Simple 10-minute daily stretching routine perfect for beginners or morning mobility.",
+    "short_description": "Easy daily stretching"
+  },
+  {
+    "program_name": "Office Worker Desk Stretches",
+    "program_category": "Stretching",
+    "program_subcategory": "Easy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 4,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 10,
+    "tags": [
+      "Stretching",
+      "Desk Work",
+      "Easy"
+    ],
+    "goals": [
+      "Mobility",
+      "Pain Relief"
+    ],
+    "description": "Easy stretches you can do at your desk to combat sitting and improve posture.",
+    "short_description": "Desk stretching routine"
+  },
+  {
+    "program_name": "Senior Gentle Stretching",
+    "program_category": "Stretching",
+    "program_subcategory": "Easy",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Stretching",
+      "Seniors",
+      "Gentle"
+    ],
+    "goals": [
+      "Mobility",
+      "Health"
+    ],
+    "description": "Gentle stretching program designed for seniors to maintain mobility and independence.",
+    "short_description": "Senior stretching"
+  },
+  {
+    "program_name": "Full Body Flexibility Medium",
+    "program_category": "Stretching",
+    "program_subcategory": "Medium",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Stretching",
+      "Full Body",
+      "Flexibility"
+    ],
+    "goals": [
+      "Flexibility",
+      "Mobility"
+    ],
+    "description": "Progressive full-body stretching to significantly improve overall flexibility.",
+    "short_description": "Medium flexibility training"
+  },
+  {
+    "program_name": "Hip Flexor & Lower Body Mobility",
+    "program_category": "Stretching",
+    "program_subcategory": "Medium",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 6,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Stretching",
+      "Hips",
+      "Lower Body"
+    ],
+    "goals": [
+      "Mobility",
+      "Pain Relief"
+    ],
+    "description": "Focused stretching program to open tight hips and improve lower body mobility.",
+    "short_description": "Hip & leg mobility"
+  },
+  {
+    "program_name": "Shoulder & Upper Body Flexibility",
+    "program_category": "Stretching",
+    "program_subcategory": "Medium",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 6,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Stretching",
+      "Shoulders",
+      "Upper Body"
+    ],
+    "goals": [
+      "Mobility",
+      "Posture"
+    ],
+    "description": "Improve shoulder mobility and upper body flexibility for better posture and movement.",
+    "short_description": "Shoulder flexibility"
+  },
+  {
+    "program_name": "Advanced Splits Training",
+    "program_category": "Stretching",
+    "program_subcategory": "Hard",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Stretching",
+      "Splits",
+      "Advanced"
+    ],
+    "goals": [
+      "Extreme Flexibility",
+      "Splits"
+    ],
+    "description": "Intensive stretching program working toward front and side splits mastery.",
+    "short_description": "Master the splits"
+  },
+  {
+    "program_name": "Contortion & Extreme Flexibility",
+    "program_category": "Stretching",
+    "program_subcategory": "Hard",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Stretching",
+      "Contortion",
+      "Extreme"
+    ],
+    "goals": [
+      "Extreme Flexibility",
+      "Skill Mastery"
+    ],
+    "description": "Advanced contortion training for extreme flexibility including backbends and deep stretches.",
+    "short_description": "Extreme flexibility training"
+  },
+  {
+    "program_name": "Martial Arts Flexibility Advanced",
+    "program_category": "Stretching",
+    "program_subcategory": "Hard",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Stretching",
+      "Martial Arts",
+      "Kicks"
+    ],
+    "goals": [
+      "Flexibility",
+      "Athletic Performance"
+    ],
+    "description": "Advanced stretching for martial artists focusing on high kicks and combat flexibility.",
+    "short_description": "Martial arts stretching"
+  },
+  {
+    "program_name": "Lower Back Pain Relief Foundation",
+    "program_category": "Pain Management",
+    "program_subcategory": "Back Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Pain Relief",
+      "Back",
+      "Core"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Core Strength"
+    ],
+    "description": "Gentle exercises to relieve lower back pain through core strengthening and mobility.",
+    "short_description": "Fix lower back pain"
+  },
+  {
+    "program_name": "Sciatica Pain Management",
+    "program_category": "Pain Management",
+    "program_subcategory": "Sciatica",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Pain Relief",
+      "Sciatica",
+      "Nerve"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Alleviate sciatic nerve pain through proper stretching, strengthening, and nerve glides.",
+    "short_description": "Sciatica relief"
+  },
+  {
+    "program_name": "Herniated Disc Recovery",
+    "program_category": "Pain Management",
+    "program_subcategory": "Back Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Pain Relief",
+      "Disc",
+      "Rehabilitation"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Recovery"
+    ],
+    "description": "Safe rehabilitation exercises for herniated disc recovery and pain management.",
+    "short_description": "Disc herniation recovery"
+  },
+  {
+    "program_name": "Neck Pain Relief Program",
+    "program_category": "Pain Management",
+    "program_subcategory": "Neck Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Pain Relief",
+      "Neck",
+      "Posture"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Relieve neck pain and tension through gentle stretches and strengthening exercises.",
+    "short_description": "Neck pain relief"
+  },
+  {
+    "program_name": "Frozen Shoulder Rehabilitation",
+    "program_category": "Pain Management",
+    "program_subcategory": "Shoulder Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Pain Relief",
+      "Shoulder",
+      "Rehabilitation"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Progressive rehabilitation for frozen shoulder to restore range of motion and reduce pain.",
+    "short_description": "Frozen shoulder recovery"
+  },
+  {
+    "program_name": "Desk Worker Posture Fix",
+    "program_category": "Pain Management",
+    "program_subcategory": "Posture",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Pain Relief",
+      "Posture",
+      "Desk Work"
+    ],
+    "goals": [
+      "Posture",
+      "Pain Relief"
+    ],
+    "description": "Combat desk-related pain with targeted exercises for neck, shoulders, and lower back.",
+    "short_description": "Fix desk posture"
+  },
+  {
+    "program_name": "Knee Pain Rehabilitation",
+    "program_category": "Pain Management",
+    "program_subcategory": "Knee Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Pain Relief",
+      "Knee",
+      "Rehabilitation"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Strength"
+    ],
+    "description": "Strengthen muscles around the knee to reduce pain and prevent future injury.",
+    "short_description": "Knee pain relief"
+  },
+  {
+    "program_name": "Hip Pain & Mobility Fix",
+    "program_category": "Pain Management",
+    "program_subcategory": "Hip Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Pain Relief",
+      "Hip",
+      "Mobility"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Relieve hip pain and improve mobility through targeted stretching and strengthening.",
+    "short_description": "Hip pain relief"
+  },
+  {
+    "program_name": "Plantar Fasciitis Recovery",
+    "program_category": "Pain Management",
+    "program_subcategory": "Foot Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 7,
+    "session_duration_minutes": 10,
+    "tags": [
+      "Pain Relief",
+      "Foot",
+      "Plantar Fasciitis"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Recovery"
+    ],
+    "description": "Daily exercises to relieve plantar fasciitis pain and strengthen feet.",
+    "short_description": "Plantar fasciitis fix"
+  },
+  {
+    "program_name": "Arthritis-Friendly Movement",
+    "program_category": "Pain Management",
+    "program_subcategory": "Arthritis",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Pain Relief",
+      "Arthritis",
+      "Joint Health"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Gentle movement program designed for arthritis management and joint health.",
+    "short_description": "Arthritis management"
+  },
+  {
+    "program_name": "Post-Injury Rehabilitation General",
+    "program_category": "Pain Management",
+    "program_subcategory": "Rehabilitation",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Rehabilitation",
+      "Recovery",
+      "Injury"
+    ],
+    "goals": [
+      "Recovery",
+      "Strength"
+    ],
+    "description": "General rehabilitation program to safely return to activity after injury.",
+    "short_description": "Post-injury recovery"
+  },
+  {
+    "program_name": "Couch to 5K Beginner",
+    "program_category": "Sport Training",
+    "program_subcategory": "Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Running",
+      "Beginner",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Health"
+    ],
+    "description": "Progressive running program taking complete beginners to 5K distance safely.",
+    "short_description": "Start running - Couch to 5K"
+  },
+  {
+    "program_name": "10K Training Plan",
+    "program_category": "Sport Training",
+    "program_subcategory": "Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Running",
+      "10K",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Build to 10K race distance with structured training and speed work.",
+    "short_description": "10K race training"
+  },
+  {
+    "program_name": "Half Marathon Training",
+    "program_category": "Sport Training",
+    "program_subcategory": "Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Running",
+      "Half Marathon",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Complete half marathon training program with long runs and tempo work.",
+    "short_description": "Half marathon prep"
+  },
+  {
+    "program_name": "Marathon Training Advanced",
+    "program_category": "Sport Training",
+    "program_subcategory": "Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Running",
+      "Marathon",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Comprehensive marathon training with periodized plan for race day success.",
+    "short_description": "Marathon training"
+  },
+  {
+    "program_name": "Trail Running Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Running",
+      "Trail",
+      "Hills"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Build strength and technique for trail running with hill training and technical skills.",
+    "short_description": "Trail running training"
+  },
+  {
+    "program_name": "Swimming for Beginners",
+    "program_category": "Sport Training",
+    "program_subcategory": "Swimming",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Swimming",
+      "Beginner",
+      "Technique"
+    ],
+    "goals": [
+      "Endurance",
+      "Learn Technique"
+    ],
+    "description": "Learn proper swimming technique and build endurance for recreational swimming.",
+    "short_description": "Learn to swim"
+  },
+  {
+    "program_name": "Triathlon Swimming Training",
+    "program_category": "Sport Training",
+    "program_subcategory": "Swimming",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Swimming",
+      "Triathlon",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Swimming-specific training for triathlon with open water skills and endurance.",
+    "short_description": "Triathlon swim prep"
+  },
+  {
+    "program_name": "Cycling Beginner Endurance",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cycling",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Cycling",
+      "Beginner",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Health"
+    ],
+    "description": "Build cycling endurance from beginner level with progressive distance increases.",
+    "short_description": "Start cycling"
+  },
+  {
+    "program_name": "Century Ride Training (100 miles)",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cycling",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Cycling",
+      "Century",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Train for 100-mile century ride with long rides and interval training.",
+    "short_description": "Century ride training"
+  },
+  {
+    "program_name": "Soccer Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Soccer",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Soccer",
+      "Conditioning",
+      "Agility"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Soccer-specific conditioning with agility, speed, and endurance training.",
+    "short_description": "Soccer fitness"
+  },
+  {
+    "program_name": "Basketball Performance Training",
+    "program_category": "Sport Training",
+    "program_subcategory": "Basketball",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Basketball",
+      "Jumping",
+      "Speed"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Explosiveness"
+    ],
+    "description": "Improve basketball performance with vertical jump, speed, and conditioning work.",
+    "short_description": "Basketball training"
+  },
+  {
+    "program_name": "Tennis Fitness Program",
+    "program_category": "Sport Training",
+    "program_subcategory": "Tennis",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Tennis",
+      "Agility",
+      "Endurance"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Agility"
+    ],
+    "description": "Tennis-specific fitness focusing on court movement, agility, and endurance.",
+    "short_description": "Tennis conditioning"
+  },
+  {
+    "program_name": "Volleyball Jump Training",
+    "program_category": "Sport Training",
+    "program_subcategory": "Volleyball",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Volleyball",
+      "Jumping",
+      "Power"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Explosiveness"
+    ],
+    "description": "Volleyball performance training emphasizing vertical jump and explosive power.",
+    "short_description": "Volleyball jump training"
+  },
+  {
+    "program_name": "Fat Loss HIIT Beginner",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Fat Loss",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "HIIT",
+      "Fat Loss",
+      "Beginner"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "Beginner-friendly HIIT program designed for fat loss and improved conditioning.",
+    "short_description": "Beginner fat loss HIIT"
+  },
+  {
+    "program_name": "Rapid Fat Loss Advanced",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Fat Loss",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Fat Loss",
+      "HIIT",
+      "Intense"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "Intensive fat loss program combining HIIT, strength training, and metabolic conditioning.",
+    "short_description": "Rapid fat loss"
+  },
+  {
+    "program_name": "Metabolic Conditioning Intermediate",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Fat Loss",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Metabolic",
+      "Fat Loss",
+      "Conditioning"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Endurance"
+    ],
+    "description": "Metabolic conditioning circuits to maximize calorie burn and fat loss.",
+    "short_description": "Metabolic conditioning"
+  },
+  {
+    "program_name": "Hypertrophy Focus 4-Day Split",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Hypertrophy",
+      "Muscle",
+      "Split"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Aesthetic"
+    ],
+    "description": "Classic 4-day bodybuilding split optimized for muscle hypertrophy.",
+    "short_description": "4-day muscle building"
+  },
+  {
+    "program_name": "Push Pull Legs Routine",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 60,
+    "tags": [
+      "PPL",
+      "Muscle",
+      "Hypertrophy"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Classic push/pull/legs split for balanced muscle development and strength.",
+    "short_description": "PPL muscle building"
+  },
+  {
+    "program_name": "Full Body Mass Builder",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Full Body",
+      "Mass",
+      "Beginner"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Three full-body workouts per week for efficient muscle building.",
+    "short_description": "Full body mass gain"
+  },
+  {
+    "program_name": "Explosive Power Development",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Athletic Performance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Power",
+      "Explosive",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Explosiveness"
+    ],
+    "description": "Develop explosive power through Olympic lifts, plyometrics, and speed work.",
+    "short_description": "Explosive power training"
+  },
+  {
+    "program_name": "Vertical Jump Training",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Athletic Performance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Jumping",
+      "Plyometrics",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Explosiveness"
+    ],
+    "description": "Increase vertical jump through plyometrics, strength training, and technique work.",
+    "short_description": "Boost vertical jump"
+  },
+  {
+    "program_name": "Sprint Speed Development",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Athletic Performance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Speed",
+      "Sprinting",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Speed"
+    ],
+    "description": "Improve sprint speed through technique drills, plyometrics, and strength work.",
+    "short_description": "Sprint faster"
+  },
+  {
+    "program_name": "Women's Marathon Training",
+    "program_category": "Women's Health",
+    "program_subcategory": "Endurance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Women",
+      "Running",
+      "Marathon"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Complete marathon training program designed specifically for women runners.",
+    "short_description": "Women's marathon prep"
+  },
+  {
+    "program_name": "Women's CrossFit Introduction",
+    "program_category": "Women's Health",
+    "program_subcategory": "CrossFit",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Women",
+      "CrossFit",
+      "Functional"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Introduction to CrossFit-style training tailored for women with scaled movements.",
+    "short_description": "Women's CrossFit intro"
+  },
+  {
+    "program_name": "Bridal Bootcamp 12-Week",
+    "program_category": "Women's Health",
+    "program_subcategory": "Special Events",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Women",
+      "Wedding",
+      "Transformation"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Toning"
+    ],
+    "description": "Get in shape for your wedding day with targeted toning and fat loss program.",
+    "short_description": "Bridal transformation"
+  },
+  {
+    "program_name": "Women's Kickboxing Fitness",
+    "program_category": "Women's Health",
+    "program_subcategory": "Martial Arts",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 55,
+    "tags": [
+      "Women",
+      "Kickboxing",
+      "Cardio"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "High-energy kickboxing workout for women combining cardio and strength.",
+    "short_description": "Women's kickboxing"
+  },
+  {
+    "program_name": "Women's Pilates Core Strength",
+    "program_category": "Women's Health",
+    "program_subcategory": "Pilates",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Women",
+      "Pilates",
+      "Core"
+    ],
+    "goals": [
+      "Core Strength",
+      "Posture"
+    ],
+    "description": "Build core strength, improve posture, and enhance body awareness through Pilates.",
+    "short_description": "Women's Pilates core"
+  },
+  {
+    "program_name": "Men's Beach Body Summer Prep",
+    "program_category": "Men's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Beach Body",
+      "Fat Loss"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Build Muscle"
+    ],
+    "description": "Get ready for beach season with fat loss and muscle definition program.",
+    "short_description": "Summer beach body"
+  },
+  {
+    "program_name": "Men's Olympic Weightlifting",
+    "program_category": "Men's Health",
+    "program_subcategory": "Olympic Lifting",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Men",
+      "Olympic",
+      "Power"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Power"
+    ],
+    "description": "Learn Olympic weightlifting technique with snatch, clean & jerk progressions.",
+    "short_description": "Olympic weightlifting"
+  },
+  {
+    "program_name": "Men's Endurance Athlete Training",
+    "program_category": "Men's Health",
+    "program_subcategory": "Endurance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Men",
+      "Endurance",
+      "Triathlon"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Build exceptional endurance for long-distance running, cycling, or triathlon.",
+    "short_description": "Men's endurance training"
+  },
+  {
+    "program_name": "Scarlett Johansson Black Widow Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Scarlett Johansson",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Celebrity",
+      "Women",
+      "Martial Arts"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like Black Widow with martial arts, strength training, and agility work.",
+    "short_description": "Black Widow training"
+  },
+  {
+    "program_name": "Brie Larson Captain Marvel Workout",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Brie Larson",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Celebrity",
+      "Women",
+      "Strength"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build superhero strength like Captain Marvel through heavy lifting and functional training.",
+    "short_description": "Captain Marvel strength"
+  },
+  {
+    "program_name": "Jason Statham Action Star Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Action Hero",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Jason Statham",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Functional",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like an action star with varied, functional, never-repeat workouts.",
+    "short_description": "Action star training"
+  },
+  {
+    "program_name": "Vin Diesel Fast & Furious Build",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Action Hero",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Vin Diesel",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 70,
+    "tags": [
+      "Celebrity",
+      "Muscle",
+      "Power"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Increase Strength"
+    ],
+    "description": "Build muscle mass and power like Vin Diesel with strength-focused training.",
+    "short_description": "Fast & Furious build"
+  },
+  {
+    "program_name": "Sylvester Stallone Rocky Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Boxing",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Sylvester Stallone",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Celebrity",
+      "Boxing",
+      "Conditioning"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Build Muscle"
+    ],
+    "description": "Train like Rocky with old-school boxing conditioning and strength training.",
+    "short_description": "Rocky-style training"
+  },
+  {
+    "program_name": "Terry Crews Power Athlete Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Power Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Terry Crews",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Celebrity",
+      "Power",
+      "Muscle"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Power"
+    ],
+    "description": "Build explosive power and muscle like Terry Crews through intense training.",
+    "short_description": "Terry Crews power"
+  },
+  {
+    "program_name": "Jennifer Lopez Dance Fitness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Dance Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Jennifer Lopez",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Dance",
+      "Women"
+    ],
+    "goals": [
+      "Toning",
+      "Conditioning"
+    ],
+    "description": "Stay fit and toned through dance-based cardio and strength training like JLo.",
+    "short_description": "JLo dance fitness"
+  },
+  {
+    "program_name": "Matthew McConaughey Beach Body",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Beach Physique",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Matthew McConaughey",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Beach Body",
+      "Lean"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Toning"
+    ],
+    "description": "Achieve a lean, beach-ready physique through surf-inspired functional training.",
+    "short_description": "Beach body lean"
+  },
+  {
+    "program_name": "Gal Gadot Athletic Grace Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Superhero Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Gal Gadot",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Celebrity",
+      "Women",
+      "Athletic"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Toning"
+    ],
+    "description": "Build athletic grace and strength like Wonder Woman through varied training.",
+    "short_description": "Athletic grace training"
+  },
+  {
+    "program_name": "Mark Wahlberg F45 Style Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Functional Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": "Mark Wahlberg",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Celebrity",
+      "HIIT",
+      "Functional"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Build Muscle"
+    ],
+    "description": "High-intensity functional training inspired by Mark Wahlberg's early morning workouts.",
+    "short_description": "F45-style intensity"
+  },
+  {
+    "program_name": "Alia Bhatt Fitness Routine",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Alia Bhatt",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Bollywood",
+      "Women",
+      "Balanced"
+    ],
+    "goals": [
+      "Toning",
+      "Fitness"
+    ],
+    "description": "Balanced fitness routine combining yoga, pilates, and strength training like Alia Bhatt.",
+    "short_description": "Alia's balanced fitness"
+  },
+  {
+    "program_name": "Vidyut Jammwal Martial Arts Training",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Vidyut Jammwal",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Bollywood",
+      "Martial Arts",
+      "Kalaripayattu"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Martial Arts"
+    ],
+    "description": "Master Kalaripayattu and functional fitness like Vidyut Jammwal.",
+    "short_description": "Kalaripayattu training"
+  },
+  {
+    "program_name": "Milind Soman Ultra Endurance",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Milind Soman",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Bollywood",
+      "Endurance",
+      "Ultra Running"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Build ultra-endurance capacity like Milind Soman through long-distance training.",
+    "short_description": "Ultra endurance training"
+  },
+  {
+    "program_name": "Malaika Arora Yoga & Wellness",
+    "program_category": "Celebrity Workout",
+    "program_subcategory": "Bollywood Fitness",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Malaika Arora",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Bollywood",
+      "Yoga",
+      "Women"
+    ],
+    "goals": [
+      "Flexibility",
+      "Wellness"
+    ],
+    "description": "Yoga-focused wellness and fitness program inspired by Malaika Arora.",
+    "short_description": "Yoga wellness"
+  },
+  {
+    "program_name": "Rohit Sharma Cricket Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cricket",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Rohit Sharma",
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Cricket",
+      "Conditioning",
+      "Power"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Power"
+    ],
+    "description": "Cricket-specific conditioning with power development for explosive batting.",
+    "short_description": "Cricket power training"
+  },
+  {
+    "program_name": "Saina Nehwal Badminton Agility",
+    "program_category": "Sport Training",
+    "program_subcategory": "Badminton",
+    "country": [
+      "India"
+    ],
+    "celebrity_name": "Saina Nehwal",
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Badminton",
+      "Agility",
+      "Women"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Agility"
+    ],
+    "description": "Badminton agility and conditioning program inspired by Saina Nehwal.",
+    "short_description": "Badminton agility"
+  },
+  {
+    "program_name": "CrossFit Beginner Foundation",
+    "program_category": "Specialized Training",
+    "program_subcategory": "CrossFit",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "CrossFit",
+      "Functional",
+      "Beginner"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Conditioning"
+    ],
+    "description": "Introduction to CrossFit with scaled movements and proper technique foundation.",
+    "short_description": "CrossFit fundamentals"
+  },
+  {
+    "program_name": "CrossFit Competition Prep",
+    "program_category": "Specialized Training",
+    "program_subcategory": "CrossFit",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "CrossFit",
+      "Competition",
+      "Elite"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Competition"
+    ],
+    "description": "Advanced CrossFit programming for competition preparation and peak performance.",
+    "short_description": "CrossFit competition"
+  },
+  {
+    "program_name": "Spartan Race Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Obstacle Course",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "OCR",
+      "Spartan",
+      "Functional"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Prepare for Spartan Race with obstacle-specific training and running conditioning.",
+    "short_description": "Spartan Race prep"
+  },
+  {
+    "program_name": "Tough Mudder Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Obstacle Course",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "OCR",
+      "Tough Mudder",
+      "Team"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Team-focused training for Tough Mudder with emphasis on fun and endurance.",
+    "short_description": "Tough Mudder prep"
+  },
+  {
+    "program_name": "Rock Climbing Strength & Technique",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Climbing",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Climbing",
+      "Grip Strength",
+      "Power"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Grip Strength"
+    ],
+    "description": "Build climbing-specific strength, endurance, and technique for bouldering and sport climbing.",
+    "short_description": "Rock climbing training"
+  },
+  {
+    "program_name": "Surfing Functional Fitness",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Surfing",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Surfing",
+      "Paddling",
+      "Balance"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Endurance"
+    ],
+    "description": "Surf-specific conditioning with paddling endurance, pop-up power, and balance.",
+    "short_description": "Surfing fitness"
+  },
+  {
+    "program_name": "MMA Fighter Conditioning",
+    "program_category": "Specialized Training",
+    "program_subcategory": "MMA",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "MMA",
+      "Fighting",
+      "Conditioning"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Combat Sports"
+    ],
+    "description": "Complete MMA conditioning with striking, grappling, and fight-specific endurance.",
+    "short_description": "MMA conditioning"
+  },
+  {
+    "program_name": "Brazilian Jiu-Jitsu Strength",
+    "program_category": "Specialized Training",
+    "program_subcategory": "BJJ",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "BJJ",
+      "Grappling",
+      "Strength"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Grappling Strength"
+    ],
+    "description": "Supplemental strength training for Brazilian Jiu-Jitsu practitioners.",
+    "short_description": "BJJ strength training"
+  },
+  {
+    "program_name": "Muay Thai Conditioning",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Muay Thai",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Muay Thai",
+      "Kickboxing",
+      "Conditioning"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Combat Conditioning"
+    ],
+    "description": "Muay Thai-specific conditioning with pad work, clinch work, and cardio.",
+    "short_description": "Muay Thai conditioning"
+  },
+  {
+    "program_name": "Parkour & Freerunning Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Parkour",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Parkour",
+      "Movement",
+      "Agility"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Movement Skills"
+    ],
+    "description": "Build parkour movement skills with vaulting, jumping, and flow training.",
+    "short_description": "Parkour training"
+  },
+  {
+    "program_name": "Total Beginner Fitness (Never Exercised)",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Absolute Beginner",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Beginner",
+      "Foundation",
+      "Basics"
+    ],
+    "goals": [
+      "Health",
+      "Fitness Foundation"
+    ],
+    "description": "Perfect starting point for someone who has never exercised before.",
+    "short_description": "Absolute beginner start"
+  },
+  {
+    "program_name": "Home Workout No Equipment",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Home Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Home",
+      "Bodyweight",
+      "No Equipment"
+    ],
+    "goals": [
+      "Fitness",
+      "Build Muscle"
+    ],
+    "description": "Effective home workout using zero equipment - just your bodyweight.",
+    "short_description": "No equipment home workout"
+  },
+  {
+    "program_name": "Walking to Fitness Program",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Walking",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Walking",
+      "Low Impact",
+      "Beginner"
+    ],
+    "goals": [
+      "Health",
+      "Weight Loss"
+    ],
+    "description": "Progressive walking program to improve health and lose weight gently.",
+    "short_description": "Walking for fitness"
+  },
+  {
+    "program_name": "Senior Fitness Over 65",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Senior Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Seniors",
+      "Balance",
+      "Mobility"
+    ],
+    "goals": [
+      "Health",
+      "Mobility"
+    ],
+    "description": "Age-appropriate fitness for seniors focusing on balance, strength, and independence.",
+    "short_description": "Senior fitness program"
+  },
+  {
+    "program_name": "Chair Exercises for Limited Mobility",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Adaptive Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Adaptive",
+      "Chair",
+      "Limited Mobility"
+    ],
+    "goals": [
+      "Health",
+      "Mobility"
+    ],
+    "description": "Effective exercises that can be done seated for those with limited mobility.",
+    "short_description": "Chair exercises"
+  },
+  {
+    "program_name": "Ironman Triathlon Training",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Triathlon",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 24,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Triathlon",
+      "Ironman",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Complete Ironman triathlon training covering swim, bike, and run progressions.",
+    "short_description": "Ironman triathlon prep"
+  },
+  {
+    "program_name": "Ultra Marathon 50K Training",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Ultra Running",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 20,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 150,
+    "tags": [
+      "Ultra",
+      "Running",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Ultra Endurance"
+    ],
+    "description": "Train for 50K ultramarathon with back-to-back long runs and trail training.",
+    "short_description": "Ultra 50K training"
+  },
+  {
+    "program_name": "Bodybuilding Competition Prep",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Bodybuilding",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Bodybuilding",
+      "Competition",
+      "Aesthetic"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Competition"
+    ],
+    "description": "Contest prep bodybuilding program with periodization for peak physique.",
+    "short_description": "Bodybuilding contest prep"
+  },
+  {
+    "program_name": "Powerlifting Meet Preparation",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Powerlifting",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Powerlifting",
+      "Strength",
+      "Competition"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Competition"
+    ],
+    "description": "Peaking program for powerlifting competition with max strength focus.",
+    "short_description": "Powerlifting meet prep"
+  },
+  {
+    "program_name": "Ashtanga Yoga Primary Series",
+    "program_category": "Yoga",
+    "program_subcategory": "Ashtanga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Yoga",
+      "Ashtanga",
+      "Traditional"
+    ],
+    "goals": [
+      "Flexibility",
+      "Strength"
+    ],
+    "description": "Traditional Ashtanga Yoga primary series with disciplined practice sequence.",
+    "short_description": "Ashtanga primary series"
+  },
+  {
+    "program_name": "Kundalini Yoga Energy Work",
+    "program_category": "Yoga",
+    "program_subcategory": "Kundalini",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Kundalini",
+      "Energy"
+    ],
+    "goals": [
+      "Energy",
+      "Spiritual"
+    ],
+    "description": "Kundalini yoga focusing on energy work, breath, and consciousness.",
+    "short_description": "Kundalini energy yoga"
+  },
+  {
+    "program_name": "Hatha Yoga Classical",
+    "program_category": "Yoga",
+    "program_subcategory": "Hatha",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Hatha",
+      "Classical"
+    ],
+    "goals": [
+      "Flexibility",
+      "Balance"
+    ],
+    "description": "Classical Hatha Yoga with traditional poses and breathing exercises.",
+    "short_description": "Classical Hatha yoga"
+  },
+  {
+    "program_name": "Aerial Yoga Beginner",
+    "program_category": "Yoga",
+    "program_subcategory": "Aerial",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Yoga",
+      "Aerial",
+      "Fun"
+    ],
+    "goals": [
+      "Flexibility",
+      "Core Strength"
+    ],
+    "description": "Yoga using aerial silk hammocks for decompression and fun inversions.",
+    "short_description": "Aerial yoga fun"
+  },
+  {
+    "program_name": "Acro Yoga Partner Practice",
+    "program_category": "Yoga",
+    "program_subcategory": "Acro",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Yoga",
+      "Acro",
+      "Partner"
+    ],
+    "goals": [
+      "Strength",
+      "Balance"
+    ],
+    "description": "Partner acrobatic yoga combining strength, trust, and playfulness.",
+    "short_description": "Acro yoga partners"
+  },
+  {
+    "program_name": "Chair Yoga for Office",
+    "program_category": "Yoga",
+    "program_subcategory": "Chair Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 4,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Yoga",
+      "Chair",
+      "Office"
+    ],
+    "goals": [
+      "Flexibility",
+      "Stress Relief"
+    ],
+    "description": "Quick chair yoga sessions perfect for office workers and desk stretching.",
+    "short_description": "Office chair yoga"
+  },
+  {
+    "program_name": "Yoga Nidra Deep Relaxation",
+    "program_category": "Yoga",
+    "program_subcategory": "Yoga Nidra",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Yoga",
+      "Meditation",
+      "Sleep"
+    ],
+    "goals": [
+      "Stress Relief",
+      "Sleep Quality"
+    ],
+    "description": "Yogic sleep practice for deep relaxation and stress reduction.",
+    "short_description": "Yoga Nidra relaxation"
+  },
+  {
+    "program_name": "Rocket Yoga Dynamic Flow",
+    "program_category": "Yoga",
+    "program_subcategory": "Rocket Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Yoga",
+      "Rocket",
+      "Dynamic"
+    ],
+    "goals": [
+      "Strength",
+      "Flexibility"
+    ],
+    "description": "Modified Ashtanga with arm balances, inversions, and creative sequences.",
+    "short_description": "Rocket yoga flow"
+  },
+  {
+    "program_name": "Jivamukti Yoga Spiritual Practice",
+    "program_category": "Yoga",
+    "program_subcategory": "Jivamukti",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Yoga",
+      "Jivamukti",
+      "Spiritual"
+    ],
+    "goals": [
+      "Flexibility",
+      "Spiritual Growth"
+    ],
+    "description": "Vinyasa-based practice incorporating chanting, meditation, and philosophy.",
+    "short_description": "Jivamukti spiritual yoga"
+  },
+  {
+    "program_name": "Forrest Yoga Healing Practice",
+    "program_category": "Yoga",
+    "program_subcategory": "Forrest Yoga",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Yoga",
+      "Forrest",
+      "Healing"
+    ],
+    "goals": [
+      "Core Strength",
+      "Emotional Healing"
+    ],
+    "description": "Intense core work and long holdings for emotional and physical healing.",
+    "short_description": "Forrest healing yoga"
+  },
+  {
+    "program_name": "Women's Triathlon Training",
+    "program_category": "Women's Health",
+    "program_subcategory": "Triathlon",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Women",
+      "Triathlon",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Athletic Performance"
+    ],
+    "description": "Complete women's triathlon training for swim, bike, and run.",
+    "short_description": "Women's triathlon"
+  },
+  {
+    "program_name": "Women's Powerlifting Beginner",
+    "program_category": "Women's Health",
+    "program_subcategory": "Powerlifting",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Women",
+      "Powerlifting",
+      "Strength"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Confidence"
+    ],
+    "description": "Introduction to powerlifting for women: squat, bench press, deadlift.",
+    "short_description": "Women's powerlifting intro"
+  },
+  {
+    "program_name": "Figure Competition Prep Women",
+    "program_category": "Women's Health",
+    "program_subcategory": "Figure Competition",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 20,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Women",
+      "Figure",
+      "Competition"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Competition"
+    ],
+    "description": "Figure competition prep with muscle building and conditioning phases.",
+    "short_description": "Figure comp prep"
+  },
+  {
+    "program_name": "Bikini Body Competition Prep",
+    "program_category": "Women's Health",
+    "program_subcategory": "Bikini Competition",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Women",
+      "Bikini",
+      "Competition"
+    ],
+    "goals": [
+      "Toning",
+      "Competition"
+    ],
+    "description": "Bikini competition prep focusing on shape, symmetry, and conditioning.",
+    "short_description": "Bikini comp prep"
+  },
+  {
+    "program_name": "Women's Obstacle Course Racing",
+    "program_category": "Women's Health",
+    "program_subcategory": "OCR",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Women",
+      "OCR",
+      "Functional"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Strength"
+    ],
+    "description": "Train for obstacle course races with grip strength, running, and obstacles.",
+    "short_description": "Women's OCR training"
+  },
+  {
+    "program_name": "Men's Spartan Physique",
+    "program_category": "Men's Health",
+    "program_subcategory": "Aesthetic Goals",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Men",
+      "Spartan",
+      "Warrior"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Athletic Performance"
+    ],
+    "description": "Build a lean, muscular warrior physique like ancient Spartans.",
+    "short_description": "Spartan warrior build"
+  },
+  {
+    "program_name": "Men's Navy SEAL Fitness",
+    "program_category": "Men's Health",
+    "program_subcategory": "Military Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Men",
+      "Military",
+      "Elite"
+    ],
+    "goals": [
+      "Endurance",
+      "Mental Toughness"
+    ],
+    "description": "Elite military-style training inspired by Navy SEAL preparation programs.",
+    "short_description": "Navy SEAL training"
+  },
+  {
+    "program_name": "Men's Tactical Athlete Program",
+    "program_category": "Men's Health",
+    "program_subcategory": "Tactical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Men",
+      "Tactical",
+      "Functional"
+    ],
+    "goals": [
+      "Strength",
+      "Endurance"
+    ],
+    "description": "Train like a tactical athlete: military, law enforcement, first responder fitness.",
+    "short_description": "Tactical athlete training"
+  },
+  {
+    "program_name": "Men's Absolute Strength 5x5",
+    "program_category": "Men's Health",
+    "program_subcategory": "Strength Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Strength",
+      "5x5"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Build Muscle"
+    ],
+    "description": "Classic 5x5 strength program for building maximum strength and size.",
+    "short_description": "5x5 strength program"
+  },
+  {
+    "program_name": "Men's Starting Strength Program",
+    "program_category": "Men's Health",
+    "program_subcategory": "Strength Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Men",
+      "Beginner",
+      "Strength"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Learn Fundamentals"
+    ],
+    "description": "Linear progression strength program perfect for novice lifters.",
+    "short_description": "Starting strength basics"
+  },
+  {
+    "program_name": "Golf Fitness & Flexibility",
+    "program_category": "Sport Training",
+    "program_subcategory": "Golf",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Golf",
+      "Flexibility",
+      "Rotation"
+    ],
+    "goals": [
+      "Flexibility",
+      "Athletic Performance"
+    ],
+    "description": "Improve golf performance through rotational power and flexibility training.",
+    "short_description": "Golf fitness training"
+  },
+  {
+    "program_name": "Baseball/Softball Throwing Program",
+    "program_category": "Sport Training",
+    "program_subcategory": "Baseball",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Baseball",
+      "Throwing",
+      "Power"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Injury Prevention"
+    ],
+    "description": "Baseball/softball conditioning with throwing velocity and injury prevention focus.",
+    "short_description": "Baseball conditioning"
+  },
+  {
+    "program_name": "American Football Strength & Speed",
+    "program_category": "Sport Training",
+    "program_subcategory": "Football",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Football",
+      "Strength",
+      "Speed"
+    ],
+    "goals": [
+      "Increase Strength",
+      "Explosiveness"
+    ],
+    "description": "Football strength and speed training for power, size, and explosiveness.",
+    "short_description": "Football training"
+  },
+  {
+    "program_name": "Rugby Conditioning Program",
+    "program_category": "Sport Training",
+    "program_subcategory": "Rugby",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Rugby",
+      "Conditioning",
+      "Contact"
+    ],
+    "goals": [
+      "Strength",
+      "Endurance"
+    ],
+    "description": "Rugby-specific training for strength, endurance, and contact readiness.",
+    "short_description": "Rugby conditioning"
+  },
+  {
+    "program_name": "Ice Hockey Power & Speed",
+    "program_category": "Sport Training",
+    "program_subcategory": "Hockey",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Hockey",
+      "Power",
+      "Speed"
+    ],
+    "goals": [
+      "Explosiveness",
+      "Conditioning"
+    ],
+    "description": "Off-ice hockey training for explosive power, speed, and conditioning.",
+    "short_description": "Hockey power training"
+  },
+  {
+    "program_name": "Lacrosse Agility & Endurance",
+    "program_category": "Sport Training",
+    "program_subcategory": "Lacrosse",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Lacrosse",
+      "Agility",
+      "Endurance"
+    ],
+    "goals": [
+      "Agility",
+      "Endurance"
+    ],
+    "description": "Lacrosse conditioning with agility drills and endurance work.",
+    "short_description": "Lacrosse training"
+  },
+  {
+    "program_name": "Wrestling Strength & Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Wrestling",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Wrestling",
+      "Strength",
+      "Conditioning"
+    ],
+    "goals": [
+      "Strength",
+      "Endurance"
+    ],
+    "description": "Wrestling-specific strength and conditioning for mat dominance.",
+    "short_description": "Wrestling conditioning"
+  },
+  {
+    "program_name": "Field Hockey Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "Field Hockey",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Hockey",
+      "Endurance",
+      "Speed"
+    ],
+    "goals": [
+      "Endurance",
+      "Speed"
+    ],
+    "description": "Field hockey conditioning with running endurance and sprint work.",
+    "short_description": "Field hockey fitness"
+  },
+  {
+    "program_name": "Rowing Endurance & Power",
+    "program_category": "Sport Training",
+    "program_subcategory": "Rowing",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Rowing",
+      "Endurance",
+      "Power"
+    ],
+    "goals": [
+      "Endurance",
+      "Power"
+    ],
+    "description": "Rowing-specific training for endurance and powerful strokes.",
+    "short_description": "Rowing training"
+  },
+  {
+    "program_name": "Track & Field Sprinter Program",
+    "program_category": "Sport Training",
+    "program_subcategory": "Track",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Track",
+      "Sprinting",
+      "Speed"
+    ],
+    "goals": [
+      "Speed",
+      "Power"
+    ],
+    "description": "Elite sprinter training for 100m, 200m, 400m track events.",
+    "short_description": "Sprinter training"
+  },
+  {
+    "program_name": "TMJ & Jaw Pain Relief",
+    "program_category": "Pain Management",
+    "program_subcategory": "TMJ",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 7,
+    "session_duration_minutes": 10,
+    "tags": [
+      "Pain Relief",
+      "TMJ",
+      "Jaw"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Gentle exercises and stretches to relieve TMJ and jaw pain.",
+    "short_description": "TMJ pain relief"
+  },
+  {
+    "program_name": "Wrist & Hand Pain Relief",
+    "program_category": "Pain Management",
+    "program_subcategory": "Hand Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 6,
+    "sessions_per_week": 7,
+    "session_duration_minutes": 10,
+    "tags": [
+      "Pain Relief",
+      "Wrist",
+      "Carpal Tunnel"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Exercises for wrist, hand, and carpal tunnel pain relief.",
+    "short_description": "Wrist pain relief"
+  },
+  {
+    "program_name": "Elbow Tendonitis Rehab",
+    "program_category": "Pain Management",
+    "program_subcategory": "Elbow Pain",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 15,
+    "tags": [
+      "Pain Relief",
+      "Elbow",
+      "Tendonitis"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Recovery"
+    ],
+    "description": "Rehabilitation for tennis elbow, golfer's elbow, and elbow tendonitis.",
+    "short_description": "Elbow tendonitis rehab"
+  },
+  {
+    "program_name": "Ankle Sprain Recovery",
+    "program_category": "Pain Management",
+    "program_subcategory": "Ankle Injury",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Pain Relief",
+      "Ankle",
+      "Recovery"
+    ],
+    "goals": [
+      "Recovery",
+      "Stability"
+    ],
+    "description": "Progressive ankle sprain rehabilitation for strength and stability.",
+    "short_description": "Ankle sprain recovery"
+  },
+  {
+    "program_name": "IT Band Syndrome Relief",
+    "program_category": "Pain Management",
+    "program_subcategory": "IT Band",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Pain Relief",
+      "IT Band",
+      "Running"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Exercises and stretches to relieve IT band syndrome pain.",
+    "short_description": "IT band relief"
+  },
+  {
+    "program_name": "Metabolic Resistance Training",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Fat Loss",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Fat Loss",
+      "Metabolic",
+      "Circuit"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "Circuit training with weights for maximum calorie burn and fat loss.",
+    "short_description": "Metabolic resistance"
+  },
+  {
+    "program_name": "Tabata HIIT 4-Minute Workouts",
+    "program_category": "Goal-Based",
+    "program_subcategory": "HIIT",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 6,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 20,
+    "tags": [
+      "HIIT",
+      "Tabata",
+      "Quick"
+    ],
+    "goals": [
+      "Lose Fat",
+      "Conditioning"
+    ],
+    "description": "Ultra-high intensity Tabata protocol: 20 seconds on, 10 seconds off.",
+    "short_description": "Tabata HIIT workouts"
+  },
+  {
+    "program_name": "German Volume Training 10x10",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 6,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Hypertrophy",
+      "GVT",
+      "Volume"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Size"
+    ],
+    "description": "Extreme volume training with 10 sets of 10 reps for rapid muscle growth.",
+    "short_description": "GVT 10x10 program"
+  },
+  {
+    "program_name": "Drop Set Hypertrophy Program",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Hypertrophy",
+      "Drop Sets",
+      "Intensity"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Size"
+    ],
+    "description": "Muscle building program using drop sets for increased volume and intensity.",
+    "short_description": "Drop set hypertrophy"
+  },
+  {
+    "program_name": "Superset Muscle Building",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Muscle Building",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Hypertrophy",
+      "Supersets",
+      "Efficiency"
+    ],
+    "goals": [
+      "Build Muscle",
+      "Time Efficient"
+    ],
+    "description": "Efficient muscle building using antagonist supersets for maximum growth.",
+    "short_description": "Superset training"
+  },
+  {
+    "program_name": "Medieval Warrior Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Functional",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Medieval",
+      "Functional",
+      "Warrior"
+    ],
+    "goals": [
+      "Strength",
+      "Endurance"
+    ],
+    "description": "Train like a medieval warrior with functional strength and combat conditioning.",
+    "short_description": "Medieval warrior prep"
+  },
+  {
+    "program_name": "Animal Movement Practice",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Movement",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Movement",
+      "Animal Flow",
+      "Ground Work"
+    ],
+    "goals": [
+      "Mobility",
+      "Movement Skills"
+    ],
+    "description": "Primal movement patterns inspired by animal locomotion for mobility and strength.",
+    "short_description": "Animal movement flow"
+  },
+  {
+    "program_name": "Handstand Progression Program",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Gymnastics",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Gymnastics",
+      "Handstand",
+      "Balance"
+    ],
+    "goals": [
+      "Skill Mastery",
+      "Strength"
+    ],
+    "description": "Progressive handstand training from wall support to freestanding holds.",
+    "short_description": "Learn handstands"
+  },
+  {
+    "program_name": "Muscle-Up Skill Development",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Calisthenics",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Calisthenics",
+      "Muscle-Up",
+      "Skill"
+    ],
+    "goals": [
+      "Skill Mastery",
+      "Strength"
+    ],
+    "description": "Master the muscle-up with progression from pull-ups to bar muscle-ups.",
+    "short_description": "Master muscle-ups"
+  },
+  {
+    "program_name": "Planche Training Program",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Calisthenics",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 24,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Calisthenics",
+      "Planche",
+      "Elite Skill"
+    ],
+    "goals": [
+      "Skill Mastery",
+      "Strength"
+    ],
+    "description": "Long-term planche training from tuck to full planche progression.",
+    "short_description": "Achieve the planche"
+  },
+  {
+    "program_name": "One-Arm Push-Up & Pull-Up",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Calisthenics",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Calisthenics",
+      "Unilateral",
+      "Advanced"
+    ],
+    "goals": [
+      "Skill Mastery",
+      "Strength"
+    ],
+    "description": "Build to one-arm push-ups and one-arm pull-ups through progression.",
+    "short_description": "One-arm mastery"
+  },
+  {
+    "program_name": "Kettlebell Sport Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Kettlebell Sport",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Kettlebell",
+      "Sport",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Strength"
+    ],
+    "description": "Competitive kettlebell sport training: jerk, snatch, and long cycle.",
+    "short_description": "Kettlebell sport"
+  },
+  {
+    "program_name": "Steel Mace Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Unconventional",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Steel Mace",
+      "Rotation",
+      "Functional"
+    ],
+    "goals": [
+      "Strength",
+      "Mobility"
+    ],
+    "description": "Rotational strength and power development using steel mace training.",
+    "short_description": "Steel mace training"
+  },
+  {
+    "program_name": "Indian Clubs Shoulder Health",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Unconventional",
+    "country": [
+      "India",
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Indian Clubs",
+      "Shoulder",
+      "Mobility"
+    ],
+    "goals": [
+      "Shoulder Health",
+      "Mobility"
+    ],
+    "description": "Traditional Indian club training for shoulder health and mobility.",
+    "short_description": "Indian clubs training"
+  },
+  {
+    "program_name": "Sandbag Training Program",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Unconventional",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 50,
+    "tags": [
+      "Sandbag",
+      "Functional",
+      "Strength"
+    ],
+    "goals": [
+      "Functional Strength",
+      "Conditioning"
+    ],
+    "description": "Build functional strength with unstable sandbag training.",
+    "short_description": "Sandbag strength"
+  },
+  {
+    "program_name": "Battle Ropes HIIT Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "HIIT Equipment",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Battle Ropes",
+      "HIIT",
+      "Conditioning"
+    ],
+    "goals": [
+      "Conditioning",
+      "Upper Body"
+    ],
+    "description": "High-intensity battle rope training for conditioning and upper body power.",
+    "short_description": "Battle rope HIIT"
+  },
+  {
+    "program_name": "TRX Suspension Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Suspension Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "TRX",
+      "Suspension",
+      "Core"
+    ],
+    "goals": [
+      "Core Strength",
+      "Functional Fitness"
+    ],
+    "description": "Full-body suspension training using TRX or similar systems.",
+    "short_description": "TRX suspension training"
+  },
+  {
+    "program_name": "Sled Push & Pull Power",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Sled Training",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Sled",
+      "Power",
+      "Legs"
+    ],
+    "goals": [
+      "Power",
+      "Leg Strength"
+    ],
+    "description": "Build explosive leg power and conditioning with sled pushes and pulls.",
+    "short_description": "Sled power training"
+  },
+  {
+    "program_name": "Strongman Implements Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Strongman",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Strongman",
+      "Implements",
+      "Functional"
+    ],
+    "goals": [
+      "Strength",
+      "Functional Power"
+    ],
+    "description": "Train with atlas stones, farmer's walks, yoke carries, and tire flips.",
+    "short_description": "Strongman implements"
+  },
+  {
+    "program_name": "Ninja Warrior Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Obstacle Course",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Ninja Warrior",
+      "Obstacles",
+      "Grip"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Skill Mastery"
+    ],
+    "description": "Train for American Ninja Warrior with obstacle-specific skills and grip strength.",
+    "short_description": "Ninja Warrior prep"
+  },
+  {
+    "program_name": "Stunt Performer Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Stunt Work",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 20,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 120,
+    "tags": [
+      "Stunt",
+      "Acrobatics",
+      "Falls"
+    ],
+    "goals": [
+      "Athletic Performance",
+      "Skill Mastery"
+    ],
+    "description": "Professional stunt training with falls, fights, and acrobatic skills.",
+    "short_description": "Stunt performer training"
+  },
+  {
+    "program_name": "Firefighter Functional Fitness",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Occupational",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Firefighter",
+      "Functional",
+      "Job Specific"
+    ],
+    "goals": [
+      "Strength",
+      "Endurance"
+    ],
+    "description": "Firefighter-specific training for carrying equipment, climbing, and endurance.",
+    "short_description": "Firefighter fitness"
+  },
+  {
+    "program_name": "Police Academy Prep",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Occupational",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Law Enforcement",
+      "Test Prep",
+      "Running"
+    ],
+    "goals": [
+      "Endurance",
+      "Pass Test"
+    ],
+    "description": "Prepare for police academy physical fitness tests and standards.",
+    "short_description": "Police academy prep"
+  },
+  {
+    "program_name": "Military Boot Camp Preparation",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Military",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Military",
+      "Boot Camp",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Mental Toughness"
+    ],
+    "description": "Prepare for basic military training with running, calisthenics, and rucking.",
+    "short_description": "Boot camp prep"
+  },
+  {
+    "program_name": "Astronaut Fitness Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Occupational",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Elite",
+    "duration_weeks": 52,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Astronaut",
+      "Elite",
+      "Endurance"
+    ],
+    "goals": [
+      "Endurance",
+      "Strength"
+    ],
+    "description": "Year-long conditioning program inspired by astronaut training requirements.",
+    "short_description": "Astronaut conditioning"
+  },
+  {
+    "program_name": "Skiers Leg Strength & Endurance",
+    "program_category": "Sport Training",
+    "program_subcategory": "Skiing",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Skiing",
+      "Legs",
+      "Endurance"
+    ],
+    "goals": [
+      "Leg Strength",
+      "Endurance"
+    ],
+    "description": "Pre-season ski conditioning for powerful legs and injury prevention.",
+    "short_description": "Ski conditioning"
+  },
+  {
+    "program_name": "Snowboarders Balance & Power",
+    "program_category": "Sport Training",
+    "program_subcategory": "Snowboarding",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Snowboarding",
+      "Balance",
+      "Power"
+    ],
+    "goals": [
+      "Balance",
+      "Power"
+    ],
+    "description": "Snowboard-specific training for balance, rotational power, and core strength.",
+    "short_description": "Snowboard training"
+  },
+  {
+    "program_name": "Skateboarding Balance & Tricks",
+    "program_category": "Sport Training",
+    "program_subcategory": "Skateboarding",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Skateboarding",
+      "Balance",
+      "Tricks"
+    ],
+    "goals": [
+      "Balance",
+      "Athletic Performance"
+    ],
+    "description": "Improve skateboarding with balance training, leg strength, and fall prevention.",
+    "short_description": "Skateboard training"
+  },
+  {
+    "program_name": "BMX Rider Conditioning",
+    "program_category": "Sport Training",
+    "program_subcategory": "BMX",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "BMX",
+      "Explosiveness",
+      "Core"
+    ],
+    "goals": [
+      "Explosiveness",
+      "Core Strength"
+    ],
+    "description": "BMX-specific conditioning for explosive power and crash resilience.",
+    "short_description": "BMX conditioning"
+  },
+  {
+    "program_name": "Equestrian Rider Fitness",
+    "program_category": "Sport Training",
+    "program_subcategory": "Equestrian",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Equestrian",
+      "Core",
+      "Balance"
+    ],
+    "goals": [
+      "Core Strength",
+      "Balance"
+    ],
+    "description": "Horse riding fitness for core stability, leg strength, and endurance.",
+    "short_description": "Equestrian fitness"
+  },
+  {
+    "program_name": "Dancers Flexibility & Strength",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Dance",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Dance",
+      "Flexibility",
+      "Strength"
+    ],
+    "goals": [
+      "Flexibility",
+      "Dance Performance"
+    ],
+    "description": "Supplemental training for dancers: flexibility, turnout, and injury prevention.",
+    "short_description": "Dancer conditioning"
+  },
+  {
+    "program_name": "Ballet Strength & Technique",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Ballet",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Ballet",
+      "Strength",
+      "Flexibility"
+    ],
+    "goals": [
+      "Flexibility",
+      "Dance Performance"
+    ],
+    "description": "Ballet-specific strength, flexibility, and technique enhancement program.",
+    "short_description": "Ballet training"
+  },
+  {
+    "program_name": "Cheerleading Tumbling Power",
+    "program_category": "Sport Training",
+    "program_subcategory": "Cheerleading",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Cheerleading",
+      "Tumbling",
+      "Power"
+    ],
+    "goals": [
+      "Explosiveness",
+      "Athletic Performance"
+    ],
+    "description": "Cheerleading conditioning with tumbling power, stunting strength, and jump training.",
+    "short_description": "Cheerleading training"
+  },
+  {
+    "program_name": "Gymnasts Strength & Flexibility",
+    "program_category": "Sport Training",
+    "program_subcategory": "Gymnastics",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 6,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Gymnastics",
+      "Strength",
+      "Flexibility"
+    ],
+    "goals": [
+      "Strength",
+      "Flexibility"
+    ],
+    "description": "Supplemental gymnastics training for strength, flexibility, and skill work.",
+    "short_description": "Gymnastics conditioning"
+  },
+  {
+    "program_name": "Figure Skater Off-Ice Training",
+    "program_category": "Sport Training",
+    "program_subcategory": "Figure Skating",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 12,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 75,
+    "tags": [
+      "Figure Skating",
+      "Balance",
+      "Power"
+    ],
+    "goals": [
+      "Balance",
+      "Jump Power"
+    ],
+    "description": "Off-ice training for figure skaters: jumping power, balance, and flexibility.",
+    "short_description": "Figure skating training"
+  },
+  {
+    "program_name": "Elderly Fall Prevention",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Senior Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Seniors",
+      "Fall Prevention",
+      "Balance"
+    ],
+    "goals": [
+      "Balance",
+      "Safety"
+    ],
+    "description": "Fall prevention program for elderly with balance, strength, and coordination work.",
+    "short_description": "Fall prevention"
+  },
+  {
+    "program_name": "Bone Density Building for Osteoporosis",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Bone Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 24,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Bone Health",
+      "Osteoporosis",
+      "Strength"
+    ],
+    "goals": [
+      "Bone Density",
+      "Strength"
+    ],
+    "description": "Safe resistance training to build bone density and prevent osteoporosis.",
+    "short_description": "Bone density building"
+  },
+  {
+    "program_name": "Heart Health Cardio Program",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Cardiac Health",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Cardio",
+      "Heart Health",
+      "Low Impact"
+    ],
+    "goals": [
+      "Heart Health",
+      "Endurance"
+    ],
+    "description": "Safe cardiovascular exercise program for heart health and disease prevention.",
+    "short_description": "Heart health cardio"
+  },
+  {
+    "program_name": "Diabetes Management Exercise",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Diabetes",
+      "Health",
+      "Cardio"
+    ],
+    "goals": [
+      "Blood Sugar Control",
+      "Health"
+    ],
+    "description": "Exercise program to help manage blood sugar levels and improve insulin sensitivity.",
+    "short_description": "Diabetes exercise"
+  },
+  {
+    "program_name": "Wheelchair Athlete Upper Body",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Adaptive Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Adaptive",
+      "Wheelchair",
+      "Upper Body"
+    ],
+    "goals": [
+      "Upper Body Strength",
+      "Athletic Performance"
+    ],
+    "description": "Upper body strength and conditioning for wheelchair athletes.",
+    "short_description": "Wheelchair athlete training"
+  },
+  {
+    "program_name": "Blind & Visually Impaired Fitness",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Adaptive Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "Adaptive",
+      "Accessibility",
+      "Safety"
+    ],
+    "goals": [
+      "Health",
+      "Fitness"
+    ],
+    "description": "Accessible fitness program designed for blind and visually impaired individuals.",
+    "short_description": "Accessible fitness"
+  },
+  {
+    "program_name": "Cancer Recovery Fitness",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical Recovery",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Cancer",
+      "Recovery",
+      "Gentle"
+    ],
+    "goals": [
+      "Recovery",
+      "Strength"
+    ],
+    "description": "Gentle exercise program to aid cancer recovery and rebuild strength safely.",
+    "short_description": "Cancer recovery fitness"
+  },
+  {
+    "program_name": "Lymphedema Safe Exercise",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Lymphedema",
+      "Safe",
+      "Gentle"
+    ],
+    "goals": [
+      "Health",
+      "Circulation"
+    ],
+    "description": "Safe exercise protocol for individuals managing lymphedema.",
+    "short_description": "Lymphedema-safe exercise"
+  },
+  {
+    "program_name": "Fibromyalgia Gentle Movement",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Fibromyalgia",
+      "Pain Management",
+      "Gentle"
+    ],
+    "goals": [
+      "Pain Relief",
+      "Mobility"
+    ],
+    "description": "Gentle movement program for fibromyalgia pain management and function.",
+    "short_description": "Fibromyalgia movement"
+  },
+  {
+    "program_name": "Chronic Fatigue Syndrome Exercise",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 2,
+    "session_duration_minutes": 20,
+    "tags": [
+      "CFS",
+      "Energy Management",
+      "Gentle"
+    ],
+    "goals": [
+      "Energy",
+      "Function"
+    ],
+    "description": "Carefully paced exercise for chronic fatigue syndrome with energy management.",
+    "short_description": "CFS exercise protocol"
+  },
+  {
+    "program_name": "Multiple Sclerosis Fitness",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "MS",
+      "Neurological",
+      "Adapted"
+    ],
+    "goals": [
+      "Mobility",
+      "Function"
+    ],
+    "description": "Adapted exercise program for multiple sclerosis to maintain function and mobility.",
+    "short_description": "MS fitness program"
+  },
+  {
+    "program_name": "Parkinsons Disease Movement",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Medical",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 16,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 40,
+    "tags": [
+      "Parkinsons",
+      "Balance",
+      "Movement"
+    ],
+    "goals": [
+      "Balance",
+      "Movement Quality"
+    ],
+    "description": "Movement therapy for Parkinson's disease focusing on balance and coordination.",
+    "short_description": "Parkinson's movement"
+  },
+  {
+    "program_name": "Video Gamer Health & Posture",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Occupational",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 20,
+    "tags": [
+      "Gaming",
+      "Posture",
+      "Wrist Health"
+    ],
+    "goals": [
+      "Posture",
+      "Health"
+    ],
+    "description": "Counter sedentary gaming lifestyle with posture work and wrist health exercises.",
+    "short_description": "Gamer health program"
+  },
+  {
+    "program_name": "eSports Athlete Performance",
+    "program_category": "Sport Training",
+    "program_subcategory": "eSports",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 4,
+    "session_duration_minutes": 30,
+    "tags": [
+      "eSports",
+      "Reaction Time",
+      "Endurance"
+    ],
+    "goals": [
+      "Reaction Time",
+      "Mental Focus"
+    ],
+    "description": "Physical training for eSports athletes: reaction time, endurance, and eye health.",
+    "short_description": "eSports athlete training"
+  },
+  {
+    "program_name": "Truck Driver Fitness",
+    "program_category": "Goal-Based",
+    "program_subcategory": "Occupational",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 10,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 25,
+    "tags": [
+      "Truck Driver",
+      "Sedentary",
+      "Back Health"
+    ],
+    "goals": [
+      "Health",
+      "Back Pain Relief"
+    ],
+    "description": "Fitness program for truck drivers to combat sedentary lifestyle and back pain.",
+    "short_description": "Truck driver fitness"
+  },
+  {
+    "program_name": "Circus Arts Conditioning",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Circus",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Advanced",
+    "duration_weeks": 16,
+    "sessions_per_week": 5,
+    "session_duration_minutes": 90,
+    "tags": [
+      "Circus",
+      "Acrobatics",
+      "Aerial"
+    ],
+    "goals": [
+      "Strength",
+      "Flexibility"
+    ],
+    "description": "Conditioning for circus arts: aerial silks, trapeze, acrobatics, and contortion.",
+    "short_description": "Circus arts training"
+  },
+  {
+    "program_name": "Pole Dancing Strength & Grace",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Pole Fitness",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Intermediate",
+    "duration_weeks": 12,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 60,
+    "tags": [
+      "Pole",
+      "Strength",
+      "Dance"
+    ],
+    "goals": [
+      "Upper Body Strength",
+      "Flexibility"
+    ],
+    "description": "Build strength and grace for pole fitness and dance.",
+    "short_description": "Pole fitness training"
+  },
+  {
+    "program_name": "Slacklining Balance Training",
+    "program_category": "Specialized Training",
+    "program_subcategory": "Balance Sports",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 30,
+    "tags": [
+      "Slackline",
+      "Balance",
+      "Core"
+    ],
+    "goals": [
+      "Balance",
+      "Core Strength"
+    ],
+    "description": "Develop exceptional balance and core strength through slacklining practice.",
+    "short_description": "Slackline training"
+  },
+  {
+    "program_name": "Stand-Up Paddleboarding Fitness",
+    "program_category": "Sport Training",
+    "program_subcategory": "SUP",
+    "country": [
+      "Global"
+    ],
+    "celebrity_name": null,
+    "difficulty_level": "Beginner",
+    "duration_weeks": 8,
+    "sessions_per_week": 3,
+    "session_duration_minutes": 45,
+    "tags": [
+      "SUP",
+      "Balance",
+      "Core"
+    ],
+    "goals": [
+      "Balance",
+      "Core Strength"
+    ],
+    "description": "Build balance and core strength for stand-up paddleboarding.",
+    "short_description": "SUP fitness"
+  }
+]

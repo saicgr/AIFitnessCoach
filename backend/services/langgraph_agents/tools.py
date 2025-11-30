@@ -10,7 +10,7 @@ import json
 from langchain_core.tools import tool
 from services.workout_modifier import WorkoutModifier
 from services.injury_service import get_injury_service, Injury
-from core.duckdb_database import get_db
+from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -129,13 +129,10 @@ def reschedule_workout(
     logger.info(f"Tool: Rescheduling workout {workout_id} to {new_date}, reason: {reason}")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
 
         # Get the workout being moved
-        moved_workout = db.conn.execute(
-            "SELECT id, user_id, name, scheduled_date FROM workouts WHERE id = ?",
-            [workout_id]
-        ).fetchone()
+        moved_workout = db.get_workout(workout_id)
 
         if not moved_workout:
             return {
@@ -145,51 +142,42 @@ def reschedule_workout(
                 "message": f"Workout with ID {workout_id} not found"
             }
 
-        old_date = moved_workout[3]
-        user_id = moved_workout[1]
-        workout_name = moved_workout[2]
+        old_date = moved_workout.get("scheduled_date")
+        user_id = moved_workout.get("user_id")
+        workout_name = moved_workout.get("name")
 
         # Check for existing workout on new date
-        existing = db.conn.execute(
-            "SELECT id, name FROM workouts WHERE user_id = ? AND scheduled_date >= ? AND scheduled_date < ?",
-            [user_id, new_date, new_date + " 23:59:59"]
-        ).fetchone()
+        workouts_on_date = db.get_workouts_by_date_range(user_id, new_date, new_date)
 
         swapped_with = None
-        if existing:
+        if workouts_on_date:
+            existing = workouts_on_date[0]
             # Swap dates
-            logger.info(f"Swapping: workout {existing[0]} ({existing[1]}) will move to {old_date}")
-            db.conn.execute(
-                "UPDATE workouts SET scheduled_date = ?, last_modified_at = ?, last_modified_method = 'ai_reschedule' WHERE id = ?",
-                [old_date, datetime.now(), existing[0]]
-            )
-            swapped_with = {"id": existing[0], "name": existing[1]}
+            logger.info(f"Swapping: workout {existing['id']} ({existing['name']}) will move to {old_date}")
+            db.update_workout(existing['id'], {
+                "scheduled_date": str(old_date),
+                "last_modified_method": "ai_reschedule"
+            })
+            swapped_with = {"id": existing['id'], "name": existing['name']}
 
         # Update moved workout
-        db.conn.execute(
-            "UPDATE workouts SET scheduled_date = ?, last_modified_at = ?, last_modified_method = 'ai_reschedule' WHERE id = ?",
-            [new_date, datetime.now(), workout_id]
-        )
+        db.update_workout(workout_id, {
+            "scheduled_date": new_date,
+            "last_modified_method": "ai_reschedule"
+        })
 
         # Log the change
         try:
-            result = db.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM workout_changes").fetchone()
-            change_id = result[0]
-            db.conn.execute("""
-                INSERT INTO workout_changes
-                (id, workout_id, user_id, change_type, field_changed, old_value, new_value, change_source, change_reason)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                change_id,
-                workout_id,
-                user_id,
-                "rescheduled",
-                "scheduled_date",
-                str(old_date),
-                new_date,
-                "ai_coach",
-                reason or "Rescheduled via AI coach"
-            ])
+            db.create_workout_change({
+                "workout_id": workout_id,
+                "user_id": user_id,
+                "change_type": "rescheduled",
+                "field_changed": "scheduled_date",
+                "old_value": str(old_date),
+                "new_value": new_date,
+                "change_source": "ai_coach",
+                "change_reason": reason or "Rescheduled via AI coach"
+            })
         except Exception as log_error:
             logger.warning(f"Failed to log workout change: {log_error}")
 
@@ -248,7 +236,7 @@ def report_injury(
     logger.info(f"Tool: Reporting injury for user {user_id}: {body_part} ({severity})")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
         injury_service = get_injury_service()
 
         # Determine recovery duration
@@ -262,27 +250,21 @@ def report_injury(
         expected_recovery_date = reported_at + timedelta(weeks=recovery_weeks)
 
         # Create injury record in injury_history table
-        result = db.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM injury_history").fetchone()
-        injury_id = result[0]
+        injury_data = {
+            "user_id": user_id,
+            "body_part": body_part.lower(),
+            "severity": severity.lower(),
+            "reported_at": reported_at.isoformat(),
+            "expected_recovery_date": expected_recovery_date.isoformat(),
+            "duration_planned_weeks": recovery_weeks,
+            "pain_level_initial": pain_level,
+            "pain_level_current": pain_level,
+            "improvement_notes": notes,
+            "is_active": True
+        }
 
-        db.conn.execute("""
-            INSERT INTO injury_history
-            (id, user_id, body_part, severity, reported_at, expected_recovery_date,
-             duration_planned_weeks, pain_level_initial, pain_level_current, improvement_notes, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            injury_id,
-            user_id,
-            body_part.lower(),
-            severity.lower(),
-            reported_at,
-            expected_recovery_date,
-            recovery_weeks,
-            pain_level,
-            pain_level,
-            notes,
-            True
-        ])
+        created_injury = db.create_injury_history(injury_data)
+        injury_id = created_injury.get("id")
 
         # Create Injury object for service operations
         injury = Injury(
@@ -306,21 +288,28 @@ def report_injury(
         exercises_removed_total = []
 
         # Get upcoming workouts for the next recovery period
-        upcoming_workouts = db.conn.execute("""
-            SELECT id, exercises_json, name FROM workouts
-            WHERE user_id = ? AND scheduled_date >= ? AND scheduled_date <= ? AND is_completed = FALSE
-            ORDER BY scheduled_date
-        """, [user_id, reported_at.strftime("%Y-%m-%d"), expected_recovery_date.strftime("%Y-%m-%d")]).fetchall()
+        upcoming_workouts = db.get_workouts_by_date_range(
+            user_id,
+            reported_at.strftime("%Y-%m-%d"),
+            expected_recovery_date.strftime("%Y-%m-%d")
+        )
 
         for workout in upcoming_workouts:
-            workout_id = workout[0]
-            exercises_json = workout[1]
-            workout_name = workout[2]
+            if workout.get("is_completed"):
+                continue
 
-            try:
-                exercises = json.loads(exercises_json) if exercises_json else []
-            except json.JSONDecodeError:
-                exercises = []
+            workout_id = workout.get("id")
+            exercises_data = workout.get("exercises")
+            workout_name = workout.get("name")
+
+            # Handle exercises (could be string or list)
+            if isinstance(exercises_data, str):
+                try:
+                    exercises = json.loads(exercises_data) if exercises_data else []
+                except json.JSONDecodeError:
+                    exercises = []
+            else:
+                exercises = exercises_data or []
 
             # Filter exercises for this injury
             safe_exercises, removed = injury_service.filter_workout_for_injuries(exercises, [injury])
@@ -332,75 +321,48 @@ def report_injury(
                 updated_exercises = injury_service.add_rehab_exercises_to_workout(safe_exercises, [injury])
 
                 # Update workout in database
-                db.conn.execute("""
-                    UPDATE workouts
-                    SET exercises_json = ?, last_modified_method = 'injury_modification', last_modified_at = ?
-                    WHERE id = ?
-                """, [json.dumps(updated_exercises), datetime.now(), workout_id])
+                db.update_workout(workout_id, {
+                    "exercises": updated_exercises,
+                    "last_modified_method": "injury_modification"
+                })
 
                 workouts_modified += 1
 
                 # Log the modification
                 try:
-                    change_result = db.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM workout_changes").fetchone()
-                    change_id = change_result[0]
-                    db.conn.execute("""
-                        INSERT INTO workout_changes
-                        (id, workout_id, user_id, change_type, field_changed, old_value, new_value, change_source, change_reason)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, [
-                        change_id,
-                        workout_id,
-                        user_id,
-                        "injury_modification",
-                        "exercises_json",
-                        exercises_json,
-                        json.dumps(updated_exercises),
-                        "injury_report",
-                        f"{body_part} injury ({severity})"
-                    ])
+                    db.create_workout_change({
+                        "workout_id": workout_id,
+                        "user_id": user_id,
+                        "change_type": "injury_modification",
+                        "field_changed": "exercises",
+                        "old_value": json.dumps(exercises) if isinstance(exercises, list) else exercises_data,
+                        "new_value": json.dumps(updated_exercises),
+                        "change_source": "injury_report",
+                        "change_reason": f"{body_part} injury ({severity})"
+                    })
                 except Exception as log_error:
                     logger.warning(f"Failed to log workout change: {log_error}")
 
-        # Update injury record with modification counts
-        db.conn.execute("""
-            UPDATE injury_history
-            SET workouts_modified_count = ?,
-                exercises_removed = ?,
-                rehab_exercises_added = ?
-            WHERE id = ?
-        """, [
-            workouts_modified,
-            json.dumps(list(set(exercises_removed_total))),
-            json.dumps([ex.get("name") for ex in rehab_exercises]),
-            injury_id
-        ])
-
         # Update user's active injuries list
         try:
-            user_injuries = db.conn.execute(
-                "SELECT active_injuries FROM users WHERE id = ?", [user_id]
-            ).fetchone()
+            user = db.get_user(user_id)
+            if user:
+                current_injuries = user.get("active_injuries") or []
+                if isinstance(current_injuries, str):
+                    try:
+                        current_injuries = json.loads(current_injuries)
+                    except json.JSONDecodeError:
+                        current_injuries = []
 
-            current_injuries = []
-            if user_injuries and user_injuries[0]:
-                try:
-                    current_injuries = json.loads(user_injuries[0])
-                except json.JSONDecodeError:
-                    current_injuries = []
+                current_injuries.append({
+                    "id": injury_id,
+                    "body_part": body_part.lower(),
+                    "severity": severity.lower(),
+                    "reported_at": reported_at.isoformat(),
+                    "expected_recovery_date": expected_recovery_date.isoformat()
+                })
 
-            current_injuries.append({
-                "id": injury_id,
-                "body_part": body_part.lower(),
-                "severity": severity.lower(),
-                "reported_at": reported_at.isoformat(),
-                "expected_recovery_date": expected_recovery_date.isoformat()
-            })
-
-            db.conn.execute(
-                "UPDATE users SET active_injuries = ? WHERE id = ?",
-                [json.dumps(current_injuries), user_id]
-            )
+                db.update_user(user_id, {"active_injuries": current_injuries})
         except Exception as user_update_error:
             logger.warning(f"Failed to update user active injuries: {user_update_error}")
 
@@ -458,23 +420,22 @@ def clear_injury(
     logger.info(f"Tool: Clearing injury for user {user_id}: body_part={body_part}, injury_id={injury_id}")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
 
         # Find the injury to clear
+        active_injuries = db.get_active_injuries(user_id)
+
+        injury_record = None
         if injury_id:
-            injury_record = db.conn.execute("""
-                SELECT id, body_part, severity, reported_at, expected_recovery_date, duration_planned_weeks
-                FROM injury_history
-                WHERE id = ? AND user_id = ? AND is_active = TRUE
-            """, [injury_id, user_id]).fetchone()
+            for inj in active_injuries:
+                if inj.get("id") == injury_id:
+                    injury_record = inj
+                    break
         elif body_part:
-            injury_record = db.conn.execute("""
-                SELECT id, body_part, severity, reported_at, expected_recovery_date, duration_planned_weeks
-                FROM injury_history
-                WHERE user_id = ? AND body_part = ? AND is_active = TRUE
-                ORDER BY reported_at DESC
-                LIMIT 1
-            """, [user_id, body_part.lower()]).fetchone()
+            for inj in active_injuries:
+                if inj.get("body_part") == body_part.lower():
+                    injury_record = inj
+                    break
         else:
             return {
                 "success": False,
@@ -491,57 +452,53 @@ def clear_injury(
                 "message": f"No active injury found for {'injury ID ' + str(injury_id) if injury_id else body_part}"
             }
 
-        injury_id = injury_record[0]
-        cleared_body_part = injury_record[1]
-        severity = injury_record[2]
-        reported_at = injury_record[3]
-        expected_recovery = injury_record[4]
-        planned_weeks = injury_record[5]
+        injury_id = injury_record.get("id")
+        cleared_body_part = injury_record.get("body_part")
+        severity = injury_record.get("severity")
+        reported_at = injury_record.get("reported_at")
+        planned_weeks = injury_record.get("duration_planned_weeks")
 
         # Calculate actual duration
         actual_recovery_date = datetime.now()
         if isinstance(reported_at, str):
-            reported_at = datetime.fromisoformat(reported_at)
+            reported_at = datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
         actual_days = (actual_recovery_date - reported_at).days
 
         # Determine if early or late recovery
         recovery_status = "on_time"
-        if actual_days < (planned_weeks * 7 * 0.7):  # More than 30% early
-            recovery_status = "early"
-        elif actual_days > (planned_weeks * 7 * 1.3):  # More than 30% late
-            recovery_status = "late"
+        if planned_weeks:
+            if actual_days < (planned_weeks * 7 * 0.7):  # More than 30% early
+                recovery_status = "early"
+            elif actual_days > (planned_weeks * 7 * 1.3):  # More than 30% late
+                recovery_status = "late"
 
         # Update injury record as healed
-        db.conn.execute("""
-            UPDATE injury_history
-            SET is_active = FALSE,
-                actual_recovery_date = ?,
-                duration_actual_days = ?,
-                recovery_phase = 'healed',
-                user_feedback = ?
-            WHERE id = ?
-        """, [actual_recovery_date, actual_days, user_feedback, injury_id])
+        # Note: We'll need to use raw client since we need specific fields
+        db.client.table("injury_history").update({
+            "is_active": False,
+            "actual_recovery_date": actual_recovery_date.isoformat(),
+            "duration_actual_days": actual_days,
+            "recovery_phase": "healed",
+            "user_feedback": user_feedback
+        }).eq("id", injury_id).execute()
 
         # Remove from user's active injuries
         try:
-            user_injuries = db.conn.execute(
-                "SELECT active_injuries FROM users WHERE id = ?", [user_id]
-            ).fetchone()
+            user = db.get_user(user_id)
+            if user:
+                current_injuries = user.get("active_injuries") or []
+                if isinstance(current_injuries, str):
+                    try:
+                        current_injuries = json.loads(current_injuries)
+                    except json.JSONDecodeError:
+                        current_injuries = []
 
-            if user_injuries and user_injuries[0]:
-                try:
-                    current_injuries = json.loads(user_injuries[0])
-                    # Remove the cleared injury
-                    updated_injuries = [
-                        inj for inj in current_injuries
-                        if inj.get("id") != injury_id and inj.get("body_part") != cleared_body_part
-                    ]
-                    db.conn.execute(
-                        "UPDATE users SET active_injuries = ? WHERE id = ?",
-                        [json.dumps(updated_injuries), user_id]
-                    )
-                except json.JSONDecodeError:
-                    pass
+                # Remove the cleared injury
+                updated_injuries = [
+                    inj for inj in current_injuries
+                    if inj.get("id") != injury_id and inj.get("body_part") != cleared_body_part
+                ]
+                db.update_user(user_id, {"active_injuries": updated_injuries})
         except Exception as user_update_error:
             logger.warning(f"Failed to update user active injuries: {user_update_error}")
 
@@ -584,16 +541,10 @@ def get_active_injuries(user_id: int) -> Dict[str, Any]:
     logger.info(f"Tool: Getting active injuries for user {user_id}")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
         injury_service = get_injury_service()
 
-        injuries = db.conn.execute("""
-            SELECT id, body_part, severity, reported_at, expected_recovery_date,
-                   duration_planned_weeks, pain_level_current, improvement_notes, recovery_phase
-            FROM injury_history
-            WHERE user_id = ? AND is_active = TRUE
-            ORDER BY reported_at DESC
-        """, [user_id]).fetchall()
+        injuries = db.get_active_injuries(user_id)
 
         if not injuries:
             return {
@@ -607,21 +558,20 @@ def get_active_injuries(user_id: int) -> Dict[str, Any]:
 
         active_injuries = []
         for inj in injuries:
-            injury_id = inj[0]
-            body_part = inj[1]
-            severity = inj[2]
-            reported_at = inj[3]
-            expected_recovery = inj[4]
-            planned_weeks = inj[5]
-            pain_level = inj[6]
-            notes = inj[7]
-            stored_phase = inj[8]
+            injury_id = inj.get("id")
+            body_part = inj.get("body_part")
+            severity = inj.get("severity")
+            reported_at = inj.get("reported_at")
+            expected_recovery = inj.get("expected_recovery_date")
+            planned_weeks = inj.get("duration_planned_weeks")
+            pain_level = inj.get("pain_level_current")
+            notes = inj.get("improvement_notes")
 
             # Parse dates
             if isinstance(reported_at, str):
-                reported_at = datetime.fromisoformat(reported_at)
+                reported_at = datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
             if isinstance(expected_recovery, str):
-                expected_recovery = datetime.fromisoformat(expected_recovery)
+                expected_recovery = datetime.fromisoformat(expected_recovery.replace("Z", "+00:00"))
 
             # Create Injury object to get current phase
             injury = Injury(
@@ -698,23 +648,22 @@ def update_injury_status(
     logger.info(f"Tool: Updating injury status for user {user_id}")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
 
         # Find the injury
+        active_injuries = db.get_active_injuries(user_id)
+
+        injury_record = None
         if injury_id:
-            injury_record = db.conn.execute("""
-                SELECT id, body_part, pain_level_current, improvement_notes
-                FROM injury_history
-                WHERE id = ? AND user_id = ? AND is_active = TRUE
-            """, [injury_id, user_id]).fetchone()
+            for inj in active_injuries:
+                if inj.get("id") == injury_id:
+                    injury_record = inj
+                    break
         elif body_part:
-            injury_record = db.conn.execute("""
-                SELECT id, body_part, pain_level_current, improvement_notes
-                FROM injury_history
-                WHERE user_id = ? AND body_part = ? AND is_active = TRUE
-                ORDER BY reported_at DESC
-                LIMIT 1
-            """, [user_id, body_part.lower()]).fetchone()
+            for inj in active_injuries:
+                if inj.get("body_part") == body_part.lower():
+                    injury_record = inj
+                    break
         else:
             return {
                 "success": False,
@@ -729,38 +678,31 @@ def update_injury_status(
                 "message": f"No active injury found"
             }
 
-        injury_id = injury_record[0]
-        current_body_part = injury_record[1]
-        old_pain = injury_record[2]
-        old_notes = injury_record[3]
+        injury_id = injury_record.get("id")
+        current_body_part = injury_record.get("body_part")
+        old_pain = injury_record.get("pain_level_current")
+        old_notes = injury_record.get("improvement_notes")
 
-        # Build update query
-        updates = []
-        params = []
+        # Build update data
+        update_data = {}
 
         if pain_level is not None:
-            updates.append("pain_level_current = ?")
-            params.append(pain_level)
+            update_data["pain_level_current"] = pain_level
 
         if improvement_notes:
             # Append to existing notes
             new_notes = f"{old_notes or ''}\n[{datetime.now().strftime('%Y-%m-%d')}] {improvement_notes}".strip()
-            updates.append("improvement_notes = ?")
-            params.append(new_notes)
+            update_data["improvement_notes"] = new_notes
 
-        if not updates:
+        if not update_data:
             return {
                 "success": False,
                 "action": "update_injury_status",
                 "message": "No updates provided. Specify pain_level or improvement_notes."
             }
 
-        params.append(injury_id)
-        db.conn.execute(f"""
-            UPDATE injury_history
-            SET {', '.join(updates)}
-            WHERE id = ?
-        """, params)
+        # Update using raw client
+        db.client.table("injury_history").update(update_data).eq("id", injury_id).execute()
 
         pain_change = ""
         if pain_level is not None and old_pain is not None:
@@ -807,13 +749,10 @@ def delete_workout(
     logger.info(f"Tool: Deleting workout {workout_id}, reason: {reason}")
 
     try:
-        db = get_db()
+        db = get_supabase_db()
 
         # Get workout details before deletion
-        workout = db.conn.execute(
-            "SELECT id, user_id, name, scheduled_date, type FROM workouts WHERE id = ?",
-            [workout_id]
-        ).fetchone()
+        workout = db.get_workout(workout_id)
 
         if not workout:
             return {
@@ -823,46 +762,36 @@ def delete_workout(
                 "message": f"Workout with ID {workout_id} not found"
             }
 
-        workout_name = workout[2]
-        scheduled_date = workout[3]
-        workout_type = workout[4]
-        user_id = workout[1]
+        workout_name = workout.get("name")
+        scheduled_date = workout.get("scheduled_date")
+        workout_type = workout.get("type")
+        user_id = workout.get("user_id")
 
         # Delete related records first (cascade manually)
         # Delete performance logs for workout logs of this workout
-        db.conn.execute("""
-            DELETE FROM performance_logs
-            WHERE workout_log_id IN (SELECT id FROM workout_logs WHERE workout_id = ?)
-        """, [workout_id])
+        db.delete_performance_logs_by_workout_log(workout_id)
 
         # Delete workout logs
-        db.conn.execute("DELETE FROM workout_logs WHERE workout_id = ?", [workout_id])
+        db.delete_workout_logs_by_workout(workout_id)
 
         # Delete workout changes
-        db.conn.execute("DELETE FROM workout_changes WHERE workout_id = ?", [workout_id])
+        db.delete_workout_changes_by_workout(workout_id)
 
         # Delete the workout itself
-        db.conn.execute("DELETE FROM workouts WHERE id = ?", [workout_id])
+        db.delete_workout(workout_id)
 
-        # Log the deletion as a change (in a general log if needed)
+        # Log the deletion as a change
         try:
-            result = db.conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM workout_changes").fetchone()
-            change_id = result[0]
-            db.conn.execute("""
-                INSERT INTO workout_changes
-                (id, workout_id, user_id, change_type, field_changed, old_value, new_value, change_source, change_reason)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, [
-                change_id,
-                workout_id,
-                user_id,
-                "deleted",
-                "workout",
-                workout_name,
-                None,
-                "ai_coach",
-                reason or "Deleted via AI coach"
-            ])
+            db.create_workout_change({
+                "workout_id": workout_id,
+                "user_id": user_id,
+                "change_type": "deleted",
+                "field_changed": "workout",
+                "old_value": workout_name,
+                "new_value": None,
+                "change_source": "ai_coach",
+                "change_reason": reason or "Deleted via AI coach"
+            })
         except Exception as log_error:
             logger.warning(f"Failed to log workout deletion: {log_error}")
 

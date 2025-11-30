@@ -1,11 +1,11 @@
 """
 AI Fitness Coach Backend - Main Entry Point
 
-Run with:
+Local development:
     uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-Or simply:
-    python main.py
+AWS Lambda deployment:
+    Deployed via Terraform with Mangum adapter (see lambda_handler.py)
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
