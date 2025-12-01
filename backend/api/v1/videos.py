@@ -39,32 +39,61 @@ PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
 # NOTE: More specific routes must come BEFORE catch-all routes
 
+def check_exercise_variant_exists(db, exercise_name: str) -> bool:
+    """Check if an exercise variant exists in the database."""
+    result = db.client.table("exercise_library").select(
+        "exercise_name"
+    ).ilike("exercise_name", exercise_name).limit(1).execute()
+    return bool(result.data)
+
+
 @router.get("/videos/by-exercise/{exercise_name:path}")
-async def get_video_by_exercise_name(exercise_name: str):
+async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
     """
     Get presigned video URL by exercise name.
 
     Looks up the exercise in exercise_library table and generates a presigned URL
     for the associated S3 video.
 
+    If gender is specified ('male' or 'female'), tries to find gendered variant first.
+
     Args:
         exercise_name: Name of the exercise to lookup
+        gender: Optional gender preference ('male' or 'female')
 
     Returns:
-        Presigned URL and expiration time
+        Presigned URL and expiration time, plus gender variant info
     """
     try:
         db = get_supabase_db()
 
-        # Lookup exercise by name (case-insensitive)
-        result = db.client.table("exercise_library").select(
-            "video_s3_path"
-        ).ilike("exercise_name", exercise_name).limit(1).execute()
+        # Build list of exercise names to try
+        # Strip any existing gender suffix to get base name
+        base_name = exercise_name.replace('_male', '').replace('_female', '')
 
-        if not result.data or not result.data[0].get("video_s3_path"):
+        search_names = []
+        if gender in ('male', 'female'):
+            search_names.append(f"{base_name}_{gender}")
+        search_names.append(exercise_name)  # Original name as fallback
+        search_names.append(base_name)      # Base name as last resort
+
+        # Try each name variant
+        found_result = None
+        for name in search_names:
+            result = db.client.table("exercise_library").select(
+                "video_s3_path, exercise_name"
+            ).ilike("exercise_name", name).limit(1).execute()
+
+            if result.data and result.data[0].get("video_s3_path"):
+                found_result = result.data[0]
+                break
+
+        if not found_result:
             raise HTTPException(status_code=404, detail="Video not found for exercise")
 
-        s3_path = result.data[0]["video_s3_path"]
+        s3_path = found_result["video_s3_path"]
+        found_exercise_name = found_result["exercise_name"]
+
         # s3_path format: s3://bucket/key
         # Extract key from s3:// URI
         key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
@@ -75,10 +104,24 @@ async def get_video_by_exercise_name(exercise_name: str):
             ExpiresIn=PRESIGNED_URL_EXPIRATION
         )
 
+        # Determine current gender from found exercise name
+        current_gender = None
+        if "_male" in found_exercise_name.lower():
+            current_gender = "male"
+        elif "_female" in found_exercise_name.lower():
+            current_gender = "female"
+
+        # Check if gender variants exist
+        has_male = check_exercise_variant_exists(db, f"{base_name}_male")
+        has_female = check_exercise_variant_exists(db, f"{base_name}_female")
+
         return {
             "url": url,
             "expires_in": PRESIGNED_URL_EXPIRATION,
-            "exercise_name": exercise_name
+            "exercise_name": found_exercise_name,
+            "current_gender": current_gender,
+            "has_male": has_male,
+            "has_female": has_female
         }
 
     except HTTPException:

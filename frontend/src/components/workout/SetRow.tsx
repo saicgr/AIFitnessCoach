@@ -1,12 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ActiveSet } from '../../types';
 
+// Format duration in MM:SS format
+const formatSetDuration = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 interface SetRowProps {
   set: ActiveSet;
   onWeightChange: (weight: number) => void;
   onRepsChange: (reps: number) => void;
   onComplete: () => void;
   onSetTypeChange?: (type: 'warmup' | 'working' | 'failure') => void;
+  onSetFocus?: () => void;  // Called when user starts interacting with set
   isActive: boolean;
 }
 
@@ -16,6 +24,7 @@ export default function SetRow({
   onRepsChange,
   onComplete,
   onSetTypeChange,
+  onSetFocus,
   isActive,
 }: SetRowProps) {
   const weightRef = useRef<HTMLInputElement>(null);
@@ -139,7 +148,10 @@ export default function SetRow({
           onChange={(e) => setLocalWeight(e.target.value)}
           onBlur={handleWeightBlur}
           onKeyDown={(e) => handleKeyDown(e, repsRef)}
-          onFocus={(e) => e.target.select()}
+          onFocus={(e) => {
+            e.target.select();
+            onSetFocus?.();
+          }}
           disabled={set.isCompleted}
           className={`
             w-full
@@ -171,7 +183,10 @@ export default function SetRow({
           onChange={(e) => setLocalReps(e.target.value)}
           onBlur={handleRepsBlur}
           onKeyDown={(e) => handleKeyDown(e, { current: null })}
-          onFocus={(e) => e.target.select()}
+          onFocus={(e) => {
+            e.target.select();
+            onSetFocus?.();
+          }}
           disabled={set.isCompleted}
           className={`
             w-full
@@ -191,6 +206,21 @@ export default function SetRow({
           `}
           placeholder="reps"
         />
+      </div>
+
+      {/* Time Display */}
+      <div className="w-14 text-center">
+        {set.isCompleted && set.durationSeconds ? (
+          <span className="text-emerald-400 font-mono text-sm">
+            {formatSetDuration(set.durationSeconds)}
+          </span>
+        ) : set.startTime && !set.isCompleted ? (
+          <span className="text-primary animate-pulse font-mono text-sm">
+            ⏱️
+          </span>
+        ) : (
+          <span className="text-text-muted text-sm">-</span>
+        )}
       </div>
 
       {/* Complete Checkbox */}

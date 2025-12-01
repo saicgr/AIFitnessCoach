@@ -446,15 +446,34 @@ export const updateWeeklyVolume = async (
 // Exercise Videos
 // ============================================
 
-export const getExerciseVideoUrl = async (exerciseName: string): Promise<string | null> => {
+export interface VideoResponse {
+  url: string;
+  expires_in: number;
+  exercise_name: string;
+  current_gender: 'male' | 'female' | null;
+  has_male: boolean;
+  has_female: boolean;
+}
+
+export const getExerciseVideoInfo = async (
+  exerciseName: string,
+  gender?: 'male' | 'female'
+): Promise<VideoResponse | null> => {
   try {
-    const { data } = await api.get<{ url: string; expires_in: number }>(
-      `/videos/by-exercise/${encodeURIComponent(exerciseName)}`
+    const params = gender ? `?gender=${gender}` : '';
+    const { data } = await api.get<VideoResponse>(
+      `/videos/by-exercise/${encodeURIComponent(exerciseName)}${params}`
     );
-    return data.url;
+    return data;
   } catch {
     return null;
   }
+};
+
+// Backwards compatible function that just returns the URL
+export const getExerciseVideoUrl = async (exerciseName: string): Promise<string | null> => {
+  const info = await getExerciseVideoInfo(exerciseName);
+  return info?.url ?? null;
 };
 
 export default api;

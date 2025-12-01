@@ -519,6 +519,11 @@ export interface ActiveSet {
   isCompleted: boolean;
   previousWeight?: number;
   previousReps?: number;
+  // Timing fields
+  startTime?: number;        // Timestamp when set started
+  endTime?: number;          // Timestamp when set completed
+  durationSeconds?: number;  // Calculated duration
+  previousDuration?: number; // Previous best time for same weight/reps
 }
 
 // Workout log for backend (records a completed workout session)

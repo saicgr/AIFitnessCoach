@@ -9,12 +9,14 @@ import {
   getPerformanceLogs,
   createStrengthRecord,
   getStrengthRecords,
-  getExerciseVideoUrl,
+  getExerciseVideoInfo,
+  type VideoResponse,
 } from '../api/client';
 import { useAppStore } from '../store';
 import SetRow from '../components/workout/SetRow';
 import BottomSheet from '../components/workout/BottomSheet';
 import ExerciseListModal from '../components/workout/ExerciseListModal';
+import VideoPlayer from '../components/workout/VideoPlayer';
 import type { Workout, ActiveSet, PerformanceLogDetailed, StrengthRecord } from '../types';
 
 // Epley formula for 1RM estimation
@@ -37,19 +39,6 @@ const formatTime = (seconds: number) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-// Get icon for muscle group
-const getMuscleGroupIcon = (muscleGroup?: string) => {
-  const group = muscleGroup?.toLowerCase() || '';
-  if (group.includes('chest')) return '💪';
-  if (group.includes('back')) return '🔙';
-  if (group.includes('shoulder')) return '🤷';
-  if (group.includes('leg') || group.includes('quad') || group.includes('hamstring')) return '🦵';
-  if (group.includes('arm') || group.includes('bicep') || group.includes('tricep')) return '💪';
-  if (group.includes('core') || group.includes('ab')) return '🎯';
-  if (group.includes('glute')) return '🍑';
-  return '🏋️';
-};
-
 export default function ActiveWorkout() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -68,8 +57,10 @@ export default function ActiveWorkout() {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoInfo, setVideoInfo] = useState<VideoResponse | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
+  // Default to 'male' - gender preference can be updated via the toggle
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('male');
 
   const { data: workout, isLoading: workoutLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
@@ -167,18 +158,18 @@ export default function ActiveWorkout() {
     return () => clearInterval(interval);
   }, [isResting, restTimer]);
 
-  // Fetch video URL when exercise changes
+  // Fetch video URL when exercise or gender changes
   useEffect(() => {
     const currentExercise = workout?.exercises[currentExerciseIndex];
     if (!currentExercise?.name) return;
 
     setVideoLoading(true);
-    setVideoUrl(null);
+    setVideoInfo(null);
 
-    getExerciseVideoUrl(currentExercise.name)
-      .then((url) => setVideoUrl(url))
+    getExerciseVideoInfo(currentExercise.name, selectedGender)
+      .then((info) => setVideoInfo(info))
       .finally(() => setVideoLoading(false));
-  }, [workout?.exercises, currentExerciseIndex]);
+  }, [workout?.exercises, currentExerciseIndex, selectedGender]);
 
   // Create workout log mutation
   const createWorkoutLogMutation = useMutation({
@@ -251,9 +242,20 @@ export default function ActiveWorkout() {
     const exercise = workout.exercises[exerciseIndex];
     const weightKg = lbsToKg(set.actualWeight || 0);
 
-    // Mark set as completed
+    // Calculate set duration
+    const endTime = Date.now();
+    const durationSeconds = set.startTime
+      ? Math.round((endTime - set.startTime) / 1000)
+      : undefined;
+
+    // Mark set as completed with timing data
     const updatedSets = [...currentSets];
-    updatedSets[setIndex] = { ...set, isCompleted: true };
+    updatedSets[setIndex] = {
+      ...set,
+      isCompleted: true,
+      endTime,
+      durationSeconds,
+    };
     setExerciseSets(new Map(exerciseSets.set(exerciseIndex, updatedSets)));
 
     // Start rest timer
@@ -328,6 +330,19 @@ export default function ActiveWorkout() {
     setExerciseSets(new Map(exerciseSets.set(exerciseIndex, updatedSets)));
   };
 
+  const handleSetFocus = (exerciseIndex: number, setIndex: number) => {
+    const currentSets = exerciseSets.get(exerciseIndex);
+    if (!currentSets) return;
+
+    const set = currentSets[setIndex];
+    // Only start timing if not already started and not completed
+    if (!set.startTime && !set.isCompleted) {
+      const updatedSets = [...currentSets];
+      updatedSets[setIndex] = { ...set, startTime: Date.now() };
+      setExerciseSets(new Map(exerciseSets.set(exerciseIndex, updatedSets)));
+    }
+  };
+
   const handleAddSet = (exerciseIndex: number) => {
     const currentSets = exerciseSets.get(exerciseIndex);
     if (!currentSets || !workout) return;
@@ -360,6 +375,11 @@ export default function ActiveWorkout() {
 
     completeMutation.mutate();
   };
+
+  const handleSkipRest = useCallback(() => {
+    setIsResting(false);
+    setRestTimer(null);
+  }, []);
 
   const goToNextExercise = () => {
     if (workout && currentExerciseIndex < workout.exercises.length - 1) {
@@ -435,6 +455,7 @@ export default function ActiveWorkout() {
           <div className="w-16 text-center">Prev</div>
           <div className="flex-1 max-w-16 text-center">Wt</div>
           <div className="flex-1 max-w-16 text-center">Reps</div>
+          <div className="w-14 text-center">Time</div>
           <div className="w-8 text-center"></div>
         </div>
         <div className="p-2 space-y-1.5">
@@ -447,6 +468,7 @@ export default function ActiveWorkout() {
               onRepsChange={(reps) => handleRepsChange(currentExerciseIndex, index, reps)}
               onComplete={() => handleSetComplete(currentExerciseIndex, index)}
               onSetTypeChange={(type) => handleSetTypeChange(currentExerciseIndex, index, type)}
+              onSetFocus={() => handleSetFocus(currentExerciseIndex, index)}
             />
           ))}
         </div>
@@ -534,6 +556,7 @@ export default function ActiveWorkout() {
           <div className="w-20 text-center">Previous</div>
           <div className="flex-1 max-w-20 text-center">Weight</div>
           <div className="flex-1 max-w-20 text-center">Reps</div>
+          <div className="w-14 text-center">Time</div>
           <div className="w-8 text-center"></div>
         </div>
         <div className="p-2 space-y-2">
@@ -546,6 +569,7 @@ export default function ActiveWorkout() {
               onRepsChange={(reps) => handleRepsChange(currentExerciseIndex, index, reps)}
               onComplete={() => handleSetComplete(currentExerciseIndex, index)}
               onSetTypeChange={(type) => handleSetTypeChange(currentExerciseIndex, index, type)}
+              onSetFocus={() => handleSetFocus(currentExerciseIndex, index)}
             />
           ))}
         </div>
@@ -667,8 +691,77 @@ export default function ActiveWorkout() {
     </div>
   );
 
+  // Video player props for reuse
+  const videoPlayerProps = {
+    videoInfo,
+    videoLoading,
+    selectedGender,
+    onGenderChange: setSelectedGender,
+    exerciseName: currentExercise.name,
+    exerciseIndex: currentExerciseIndex,
+    totalExercises: workout.exercises.length,
+    muscleGroup: currentExercise.muscle_group,
+    isResting,
+    restTimer,
+    onSkipRest: handleSkipRest,
+    exerciseCompleted,
+  };
+
+  // Desktop workout panel content
+  const desktopWorkoutPanel = (
+    <div className="h-full flex flex-col bg-surface overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-white/10">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => navigate(`/workout/${id}`)}
+            className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-text-secondary hover:bg-white/20 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="bg-white/10 rounded-full px-4 py-2 flex items-center gap-2">
+            <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-text font-mono font-semibold">{formatTime(totalElapsedTime)}</span>
+          </div>
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              isPaused ? 'bg-primary text-white' : 'bg-white/10 text-text-secondary hover:bg-white/20'
+            }`}
+          >
+            {isPaused ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            )}
+          </button>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {expandedContent}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       {/* PR Celebration Overlay */}
       {showPRCelebration && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in">
@@ -694,136 +787,82 @@ export default function ActiveWorkout() {
         />
       )}
 
-      {/* Floating Header with Timer */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-4 py-3 safe-area-top">
-        <div className="flex items-center justify-between">
-          {/* Back button */}
-          <button
-            onClick={() => navigate(`/workout/${id}`)}
-            className="w-10 h-10 bg-black/40 backdrop-blur-lg rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          {/* Total workout time */}
-          <div className="bg-black/40 backdrop-blur-lg rounded-full px-4 py-2 flex items-center gap-2">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-white font-mono font-semibold">{formatTime(totalElapsedTime)}</span>
-          </div>
-
-          {/* Pause button */}
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            className={`w-10 h-10 backdrop-blur-lg rounded-full flex items-center justify-center transition-colors ${
-              isPaused ? 'bg-primary text-white' : 'bg-black/40 text-white hover:bg-black/60'
-            }`}
-          >
-            {isPaused ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-              </svg>
-            )}
-          </button>
+      {/* DESKTOP LAYOUT (lg and up) - Side by side */}
+      <div className="hidden lg:flex h-screen">
+        {/* Left: Video */}
+        <div className="w-1/2 xl:w-3/5 h-full">
+          <VideoPlayer {...videoPlayerProps} />
         </div>
-
-        {/* Progress bar */}
-        <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
+        {/* Right: Workout Panel */}
+        <div className="w-1/2 xl:w-2/5 h-full border-l border-white/10">
+          {desktopWorkoutPanel}
         </div>
-      </header>
-
-      {/* Full-screen Exercise Visual */}
-      <div
-        className="flex-1 relative"
-        style={{ paddingBottom: sheetExpanded ? '85vh' : '220px' }}
-      >
-        {/* Exercise video or Placeholder */}
-        {videoUrl ? (
-          <video
-            key={videoUrl}
-            src={videoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-surface to-cyan-900/30 flex flex-col items-center justify-center">
-            {videoLoading ? (
-              <>
-                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-white/60 text-lg">Loading video...</p>
-              </>
-            ) : (
-              <>
-                {/* Large muscle group icon */}
-                <div className="text-8xl mb-6 opacity-80">{getMuscleGroupIcon(currentExercise.muscle_group)}</div>
-                {/* Exercise name */}
-                <h1 className="text-3xl font-bold text-white text-center px-8 mb-2">{currentExercise.name}</h1>
-                {/* Muscle group */}
-                <p className="text-white/60 text-lg">{currentExercise.muscle_group || 'Full Body'}</p>
-                {/* Exercise counter */}
-                <p className="text-white/40 text-sm mt-4">
-                  Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
-                </p>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Rest Timer Overlay */}
-        {isResting && restTimer !== null && (
-          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
-            <p className="text-white/60 text-lg mb-2">Rest Time</p>
-            <div className="text-7xl font-bold text-white font-mono mb-6">
-              {formatTime(restTimer)}
-            </div>
-            <button
-              onClick={() => {
-                setIsResting(false);
-                setRestTimer(null);
-              }}
-              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-lg"
-            >
-              Skip Rest
-            </button>
-          </div>
-        )}
-
-        {/* Exercise completed badge */}
-        {exerciseCompleted && !isResting && (
-          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-10">
-            <div className="bg-emerald-500 text-white px-4 py-2 rounded-full font-semibold flex items-center gap-2 shadow-lg shadow-emerald-500/30">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Exercise Complete
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Bottom Sheet */}
-      <BottomSheet
-        isExpanded={sheetExpanded}
-        onExpandedChange={setSheetExpanded}
-        collapsedHeight={280}
-        collapsedContent={collapsedContent}
-      >
-        {expandedContent}
-      </BottomSheet>
+      {/* MOBILE LAYOUT (below lg) - Stacked with bottom sheet */}
+      <div className="lg:hidden flex flex-col min-h-screen">
+        {/* Floating Header with Timer */}
+        <header className="fixed top-0 left-0 right-0 z-30 px-4 py-3 safe-area-top">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate(`/workout/${id}`)}
+              className="w-10 h-10 bg-black/40 backdrop-blur-lg rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="bg-black/40 backdrop-blur-lg rounded-full px-4 py-2 flex items-center gap-2">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-white font-mono font-semibold">{formatTime(totalElapsedTime)}</span>
+            </div>
+            <button
+              onClick={() => setIsPaused(!isPaused)}
+              className={`w-10 h-10 backdrop-blur-lg rounded-full flex items-center justify-center transition-colors ${
+                isPaused ? 'bg-primary text-white' : 'bg-black/40 text-white hover:bg-black/60'
+              }`}
+            >
+              {isPaused ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </header>
+
+        {/* Full-screen Exercise Visual */}
+        <div
+          className="flex-1 relative"
+          style={{ paddingBottom: sheetExpanded ? '85vh' : '220px' }}
+        >
+          <div className="absolute inset-0 pt-20">
+            <VideoPlayer {...videoPlayerProps} />
+          </div>
+        </div>
+
+        {/* Bottom Sheet */}
+        <BottomSheet
+          isExpanded={sheetExpanded}
+          onExpandedChange={setSheetExpanded}
+          collapsedHeight={280}
+          collapsedContent={collapsedContent}
+        >
+          {expandedContent}
+        </BottomSheet>
+      </div>
 
       {/* CSS for animations */}
       <style>{`
