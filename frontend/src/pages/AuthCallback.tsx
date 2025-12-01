@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { googleAuth } from '../api/client';
+import { extractOnboardingData } from '../types';
 import { GlassCard } from '../components/ui';
 import { createLogger } from '../utils/logger';
 
@@ -10,7 +11,7 @@ const log = createLogger('AuthCallback');
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const { setUser, setSession } = useAppStore();
+  const { setUser, setSession, setOnboardingData } = useAppStore();
   const [status, setStatus] = useState('Processing sign-in...');
   const [error, setError] = useState<string | null>(null);
 
@@ -37,11 +38,18 @@ export default function AuthCallback() {
         setSession(session);
 
         // Call backend to get/create user in our database
-        const user = await googleAuth(session.access_token);
+        const { user, backend } = await googleAuth(session.access_token);
         log.info('User authenticated', { userId: user.id, onboarding_completed: user.onboarding_completed });
 
         // Store user in app state
         setUser(user);
+
+        // Extract and store onboarding data from preferences (for Profile page)
+        if (user.onboarding_completed) {
+          const onboardingData = extractOnboardingData(backend);
+          setOnboardingData(onboardingData);
+          log.info('Onboarding data restored from preferences');
+        }
 
         setStatus('Welcome! Redirecting...');
 
@@ -60,7 +68,7 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate, setUser, setSession]);
+  }, [navigate, setUser, setSession, setOnboardingData]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

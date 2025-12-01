@@ -57,6 +57,57 @@ export function parseUser(backend: UserBackend): User {
   };
 }
 
+// Helper to extract OnboardingData from UserBackend preferences
+export function extractOnboardingData(backend: UserBackend): Partial<OnboardingData> {
+  const preferences = JSON.parse(backend.preferences || '{}');
+  const goals = JSON.parse(backend.goals || '[]');
+  const equipment = JSON.parse(backend.equipment || '[]');
+  const activeInjuries = JSON.parse(backend.active_injuries || '[]');
+
+  return {
+    // Personal Info
+    name: preferences.name || '',
+    gender: preferences.gender || 'prefer_not_to_say',
+    age: preferences.age || 30,
+
+    // Body Metrics
+    heightCm: preferences.height_cm || 170,
+    weightKg: preferences.weight_kg || 70,
+    targetWeightKg: preferences.target_weight_kg,
+
+    // Advanced Measurements
+    waistCircumferenceCm: preferences.waist_circumference_cm,
+    hipCircumferenceCm: preferences.hip_circumference_cm,
+    neckCircumferenceCm: preferences.neck_circumference_cm,
+    bodyFatPercent: preferences.body_fat_percent,
+    restingHeartRate: preferences.resting_heart_rate,
+    bloodPressureSystolic: preferences.blood_pressure_systolic,
+    bloodPressureDiastolic: preferences.blood_pressure_diastolic,
+
+    // Fitness Background
+    fitnessLevel: (backend.fitness_level as OnboardingData['fitnessLevel']) || 'beginner',
+    goals: goals,
+    workoutExperience: preferences.workout_experience || [],
+
+    // Schedule
+    daysPerWeek: preferences.days_per_week || 4,
+    selectedDays: preferences.selected_days || [0, 1, 3, 4],
+    preferredTime: preferences.preferred_time || 'morning',
+    workoutDuration: preferences.workout_duration || 45,
+
+    // Workout Preferences
+    trainingSplit: preferences.training_split || 'full_body',
+    intensityPreference: preferences.intensity_preference || 'moderate',
+    equipment: equipment,
+    workoutVariety: preferences.workout_variety || 'varied',
+
+    // Health & Limitations
+    activeInjuries: activeInjuries,
+    healthConditions: preferences.health_conditions || [],
+    activityLevel: preferences.activity_level || 'lightly_active',
+  };
+}
+
 // Exercise types
 export interface Exercise {
   id: string;

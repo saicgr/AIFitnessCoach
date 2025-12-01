@@ -92,10 +92,10 @@ export const checkHealth = async (): Promise<HealthResponse> => {
   return data;
 };
 
-// Auth
-export const googleAuth = async (accessToken: string): Promise<User> => {
+// Auth - returns both parsed User and raw backend data for extracting onboarding preferences
+export const googleAuth = async (accessToken: string): Promise<{ user: User; backend: UserBackend }> => {
   const { data } = await api.post<UserBackend>('/users/auth/google', { access_token: accessToken });
-  return parseUser(data);
+  return { user: parseUser(data), backend: data };
 };
 
 // Users
@@ -107,6 +107,12 @@ export const createUser = async (user: CreateUserRequest): Promise<User> => {
 export const getUser = async (userId: number): Promise<User> => {
   const { data } = await api.get<UserBackend>(`/users/${userId}`);
   return parseUser(data);
+};
+
+// Get user with raw backend data for extracting onboarding preferences
+export const getUserWithBackend = async (userId: number | string): Promise<{ user: User; backend: UserBackend }> => {
+  const { data } = await api.get<UserBackend>(`/users/${userId}`);
+  return { user: parseUser(data), backend: data };
 };
 
 export const updateUser = async (userId: number, updates: UpdateUserRequest): Promise<User> => {

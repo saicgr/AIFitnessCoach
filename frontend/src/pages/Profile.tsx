@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAppStore } from '../store';
-import { updateUser } from '../api/client';
+import { updateUser, getUserWithBackend } from '../api/client';
+import { extractOnboardingData } from '../types';
 import { createLogger } from '../utils/logger';
 import { GlassCard, GlassButton } from '../components/ui';
 
@@ -239,6 +240,25 @@ export default function Profile() {
   useEffect(() => {
     setFormData({ ...onboardingData });
   }, [onboardingData]);
+
+  // Fetch fresh user data from backend on mount to sync localStorage with database
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const syncOnboardingData = async () => {
+      try {
+        log.info('Syncing onboarding data from backend...');
+        const { backend } = await getUserWithBackend(user.id);
+        const freshData = extractOnboardingData(backend);
+        setOnboardingData(freshData);
+        log.info('Onboarding data synced from backend', freshData);
+      } catch (error) {
+        log.error('Failed to sync onboarding data from backend', error);
+      }
+    };
+
+    syncOnboardingData();
+  }, [user?.id, setOnboardingData]);
 
   // Update mutation
   const updateMutation = useMutation({
