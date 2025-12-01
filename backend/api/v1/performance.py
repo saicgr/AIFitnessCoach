@@ -37,14 +37,14 @@ def get_progressive_overload() -> ProgressiveOverloadService:
 
 class AnalyticsQueryParams(BaseModel):
     """Query parameters for analytics."""
-    user_id: int
+    user_id: str
     days: int = 30
     exercise_ids: Optional[List[str]] = None
 
 
 @router.get("/analytics")
 async def get_analytics(
-    user_id: int,
+    user_id: str,
     days: int = Query(default=30, ge=7, le=365),
 ):
     """
@@ -129,7 +129,7 @@ class PRResponse(BaseModel):
 
 @router.get("/prs")
 async def get_personal_records(
-    user_id: int,
+    user_id: str,
     limit: int = Query(default=10, ge=1, le=50),
 ):
     """
@@ -202,7 +202,7 @@ async def get_personal_records(
 
 @router.get("/volume")
 async def get_weekly_volume(
-    user_id: int,
+    user_id: str,
     weeks: int = Query(default=4, ge=1, le=12),
 ):
     """
@@ -317,7 +317,7 @@ async def get_weekly_volume(
 @router.get("/strength-curve/{exercise_id}")
 async def get_strength_curve(
     exercise_id: str,
-    user_id: int,
+    user_id: str,
     days: int = Query(default=90, ge=30, le=365),
 ):
     """

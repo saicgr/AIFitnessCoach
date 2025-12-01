@@ -106,7 +106,7 @@ class ChatHistoryItem(BaseModel):
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
-async def get_chat_history(user_id: int, limit: int = 100):
+async def get_chat_history(user_id: str, limit: int = 100):
     """
     Get chat history for a user.
 

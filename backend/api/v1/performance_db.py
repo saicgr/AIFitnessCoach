@@ -128,7 +128,7 @@ async def create_performance_log(log: PerformanceLogCreate):
 
 @router.get("/logs", response_model=List[PerformanceLog])
 async def list_performance_logs(
-    user_id: int,
+    user_id: str,
     exercise_id: Optional[str] = None,
     limit: int = Query(default=50, ge=1, le=200),
 ):
@@ -174,7 +174,7 @@ async def create_workout_log(log: WorkoutLogCreate):
 
 @router.get("/workout-logs", response_model=List[WorkoutLog])
 async def list_workout_logs(
-    user_id: int,
+    user_id: str,
     limit: int = Query(default=50, ge=1, le=200),
 ):
     """List workout logs for a user."""
@@ -219,7 +219,7 @@ async def create_strength_record(record: StrengthRecordCreate):
 
 @router.get("/strength-records", response_model=List[StrengthRecord])
 async def list_strength_records(
-    user_id: int,
+    user_id: str,
     exercise_id: Optional[str] = None,
     prs_only: bool = False,
     limit: int = Query(default=50, ge=1, le=200),
@@ -273,7 +273,7 @@ async def upsert_weekly_volume(volume: WeeklyVolumeCreate):
 
 @router.get("/weekly-volume", response_model=List[WeeklyVolume])
 async def list_weekly_volumes(
-    user_id: int,
+    user_id: str,
     week_number: Optional[int] = None,
     year: Optional[int] = None,
 ):

@@ -147,8 +147,8 @@ class RecommendationQuery(BaseModel):
 
 @router.get("/{workout_id}/recommendations", response_model=GetRecommendationsResponse)
 async def get_recommendations(
-    workout_id: int,
-    user_id: int,
+    workout_id: str,
+    user_id: str,
     prog_service: ProgressiveOverloadService = Depends(get_progressive_overload),
 ):
     """
@@ -275,7 +275,7 @@ async def adapt_workout(
 
 class SplitRequest(BaseModel):
     """Request for optimized weekly split."""
-    user_id: int
+    user_id: str
     available_days: int = 4
 
 
@@ -288,7 +288,7 @@ class SplitDay(BaseModel):
 
 class SplitResponse(BaseModel):
     """Response with optimized split."""
-    user_id: int
+    user_id: str
     available_days: int
     split: List[SplitDay]
     reasoning: str

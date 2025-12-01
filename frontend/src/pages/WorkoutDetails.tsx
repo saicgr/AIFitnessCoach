@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getWorkout, deleteWorkout } from '../api/client';
 import { useAppStore } from '../store';
@@ -8,8 +8,10 @@ import { GlassCard } from '../components/ui';
 
 export default function WorkoutDetails() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setCurrentWorkout, removeWorkout, setActiveWorkoutId } = useAppStore();
+  const autoStartHandled = useRef(false);
 
   const { data: workout, isLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
@@ -22,6 +24,15 @@ export default function WorkoutDetails() {
       setCurrentWorkout(workout);
     }
   }, [workout, setCurrentWorkout]);
+
+  // Auto-start workout if ?start=true is in URL
+  useEffect(() => {
+    if (workout && !autoStartHandled.current && searchParams.get('start') === 'true' && !workout.completed_at) {
+      autoStartHandled.current = true;
+      setActiveWorkoutId(workout.id);
+      navigate(`/workout/${workout.id}/active`, { replace: true });
+    }
+  }, [workout, searchParams, setActiveWorkoutId, navigate]);
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteWorkout(id!),

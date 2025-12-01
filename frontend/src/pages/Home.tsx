@@ -8,102 +8,43 @@ import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 import { createLogger } from '../utils/logger';
 import type { Workout } from '../types';
-import { formatDuration } from '../utils/dateUtils';
 
 const log = createLogger('home');
 
-// Workout type gradients and glow colors
-const workoutStyles: Record<string, { gradient: string; glow: string }> = {
-  strength: { gradient: 'from-indigo-500 to-purple-600', glow: 'rgba(99, 102, 241, 0.4)' },
-  cardio: { gradient: 'from-orange-500 to-red-500', glow: 'rgba(249, 115, 22, 0.4)' },
-  flexibility: { gradient: 'from-teal-400 to-cyan-500', glow: 'rgba(20, 184, 166, 0.4)' },
-  hiit: { gradient: 'from-pink-500 to-rose-500', glow: 'rgba(236, 72, 153, 0.4)' },
-  mixed: { gradient: 'from-blue-500 to-indigo-600', glow: 'rgba(59, 130, 246, 0.4)' },
-};
+// Calculate current workout streak
+function calculateStreak(workouts: Workout[]): number {
+  const completedWorkouts = workouts
+    .filter(w => w.completed_at)
+    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
 
-// Today's workout card component
-function TodayWorkoutCard({ workout }: { workout: Workout }) {
-  const style = workoutStyles[workout.type] || workoutStyles.mixed;
-  const isCompleted = !!workout.completed_at;
+  if (completedWorkouts.length === 0) return 0;
 
-  return (
-    <Link to={`/workout/${workout.id}`} className="block">
-      <div
-        className={`
-          relative overflow-hidden rounded-2xl p-6 min-h-[240px]
-          bg-gradient-to-br ${style.gradient}
-          transition-all duration-300 hover:scale-[1.02]
-        `}
-        style={{
-          boxShadow: `0 0 40px ${style.glow}, 0 20px 40px rgba(0,0,0,0.3)`,
-        }}
-      >
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-              </pattern>
-            </defs>
-            <rect width="100" height="100" fill="url(#grid)" />
-          </svg>
-        </div>
+  // Get unique completion dates
+  const completionDates = [...new Set(
+    completedWorkouts.map(w => new Date(w.completed_at!).toISOString().split('T')[0])
+  )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-        {/* Completed overlay */}
-        {isCompleted && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-accent mx-auto flex items-center justify-center mb-2 shadow-[0_0_20px_rgba(20,184,166,0.5)]">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-lg font-semibold text-white">Completed!</p>
-            </div>
-          </div>
-        )}
+  // Calculate current streak
+  let currentStreak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-        {/* Content */}
-        <div className="relative z-0 flex flex-col h-full">
-          <span className="text-xs font-bold uppercase tracking-wider text-white/70">
-            Today's Workout
-          </span>
+  for (let i = 0; i < completionDates.length; i++) {
+    const checkDate = new Date(today);
+    checkDate.setDate(today.getDate() - i);
+    const checkDateStr = checkDate.toISOString().split('T')[0];
 
-          <div className="flex-1 mt-4">
-            <h2 className="text-2xl font-bold text-white mb-1">{workout.name}</h2>
-            <p className="text-white/80 capitalize">
-              {workout.type} • {workout.difficulty}
-            </p>
+    if (completionDates.includes(checkDateStr)) {
+      currentStreak++;
+    } else if (i === 0) {
+      // Today doesn't have a workout, check if yesterday does
+      continue;
+    } else {
+      break;
+    }
+  }
 
-            <div className="flex items-center gap-4 mt-4 text-white/90">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-medium">{formatDuration(workout.duration_minutes)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span className="font-medium">{workout.exercises.length} exercises</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-xl text-white font-medium hover:bg-white/30 transition-colors">
-              {isCompleted ? 'View Details' : 'Start Workout'}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
+  return currentStreak;
 }
 
 // Stats card component
@@ -225,12 +166,8 @@ export default function Home() {
     }
   }, [data, setWorkouts]);
 
-  // Get today's workout
+  // Get today's date for filtering
   const today = new Date().toISOString().split('T')[0];
-  const todaysWorkout = workouts.find(w => {
-    const scheduledDate = w.scheduled_date?.split('T')[0];
-    return scheduledDate === today;
-  });
 
   const todayWorkouts = workouts.filter((w) => {
     return (w.scheduled_date?.startsWith(today) || !w.completed_at) && !w.completed_at;
@@ -406,7 +343,26 @@ export default function Home() {
               <p className="text-text-secondary text-sm">Welcome back,</p>
               <h1 className="text-2xl font-bold text-text">{userName}</h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              {/* Streak Badge */}
+              {(() => {
+                const streak = calculateStreak(workouts);
+                return (
+                  <div
+                    className={`flex items-center gap-1.5 px-3 py-2 backdrop-blur-sm rounded-xl border ${
+                      streak > 0
+                        ? 'bg-orange/20 border-orange/30'
+                        : 'bg-white/10 border-white/10'
+                    }`}
+                    title={streak > 0 ? `${streak} day streak!` : 'Start your streak!'}
+                  >
+                    <svg className={`w-5 h-5 ${streak > 0 ? 'text-orange' : 'text-text-secondary'}`} fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+                    </svg>
+                    <span className={`text-sm font-bold ${streak > 0 ? 'text-orange' : 'text-text-secondary'}`}>{streak}</span>
+                  </div>
+                );
+              })()}
               <Link
                 to="/metrics"
                 className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/15 transition-colors"
@@ -478,29 +434,6 @@ export default function Home() {
               total={backgroundProgress.total}
               variant="glow"
             />
-          </GlassCard>
-        )}
-
-        {/* Today's Workout */}
-        {todaysWorkout && (
-          <section className="fade-in-up">
-            <TodayWorkoutCard workout={todaysWorkout} />
-          </section>
-        )}
-
-        {/* No workout for today */}
-        {!todaysWorkout && !isLoading && (
-          <GlassCard className="p-6 text-center" variant="default">
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-text mb-2">No Workout Today</h3>
-            <p className="text-text-secondary mb-4">Take a rest day or generate a new workout</p>
-            <GlassButton onClick={handleOpenGenerateModal} size="sm">
-              Generate Workout
-            </GlassButton>
           </GlassCard>
         )}
 

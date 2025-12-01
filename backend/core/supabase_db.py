@@ -303,7 +303,7 @@ class SupabaseDB:
             self.client.table("chat_history")
             .select("*")
             .eq("user_id", user_id)
-            .order("created_at", desc=False)
+            .order("timestamp", desc=False)
             .limit(limit)
             .execute()
         )

@@ -115,11 +115,11 @@ class ExerciseCreate(BaseModel):
     is_unilateral: bool = False
     tags: str = "[]"
     is_custom: bool = False
-    created_by_user_id: Optional[int] = None
+    created_by_user_id: Optional[str] = None  # UUID string from Supabase
 
 
 class Exercise(ExerciseCreate):
-    id: int
+    id: str  # UUID string from Supabase
     created_at: datetime
 
 
@@ -227,7 +227,7 @@ class WorkoutLogCreate(BaseModel):
 
 
 class WorkoutLog(WorkoutLogCreate):
-    id: int
+    id: str  # UUID string from Supabase
     completed_at: datetime
 
 
@@ -236,7 +236,7 @@ class WorkoutLog(WorkoutLogCreate):
 # ============================================
 
 class PerformanceLogCreate(BaseModel):
-    workout_log_id: int
+    workout_log_id: str  # UUID string from Supabase
     user_id: str  # UUID string from Supabase
     exercise_id: str
     exercise_name: str
@@ -252,7 +252,7 @@ class PerformanceLogCreate(BaseModel):
 
 
 class PerformanceLog(PerformanceLogCreate):
-    id: int
+    id: str  # UUID string from Supabase
     recorded_at: datetime
 
 
@@ -272,7 +272,7 @@ class StrengthRecordCreate(BaseModel):
 
 
 class StrengthRecord(StrengthRecordCreate):
-    id: int
+    id: str  # UUID string from Supabase
     achieved_at: datetime
 
 
@@ -294,7 +294,7 @@ class WeeklyVolumeCreate(BaseModel):
 
 
 class WeeklyVolume(WeeklyVolumeCreate):
-    id: int
+    id: str  # UUID string from Supabase
     updated_at: datetime
 
 
@@ -310,7 +310,7 @@ class ChatCreate(BaseModel):
 
 
 class ChatHistory(ChatCreate):
-    id: int
+    id: str  # UUID string from Supabase
     timestamp: datetime
 
 
@@ -328,7 +328,7 @@ class InjuryCreate(BaseModel):
 
 
 class Injury(InjuryCreate):
-    id: int
+    id: str  # UUID string from Supabase
 
 
 # ============================================

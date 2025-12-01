@@ -30,15 +30,23 @@ interface WorkoutCardProps {
   isDragging?: boolean;
   onClick?: () => void;
   onDelete?: (workoutId: string) => void;
+  onStart?: (workoutId: string) => void;
 }
 
-function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, onDelete }: WorkoutCardProps) {
+function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, onDelete, onStart }: WorkoutCardProps) {
   const isCompleted = !!workout.completed_at;
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
       onDelete(workout.id);
+    }
+  };
+
+  const handleStartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStart) {
+      onStart(workout.id);
     }
   };
 
@@ -140,6 +148,16 @@ function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, on
                 </svg>
               </div>
             </div>
+          ) : onStart && !isDragging ? (
+            <button
+              onClick={handleStartClick}
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/80 hover:scale-105 transition-all shadow-lg shadow-primary/30"
+              title="Start workout"
+            >
+              <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
           ) : null}
         </div>
       </div>
@@ -153,9 +171,10 @@ interface DraggableWorkoutCardProps {
   isPast: boolean;
   onNavigate: (workoutId: string) => void;
   onDelete: (workoutId: string) => void;
+  onStart: (workoutId: string) => void;
 }
 
-function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete }: DraggableWorkoutCardProps) {
+function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete, onStart }: DraggableWorkoutCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: workout.id,
     data: { workout },
@@ -181,6 +200,7 @@ function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete }
         isDragging={isDragging}
         onClick={handleClick}
         onDelete={onDelete}
+        onStart={onStart}
       />
     </div>
   );
@@ -466,6 +486,11 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     navigate(`/workout/${workoutId}`);
   };
 
+  // Start workout handler - navigates to workout with start param
+  const handleStart = (workoutId: string) => {
+    navigate(`/workout/${workoutId}?start=true`);
+  };
+
   // Delete handler - shows confirmation modal
   const handleDeleteRequest = (workoutId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
@@ -611,6 +636,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                       isPast={isPast}
                       onNavigate={handleNavigate}
                       onDelete={handleDeleteRequest}
+                      onStart={handleStart}
                     />
                   ) : (
                     <RestDayCard
