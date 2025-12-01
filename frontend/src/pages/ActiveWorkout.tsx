@@ -12,7 +12,9 @@ import {
 } from '../api/client';
 import { useAppStore } from '../store';
 import SetRow from '../components/workout/SetRow';
-import type { Workout, ActiveSet, WorkoutExercise, PerformanceLogDetailed, StrengthRecord } from '../types';
+import BottomSheet from '../components/workout/BottomSheet';
+import ExerciseListModal from '../components/workout/ExerciseListModal';
+import type { Workout, ActiveSet, PerformanceLogDetailed, StrengthRecord } from '../types';
 
 // Epley formula for 1RM estimation
 const calculate1RM = (weight: number, reps: number): number => {
@@ -22,6 +24,30 @@ const calculate1RM = (weight: number, reps: number): number => {
 
 // Convert lbs to kg
 const lbsToKg = (lbs: number): number => lbs * 0.453592;
+
+// Format time as MM:SS or H:MM:SS
+const formatTime = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0) {
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Get icon for muscle group
+const getMuscleGroupIcon = (muscleGroup?: string) => {
+  const group = muscleGroup?.toLowerCase() || '';
+  if (group.includes('chest')) return '💪';
+  if (group.includes('back')) return '🔙';
+  if (group.includes('shoulder')) return '🤷';
+  if (group.includes('leg') || group.includes('quad') || group.includes('hamstring')) return '🦵';
+  if (group.includes('arm') || group.includes('bicep') || group.includes('tricep')) return '💪';
+  if (group.includes('core') || group.includes('ab')) return '🎯';
+  if (group.includes('glute')) return '🍑';
+  return '🏋️';
+};
 
 export default function ActiveWorkout() {
   const { id } = useParams<{ id: string }>();
@@ -34,9 +60,13 @@ export default function ActiveWorkout() {
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [isResting, setIsResting] = useState(false);
   const [workoutStartTime] = useState(Date.now());
+  const [totalElapsedTime, setTotalElapsedTime] = useState(0);
   const [showPRCelebration, setShowPRCelebration] = useState(false);
   const [prExerciseName, setPRExerciseName] = useState('');
   const [workoutLogId, setWorkoutLogId] = useState<string | null>(null);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [showExerciseList, setShowExerciseList] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const { data: workout, isLoading: workoutLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
@@ -57,6 +87,15 @@ export default function ActiveWorkout() {
     queryFn: () => getStrengthRecords(user!.id.toString(), undefined, true),
     enabled: !!user?.id,
   });
+
+  // Total elapsed time counter
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setTotalElapsedTime(Math.floor((Date.now() - workoutStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [workoutStartTime, isPaused]);
 
   // Initialize sets for each exercise
   useEffect(() => {
@@ -300,21 +339,24 @@ export default function ActiveWorkout() {
     // Update workout log with final data
     if (workoutLogId) {
       const totalTimeSeconds = Math.floor((Date.now() - workoutStartTime) / 1000);
-      try {
-        // We'd update the workout log here with final time if the API supports it
-        console.log('Workout completed in', totalTimeSeconds, 'seconds');
-      } catch (error) {
-        console.error('Failed to update workout log:', error);
-      }
+      console.log('Workout completed in', totalTimeSeconds, 'seconds');
     }
 
     completeMutation.mutate();
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const goToNextExercise = () => {
+    if (workout && currentExerciseIndex < workout.exercises.length - 1) {
+      setCurrentExerciseIndex(currentExerciseIndex + 1);
+      setSheetExpanded(false);
+    }
+  };
+
+  const goToPreviousExercise = () => {
+    if (currentExerciseIndex > 0) {
+      setCurrentExerciseIndex(currentExerciseIndex - 1);
+      setSheetExpanded(false);
+    }
   };
 
   const getCompletedSetsCount = () => {
@@ -336,7 +378,10 @@ export default function ActiveWorkout() {
   if (workoutLoading || !workout) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-text-secondary">Loading workout...</div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">Loading workout...</p>
+        </div>
       </div>
     );
   }
@@ -346,6 +391,265 @@ export default function ActiveWorkout() {
   const currentSetIndex = currentSets.findIndex((s) => !s.isCompleted);
   const exerciseCompleted = currentSets.length > 0 && currentSets.every((s) => s.isCompleted);
   const progress = getTotalSetsCount() > 0 ? (getCompletedSetsCount() / getTotalSetsCount()) * 100 : 0;
+  const isLastExercise = currentExerciseIndex === workout.exercises.length - 1;
+
+  // Collapsed content for bottom sheet (set-by-set details of current exercise)
+  const collapsedContent = (
+    <div className="space-y-3">
+      {/* Exercise tags and name */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-0.5 bg-white/10 rounded-full text-text-secondary uppercase tracking-wider">
+            {currentExercise.equipment || 'Bodyweight'}
+          </span>
+          {currentExercise.muscle_group && (
+            <span className="text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
+              {currentExercise.muscle_group}
+            </span>
+          )}
+        </div>
+        <h2 className="text-xl font-bold text-text">{currentExercise.name}</h2>
+        <p className="text-text-secondary">{currentExercise.sets} sets × {currentExercise.reps} reps</p>
+      </div>
+
+      {/* Current set-by-set table */}
+      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 text-text-muted text-xs font-medium uppercase tracking-wider">
+          <div className="w-8 text-center">Set</div>
+          <div className="w-16 text-center">Prev</div>
+          <div className="flex-1 max-w-16 text-center">Wt</div>
+          <div className="flex-1 max-w-16 text-center">Reps</div>
+          <div className="w-8 text-center"></div>
+        </div>
+        <div className="p-2 space-y-1.5">
+          {currentSets.map((set, index) => (
+            <SetRow
+              key={index}
+              set={set}
+              isActive={index === currentSetIndex}
+              onWeightChange={(weight) => handleWeightChange(currentExerciseIndex, index, weight)}
+              onRepsChange={(reps) => handleRepsChange(currentExerciseIndex, index, reps)}
+              onComplete={() => handleSetComplete(currentExerciseIndex, index)}
+              onSetTypeChange={(type) => handleSetTypeChange(currentExerciseIndex, index, type)}
+            />
+          ))}
+        </div>
+        <div className="p-2 pt-0">
+          <button
+            onClick={() => handleAddSet(currentExerciseIndex)}
+            className="w-full py-2 border-2 border-dashed border-white/20 rounded-xl text-text-secondary hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Set
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation buttons */}
+      <div className="flex gap-3 pt-2">
+        <button
+          onClick={() => setShowExerciseList(true)}
+          className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-text-secondary hover:bg-white/20 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        </button>
+        {isLastExercise ? (
+          <button
+            onClick={handleFinishWorkout}
+            disabled={completeMutation.isPending}
+            className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-50 transition-all"
+          >
+            {completeMutation.isPending ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Completing...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Finish Workout
+              </>
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={goToNextExercise}
+            className="flex-1 h-12 bg-gradient-to-r from-primary to-cyan-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-primary/30 transition-all"
+          >
+            Next Exercise
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  // Expanded content - shows all exercises with their set details
+  const expandedContent = (
+    <div className="space-y-4">
+      {/* Exercise info header */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-0.5 bg-white/10 rounded-full text-text-secondary uppercase tracking-wider">
+            {currentExercise.equipment || 'Bodyweight'}
+          </span>
+          {currentExercise.muscle_group && (
+            <span className="text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
+              {currentExercise.muscle_group}
+            </span>
+          )}
+        </div>
+        <h2 className="text-xl font-bold text-text">{currentExercise.name}</h2>
+        <p className="text-text-secondary">{currentExercise.sets} sets × {currentExercise.reps} reps</p>
+      </div>
+
+      {/* Set-by-set table */}
+      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 text-text-muted text-xs font-medium uppercase tracking-wider">
+          <div className="w-8 text-center">Set</div>
+          <div className="w-20 text-center">Previous</div>
+          <div className="flex-1 max-w-20 text-center">Weight</div>
+          <div className="flex-1 max-w-20 text-center">Reps</div>
+          <div className="w-8 text-center"></div>
+        </div>
+        <div className="p-2 space-y-2">
+          {currentSets.map((set, index) => (
+            <SetRow
+              key={index}
+              set={set}
+              isActive={index === currentSetIndex}
+              onWeightChange={(weight) => handleWeightChange(currentExerciseIndex, index, weight)}
+              onRepsChange={(reps) => handleRepsChange(currentExerciseIndex, index, reps)}
+              onComplete={() => handleSetComplete(currentExerciseIndex, index)}
+              onSetTypeChange={(type) => handleSetTypeChange(currentExerciseIndex, index, type)}
+            />
+          ))}
+        </div>
+        <div className="p-2 pt-0">
+          <button
+            onClick={() => handleAddSet(currentExerciseIndex)}
+            className="w-full py-2 border-2 border-dashed border-white/20 rounded-xl text-text-secondary hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Set
+          </button>
+        </div>
+      </div>
+
+      {/* AI Coaching Tip */}
+      {currentExercise.notes && (
+        <div className="bg-gradient-to-r from-primary/10 to-cyan-500/10 rounded-xl p-3 border border-primary/20">
+          <div className="flex items-start gap-2">
+            <span className="text-lg">💡</span>
+            <p className="text-sm text-text-secondary">{currentExercise.notes}</p>
+          </div>
+        </div>
+      )}
+
+      {/* All Exercises List */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">All Exercises</h3>
+        <div className="space-y-2">
+          {workout.exercises.map((exercise, index) => {
+            const sets = exerciseSets.get(index) || [];
+            const isComplete = sets.length > 0 && sets.every((s) => s.isCompleted);
+            const isActive = index === currentExerciseIndex;
+            const completedSetsCount = sets.filter(s => s.isCompleted).length;
+
+            return (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentExerciseIndex(index);
+                  setSheetExpanded(false);
+                }}
+                className={`
+                  w-full flex items-center gap-3 p-3 rounded-xl
+                  border transition-all duration-200
+                  ${isActive
+                    ? 'bg-primary/20 border-primary/50'
+                    : isComplete
+                    ? 'bg-emerald-500/10 border-emerald-500/30'
+                    : 'bg-white/5 border-white/10'
+                  }
+                `}
+              >
+                <div
+                  className={`
+                    w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold
+                    ${isComplete
+                      ? 'bg-emerald-500 text-white'
+                      : isActive
+                      ? 'bg-primary text-white'
+                      : 'bg-white/10 text-text-secondary'
+                    }
+                  `}
+                >
+                  {isComplete ? (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <div className="flex-1 text-left">
+                  <p className={`font-medium text-sm ${isActive ? 'text-primary' : 'text-text'}`}>
+                    {exercise.name}
+                  </p>
+                </div>
+                <span className="text-xs text-text-muted">
+                  {completedSetsCount}/{sets.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex gap-3 pt-2 sticky bottom-0 bg-surface/95 -mx-4 px-4 py-3 border-t border-white/10">
+        <button
+          onClick={goToPreviousExercise}
+          disabled={currentExerciseIndex === 0}
+          className="flex-shrink-0 w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-text-secondary hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        {isLastExercise ? (
+          <button
+            onClick={handleFinishWorkout}
+            disabled={completeMutation.isPending}
+            className="flex-1 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-50 transition-all"
+          >
+            {completeMutation.isPending ? 'Completing...' : 'Finish Workout'}
+          </button>
+        ) : (
+          <button
+            onClick={goToNextExercise}
+            className="flex-1 h-12 bg-gradient-to-r from-primary to-cyan-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-primary/30 transition-all"
+          >
+            Next Exercise
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -360,72 +664,101 @@ export default function ActiveWorkout() {
         </div>
       )}
 
-      {/* Header */}
-      <header className="bg-surface/80 backdrop-blur-lg border-b border-white/10 px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={() => navigate(`/workout/${id}`)}
-              className="text-text-secondary hover:text-text transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      {/* Exercise List Modal */}
+      {showExerciseList && (
+        <ExerciseListModal
+          exercises={workout.exercises}
+          currentExerciseIndex={currentExerciseIndex}
+          exerciseSets={exerciseSets}
+          onSelectExercise={(index) => {
+            setCurrentExerciseIndex(index);
+            setSheetExpanded(false);
+          }}
+          onClose={() => setShowExerciseList(false)}
+        />
+      )}
+
+      {/* Floating Header with Timer */}
+      <header className="fixed top-0 left-0 right-0 z-30 px-4 py-3 safe-area-top">
+        <div className="flex items-center justify-between">
+          {/* Back button */}
+          <button
+            onClick={() => navigate(`/workout/${id}`)}
+            className="w-10 h-10 bg-black/40 backdrop-blur-lg rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Total workout time */}
+          <div className="bg-black/40 backdrop-blur-lg rounded-full px-4 py-2 flex items-center gap-2">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-white font-mono font-semibold">{formatTime(totalElapsedTime)}</span>
+          </div>
+
+          {/* Pause button */}
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className={`w-10 h-10 backdrop-blur-lg rounded-full flex items-center justify-center transition-colors ${
+              isPaused ? 'bg-primary text-white' : 'bg-black/40 text-white hover:bg-black/60'
+            }`}
+          >
+            {isPaused ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
               </svg>
-            </button>
-            <span className="font-semibold text-text">{workout.name}</span>
-            <span className="text-text-secondary text-sm">
-              {currentExerciseIndex + 1}/{workout.exercises.length}
-            </span>
-          </div>
-          {/* Progress bar */}
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-3 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-primary to-emerald-400 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-2xl mx-auto w-full p-4 flex flex-col gap-4">
-        {/* Exercise Header */}
-        <div className="bg-surface/50 backdrop-blur rounded-2xl p-4 border border-white/10">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-primary/20 text-primary rounded-2xl flex items-center justify-center">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-text">{currentExercise.name}</h1>
-              <p className="text-text-secondary text-sm">
-                {currentExercise.muscle_group || 'Full Body'}
-              </p>
-            </div>
-            {exerciseCompleted && (
-              <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-sm font-medium">
-                Done
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* AI Coaching Tip */}
-        <div className="bg-gradient-to-r from-primary/10 to-cyan-500/10 rounded-xl p-3 border border-primary/20">
-          <div className="flex items-start gap-2">
-            <span className="text-lg">💡</span>
-            <p className="text-sm text-text-secondary">
-              {currentExercise.notes || `Focus on controlled movements. Keep your core engaged throughout the exercise.`}
+      {/* Full-screen Exercise Visual */}
+      <div
+        className="flex-1 relative"
+        style={{ paddingBottom: sheetExpanded ? '85vh' : '220px' }}
+      >
+        {/* Exercise image/GIF or Placeholder */}
+        {currentExercise.gif_url ? (
+          <img
+            src={currentExercise.gif_url}
+            alt={currentExercise.name}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-surface to-cyan-900/30 flex flex-col items-center justify-center">
+            {/* Large muscle group icon */}
+            <div className="text-8xl mb-6 opacity-80">{getMuscleGroupIcon(currentExercise.muscle_group)}</div>
+            {/* Exercise name */}
+            <h1 className="text-3xl font-bold text-white text-center px-8 mb-2">{currentExercise.name}</h1>
+            {/* Muscle group */}
+            <p className="text-white/60 text-lg">{currentExercise.muscle_group || 'Full Body'}</p>
+            {/* Exercise counter */}
+            <p className="text-white/40 text-sm mt-4">
+              Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
             </p>
           </div>
-        </div>
+        )}
 
-        {/* Rest Timer */}
+        {/* Rest Timer Overlay */}
         {isResting && restTimer !== null && (
-          <div className="bg-surface/80 backdrop-blur rounded-2xl p-6 border border-white/10 text-center">
-            <p className="text-text-secondary text-sm mb-2">Rest Time</p>
-            <div className="text-5xl font-bold text-primary mb-4">
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-20">
+            <p className="text-white/60 text-lg mb-2">Rest Time</p>
+            <div className="text-7xl font-bold text-white font-mono mb-6">
               {formatTime(restTimer)}
             </div>
             <button
@@ -433,119 +766,35 @@ export default function ActiveWorkout() {
                 setIsResting(false);
                 setRestTimer(null);
               }}
-              className="px-6 py-2 bg-white/10 hover:bg-white/20 text-text rounded-xl transition-colors"
+              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-lg"
             >
               Skip Rest
             </button>
           </div>
         )}
 
-        {/* Sets Table */}
-        <div className="bg-surface/50 backdrop-blur rounded-2xl border border-white/10 overflow-hidden">
-          {/* Table Header */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-white/5 text-text-muted text-xs font-medium uppercase tracking-wider">
-            <div className="w-8 text-center">Set</div>
-            <div className="w-20 text-center">Previous</div>
-            <div className="flex-1 max-w-20 text-center">Weight</div>
-            <div className="flex-1 max-w-20 text-center">Reps</div>
-            <div className="w-8 text-center">✓</div>
-          </div>
-
-          {/* Sets */}
-          <div className="p-2 space-y-2">
-            {currentSets.map((set, index) => (
-              <SetRow
-                key={index}
-                set={set}
-                isActive={index === currentSetIndex}
-                onWeightChange={(weight) => handleWeightChange(currentExerciseIndex, index, weight)}
-                onRepsChange={(reps) => handleRepsChange(currentExerciseIndex, index, reps)}
-                onComplete={() => handleSetComplete(currentExerciseIndex, index)}
-                onSetTypeChange={(type) => handleSetTypeChange(currentExerciseIndex, index, type)}
-              />
-            ))}
-          </div>
-
-          {/* Add Set Button */}
-          <div className="p-2 pt-0">
-            <button
-              onClick={() => handleAddSet(currentExerciseIndex)}
-              className="w-full py-2 border-2 border-dashed border-white/20 rounded-xl text-text-secondary hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        {/* Exercise completed badge */}
+        {exerciseCompleted && !isResting && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-10">
+            <div className="bg-emerald-500 text-white px-4 py-2 rounded-full font-semibold flex items-center gap-2 shadow-lg shadow-emerald-500/30">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Add Set
-            </button>
+              Exercise Complete
+            </div>
           </div>
-        </div>
-
-        {/* Exercise Navigation */}
-        <div className="flex gap-3 mt-auto pt-4">
-          <button
-            onClick={() => setCurrentExerciseIndex(Math.max(0, currentExerciseIndex - 1))}
-            disabled={currentExerciseIndex === 0}
-            className="py-3 px-5 bg-surface/50 border border-white/10 rounded-xl text-text-secondary hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Previous
-          </button>
-          {currentExerciseIndex === workout.exercises.length - 1 ? (
-            <button
-              onClick={handleFinishWorkout}
-              disabled={completeMutation.isPending}
-              className="flex-1 py-3 px-5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-50 transition-all"
-            >
-              {completeMutation.isPending ? 'Completing...' : 'Finish Workout'}
-            </button>
-          ) : (
-            <button
-              onClick={() => setCurrentExerciseIndex(currentExerciseIndex + 1)}
-              className="flex-1 py-3 px-5 bg-gradient-to-r from-primary to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary/30 transition-all"
-            >
-              Next Exercise
-            </button>
-          )}
-        </div>
-      </main>
-
-      {/* Exercise List (bottom tabs) */}
-      <div className="bg-surface/80 backdrop-blur-lg border-t border-white/10 px-4 py-3 sticky bottom-0">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {workout.exercises.map((ex, index) => {
-              const sets = exerciseSets.get(index) || [];
-              const isComplete = sets.length > 0 && sets.every((s) => s.isCompleted);
-              const isActive = index === currentExerciseIndex;
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => setCurrentExerciseIndex(index)}
-                  className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                      : isComplete
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  {isComplete ? (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    index + 1
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        )}
       </div>
+
+      {/* Bottom Sheet */}
+      <BottomSheet
+        isExpanded={sheetExpanded}
+        onExpandedChange={setSheetExpanded}
+        collapsedHeight={280}
+        collapsedContent={collapsedContent}
+      >
+        {expandedContent}
+      </BottomSheet>
 
       {/* CSS for animations */}
       <style>{`
@@ -564,12 +813,8 @@ export default function ActiveWorkout() {
         .animate-bounce-in {
           animation: bounce-in 0.5s ease-out;
         }
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        .safe-area-top {
+          padding-top: max(12px, env(safe-area-inset-top));
         }
       `}</style>
     </div>

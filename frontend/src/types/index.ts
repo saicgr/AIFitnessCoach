@@ -134,6 +134,7 @@ export interface WorkoutExercise {
   completed?: boolean;
   muscle_group?: string;  // Primary muscle targeted by this exercise
   equipment?: string;     // Equipment needed for this exercise
+  gif_url?: string;       // Exercise demonstration GIF from S3
 }
 
 // Backend workout type (has exercises_json as string)
