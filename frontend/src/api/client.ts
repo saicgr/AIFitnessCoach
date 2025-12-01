@@ -151,7 +151,12 @@ export const generateWeeklyWorkouts = async (request: GenerateWeeklyRequest): Pr
 };
 
 export const generateMonthlyWorkouts = async (request: GenerateMonthlyRequest): Promise<GenerateMonthlyResponse> => {
-  const { data } = await api.post<{ workouts: WorkoutBackend[]; total_generated: number }>('/workouts-db/generate-monthly', request);
+  // 5 minute timeout for generating 12 weeks of workouts (many AI calls)
+  const { data } = await api.post<{ workouts: WorkoutBackend[]; total_generated: number }>(
+    '/workouts-db/generate-monthly',
+    request,
+    { timeout: 300000 }  // 5 minutes
+  );
   return {
     workouts: data.workouts.map(parseWorkout),
     total_generated: data.total_generated,

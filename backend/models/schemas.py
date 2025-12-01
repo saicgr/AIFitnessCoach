@@ -203,11 +203,12 @@ class GenerateWeeklyResponse(BaseModel):
 
 
 class GenerateMonthlyRequest(BaseModel):
-    """Request to generate workouts for a full month."""
+    """Request to generate workouts for a specified number of weeks (default 12 weeks)."""
     user_id: str  # UUID string from Supabase
     month_start_date: str  # ISO date string, e.g., "2024-11-01"
     selected_days: List[int]  # 0=Mon, 1=Tue, ..., 6=Sun
     duration_minutes: Optional[int] = 45
+    weeks: Optional[int] = 12  # Number of weeks to generate (default 12 weeks)
 
 
 class GenerateMonthlyResponse(BaseModel):

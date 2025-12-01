@@ -24,6 +24,7 @@ import {
   createUser,
   updateUser,
   generateMonthlyWorkouts,
+  generateRemainingWorkouts,
 } from '../api/client';
 import MessageBubble from '../components/chat/MessageBubble';
 import QuickReplyButtons from '../components/chat/QuickReplyButtons';
@@ -56,6 +57,9 @@ const ConversationalOnboarding: FC = () => {
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [currentDaysPerWeek, setCurrentDaysPerWeek] = useState(3);
   const [error, setError] = useState<string | null>(null);
+  const [showWorkoutLoading, setShowWorkoutLoading] = useState(false);
+  const [workoutLoadingProgress, setWorkoutLoadingProgress] = useState(0);
+  const [workoutLoadingMessage, setWorkoutLoadingMessage] = useState('');
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -188,16 +192,11 @@ const ConversationalOnboarding: FC = () => {
   };
 
   // Check if a message looks like a completion message
-  // Must be explicit completion phrases, NOT question-like messages
+  // These are messages where onboarding is done and we're ready to generate workouts
   const isCompletionMessage = (content: string) => {
     const lowerContent = content.toLowerCase();
 
-    // Don't show "Let's Go" if the message is asking a question
-    if (lowerContent.includes('?')) {
-      return false;
-    }
-
-    // Only match explicit completion phrases
+    // Completion phrases that indicate we're ready to proceed
     const completionPhrases = [
       "let's get started",
       "ready to begin",
@@ -206,7 +205,13 @@ const ConversationalOnboarding: FC = () => {
       "create your workout plan",
       "all set",
       "got everything i need",
-      "ready to go"
+      "ready to go",
+      "let's kick things off",
+      "let's get moving",
+      "exciting journey",
+      "ready to make some progress",
+      "i'll prepare a workout plan",
+      "prepare a workout plan"
     ];
 
     return completionPhrases.some(phrase => lowerContent.includes(phrase));
@@ -236,6 +241,9 @@ const ConversationalOnboarding: FC = () => {
 
   const completeOnboarding = async (injuries: string[], conditions: string[]) => {
     setIsLoading(true);
+    setShowWorkoutLoading(true);
+    setWorkoutLoadingProgress(0);
+    setWorkoutLoadingMessage('Saving your profile...');
 
     try {
       log.info('Completing onboarding...');
@@ -247,6 +255,8 @@ const ConversationalOnboarding: FC = () => {
       };
 
       // Save conversation to database
+      setWorkoutLoadingProgress(5);
+      setWorkoutLoadingMessage('Saving conversation history...');
       await saveOnboardingConversation({
         user_id: user?.id?.toString() || 'temp',
         conversation: conversationalOnboarding.messages.map((msg) => ({
@@ -256,6 +266,9 @@ const ConversationalOnboarding: FC = () => {
           extracted_data: msg.extractedData,
         })),
       });
+
+      setWorkoutLoadingProgress(15);
+      setWorkoutLoadingMessage('Creating your fitness profile...');
 
       // Create/update user in Supabase
       const userData = {
@@ -293,8 +306,11 @@ const ConversationalOnboarding: FC = () => {
       setUser(savedUser);
       log.info('User saved:', savedUser);
 
-      // Generate workouts for the month
-      log.info('Generating monthly workouts...');
+      setWorkoutLoadingProgress(25);
+      setWorkoutLoadingMessage('Generating your first week of workouts...');
+
+      // Generate workouts - week 1 first, then remaining weeks in background
+      log.info('Starting workout generation - week 1 first...');
       try {
         // Convert day names to indices (0=Mon, 1=Tue, ..., 6=Sun)
         const dayNameToIndex: Record<string, number> = {
@@ -332,22 +348,72 @@ const ConversationalOnboarding: FC = () => {
 
         log.info('Selected day indices:', selectedDayIndices);
 
-        const result = await generateMonthlyWorkouts({
+        // Start progress animation during workout generation
+        const progressInterval = setInterval(() => {
+          setWorkoutLoadingProgress(prev => {
+            if (prev >= 85) return prev;
+            return prev + Math.random() * 8;
+          });
+        }, 500);
+
+        // STEP 1: Generate just week 1 first (fast, so user can start immediately)
+        setWorkoutLoadingMessage(`Creating your first week of personalized workouts...`);
+
+        const week1Result = await generateMonthlyWorkouts({
           user_id: savedUser.id,
           month_start_date: monthStartDate,
           duration_minutes: finalData.workout_duration || 45,
           selected_days: selectedDayIndices,
+          weeks: 1,  // Just week 1 for immediate use
         });
-        log.info(`Generated ${result.total_generated} workouts!`);
-      } catch (workoutErr) {
-        log.error('Failed to generate workouts:', workoutErr);
+
+        clearInterval(progressInterval);
+        setWorkoutLoadingProgress(90);
+        log.info(`Generated ${week1Result.total_generated} workouts for week 1!`);
+
+        // STEP 2: Fire off remaining weeks in the background (don't wait)
+        // User will see their workouts grow as they're generated
+        const remainingWeeksRequest = {
+          user_id: savedUser.id,
+          month_start_date: monthStartDate,
+          duration_minutes: finalData.workout_duration || 45,
+          selected_days: selectedDayIndices,
+          weeks: 11,  // Weeks 2-12
+        };
+
+        // Fire and forget - don't await, just log results
+        generateRemainingWorkouts(remainingWeeksRequest)
+          .then((result) => {
+            log.info(`✅ Background generation complete: ${result.total_generated} additional workouts created!`);
+          })
+          .catch((err) => {
+            log.error('⚠️ Background workout generation failed:', err);
+            // Silently fail - user already has week 1
+          });
+
+        setWorkoutLoadingProgress(95);
+        setWorkoutLoadingMessage(`Week 1 ready! More workouts generating in background...`);
+      } catch (workoutErr: any) {
+        log.error('Failed to generate week 1 workouts:', workoutErr);
+        log.error('Error details:', workoutErr?.response?.data || workoutErr?.message || 'Unknown error');
         // Don't fail onboarding if workout generation fails
+        setWorkoutLoadingMessage('Workouts will be generated later. Finishing setup...');
+        // Wait a bit so user can see the message
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
+      setWorkoutLoadingProgress(100);
+      setWorkoutLoadingMessage('All done! Taking you to your dashboard...');
+
+      // Brief delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Success! Navigate to home
+      setShowWorkoutLoading(false);
       navigate('/');
     } catch (err: any) {
       log.error('Failed to complete onboarding:', err);
+      setShowWorkoutLoading(false);
       setError(err.response?.data?.detail || 'Failed to complete onboarding. Please try again.');
       setIsLoading(false);
     }
@@ -533,6 +599,66 @@ const ConversationalOnboarding: FC = () => {
           onComplete={handleHealthChecklistComplete}
           onSkip={handleHealthChecklistSkip}
         />
+      )}
+
+      {/* Workout Generation Loading Modal */}
+      {showWorkoutLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-background border border-white/20 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            {/* Animated Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                  <svg
+                    className="w-10 h-10 text-primary animate-pulse"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                    />
+                  </svg>
+                </div>
+                {/* Spinning ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-xl font-bold text-text text-center mb-2">
+              Building Your Workout Plan
+            </h2>
+            <p className="text-text-secondary text-center text-sm mb-6">
+              {workoutLoadingMessage}
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-white/10 rounded-full h-3 mb-4 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-secondary rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${workoutLoadingProgress}%` }}
+              />
+            </div>
+
+            {/* Progress Percentage */}
+            <p className="text-center text-sm text-text-secondary">
+              {Math.round(workoutLoadingProgress)}% complete
+            </p>
+
+            {/* Badge - shows week 1 first, then remaining weeks in background */}
+            <div className="flex justify-center mt-6">
+              <div className="px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30">
+                <span className="text-sm font-medium text-primary">
+                  {workoutLoadingProgress < 90 ? 'Week 1 First' : '12 Weeks of Workouts'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

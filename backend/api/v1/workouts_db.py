@@ -609,10 +609,10 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def calculate_monthly_dates(month_start_date: str, selected_days: List[int]) -> List[datetime]:
-    """Calculate workout dates for 30 days from the start date."""
+def calculate_monthly_dates(month_start_date: str, selected_days: List[int], weeks: int = 12) -> List[datetime]:
+    """Calculate workout dates for specified number of weeks from the start date."""
     base_date = datetime.fromisoformat(month_start_date)
-    end_date = base_date + timedelta(days=30)
+    end_date = base_date + timedelta(days=weeks * 7)
 
     workout_dates = []
     current_date = base_date
@@ -656,8 +656,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
         logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}")
 
-        workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days)
-        logger.info(f"Calculated {len(workout_dates)} workout dates for days {request.selected_days}")
+        weeks = request.weeks or 12
+        workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, weeks)
+        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days}")
 
         if not workout_dates:
             logger.warning("No workout dates calculated - returning empty response")

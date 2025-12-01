@@ -270,6 +270,7 @@ export interface GenerateMonthlyRequest {
   month_start_date: string;  // ISO date string, e.g., "2024-11-01"
   selected_days: number[];   // 0=Mon, 1=Tue, ..., 6=Sun
   duration_minutes?: number;
+  weeks?: number;  // Number of weeks to generate (default 12)
 }
 
 export interface GenerateMonthlyResponse {

@@ -125,19 +125,34 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     ])
 
     # Check if AI is asking about equipment
+    # Note: Be more specific to avoid false positives from acknowledgment phrases like "full gym"
+    # Only match if the question is specifically ASKING about equipment
     is_asking_equipment = any(keyword in question_lower for keyword in [
-        "equipment", "gym", "access to", "have available", "tools", "machines"
-    ])
+        "what equipment", "which equipment", "equipment do you", "equipment available",
+        "access to a gym", "what tools", "what machines"
+    ]) or (
+        # Also check for generic "equipment?" at the end of a sentence
+        "equipment?" in question_lower or
+        "gym?" in question_lower
+    )
 
     # Check if AI is asking about goals
+    # Note: Be more specific to avoid false positives from acknowledgment phrases like "your goals"
+    # Only match if the question is specifically ASKING about goals
     is_asking_goals = any(keyword in question_lower for keyword in [
-        "goal", "goals", "looking to", "want to achieve", "fitness objective"
-    ])
+        "what are your goals", "your goals?", "fitness goals?", "main goals",
+        "what goals", "which goals", "looking to achieve?", "want to achieve?"
+    ]) or "goals?" in question_lower
 
     # Check if AI is asking about fitness level
+    # Note: Be specific - "fitness level" is the key phrase, not generic words like "experience"
     is_asking_fitness_level = any(keyword in question_lower for keyword in [
-        "fitness level", "experience", "describe your fitness", "how fit", "beginner", "intermediate", "advanced"
-    ])
+        "fitness level", "describe your fitness", "how fit are you",
+        "fitness level?", "your level?"
+    ]) or (
+        # Also match questions ending with fitness level related options
+        "?" in question_lower and any(word in question_lower for word in ["beginner", "intermediate", "advanced"])
+    )
 
     # Check if AI is giving a completion/wrap-up message
     is_completion_message = any(keyword in question_lower for keyword in [
@@ -145,13 +160,38 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         "fitness journey", "all set", "got everything", "thanks for sharing"
     ])
 
+    # Check if AI is asking for FREE TEXT input (no quick replies needed)
+    # These fields should let the user type their answer
+    is_asking_name = any(keyword in question_lower for keyword in [
+        "your name", "what's your name", "what is your name", "name?",
+        "share your name", "tell me your name", "call you"
+    ])
+    is_asking_age = any(keyword in question_lower for keyword in [
+        "how old", "your age", "age?"
+    ])
+    is_asking_height = any(keyword in question_lower for keyword in [
+        "how tall", "your height", "height?"
+    ])
+    is_asking_weight = any(keyword in question_lower for keyword in [
+        "how much do you weigh", "your weight", "weight?"
+    ])
+
+    # If asking for free text input, don't show any quick replies
+    is_free_text_question = is_asking_name or is_asking_age or is_asking_height or is_asking_weight
+
     # Multi-select fields (lists that allow multiple selections)
     multi_select_fields = ["goals", "equipment"]
     is_multi_select = False
 
     # Smart quick reply detection based on missing fields and question content
     # Sort missing fields by FIELD_ORDER to ensure we ask questions in the correct sequence
-    if missing:
+
+    # PRIORITY -1: If AI is asking for free text input (name, age, etc.), skip quick replies entirely
+    if is_free_text_question:
+        logger.info(f"[Onboarding Agent] 📝 Free text question detected, no quick replies")
+        # Don't show any quick replies - let user type their answer
+
+    elif missing:
         # Get next field based on FIELD_ORDER
         next_field = None
         for field in FIELD_ORDER:
@@ -231,11 +271,11 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
             quick_replies = QUICK_REPLIES["days_per_week"]
             logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: days_per_week (detected from question)")
 
-        # PRIORITY 4: Fall back to next_field from FIELD_ORDER
-        elif next_field in QUICK_REPLIES:
-            quick_replies = QUICK_REPLIES[next_field]
-            is_multi_select = next_field in multi_select_fields
-            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: {next_field} (from FIELD_ORDER, multi_select={is_multi_select})")
+        # NOTE: We removed PRIORITY 4 (fallback to next_field) because it caused mismatched quick replies.
+        # Quick replies should ONLY appear when we specifically detect what the AI is asking about.
+        # If the AI asks about something we don't recognize (like name), no quick replies is the correct behavior.
+        else:
+            logger.info(f"[Onboarding Agent] ℹ️ No matching quick reply detected for this question")
 
     return {
         "messages": messages + [response],
