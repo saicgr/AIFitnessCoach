@@ -39,6 +39,7 @@ const ConversationalOnboarding: FC = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const initializedRef = useRef(false);
 
   const {
     user,
@@ -62,8 +63,10 @@ const ConversationalOnboarding: FC = () => {
   }, [conversationalOnboarding.messages]);
 
   // Initialize conversation with hardcoded opening message
+  // Using ref to prevent React Strict Mode double-mount from adding duplicate messages
   useEffect(() => {
-    if (conversationalOnboarding.messages.length === 0) {
+    if (conversationalOnboarding.messages.length === 0 && !initializedRef.current) {
+      initializedRef.current = true;
       setConversationalOnboarding({ isActive: true });
 
       const openingMessage = {

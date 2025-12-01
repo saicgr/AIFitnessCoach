@@ -184,6 +184,81 @@ export const swapWorkout = async (params: {
   return data;
 };
 
+// Regenerate workout - uses SCD2 versioning to preserve history
+export interface RegenerateWorkoutRequest {
+  workout_id: string;
+  user_id: string;
+  scheduled_date: string;
+  duration_minutes?: number;
+  equipment?: string[];
+  difficulty?: string;  // 'easy', 'medium', 'hard'
+  focus_areas?: string[];
+}
+
+export const regenerateWorkout = async (request: RegenerateWorkoutRequest): Promise<Workout> => {
+  // Map frontend difficulty to backend fitness_level
+  const difficultyToFitnessLevel: Record<string, string> = {
+    'easy': 'beginner',
+    'medium': 'intermediate',
+    'hard': 'advanced',
+  };
+  const fitnessLevel = request.difficulty
+    ? difficultyToFitnessLevel[request.difficulty] || 'intermediate'
+    : undefined;
+
+  // Use the new versioned regenerate endpoint
+  const regenerateRequest = {
+    workout_id: request.workout_id,
+    user_id: request.user_id,
+    duration_minutes: request.duration_minutes || 45,
+    fitness_level: fitnessLevel,
+    equipment: request.equipment,
+    focus_areas: request.focus_areas,
+  };
+
+  const { data } = await api.post<WorkoutBackend>('/workouts-db/regenerate', regenerateRequest);
+  return parseWorkout(data);
+};
+
+// ============================================
+// Workout Version History (SCD2)
+// ============================================
+
+export interface WorkoutVersionInfo {
+  id: string;
+  version_number: number;
+  name: string;
+  is_current: boolean;
+  valid_from: string | null;
+  valid_to: string | null;
+  generation_method: string | null;
+  exercises_count: number;
+}
+
+export interface RevertWorkoutRequest {
+  workout_id: string;
+  target_version: number;
+}
+
+/**
+ * Get all versions of a workout (version history).
+ * Returns versions ordered by version number (newest first).
+ */
+export const getWorkoutVersions = async (workoutId: string): Promise<WorkoutVersionInfo[]> => {
+  const { data } = await api.get<WorkoutVersionInfo[]>(`/workouts-db/${workoutId}/versions`);
+  return data;
+};
+
+/**
+ * Revert a workout to a previous version.
+ * This creates a NEW version with the content of the target version,
+ * preserving the full history (SCD2 style).
+ */
+export const revertWorkout = async (request: RevertWorkoutRequest): Promise<Workout> => {
+  const { data } = await api.post<WorkoutBackend>('/workouts-db/revert', request);
+  return parseWorkout(data);
+};
+
 // Exercises
 export const getExercises = async (): Promise<Exercise[]> => {
   const { data } = await api.get('/exercises/');

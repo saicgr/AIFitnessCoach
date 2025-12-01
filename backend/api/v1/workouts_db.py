@@ -16,7 +16,12 @@ import json
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-from models.schemas import Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest, SwapWorkoutsRequest, GenerateWeeklyRequest, GenerateWeeklyResponse, GenerateMonthlyRequest, GenerateMonthlyResponse
+from models.schemas import (
+    Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
+    SwapWorkoutsRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
+    GenerateMonthlyRequest, GenerateMonthlyResponse,
+    RegenerateWorkoutRequest, RevertWorkoutRequest, WorkoutVersionInfo
+)
 from services.openai_service import OpenAIService
 from services.rag_service import WorkoutRAGService
 from services.exercise_library_service import get_exercise_library_service
@@ -137,6 +142,13 @@ def row_to_workout(row: dict) -> Workout:
         last_modified_method=row.get("last_modified_method"),
         last_modified_at=row.get("last_modified_at"),
         modification_history=modification_history,
+        # SCD2 versioning fields
+        version_number=row.get("version_number", 1),
+        is_current=row.get("is_current", True),
+        valid_from=row.get("valid_from"),
+        valid_to=row.get("valid_to"),
+        parent_workout_id=row.get("parent_workout_id"),
+        superseded_by=row.get("superseded_by"),
     )
 
 
@@ -920,4 +932,197 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to generate remaining workouts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== WORKOUT VERSIONING (SCD2) ENDPOINTS ====================
+
+@router.post("/regenerate", response_model=Workout)
+async def regenerate_workout(request: RegenerateWorkoutRequest):
+    """
+    Regenerate a workout with new settings while preserving version history (SCD2).
+
+    This endpoint:
+    1. Gets the existing workout
+    2. Generates a new workout using AI based on provided settings
+    3. Creates a new version, marking the old one as superseded
+    4. Returns the new version
+
+    The old workout is NOT deleted - it's kept for history/revert.
+    """
+    logger.info(f"Regenerating workout {request.workout_id} for user {request.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get existing workout
+        existing = db.get_workout(request.workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Get user data for generation
+        user = db.get_user(request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Determine generation parameters
+        fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
+        equipment = request.equipment or parse_json_field(user.get("equipment"), [])
+        goals = parse_json_field(user.get("goals"), [])
+
+        openai_service = OpenAIService()
+
+        try:
+            workout_data = await openai_service.generate_workout_plan(
+                fitness_level=fitness_level,
+                goals=goals if isinstance(goals, list) else [],
+                equipment=equipment if isinstance(equipment, list) else [],
+                duration_minutes=request.duration_minutes or 45,
+                focus_areas=request.focus_areas
+            )
+
+            exercises = workout_data.get("exercises", [])
+            workout_name = workout_data.get("name", "Regenerated Workout")
+            workout_type = workout_data.get("type", existing.get("type", "strength"))
+            difficulty = workout_data.get("difficulty", "medium")
+
+        except Exception as ai_error:
+            logger.error(f"AI workout regeneration failed: {ai_error}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate new workout: {str(ai_error)}"
+            )
+
+        # Prepare new workout data for the SCD2 supersede operation
+        new_workout_data = {
+            "user_id": request.user_id,
+            "name": workout_name,
+            "type": workout_type,
+            "difficulty": difficulty,
+            "scheduled_date": existing.get("scheduled_date"),  # Keep same date
+            "exercises_json": exercises,
+            "duration_minutes": request.duration_minutes or 45,
+            "is_completed": False,  # Reset completion on regenerate
+            "generation_method": "ai_regenerate",
+            "generation_source": "regenerate_endpoint",
+            "generation_metadata": json.dumps({
+                "regenerated_from": request.workout_id,
+                "previous_version": existing.get("version_number", 1),
+                "fitness_level": fitness_level,
+                "equipment": equipment,
+            }),
+        }
+
+        # Use SCD2 supersede to create new version
+        new_workout = db.supersede_workout(request.workout_id, new_workout_data)
+        logger.info(f"Workout regenerated: old_id={request.workout_id}, new_id={new_workout['id']}, version={new_workout.get('version_number')}")
+
+        log_workout_change(
+            workout_id=new_workout["id"],
+            user_id=request.user_id,
+            change_type="regenerated",
+            change_source="regenerate_endpoint",
+            new_value={
+                "name": workout_name,
+                "exercises_count": len(exercises),
+                "previous_workout_id": request.workout_id
+            }
+        )
+
+        regenerated = row_to_workout(new_workout)
+        await index_workout_to_rag(regenerated)
+
+        return regenerated
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to regenerate workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{workout_id}/versions", response_model=List[WorkoutVersionInfo])
+async def get_workout_versions(workout_id: str):
+    """
+    Get all versions of a workout (version history).
+
+    Returns a list of version info objects ordered by version number (newest first).
+    """
+    logger.info(f"Getting versions for workout {workout_id}")
+
+    try:
+        db = get_supabase_db()
+        versions = db.get_workout_versions(workout_id)
+
+        if not versions:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Convert to version info objects
+        version_infos = []
+        for v in versions:
+            exercises = v.get("exercises_json", [])
+            if isinstance(exercises, str):
+                try:
+                    exercises = json.loads(exercises)
+                except:
+                    exercises = []
+
+            version_infos.append(WorkoutVersionInfo(
+                id=str(v.get("id")),
+                version_number=v.get("version_number", 1),
+                name=v.get("name", ""),
+                is_current=v.get("is_current", False),
+                valid_from=v.get("valid_from"),
+                valid_to=v.get("valid_to"),
+                generation_method=v.get("generation_method"),
+                exercises_count=len(exercises) if isinstance(exercises, list) else 0
+            ))
+
+        return version_infos
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get workout versions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/revert", response_model=Workout)
+async def revert_workout(request: RevertWorkoutRequest):
+    """
+    Revert a workout to a previous version.
+
+    This creates a NEW version with the content of the target version,
+    preserving the full history (SCD2 style).
+    """
+    logger.info(f"Reverting workout {request.workout_id} to version {request.target_version}")
+
+    try:
+        db = get_supabase_db()
+
+        # Use the SCD2 revert method
+        reverted = db.revert_workout(request.workout_id, request.target_version)
+
+        logger.info(f"Workout reverted: workout_id={request.workout_id}, target_version={request.target_version}, new_id={reverted['id']}")
+
+        log_workout_change(
+            workout_id=reverted["id"],
+            user_id=reverted.get("user_id"),
+            change_type="reverted",
+            change_source="revert_endpoint",
+            new_value={
+                "reverted_to_version": request.target_version,
+                "original_workout_id": request.workout_id
+            }
+        )
+
+        reverted_workout = row_to_workout(reverted)
+        await index_workout_to_rag(reverted_workout)
+
+        return reverted_workout
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to revert workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))

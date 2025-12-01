@@ -168,6 +168,13 @@ class Workout(BaseModel):
     last_modified_method: Optional[str] = None
     last_modified_at: Optional[datetime] = None
     modification_history: Optional[str] = None  # Will be JSON stringified
+    # SCD2 Versioning fields
+    version_number: int = 1
+    is_current: bool = True
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    parent_workout_id: Optional[str] = None  # UUID of original workout
+    superseded_by: Optional[str] = None  # UUID of newer version
 
 
 class GenerateWorkoutRequest(BaseModel):
@@ -213,6 +220,34 @@ class SwapWorkoutsRequest(BaseModel):
     workout_id: str  # UUID string from Supabase
     new_date: str  # ISO date, e.g., "2024-11-25"
     reason: Optional[str] = None
+
+
+class RegenerateWorkoutRequest(BaseModel):
+    """Request to regenerate a workout with new settings while preserving history."""
+    workout_id: str  # UUID of the workout to regenerate
+    user_id: str  # UUID of the user
+    duration_minutes: Optional[int] = 45
+    fitness_level: Optional[str] = None  # beginner/intermediate/advanced
+    equipment: Optional[List[str]] = None
+    focus_areas: Optional[List[str]] = None
+
+
+class RevertWorkoutRequest(BaseModel):
+    """Request to revert a workout to a previous version."""
+    workout_id: str  # UUID of current workout
+    target_version: int  # Version number to revert to
+
+
+class WorkoutVersionInfo(BaseModel):
+    """Summarized version info for version history display."""
+    id: str
+    version_number: int
+    name: str
+    is_current: bool
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    generation_method: Optional[str] = None
+    exercises_count: int = 0
 
 
 # ============================================

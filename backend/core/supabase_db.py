@@ -119,6 +119,167 @@ class SupabaseDB:
         )
         return result.data or []
 
+    # ==================== WORKOUT VERSIONING (SCD2) ====================
+
+    def list_current_workouts(
+        self,
+        user_id: str,
+        is_completed: Optional[bool] = None,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List only current (active) workouts for a user - excludes superseded versions."""
+        query = self.client.table("workouts").select("*").eq("user_id", user_id).eq("is_current", True)
+
+        if is_completed is not None:
+            query = query.eq("is_completed", is_completed)
+        if from_date:
+            query = query.gte("scheduled_date", from_date)
+        if to_date:
+            query = query.lte("scheduled_date", to_date)
+
+        result = query.order("scheduled_date", desc=True).range(offset, offset + limit - 1).execute()
+        return result.data or []
+
+    def get_workout_versions(self, workout_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all versions of a workout (including the original).
+        Returns versions ordered by version_number descending (newest first).
+        """
+        # First get the workout to find its parent_workout_id
+        workout = self.get_workout(workout_id)
+        if not workout:
+            return []
+
+        # Determine the original workout ID (parent or self)
+        original_id = workout.get("parent_workout_id") or workout_id
+
+        # Get all workouts in the version chain
+        result = (
+            self.client.table("workouts")
+            .select("*")
+            .or_(f"id.eq.{original_id},parent_workout_id.eq.{original_id}")
+            .order("version_number", desc=True)
+            .execute()
+        )
+        return result.data or []
+
+    def supersede_workout(
+        self, old_workout_id: str, new_workout_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        SCD2: Create a new version of a workout, marking the old one as superseded.
+
+        This method:
+        1. Gets the old workout and its version info
+        2. Marks the old workout as not current (is_current=False, valid_to=now)
+        3. Creates a new workout with incremented version and parent reference
+        4. Updates the old workout's superseded_by to point to the new one
+
+        Returns the new workout.
+        """
+        now = datetime.utcnow().isoformat()
+
+        # Get the old workout
+        old_workout = self.get_workout(old_workout_id)
+        if not old_workout:
+            raise ValueError(f"Workout {old_workout_id} not found")
+
+        # Determine the parent (original) workout ID
+        parent_id = old_workout.get("parent_workout_id") or old_workout_id
+        old_version = old_workout.get("version_number", 1)
+
+        # Prepare new workout data with versioning fields
+        new_workout_data["version_number"] = old_version + 1
+        new_workout_data["is_current"] = True
+        new_workout_data["valid_from"] = now
+        new_workout_data["valid_to"] = None
+        new_workout_data["parent_workout_id"] = parent_id
+        new_workout_data["superseded_by"] = None
+
+        # Create the new workout
+        new_workout = self.create_workout(new_workout_data)
+
+        # Mark the old workout as superseded
+        self.client.table("workouts").update({
+            "is_current": False,
+            "valid_to": now,
+            "superseded_by": new_workout["id"]
+        }).eq("id", old_workout_id).execute()
+
+        return new_workout
+
+    def revert_workout(self, workout_id: str, target_version: int) -> Dict[str, Any]:
+        """
+        Revert a workout to a previous version by creating a new version
+        with the content of the target version.
+
+        This preserves the full history (SCD2 style) - we don't delete versions,
+        we create a new version that copies the old content.
+
+        Returns the new (reverted) workout.
+        """
+        # Get all versions
+        versions = self.get_workout_versions(workout_id)
+        if not versions:
+            raise ValueError(f"No versions found for workout {workout_id}")
+
+        # Find the target version
+        target_workout = None
+        for v in versions:
+            if v.get("version_number") == target_version:
+                target_workout = v
+                break
+
+        if not target_workout:
+            raise ValueError(f"Version {target_version} not found for workout {workout_id}")
+
+        # Find the current version
+        current_workout = None
+        for v in versions:
+            if v.get("is_current"):
+                current_workout = v
+                break
+
+        if not current_workout:
+            raise ValueError("No current version found")
+
+        # Create new workout data from target version (excluding ID and versioning fields)
+        new_workout_data = {
+            "user_id": target_workout["user_id"],
+            "name": target_workout["name"],
+            "type": target_workout["type"],
+            "difficulty": target_workout["difficulty"],
+            "scheduled_date": target_workout["scheduled_date"],
+            "is_completed": False,  # Reset completion status on revert
+            "exercises_json": target_workout["exercises_json"],
+            "duration_minutes": target_workout.get("duration_minutes", 45),
+            "generation_method": "revert",
+            "generation_source": f"reverted_from_v{target_version}",
+            "generation_metadata": json.dumps({
+                "reverted_from_version": target_version,
+                "reverted_from_id": target_workout["id"],
+                "reverted_at": datetime.utcnow().isoformat()
+            }),
+        }
+
+        # Use supersede to create the new version
+        return self.supersede_workout(current_workout["id"], new_workout_data)
+
+    def soft_delete_workout(self, workout_id: str) -> bool:
+        """
+        Soft delete a workout by marking it as not current.
+        Unlike hard delete, this preserves history for potential recovery.
+        """
+        now = datetime.utcnow().isoformat()
+        self.client.table("workouts").update({
+            "is_current": False,
+            "valid_to": now
+        }).eq("id", workout_id).execute()
+        return True
+
     # ==================== EXERCISES ====================
 
     def get_exercise(self, exercise_id: int) -> Optional[Dict[str, Any]]:
