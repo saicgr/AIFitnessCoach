@@ -243,6 +243,7 @@ class PerformanceLogCreate(BaseModel):
     set_number: int
     reps_completed: int
     weight_kg: float
+    set_type: Optional[str] = None  # 'warmup', 'working', or 'failure'
     rpe: Optional[float] = None
     rir: Optional[int] = None
     tempo: Optional[str] = None

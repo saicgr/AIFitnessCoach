@@ -552,6 +552,7 @@ export interface PerformanceLogCreate {
   set_number: number;
   reps_completed: number;
   weight_kg: number;
+  set_type?: 'warmup' | 'working' | 'failure';  // Set type indicator
   rpe?: number;
   rir?: number;  // Reps in reserve
   is_completed: boolean;
@@ -568,6 +569,7 @@ export interface PerformanceLogDetailed {
   set_number: number;
   reps_completed: number;
   weight_kg: number;
+  set_type?: 'warmup' | 'working' | 'failure';  // Set type indicator
   rpe?: number;
   rir?: number;
   is_completed: boolean;
