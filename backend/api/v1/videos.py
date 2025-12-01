@@ -13,13 +13,23 @@ from fastapi import APIRouter, HTTPException
 import boto3
 from botocore.exceptions import ClientError
 import os
+from dotenv import load_dotenv
+from core.supabase_db import get_supabase_db
+
+# Load .env file to ensure credentials are available
+load_dotenv()
 
 router = APIRouter()
 
-# Initialize S3 client
+# Initialize S3 client with explicit credentials from environment
+# Use signature v4 for presigned URLs
+from botocore.config import Config
 s3_client = boto3.client(
     's3',
-    region_name=os.getenv('AWS_REGION_NAME', 'us-east-1')
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_DEFAULT_REGION', 'us-east-1'),
+    config=Config(signature_version='s3v4')
 )
 
 BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'ai-fitness-coach')
@@ -27,47 +37,54 @@ VIDEO_BASE_PREFIX = "VERTICAL VIDEOS/"  # Base folder for all videos
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
 
-@router.get("/videos/{video_path:path}")
-async def get_video_url(video_path: str):
+# NOTE: More specific routes must come BEFORE catch-all routes
+
+@router.get("/videos/by-exercise/{exercise_name:path}")
+async def get_video_by_exercise_name(exercise_name: str):
     """
-    Generate a presigned URL for a video in S3.
+    Get presigned video URL by exercise name.
+
+    Looks up the exercise in exercise_library table and generates a presigned URL
+    for the associated S3 video.
 
     Args:
-        video_path: Path to the video file relative to "VERTICAL VIDEOS/" folder
-                   Examples:
-                   - "Upper Body/Chest/bench_press.mp4"
-                   - "Lower Body/Legs/squats.mp4"
+        exercise_name: Name of the exercise to lookup
 
     Returns:
-        Presigned URL valid for 1 hour
+        Presigned URL and expiration time
     """
     try:
-        # Construct full S3 key with base prefix
-        full_key = f"{VIDEO_BASE_PREFIX}{video_path}"
+        db = get_supabase_db()
 
-        # Generate presigned URL
+        # Lookup exercise by name (case-insensitive)
+        result = db.client.table("exercise_library").select(
+            "video_s3_path"
+        ).ilike("exercise_name", exercise_name).limit(1).execute()
+
+        if not result.data or not result.data[0].get("video_s3_path"):
+            raise HTTPException(status_code=404, detail="Video not found for exercise")
+
+        s3_path = result.data[0]["video_s3_path"]
+        # s3_path format: s3://bucket/key
+        # Extract key from s3:// URI
+        key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
+
         url = s3_client.generate_presigned_url(
             'get_object',
-            Params={
-                'Bucket': BUCKET_NAME,
-                'Key': full_key
-            },
+            Params={'Bucket': BUCKET_NAME, 'Key': key},
             ExpiresIn=PRESIGNED_URL_EXPIRATION
         )
 
         return {
             "url": url,
             "expires_in": PRESIGNED_URL_EXPIRATION,
-            "video_path": video_path,
-            "full_s3_key": full_key
+            "exercise_name": exercise_name
         }
 
-    except ClientError as e:
-        error_code = e.response['Error']['Code']
-        if error_code == 'NoSuchKey':
-            raise HTTPException(status_code=404, detail=f"Video not found: {full_key}")
-        else:
-            raise HTTPException(status_code=500, detail=f"Failed to generate video URL: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get video URL: {str(e)}")
 
 
 @router.get("/videos/list/")
@@ -154,3 +171,47 @@ async def list_folders():
 
     except ClientError as e:
         raise HTTPException(status_code=500, detail=f"Failed to list folders: {str(e)}")
+
+
+# This catch-all route must be LAST
+@router.get("/videos/{video_path:path}")
+async def get_video_url(video_path: str):
+    """
+    Generate a presigned URL for a video in S3.
+
+    Args:
+        video_path: Path to the video file relative to "VERTICAL VIDEOS/" folder
+                   Examples:
+                   - "Upper Body/Chest/bench_press.mp4"
+                   - "Lower Body/Legs/squats.mp4"
+
+    Returns:
+        Presigned URL valid for 1 hour
+    """
+    try:
+        # Construct full S3 key with base prefix
+        full_key = f"{VIDEO_BASE_PREFIX}{video_path}"
+
+        # Generate presigned URL
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': BUCKET_NAME,
+                'Key': full_key
+            },
+            ExpiresIn=PRESIGNED_URL_EXPIRATION
+        )
+
+        return {
+            "url": url,
+            "expires_in": PRESIGNED_URL_EXPIRATION,
+            "video_path": video_path,
+            "full_s3_key": full_key
+        }
+
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'NoSuchKey':
+            raise HTTPException(status_code=404, detail=f"Video not found: {full_key}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to generate video URL: {str(e)}")

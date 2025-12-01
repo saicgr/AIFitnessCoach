@@ -9,6 +9,7 @@ import {
   getPerformanceLogs,
   createStrengthRecord,
   getStrengthRecords,
+  getExerciseVideoUrl,
 } from '../api/client';
 import { useAppStore } from '../store';
 import SetRow from '../components/workout/SetRow';
@@ -67,6 +68,8 @@ export default function ActiveWorkout() {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   const { data: workout, isLoading: workoutLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
@@ -163,6 +166,19 @@ export default function ActiveWorkout() {
     }
     return () => clearInterval(interval);
   }, [isResting, restTimer]);
+
+  // Fetch video URL when exercise changes
+  useEffect(() => {
+    const currentExercise = workout?.exercises[currentExerciseIndex];
+    if (!currentExercise?.name) return;
+
+    setVideoLoading(true);
+    setVideoUrl(null);
+
+    getExerciseVideoUrl(currentExercise.name)
+      .then((url) => setVideoUrl(url))
+      .finally(() => setVideoLoading(false));
+  }, [workout?.exercises, currentExerciseIndex]);
 
   // Create workout log mutation
   const createWorkoutLogMutation = useMutation({
@@ -732,25 +748,38 @@ export default function ActiveWorkout() {
         className="flex-1 relative"
         style={{ paddingBottom: sheetExpanded ? '85vh' : '220px' }}
       >
-        {/* Exercise image/GIF or Placeholder */}
-        {currentExercise.gif_url ? (
-          <img
-            src={currentExercise.gif_url}
-            alt={currentExercise.name}
+        {/* Exercise video or Placeholder */}
+        {videoUrl ? (
+          <video
+            key={videoUrl}
+            src={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-surface to-cyan-900/30 flex flex-col items-center justify-center">
-            {/* Large muscle group icon */}
-            <div className="text-8xl mb-6 opacity-80">{getMuscleGroupIcon(currentExercise.muscle_group)}</div>
-            {/* Exercise name */}
-            <h1 className="text-3xl font-bold text-white text-center px-8 mb-2">{currentExercise.name}</h1>
-            {/* Muscle group */}
-            <p className="text-white/60 text-lg">{currentExercise.muscle_group || 'Full Body'}</p>
-            {/* Exercise counter */}
-            <p className="text-white/40 text-sm mt-4">
-              Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
-            </p>
+            {videoLoading ? (
+              <>
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-white/60 text-lg">Loading video...</p>
+              </>
+            ) : (
+              <>
+                {/* Large muscle group icon */}
+                <div className="text-8xl mb-6 opacity-80">{getMuscleGroupIcon(currentExercise.muscle_group)}</div>
+                {/* Exercise name */}
+                <h1 className="text-3xl font-bold text-white text-center px-8 mb-2">{currentExercise.name}</h1>
+                {/* Muscle group */}
+                <p className="text-white/60 text-lg">{currentExercise.muscle_group || 'Full Body'}</p>
+                {/* Exercise counter */}
+                <p className="text-white/40 text-sm mt-4">
+                  Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
+                </p>
+              </>
+            )}
           </div>
         )}
 

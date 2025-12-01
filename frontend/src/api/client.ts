@@ -442,4 +442,19 @@ export const updateWeeklyVolume = async (
   return data;
 };
 
+// ============================================
+// Exercise Videos
+// ============================================
+
+export const getExerciseVideoUrl = async (exerciseName: string): Promise<string | null> => {
+  try {
+    const { data } = await api.get<{ url: string; expires_in: number }>(
+      `/videos/by-exercise/${encodeURIComponent(exerciseName)}`
+    );
+    return data.url;
+  } catch {
+    return null;
+  }
+};
+
 export default api;
