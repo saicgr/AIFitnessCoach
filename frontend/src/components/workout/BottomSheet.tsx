@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, ReactNode } from 'react';
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 
 interface BottomSheetProps {
   isExpanded: boolean;

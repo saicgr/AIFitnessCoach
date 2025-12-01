@@ -280,7 +280,7 @@ export default function Home() {
       }
     },
     onSuccess: (newWorkouts) => {
-      const deletedWorkoutIds = new Set<number>();
+      const deletedWorkoutIds = new Set<string>();
       if (pendingGenerateData) {
         const todayDate = new Date();
         const dayOfWeek = todayDate.getDay();

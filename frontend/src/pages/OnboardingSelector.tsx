@@ -10,7 +10,7 @@
  * - Gradient animations
  * - Clear visual hierarchy (AI chat is primary)
  */
-import { FC } from 'react';
+import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const OnboardingSelector: FC = () => {

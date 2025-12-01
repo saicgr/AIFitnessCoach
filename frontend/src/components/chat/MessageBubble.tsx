@@ -10,7 +10,7 @@
  * - Smooth fade-in animations
  * - Glass-morphism design
  */
-import { FC } from 'react';
+import type { FC } from 'react';
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant';

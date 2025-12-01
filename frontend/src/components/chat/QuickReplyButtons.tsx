@@ -11,7 +11,7 @@
  * - Icons support
  * - Responsive grid layout
  */
-import { FC, useState } from 'react';
+import { useState, type FC } from 'react';
 import type { QuickReply } from '../../types/onboarding';
 
 interface QuickReplyButtonsProps {

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
 import { getWorkouts, calculateHealthMetrics, getActiveInjuries, getStrengthRecords, getWeeklyVolumes } from '../api/client';
 import { createLogger } from '../utils/logger';
-import type { HealthMetrics, ActiveInjury, Workout, StrengthRecord, WeeklyVolume } from '../types';
+import type { HealthMetrics, ActiveInjury, Workout } from '../types';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 import { DashboardLayout } from '../components/layout';
 

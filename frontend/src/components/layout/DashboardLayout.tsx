@@ -6,7 +6,7 @@
  * - Responsive content area with proper margins
  * - Background decorations
  */
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 
 interface DashboardLayoutProps {

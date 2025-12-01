@@ -10,7 +10,7 @@
  * - Validates against expected days_per_week
  * - Glass-morphism styling
  */
-import { FC, useState, useEffect } from 'react';
+import { useState, useEffect, type FC } from 'react';
 
 interface DayPickerComponentProps {
   daysPerWeek: number;

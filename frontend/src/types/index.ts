@@ -298,7 +298,7 @@ export interface UserProfile {
 }
 
 export interface WorkoutContext {
-  id: number;
+  id: string;  // UUID string to match Workout.id
   name: string;
   type: string;
   difficulty: string;

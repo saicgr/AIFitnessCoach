@@ -11,7 +11,7 @@
  * - Multi-select with chips
  * - "None" is exclusive
  */
-import { FC, useState } from 'react';
+import { useState, type FC } from 'react';
 
 interface HealthChecklistModalProps {
   onComplete: (data: { injuries: string[]; conditions: string[] }) => void;

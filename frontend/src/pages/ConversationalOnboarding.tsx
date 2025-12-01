@@ -15,7 +15,7 @@
  *
  * NO MOCK DATA, NO FALLBACKS - per CLAUDE.md
  */
-import { FC, useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import {
@@ -31,7 +31,6 @@ import QuickReplyButtons from '../components/chat/QuickReplyButtons';
 import DayPickerComponent from '../components/chat/DayPickerComponent';
 import HealthChecklistModal from '../components/chat/HealthChecklistModal';
 import BasicInfoForm from '../components/chat/BasicInfoForm';
-import type { QuickReply } from '../types/onboarding';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('ConversationalOnboarding');
@@ -181,7 +180,7 @@ const ConversationalOnboarding: FC = () => {
 
   const handleDaySelection = (days: number[]) => {
     setShowDayPicker(false);
-    updateCollectedData({ selected_days: days });
+    updateCollectedData({ selectedDays: days });
     const daysMessage = days.map((d) => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][d]).join(', ');
     handleSendMessage(daysMessage);
   };
@@ -225,8 +224,8 @@ const ConversationalOnboarding: FC = () => {
   const handleHealthChecklistComplete = async (data: { injuries: string[]; conditions: string[] }) => {
     setShowHealthChecklist(false);
     updateCollectedData({
-      active_injuries: data.injuries,
-      health_conditions: data.conditions,
+      activeInjuries: data.injuries,
+      healthConditions: data.conditions,
     });
 
     // Complete onboarding
@@ -250,8 +249,8 @@ const ConversationalOnboarding: FC = () => {
 
       const finalData = {
         ...conversationalOnboarding.collectedData,
-        active_injuries: injuries,
-        health_conditions: conditions,
+        activeInjuries: injuries,
+        healthConditions: conditions,
       };
 
       // Save conversation to database
@@ -272,7 +271,7 @@ const ConversationalOnboarding: FC = () => {
 
       // Create/update user in Supabase
       const userData = {
-        fitness_level: finalData.fitness_level || 'beginner',
+        fitness_level: finalData.fitnessLevel || 'beginner',
         goals: JSON.stringify(finalData.goals || []),
         equipment: JSON.stringify(finalData.equipment || []),
         active_injuries: JSON.stringify(injuries),
@@ -283,15 +282,15 @@ const ConversationalOnboarding: FC = () => {
           gender: finalData.gender,
           height_cm: finalData.heightCm,
           weight_kg: finalData.weightKg,
-          target_weight_kg: finalData.target_weight_kg,
-          days_per_week: finalData.days_per_week,
-          selected_days: finalData.selected_days,
-          workout_duration: finalData.workout_duration,
-          preferred_time: finalData.preferred_time,
-          training_split: finalData.training_split || 'full_body',
-          intensity_preference: finalData.intensity_preference || 'moderate',
-          workout_variety: finalData.workout_variety || 'varied',
-          activity_level: finalData.activity_level || 'lightly_active',
+          target_weight_kg: finalData.targetWeightKg,
+          days_per_week: finalData.daysPerWeek,
+          selected_days: finalData.selectedDays,
+          workout_duration: finalData.workoutDuration,
+          preferred_time: finalData.preferredTime,
+          training_split: finalData.trainingSplit || 'full_body',
+          intensity_preference: finalData.intensityPreference || 'moderate',
+          workout_variety: finalData.workoutVariety || 'varied',
+          activity_level: finalData.activityLevel || 'lightly_active',
           health_conditions: conditions,
         }),
       };
@@ -319,20 +318,20 @@ const ConversationalOnboarding: FC = () => {
         };
 
         let selectedDayIndices: number[] = [];
-        const rawDays = finalData.selected_days || [];
+        const rawDays = (finalData.selectedDays || []) as (number | string)[];
 
         log.info('Raw selected_days from finalData:', rawDays);
 
         if (rawDays.length > 0) {
           if (typeof rawDays[0] === 'string') {
             // Convert day names to indices
-            selectedDayIndices = rawDays
-              .map((day: string) => dayNameToIndex[day])
-              .filter((idx: number | undefined) => idx !== undefined);
+            selectedDayIndices = (rawDays as string[])
+              .map((day) => dayNameToIndex[day])
+              .filter((idx): idx is number => idx !== undefined);
             log.info('Converted day names to indices:', selectedDayIndices);
           } else {
             // Already indices
-            selectedDayIndices = rawDays;
+            selectedDayIndices = rawDays as number[];
             log.info('Days already as indices:', selectedDayIndices);
           }
         }
@@ -360,9 +359,9 @@ const ConversationalOnboarding: FC = () => {
         setWorkoutLoadingMessage(`Creating your first week of personalized workouts...`);
 
         const week1Result = await generateMonthlyWorkouts({
-          user_id: savedUser.id,
+          user_id: String(savedUser.id),
           month_start_date: monthStartDate,
-          duration_minutes: finalData.workout_duration || 45,
+          duration_minutes: finalData.workoutDuration || 45,
           selected_days: selectedDayIndices,
           weeks: 1,  // Just week 1 for immediate use
         });
@@ -374,9 +373,9 @@ const ConversationalOnboarding: FC = () => {
         // STEP 2: Fire off remaining weeks in the background (don't wait)
         // User will see their workouts grow as they're generated
         const remainingWeeksRequest = {
-          user_id: savedUser.id,
+          user_id: String(savedUser.id),
           month_start_date: monthStartDate,
-          duration_minutes: finalData.workout_duration || 45,
+          duration_minutes: finalData.workoutDuration || 45,
           selected_days: selectedDayIndices,
           weeks: 11,  // Weeks 2-12
         };
@@ -420,7 +419,6 @@ const ConversationalOnboarding: FC = () => {
   };
 
   const latestMessage = conversationalOnboarding.messages[conversationalOnboarding.messages.length - 1];
-  const showQuickReplies = latestMessage?.role === 'assistant' && latestMessage.quickReplies && !isLoading;
 
   // Show BasicInfoForm on first AI question (when asking for name)
   const showBasicInfoForm =

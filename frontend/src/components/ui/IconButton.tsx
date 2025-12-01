@@ -4,7 +4,7 @@
  * A consistent icon button used across the app for actions like
  * Start, Settings, Regenerate, Delete, Add, etc.
  */
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
 type IconButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'accent';
 type IconButtonSize = 'xs' | 'sm' | 'md' | 'lg';

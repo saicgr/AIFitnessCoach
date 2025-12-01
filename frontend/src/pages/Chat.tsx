@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
 import { sendChatMessage, getChatHistory } from '../api/client';
@@ -73,7 +73,6 @@ function TypingIndicator() {
 }
 
 export default function Chat() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { user, workouts, chatHistory, setChatHistory, addChatMessage, clearChatHistory, onboardingData } = useAppStore();
   const [historyLoaded, setHistoryLoaded] = useState(false);

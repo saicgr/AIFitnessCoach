@@ -4,7 +4,7 @@
  * Shows below AI's first question to make onboarding faster.
  * Submits all three fields at once instead of 3 separate messages.
  */
-import { FC, useState } from 'react';
+import { useState, type FC } from 'react';
 import { createLogger } from '../../utils/logger';
 
 const log = createLogger('BasicInfoForm');
