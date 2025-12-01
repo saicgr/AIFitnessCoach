@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../store';
 import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, generateRemainingWorkouts } from '../api/client';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
 import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
+import { DashboardLayout } from '../components/layout';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 import { createLogger } from '../utils/logger';
 import type { Workout } from '../types';
@@ -47,20 +48,23 @@ function calculateStreak(workouts: Workout[]): number {
   return currentStreak;
 }
 
-// Stats card component
+// Stats card component - Premium redesign
 function StatCard({ value, label, icon, color }: { value: string | number; label: string; icon: React.ReactNode; color: string }) {
   return (
-    <GlassCard className="p-4" hoverable>
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-          {icon}
+    <div className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 transition-all duration-300 hover:bg-white/8 hover:border-white/20 hover:shadow-lg">
+      {/* Subtle gradient overlay on hover */}
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${color.replace('text-', 'bg-')}/5`} />
+
+      <div className="relative flex items-center gap-4">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color.replace('text-', 'bg-')}/20`}>
+          <span className={color}>{icon}</span>
         </div>
         <div>
-          <div className="text-xl font-bold text-text">{value}</div>
-          <div className="text-xs text-text-secondary">{label}</div>
+          <div className="text-2xl font-bold text-text">{value}</div>
+          <div className="text-sm text-text-secondary font-medium">{label}</div>
         </div>
       </div>
-    </GlassCard>
+    </div>
   );
 }
 
@@ -276,6 +280,7 @@ export default function Home() {
   const completedWorkouts = workouts.filter((w) => w.completed_at);
   // Get user's name from backend user object first, then onboardingData, then fallback
   const userName = user?.name || onboardingData?.name || 'there';
+  const streak = calculateStreak(workouts);
 
   const handleOpenGenerateModal = () => {
     setGenerateError(null);
@@ -328,257 +333,251 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 glass-heavy safe-area-top">
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-text-secondary text-sm">Welcome back,</p>
-              <h1 className="text-2xl font-bold text-text">{userName}</h1>
-            </div>
-            <div className="flex gap-2 items-center">
-              {/* Streak Badge */}
-              {(() => {
-                const streak = calculateStreak(workouts);
-                return (
-                  <div
-                    className={`flex items-center gap-1.5 px-3 py-2 backdrop-blur-sm rounded-xl border ${
-                      streak > 0
-                        ? 'bg-orange/20 border-orange/30'
-                        : 'bg-white/10 border-white/10'
-                    }`}
-                    title={streak > 0 ? `${streak} day streak!` : 'Start your streak!'}
-                  >
-                    <svg className={`w-5 h-5 ${streak > 0 ? 'text-orange' : 'text-text-secondary'}`} fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
-                    </svg>
-                    <span className={`text-sm font-bold ${streak > 0 ? 'text-orange' : 'text-text-secondary'}`}>{streak}</span>
+    <DashboardLayout>
+      <div className="pb-24">
+        {/* Premium Header */}
+        <header className="relative z-10 border-b border-white/5 bg-surface/50 backdrop-blur-xl">
+          <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Welcome Section */}
+              <div className="flex items-center gap-5">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-primary">
+                      {userName.charAt(0).toUpperCase()}
+                    </span>
                   </div>
-                );
-              })()}
-              <Link
-                to="/metrics"
-                className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/15 transition-colors"
-                title="Metrics"
-              >
-                <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </Link>
-              <Link
-                to="/chat"
-                className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/15 transition-colors"
-                title="AI Coach"
-              >
-                <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </Link>
-              <Link
-                to="/profile"
-                className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/15 transition-colors"
-                title="Profile"
-              >
-                <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </Link>
-              <Link
-                to="/settings"
-                className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/10 hover:bg-white/15 transition-colors"
-                title="Settings"
-              >
-                <svg className="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </Link>
+                  {streak > 0 && (
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-orange flex items-center justify-center border-2 border-background">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-text-secondary text-sm font-medium">Welcome back,</p>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-text">{userName}</h1>
+                  {streak > 0 && (
+                    <p className="text-orange text-sm font-medium mt-1">
+                      {streak} day streak!
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Stats - Desktop */}
+              <div className="hidden lg:flex items-center gap-4">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-text">{completedWorkouts.length}</div>
+                    <div className="text-xs text-text-secondary">Completed</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-text capitalize">{user.fitness_level}</div>
+                    <div className="text-xs text-text-secondary">Level</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Background Generation Progress */}
-        {isBackgroundGenerating && backgroundProgress && (
-          <GlassCard className="p-4" variant="glow" glowColor="primary">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+        <main className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
+          {/* Background Generation Progress */}
+          {isBackgroundGenerating && backgroundProgress && (
+            <GlassCard className="p-5" variant="glow" glowColor="primary">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-text">
+                    {backgroundProgress.generated === backgroundProgress.total
+                      ? 'All workouts ready!'
+                      : 'Generating your monthly workouts...'}
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {backgroundProgress.generated === backgroundProgress.total
+                      ? `${backgroundProgress.total} workouts created`
+                      : 'This happens in the background - you can browse your schedule'}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-text">
-                  {backgroundProgress.generated === backgroundProgress.total
-                    ? 'All workouts ready!'
-                    : 'Generating your monthly workouts...'}
-                </p>
-                <p className="text-xs text-text-secondary">
-                  {backgroundProgress.generated === backgroundProgress.total
-                    ? `${backgroundProgress.total} workouts created`
-                    : 'This happens in the background - you can browse your schedule'}
-                </p>
-              </div>
+              <ProgressBar
+                current={backgroundProgress.generated || 1}
+                total={backgroundProgress.total}
+                variant="glow"
+              />
+            </GlassCard>
+          )}
+
+          {/* Quick Stats - Mobile Only */}
+          <section className="lg:hidden fade-in-up stagger-1">
+            <div className="grid grid-cols-3 gap-3">
+              <StatCard
+                value={completedWorkouts.length}
+                label="Completed"
+                color="text-accent"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                }
+              />
+              <StatCard
+                value={user.goals.length}
+                label="Goals"
+                color="text-secondary"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                }
+              />
+              <StatCard
+                value={user.fitness_level.charAt(0).toUpperCase() + user.fitness_level.slice(1)}
+                label="Level"
+                color="text-orange"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                }
+              />
             </div>
-            <ProgressBar
-              current={backgroundProgress.generated || 1}
-              total={backgroundProgress.total}
-              variant="glow"
-            />
-          </GlassCard>
+          </section>
+
+          {/* Workout Schedule Section */}
+          <section className="fade-in-up stagger-2">
+            {/* Section Header - Apple Fitness Style */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl lg:text-2xl font-bold text-text">Your Schedule</h2>
+                <p className="text-sm text-text-secondary mt-1">Drag workouts to reschedule</p>
+              </div>
+              <GlassButton
+                variant="primary"
+                size="md"
+                onClick={handleOpenGenerateModal}
+                loading={generateMutation.isPending}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                }
+              >
+                New Workout
+              </GlassButton>
+            </div>
+
+            {/* Timeline Card Container */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 lg:p-8">
+              <WorkoutTimeline
+                workouts={workouts}
+                isLoading={isLoading}
+                onGenerateWorkout={handleOpenGenerateModal}
+                isBackgroundGenerating={isBackgroundGenerating}
+              />
+            </div>
+          </section>
+        </main>
+
+        {/* Generate Workout Modal */}
+        <GenerateWorkoutModal
+          isOpen={showGenerateModal}
+          onClose={() => setShowGenerateModal(false)}
+          onGenerate={handleGenerate}
+          isGenerating={generateMutation.isPending}
+          initialData={{
+            fitnessLevel: user.fitness_level,
+            goals: user.goals,
+            equipment: user.equipment,
+          }}
+        />
+
+        {/* Replace Workout Confirmation Dialog */}
+        {showReplaceConfirm && pendingGenerateData && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <GlassCard className="max-w-sm w-full p-6" variant="elevated">
+              <div className="text-center mb-4">
+                <div className="w-12 h-12 bg-orange/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-text">Replace Existing Workouts?</h3>
+                <p className="text-text-secondary mt-2 text-sm">
+                  You are generating {pendingGenerateData.selectedDays.length} new workout{pendingGenerateData.selectedDays.length > 1 ? 's' : ''}.
+                  This will replace any existing workouts on those days.
+                </p>
+              </div>
+
+              {generateError && (
+                <div className="mb-4 p-3 bg-coral/10 border border-coral/30 rounded-xl">
+                  <p className="text-coral text-sm">{generateError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <GlassButton
+                  variant="secondary"
+                  onClick={handleCancelReplace}
+                  disabled={generateMutation.isPending}
+                  fullWidth
+                >
+                  Cancel
+                </GlassButton>
+                <GlassButton
+                  onClick={handleConfirmReplace}
+                  loading={generateMutation.isPending}
+                  fullWidth
+                >
+                  Replace
+                </GlassButton>
+              </div>
+            </GlassCard>
+          </div>
         )}
 
-        {/* Quick Stats */}
-        <section className="fade-in-up stagger-1">
-          <div className="grid grid-cols-3 gap-3">
-            <StatCard
-              value={completedWorkouts.length}
-              label="Completed"
-              color="bg-accent/20 text-accent"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        {/* Error Toast */}
+        {generateError && !showReplaceConfirm && (
+          <div className="fixed bottom-24 left-4 right-4 z-50 lg:left-auto lg:right-8 lg:max-w-md">
+            <GlassCard className="p-4 border-coral/30" variant="default">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-coral flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              }
-            />
-            <StatCard
-              value={user.goals.length}
-              label="Goals"
-              color="bg-secondary/20 text-secondary"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              }
-            />
-            <StatCard
-              value={user.fitness_level.charAt(0).toUpperCase() + user.fitness_level.slice(1)}
-              label="Level"
-              color="bg-orange/20 text-orange"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              }
-            />
-          </div>
-        </section>
-
-        {/* Workout Timeline */}
-        <section className="fade-in-up stagger-2">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-text">Your Schedule</h2>
-            <GlassButton
-              variant="primary"
-              size="sm"
-              onClick={handleOpenGenerateModal}
-              loading={generateMutation.isPending}
-              icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              }
-            >
-              New Workout
-            </GlassButton>
-          </div>
-
-          <WorkoutTimeline
-            workouts={workouts}
-            isLoading={isLoading}
-            onGenerateWorkout={handleOpenGenerateModal}
-            isBackgroundGenerating={isBackgroundGenerating}
-          />
-        </section>
-      </main>
-
-      {/* Generate Workout Modal */}
-      <GenerateWorkoutModal
-        isOpen={showGenerateModal}
-        onClose={() => setShowGenerateModal(false)}
-        onGenerate={handleGenerate}
-        isGenerating={generateMutation.isPending}
-        initialData={{
-          fitnessLevel: user.fitness_level,
-          goals: user.goals,
-          equipment: user.equipment,
-        }}
-      />
-
-      {/* Replace Workout Confirmation Dialog */}
-      {showReplaceConfirm && pendingGenerateData && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassCard className="max-w-sm w-full p-6" variant="elevated">
-            <div className="text-center mb-4">
-              <div className="w-12 h-12 bg-orange/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+                <span className="flex-1 text-sm text-text">{generateError}</span>
+                <button
+                  onClick={() => setGenerateError(null)}
+                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                >
+                  <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <h3 className="text-lg font-bold text-text">Replace Existing Workouts?</h3>
-              <p className="text-text-secondary mt-2 text-sm">
-                You are generating {pendingGenerateData.selectedDays.length} new workout{pendingGenerateData.selectedDays.length > 1 ? 's' : ''}.
-                This will replace any existing workouts on those days.
-              </p>
-            </div>
-
-            {generateError && (
-              <div className="mb-4 p-3 bg-coral/10 border border-coral/30 rounded-xl">
-                <p className="text-coral text-sm">{generateError}</p>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <GlassButton
-                variant="secondary"
-                onClick={handleCancelReplace}
-                disabled={generateMutation.isPending}
-                fullWidth
-              >
-                Cancel
-              </GlassButton>
-              <GlassButton
-                onClick={handleConfirmReplace}
-                loading={generateMutation.isPending}
-                fullWidth
-              >
-                Replace
-              </GlassButton>
-            </div>
-          </GlassCard>
-        </div>
-      )}
-
-      {/* Error Toast */}
-      {generateError && !showReplaceConfirm && (
-        <div className="fixed bottom-24 left-4 right-4 z-50">
-          <GlassCard className="p-4 border-coral/30" variant="default">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-coral flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="flex-1 text-sm text-text">{generateError}</span>
-              <button
-                onClick={() => setGenerateError(null)}
-                className="p-1 hover:bg-white/10 rounded transition-colors"
-              >
-                <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </GlassCard>
-        </div>
-      )}
-    </div>
+            </GlassCard>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

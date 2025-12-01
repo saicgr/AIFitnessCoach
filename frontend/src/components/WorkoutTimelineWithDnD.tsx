@@ -10,230 +10,18 @@ import {
   toDateString,
   isToday as checkIsToday,
   isPastDate,
-  formatDuration
 } from '../utils/dateUtils';
 import { swapWorkout, deleteWorkout, regenerateWorkout, getWorkoutVersions, revertWorkout } from '../api/client';
 import type { RegenerateWorkoutRequest, WorkoutVersionInfo } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../store';
+import { DayCard, WorkoutCard, RestDayBadge } from './schedule';
 
 interface WorkoutTimelineProps {
   workouts: Workout[];
   isLoading: boolean;
   onGenerateWorkout: () => void;
   isBackgroundGenerating?: boolean;
-}
-
-interface WorkoutCardProps {
-  workout: Workout;
-  isToday: boolean;
-  isPast: boolean;
-  isDragging?: boolean;
-  onClick?: () => void;
-  onDelete?: (workoutId: string) => void;
-  onStart?: (workoutId: string) => void;
-  onRegenerate?: (workoutId: string) => void;
-  onSettings?: (workoutId: string) => void;
-  isRegenerating?: boolean;
-}
-
-function WorkoutCard({ workout, isToday, isPast, isDragging = false, onClick, onDelete, onStart, onRegenerate, onSettings, isRegenerating = false }: WorkoutCardProps) {
-  const isCompleted = !!workout.completed_at;
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onDelete) {
-      onDelete(workout.id);
-    }
-  };
-
-  const handleStartClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onStart) {
-      onStart(workout.id);
-    }
-  };
-
-  const handleRegenerateClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onRegenerate) {
-      onRegenerate(workout.id);
-    }
-  };
-
-  const handleSettingsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onSettings) {
-      onSettings(workout.id);
-    }
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className={`group block p-4 rounded-xl border-2 transition-all hover:shadow-lg cursor-pointer ${
-        isDragging ? 'opacity-50' : ''
-      } ${
-        isToday
-          ? 'border-primary/50 bg-primary/10 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-          : isCompleted
-          ? 'border-accent/30 bg-accent/10'
-          : isPast
-          ? 'border-white/5 bg-white/5'
-          : 'border-white/10 bg-white/5'
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-text truncate">{workout.name}</h3>
-          <p className="text-sm text-text-secondary mt-1 capitalize">{workout.type}</p>
-
-          <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {formatDuration(workout.duration_minutes)}
-            </span>
-            <span>{workout.exercises.length} exercises</span>
-            <span className="capitalize">{workout.difficulty}</span>
-          </div>
-
-          {/* Target Muscles */}
-          {workout.target_muscles && workout.target_muscles.length > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-              <span className="text-text-muted text-xs mr-0.5">Targets:</span>
-              {workout.target_muscles.slice(0, 3).map((muscle, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full capitalize"
-                >
-                  {muscle}
-                </span>
-              ))}
-              {workout.target_muscles.length > 3 && (
-                <span className="text-xs text-text-muted">+{workout.target_muscles.length - 3}</span>
-              )}
-            </div>
-          )}
-
-          {/* Equipment */}
-          {workout.equipment && workout.equipment.length > 0 && (
-            <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-              <span className="text-text-muted text-xs mr-0.5">Equipment:</span>
-              {workout.equipment.slice(0, 3).map((item, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded-full capitalize"
-                >
-                  {item}
-                </span>
-              ))}
-              {workout.equipment.length > 3 && (
-                <span className="text-xs text-text-muted">+{workout.equipment.length - 3}</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Action buttons - visible on hover */}
-          {!isDragging && !isCompleted && !isPast && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-              {/* Settings button */}
-              {onSettings && (
-                <button
-                  onClick={handleSettingsClick}
-                  className="p-1.5 rounded-full bg-white/10 text-text-secondary hover:bg-white/20 hover:text-text transition-all"
-                  title="Workout settings"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
-              )}
-
-              {/* Regenerate button */}
-              {onRegenerate && (
-                <button
-                  onClick={handleRegenerateClick}
-                  disabled={isRegenerating}
-                  className="p-1.5 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-all disabled:opacity-50"
-                  title="Regenerate workout"
-                >
-                  {isRegenerating ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                </button>
-              )}
-
-              {/* Delete button */}
-              {onDelete && (
-                <button
-                  onClick={handleDeleteClick}
-                  className="p-1.5 rounded-full bg-coral/20 text-coral hover:bg-coral/30 transition-all"
-                  title="Delete workout"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Delete button for completed/past workouts */}
-          {!isDragging && (isCompleted || isPast) && onDelete && (
-            <button
-              onClick={handleDeleteClick}
-              className="p-1.5 rounded-full bg-coral/20 text-coral opacity-0 group-hover:opacity-100 hover:bg-coral/30 transition-all"
-              title="Delete workout"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          )}
-
-          {isCompleted ? (
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-          ) : isPast && !isCompleted ? (
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            </div>
-          ) : onStart && !isDragging ? (
-            <button
-              onClick={handleStartClick}
-              className="flex-shrink-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/80 hover:scale-105 transition-all shadow-lg shadow-primary/30"
-              title="Start workout"
-            >
-              <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 interface DraggableWorkoutCardProps {
@@ -298,80 +86,10 @@ function DroppableDayWrapper({ dateString, children }: DroppableDayWrapperProps)
     <div
       ref={setNodeRef}
       className={`flex-1 transition-all ${
-        isOver ? 'bg-primary/10 rounded-xl ring-2 ring-primary ring-offset-2' : ''
+        isOver ? 'ring-2 ring-primary ring-offset-2 ring-offset-background rounded-2xl' : ''
       }`}
     >
       {children}
-    </div>
-  );
-}
-
-interface RestDayCardProps {
-  isToday: boolean;
-  isPast: boolean;
-  onAddWorkout: () => void;
-  isGenerating?: boolean;
-}
-
-function RestDayCard({ isToday, isPast, onAddWorkout, isGenerating = false }: RestDayCardProps) {
-  // Show generating placeholder if background generation is active and not a past date
-  if (isGenerating && !isPast) {
-    return (
-      <div className="p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/10 animate-pulse">
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <span className="text-primary text-sm">Generating workout...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (isToday) {
-    return (
-      <div className="p-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            <span className="text-text-secondary font-medium">Rest Day</span>
-          </div>
-          <button
-            onClick={onAddWorkout}
-            className="text-primary text-sm font-medium hover:underline"
-          >
-            + Add Workout
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`p-4 rounded-xl border-2 border-dashed ${
-      isPast ? 'border-white/5 bg-white/5' : 'border-white/10 bg-white/5'
-    }`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-          </svg>
-          <span className="text-text-muted text-sm italic">
-            {isPast ? 'Rest Day' : 'Rest Day'}
-          </span>
-        </div>
-        {!isPast && (
-          <button
-            onClick={onAddWorkout}
-            className="text-text-muted text-sm hover:text-primary transition-colors"
-          >
-            + Add
-          </button>
-        )}
-      </div>
     </div>
   );
 }
@@ -407,7 +125,7 @@ function ReasonModal({ isOpen, onClose, onConfirm, isLoading }: ReasonModalProps
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="e.g., I have a meeting on that day, feeling tired, etc."
-          className="w-full p-3 bg-white/5 border border-white/10 rounded-lg mb-4 text-text placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary"
+          className="w-full p-3 bg-white/5 border border-white/10 rounded-xl mb-4 text-text placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary resize-none"
           rows={3}
           autoFocus
         />
@@ -416,14 +134,14 @@ function ReasonModal({ isOpen, onClose, onConfirm, isLoading }: ReasonModalProps
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="px-4 py-2 bg-white/10 text-text-secondary rounded-lg font-semibold hover:bg-white/20 disabled:opacity-50 transition-colors"
+            className="px-4 py-2.5 bg-white/10 text-text-secondary rounded-xl font-semibold hover:bg-white/20 disabled:opacity-50 transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={isLoading}
-            className="px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            className="px-4 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/80 disabled:opacity-50 transition-all"
           >
             {isLoading ? 'Moving...' : 'Move Workout'}
           </button>
@@ -447,9 +165,9 @@ function DeleteConfirmModal({ isOpen, workoutName, onClose, onConfirm, isLoading
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-surface border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl">
-        <div className="text-center mb-4">
-          <div className="w-12 h-12 bg-coral/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 bg-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-7 h-7 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </div>
@@ -463,14 +181,14 @@ function DeleteConfirmModal({ isOpen, workoutName, onClose, onConfirm, isLoading
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-3 bg-white/10 text-text-secondary rounded-xl font-semibold hover:bg-white/20 disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-3 bg-white/10 text-text-secondary rounded-xl font-semibold hover:bg-white/20 disabled:opacity-50 transition-all"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-4 py-3 bg-coral text-white rounded-xl font-semibold hover:bg-coral/80 disabled:opacity-50 transition-colors"
+            className="flex-1 px-4 py-3 bg-coral text-white rounded-xl font-semibold hover:bg-coral/80 disabled:opacity-50 transition-all"
           >
             {isLoading ? 'Deleting...' : 'Delete'}
           </button>
@@ -555,10 +273,6 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
     }
   };
 
-  // Check if undo is available (has previous version)
-  const previousVersion = versions.find(v => !v.is_current && v.version_number === (versions.find(vv => vv.is_current)?.version_number || 1) - 1);
-  const canUndo = previousVersion !== undefined;
-
   const toggleEquipment = (eq: string) => {
     setSelectedEquipment(prev =>
       prev.includes(eq) ? prev.filter(e => e !== eq) : [...prev, eq]
@@ -583,12 +297,12 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-surface border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-surface border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-text">Workout Settings</h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-white/10 transition-colors"
+            className="p-2 rounded-xl hover:bg-white/10 transition-all"
           >
             <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -597,23 +311,23 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 mb-4 border-b border-white/10 pb-2">
+        <div className="flex gap-2 mb-5 p-1 bg-white/5 rounded-xl">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'settings'
-                ? 'bg-primary text-white'
-                : 'text-text-secondary hover:bg-white/10'
+                ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                : 'text-text-secondary hover:text-text hover:bg-white/5'
             }`}
           >
             Settings
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'history'
-                ? 'bg-primary text-white'
-                : 'text-text-secondary hover:bg-white/10'
+                ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                : 'text-text-secondary hover:text-text hover:bg-white/5'
             }`}
           >
             History
@@ -636,17 +350,17 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-sm">No previous versions available.</p>
-                <p className="text-xs mt-1">Regenerate the workout to create a version history.</p>
+                <p className="text-xs mt-1 text-text-muted/70">Regenerate the workout to create a version history.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {versions.map((version) => (
                   <div
                     key={version.id}
-                    className={`p-3 rounded-lg border ${
+                    className={`p-4 rounded-xl border-2 transition-all ${
                       version.is_current
-                        ? 'border-primary bg-primary/10'
-                        : 'border-white/10 bg-white/5'
+                        ? 'border-primary/40 bg-primary/10'
+                        : 'border-white/10 bg-white/5 hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -654,18 +368,18 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-text">{version.name}</span>
                           {version.is_current && (
-                            <span className="text-xs px-2 py-0.5 bg-primary/30 text-primary rounded-full">
+                            <span className="text-xs px-2 py-0.5 bg-primary/30 text-primary rounded-full font-medium">
                               Current
                             </span>
                           )}
                         </div>
                         <div className="text-xs text-text-muted mt-1 flex items-center gap-2">
                           <span>v{version.version_number}</span>
-                          <span>•</span>
+                          <span className="w-1 h-1 rounded-full bg-text-muted" />
                           <span>{version.exercises_count} exercises</span>
                           {version.valid_from && (
                             <>
-                              <span>•</span>
+                              <span className="w-1 h-1 rounded-full bg-text-muted" />
                               <span>{new Date(version.valid_from).toLocaleDateString()}</span>
                             </>
                           )}
@@ -691,146 +405,146 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
         {/* Settings Tab Content */}
         {activeTab === 'settings' && (
           <>
-        {/* Duration Slider */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            Duration: {duration} minutes
-          </label>
-          <input
-            type="range"
-            min="15"
-            max="120"
-            step="5"
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-          />
-          <div className="flex justify-between text-xs text-text-muted mt-1">
-            <span>15 min</span>
-            <span>120 min</span>
-          </div>
-        </div>
-
-        {/* Difficulty Selection */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            Difficulty
-          </label>
-          <div className="flex gap-2">
-            {DIFFICULTY_OPTIONS.map((level) => (
-              <button
-                key={level}
-                onClick={() => setDifficulty(level)}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                  difficulty === level
-                    ? level === 'easy' ? 'bg-emerald-500 text-white'
-                      : level === 'medium' ? 'bg-amber-500 text-white'
-                      : 'bg-coral text-white'
-                    : 'bg-white/5 text-text-secondary hover:bg-white/10'
-                }`}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Equipment Selection */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-text-secondary mb-3">
-            Available Equipment
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {EQUIPMENT_OPTIONS.map((eq) => (
-              <button
-                key={eq}
-                onClick={() => toggleEquipment(eq)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                  selectedEquipment.includes(eq)
-                    ? 'bg-primary text-white'
-                    : 'bg-white/5 text-text-secondary hover:bg-white/10'
-                }`}
-              >
-                {eq}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom equipment items */}
-          {customItems.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {customItems.map((eq) => (
-                <button
-                  key={eq}
-                  onClick={() => toggleEquipment(eq)}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-white flex items-center gap-1.5"
-                >
-                  {eq}
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Add custom equipment */}
-          {showCustomInput ? (
-            <div className="mt-3 flex gap-2">
+            {/* Duration Slider */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-text mb-3">
+                Duration: <span className="text-primary">{duration} minutes</span>
+              </label>
               <input
-                type="text"
-                value={customEquipment}
-                onChange={(e) => setCustomEquipment(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addCustomEquipment()}
-                placeholder="e.g., medicine ball, TRX"
-                className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-text text-sm placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary"
-                autoFocus
+                type="range"
+                min="15"
+                max="120"
+                step="5"
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
               />
+              <div className="flex justify-between text-xs text-text-muted mt-2">
+                <span>15 min</span>
+                <span>120 min</span>
+              </div>
+            </div>
+
+            {/* Difficulty Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-text mb-3">
+                Difficulty
+              </label>
+              <div className="flex gap-2">
+                {DIFFICULTY_OPTIONS.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all capitalize ${
+                      difficulty === level
+                        ? level === 'easy' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                          : level === 'medium' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                          : 'bg-coral text-white shadow-lg shadow-coral/25'
+                        : 'bg-white/5 text-text-secondary hover:bg-white/10'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Equipment Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-text mb-3">
+                Available Equipment
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {EQUIPMENT_OPTIONS.map((eq) => (
+                  <button
+                    key={eq}
+                    onClick={() => toggleEquipment(eq)}
+                    className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all capitalize ${
+                      selectedEquipment.includes(eq)
+                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                        : 'bg-white/5 text-text-secondary hover:bg-white/10'
+                    }`}
+                  >
+                    {eq}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom equipment items */}
+              {customItems.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {customItems.map((eq) => (
+                    <button
+                      key={eq}
+                      onClick={() => toggleEquipment(eq)}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent text-white flex items-center gap-1.5"
+                    >
+                      {eq}
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Add custom equipment */}
+              {showCustomInput ? (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="text"
+                    value={customEquipment}
+                    onChange={(e) => setCustomEquipment(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addCustomEquipment()}
+                    placeholder="e.g., medicine ball, TRX"
+                    className="flex-1 px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-text text-sm placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-primary"
+                    autoFocus
+                  />
+                  <button
+                    onClick={addCustomEquipment}
+                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => { setShowCustomInput(false); setCustomEquipment(''); }}
+                    className="px-4 py-2.5 bg-white/10 text-text-muted rounded-xl text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowCustomInput(true)}
+                  className="mt-3 w-full py-2.5 border-2 border-dashed border-white/15 rounded-xl text-text-secondary hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Other Equipment
+                </button>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
               <button
-                onClick={addCustomEquipment}
-                className="px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium"
-              >
-                Add
-              </button>
-              <button
-                onClick={() => { setShowCustomInput(false); setCustomEquipment(''); }}
-                className="px-3 py-2 bg-white/10 text-text-muted rounded-lg text-sm"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-white/10 text-text-secondary rounded-xl font-semibold hover:bg-white/20 transition-all"
               >
                 Cancel
               </button>
+              <button
+                onClick={handleSave}
+                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/80 transition-all shadow-lg shadow-primary/25"
+              >
+                Regenerate
+              </button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowCustomInput(true)}
-              className="mt-3 w-full py-2 border-2 border-dashed border-white/15 rounded-lg text-text-secondary hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 text-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Other Equipment
-            </button>
-          )}
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 bg-white/10 text-text-secondary rounded-xl font-semibold hover:bg-white/20 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/80 transition-colors"
-          >
-            Regenerate
-          </button>
-        </div>
-
-        <p className="text-xs text-text-muted text-center mt-3">
-          This will generate a new workout with these settings
-        </p>
+            <p className="text-xs text-text-muted text-center mt-3">
+              This will generate a new workout with these settings
+            </p>
           </>
         )}
       </div>
@@ -856,14 +570,14 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
   // Configure sensors with delay for long-press to drag
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      delay: 300,      // 300ms long-press required
-      tolerance: 5,    // 5px movement tolerance
+      delay: 300,
+      tolerance: 5,
     },
   });
 
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 300,      // 300ms long-press for mobile
+      delay: 300,
       tolerance: 5,
     },
   });
@@ -906,7 +620,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       return await deleteWorkout(workoutId);
     },
     onSuccess: (_, workoutId) => {
-      // Remove from local state
       const updatedWorkouts = workouts.filter(w => w.id !== workoutId);
       setWorkouts(updatedWorkouts);
       queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
@@ -925,7 +638,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       return await regenerateWorkout(request);
     },
     onSuccess: (newWorkout) => {
-      // Add new workout to local state (SCD2 keeps old one but marks it non-current)
       const updatedWorkouts = workouts.filter(w => w.id !== regeneratingWorkoutId);
       updatedWorkouts.push(newWorkout);
       setWorkouts(updatedWorkouts);
@@ -945,7 +657,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       return await revertWorkout({ workout_id: workoutId, target_version: targetVersion });
     },
     onSuccess: (newWorkout, { workoutId }) => {
-      // Add reverted workout to local state
       const updatedWorkouts = workouts.filter(w => w.id !== workoutId);
       updatedWorkouts.push(newWorkout);
       setWorkouts(updatedWorkouts);
@@ -962,12 +673,12 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     navigate(`/workout/${workoutId}`);
   };
 
-  // Start workout handler - navigates to workout with start param
+  // Start workout handler
   const handleStart = (workoutId: string) => {
     navigate(`/workout/${workoutId}?start=true`);
   };
 
-  // Delete handler - shows confirmation modal
+  // Delete handler
   const handleDeleteRequest = (workoutId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (workout) {
@@ -976,7 +687,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     }
   };
 
-  // Confirm delete
   const handleDeleteConfirm = () => {
     if (pendingDelete) {
       deleteMutation.mutate(pendingDelete.workoutId);
@@ -998,7 +708,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     }
   };
 
-  // Settings handler - opens modal
+  // Settings handler
   const handleSettingsRequest = (workoutId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
     if (workout) {
@@ -1007,13 +717,11 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     }
   };
 
-  // Handle settings save and regenerate with new settings
   const handleSettingsSave = (settings: { duration_minutes: number; equipment: string[]; difficulty: string }) => {
     if (pendingSettings && user) {
       const workoutId = pendingSettings.workoutId;
       const scheduledDate = pendingSettings.workout.scheduled_date || new Date().toISOString();
 
-      // Set regenerating state BEFORE closing modal so card shows loading
       setRegeneratingWorkoutId(workoutId);
       setShowSettingsModal(false);
       setPendingSettings(null);
@@ -1029,7 +737,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     }
   };
 
-  // Handle revert to previous version
   const handleRevert = (workoutId: string, targetVersion: number) => {
     revertMutation.mutate({ workoutId, targetVersion });
   };
@@ -1048,13 +755,11 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     const newDate = over.id as string;
     const workoutId = active.id as string;
 
-    // Don't allow moving to the same date
     const currentWorkout = workouts.find((w) => w.id === workoutId);
     if (currentWorkout?.scheduled_date?.split('T')[0] === newDate) {
       return;
     }
 
-    // Show reason modal
     setPendingSwap({ workoutId, newDate });
     setShowReasonModal(true);
   };
@@ -1075,15 +780,15 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {[1, 2, 3, 4, 5, 6, 7].map((i) => (
           <div key={i} className="animate-pulse">
-            <div className="flex gap-3">
-              <div className="w-24 flex-shrink-0">
-                <div className="h-4 w-16 bg-white/10 rounded mb-1" />
-                <div className="h-3 w-12 bg-white/10 rounded" />
+            <div className="flex gap-4 lg:gap-6">
+              <div className="w-16 lg:w-20 flex-shrink-0">
+                <div className="h-4 w-12 bg-white/10 rounded mb-1" />
+                <div className="h-6 w-8 bg-white/10 rounded-lg" />
               </div>
-              <div className="flex-1 h-20 bg-white/5 rounded-xl" />
+              <div className="flex-1 h-24 bg-white/5 rounded-2xl" />
             </div>
           </div>
         ))}
@@ -1099,24 +804,24 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col">
-        {/* Compact Week Navigation */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Week Navigation */}
+        <div className="flex items-center justify-between mb-6 p-2 bg-white/5 rounded-xl">
           <button
             onClick={() => setWeekOffset((w) => w - 1)}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-all"
             aria-label="Previous week"
           >
-            <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
           <button
             onClick={() => setWeekOffset(0)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               weekOffset === 0
                 ? 'bg-primary/20 text-primary'
-                : 'text-text-secondary hover:bg-white/10'
+                : 'text-text-secondary hover:bg-white/10 hover:text-text'
             }`}
           >
             {formatWeekRange(weekDates)}
@@ -1124,17 +829,17 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
 
           <button
             onClick={() => setWeekOffset((w) => w + 1)}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-all"
             aria-label="Next week"
           >
-            <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
 
-        {/* Days List */}
-        <div className="space-y-3">
+        {/* Days List with Premium DayCard */}
+        <div className="space-y-4">
           {weekDates.map((date) => {
             const workout = getWorkoutForDate(date);
             const isToday = checkIsToday(date);
@@ -1142,19 +847,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
             const dateStr = toDateString(date);
 
             return (
-              <div key={dateStr} className={`flex gap-3 ${isToday ? 'relative' : ''}`}>
-                {/* Day Label */}
-                <div className={`w-24 flex-shrink-0 ${isToday ? 'text-primary' : 'text-text-secondary'}`}>
-                  <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-text'}`}>
-                    {date.toLocaleDateString('en-US', { weekday: 'short' })}
-                  </div>
-                  <div className={`text-xs ${isToday ? 'text-primary' : 'text-text-muted'}`}>
-                    {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </div>
-                  {isToday && <div className="w-2 h-2 rounded-full bg-primary mt-1" />}
-                </div>
-
-                {/* Droppable Day Wrapper */}
+              <DayCard key={dateStr} date={date} isToday={isToday} isPast={isPast}>
                 <DroppableDayWrapper dateString={dateStr}>
                   {workout ? (
                     <DraggableWorkoutCard
@@ -1169,7 +862,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                       isRegenerating={regeneratingWorkoutId === workout.id}
                     />
                   ) : (
-                    <RestDayCard
+                    <RestDayBadge
                       isToday={isToday}
                       isPast={isPast}
                       onAddWorkout={onGenerateWorkout}
@@ -1177,26 +870,27 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                     />
                   )}
                 </DroppableDayWrapper>
-              </div>
+              </DayCard>
             );
           })}
         </div>
-
       </div>
 
       {/* Drag Overlay */}
       <DragOverlay>
         {activeWorkout && (
-          <WorkoutCard
-            workout={activeWorkout}
-            isToday={false}
-            isPast={false}
-            isDragging
-          />
+          <div className="opacity-90">
+            <WorkoutCard
+              workout={activeWorkout}
+              isToday={false}
+              isPast={false}
+              isDragging
+            />
+          </div>
         )}
       </DragOverlay>
 
-      {/* Reason Modal */}
+      {/* Modals */}
       <ReasonModal
         isOpen={showReasonModal}
         onClose={() => {
@@ -1207,7 +901,6 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
         isLoading={swapMutation.isPending}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         isOpen={showDeleteModal}
         workoutName={pendingDelete?.workoutName || ''}
@@ -1219,10 +912,14 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
         isLoading={deleteMutation.isPending}
       />
 
-      {/* Workout Settings Modal */}
       <WorkoutSettingsModal
         isOpen={showSettingsModal}
-        workout={pendingSettings?.workout ? { id: pendingSettings.workout.id, duration_minutes: pendingSettings.workout.duration_minutes, equipment: pendingSettings.workout.equipment, difficulty: pendingSettings.workout.difficulty } : null}
+        workout={pendingSettings?.workout ? {
+          id: pendingSettings.workout.id,
+          duration_minutes: pendingSettings.workout.duration_minutes,
+          equipment: pendingSettings.workout.equipment,
+          difficulty: pendingSettings.workout.difficulty
+        } : null}
         onClose={() => {
           setShowSettingsModal(false);
           setPendingSettings(null);

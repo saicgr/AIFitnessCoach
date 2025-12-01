@@ -6,6 +6,7 @@ import { updateUser, getUserWithBackend } from '../api/client';
 import { extractOnboardingData } from '../types';
 import { createLogger } from '../utils/logger';
 import { GlassCard, GlassButton } from '../components/ui';
+import { DashboardLayout } from '../components/layout';
 
 const log = createLogger('profile');
 
@@ -354,28 +355,8 @@ export default function Profile() {
     : 'U';
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 glass-heavy safe-area-top">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
-          >
-            <Icons.Back />
-          </button>
-          <h1 className="text-lg font-semibold text-text">Profile</h1>
-          <div className="w-9" />
-        </div>
-      </header>
-
-      <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <DashboardLayout>
+      <div className="max-w-2xl mx-auto space-y-6">
         {/* Profile Header Card */}
         <div
           className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-primary to-secondary"
@@ -988,35 +969,35 @@ export default function Profile() {
             View Metrics
           </GlassButton>
         </div>
-      </main>
 
-      {/* Error Toast */}
-      {updateMutation.isError && (
-        <div className="fixed bottom-6 left-4 right-4 z-50">
-          <GlassCard className="p-4 border-coral/30" variant="default">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-coral flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="flex-1 text-sm text-text">Failed to save changes. Please try again.</span>
-            </div>
-          </GlassCard>
-        </div>
-      )}
+        {/* Error Toast */}
+        {updateMutation.isError && (
+          <div className="fixed bottom-6 left-4 right-4 lg:left-24 z-50">
+            <GlassCard className="p-4 border-coral/30" variant="default">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-coral flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="flex-1 text-sm text-text">Failed to save changes. Please try again.</span>
+              </div>
+            </GlassCard>
+          </div>
+        )}
 
-      {/* Success Toast */}
-      {updateMutation.isSuccess && (
-        <div className="fixed bottom-6 left-4 right-4 z-50 animate-fade-in">
-          <GlassCard className="p-4 border-accent/30" variant="default">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="flex-1 text-sm text-text">Profile updated successfully!</span>
-            </div>
-          </GlassCard>
-        </div>
-      )}
-    </div>
+        {/* Success Toast */}
+        {updateMutation.isSuccess && (
+          <div className="fixed bottom-6 left-4 right-4 lg:left-24 z-50 animate-fade-in">
+            <GlassCard className="p-4 border-accent/30" variant="default">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="flex-1 text-sm text-text">Profile updated successfully!</span>
+              </div>
+            </GlassCard>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

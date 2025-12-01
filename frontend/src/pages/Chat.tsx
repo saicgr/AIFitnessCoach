@@ -8,6 +8,7 @@ import { createLogger } from '../utils/logger';
 import ChatActions from '../components/chat/ChatActions';
 import { isSameDay, isThisWeek, getYesterday, getTomorrow, getTodayStart } from '../utils/dateUtils';
 import { GlassCard, GlassButton } from '../components/ui';
+import { DashboardLayout } from '../components/layout';
 
 const log = createLogger('chat');
 
@@ -270,52 +271,35 @@ export default function Chat() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 glass-heavy safe-area-top">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    <DashboardLayout noPadding>
+      <div className="flex flex-col h-[calc(100vh-2rem)]">
+        {/* Chat Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="font-semibold text-text">AI Coach</h1>
-                <p className="text-xs text-text-secondary">Always here to help</p>
-              </div>
             </div>
-            <button
-              onClick={clearChatHistory}
-              className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
-              title="Clear chat"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
+            <div>
+              <h1 className="font-semibold text-text">AI Coach</h1>
+              <p className="text-xs text-text-secondary">Always here to help</p>
+            </div>
           </div>
+          <button
+            onClick={clearChatHistory}
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
+            title="Clear chat"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
-      </header>
 
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto relative z-10">
-        <div className="max-w-2xl mx-auto p-4 space-y-4">
+        {/* Messages */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto p-4 space-y-4">
           {isLoadingHistory ? (
             <div className="flex justify-center py-12">
               <div className="flex items-center gap-3 text-text-secondary">
@@ -384,13 +368,12 @@ export default function Chat() {
               <div ref={messagesEndRef} />
             </>
           )}
-        </div>
-      </main>
+          </div>
+        </main>
 
-      {/* Input */}
-      <div className="relative z-10 glass-heavy safe-area-bottom">
-        <div className="max-w-2xl mx-auto p-4">
-          <div className="flex gap-3">
+        {/* Input */}
+        <div className="border-t border-white/10 p-4">
+          <div className="max-w-2xl mx-auto flex gap-3">
             <input
               type="text"
               value={input}
@@ -419,6 +402,6 @@ export default function Chat() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

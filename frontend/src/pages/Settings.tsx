@@ -6,6 +6,7 @@ import { resetUser, calculateHealthMetrics, getActiveInjuries } from '../api/cli
 import { createLogger } from '../utils/logger';
 import type { HealthMetrics, ActiveInjury } from '../types';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
+import { DashboardLayout } from '../components/layout';
 
 const log = createLogger('settings');
 
@@ -266,28 +267,8 @@ export default function Settings() {
     : 'U';
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 glass-heavy safe-area-top">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
-          >
-            <Icons.Back />
-          </button>
-          <h1 className="text-lg font-semibold text-text">Settings</h1>
-          <div className="w-9" />
-        </div>
-      </header>
-
-      <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <DashboardLayout>
+      <div className="max-w-2xl mx-auto space-y-6">
         {/* Profile Card */}
         <div
           className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-primary to-secondary"
@@ -713,70 +694,70 @@ export default function Settings() {
             </div>
           )}
         </GlassCard>
-      </main>
 
-      {/* Reset Confirmation Dialog */}
-      {showResetDialog && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <GlassCard className="max-w-md w-full p-6" variant="elevated">
-            <div className="text-center mb-5">
-              <div className="w-16 h-16 bg-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        {/* Reset Confirmation Dialog */}
+        {showResetDialog && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <GlassCard className="max-w-md w-full p-6" variant="elevated">
+              <div className="text-center mb-5">
+                <div className="w-16 h-16 bg-coral/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-text mb-2">Reset All Data?</h2>
+                <p className="text-text-secondary text-sm">This will permanently delete:</p>
               </div>
-              <h2 className="text-xl font-bold text-text mb-2">Reset All Data?</h2>
-              <p className="text-text-secondary text-sm">This will permanently delete:</p>
-            </div>
 
-            <ul className="space-y-2 mb-5">
-              {[
-                'All your workouts and progress',
-                'Your preferences and goals',
-                'Chat history with AI coach'
-              ].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 bg-coral/10 p-3 rounded-xl border border-coral/20">
-                  <div className="w-5 h-5 bg-coral/30 rounded-full flex items-center justify-center">
-                    <span className="text-coral text-xs font-bold">×</span>
-                  </div>
-                  <span className="text-text-secondary text-sm">{item}</span>
-                </li>
-              ))}
-            </ul>
+              <ul className="space-y-2 mb-5">
+                {[
+                  'All your workouts and progress',
+                  'Your preferences and goals',
+                  'Chat history with AI coach'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 bg-coral/10 p-3 rounded-xl border border-coral/20">
+                    <div className="w-5 h-5 bg-coral/30 rounded-full flex items-center justify-center">
+                      <span className="text-coral text-xs font-bold">×</span>
+                    </div>
+                    <span className="text-text-secondary text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
 
-            <p className="text-center text-sm text-text font-medium mb-5 p-3 bg-white/5 rounded-xl border border-white/10">
-              You will be taken back to onboarding.
-              <br />
-              <span className="text-coral">This action cannot be undone.</span>
-            </p>
+              <p className="text-center text-sm text-text font-medium mb-5 p-3 bg-white/5 rounded-xl border border-white/10">
+                You will be taken back to onboarding.
+                <br />
+                <span className="text-coral">This action cannot be undone.</span>
+              </p>
 
-            {resetError && (
-              <div className="mb-4 p-3 bg-coral/10 border border-coral/30 rounded-xl">
-                <p className="text-coral text-sm">{resetError}</p>
+              {resetError && (
+                <div className="mb-4 p-3 bg-coral/10 border border-coral/30 rounded-xl">
+                  <p className="text-coral text-sm">{resetError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <GlassButton
+                  variant="secondary"
+                  onClick={handleCancelReset}
+                  disabled={resetMutation.isPending}
+                  fullWidth
+                >
+                  Cancel
+                </GlassButton>
+                <GlassButton
+                  variant="danger"
+                  onClick={handleConfirmReset}
+                  loading={resetMutation.isPending}
+                  fullWidth
+                >
+                  Reset Everything
+                </GlassButton>
               </div>
-            )}
-
-            <div className="flex gap-3">
-              <GlassButton
-                variant="secondary"
-                onClick={handleCancelReset}
-                disabled={resetMutation.isPending}
-                fullWidth
-              >
-                Cancel
-              </GlassButton>
-              <GlassButton
-                variant="danger"
-                onClick={handleConfirmReset}
-                loading={resetMutation.isPending}
-                fullWidth
-              >
-                Reset Everything
-              </GlassButton>
-            </div>
-          </GlassCard>
-        </div>
-      )}
-    </div>
+            </GlassCard>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

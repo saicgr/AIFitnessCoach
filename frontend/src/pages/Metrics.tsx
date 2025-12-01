@@ -6,6 +6,7 @@ import { getWorkouts, calculateHealthMetrics, getActiveInjuries, getStrengthReco
 import { createLogger } from '../utils/logger';
 import type { HealthMetrics, ActiveInjury, Workout, StrengthRecord, WeeklyVolume } from '../types';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
+import { DashboardLayout } from '../components/layout';
 
 const log = createLogger('metrics');
 
@@ -293,28 +294,8 @@ export default function Metrics() {
   const maxMuscleVolume = Math.max(...Object.values(muscleVolume), 15);
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 glass-heavy safe-area-top">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/10 rounded-xl transition-colors text-text-secondary hover:text-text"
-          >
-            <Icons.Back />
-          </button>
-          <h1 className="text-lg font-semibold text-text">Metrics Dashboard</h1>
-          <div className="w-9" />
-        </div>
-      </header>
-
-      <main className="relative z-10 max-w-2xl mx-auto px-4 py-6 space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
         {/* Quick Stats Grid */}
         <section>
           <div className="grid grid-cols-2 gap-3">
@@ -681,7 +662,7 @@ export default function Metrics() {
           Metrics are calculated based on your profile data.
           Update your profile for more accurate results.
         </p>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

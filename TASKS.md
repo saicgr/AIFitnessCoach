@@ -6,6 +6,7 @@ NEED
 4. Need image input to read images.
 5. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
 6. program_variants needs more populated Variants
+7. Create a restore table to record deleted data of user and help restoring data.
 
 FUTURE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
