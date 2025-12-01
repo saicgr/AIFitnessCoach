@@ -9,6 +9,38 @@ interface AppState {
   setTheme: (theme: 'dark' | 'light') => void;
   toggleTheme: () => void;
 
+  // Notification settings
+  notificationSettings: {
+    // Channel preferences
+    emailEnabled: boolean;
+    pushEnabled: boolean;
+
+    // Workout reminder frequency
+    workoutReminderFrequency: 'none' | 'workout_days' | 'daily';
+
+    // Summary emails - multi-select array
+    summaryEmailFrequencies: Array<'weekly' | 'monthly' | '3_months' | '6_months' | '12_months'>;
+    includedInSummary: {
+      workoutData: boolean;
+      weightData: boolean;
+    };
+
+    // Food tracking emails
+    foodTrackingEnabled: boolean;
+    foodTrackingMeals: {
+      breakfast: boolean;
+      lunch: boolean;
+      dinner: boolean;
+    };
+
+    // Motivation emails
+    motivationEmailsEnabled: boolean;
+  };
+  setNotificationSettings: (settings: Partial<AppState['notificationSettings']>) => void;
+  setIncludedInSummary: (data: Partial<AppState['notificationSettings']['includedInSummary']>) => void;
+  setFoodTrackingMeals: (meals: Partial<AppState['notificationSettings']['foodTrackingMeals']>) => void;
+  toggleSummaryEmailFrequency: (frequency: 'weekly' | 'monthly' | '3_months' | '6_months' | '12_months') => void;
+
   // Auth state
   session: Session | null;
   setSession: (session: Session | null) => void;
@@ -109,7 +141,7 @@ const defaultOnboarding: OnboardingData = {
   activityLevel: 'lightly_active',
 };
 
-const STORAGE_VERSION = 4;
+const STORAGE_VERSION = 6;
 
 // Helper to apply theme class to document
 const applyThemeToDocument = (theme: 'dark' | 'light') => {
@@ -136,6 +168,56 @@ export const useAppStore = create<AppState>()(
           const newTheme = state.theme === 'dark' ? 'light' : 'dark';
           applyThemeToDocument(newTheme);
           return { theme: newTheme };
+        }),
+
+      // Notifications
+      notificationSettings: {
+        emailEnabled: true,
+        pushEnabled: false,
+        workoutReminderFrequency: 'workout_days',
+        summaryEmailFrequencies: [],
+        includedInSummary: {
+          workoutData: true,
+          weightData: true,
+        },
+        foodTrackingEnabled: false,
+        foodTrackingMeals: {
+          breakfast: true,
+          lunch: true,
+          dinner: true,
+        },
+        motivationEmailsEnabled: false,
+      },
+      setNotificationSettings: (settings) =>
+        set((state) => ({
+          notificationSettings: { ...state.notificationSettings, ...settings },
+        })),
+      setIncludedInSummary: (data) =>
+        set((state) => ({
+          notificationSettings: {
+            ...state.notificationSettings,
+            includedInSummary: { ...state.notificationSettings.includedInSummary, ...data },
+          },
+        })),
+      setFoodTrackingMeals: (meals) =>
+        set((state) => ({
+          notificationSettings: {
+            ...state.notificationSettings,
+            foodTrackingMeals: { ...state.notificationSettings.foodTrackingMeals, ...meals },
+          },
+        })),
+      toggleSummaryEmailFrequency: (frequency) =>
+        set((state) => {
+          const current = state.notificationSettings.summaryEmailFrequencies || [];
+          const updated = current.includes(frequency)
+            ? current.filter((f) => f !== frequency)
+            : [...current, frequency];
+          return {
+            notificationSettings: {
+              ...state.notificationSettings,
+              summaryEmailFrequencies: updated,
+            },
+          };
         }),
 
       // Auth
@@ -229,13 +311,35 @@ export const useAppStore = create<AppState>()(
         session: state.session,
         onboardingData: state.onboardingData,
         theme: state.theme,
+        notificationSettings: state.notificationSettings,
       }),
       migrate: (persistedState, version) => {
         // Clear old data if version mismatch
         if (version < STORAGE_VERSION) {
-          return { user: null, session: null, onboardingData: defaultOnboarding, theme: 'dark' as const };
+          return {
+            user: null,
+            session: null,
+            onboardingData: defaultOnboarding,
+            theme: 'dark' as const,
+            notificationSettings: {
+              emailEnabled: true,
+              pushEnabled: false,
+              workoutReminderFrequency: 'workout_days' as const,
+              summaryEmailFrequencies: [] as Array<'weekly' | 'monthly' | '3_months' | '6_months' | '12_months'>,
+              includedInSummary: { workoutData: true, weightData: true },
+              foodTrackingEnabled: false,
+              foodTrackingMeals: { breakfast: true, lunch: true, dinner: true },
+              motivationEmailsEnabled: false,
+            },
+          };
         }
-        return persistedState as { user: User | null; session: Session | null; onboardingData: OnboardingData; theme: 'dark' | 'light' };
+        return persistedState as {
+          user: User | null;
+          session: Session | null;
+          onboardingData: OnboardingData;
+          theme: 'dark' | 'light';
+          notificationSettings: AppState['notificationSettings'];
+        };
       },
       onRehydrateStorage: () => (state) => {
         // Apply theme when store rehydrates from localStorage
@@ -252,6 +356,16 @@ export const clearAppStorage = () => {
   localStorage.removeItem('fitness-coach-storage');
   useAppStore.setState({
     theme: 'dark',
+    notificationSettings: {
+      emailEnabled: true,
+      pushEnabled: false,
+      workoutReminderFrequency: 'workout_days',
+      summaryEmailFrequencies: [],
+      includedInSummary: { workoutData: true, weightData: true },
+      foodTrackingEnabled: false,
+      foodTrackingMeals: { breakfast: true, lunch: true, dinner: true },
+      motivationEmailsEnabled: false,
+    },
     session: null,
     user: null,
     onboardingData: defaultOnboarding,

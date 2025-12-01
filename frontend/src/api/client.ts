@@ -559,4 +559,53 @@ export const getExerciseVideoUrl = async (exerciseName: string): Promise<string 
   return info?.url ?? null;
 };
 
+// ============================================
+// Email Reminders
+// ============================================
+
+export interface TestEmailResponse {
+  success: boolean;
+  message: string;
+  email_id?: string;
+}
+
+export const sendTestEmail = async (email: string): Promise<TestEmailResponse> => {
+  const { data } = await api.post<TestEmailResponse>(`/reminders/test?to_email=${encodeURIComponent(email)}`);
+  return data;
+};
+
+// ============================================
+// Notification Settings
+// ============================================
+
+export interface NotificationSettingsPayload {
+  emailEnabled: boolean;
+  pushEnabled: boolean;
+  workoutReminderFrequency: 'none' | 'workout_days' | 'daily';
+  summaryEmailFrequencies: Array<'weekly' | 'monthly' | '3_months' | '6_months' | '12_months'>;
+  includedInSummary: {
+    workoutData: boolean;
+    weightData: boolean;
+  };
+  foodTrackingEnabled: boolean;
+  foodTrackingMeals: {
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  };
+  motivationEmailsEnabled: boolean;
+}
+
+export const saveNotificationSettings = async (
+  userId: string,
+  settings: NotificationSettingsPayload
+): Promise<{ success: boolean }> => {
+  await api.patch(`/users/${userId}`, {
+    preferences: JSON.stringify({
+      notifications: settings,
+    }),
+  });
+  return { success: true };
+};
+
 export default api;

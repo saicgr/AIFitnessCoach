@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 from api.v1 import chat, health, workouts, performance
 from api.v1 import users, exercises, workouts_db, performance_db
-from api.v1 import metrics, videos, onboarding
+from api.v1 import metrics, videos, onboarding, reminders
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -27,3 +27,6 @@ router.include_router(videos.router, tags=["Videos"])
 
 # Conversational AI onboarding endpoints
 router.include_router(onboarding.router, prefix="/onboarding", tags=["Onboarding"])
+
+# Email reminder endpoints
+router.include_router(reminders.router, prefix="/reminders", tags=["Reminders"])

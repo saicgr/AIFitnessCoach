@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAppStore, clearAppStorage } from '../store';
-import { resetUser, calculateHealthMetrics, getActiveInjuries } from '../api/client';
+import { resetUser, getActiveInjuries, sendTestEmail, saveNotificationSettings } from '../api/client';
 import { createLogger } from '../utils/logger';
-import type { HealthMetrics, ActiveInjury } from '../types';
+import type { ActiveInjury } from '../types';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 import { DashboardLayout } from '../components/layout';
 
@@ -15,16 +15,6 @@ const Icons = {
   Back: () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-    </svg>
-  ),
-  Heart: () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-    </svg>
-  ),
-  Scale: () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
     </svg>
   ),
   Target: () => (
@@ -67,6 +57,41 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
   ),
+  Bell: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+  ),
+  BellOff: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11M6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9M18 11a6 6 0 00-6-6M9 7a6 6 0 00-3 5.197M3 3l18 18" />
+    </svg>
+  ),
+  Email: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+  ),
+  Chart: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+  ),
+  Food: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+  ),
+  Sparkles: () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+  ),
+  Check: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  ),
 };
 
 // Section Header component
@@ -80,39 +105,6 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
         <h2 className="text-lg font-semibold text-text">{title}</h2>
         {subtitle && <p className="text-xs text-text-secondary">{subtitle}</p>}
       </div>
-    </div>
-  );
-}
-
-// Metric Card component
-function MetricCard({
-  label,
-  value,
-  unit,
-  sublabel,
-  color = 'primary',
-}: {
-  label: string;
-  value: string | number;
-  unit?: string;
-  sublabel?: string;
-  color?: 'primary' | 'secondary' | 'accent' | 'orange';
-}) {
-  const colorClasses = {
-    primary: 'bg-primary/10 border-primary/20 text-primary',
-    secondary: 'bg-secondary/10 border-secondary/20 text-secondary',
-    accent: 'bg-accent/10 border-accent/20 text-accent',
-    orange: 'bg-orange/10 border-orange/20 text-orange',
-  };
-
-  return (
-    <div className={`rounded-xl p-4 border ${colorClasses[color]} transition-all hover:scale-[1.02]`}>
-      <p className={`text-xs font-medium mb-1 opacity-80`}>{label}</p>
-      <div className="flex items-baseline gap-1">
-        <span className="text-xl font-bold text-text">{value}</span>
-        {unit && <span className="text-sm text-text-secondary">{unit}</span>}
-      </div>
-      {sublabel && <p className="text-xs text-text-muted mt-1">{sublabel}</p>}
     </div>
   );
 }
@@ -133,48 +125,53 @@ function Chip({ children, variant = 'primary' }: { children: React.ReactNode; va
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user, onboardingData, setOnboardingData, theme, toggleTheme, setUser } = useAppStore();
+  const {
+    user,
+    onboardingData,
+    theme,
+    toggleTheme,
+    setUser,
+    notificationSettings,
+    setNotificationSettings,
+    setIncludedInSummary,
+    setFoodTrackingMeals,
+    toggleSummaryEmailFrequency,
+  } = useAppStore();
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
-  const [healthMetrics, setHealthMetrics] = useState<HealthMetrics | null>(null);
-  const [metricsLoading, setMetricsLoading] = useState(false);
   const [activeInjuries, setActiveInjuries] = useState<ActiveInjury[]>([]);
   const [injuriesLoading, setInjuriesLoading] = useState(false);
+  const [testEmailSending, setTestEmailSending] = useState(false);
+  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Calculate health metrics when component loads
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      if (!user || !onboardingData.weightKg || !onboardingData.heightCm || !onboardingData.age) return;
+  // Handle test email
+  const handleSendTestEmail = async () => {
+    if (!user) return;
 
-      const gender = onboardingData.gender;
-      if (gender !== 'male' && gender !== 'female') return;
+    // Get user email from session (Google auth provides this)
+    const { session } = useAppStore.getState();
+    const email = session?.user?.email;
 
-      setMetricsLoading(true);
-      try {
-        const metrics = await calculateHealthMetrics({
-          userId: user.id,
-          weightKg: onboardingData.weightKg,
-          heightCm: onboardingData.heightCm,
-          age: onboardingData.age,
-          gender: gender,
-          activityLevel: onboardingData.activityLevel,
-          targetWeightKg: onboardingData.targetWeightKg,
-          waistCm: onboardingData.waistCircumferenceCm,
-          hipCm: onboardingData.hipCircumferenceCm,
-          neckCm: onboardingData.neckCircumferenceCm,
-          bodyFatPercent: onboardingData.bodyFatPercent,
-        });
-        setHealthMetrics(metrics);
-        log.info('Health metrics calculated', metrics);
-      } catch (error) {
-        log.error('Failed to calculate health metrics', error);
-      } finally {
-        setMetricsLoading(false);
-      }
-    };
+    if (!email) {
+      setTestEmailResult({ success: false, message: 'No email address found. Please log in with Google to use email features.' });
+      return;
+    }
 
-    fetchMetrics();
-  }, [user, onboardingData]);
+    setTestEmailSending(true);
+    setTestEmailResult(null);
+
+    try {
+      const result = await sendTestEmail(email);
+      setTestEmailResult({ success: true, message: `Test email sent to ${email}` });
+      log.info('Test email sent', result);
+    } catch (error: any) {
+      const message = error.response?.data?.detail || error.message || 'Failed to send test email';
+      setTestEmailResult({ success: false, message });
+      log.error('Test email failed', error);
+    } finally {
+      setTestEmailSending(false);
+    }
+  };
 
   // Fetch active injuries
   useEffect(() => {
@@ -195,6 +192,24 @@ export default function Settings() {
 
     fetchInjuries();
   }, [user]);
+
+  // Sync notification settings to backend when they change
+  useEffect(() => {
+    const syncSettings = async () => {
+      if (!user) return;
+
+      try {
+        await saveNotificationSettings(String(user.id), notificationSettings);
+        log.info('Notification settings synced to backend');
+      } catch (error) {
+        log.error('Failed to sync notification settings', error);
+      }
+    };
+
+    // Debounce the sync to avoid too many API calls
+    const timeoutId = setTimeout(syncSettings, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [user, notificationSettings]);
 
 
   const resetMutation = useMutation({
@@ -227,34 +242,6 @@ export default function Settings() {
   const handleCancelReset = () => {
     setShowResetDialog(false);
     setResetError(null);
-  };
-
-  const handleGenderSelect = async (gender: 'male' | 'female') => {
-    setOnboardingData({ gender });
-    if (!user || !onboardingData.weightKg || !onboardingData.heightCm || !onboardingData.age) return;
-
-    setMetricsLoading(true);
-    try {
-      const metrics = await calculateHealthMetrics({
-        userId: user.id,
-        weightKg: onboardingData.weightKg,
-        heightCm: onboardingData.heightCm,
-        age: onboardingData.age,
-        gender: gender,
-        activityLevel: onboardingData.activityLevel,
-        targetWeightKg: onboardingData.targetWeightKg,
-        waistCm: onboardingData.waistCircumferenceCm,
-        hipCm: onboardingData.hipCircumferenceCm,
-        neckCm: onboardingData.neckCircumferenceCm,
-        bodyFatPercent: onboardingData.bodyFatPercent,
-      });
-      setHealthMetrics(metrics);
-      log.info('Health metrics calculated after gender selection', metrics);
-    } catch (error) {
-      log.error('Failed to calculate health metrics', error);
-    } finally {
-      setMetricsLoading(false);
-    }
   };
 
   if (!user) {
@@ -353,6 +340,275 @@ export default function Settings() {
           </div>
         </GlassCard>
 
+        {/* Notifications Section */}
+        <GlassCard className="p-6">
+          <SectionHeader
+            icon={<Icons.Bell />}
+            title="Notifications"
+            subtitle="Manage how you receive updates"
+          />
+
+          <div className="space-y-6">
+            {/* Channel Preferences */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Notification Channels</p>
+
+              {/* Email Toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/5 rounded-xl">
+                    <Icons.Email />
+                  </div>
+                  <div>
+                    <p className="font-medium text-text">Email Notifications</p>
+                    <p className="text-xs text-text-secondary">Receive updates via email</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNotificationSettings({ emailEnabled: !notificationSettings.emailEnabled })}
+                  className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                    notificationSettings.emailEnabled
+                      ? 'bg-primary shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                      : 'bg-white/20 border border-white/30'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                    notificationSettings.emailEnabled ? 'left-7' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              {/* Push Toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/5 rounded-xl">
+                    <Icons.Bell />
+                  </div>
+                  <div>
+                    <p className="font-medium text-text">Push Notifications</p>
+                    <p className="text-xs text-text-secondary">Browser/app notifications</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNotificationSettings({ pushEnabled: !notificationSettings.pushEnabled })}
+                  className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                    notificationSettings.pushEnabled
+                      ? 'bg-primary shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                      : 'bg-white/20 border border-white/30'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                    notificationSettings.pushEnabled ? 'left-7' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Workout Reminders - only show if email enabled */}
+            {notificationSettings.emailEnabled && (
+              <>
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Workout Reminders</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'none', label: 'Off' },
+                      { value: 'workout_days', label: 'Workout Days' },
+                      { value: 'daily', label: 'Daily' },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setNotificationSettings({ workoutReminderFrequency: option.value as 'none' | 'workout_days' | 'daily' })}
+                        className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          notificationSettings.workoutReminderFrequency === option.value
+                            ? 'bg-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+                            : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary Emails - Multi-select */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icons.Chart />
+                    <div>
+                      <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Progress Summary Emails</p>
+                      <p className="text-xs text-text-muted mt-0.5">Select multiple frequencies</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 'weekly' as const, label: 'Weekly' },
+                      { value: 'monthly' as const, label: 'Monthly' },
+                      { value: '3_months' as const, label: '3 Months' },
+                      { value: '6_months' as const, label: '6 Months' },
+                      { value: '12_months' as const, label: 'Yearly' },
+                    ].map((option) => {
+                      const frequencies = notificationSettings.summaryEmailFrequencies || [];
+                      const isSelected = frequencies.includes(option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => toggleSummaryEmailFrequency(option.value)}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            isSelected
+                              ? 'bg-primary text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+                              : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
+                          }`}
+                        >
+                          {isSelected && <Icons.Check />}
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Summary Content Options - show if any frequency selected */}
+                  {(notificationSettings.summaryEmailFrequencies || []).length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-xs text-text-muted mb-2">Include in summary:</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setIncludedInSummary({ workoutData: !notificationSettings.includedInSummary.workoutData })}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all ${
+                            notificationSettings.includedInSummary.workoutData
+                              ? 'bg-accent/20 text-accent border border-accent/30'
+                              : 'bg-white/5 text-text-secondary border border-white/10'
+                          }`}
+                        >
+                          {notificationSettings.includedInSummary.workoutData && <Icons.Check />}
+                          Workout Data
+                        </button>
+                        <button
+                          onClick={() => setIncludedInSummary({ weightData: !notificationSettings.includedInSummary.weightData })}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all ${
+                            notificationSettings.includedInSummary.weightData
+                              ? 'bg-accent/20 text-accent border border-accent/30'
+                              : 'bg-white/5 text-text-secondary border border-white/10'
+                          }`}
+                        >
+                          {notificationSettings.includedInSummary.weightData && <Icons.Check />}
+                          Weight Data
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Food Tracking Emails */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Icons.Food />
+                      <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Food Tracking Emails</p>
+                    </div>
+                    <button
+                      onClick={() => setNotificationSettings({ foodTrackingEnabled: !notificationSettings.foodTrackingEnabled })}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-300 ${
+                        notificationSettings.foodTrackingEnabled
+                          ? 'bg-primary'
+                          : 'bg-white/20 border border-white/30'
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full transition-all duration-300 bg-white ${
+                        notificationSettings.foodTrackingEnabled ? 'left-6' : 'left-0.5'
+                      }`} />
+                    </button>
+                  </div>
+
+                  {notificationSettings.foodTrackingEnabled && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-text-muted mb-2">Request food photos for:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(['breakfast', 'lunch', 'dinner'] as const).map((meal) => (
+                          <button
+                            key={meal}
+                            onClick={() => setFoodTrackingMeals({ [meal]: !notificationSettings.foodTrackingMeals[meal] })}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm capitalize transition-all ${
+                              notificationSettings.foodTrackingMeals[meal]
+                                ? 'bg-accent/20 text-accent border border-accent/30'
+                                : 'bg-white/5 text-text-secondary border border-white/10'
+                            }`}
+                          >
+                            {notificationSettings.foodTrackingMeals[meal] && <Icons.Check />}
+                            {meal}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Motivation Emails */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white/5 rounded-xl">
+                        <Icons.Sparkles />
+                      </div>
+                      <div>
+                        <p className="font-medium text-text">Motivation Emails</p>
+                        <p className="text-xs text-text-secondary">Receive encouragement and tips</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setNotificationSettings({ motivationEmailsEnabled: !notificationSettings.motivationEmailsEnabled })}
+                      className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                        notificationSettings.motivationEmailsEnabled
+                          ? 'bg-primary shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                          : 'bg-white/20 border border-white/30'
+                      }`}
+                    >
+                      <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                        notificationSettings.motivationEmailsEnabled ? 'left-7' : 'left-1'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Test Email Button */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white/5 rounded-xl">
+                        <Icons.Email />
+                      </div>
+                      <div>
+                        <p className="font-medium text-text">Test Email</p>
+                        <p className="text-xs text-text-secondary">Send a test email to verify delivery</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSendTestEmail}
+                      disabled={testEmailSending}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                        testEmailSending
+                          ? 'bg-white/10 text-text-muted cursor-not-allowed'
+                          : 'bg-primary/20 text-primary hover:bg-primary/30 border border-primary/30'
+                      }`}
+                    >
+                      {testEmailSending ? 'Sending...' : 'Send Test'}
+                    </button>
+                  </div>
+                  {testEmailResult && (
+                    <div className={`mt-3 p-3 rounded-xl text-sm ${
+                      testEmailResult.success
+                        ? 'bg-accent/10 text-accent border border-accent/30'
+                        : 'bg-coral/10 text-coral border border-coral/30'
+                    }`}>
+                      {testEmailResult.message}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </GlassCard>
+
         {/* Goals & Equipment Section */}
         <GlassCard className="p-6">
           <SectionHeader icon={<Icons.Target />} title="Goals & Equipment" />
@@ -384,165 +640,6 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </GlassCard>
-
-        {/* Health Metrics Section */}
-        <GlassCard className="p-6">
-          <SectionHeader
-            icon={<Icons.Heart />}
-            title="Health Metrics"
-            subtitle="Based on your measurements"
-          />
-
-          {metricsLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-text-secondary text-sm">Calculating your metrics...</p>
-            </div>
-          ) : healthMetrics ? (
-            <div className="space-y-5">
-              {/* BMI Card */}
-              <div className="bg-white/5 rounded-xl p-5 border border-white/10">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm font-medium text-text-secondary">Body Mass Index</p>
-                    <p className="text-3xl font-bold text-text mt-1">{healthMetrics.bmi.toFixed(1)}</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-3 py-1.5 rounded-lg ${
-                    healthMetrics.bmiCategory === 'normal'
-                      ? 'bg-accent/20 text-accent'
-                      : healthMetrics.bmiCategory === 'underweight'
-                      ? 'bg-orange/20 text-orange'
-                      : healthMetrics.bmiCategory === 'overweight'
-                      ? 'bg-orange/20 text-orange'
-                      : 'bg-coral/20 text-coral'
-                  }`}>
-                    {healthMetrics.bmiCategory.charAt(0).toUpperCase() + healthMetrics.bmiCategory.slice(1)}
-                  </span>
-                </div>
-                <ProgressBar current={healthMetrics.bmi} total={40} variant="glow" />
-                <div className="flex justify-between text-xs text-text-muted mt-2">
-                  <span>18.5</span>
-                  <span>25</span>
-                  <span>30</span>
-                  <span>40</span>
-                </div>
-              </div>
-
-              {/* Metabolic Rates Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <MetricCard
-                  label="Basal Metabolic Rate"
-                  value={Math.round(healthMetrics.bmrMifflin)}
-                  unit="kcal"
-                  sublabel="Daily at rest"
-                  color="primary"
-                />
-                <MetricCard
-                  label="Daily Energy Needs"
-                  value={Math.round(healthMetrics.tdee)}
-                  unit="kcal"
-                  sublabel="TDEE"
-                  color="accent"
-                />
-              </div>
-
-              {/* Ideal Body Weight */}
-              <div className="bg-secondary/10 rounded-xl p-4 border border-secondary/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <Icons.Scale />
-                  <p className="text-sm font-medium text-secondary">Ideal Body Weight Range</p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-text">{Math.round(healthMetrics.idealBodyWeightMiller)}</p>
-                    <p className="text-xs text-text-secondary">Min (kg)</p>
-                  </div>
-                  <div className="flex-1 mx-4 h-1 bg-white/10 rounded-full relative">
-                    <div className="absolute inset-y-0 left-1/4 right-1/4 bg-secondary rounded-full" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-text">{Math.round(healthMetrics.idealBodyWeightDevine)}</p>
-                    <p className="text-xs text-text-secondary">Max (kg)</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Body Composition */}
-              {(healthMetrics.bodyFatNavy || healthMetrics.waistToHeightRatio) && (
-                <div>
-                  <p className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Body Composition</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {healthMetrics.bodyFatNavy && (
-                      <MetricCard
-                        label="Est. Body Fat"
-                        value={healthMetrics.bodyFatNavy.toFixed(1)}
-                        unit="%"
-                        color="orange"
-                      />
-                    )}
-                    {healthMetrics.leanBodyMass && (
-                      <MetricCard
-                        label="Lean Mass"
-                        value={healthMetrics.leanBodyMass.toFixed(1)}
-                        unit="kg"
-                        color="orange"
-                      />
-                    )}
-                    {healthMetrics.waistToHeightRatio && (
-                      <MetricCard
-                        label="Waist/Height"
-                        value={healthMetrics.waistToHeightRatio.toFixed(2)}
-                        color="orange"
-                      />
-                    )}
-                    {healthMetrics.ffmi && (
-                      <MetricCard
-                        label="FFMI"
-                        value={healthMetrics.ffmi.toFixed(1)}
-                        color="orange"
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Icons.Info />
-              </div>
-              <p className="text-text font-medium mb-1">Metrics Not Available</p>
-              <p className="text-text-secondary text-sm mb-4">
-                Select your biological sex to calculate health metrics
-              </p>
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => handleGenderSelect('male')}
-                  className={`px-6 py-2.5 rounded-xl font-medium transition-all ${
-                    onboardingData.gender === 'male'
-                      ? 'bg-primary text-white shadow-[0_0_20px_rgba(6,182,212,0.4)]'
-                      : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
-                  }`}
-                >
-                  Male
-                </button>
-                <button
-                  onClick={() => handleGenderSelect('female')}
-                  className={`px-6 py-2.5 rounded-xl font-medium transition-all ${
-                    onboardingData.gender === 'female'
-                      ? 'bg-primary text-white shadow-[0_0_20px_rgba(6,182,212,0.4)]'
-                      : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
-                  }`}
-                >
-                  Female
-                </button>
-              </div>
-              <p className="text-xs text-text-muted mt-3">
-                Used only for accurate BMR and body composition calculations
-              </p>
-            </div>
-          )}
         </GlassCard>
 
         {/* Active Injuries Section */}

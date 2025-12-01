@@ -7,6 +7,8 @@ NEED
 5. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
 6. program_variants needs more populated Variants
 7. Create a restore table to record deleted data of user and help restoring data.
+8. Data Import Export
+9. Browser notifications?
 
 FUTURE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
@@ -16,3 +18,4 @@ NutritionAgent - meal planning, macros
 InjuryAgent - rehab exercises, modifications
 ProgressAgent - analytics, goal tracking
 4. Lifetime subscription discount during holidays, PromoCode offers in reddit etc.
+5. API Public swagger UI  
