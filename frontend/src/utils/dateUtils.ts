@@ -204,19 +204,19 @@ export const getTodayStart = (): Date => {
 };
 
 /**
- * Get the start of the week (Monday) for a given date
+ * Get the start of the week (Sunday) for a given date
  */
 export const getStartOfWeek = (date: Date): Date => {
   const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const diff = d.getDate() - day; // Go back to Sunday
   d.setDate(diff);
   d.setHours(0, 0, 0, 0);
   return d;
 };
 
 /**
- * Get the end of the week (Sunday) for a given date
+ * Get the end of the week (Saturday) for a given date
  */
 export const getEndOfWeek = (date: Date): Date => {
   const start = getStartOfWeek(date);
@@ -227,7 +227,7 @@ export const getEndOfWeek = (date: Date): Date => {
 };
 
 /**
- * Generate an array of 7 dates for a week (Monday to Sunday)
+ * Generate an array of 7 dates for a week (Sunday to Saturday)
  * @param weekOffset 0 = current week, -1 = last week, 1 = next week
  */
 export const getWeekDates = (weekOffset: number = 0): Date[] => {
