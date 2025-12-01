@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
 import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, generateRemainingWorkouts } from '../api/client';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
@@ -9,6 +10,13 @@ import { DashboardLayout } from '../components/layout';
 import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
 import { createLogger } from '../utils/logger';
 import type { Workout } from '../types';
+import {
+  toolbarVariants,
+  toolbarItemVariants,
+  fadeInUpVariants,
+  cardVariants,
+  badgePulseVariants,
+} from '../utils/animations';
 
 const log = createLogger('home');
 
@@ -48,23 +56,63 @@ function calculateStreak(workouts: Workout[]): number {
   return currentStreak;
 }
 
-// Stats card component - Premium redesign
-function StatCard({ value, label, icon, color }: { value: string | number; label: string; icon: React.ReactNode; color: string }) {
+// Stats card component - Premium redesign with animations
+function StatCard({ value, label, icon, color, index = 0 }: { value: string | number; label: string; icon: React.ReactNode; color: string; index?: number }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5 transition-all duration-300 hover:bg-white/8 hover:border-white/20 hover:shadow-lg">
+    <motion.div
+      className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-5"
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      whileHover={{
+        scale: 1.03,
+        y: -2,
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+      }}
+      whileTap={{ scale: 0.98 }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 25,
+        delay: index * 0.1,
+      }}
+    >
       {/* Subtle gradient overlay on hover */}
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${color.replace('text-', 'bg-')}/5`} />
+      <motion.div
+        className={`absolute inset-0 ${color.replace('text-', 'bg-')}/5`}
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      />
 
       <div className="relative flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color.replace('text-', 'bg-')}/20`}>
+        <motion.div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center ${color.replace('text-', 'bg-')}/20`}
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        >
           <span className={color}>{icon}</span>
-        </div>
+        </motion.div>
         <div>
-          <div className="text-2xl font-bold text-text">{value}</div>
-          <div className="text-sm text-text-secondary font-medium">{label}</div>
+          <motion.div
+            className="text-2xl font-bold text-text"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 + 0.1 }}
+          >
+            {value}
+          </motion.div>
+          <motion.div
+            className="text-sm text-text-secondary font-medium"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.2 }}
+          >
+            {label}
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -335,66 +383,116 @@ export default function Home() {
   return (
     <DashboardLayout>
       <div className="pb-24">
-        {/* Premium Header */}
-        <header className="relative z-10 border-b border-white/5 bg-surface/50 backdrop-blur-xl">
+        {/* Premium Header with Animations */}
+        <motion.header
+          className="relative z-10 border-b border-white/5 bg-surface/50 backdrop-blur-xl"
+          variants={toolbarVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               {/* Welcome Section */}
-              <div className="flex items-center gap-5">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <motion.div
+                className="flex items-center gap-5"
+                variants={toolbarItemVariants}
+              >
+                <motion.div
+                  className="relative"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <motion.div
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                  >
                     <span className="text-2xl font-bold text-primary">
                       {userName.charAt(0).toUpperCase()}
                     </span>
-                  </div>
+                  </motion.div>
                   {streak > 0 && (
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-orange flex items-center justify-center border-2 border-background">
+                    <motion.div
+                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-orange flex items-center justify-center border-2 border-background"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.3 }}
+                      variants={badgePulseVariants}
+                      whileHover="pulse"
+                    >
                       <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/>
                       </svg>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
-                <div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
                   <p className="text-text-secondary text-sm font-medium">Welcome back,</p>
                   <h1 className="text-2xl lg:text-3xl font-bold text-text">{userName}</h1>
                   {streak > 0 && (
-                    <p className="text-orange text-sm font-medium mt-1">
+                    <motion.p
+                      className="text-orange text-sm font-medium mt-1"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
                       {streak} day streak!
-                    </p>
+                    </motion.p>
                   )}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
-              {/* Quick Stats - Desktop */}
-              <div className="hidden lg:flex items-center gap-4">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-                  <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+              {/* Quick Stats - Desktop with animations */}
+              <motion.div
+                className="hidden lg:flex items-center gap-4"
+                variants={toolbarItemVariants}
+              >
+                <motion.div
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <motion.div
+                    className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center"
+                    whileHover={{ rotate: 10 }}
+                  >
                     <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                  </div>
+                  </motion.div>
                   <div>
                     <div className="text-lg font-bold text-text">{completedWorkouts.length}</div>
                     <div className="text-xs text-text-secondary">Completed</div>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center">
+                <motion.div
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <motion.div
+                    className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center"
+                    whileHover={{ rotate: 10 }}
+                  >
                     <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                  </div>
+                  </motion.div>
                   <div>
                     <div className="text-lg font-bold text-text capitalize">{user.fitness_level}</div>
                     <div className="text-xs text-text-secondary">Level</div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
-        </header>
+        </motion.header>
 
         <main className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
           {/* Background Generation Progress */}
@@ -429,12 +527,19 @@ export default function Home() {
           )}
 
           {/* Quick Stats - Mobile Only */}
-          <section className="lg:hidden fade-in-up stagger-1">
+          <motion.section
+            className="lg:hidden"
+            variants={fadeInUpVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.2 }}
+          >
             <div className="grid grid-cols-3 gap-3">
               <StatCard
                 value={completedWorkouts.length}
                 label="Completed"
                 color="text-accent"
+                index={0}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -445,6 +550,7 @@ export default function Home() {
                 value={user.goals.length}
                 label="Goals"
                 color="text-secondary"
+                index={1}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -455,6 +561,7 @@ export default function Home() {
                 value={user.fitness_level.charAt(0).toUpperCase() + user.fitness_level.slice(1)}
                 label="Level"
                 color="text-orange"
+                index={2}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -462,23 +569,37 @@ export default function Home() {
                 }
               />
             </div>
-          </section>
+          </motion.section>
 
           {/* Workout Schedule Section */}
-          <section className="fade-in-up stagger-2">
+          <motion.section
+            variants={fadeInUpVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.3 }}
+          >
             {/* Section Header - Apple Fitness Style */}
             <div className="flex items-center justify-between mb-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+              >
                 <h2 className="text-xl lg:text-2xl font-bold text-text">Your Schedule</h2>
                 <p className="text-sm text-text-secondary mt-1">Drag workouts to reschedule</p>
-              </div>
+              </motion.div>
               <GlassButton
                 variant="primary"
                 size="md"
                 onClick={handleOpenGenerateModal}
                 loading={generateMutation.isPending}
                 icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 }
@@ -488,15 +609,20 @@ export default function Home() {
             </div>
 
             {/* Timeline Card Container */}
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-6 lg:p-8">
+            <motion.div
+              className="rounded-2xl bg-white/5 border border-white/10 p-6 lg:p-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
               <WorkoutTimeline
                 workouts={workouts}
                 isLoading={isLoading}
                 onGenerateWorkout={handleOpenGenerateModal}
                 isBackgroundGenerating={isBackgroundGenerating}
               />
-            </div>
-          </section>
+            </motion.div>
+          </motion.section>
         </main>
 
         {/* Generate Workout Modal */}

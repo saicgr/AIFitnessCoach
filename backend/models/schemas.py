@@ -229,6 +229,7 @@ class RegenerateWorkoutRequest(BaseModel):
     user_id: str  # UUID of the user
     duration_minutes: Optional[int] = 45
     fitness_level: Optional[str] = None  # beginner/intermediate/advanced
+    difficulty: Optional[str] = None  # easy/medium/hard - explicit workout difficulty
     equipment: Optional[List[str]] = None
     focus_areas: Optional[List[str]] = None
 

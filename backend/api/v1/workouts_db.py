@@ -967,25 +967,76 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
             raise HTTPException(status_code=404, detail="User not found")
 
         # Determine generation parameters
+        # Use user-selected settings if provided, otherwise fall back to user profile
         fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
-        equipment = request.equipment or parse_json_field(user.get("equipment"), [])
+        # IMPORTANT: Use explicit None check so empty list [] is respected
+        equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
         goals = parse_json_field(user.get("goals"), [])
 
+        # Get user-selected difficulty (easy/medium/hard) - will override AI-generated difficulty
+        user_difficulty = request.difficulty
+
+        logger.info(f"Regenerating workout with: fitness_level={fitness_level}, equipment={equipment}, difficulty={user_difficulty}")
+
         openai_service = OpenAIService()
+        exercise_rag = get_exercise_rag_service()
+
+        # Determine focus area from existing workout or request
+        focus_areas = request.focus_areas or []
+        if not focus_areas:
+            # Try to determine focus from existing workout's target muscles
+            existing_exercises = parse_json_field(existing.get("exercises_json") or existing.get("exercises"), [])
+            if existing_exercises:
+                target_muscles = set()
+                for ex in existing_exercises:
+                    if isinstance(ex, dict) and ex.get("target_muscles"):
+                        muscles = ex.get("target_muscles")
+                        if isinstance(muscles, list):
+                            target_muscles.update(muscles)
+                        elif isinstance(muscles, str):
+                            target_muscles.add(muscles)
+                if target_muscles:
+                    focus_areas = list(target_muscles)[:2]  # Use up to 2 main muscles
+
+        focus_area = focus_areas[0] if focus_areas else "full_body"
 
         try:
-            workout_data = await openai_service.generate_workout_plan(
+            # Use RAG to intelligently select exercises from ChromaDB/Supabase
+            rag_exercises = await exercise_rag.select_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=equipment if isinstance(equipment, list) else [],
                 fitness_level=fitness_level,
                 goals=goals if isinstance(goals, list) else [],
-                equipment=equipment if isinstance(equipment, list) else [],
-                duration_minutes=request.duration_minutes or 45,
-                focus_areas=request.focus_areas
+                count=6,
+                avoid_exercises=[],  # Don't avoid any since we're regenerating
             )
+
+            if rag_exercises:
+                # Use RAG-selected exercises with real videos
+                logger.info(f"RAG selected {len(rag_exercises)} exercises for regeneration")
+                workout_data = await openai_service.generate_workout_from_library(
+                    exercises=rag_exercises,
+                    fitness_level=fitness_level,
+                    goals=goals if isinstance(goals, list) else [],
+                    duration_minutes=request.duration_minutes or 45,
+                    focus_areas=focus_areas if focus_areas else [focus_area],
+                )
+            else:
+                # Fallback to direct generation if RAG fails
+                logger.warning("RAG returned no exercises, falling back to direct generation")
+                workout_data = await openai_service.generate_workout_plan(
+                    fitness_level=fitness_level,
+                    goals=goals if isinstance(goals, list) else [],
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    duration_minutes=request.duration_minutes or 45,
+                    focus_areas=focus_areas if focus_areas else None
+                )
 
             exercises = workout_data.get("exercises", [])
             workout_name = workout_data.get("name", "Regenerated Workout")
             workout_type = workout_data.get("type", existing.get("type", "strength"))
-            difficulty = workout_data.get("difficulty", "medium")
+            # Use user-selected difficulty if provided, otherwise use AI-generated or default
+            difficulty = user_difficulty or workout_data.get("difficulty", "medium")
 
         except Exception as ai_error:
             logger.error(f"AI workout regeneration failed: {ai_error}")
@@ -993,6 +1044,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 status_code=500,
                 detail=f"Failed to generate new workout: {str(ai_error)}"
             )
+
+        # Track if RAG was used for metadata
+        used_rag = rag_exercises is not None and len(rag_exercises) > 0
 
         # Prepare new workout data for the SCD2 supersede operation
         new_workout_data = {
@@ -1003,14 +1057,18 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
             "scheduled_date": existing.get("scheduled_date"),  # Keep same date
             "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
+            "equipment": json.dumps(equipment) if equipment else "[]",  # Store user-selected equipment
             "is_completed": False,  # Reset completion on regenerate
-            "generation_method": "ai_regenerate",
+            "generation_method": "rag_regenerate" if used_rag else "ai_regenerate",
             "generation_source": "regenerate_endpoint",
             "generation_metadata": json.dumps({
                 "regenerated_from": request.workout_id,
                 "previous_version": existing.get("version_number", 1),
                 "fitness_level": fitness_level,
                 "equipment": equipment,
+                "difficulty": difficulty,
+                "used_rag": used_rag,
+                "focus_area": focus_area,
             }),
         }
 

@@ -201,7 +201,7 @@ export interface RegenerateWorkoutRequest {
 }
 
 export const regenerateWorkout = async (request: RegenerateWorkoutRequest): Promise<Workout> => {
-  // Map frontend difficulty to backend fitness_level
+  // Map frontend difficulty to backend fitness_level for RAG selection
   const difficultyToFitnessLevel: Record<string, string> = {
     'easy': 'beginner',
     'medium': 'intermediate',
@@ -212,15 +212,18 @@ export const regenerateWorkout = async (request: RegenerateWorkoutRequest): Prom
     : undefined;
 
   // Use the new versioned regenerate endpoint
+  // Send both fitness_level (for RAG) and difficulty (for workout display)
   const regenerateRequest = {
     workout_id: request.workout_id,
     user_id: request.user_id,
     duration_minutes: request.duration_minutes || 45,
     fitness_level: fitnessLevel,
+    difficulty: request.difficulty,  // Send explicit difficulty for workout metadata
     equipment: request.equipment,
     focus_areas: request.focus_areas,
   };
 
+  console.log('Regenerating workout with:', regenerateRequest);
   const { data } = await api.post<WorkoutBackend>('/workouts-db/regenerate', regenerateRequest);
   return parseWorkout(data);
 };
