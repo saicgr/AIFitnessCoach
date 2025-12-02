@@ -42,6 +42,7 @@ interface WorkoutCardProps {
   isToday: boolean;
   isPast: boolean;
   isDragging?: boolean;
+  isSelected?: boolean;
   onClick?: () => void;
   onDelete?: (workoutId: string) => void;
   onStart?: (workoutId: string) => void;
@@ -49,6 +50,7 @@ interface WorkoutCardProps {
   onSettings?: (workoutId: string) => void;
   isRegenerating?: boolean;
   index?: number; // For stagger animation
+  compact?: boolean; // For compact mode in 4-panel layout
 }
 
 export default function WorkoutCard({
@@ -56,6 +58,7 @@ export default function WorkoutCard({
   isToday,
   isPast,
   isDragging = false,
+  isSelected = false,
   onClick,
   onDelete,
   onStart,
@@ -63,6 +66,7 @@ export default function WorkoutCard({
   onSettings,
   isRegenerating = false,
   index = 0,
+  compact = false,
 }: WorkoutCardProps) {
   const isCompleted = !!workout.completed_at;
 
@@ -72,7 +76,9 @@ export default function WorkoutCard({
   };
 
   // Card state styles
-  const cardStyles = isToday
+  const cardStyles = isSelected
+    ? 'border-secondary ring-2 ring-secondary/50 bg-gradient-to-br from-secondary/15 to-secondary/5'
+    : isToday
     ? 'border-primary/40 bg-gradient-to-br from-primary/10 to-primary/5'
     : isCompleted
     ? 'border-accent/30 bg-accent/5'
@@ -84,7 +90,8 @@ export default function WorkoutCard({
     <motion.div
       onClick={onClick}
       className={`
-        group relative p-4 lg:p-5 rounded-2xl border-2 cursor-pointer
+        group relative rounded-2xl border-2 cursor-pointer
+        ${compact ? 'p-3' : 'p-4 lg:p-5'}
         ${isDragging ? 'opacity-50' : ''}
         ${cardStyles}
       `}
@@ -127,11 +134,11 @@ export default function WorkoutCard({
       )}
 
       {/* Top Row: Name, Type, Duration, Difficulty */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           {/* Workout Name */}
           <motion.h3
-            className="font-semibold text-text text-base lg:text-lg truncate pr-2"
+            className={`font-semibold text-text truncate pr-2 ${compact ? 'text-sm' : 'text-base lg:text-lg'}`}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 + 0.1 }}
@@ -141,21 +148,25 @@ export default function WorkoutCard({
 
           {/* Metadata Row */}
           <motion.div
-            className="flex items-center gap-3 mt-2 flex-wrap"
+            className={`flex items-center gap-2 mt-1.5 flex-wrap ${compact ? 'text-xs' : 'text-sm'}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.05 + 0.15 }}
           >
-            <span className="text-text-secondary text-sm capitalize">{workout.type}</span>
+            <span className="text-text-secondary capitalize">{workout.type}</span>
             <span className="w-1 h-1 rounded-full bg-text-muted" />
-            <span className="text-text-secondary text-sm flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="text-text-secondary flex items-center gap-1">
+              <svg className={`${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {formatDuration(workout.duration_minutes)}
             </span>
-            <span className="w-1 h-1 rounded-full bg-text-muted" />
-            <span className="text-text-secondary text-sm">{workout.exercises.length} exercises</span>
+            {!compact && (
+              <>
+                <span className="w-1 h-1 rounded-full bg-text-muted" />
+                <span className="text-text-secondary">{workout.exercises.length} exercises</span>
+              </>
+            )}
             <DifficultyBadge difficulty={workout.difficulty} />
           </motion.div>
         </div>
@@ -169,13 +180,13 @@ export default function WorkoutCard({
         >
           {isCompleted ? (
             <motion.div
-              className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center"
+              className={`rounded-xl bg-accent flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 500, damping: 20 }}
             >
               <motion.svg
-                className="w-5 h-5 text-white"
+                className={`text-white ${compact ? 'w-4 h-4' : 'w-5 h-5'}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -187,18 +198,19 @@ export default function WorkoutCard({
               </motion.svg>
             </motion.div>
           ) : isPast && !isCompleted ? (
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-              <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`rounded-xl bg-white/5 flex items-center justify-center ${compact ? 'w-8 h-8' : 'w-10 h-10'}`}>
+              <svg className={`text-text-muted ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
           ) : onStart && !isDragging ? (
             <motion.button
               onClick={(e) => handleAction(e, () => onStart(workout.id))}
-              className="
-                w-12 h-12 rounded-xl bg-primary flex items-center justify-center
+              className={`
+                rounded-xl bg-primary flex items-center justify-center
                 shadow-lg shadow-primary/25
-              "
+                ${compact ? 'w-9 h-9' : 'w-12 h-12'}
+              `}
               title="Start workout"
               variants={buttonVariants}
               initial="initial"
@@ -206,7 +218,7 @@ export default function WorkoutCard({
               whileTap="tap"
             >
               <motion.svg
-                className="w-5 h-5 text-white ml-0.5"
+                className={`text-white ml-0.5 ${compact ? 'w-4 h-4' : 'w-5 h-5'}`}
                 fill="currentColor"
                 viewBox="0 0 24 24"
                 whileHover={{ scale: 1.2 }}
@@ -218,64 +230,68 @@ export default function WorkoutCard({
         </motion.div>
       </div>
 
-      {/* Tags Section */}
-      <motion.div
-        className="mt-4 space-y-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 + 0.25 }}
-      >
-        {/* Target Muscles */}
-        {workout.target_muscles && workout.target_muscles.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-text-muted text-xs font-medium">Targets</span>
-            {workout.target_muscles.slice(0, 4).map((muscle, idx) => (
-              <motion.span
-                key={idx}
-                className="px-2.5 py-1 bg-primary/15 text-primary text-xs rounded-lg capitalize font-medium"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 + 0.3 + idx * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                {muscle}
-              </motion.span>
-            ))}
-            {workout.target_muscles.length > 4 && (
-              <span className="text-xs text-text-muted font-medium">+{workout.target_muscles.length - 4}</span>
-            )}
-          </div>
-        )}
+      {/* Tags Section - hidden in compact mode */}
+      {!compact && (
+        <motion.div
+          className="mt-4 space-y-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 + 0.25 }}
+        >
+          {/* Target Muscles */}
+          {workout.target_muscles && workout.target_muscles.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-text-muted text-xs font-medium">Targets</span>
+              {workout.target_muscles.slice(0, 4).map((muscle, idx) => (
+                <motion.span
+                  key={idx}
+                  className="px-2.5 py-1 bg-primary/15 text-primary text-xs rounded-lg capitalize font-medium"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 + 0.3 + idx * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {muscle}
+                </motion.span>
+              ))}
+              {workout.target_muscles.length > 4 && (
+                <span className="text-xs text-text-muted font-medium">+{workout.target_muscles.length - 4}</span>
+              )}
+            </div>
+          )}
 
-        {/* Equipment */}
-        {workout.equipment && workout.equipment.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-text-muted text-xs font-medium">Equipment</span>
-            {workout.equipment.slice(0, 4).map((item, idx) => (
-              <motion.span
-                key={idx}
-                className="px-2.5 py-1 bg-accent/15 text-accent text-xs rounded-lg capitalize font-medium"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 + 0.35 + idx * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                {item}
-              </motion.span>
-            ))}
-            {workout.equipment.length > 4 && (
-              <span className="text-xs text-text-muted font-medium">+{workout.equipment.length - 4}</span>
-            )}
-          </div>
-        )}
-      </motion.div>
+          {/* Equipment */}
+          {workout.equipment && workout.equipment.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-text-muted text-xs font-medium">Equipment</span>
+              {workout.equipment.slice(0, 4).map((item, idx) => (
+                <motion.span
+                  key={idx}
+                  className="px-2.5 py-1 bg-accent/15 text-accent text-xs rounded-lg capitalize font-medium"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 + 0.35 + idx * 0.05 }}
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {item}
+                </motion.span>
+              ))}
+              {workout.equipment.length > 4 && (
+                <span className="text-xs text-text-muted font-medium">+{workout.equipment.length - 4}</span>
+              )}
+            </div>
+          )}
+        </motion.div>
+      )}
 
-      {/* Action Buttons - Visible on hover */}
+      {/* Action Buttons - Inline in compact mode, absolute overlay otherwise */}
       {!isDragging && !isPast && (
         <div className={`
-          absolute bottom-4 right-4 flex items-center gap-2
-          opacity-0 group-hover:opacity-100 transition-all duration-200
-          translate-y-1 group-hover:translate-y-0
+          flex items-center gap-2
+          ${compact
+            ? 'mt-2 justify-end'
+            : 'absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0'
+          }
         `}>
           {/* Settings */}
           {onSettings && !isCompleted && (

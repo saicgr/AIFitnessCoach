@@ -400,7 +400,6 @@ export default function Onboarding() {
 
       try {
         const today = new Date();
-        const todayDate = today.toISOString().split('T')[0];
 
         // Convert JS day (0=Sun) to our format (0=Mon)
         const todayJsDay = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat

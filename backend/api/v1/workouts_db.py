@@ -1255,6 +1255,56 @@ async def revert_workout(request: RevertWorkoutRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== AI SUMMARY ENDPOINT ====================
+
+@router.get("/{workout_id}/summary")
+async def get_workout_ai_summary(workout_id: str):
+    """Generate an AI summary/description of a workout explaining the intention and benefits."""
+    logger.info(f"Generating AI summary for workout {workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout
+        result = db.client.table("workouts").select("*").eq("id", workout_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        workout_data = result.data[0]
+
+        # Parse exercises
+        exercises = parse_json_field(workout_data.get("exercises_json"), [])
+        target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
+
+        # Get user info for goals and fitness level
+        user_id = workout_data.get("user_id")
+        user_result = db.client.table("users").select("goals, fitness_level").eq("id", user_id).execute()
+
+        user_goals = []
+        fitness_level = "intermediate"
+        if user_result.data:
+            user_goals = parse_json_field(user_result.data[0].get("goals"), [])
+            fitness_level = user_result.data[0].get("fitness_level", "intermediate")
+
+        # Generate the AI summary
+        openai_service = OpenAIService()
+        summary = await openai_service.generate_workout_summary(
+            workout_name=workout_data.get("name", "Workout"),
+            exercises=exercises,
+            target_muscles=target_muscles,
+            user_goals=user_goals,
+            fitness_level=fitness_level
+        )
+
+        return {"summary": summary}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate workout summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== WARMUP & STRETCHES ENDPOINTS ====================
 
 @router.get("/{workout_id}/warmup")

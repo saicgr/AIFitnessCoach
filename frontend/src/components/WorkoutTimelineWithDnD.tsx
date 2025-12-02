@@ -22,21 +22,26 @@ interface WorkoutTimelineProps {
   isLoading: boolean;
   onGenerateWorkout: () => void;
   isBackgroundGenerating?: boolean;
+  onSelectWorkout?: (workoutId: string) => void;
+  selectedWorkoutId?: string | null;
+  compact?: boolean; // For 4-panel layout when exercise is selected
 }
 
 interface DraggableWorkoutCardProps {
   workout: Workout;
   isToday: boolean;
   isPast: boolean;
+  isSelected?: boolean;
   onNavigate: (workoutId: string) => void;
   onDelete: (workoutId: string) => void;
   onStart: (workoutId: string) => void;
   onRegenerate: (workoutId: string) => void;
   onSettings: (workoutId: string) => void;
   isRegenerating?: boolean;
+  compact?: boolean;
 }
 
-function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete, onStart, onRegenerate, onSettings, isRegenerating }: DraggableWorkoutCardProps) {
+function DraggableWorkoutCard({ workout, isToday, isPast, isSelected, onNavigate, onDelete, onStart, onRegenerate, onSettings, isRegenerating, compact }: DraggableWorkoutCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: workout.id,
     data: { workout },
@@ -60,12 +65,14 @@ function DraggableWorkoutCard({ workout, isToday, isPast, onNavigate, onDelete, 
         isToday={isToday}
         isPast={isPast}
         isDragging={isDragging}
+        isSelected={isSelected}
         onClick={handleClick}
         onDelete={onDelete}
         onStart={onStart}
         onRegenerate={onRegenerate}
         onSettings={onSettings}
         isRegenerating={isRegenerating}
+        compact={compact}
       />
     </div>
   );
@@ -552,7 +559,7 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
   );
 }
 
-export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout, isBackgroundGenerating = false }: WorkoutTimelineProps) {
+export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout, isBackgroundGenerating = false, onSelectWorkout, selectedWorkoutId, compact = false }: WorkoutTimelineProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -668,9 +675,13 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
     },
   });
 
-  // Navigation handler
+  // Navigation handler - use onSelectWorkout if provided (for desktop split view)
   const handleNavigate = (workoutId: string) => {
-    navigate(`/workout/${workoutId}`);
+    if (onSelectWorkout) {
+      onSelectWorkout(workoutId);
+    } else {
+      navigate(`/workout/${workoutId}`);
+    }
   };
 
   // Start workout handler
@@ -854,12 +865,14 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                       workout={workout}
                       isToday={isToday}
                       isPast={isPast}
+                      isSelected={selectedWorkoutId === workout.id}
                       onNavigate={handleNavigate}
                       onDelete={handleDeleteRequest}
                       onStart={handleStart}
                       onRegenerate={handleRegenerateRequest}
                       onSettings={handleSettingsRequest}
                       isRegenerating={regeneratingWorkoutId === workout.id}
+                      compact={compact}
                     />
                   ) : (
                     <RestDayBadge
@@ -867,6 +880,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                       isPast={isPast}
                       onAddWorkout={onGenerateWorkout}
                       isGenerating={isBackgroundGenerating}
+                      compact={compact}
                     />
                   )}
                 </DroppableDayWrapper>

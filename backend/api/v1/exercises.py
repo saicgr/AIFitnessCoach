@@ -238,3 +238,42 @@ async def get_rag_stats():
     except Exception as e:
         logger.error(f"Error getting RAG stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/library/by-name/{name}")
+async def get_exercise_from_library_by_name(name: str):
+    """
+    Get full exercise details from exercise_library by name (case-insensitive fuzzy match).
+
+    This is useful for fetching full instructions for exercises that may have
+    been stored with truncated notes.
+    """
+    try:
+        db = get_supabase_db()
+
+        # First try exact match (case-insensitive)
+        result = db.client.table("exercise_library").select("*").ilike("name", name).limit(1).execute()
+
+        if not result.data:
+            # Try fuzzy match - search for name containing the search term
+            result = db.client.table("exercise_library").select("*").ilike("name", f"%{name}%").limit(1).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Exercise not found in library")
+
+        exercise = result.data[0]
+
+        return {
+            "id": exercise.get("id"),
+            "name": exercise.get("name"),
+            "instructions": exercise.get("instructions"),
+            "muscle_group": exercise.get("muscle_group"),
+            "equipment": exercise.get("equipment"),
+            "video_url": exercise.get("video_url"),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting exercise from library: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

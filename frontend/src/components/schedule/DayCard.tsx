@@ -105,9 +105,10 @@ interface RestDayBadgeProps {
   isPast: boolean;
   onAddWorkout: () => void;
   isGenerating?: boolean;
+  compact?: boolean;
 }
 
-export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = false }: RestDayBadgeProps) {
+export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = false, compact = false }: RestDayBadgeProps) {
   // Show generating placeholder
   if (isGenerating && !isPast) {
     return (
@@ -143,7 +144,8 @@ export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = fal
   return (
     <motion.div
       className={`
-        group/rest p-4 lg:p-5 rounded-2xl border-2 border-dashed transition-colors duration-200
+        group/rest rounded-2xl border-2 border-dashed transition-colors duration-200
+        ${compact ? 'p-3' : 'p-4 lg:p-5'}
         ${isToday
           ? 'border-primary/30 bg-primary/5 hover:border-primary/50'
           : isPast
@@ -157,18 +159,19 @@ export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = fal
       whileHover={!isPast ? { scale: 1.01, y: -2 } : {}}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <motion.div
             className={`
-              w-10 h-10 rounded-xl flex items-center justify-center
+              flex-shrink-0 rounded-xl flex items-center justify-center
+              ${compact ? 'w-8 h-8' : 'w-10 h-10'}
               ${isToday ? 'bg-primary/20' : 'bg-white/5'}
             `}
             whileHover={{ scale: 1.1, rotate: 5 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           >
             <svg
-              className={`w-5 h-5 ${isToday ? 'text-primary' : 'text-text-muted'}`}
+              className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} ${isToday ? 'text-primary' : 'text-text-muted'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -176,29 +179,26 @@ export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = fal
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </motion.div>
-          <div>
-            <span className={`
-              font-medium
-              ${isToday ? 'text-primary' : isPast ? 'text-text-muted' : 'text-text-secondary'}
-            `}>
-              Rest Day
-            </span>
-            {!isPast && (
-              <p className="text-xs text-text-muted mt-0.5">Recovery time</p>
-            )}
-          </div>
+          <span className={`
+            font-medium whitespace-nowrap
+            ${compact ? 'text-sm' : ''}
+            ${isToday ? 'text-primary' : isPast ? 'text-text-muted' : 'text-text-secondary'}
+          `}>
+            Rest Day
+          </span>
         </div>
 
-        {/* Add workout button with animation */}
+        {/* Add workout button with animation - icon only in compact mode */}
         {!isPast && (
           <motion.button
             onClick={onAddWorkout}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+              flex-shrink-0 flex items-center justify-center rounded-xl text-sm font-medium
               transition-colors duration-200
+              ${compact ? 'w-8 h-8' : 'gap-2 px-4 py-2'}
               ${isToday
                 ? 'bg-primary/20 text-primary hover:bg-primary/30'
-                : 'bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text opacity-0 group-hover/rest:opacity-100'
+                : 'bg-white/5 text-text-secondary hover:bg-white/10 hover:text-text'
               }
             `}
             variants={buttonVariants}
@@ -216,7 +216,7 @@ export function RestDayBadge({ isToday, isPast, onAddWorkout, isGenerating = fal
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </motion.svg>
-            <span className="hidden sm:inline">Add</span>
+            {!compact && <span className="hidden sm:inline">Add</span>}
           </motion.button>
         )}
       </div>

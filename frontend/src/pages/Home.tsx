@@ -1,15 +1,35 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
 import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts } from '../api/client';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
 import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
+import WorkoutDetailPanel from '../components/WorkoutDetailPanel';
+import ExerciseVideoPanel from '../components/ExerciseVideoPanel';
+import ExerciseInstructionsPanel from '../components/ExerciseInstructionsPanel';
 import { DashboardLayout } from '../components/layout';
 import { GlassCard, GlassButton } from '../components/ui';
 import { createLogger } from '../utils/logger';
-import type { Workout } from '../types';
+import type { Workout, WorkoutExercise } from '../types';
+
+// Hook to detect desktop breakpoint (lg: 1024px)
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
+  return isDesktop;
+}
 import {
   toolbarVariants,
   toolbarItemVariants,
@@ -133,6 +153,31 @@ export default function Home() {
 
   // Background generation state (set when arriving from onboarding)
   const [isBackgroundGenerating, setIsBackgroundGenerating] = useState(false);
+
+  // Desktop split-view state
+  const isDesktop = useIsDesktop();
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<WorkoutExercise | null>(null);
+
+  // Handler for selecting a workout on desktop
+  const handleSelectWorkout = (workoutId: string) => {
+    if (isDesktop) {
+      setSelectedWorkoutId(workoutId);
+    } else {
+      navigate(`/workout/${workoutId}`);
+    }
+  };
+
+  // Close the detail panel
+  const handleCloseDetailPanel = () => {
+    setSelectedWorkoutId(null);
+    setSelectedExercise(null);
+  };
+
+  // Close the exercise video panel
+  const handleCloseExercisePanel = () => {
+    setSelectedExercise(null);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -449,7 +494,7 @@ export default function Home() {
           </div>
         </motion.header>
 
-        <main className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
+        <main className={`relative z-10 px-6 lg:px-8 py-8 space-y-8 ${isDesktop && selectedExercise ? '' : 'max-w-6xl mx-auto'}`}>
           {/* Quick Stats - Mobile Only */}
           <motion.section
             className="lg:hidden"
@@ -532,20 +577,121 @@ export default function Home() {
               </GlassButton>
             </div>
 
-            {/* Timeline Card Container */}
-            <motion.div
-              className="rounded-2xl bg-white/5 border border-white/10 p-6 lg:p-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.3 }}
-            >
-              <WorkoutTimeline
-                workouts={workouts}
-                isLoading={isLoading}
-                onGenerateWorkout={handleOpenGenerateModal}
-                isBackgroundGenerating={isBackgroundGenerating}
-              />
-            </motion.div>
+            {/* Split Layout for Desktop / Single Column for Mobile */}
+            <div className={`flex gap-4 ${isDesktop && selectedWorkoutId ? 'flex-row' : 'flex-col'}`}>
+              {/* Timeline Card Container */}
+              <div
+                className={`rounded-2xl bg-white/5 border border-white/10 p-4 lg:p-6 transition-[width,max-width,flex] duration-200 ease-out ${
+                  isDesktop && selectedWorkoutId
+                    ? selectedExercise
+                      ? 'w-[340px] flex-shrink-0'
+                      : 'flex-1 max-w-[450px]'
+                    : 'w-full'
+                }`}
+              >
+                <WorkoutTimeline
+                  workouts={workouts}
+                  isLoading={isLoading}
+                  onGenerateWorkout={handleOpenGenerateModal}
+                  isBackgroundGenerating={isBackgroundGenerating}
+                  onSelectWorkout={isDesktop ? handleSelectWorkout : undefined}
+                  selectedWorkoutId={selectedWorkoutId}
+                  compact={!!selectedExercise}
+                />
+              </div>
+
+              {/* Detail Panel - Desktop only, slides in from right */}
+              <AnimatePresence mode="popLayout">
+                {isDesktop && selectedWorkoutId && (
+                  <motion.div
+                    key="detail-panel"
+                    className={`rounded-2xl bg-white/5 border border-white/10 overflow-hidden self-start transition-[max-width,min-width] duration-200 ease-out ${
+                      selectedExercise
+                        ? 'flex-1 min-w-[340px] max-w-[480px]'
+                        : 'flex-1 max-w-[600px]'
+                    }`}
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30 }}
+                    transition={{
+                      duration: 0.15,
+                      ease: 'easeOut',
+                    }}
+                    style={{
+                      height: 'calc(100vh - 32px)',
+                      minHeight: '700px',
+                      maxHeight: 'none',
+                      position: 'sticky',
+                      top: '16px',
+                    }}
+                  >
+                    <div className="p-4 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                      <WorkoutDetailPanel
+                        workoutId={selectedWorkoutId}
+                        onClose={handleCloseDetailPanel}
+                        onSelectExercise={setSelectedExercise}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Exercise Video Panel - Third panel, slides in from right */}
+              <AnimatePresence mode="popLayout">
+                {isDesktop && selectedExercise && (
+                  <motion.div
+                    key="video-panel"
+                    className="w-[320px] flex-shrink-0 rounded-2xl bg-white/5 border border-white/10 overflow-hidden self-start"
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30 }}
+                    transition={{
+                      duration: 0.15,
+                      ease: 'easeOut',
+                    }}
+                    style={{
+                      height: 'calc(100vh - 32px)',
+                      minHeight: '700px',
+                      maxHeight: 'none',
+                      position: 'sticky',
+                      top: '16px',
+                    }}
+                  >
+                    <ExerciseVideoPanel
+                      exercise={selectedExercise}
+                      onClose={handleCloseExercisePanel}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Exercise Instructions Panel - Fourth panel, slides in from right */}
+              <AnimatePresence mode="popLayout">
+                {isDesktop && selectedExercise && (
+                  <motion.div
+                    key="instructions-panel"
+                    className="w-[300px] flex-shrink-0 rounded-2xl bg-white/5 border border-white/10 overflow-hidden self-start"
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30 }}
+                    transition={{
+                      duration: 0.15,
+                      ease: 'easeOut',
+                      delay: 0.02,
+                    }}
+                    style={{
+                      height: 'calc(100vh - 32px)',
+                      minHeight: '700px',
+                      maxHeight: 'none',
+                      position: 'sticky',
+                      top: '16px',
+                    }}
+                  >
+                    <ExerciseInstructionsPanel exercise={selectedExercise} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.section>
         </main>
 

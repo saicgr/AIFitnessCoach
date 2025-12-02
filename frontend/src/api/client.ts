@@ -299,6 +299,25 @@ export interface StretchResponse {
 }
 
 /**
+ * Response type for AI workout summary
+ */
+export interface WorkoutSummaryResponse {
+  summary: string;
+}
+
+/**
+ * Get AI-generated summary/description for a workout
+ */
+export const getWorkoutAISummary = async (workoutId: string): Promise<string | null> => {
+  try {
+    const { data } = await api.get<WorkoutSummaryResponse>(`/workouts-db/${workoutId}/summary`);
+    return data.summary;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Get warmup exercises for a workout
  */
 export const getWorkoutWarmup = async (workoutId: string): Promise<WarmupResponse | null> => {
@@ -396,6 +415,25 @@ export const searchExercises = async (
   if (equipment) equipment.forEach((e) => params.append('equipment', e));
   const { data } = await api.get(`/exercises/search?${params.toString()}`);
   return data;
+};
+
+// Exercise Library - Get full exercise details by name
+export interface ExerciseLibraryDetails {
+  id: number;
+  name: string;
+  instructions: string | null;
+  muscle_group: string | null;
+  equipment: string | null;
+  video_url: string | null;
+}
+
+export const getExerciseFromLibraryByName = async (name: string): Promise<ExerciseLibraryDetails | null> => {
+  try {
+    const { data } = await api.get<ExerciseLibraryDetails>(`/exercises/library/by-name/${encodeURIComponent(name)}`);
+    return data;
+  } catch {
+    return null;
+  }
 };
 
 // Chat

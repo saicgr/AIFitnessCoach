@@ -21,6 +21,47 @@ settings = get_settings()
 logger = get_logger(__name__)
 
 
+def _infer_equipment_from_name(exercise_name: str) -> str:
+    """
+    Infer equipment type from exercise name when equipment data is missing.
+
+    Examples:
+    - "cable machine low to high" -> "Cable Machine"
+    - "barbell bench press" -> "Barbell"
+    - "dumbbell curl" -> "Dumbbells"
+    """
+    if not exercise_name:
+        return "Bodyweight"
+
+    name_lower = exercise_name.lower()
+
+    # Equipment inference rules (order matters - more specific first)
+    equipment_patterns = [
+        (["cable machine", "cable"], "Cable Machine"),
+        (["barbell", "bar bell"], "Barbell"),
+        (["dumbbell", "dumb bell", "db "], "Dumbbells"),
+        (["kettlebell", "kettle bell", "kb "], "Kettlebell"),
+        (["ez bar", "ez-bar"], "EZ Bar"),
+        (["smith machine", "smith"], "Smith Machine"),
+        (["resistance band", "band "], "Resistance Bands"),
+        (["pull-up bar", "pullup bar", "chin-up bar", "chinup bar"], "Pull-up Bar"),
+        (["machine", "lat pulldown", "leg press", "leg curl", "leg extension", "chest press machine", "shoulder press machine"], "Machine"),
+        (["trx", "suspension"], "TRX"),
+        (["medicine ball", "med ball"], "Medicine Ball"),
+        (["stability ball", "swiss ball", "exercise ball"], "Stability Ball"),
+        (["rope ", " rope", "battle rope"], "Rope"),
+        (["bench ", " bench"], "Bench"),
+    ]
+
+    for patterns, equipment in equipment_patterns:
+        for pattern in patterns:
+            if pattern in name_lower:
+                return equipment
+
+    # If no equipment matched, default to Bodyweight
+    return "Bodyweight"
+
+
 class ExerciseRAGService:
     """
     RAG-based exercise selection service.
@@ -251,11 +292,18 @@ class ExerciseRAGService:
 
             seen_exercises.append(exercise_name)
 
+            # Get equipment - use inference if missing
+            raw_eq = meta.get("equipment", "")
+            if not raw_eq or raw_eq.lower() in ["bodyweight", "body weight", "none", ""]:
+                eq = _infer_equipment_from_name(exercise_name)
+            else:
+                eq = raw_eq
+
             candidates.append({
                 "id": meta.get("exercise_id", ""),
                 "name": exercise_name,
                 "body_part": meta.get("body_part", ""),
-                "equipment": meta.get("equipment", "bodyweight"),
+                "equipment": eq,
                 "target_muscle": meta.get("target_muscle", ""),
                 "difficulty": meta.get("difficulty", "intermediate"),
                 "gif_url": meta.get("gif_url", ""),
@@ -640,15 +688,24 @@ Select exactly {count} exercises that are SAFE for this user."""
         else:
             sets, reps, rest = 3, 12, 60
 
+        # Get equipment - if missing or "bodyweight", try to infer from exercise name
+        exercise_name = exercise.get("name", "Unknown")
+        raw_equipment = exercise.get("equipment", "")
+        if not raw_equipment or raw_equipment.lower() in ["bodyweight", "body weight", "none", ""]:
+            # Infer equipment from name
+            equipment = _infer_equipment_from_name(exercise_name)
+        else:
+            equipment = raw_equipment
+
         return {
-            "name": exercise.get("name", "Unknown"),
+            "name": exercise_name,
             "sets": sets,
             "reps": reps,
             "rest_seconds": rest,
-            "equipment": exercise.get("equipment", "bodyweight"),
+            "equipment": equipment,
             "muscle_group": exercise.get("target_muscle", exercise.get("body_part", "")),
             "body_part": exercise.get("body_part", ""),
-            "notes": exercise.get("instructions", "Focus on proper form")[:200],
+            "notes": exercise.get("instructions", "Focus on proper form"),
             "gif_url": exercise.get("gif_url", ""),
             "library_id": exercise.get("id", ""),
         }

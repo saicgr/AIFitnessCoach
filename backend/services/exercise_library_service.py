@@ -12,6 +12,7 @@ import random
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from services.exercise_rag_service import _infer_equipment_from_name
 
 logger = get_logger(__name__)
 
@@ -172,15 +173,23 @@ class ExerciseLibraryService:
             else:
                 sets, reps = 3, 12
 
+            # Get equipment - infer from name if missing
+            exercise_name = ex.get('exercise_name', 'Unknown Exercise')
+            raw_eq = ex.get('equipment', '')
+            if not raw_eq or raw_eq.lower() in ['bodyweight', 'body weight', 'none', '']:
+                equipment = _infer_equipment_from_name(exercise_name)
+            else:
+                equipment = raw_eq
+
             formatted_exercises.append({
-                'name': ex.get('exercise_name', 'Unknown Exercise'),
+                'name': exercise_name,
                 'sets': sets,
                 'reps': reps,
                 'rest_seconds': 60 if fitness_level != 'advanced' else 45,
-                'equipment': ex.get('equipment', 'bodyweight'),
+                'equipment': equipment,
                 'muscle_group': ex.get('target_muscle', ex.get('body_part', 'unknown')),
                 'body_part': ex.get('body_part', ''),
-                'notes': ex.get('instructions', '')[:200] if ex.get('instructions') else 'Focus on proper form',
+                'notes': ex.get('instructions', '') or 'Focus on proper form',
                 'gif_url': ex.get('gif_url', ''),
                 'library_id': ex.get('id', ''),
             })

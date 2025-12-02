@@ -533,6 +533,74 @@ Return ONLY a JSON object with:
                 "notes": "Focus on proper form and controlled movements."
             }
 
+    async def generate_workout_summary(
+        self,
+        workout_name: str,
+        exercises: List[Dict],
+        target_muscles: List[str],
+        user_goals: List[str],
+        fitness_level: str
+    ) -> str:
+        """
+        Generate an AI summary/description of a workout explaining the intention
+        and benefits of each exercise.
+
+        Args:
+            workout_name: Name of the workout
+            exercises: List of exercises with their details
+            target_muscles: Target muscle groups
+            user_goals: User's fitness goals
+            fitness_level: User's fitness level
+
+        Returns:
+            Markdown-formatted workout summary
+        """
+        # Format exercises for the prompt
+        exercise_details = "\n".join([
+            f"- {ex.get('name', 'Unknown')}: {ex.get('sets', 3)} sets x {ex.get('reps', 10)} reps, targets {ex.get('muscle_group', 'unknown')}"
+            for ex in exercises
+        ])
+
+        prompt = f"""Generate a motivating workout summary for "{workout_name}".
+
+WORKOUT DETAILS:
+{exercise_details}
+
+Target muscles: {', '.join(target_muscles) if target_muscles else 'Full body'}
+User goals: {', '.join(user_goals) if user_goals else 'General fitness'}
+Fitness level: {fitness_level}
+
+Create a summary with:
+1. **Today's Intention:** A 2-3 sentence overview of the workout's purpose and what the user will achieve
+2. For each exercise, a bullet point explaining:
+   - Why this exercise is included
+   - What specific benefits it provides for muscle growth/strength
+   - How it connects to the user's goals
+3. **Overall benefit:** A closing statement about how these exercises work together
+
+Format your response in clear, motivating language. Use bullet points with exercise names in **bold**.
+Keep it concise but informative - aim for 150-250 words total."""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert fitness coach providing educational and motivating workout explanations. Be concise, scientific, and encouraging."
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=600
+            )
+
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            print(f"Error generating workout summary: {e}")
+            return f"**{workout_name}**\n\nThis workout targets {', '.join(target_muscles) if target_muscles else 'multiple muscle groups'} with {len(exercises)} carefully selected exercises to help you reach your fitness goals."
+
     def get_coach_system_prompt(self, context: str = "") -> str:
         """
         Get the system prompt for the AI coach.

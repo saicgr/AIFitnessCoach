@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getWorkout, deleteWorkout, getWorkoutWarmup, getWorkoutStretches, createWorkoutWarmupAndStretches, type WarmupResponse, type StretchResponse } from '../api/client';
+import { getWorkout, deleteWorkout, getWorkoutWarmup, getWorkoutStretches, type WarmupResponse, type StretchResponse } from '../api/client';
 import { useAppStore } from '../store';
 import type { Workout } from '../types';
 import { GlassCard, GlassButton } from '../components/ui';
@@ -18,7 +18,6 @@ export default function WorkoutDetails() {
   const [warmup, setWarmup] = useState<WarmupResponse | null>(null);
   const [stretches, setStretches] = useState<StretchResponse | null>(null);
   const [loadingWarmupStretches, setLoadingWarmupStretches] = useState(false);
-  const [generatingWarmupStretches, setGeneratingWarmupStretches] = useState(false);
   const [warmupExpanded, setWarmupExpanded] = useState(false);
   const [stretchesExpanded, setStretchesExpanded] = useState(false);
 
@@ -34,30 +33,21 @@ export default function WorkoutDetails() {
     }
   }, [workout, setCurrentWorkout]);
 
-  // Fetch warmups and stretches when workout loads
+  // Fetch warmups and stretches when workout loads (they should already exist from backend)
   useEffect(() => {
     const fetchWarmupAndStretches = async () => {
       if (!id) return;
 
       setLoadingWarmupStretches(true);
       try {
-        // Try to fetch existing warmup and stretches
         const [warmupData, stretchData] = await Promise.all([
           getWorkoutWarmup(id),
           getWorkoutStretches(id)
         ]);
 
-        // If neither exists, generate them
-        if (!warmupData && !stretchData) {
-          setGeneratingWarmupStretches(true);
-          const generated = await createWorkoutWarmupAndStretches(id, 5, 5);
-          setWarmup(generated.warmup);
-          setStretches(generated.stretches);
-          setGeneratingWarmupStretches(false);
-        } else {
-          setWarmup(warmupData);
-          setStretches(stretchData);
-        }
+        // Set whatever data exists - don't generate on-demand
+        setWarmup(warmupData);
+        setStretches(stretchData);
       } catch (error) {
         console.error('Error fetching warmup/stretches:', error);
       } finally {
@@ -219,7 +209,7 @@ export default function WorkoutDetails() {
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-text">Warm-up</h2>
                 <p className="text-xs text-text-secondary">
-                  {loadingWarmupStretches || generatingWarmupStretches
+                  {loadingWarmupStretches
                     ? 'Loading...'
                     : warmup?.exercises_json?.length
                       ? `${warmup.exercises_json.length} exercises • ${warmup.duration_minutes} min`
@@ -239,11 +229,11 @@ export default function WorkoutDetails() {
 
           {warmupExpanded && (
             <div className="mt-5">
-              {(loadingWarmupStretches || generatingWarmupStretches) ? (
+              {loadingWarmupStretches ? (
                 <div className="flex items-center justify-center py-4">
                   <div className="flex items-center gap-3 text-text-secondary">
                     <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">{generatingWarmupStretches ? 'Generating warmup...' : 'Loading warmup...'}</span>
+                    <span className="text-sm">Loading warmup...</span>
                   </div>
                 </div>
               ) : warmup?.exercises_json?.length ? (
@@ -346,7 +336,7 @@ export default function WorkoutDetails() {
               <div className="text-left">
                 <h2 className="text-lg font-semibold text-text">Cool-down Stretches</h2>
                 <p className="text-xs text-text-secondary">
-                  {loadingWarmupStretches || generatingWarmupStretches
+                  {loadingWarmupStretches
                     ? 'Loading...'
                     : stretches?.exercises_json?.length
                       ? `${stretches.exercises_json.length} stretches • ${stretches.duration_minutes} min`
@@ -366,11 +356,11 @@ export default function WorkoutDetails() {
 
           {stretchesExpanded && (
             <div className="mt-5">
-              {(loadingWarmupStretches || generatingWarmupStretches) ? (
+              {loadingWarmupStretches ? (
                 <div className="flex items-center justify-center py-4">
                   <div className="flex items-center gap-3 text-text-secondary">
                     <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm">{generatingWarmupStretches ? 'Generating stretches...' : 'Loading stretches...'}</span>
+                    <span className="text-sm">Loading stretches...</span>
                   </div>
                 </div>
               ) : stretches?.exercises_json?.length ? (
