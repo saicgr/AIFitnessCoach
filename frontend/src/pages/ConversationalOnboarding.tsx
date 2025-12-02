@@ -25,6 +25,8 @@ import {
   updateUser,
   generateMonthlyWorkouts,
   generateRemainingWorkouts,
+  getWorkouts,
+  deleteWorkout,
 } from '../api/client';
 import MessageBubble from '../components/chat/MessageBubble';
 import QuickReplyButtons from '../components/chat/QuickReplyButtons';
@@ -318,7 +320,8 @@ const ConversationalOnboarding: FC = () => {
         };
 
         let selectedDayIndices: number[] = [];
-        const rawDays = (finalData.selectedDays || []) as (number | string)[];
+        // Support both camelCase (from DayPicker) and snake_case (from backend AI extraction)
+        const rawDays = (finalData.selectedDays || (finalData as any).selected_days || []) as (number | string)[];
 
         log.info('Raw selected_days from finalData:', rawDays);
 
@@ -346,6 +349,20 @@ const ConversationalOnboarding: FC = () => {
         const monthStartDate = today.toISOString().split('T')[0];
 
         log.info('Selected day indices:', selectedDayIndices);
+
+        // Delete any existing workouts from previous onboarding attempts
+        try {
+          const existingWorkouts = await getWorkouts(savedUser.id);
+          if (existingWorkouts.length > 0) {
+            log.info(`Deleting ${existingWorkouts.length} existing workouts from previous onboarding...`);
+            setWorkoutLoadingMessage('Cleaning up previous workouts...');
+            await Promise.all(existingWorkouts.map(w => deleteWorkout(w.id)));
+            log.info('Previous workouts deleted successfully');
+          }
+        } catch (cleanupErr) {
+          log.warn('Failed to cleanup old workouts (may not exist):', cleanupErr);
+          // Continue anyway - not critical if cleanup fails
+        }
 
         // Start progress animation during workout generation
         const progressInterval = setInterval(() => {
@@ -407,9 +424,9 @@ const ConversationalOnboarding: FC = () => {
       // Brief delay to show completion
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Success! Navigate to home
+      // Success! Navigate to home with state to indicate background generation
       setShowWorkoutLoading(false);
-      navigate('/');
+      navigate('/', { state: { fromOnboarding: true, isGeneratingInBackground: true } });
     } catch (err: any) {
       log.error('Failed to complete onboarding:', err);
       setShowWorkoutLoading(false);

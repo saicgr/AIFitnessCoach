@@ -2,13 +2,13 @@
  * OnboardingSelector Page
  *
  * Entry point for onboarding - lets users choose between:
- * 1. AI Chat Setup (Primary/Recommended)
+ * 1. Chat Setup (Primary/Recommended)
  * 2. Traditional Form (Fallback)
  *
  * Features:
- * - Glass-morphism cards
- * - Gradient animations
- * - Clear visual hierarchy (AI chat is primary)
+ * - Clean, premium aesthetic (Apple Fitness+ / Peloton style)
+ * - White/light surfaces
+ * - Clear visual hierarchy
  */
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,108 +17,107 @@ const OnboardingSelector: FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background-dark flex items-center justify-center p-4">
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full filter blur-3xl animate-blob"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-secondary/20 rounded-full filter blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-accent/20 rounded-full filter blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative max-w-2xl w-full">
+    <div className="min-h-screen bg-white flex items-center justify-center px-6 py-10">
+      <div className="w-full max-w-lg space-y-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-text mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Welcome!
+        <div className="text-center space-y-3">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+            BLive
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-lg text-gray-500 font-medium">
             Let's set up your personalized workout plan
           </p>
         </div>
 
         {/* Selection Cards */}
         <div className="space-y-4">
-          {/* AI Chat Option (Primary) */}
+          {/* Chat Setup Option (Primary) */}
           <button
             onClick={() => navigate('/onboarding/chat')}
             className="
-              w-full p-6 rounded-2xl border-2 text-left
-              bg-gradient-to-br from-primary/20 to-secondary/20
-              border-primary/50
-              hover:border-primary hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]
-              transition-all duration-300 group
-              transform hover:scale-[1.02]
+              w-full p-6 rounded-xl border-2 text-left
+              bg-gray-900 border-gray-900
+              hover:bg-gray-800
+              transition-all duration-200 group
             "
           >
             <div className="flex items-center gap-4 mb-3">
-              {/* AI Icon */}
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.5)] group-hover:shadow-[0_0_30px_rgba(6,182,212,0.7)] transition-all">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              {/* Chat Icon */}
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="font-bold text-text text-xl">AI Chat Setup</h2>
-                  <span className="bg-accent px-3 py-1 rounded-full text-xs font-bold text-white shadow-[0_0_10px_rgba(124,58,237,0.5)]">
-                    RECOMMENDED
+                  <h2 className="font-bold text-white text-lg">Chat Setup</h2>
+                  <span className="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-semibold text-white uppercase tracking-wide">
+                    Recommended
                   </span>
                 </div>
-                <p className="text-sm text-text-secondary">Just talk naturally, like chatting with a trainer</p>
+                <p className="text-sm text-gray-300">Natural conversation with your coach</p>
               </div>
 
               {/* Arrow */}
-              <svg className="w-6 h-6 text-primary group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-white/60 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
 
-            <p className="text-sm text-text leading-relaxed pl-[72px]">
-              Chat with an AI coach that understands natural language.
-              Answer questions your way - no forms, no dropdowns, just conversation.
-              <span className="text-primary font-medium ml-1">Takes ~2 minutes.</span>
+            <p className="text-sm text-gray-400 leading-relaxed pl-16">
+              Answer questions naturally - no forms, just conversation.
+              <span className="text-white/80 font-medium ml-1">Takes ~2 minutes.</span>
             </p>
           </button>
 
-          {/* Traditional Form Option (Fallback) */}
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              or
+            </span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Traditional Form Option (Secondary) */}
           <button
             onClick={() => navigate('/onboarding')}
             className="
-              w-full p-6 rounded-2xl border text-left
-              bg-white/5 border-white/10
-              hover:bg-white/10 hover:border-white/20
-              transition-all duration-300
+              w-full p-6 rounded-xl border text-left
+              bg-white border-gray-200
+              hover:bg-gray-50 hover:border-gray-300
+              transition-all duration-200 group
             "
           >
             <div className="flex items-center gap-4 mb-3">
               {/* Form Icon */}
-              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
-                <svg className="w-7 h-7 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
 
               <div className="flex-1">
-                <h2 className="font-bold text-text text-lg mb-1">Traditional Form</h2>
-                <p className="text-sm text-text-secondary">Classic step-by-step questionnaire</p>
+                <h2 className="font-bold text-gray-900 text-lg mb-1">Traditional Form</h2>
+                <p className="text-sm text-gray-500">Step-by-step questionnaire</p>
               </div>
 
               {/* Arrow */}
-              <svg className="w-6 h-6 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
 
-            <p className="text-sm text-text-secondary leading-relaxed pl-[72px]">
-              Prefer a traditional form? Fill out each section at your own pace with dropdowns and selections.
+            <p className="text-sm text-gray-500 leading-relaxed pl-16">
+              Prefer a classic form? Fill out each section with dropdowns and selections.
             </p>
           </button>
         </div>
 
         {/* Footer Note */}
-        <p className="text-center text-xs text-text-secondary mt-6 opacity-70">
-          Both options collect the same information - choose what feels right for you
+        <p className="text-center text-xs text-gray-400">
+          Both options collect the same information
         </p>
       </div>
     </div>

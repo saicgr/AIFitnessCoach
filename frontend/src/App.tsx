@@ -14,6 +14,7 @@ import DemoLogin from './pages/DemoLogin';
 import AuthCallback from './pages/AuthCallback';
 import Profile from './pages/Profile';
 import Metrics from './pages/Metrics';
+import Nutrition from './pages/Nutrition';
 
 function App() {
   const { user, setSession, setUser } = useAppStore();
@@ -82,6 +83,7 @@ function App() {
       <Route path="/settings" element={<Settings />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/metrics" element={<Metrics />} />
+      <Route path="/nutrition" element={<Nutrition />} />
     </Routes>
   );
 }

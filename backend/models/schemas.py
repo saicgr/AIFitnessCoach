@@ -398,3 +398,208 @@ class PerformanceAnalyticsResponse(BaseModel):
     total_workouts: int
     total_volume_kg: float
     avg_workout_duration_minutes: float
+
+
+# ============================================
+# Nutrition / Food Log Models
+# ============================================
+
+class FoodItem(BaseModel):
+    """Individual food item with nutrition data."""
+    name: str
+    amount: Optional[str] = None  # e.g., "150g", "1 cup"
+    calories: Optional[int] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
+
+
+class FoodLogCreate(BaseModel):
+    """Create a new food log."""
+    user_id: str  # UUID string
+    meal_type: str  # breakfast, lunch, dinner, snack
+    food_items: List[FoodItem]
+    total_calories: int
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: Optional[float] = None
+    health_score: Optional[int] = None  # 1-10
+    ai_feedback: Optional[str] = None
+
+
+class FoodLog(BaseModel):
+    """Food log response."""
+    id: str  # UUID string
+    user_id: str
+    meal_type: str
+    logged_at: datetime
+    food_items: List[FoodItem]
+    total_calories: int
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    fiber_g: Optional[float] = None
+    health_score: Optional[int] = None
+    ai_feedback: Optional[str] = None
+    created_at: datetime
+
+
+class DailyNutritionSummary(BaseModel):
+    """Daily nutrition summary."""
+    date: str
+    total_calories: int
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    total_fiber_g: float
+    meal_count: int
+    avg_health_score: Optional[float] = None
+
+
+class NutritionTargets(BaseModel):
+    """User's daily nutrition targets."""
+    daily_calorie_target: Optional[int] = None
+    daily_protein_target_g: Optional[float] = None
+    daily_carbs_target_g: Optional[float] = None
+    daily_fat_target_g: Optional[float] = None
+
+
+class UpdateNutritionTargetsRequest(BaseModel):
+    """Request to update user's nutrition targets."""
+    user_id: str  # UUID string
+    daily_calorie_target: Optional[int] = None
+    daily_protein_target_g: Optional[float] = None
+    daily_carbs_target_g: Optional[float] = None
+    daily_fat_target_g: Optional[float] = None
+
+
+# ============================================
+# Chat with Image Support Models
+# ============================================
+
+class ChatMessageRequest(BaseModel):
+    """Chat message request with optional image for food analysis."""
+    user_id: str  # UUID string
+    message: str
+    image_base64: Optional[str] = None  # Base64 encoded image (without data:image prefix)
+    conversation_history: Optional[List[dict]] = None  # Previous messages for context
+
+
+class ChatMessageResponse(BaseModel):
+    """Chat message response."""
+    response: str
+    intent: Optional[str] = None
+    tool_results: Optional[List[dict]] = None  # Results from any tools called
+    food_log_id: Optional[str] = None  # If a food was logged
+    nutrition_data: Optional[dict] = None  # Nutrition analysis results
+
+
+# ============================================
+# Warmup and Stretch Models (SCD2 Versioned)
+# ============================================
+
+class WarmupExercise(BaseModel):
+    """Individual warm-up exercise."""
+    name: str
+    sets: int = 1
+    reps: Optional[int] = None
+    duration_seconds: Optional[int] = None
+    rest_seconds: int = 10
+    equipment: str = "none"
+    muscle_group: str
+    notes: Optional[str] = None
+
+
+class WarmupCreate(BaseModel):
+    """Create a new warmup for a workout."""
+    workout_id: str  # UUID string
+    exercises_json: List[WarmupExercise]
+    duration_minutes: int = 5
+
+
+class Warmup(BaseModel):
+    """Warmup response with SCD2 versioning."""
+    id: str  # UUID string
+    workout_id: Optional[str] = None  # UUID string (nullable for historical)
+    exercises_json: List[WarmupExercise]
+    duration_minutes: int = 5
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    # SCD2 Versioning fields
+    version_number: int = 1
+    is_current: bool = True
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    parent_warmup_id: Optional[str] = None  # UUID of original warmup
+    superseded_by: Optional[str] = None  # UUID of newer version
+
+
+class WarmupVersionInfo(BaseModel):
+    """Summarized version info for warmup history display."""
+    id: str
+    version_number: int
+    is_current: bool
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    exercises_count: int = 0
+
+
+class StretchExercise(BaseModel):
+    """Individual stretch exercise."""
+    name: str
+    sets: int = 1
+    reps: int = 1
+    duration_seconds: int = 30
+    rest_seconds: int = 0
+    equipment: str = "none"
+    muscle_group: str
+    notes: Optional[str] = None
+
+
+class StretchCreate(BaseModel):
+    """Create a new stretch routine for a workout."""
+    workout_id: str  # UUID string
+    exercises_json: List[StretchExercise]
+    duration_minutes: int = 5
+
+
+class Stretch(BaseModel):
+    """Stretch response with SCD2 versioning."""
+    id: str  # UUID string
+    workout_id: Optional[str] = None  # UUID string (nullable for historical)
+    exercises_json: List[StretchExercise]
+    duration_minutes: int = 5
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    # SCD2 Versioning fields
+    version_number: int = 1
+    is_current: bool = True
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    parent_stretch_id: Optional[str] = None  # UUID of original stretch
+    superseded_by: Optional[str] = None  # UUID of newer version
+
+
+class StretchVersionInfo(BaseModel):
+    """Summarized version info for stretch history display."""
+    id: str
+    version_number: int
+    is_current: bool
+    valid_from: Optional[datetime] = None
+    valid_to: Optional[datetime] = None
+    exercises_count: int = 0
+
+
+class RegenerateWarmupRequest(BaseModel):
+    """Request to regenerate warmup with new settings while preserving history."""
+    warmup_id: str  # UUID of the warmup to regenerate
+    workout_id: str  # UUID of the workout
+    duration_minutes: Optional[int] = 5
+
+
+class RegenerateStretchRequest(BaseModel):
+    """Request to regenerate stretch with new settings while preserving history."""
+    stretch_id: str  # UUID of the stretch to regenerate
+    workout_id: str  # UUID of the workout
+    duration_minutes: Optional[int] = 5

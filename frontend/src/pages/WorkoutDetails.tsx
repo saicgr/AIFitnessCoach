@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getWorkout, deleteWorkout } from '../api/client';
+import { getWorkout, deleteWorkout, getWorkoutWarmup, getWorkoutStretches, createWorkoutWarmupAndStretches, type WarmupResponse, type StretchResponse } from '../api/client';
 import { useAppStore } from '../store';
 import type { Workout } from '../types';
 import { GlassCard, GlassButton } from '../components/ui';
@@ -14,6 +14,14 @@ export default function WorkoutDetails() {
   const { setCurrentWorkout, removeWorkout, setActiveWorkoutId } = useAppStore();
   const autoStartHandled = useRef(false);
 
+  // State for warmups and stretches
+  const [warmup, setWarmup] = useState<WarmupResponse | null>(null);
+  const [stretches, setStretches] = useState<StretchResponse | null>(null);
+  const [loadingWarmupStretches, setLoadingWarmupStretches] = useState(false);
+  const [generatingWarmupStretches, setGeneratingWarmupStretches] = useState(false);
+  const [warmupExpanded, setWarmupExpanded] = useState(false);
+  const [stretchesExpanded, setStretchesExpanded] = useState(false);
+
   const { data: workout, isLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
     queryFn: () => getWorkout(id!),
@@ -25,6 +33,42 @@ export default function WorkoutDetails() {
       setCurrentWorkout(workout);
     }
   }, [workout, setCurrentWorkout]);
+
+  // Fetch warmups and stretches when workout loads
+  useEffect(() => {
+    const fetchWarmupAndStretches = async () => {
+      if (!id) return;
+
+      setLoadingWarmupStretches(true);
+      try {
+        // Try to fetch existing warmup and stretches
+        const [warmupData, stretchData] = await Promise.all([
+          getWorkoutWarmup(id),
+          getWorkoutStretches(id)
+        ]);
+
+        // If neither exists, generate them
+        if (!warmupData && !stretchData) {
+          setGeneratingWarmupStretches(true);
+          const generated = await createWorkoutWarmupAndStretches(id, 5, 5);
+          setWarmup(generated.warmup);
+          setStretches(generated.stretches);
+          setGeneratingWarmupStretches(false);
+        } else {
+          setWarmup(warmupData);
+          setStretches(stretchData);
+        }
+      } catch (error) {
+        console.error('Error fetching warmup/stretches:', error);
+      } finally {
+        setLoadingWarmupStretches(false);
+      }
+    };
+
+    if (workout) {
+      fetchWarmupAndStretches();
+    }
+  }, [id, workout]);
 
   // Auto-start workout if ?start=true is in URL
   useEffect(() => {
@@ -159,6 +203,78 @@ export default function WorkoutDetails() {
           </div>
         )}
 
+        {/* Warmup Section */}
+        <GlassCard className="p-6">
+          <button
+            onClick={() => setWarmupExpanded(!warmupExpanded)}
+            className="w-full flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-500/20 rounded-xl text-orange-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h2 className="text-lg font-semibold text-text">Warm-up</h2>
+                <p className="text-xs text-text-secondary">
+                  {loadingWarmupStretches || generatingWarmupStretches
+                    ? 'Loading...'
+                    : warmup?.exercises_json?.length
+                      ? `${warmup.exercises_json.length} exercises • ${warmup.duration_minutes} min`
+                      : 'No warmup'}
+                </p>
+              </div>
+            </div>
+            <svg
+              className={`w-5 h-5 text-text-secondary transition-transform duration-200 ${warmupExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {warmupExpanded && (
+            <div className="mt-5">
+              {(loadingWarmupStretches || generatingWarmupStretches) ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center gap-3 text-text-secondary">
+                    <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">{generatingWarmupStretches ? 'Generating warmup...' : 'Loading warmup...'}</span>
+                  </div>
+                </div>
+              ) : warmup?.exercises_json?.length ? (
+                <div className="space-y-2">
+                  {warmup.exercises_json.map((exercise, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-orange-500/5 rounded-xl border border-orange-500/20"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 bg-orange-500/20 text-orange-400 rounded-lg flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="font-medium text-text text-sm">{exercise.name}</span>
+                        </div>
+                        <div className="flex gap-2 text-xs text-text-secondary">
+                          {exercise.duration_seconds && <span>{exercise.duration_seconds}s</span>}
+                          {exercise.reps && <span>{exercise.reps} reps</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-text-muted text-center py-2">No warmup exercises</p>
+              )}
+            </div>
+          )}
+        </GlassCard>
+
         {/* Exercises */}
         <GlassCard className="p-6">
           <div className="flex items-center gap-3 mb-5">
@@ -213,6 +329,77 @@ export default function WorkoutDetails() {
               </div>
             ))}
           </div>
+        </GlassCard>
+
+        {/* Stretches Section */}
+        <GlassCard className="p-6">
+          <button
+            onClick={() => setStretchesExpanded(!stretchesExpanded)}
+            className="w-full flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/20 rounded-xl text-green-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h2 className="text-lg font-semibold text-text">Cool-down Stretches</h2>
+                <p className="text-xs text-text-secondary">
+                  {loadingWarmupStretches || generatingWarmupStretches
+                    ? 'Loading...'
+                    : stretches?.exercises_json?.length
+                      ? `${stretches.exercises_json.length} stretches • ${stretches.duration_minutes} min`
+                      : 'No stretches'}
+                </p>
+              </div>
+            </div>
+            <svg
+              className={`w-5 h-5 text-text-secondary transition-transform duration-200 ${stretchesExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {stretchesExpanded && (
+            <div className="mt-5">
+              {(loadingWarmupStretches || generatingWarmupStretches) ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center gap-3 text-text-secondary">
+                    <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                    <span className="text-sm">{generatingWarmupStretches ? 'Generating stretches...' : 'Loading stretches...'}</span>
+                  </div>
+                </div>
+              ) : stretches?.exercises_json?.length ? (
+                <div className="space-y-2">
+                  {stretches.exercises_json.map((stretch, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-green-500/5 rounded-xl border border-green-500/20"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 bg-green-500/20 text-green-400 rounded-lg flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </span>
+                          <span className="font-medium text-text text-sm">{stretch.name}</span>
+                        </div>
+                        <div className="flex gap-2 text-xs text-text-secondary">
+                          {stretch.duration_seconds && <span>{stretch.duration_seconds}s</span>}
+                          {stretch.reps && <span>{stretch.reps} reps</span>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-text-muted text-center py-2">No stretches</p>
+              )}
+            </div>
+          )}
         </GlassCard>
 
         {/* Notes */}

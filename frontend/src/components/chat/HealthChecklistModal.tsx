@@ -25,6 +25,9 @@ const INJURY_OPTIONS = [
   'Wrist/elbow pain',
   'Neck pain',
   'Hip issues',
+  'Leg pain',
+  'Ankle issues',
+  'Other',
   'None',
 ];
 
@@ -36,6 +39,7 @@ const HEALTH_CONDITIONS = [
   'Arthritis',
   'Pregnancy',
   'Recent surgery',
+  'Other',
   'None',
 ];
 

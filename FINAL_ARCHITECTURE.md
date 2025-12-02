@@ -11,25 +11,25 @@ Auth & Data
 
 Backend (API layer)
 	•	FastAPI backend
-	•	Deployed on AWS Lambda behind API Gateway
+	•	Deployed on AWS Lambda behind API Gateway - needs done
 	•	Responsibilities:
-	•	Verify Supabase JWT
-	•	Read/write Supabase Postgres
-	•	Generate S3 pre-signed URLs for uploads
-	•	Call Chroma Cloud for vector search (RAG)
-	•	Call LLM provider (OpenAI / Anthropic etc.)
-	•	Build responses for AI fitness coach, program logic, etc.
+	•	Verify Supabase JWT DONE
+	•	Read/write Supabase Postgres DONE
+	•	Generate S3 pre-signed URLs for uploads DONE
+	•	Call Chroma Cloud for vector search (RAG) DONE
+	•	Call LLM provider (OpenAI / Anthropic etc.) DONE
+	•	Build responses for AI fitness coach, program logic, etc. DONE
 
 Storage & Media
-	•	Existing S3 bucket: arn:aws:s3:::ai-fitness-coach
-	•	Stores fitness videos (already uploaded)
-	•	Stores user-uploaded images for calorie/macro tracking
-	•	CloudFront (to be added):
+	•	Existing S3 bucket: arn:aws:s3:::ai-fitness-coach DONE
+	•	Stores fitness videos (already uploaded) DONE
+	•	Stores user-uploaded images for calorie/macro tracking DONE
+	<!-- •	CloudFront (to be added):
 	•	CDN in front of S3 for fast, cheaper video/image delivery
-	•	App uses CloudFront URLs for streaming content
+	•	App uses CloudFront URLs for streaming content -->
 
-Vector DB / RAG
-	•	Chroma Cloud as managed vector DB
+Vector DB / RAG DONE
+	•	Chroma Cloud as managed vector DB 
 	•	Stores embeddings for:
 	•	exercise descriptions
 	•	AI coaching snippets
@@ -38,7 +38,7 @@ Vector DB / RAG
 
 AI Models
 	•	External LLM provider:
-	•	OpenAI / Anthropic / etc. via HTTP APIs
+	•	OpenAI / Anthropic / etc. via HTTP APIs DONE
 	•	Used by Lambda backend (FastAPI handlers)
 
 Infra & Deployment

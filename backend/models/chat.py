@@ -18,6 +18,10 @@ class CoachIntent(str, Enum):
     REPORT_INJURY = "report_injury"
     DELETE_WORKOUT = "delete_workout"
     QUESTION = "question"
+    # Nutrition-related intents
+    ANALYZE_FOOD = "analyze_food"
+    NUTRITION_SUMMARY = "nutrition_summary"
+    RECENT_MEALS = "recent_meals"
 
 
 class UserProfile(BaseModel):
@@ -60,7 +64,8 @@ class ChatRequest(BaseModel):
             "user_profile": {...},
             "current_workout": {...},
             "workout_schedule": {...},
-            "conversation_history": [...]
+            "conversation_history": [...],
+            "image_base64": null
         }
     """
     message: str = Field(..., min_length=1, description="User's message")
@@ -74,6 +79,10 @@ class ChatRequest(BaseModel):
     conversation_history: List[Dict[str, Any]] = Field(
         default=[],
         description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}]"
+    )
+    image_base64: Optional[str] = Field(
+        default=None,
+        description="Base64 encoded image for food analysis (without data:image prefix)"
     )
 
 

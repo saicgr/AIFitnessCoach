@@ -26,6 +26,7 @@ from services.openai_service import OpenAIService
 from services.rag_service import WorkoutRAGService
 from services.exercise_library_service import get_exercise_library_service
 from services.exercise_rag_service import get_exercise_rag_service
+from services.warmup_stretch_service import get_warmup_stretch_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -654,7 +655,13 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
 
+        # Get injuries and health conditions for workout safety
+        active_injuries = parse_json_field(user.get("active_injuries"), [])
+        health_conditions = preferences.get("health_conditions", [])
+
         logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}")
+        if active_injuries or health_conditions:
+            logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
 
         weeks = request.weeks or 12
         workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, weeks)
@@ -685,6 +692,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
             try:
                 # Use RAG to intelligently select exercises
+                # Pass injuries to filter out contraindicated exercises
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -692,6 +700,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
                     avoid_exercises=used_exercises[-30:],  # Avoid recent exercises for variety
+                    injuries=active_injuries if active_injuries else None,
                 )
 
                 if rag_exercises:
@@ -774,6 +783,30 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 await index_workout_to_rag(workout)
                 generated_workouts.append(workout)
 
+                # Generate warmup and stretches alongside workout (with injury awareness)
+                try:
+                    warmup_stretch_service = get_warmup_stretch_service()
+                    exercises = result["exercises"]
+
+                    # Generate and save warmup (create_warmup_for_workout generates + saves)
+                    await warmup_stretch_service.create_warmup_for_workout(
+                        workout_id=workout.id,
+                        exercises=exercises,
+                        duration_minutes=5,
+                        injuries=active_injuries if active_injuries else None
+                    )
+
+                    # Generate and save stretches (create_stretches_for_workout generates + saves)
+                    await warmup_stretch_service.create_stretches_for_workout(
+                        workout_id=workout.id,
+                        exercises=exercises,
+                        duration_minutes=5,
+                        injuries=active_injuries if active_injuries else None
+                    )
+                    logger.info(f"✅ Generated warmup and stretches for workout {workout.id}")
+                except Exception as ws_error:
+                    logger.warning(f"⚠️ Failed to generate warmup/stretches for workout {workout.id}: {ws_error}")
+
         return GenerateMonthlyResponse(workouts=generated_workouts, total_generated=len(generated_workouts))
 
     except HTTPException:
@@ -802,6 +835,15 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+
+        # Extract active injuries for safety filtering
+        injuries_data = parse_json_field(user.get("injuries"), [])
+        active_injuries = [
+            inj.get("type", "") for inj in injuries_data
+            if inj.get("status") == "active" and inj.get("type")
+        ]
+        if active_injuries:
+            logger.info(f"🩹 User has active injuries for remaining workouts: {active_injuries}")
 
         all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days)
 
@@ -844,7 +886,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             focus = workout_focus_map.get(weekday, "full_body")
 
             try:
-                # Use RAG to intelligently select exercises
+                # Use RAG to intelligently select exercises (with injury awareness)
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -852,6 +894,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
                     avoid_exercises=used_exercises[-30:],
+                    injuries=active_injuries if active_injuries else None,
                 )
 
                 if rag_exercises:
@@ -925,6 +968,31 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 created = db.create_workout(workout_db_data)
                 workout = row_to_workout(created)
                 await index_workout_to_rag(workout)
+
+                # Generate warmup and stretches alongside workout (with injury awareness)
+                try:
+                    warmup_stretch_service = get_warmup_stretch_service()
+                    exercises = result["exercises"]
+
+                    # Generate and save warmup (create_warmup_for_workout generates + saves)
+                    await warmup_stretch_service.create_warmup_for_workout(
+                        workout_id=workout.id,
+                        exercises=exercises,
+                        duration_minutes=5,
+                        injuries=active_injuries if active_injuries else None
+                    )
+
+                    # Generate and save stretches (create_stretches_for_workout generates + saves)
+                    await warmup_stretch_service.create_stretches_for_workout(
+                        workout_id=workout.id,
+                        exercises=exercises,
+                        duration_minutes=5,
+                        injuries=active_injuries if active_injuries else None
+                    )
+                    logger.info(f"✅ Generated warmup and stretches for remaining workout {workout.id}")
+                except Exception as ws_error:
+                    logger.warning(f"⚠️ Failed to generate warmup/stretches for remaining workout {workout.id}: {ws_error}")
+
                 generated_workouts.append(workout)
 
         return GenerateMonthlyResponse(workouts=generated_workouts, total_generated=len(generated_workouts))
@@ -1184,4 +1252,136 @@ async def revert_workout(request: RevertWorkoutRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to revert workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== WARMUP & STRETCHES ENDPOINTS ====================
+
+@router.get("/{workout_id}/warmup")
+async def get_workout_warmup(workout_id: str):
+    """Get warmup exercises for a workout."""
+    logger.info(f"Getting warmup for workout {workout_id}")
+    try:
+        service = get_warmup_stretch_service()
+        warmup = service.get_warmup_for_workout(workout_id)
+
+        if not warmup:
+            raise HTTPException(status_code=404, detail="Warmup not found for this workout")
+
+        return warmup
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get warmup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{workout_id}/stretches")
+async def get_workout_stretches(workout_id: str):
+    """Get cool-down stretches for a workout."""
+    logger.info(f"Getting stretches for workout {workout_id}")
+    try:
+        service = get_warmup_stretch_service()
+        stretches = service.get_stretches_for_workout(workout_id)
+
+        if not stretches:
+            raise HTTPException(status_code=404, detail="Stretches not found for this workout")
+
+        return stretches
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get stretches: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{workout_id}/warmup")
+async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
+    """Generate and create warmup exercises for an existing workout."""
+    logger.info(f"Creating warmup for workout {workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout to extract exercises
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+
+        service = get_warmup_stretch_service()
+        warmup = await service.create_warmup_for_workout(workout_id, exercises, duration_minutes)
+
+        if not warmup:
+            raise HTTPException(status_code=500, detail="Failed to create warmup")
+
+        return warmup
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create warmup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{workout_id}/stretches")
+async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
+    """Generate and create cool-down stretches for an existing workout."""
+    logger.info(f"Creating stretches for workout {workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout to extract exercises
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+
+        service = get_warmup_stretch_service()
+        stretches = await service.create_stretches_for_workout(workout_id, exercises, duration_minutes)
+
+        if not stretches:
+            raise HTTPException(status_code=500, detail="Failed to create stretches")
+
+        return stretches
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create stretches: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{workout_id}/warmup-and-stretches")
+async def create_workout_warmup_and_stretches(
+    workout_id: str,
+    warmup_duration: int = 5,
+    stretch_duration: int = 5
+):
+    """Generate and create both warmup and stretches for an existing workout."""
+    logger.info(f"Creating warmup and stretches for workout {workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout to extract exercises
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+
+        service = get_warmup_stretch_service()
+        result = await service.generate_warmup_and_stretches_for_workout(
+            workout_id, exercises, warmup_duration, stretch_duration
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create warmup and stretches: {e}")
         raise HTTPException(status_code=500, detail=str(e))

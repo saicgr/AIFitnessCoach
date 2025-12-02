@@ -41,3 +41,4 @@ class OnboardingState(TypedDict):
     component: Optional[str]  # 'day_picker', 'health_checklist', etc.
     quick_replies: Optional[List[Dict[str, Any]]]  # Quick reply buttons
     multi_select: bool  # Whether quick replies support multi-select
+

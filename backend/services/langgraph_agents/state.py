@@ -20,6 +20,7 @@ class FitnessCoachState(TypedDict):
     current_workout: Optional[Dict[str, Any]]
     workout_schedule: Optional[Dict[str, Any]]  # yesterday, today, tomorrow, thisWeek, recentCompleted
     conversation_history: List[Dict[str, str]]
+    image_base64: Optional[str]  # Base64 encoded image for food analysis
 
     # Intent extraction results
     intent: Optional[CoachIntent]

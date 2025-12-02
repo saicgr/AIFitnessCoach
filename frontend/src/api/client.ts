@@ -267,6 +267,113 @@ export const revertWorkout = async (request: RevertWorkoutRequest): Promise<Work
   return parseWorkout(data);
 };
 
+// ============================================
+// Warmups & Stretches
+// ============================================
+
+export interface WarmupExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  duration_seconds: number;
+  rest_seconds: number;
+  equipment: string;
+  muscle_group: string;
+  notes?: string;
+}
+
+export interface WarmupResponse {
+  id: string;
+  workout_id: string;
+  exercises_json: WarmupExercise[];
+  duration_minutes: number;
+  created_at: string;
+}
+
+export interface StretchResponse {
+  id: string;
+  workout_id: string;
+  exercises_json: WarmupExercise[];
+  duration_minutes: number;
+  created_at: string;
+}
+
+/**
+ * Get warmup exercises for a workout
+ */
+export const getWorkoutWarmup = async (workoutId: string): Promise<WarmupResponse | null> => {
+  try {
+    const { data } = await api.get<WarmupResponse>(`/workouts-db/${workoutId}/warmup`);
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Get cool-down stretches for a workout
+ */
+export const getWorkoutStretches = async (workoutId: string): Promise<StretchResponse | null> => {
+  try {
+    const { data } = await api.get<StretchResponse>(`/workouts-db/${workoutId}/stretches`);
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Generate and create warmup for an existing workout
+ */
+export const createWorkoutWarmup = async (
+  workoutId: string,
+  durationMinutes: number = 5
+): Promise<WarmupResponse | null> => {
+  try {
+    const { data } = await api.post<WarmupResponse>(
+      `/workouts-db/${workoutId}/warmup?duration_minutes=${durationMinutes}`
+    );
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Generate and create stretches for an existing workout
+ */
+export const createWorkoutStretches = async (
+  workoutId: string,
+  durationMinutes: number = 5
+): Promise<StretchResponse | null> => {
+  try {
+    const { data } = await api.post<StretchResponse>(
+      `/workouts-db/${workoutId}/stretches?duration_minutes=${durationMinutes}`
+    );
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Generate and create both warmup and stretches for a workout
+ */
+export const createWorkoutWarmupAndStretches = async (
+  workoutId: string,
+  warmupDuration: number = 5,
+  stretchDuration: number = 5
+): Promise<{ warmup: WarmupResponse | null; stretches: StretchResponse | null }> => {
+  try {
+    const { data } = await api.post<{ warmup: WarmupResponse | null; stretches: StretchResponse | null }>(
+      `/workouts-db/${workoutId}/warmup-and-stretches?warmup_duration=${warmupDuration}&stretch_duration=${stretchDuration}`
+    );
+    return data;
+  } catch {
+    return { warmup: null, stretches: null };
+  }
+};
+
 // Exercises
 export const getExercises = async (): Promise<Exercise[]> => {
   const { data } = await api.get('/exercises/');
@@ -293,7 +400,13 @@ export const searchExercises = async (
 
 // Chat
 export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
-  const { data } = await api.post('/chat/send', request);
+  // Log if sending with image (truncate image for logging)
+  if (request.image_base64) {
+    log.info('Sending chat with image', { size_kb: Math.round(request.image_base64.length / 1024) });
+  }
+  const { data } = await api.post('/chat/send', request, {
+    timeout: 60000, // 60 second timeout for image processing
+  });
   return data;
 };
 
@@ -606,6 +719,130 @@ export const saveNotificationSettings = async (
     }),
   });
   return { success: true };
+};
+
+// ============================================
+// Nutrition Tracking
+// ============================================
+
+export interface FoodLogResponse {
+  id: string;
+  user_id: string;
+  meal_type: string;
+  logged_at: string;
+  food_items: Array<{
+    name: string;
+    amount?: string;
+    calories?: number;
+    protein_g?: number;
+    carbs_g?: number;
+    fat_g?: number;
+  }>;
+  total_calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g?: number;
+  health_score?: number;
+  ai_feedback?: string;
+  created_at: string;
+}
+
+export interface DailyNutritionResponse {
+  date: string;
+  total_calories: number;
+  total_protein_g: number;
+  total_carbs_g: number;
+  total_fat_g: number;
+  total_fiber_g: number;
+  meal_count: number;
+  avg_health_score?: number;
+  meals: FoodLogResponse[];
+}
+
+export interface WeeklyNutritionResponse {
+  start_date: string;
+  end_date: string;
+  daily_summaries: Array<{
+    date: string;
+    total_calories: number;
+    total_protein_g: number;
+    total_carbs_g: number;
+    total_fat_g: number;
+    meal_count: number;
+  }>;
+  total_calories: number;
+  average_daily_calories: number;
+  total_meals: number;
+}
+
+export interface NutritionTargetsResponse {
+  user_id: string;
+  daily_calorie_target?: number;
+  daily_protein_target_g?: number;
+  daily_carbs_target_g?: number;
+  daily_fat_target_g?: number;
+}
+
+export const getFoodLogs = async (
+  userId: string,
+  options?: {
+    limit?: number;
+    from_date?: string;
+    to_date?: string;
+    meal_type?: string;
+  }
+): Promise<FoodLogResponse[]> => {
+  const params = new URLSearchParams();
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.from_date) params.append('from_date', options.from_date);
+  if (options?.to_date) params.append('to_date', options.to_date);
+  if (options?.meal_type) params.append('meal_type', options.meal_type);
+  const { data } = await api.get<FoodLogResponse[]>(`/nutrition/food-logs/${userId}?${params.toString()}`);
+  return data;
+};
+
+export const getDailyNutritionSummary = async (
+  userId: string,
+  date?: string
+): Promise<DailyNutritionResponse> => {
+  const params = date ? `?date=${date}` : '';
+  const { data } = await api.get<DailyNutritionResponse>(`/nutrition/summary/daily/${userId}${params}`);
+  return data;
+};
+
+export const getWeeklyNutritionSummary = async (
+  userId: string,
+  startDate?: string
+): Promise<WeeklyNutritionResponse> => {
+  const params = startDate ? `?start_date=${startDate}` : '';
+  const { data } = await api.get<WeeklyNutritionResponse>(`/nutrition/summary/weekly/${userId}${params}`);
+  return data;
+};
+
+export const getNutritionTargets = async (userId: string): Promise<NutritionTargetsResponse> => {
+  const { data } = await api.get<NutritionTargetsResponse>(`/nutrition/targets/${userId}`);
+  return data;
+};
+
+export const updateNutritionTargets = async (
+  userId: string,
+  targets: {
+    daily_calorie_target?: number;
+    daily_protein_target_g?: number;
+    daily_carbs_target_g?: number;
+    daily_fat_target_g?: number;
+  }
+): Promise<NutritionTargetsResponse> => {
+  const { data } = await api.put<NutritionTargetsResponse>(`/nutrition/targets/${userId}`, {
+    user_id: userId,
+    ...targets,
+  });
+  return data;
+};
+
+export const deleteFoodLog = async (logId: string): Promise<void> => {
+  await api.delete(`/nutrition/food-logs/${logId}`);
 };
 
 export default api;

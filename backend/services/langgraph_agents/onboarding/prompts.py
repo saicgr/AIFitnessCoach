@@ -111,24 +111,73 @@ EXTRACTION RULES:
 3. Be smart about inference for TEXT responses:
    - "bench press" → goals: Build Muscle and Increase Strength, equipment: Barbell
    - "home workouts" → equipment: Bodyweight Only
-   - "Monday, Wednesday, Friday" → selected_days: 0, 2, 4
+   - "Monday, Wednesday, Friday" → selected_days: [0, 2, 4]
    - "5'10" or "5 feet 10 inches" → heightCm: 177.8
    - "150 lbs" → weightKg: 68.0
    - "beginner" → fitness_level: "beginner"
 
-4. Convert units to metric:
+4. IMPORTANT - Recognize training programs and body composition goals. Include BOTH the program name AND related base goals:
+
+   Competition/Event Training:
+   - "HYROX" or "hyrox training" → goals: ["HYROX", "Improve Endurance", "Increase Strength"]
+   - "CrossFit" → goals: ["CrossFit", "Improve Endurance", "Increase Strength", "General Fitness"]
+   - "powerlifting" → goals: ["Powerlifting", "Increase Strength"]
+   - "bodybuilding" → goals: ["Bodybuilding", "Build Muscle"]
+   - "marathon" or "running" or "long distance" → goals: ["Marathon", "Improve Endurance"]
+   - "triathlon" → goals: ["Triathlon", "Improve Endurance"]
+   - "obstacle course" or "spartan" or "tough mudder" → goals: ["Obstacle Course", "Improve Endurance", "Increase Strength"]
+
+   Combat Sports:
+   - "boxing" or "boxer" → goals: ["Boxing", "Improve Endurance", "Increase Strength"]
+   - "mma" or "mixed martial arts" or "ufc" → goals: ["MMA", "Improve Endurance", "Increase Strength"]
+   - "kickboxing" → goals: ["Kickboxing", "Improve Endurance", "Increase Strength"]
+   - "wrestling" → goals: ["Wrestling", "Increase Strength", "Improve Endurance"]
+   - "muay thai" → goals: ["Muay Thai", "Improve Endurance", "Increase Strength"]
+
+   Team Sports:
+   - "football" or "footballer" or "american football" → goals: ["Football", "Increase Strength", "Improve Endurance"]
+   - "soccer" → goals: ["Soccer", "Improve Endurance"]
+   - "basketball" → goals: ["Basketball", "Improve Endurance", "Increase Strength"]
+   - "rugby" → goals: ["Rugby", "Increase Strength", "Improve Endurance"]
+   - "tennis" → goals: ["Tennis", "Improve Endurance"]
+   - "swimming" or "swimmer" → goals: ["Swimming", "Improve Endurance", "Build Muscle"]
+   - "cricket" → goals: ["Cricket", "Improve Endurance"]
+   - "volleyball" → goals: ["Volleyball", "Improve Endurance", "Increase Strength"]
+   - "golf" → goals: ["Golf", "General Fitness"]
+
+   Body Composition Goals:
+   - "skinny fat" → goals: ["Skinny Fat", "Build Muscle", "Lose Weight"]
+   - "lean bulk" or "bulk up" or "gain muscle" → goals: ["Lean Bulk", "Build Muscle"]
+   - "cut" or "cutting" or "shredded" → goals: ["Cut", "Lose Weight"]
+   - "recomp" or "recomposition" → goals: ["Recomp", "Build Muscle", "Lose Weight"]
+   - "tone" or "toning" or "toned" → goals: ["Toning", "Build Muscle", "Lose Weight"]
+
+   Specialized Training:
+   - "calisthenics" or "bodyweight only training" → goals: ["Calisthenics", "Build Muscle", "Increase Strength"]
+   - "strongman" → goals: ["Strongman", "Increase Strength"]
+   - "functional training" or "functional fitness" → goals: ["Functional Training", "General Fitness"]
+   - "hiit" or "high intensity" → goals: ["HIIT", "Lose Weight", "Improve Endurance"]
+   - "yoga" → goals: ["Yoga", "Flexibility", "General Fitness"]
+   - "pilates" → goals: ["Pilates", "General Fitness", "Flexibility"]
+
+   Basic Goals:
+   - "weight loss" or "lose fat" or "lose weight" → goals: ["Lose Weight"]
+   - "get fit" or "stay healthy" → goals: ["General Fitness"]
+   - "all of them" or "yes them all" → goals: ["Build Muscle", "Lose Weight", "Increase Strength", "Improve Endurance"]
+
+5. Convert units to metric:
    - Height: feet/inches → cm
    - Weight: lbs → kg
 
-5. Normalize values:
+6. Normalize values:
    - Goals: Use exact labels like "Build Muscle", "Lose Weight", "Increase Strength"
    - Equipment: Use standard labels like "Barbell", "Dumbbells", "Bodyweight Only"
    - Fitness level: "beginner", "intermediate", or "advanced"
    - Days: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
 
-6. For lists (goals, equipment), merge with existing data, don't replace
+7. For lists (goals, equipment), merge with existing data, don't replace
 
-7. If the user's message is just a greeting or doesn't contain extractable data, return empty dict {{}}
+8. If the user's message is just a greeting or doesn't contain extractable data, return empty dict {{}}
 
 Return JSON object with ONLY the new/updated fields.
 

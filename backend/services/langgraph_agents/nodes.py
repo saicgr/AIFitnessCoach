@@ -78,16 +78,36 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     """
     Determine if we should use tools or just respond.
 
-    If there's a workout, always go to agent and let the LLM with bound tools decide.
-    This is the proper LangGraph way - don't second-guess the LLM's intent.
+    Routes to agent (with tools) if:
+    - There's a workout context (for workout modifications)
+    - There's an image (for food analysis)
+    - The intent is nutrition-related
+
+    This is the proper LangGraph way - let the LLM with bound tools decide.
     """
     has_workout = state.get("current_workout") is not None
+    has_image = state.get("image_base64") is not None
+    intent = state.get("intent")
 
-    if has_workout:
+    # Check for nutrition-related intents
+    nutrition_intents = [
+        CoachIntent.ANALYZE_FOOD,
+        CoachIntent.NUTRITION_SUMMARY,
+        CoachIntent.RECENT_MEALS,
+    ]
+    is_nutrition_intent = intent in nutrition_intents
+
+    if has_image:
+        logger.info("[Router] Image present -> agent (food analysis)")
+        return "agent"
+    elif has_workout:
         logger.info("[Router] Workout present -> agent (let LLM with tools decide)")
         return "agent"
+    elif is_nutrition_intent:
+        logger.info(f"[Router] Nutrition intent ({intent}) -> agent (nutrition tools)")
+        return "agent"
     else:
-        logger.info("[Router] No workout -> respond (simple response)")
+        logger.info("[Router] No workout/image -> respond (simple response)")
         return "respond"
 
 
@@ -258,9 +278,26 @@ EXAMPLES:
 - "My knee is better now" → Use clear_injury(user_id={state['user_id']}, body_part="knee")
 - "How's my injury recovery going?" → Use get_active_injuries(user_id={state['user_id']})
 
+NUTRITION TRACKING TOOLS:
+- analyze_food_image(user_id="{state['user_id']}", image_base64="...", user_message="...") - Analyze food image to log calories and macros
+  * IMPORTANT: When user sends a food image, you MUST call this tool
+  * The image_base64 is provided in the HAS_IMAGE indicator below
+  * After analysis, provide encouragement and dietary feedback
+- get_nutrition_summary(user_id="{state['user_id']}", date="YYYY-MM-DD", period="day|week") - Get nutrition totals
+- get_recent_meals(user_id="{state['user_id']}", limit=5) - Get recent meal logs
+
+FOOD IMAGE HANDLING:
+{f'HAS_IMAGE: true - The user has sent a food image. Call analyze_food_image with the image_base64 provided.' if state.get('image_base64') else 'HAS_IMAGE: false - No image attached.'}
+{f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') else ''}
+
+NUTRITION EXAMPLES:
+- User sends food image → Use analyze_food_image(user_id="{state['user_id']}", image_base64="<the image>", user_message="<user's message>")
+- "What did I eat today?" → Use get_nutrition_summary(user_id="{state['user_id']}", period="day")
+- "Show my recent meals" → Use get_recent_meals(user_id="{state['user_id']}")
+
 You can call MULTIPLE tools in a single response if the user asks for multiple changes.
 
-Always be helpful, empathetic about injuries, and explain what you're doing, including which workout you're modifying.""")
+Always be helpful, empathetic about injuries, provide encouraging nutrition feedback, and explain what you're doing.""")
 
     # Include conversation history
     messages = [system_message]

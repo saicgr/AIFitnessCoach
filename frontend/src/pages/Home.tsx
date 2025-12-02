@@ -1,13 +1,13 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
-import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, generateRemainingWorkouts } from '../api/client';
+import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts } from '../api/client';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
 import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
 import { DashboardLayout } from '../components/layout';
-import { GlassCard, GlassButton, ProgressBar } from '../components/ui';
+import { GlassCard, GlassButton } from '../components/ui';
 import { createLogger } from '../utils/logger';
 import type { Workout } from '../types';
 import {
@@ -118,6 +118,7 @@ function StatCard({ value, label, icon, color, index = 0 }: { value: string | nu
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user, workouts, setWorkouts, onboardingData } = useAppStore();
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -130,13 +131,8 @@ export default function Home() {
   } | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
-  // Background generation state
+  // Background generation state (set when arriving from onboarding)
   const [isBackgroundGenerating, setIsBackgroundGenerating] = useState(false);
-  const [backgroundProgress, setBackgroundProgress] = useState<{
-    generated: number;
-    total: number;
-  } | null>(null);
-  const backgroundGenerationStarted = useRef(false);
 
   useEffect(() => {
     if (!user) {
@@ -144,67 +140,26 @@ export default function Home() {
     }
   }, [user, navigate]);
 
-  // Check for pending background generation on mount
+  // Handle navigation from onboarding - show background generation state
   useEffect(() => {
-    if (!user || backgroundGenerationStarted.current) return;
-
-    const pendingGeneration = localStorage.getItem('pendingWorkoutGeneration');
-    if (!pendingGeneration) return;
-
-    try {
-      const params = JSON.parse(pendingGeneration);
-      if (params.user_id !== user.id) return;
-
-      backgroundGenerationStarted.current = true;
-      log.info('Starting background workout generation', params);
-
-      localStorage.removeItem('pendingWorkoutGeneration');
-
+    const state = location.state as { fromOnboarding?: boolean; isGeneratingInBackground?: boolean } | null;
+    if (state?.fromOnboarding && state?.isGeneratingInBackground) {
+      log.info('Arrived from onboarding - workouts generating in background');
       setIsBackgroundGenerating(true);
-      const estimatedTotal = params.selected_days.length * 4;
-      setBackgroundProgress({ generated: 0, total: estimatedTotal });
 
-      const pollInterval = setInterval(async () => {
-        try {
-          const freshWorkouts = await getWorkouts(params.user_id);
-          setWorkouts(freshWorkouts);
-          const generatedCount = Math.max(0, freshWorkouts.length - 1);
-          setBackgroundProgress(prev => prev ? { ...prev, generated: generatedCount } : null);
-          log.debug(`Polled workouts: ${freshWorkouts.length} total`);
-        } catch (e) {
-          log.error('Polling failed', e);
-        }
-      }, 3000);
+      // Clear the navigation state to prevent re-triggering on refresh
+      navigate('/', { replace: true });
 
-      generateRemainingWorkouts({
-        user_id: params.user_id,
-        month_start_date: params.month_start_date,
-        selected_days: params.selected_days,
-        duration_minutes: params.duration_minutes,
-      })
-        .then((result) => {
-          log.info(`Background generation complete: ${result.total_generated} workouts`);
-          clearInterval(pollInterval);
+      // Auto-disable background generating after a timeout (workouts should be loaded by then)
+      const timeout = setTimeout(() => {
+        setIsBackgroundGenerating(false);
+        // Refetch workouts to ensure we have the latest
+        queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
+      }, 15000); // 15 seconds should be enough for background generation
 
-          queryClient.invalidateQueries({ queryKey: ['workouts'] });
-          setBackgroundProgress({ generated: result.total_generated, total: result.total_generated });
-
-          setTimeout(() => {
-            setIsBackgroundGenerating(false);
-            setBackgroundProgress(null);
-          }, 2000);
-        })
-        .catch((error) => {
-          log.error('Background generation failed', error);
-          clearInterval(pollInterval);
-          setIsBackgroundGenerating(false);
-          setBackgroundProgress(null);
-        });
-    } catch (error) {
-      log.error('Failed to parse pending generation', error);
-      localStorage.removeItem('pendingWorkoutGeneration');
+      return () => clearTimeout(timeout);
     }
-  }, [user, queryClient, setWorkouts]);
+  }, [location.state, navigate, queryClient, user?.id]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['workouts', user?.id],
@@ -495,37 +450,6 @@ export default function Home() {
         </motion.header>
 
         <main className="relative z-10 max-w-6xl mx-auto px-6 lg:px-8 py-8 space-y-8">
-          {/* Background Generation Progress */}
-          {isBackgroundGenerating && backgroundProgress && (
-            <GlassCard className="p-5" variant="glow" glowColor="primary">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-text">
-                    {backgroundProgress.generated === backgroundProgress.total
-                      ? 'All workouts ready!'
-                      : 'Generating your monthly workouts...'}
-                  </p>
-                  <p className="text-sm text-text-secondary">
-                    {backgroundProgress.generated === backgroundProgress.total
-                      ? `${backgroundProgress.total} workouts created`
-                      : 'This happens in the background - you can browse your schedule'}
-                  </p>
-                </div>
-              </div>
-              <ProgressBar
-                current={backgroundProgress.generated || 1}
-                total={backgroundProgress.total}
-                variant="glow"
-              />
-            </GlassCard>
-          )}
-
           {/* Quick Stats - Mobile Only */}
           <motion.section
             className="lg:hidden"

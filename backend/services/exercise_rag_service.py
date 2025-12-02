@@ -8,12 +8,14 @@ This service:
 """
 from typing import List, Dict, Any, Optional
 import json
+import re
 
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from services.openai_service import OpenAIService
+from services.training_program_service import get_training_program_keywords_sync
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -164,6 +166,7 @@ class ExerciseRAGService:
 
         return "\n".join(text_parts)
 
+
     async def select_exercises_for_workout(
         self,
         focus_area: str,
@@ -172,6 +175,7 @@ class ExerciseRAGService:
         goals: List[str],
         count: int = 6,
         avoid_exercises: Optional[List[str]] = None,
+        injuries: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -183,11 +187,14 @@ class ExerciseRAGService:
             goals: User's fitness goals
             count: Number of exercises to select
             avoid_exercises: Exercises to avoid (for variety)
+            injuries: User's active injuries to avoid aggravating
 
         Returns:
             List of selected exercises with full details
         """
         logger.info(f"🎯 Selecting {count} exercises for {focus_area} workout")
+        if injuries:
+            logger.info(f"⚠️ User has injuries/conditions: {injuries} - AI will filter unsafe exercises")
 
         # Build search query based on user profile
         search_query = self._build_search_query(focus_area, equipment, fitness_level, goals)
@@ -210,6 +217,8 @@ class ExerciseRAGService:
 
         # Format candidates for AI selection
         candidates = []
+        seen_exercises = []  # Track exercise names to avoid similar duplicates
+
         for i, doc_id in enumerate(results["ids"][0]):
             meta = results["metadatas"][0][i]
             distance = results["distances"][0][i]
@@ -226,9 +235,25 @@ class ExerciseRAGService:
             if not any(eq in ex_equipment for eq in equipment_lower):
                 continue
 
+            # Get exercise name
+            exercise_name = meta.get("name", "Unknown")
+
+            # Skip if we already have a similar exercise (avoid duplicates and variations)
+            is_duplicate = False
+            for seen_name in seen_exercises:
+                if self._is_similar_exercise(exercise_name, seen_name):
+                    logger.debug(f"Skipping similar exercise: '{exercise_name}' (similar to '{seen_name}')")
+                    is_duplicate = True
+                    break
+
+            if is_duplicate:
+                continue
+
+            seen_exercises.append(exercise_name)
+
             candidates.append({
                 "id": meta.get("exercise_id", ""),
-                "name": meta.get("name", "Unknown"),
+                "name": exercise_name,
                 "body_part": meta.get("body_part", ""),
                 "equipment": meta.get("equipment", "bodyweight"),
                 "target_muscle": meta.get("target_muscle", ""),
@@ -242,6 +267,15 @@ class ExerciseRAGService:
             logger.warning("No compatible exercises found after filtering")
             return await self._fallback_selection(focus_area, equipment, count)
 
+        # Pre-filter candidates based on injuries (safety net before AI)
+        if injuries and len(injuries) > 0:
+            safe_candidates = self._pre_filter_by_injuries(candidates, injuries)
+            if safe_candidates:
+                logger.info(f"🛡️ Pre-filtered {len(candidates)} candidates to {len(safe_candidates)} safe exercises")
+                candidates = safe_candidates
+            else:
+                logger.warning("Pre-filter removed all candidates, keeping original list for AI to filter")
+
         # Use AI to make final selection
         selected = await self._ai_select_exercises(
             candidates=candidates[:20],  # Limit candidates for AI
@@ -249,9 +283,182 @@ class ExerciseRAGService:
             fitness_level=fitness_level,
             goals=goals,
             count=count,
+            injuries=injuries,
         )
 
         return selected
+
+    def _get_base_exercise_name(self, name: str) -> str:
+        """
+        Extract the normalized base exercise name for deduplication.
+
+        Removes version suffixes, gender variants, and normalizes the name.
+
+        Examples:
+            "Push-up (version 2)" -> "push up"
+            "Squat variation 3" -> "squat"
+            "Bodyweight full squat with overhead press (version 2)" -> "bodyweight full squat overhead press"
+            "Dumbbell Bicep Curl" -> "dumbbell bicep curl"
+            "Air Bike_female" -> "air bike"
+        """
+        # Lowercase for comparison
+        name = name.lower()
+
+        # Remove "_female" or "_Female" suffix (gender variants)
+        name = re.sub(r'[_\s]female$', '', name, flags=re.IGNORECASE)
+
+        # Remove "(version X)" or "(Version X)" suffix
+        name = re.sub(r'\s*\(version\s*\d+\)\s*', '', name, flags=re.IGNORECASE)
+
+        # Remove "version X" suffix without parentheses
+        name = re.sub(r'\s+version\s*\d+\s*', '', name, flags=re.IGNORECASE)
+
+        # Remove "variation X" suffix
+        name = re.sub(r'\s*\(variation\s*\d+\)\s*', '', name, flags=re.IGNORECASE)
+        name = re.sub(r'\s+variation\s*\d+\s*', '', name, flags=re.IGNORECASE)
+
+        # Remove "v2", "v3" etc suffix
+        name = re.sub(r'\s+v\d+\s*', '', name, flags=re.IGNORECASE)
+
+        # Remove common filler words that don't change the exercise
+        filler_words = ['with', 'and', 'the', 'a', 'an', 'on', 'in', 'to', 'for']
+        words = name.split()
+        words = [w for w in words if w not in filler_words]
+        name = ' '.join(words)
+
+        # Normalize hyphens, underscores and multiple spaces
+        name = name.replace('-', ' ')
+        name = name.replace('_', ' ')
+        name = re.sub(r'\s+', ' ', name)
+
+        return name.strip()
+
+    def _is_similar_exercise(self, name1: str, name2: str) -> bool:
+        """
+        Check if two exercise names are similar enough to be considered duplicates.
+
+        Uses word overlap to detect similar exercises like:
+        - "Squat" and "Bodyweight Squat"
+        - "Bicep Curl" and "Dumbbell Bicep Curl"
+        """
+        base1 = self._get_base_exercise_name(name1)
+        base2 = self._get_base_exercise_name(name2)
+
+        # Exact match after normalization
+        if base1 == base2:
+            return True
+
+        # Check word overlap - if one is subset of the other
+        words1 = set(base1.split())
+        words2 = set(base2.split())
+
+        # If smaller set is fully contained in larger set, they're similar
+        if words1.issubset(words2) or words2.issubset(words1):
+            return True
+
+        # High overlap (80%+ of smaller set matches)
+        smaller = words1 if len(words1) < len(words2) else words2
+        larger = words2 if len(words1) < len(words2) else words1
+        overlap = len(smaller & larger)
+        if len(smaller) > 0 and overlap / len(smaller) >= 0.8:
+            return True
+
+        return False
+
+    def _pre_filter_by_injuries(
+        self,
+        candidates: List[Dict],
+        injuries: List[str],
+    ) -> List[Dict]:
+        """
+        Pre-filter exercises that are contraindicated for user's injuries.
+        This is a safety net to catch dangerous exercises before AI selection.
+        """
+        # Define exercise patterns to avoid for each injury type
+        injury_contraindications = {
+            # Leg/Knee injuries
+            "leg": ["squat", "lunge", "leg press", "leg extension", "leg curl", "step-up",
+                    "box jump", "jump squat", "burpee", "mountain climber", "deadlift",
+                    "romanian deadlift", "calf raise", "hack squat", "pistol squat",
+                    "leg drive", "split squat", "jump", "hop", "sprint"],
+            "knee": ["squat", "lunge", "leg press", "leg extension", "leg curl", "step-up",
+                     "box jump", "jump squat", "burpee", "mountain climber", "deadlift",
+                     "pistol squat", "split squat", "jump", "hop"],
+
+            # Back injuries
+            "back": ["deadlift", "romanian deadlift", "good morning", "bent-over row",
+                     "squat", "leg press", "overhead press", "military press",
+                     "sit-up", "crunch", "superman", "hyperextension", "back extension"],
+            "spine": ["deadlift", "romanian deadlift", "good morning", "squat",
+                      "overhead press", "sit-up", "crunch", "hyperextension"],
+            "lower back": ["deadlift", "romanian deadlift", "good morning", "bent-over row",
+                           "squat", "leg press", "sit-up", "crunch", "hyperextension",
+                           "back extension", "superman"],
+
+            # Shoulder injuries
+            "shoulder": ["overhead press", "military press", "arnold press", "shoulder press",
+                         "lateral raise", "upright row", "behind neck", "dip", "bench press",
+                         "incline press", "fly", "pullover"],
+            "rotator": ["overhead press", "lateral raise", "upright row", "behind neck",
+                        "dip", "fly", "pullover"],
+
+            # Wrist/Hand injuries
+            "wrist": ["push-up", "pushup", "plank", "handstand", "clean", "snatch",
+                      "front squat", "overhead squat", "bench press"],
+            "hand": ["push-up", "pushup", "plank", "handstand", "clean", "deadlift"],
+
+            # Hip injuries
+            "hip": ["squat", "lunge", "hip thrust", "leg press", "deadlift", "step-up",
+                    "glute bridge", "romanian deadlift", "sumo deadlift"],
+
+            # Neck injuries
+            "neck": ["shrug", "upright row", "sit-up", "crunch", "neck curl",
+                     "neck extension", "behind neck press"],
+
+            # Elbow/Arm injuries
+            "elbow": ["curl", "tricep extension", "skull crusher", "close grip",
+                      "diamond push-up", "dip"],
+            "arm": ["curl", "tricep extension", "skull crusher", "overhead extension"],
+
+            # Ankle injuries
+            "ankle": ["calf raise", "jump", "hop", "skip", "run", "sprint",
+                      "box jump", "jump squat", "burpee", "lunge"],
+        }
+
+        # Determine which injury categories apply
+        active_patterns = set()
+        injuries_lower = [inj.lower() for inj in injuries]
+
+        for injury in injuries_lower:
+            for key, patterns in injury_contraindications.items():
+                if key in injury:
+                    active_patterns.update(patterns)
+
+        if not active_patterns:
+            logger.info("No specific contraindication patterns found for injuries")
+            return candidates
+
+        logger.info(f"🚫 Filtering out exercises matching: {active_patterns}")
+
+        # Filter candidates
+        safe_candidates = []
+        for candidate in candidates:
+            exercise_name = candidate.get("name", "").lower()
+            target_muscle = candidate.get("target_muscle", "").lower()
+            body_part = candidate.get("body_part", "").lower()
+
+            # Check if exercise matches any contraindicated pattern
+            is_unsafe = False
+            for pattern in active_patterns:
+                if pattern in exercise_name or pattern in target_muscle or pattern in body_part:
+                    logger.debug(f"🚫 Filtering out '{candidate.get('name')}' (matches '{pattern}')")
+                    is_unsafe = True
+                    break
+
+            if not is_unsafe:
+                safe_candidates.append(candidate)
+
+        return safe_candidates
 
     def _build_search_query(
         self,
@@ -267,7 +474,7 @@ class ExerciseRAGService:
             f"Fitness level: {fitness_level}",
         ]
 
-        # Add goal-specific terms
+        # Add goal-specific terms (base goals)
         goal_keywords = {
             "Build Muscle": "hypertrophy muscle building compound exercises",
             "Lose Weight": "fat burning high intensity metabolic exercises",
@@ -277,9 +484,15 @@ class ExerciseRAGService:
             "General Fitness": "functional fitness full body exercises",
         }
 
+        # Get training program keywords dynamically from database/cache
+        training_program_keywords = get_training_program_keywords_sync()
+
         for goal in goals:
             if goal in goal_keywords:
                 query_parts.append(goal_keywords[goal])
+            # Check if goal matches a training program
+            if goal in training_program_keywords:
+                query_parts.append(training_program_keywords[goal])
 
         return " ".join(query_parts)
 
@@ -290,8 +503,9 @@ class ExerciseRAGService:
         fitness_level: str,
         goals: List[str],
         count: int,
+        injuries: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
-        """Use AI to select the best exercises from candidates."""
+        """Use AI to select the best exercises from candidates, considering injuries."""
 
         # Format candidates for the prompt
         candidate_list = "\n".join([
@@ -299,36 +513,87 @@ class ExerciseRAGService:
             for i, c in enumerate(candidates)
         ])
 
-        prompt = f"""You are an expert fitness coach selecting exercises for a workout.
+        # Build injury awareness section
+        injury_section = ""
+        if injuries and len(injuries) > 0:
+            injury_list = ", ".join(injuries)
+            injury_section = f"""
+⚠️⚠️⚠️ CRITICAL SAFETY REQUIREMENT - USER HAS INJURIES ⚠️⚠️⚠️
+The user has the following injuries/conditions: {injury_list}
+
+YOU MUST STRICTLY AVOID these exercises based on their injuries:
+
+🚫 For "Leg pain", "Knee pain", "Knee injury", or any leg/knee issue:
+   - NEVER SELECT: Squats (any variation), Lunges, Leg Press, Leg Extensions, Leg Curls, Step-ups
+   - NEVER SELECT: Box Jumps, Jump Squats, Burpees, Mountain Climbers
+   - NEVER SELECT: Deadlifts, Romanian Deadlifts, Calf Raises with heavy load
+   - AVOID any exercise that puts significant load on the legs/knees
+
+🚫 For "Lower back pain", "Back pain", "Spine issues":
+   - NEVER SELECT: Deadlifts, Romanian Deadlifts, Good Mornings, Bent-over Rows
+   - NEVER SELECT: Squats, Leg Press, Heavy Overhead Press
+   - NEVER SELECT: Sit-ups, Crunches (prefer planks instead)
+   - AVOID any exercise with spinal loading or flexion
+
+🚫 For "Shoulder pain", "Shoulder injury", "Rotator cuff":
+   - NEVER SELECT: Overhead Press, Military Press, Arnold Press
+   - NEVER SELECT: Lateral Raises, Upright Rows, Behind-neck exercises
+   - AVOID any overhead movements or internal rotation
+
+🚫 For "Wrist pain", "Wrist injury":
+   - NEVER SELECT: Push-ups, Planks, Handstands, Cleans
+   - AVOID exercises requiring wrist extension under load
+
+🚫 For "Hip pain", "Hip injury":
+   - NEVER SELECT: Squats, Lunges, Hip Thrusts, Leg Press
+   - NEVER SELECT: Deadlifts, Step-ups
+   - AVOID exercises with deep hip flexion
+
+🚫 For "Neck pain", "Neck injury":
+   - NEVER SELECT: Shrugs with heavy weight, Upright Rows
+   - NEVER SELECT: Sit-ups, Crunches (neck strain)
+   - AVOID exercises that load the neck
+
+IMPORTANT: The user's safety is the TOP PRIORITY. If in doubt, DO NOT select the exercise.
+Only select exercises that are 100% SAFE for someone with {injury_list}.
+"""
+
+        prompt = f"""You are an expert fitness coach and physical therapist selecting exercises for a workout.
 
 TARGET WORKOUT:
 - Focus: {focus_area}
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Number of exercises needed: {count}
-
+{injury_section}
 AVAILABLE EXERCISES:
 {candidate_list}
 
 SELECTION CRITERIA:
-1. Choose exercises that best target the focus area ({focus_area})
-2. Ensure variety - different exercises for balanced muscle development
-3. Progress from compound to isolation exercises
-4. Consider the fitness level - {fitness_level}
-5. Align with goals: {', '.join(goals) if goals else 'General fitness'}
+1. {"SAFETY FIRST: Exclude any exercises that could aggravate the user's injuries" if injuries else "Choose exercises that best target the focus area"}
+2. Choose exercises that best target the focus area ({focus_area})
+3. Ensure variety - different exercises for balanced muscle development
+4. Progress from compound to isolation exercises
+5. Consider the fitness level - {fitness_level}
+6. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 
 Return ONLY a JSON array of the exercise numbers you select (1-indexed), in the order they should be performed.
 Example: [1, 5, 3, 8, 2, 6]
 
-Select exactly {count} exercises."""
+Select exactly {count} exercises that are SAFE for this user."""
 
         try:
+            system_content = "You are a fitness expert"
+            if injuries:
+                system_content += " and certified physical therapist with expertise in injury rehabilitation. SAFETY IS YOUR TOP PRIORITY - never recommend exercises that could aggravate the user's injuries."
+            system_content += ". Select exercises wisely. Return ONLY a JSON array of numbers."
+
             response = await self.openai_service.client.chat.completions.create(
-                model="gpt-4o-mini",  # Fast model for selection
+                model="gpt-4-turbo",  # Better model for safety-critical exercise selection
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a fitness expert. Select exercises wisely. Return ONLY a JSON array of numbers."
+                        "content": system_content
                     },
                     {"role": "user", "content": prompt}
                 ],

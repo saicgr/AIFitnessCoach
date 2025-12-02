@@ -320,6 +320,7 @@ export interface ChatMessage {
   content: string;
   intent?: CoachIntent;
   actionData?: Record<string, unknown>;
+  imagePreview?: string;  // Base64 image for displaying in message bubble
 }
 
 export interface ChatRequest {
@@ -329,6 +330,7 @@ export interface ChatRequest {
   current_workout?: WorkoutContext;
   workout_schedule?: WorkoutScheduleContext;
   conversation_history: ChatMessage[];
+  image_base64?: string;  // Base64 encoded image for food analysis (without data:image prefix)
 }
 
 export interface ChatResponse {

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAppStore } from '../store';
@@ -11,6 +11,9 @@ import { GlassCard, GlassButton } from '../components/ui';
 import { DashboardLayout } from '../components/layout';
 
 const log = createLogger('chat');
+
+// Max file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -38,6 +41,16 @@ function MessageBubble({ message, workoutId }: MessageBubbleProps) {
           }
         `}
       >
+        {/* Show image if present */}
+        {message.imagePreview && (
+          <div className="mb-3">
+            <img
+              src={`data:image/jpeg;base64,${message.imagePreview}`}
+              alt="Food"
+              className="rounded-lg max-w-full max-h-48 object-cover"
+            />
+          </div>
+        )}
         <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
         {!isUser && message.intent && (
           <div className="mt-3">
@@ -95,7 +108,47 @@ export default function Chat() {
   });
 
   const [input, setInput] = useState(prefillMessage || '');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);  // Base64 image
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle image selection
+  const handleImageSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      log.error('Invalid file type:', file.type);
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      log.error('File too large:', file.size);
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      // Remove the data:image/xxx;base64, prefix
+      const base64Data = base64.split(',')[1];
+      setSelectedImage(base64Data);
+      log.info('Image selected', { size_kb: Math.round(base64Data.length / 1024) });
+    };
+    reader.readAsDataURL(file);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  const removeSelectedImage = useCallback(() => {
+    setSelectedImage(null);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -227,6 +280,7 @@ export default function Chat() {
         current_workout: workoutContext,
         workout_schedule: workoutSchedule,
         conversation_history: chatHistory,
+        image_base64: selectedImage || undefined,
       });
     },
     onSuccess: (response) => {
@@ -247,11 +301,21 @@ export default function Chat() {
   });
 
   const handleSend = () => {
-    if (!input.trim() || chatMutation.isPending) return;
+    if ((!input.trim() && !selectedImage) || chatMutation.isPending) return;
 
-    const message = input.trim();
+    const message = input.trim() || (selectedImage ? 'What did I eat?' : '');
+    const imageToSend = selectedImage;
+
     setInput('');
-    addChatMessage({ role: 'user', content: message });
+    setSelectedImage(null);
+
+    // Add user message with image preview if present
+    addChatMessage({
+      role: 'user',
+      content: message,
+      imagePreview: imageToSend || undefined,
+    });
+
     chatMutation.mutate(message);
   };
 
@@ -265,8 +329,8 @@ export default function Chat() {
   const suggestedMessages = [
     'Make my workout easier',
     'Add a core exercise',
-    'Replace this with a home exercise',
-    'I have a shoulder injury',
+    'What did I eat today?',
+    'Show my nutrition summary',
   ];
 
   return (
@@ -372,32 +436,90 @@ export default function Chat() {
 
         {/* Input */}
         <div className="border-t border-white/10 p-4">
-          <div className="max-w-2xl mx-auto flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask your AI coach..."
-              className="
-                flex-1 px-4 py-3
-                bg-white/5 border border-white/10
-                rounded-xl text-text placeholder:text-text-muted
-                focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30
-                transition-all
-              "
-            />
-            <GlassButton
-              onClick={handleSend}
-              disabled={!input.trim() || chatMutation.isPending}
-              icon={
+          <div className="max-w-2xl mx-auto">
+            {/* Image Preview */}
+            {selectedImage && (
+              <div className="mb-3 relative inline-block">
+                <img
+                  src={`data:image/jpeg;base64,${selectedImage}`}
+                  alt="Selected food"
+                  className="rounded-lg max-h-32 object-cover"
+                />
+                <button
+                  onClick={removeSelectedImage}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
+                  title="Remove image"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+
+              {/* Image picker button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={chatMutation.isPending}
+                className={`
+                  p-3 rounded-xl border transition-all
+                  ${selectedImage
+                    ? 'bg-primary/20 border-primary text-primary'
+                    : 'bg-white/5 border-white/10 text-text-secondary hover:bg-white/10 hover:text-text'
+                  }
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+                title="Upload food photo"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-              }
-            >
-              Send
-            </GlassButton>
+              </button>
+
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={selectedImage ? "Describe your meal (optional)..." : "Ask your AI coach..."}
+                className="
+                  flex-1 px-4 py-3
+                  bg-white/5 border border-white/10
+                  rounded-xl text-text placeholder:text-text-muted
+                  focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30
+                  transition-all
+                "
+              />
+              <GlassButton
+                onClick={handleSend}
+                disabled={(!input.trim() && !selectedImage) || chatMutation.isPending}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                }
+              >
+                Send
+              </GlassButton>
+            </div>
+
+            {/* Helper text for food tracking */}
+            {selectedImage && (
+              <p className="text-xs text-text-muted mt-2">
+                📸 Photo attached. I'll analyze the food and track your nutrition.
+              </p>
+            )}
           </div>
         </div>
       </div>

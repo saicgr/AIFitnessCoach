@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { googleAuth } from '../api/client';
 import { extractOnboardingData } from '../types';
-import { GlassCard } from '../components/ui';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('AuthCallback');
@@ -71,40 +70,34 @@ export default function AuthCallback() {
   }, [navigate, setUser, setSession, setOnboardingData]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/20 rounded-full blur-[100px]" />
-      </div>
-
-      <GlassCard variant="elevated" className="max-w-md w-full p-8 relative z-10 text-center">
+    <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="max-w-md w-full text-center">
         {error ? (
           <>
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-coral/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-50 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-text mb-2">Authentication Failed</h2>
-            <p className="text-text-secondary mb-6">{error}</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Failed</h2>
+            <p className="text-gray-500 mb-6">{error}</p>
             <button
               onClick={() => navigate('/login', { replace: true })}
-              className="px-6 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
+              className="px-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-all"
             >
               Try Again
             </button>
           </>
         ) : (
           <>
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
-              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-8 h-8 border-3 border-gray-900 border-t-transparent rounded-full animate-spin" />
             </div>
-            <h2 className="text-xl font-semibold text-text mb-2">{status}</h2>
-            <p className="text-text-secondary">Please wait while we set up your account...</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{status}</h2>
+            <p className="text-gray-500">Please wait while we set up your account...</p>
           </>
         )}
-      </GlassCard>
+      </div>
     </div>
   );
 }

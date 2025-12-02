@@ -10,7 +10,12 @@ import {
   createStrengthRecord,
   getStrengthRecords,
   getExerciseVideoInfo,
+  getWorkoutWarmup,
+  getWorkoutStretches,
+  createWorkoutWarmupAndStretches,
   type VideoResponse,
+  type WarmupResponse,
+  type StretchResponse,
 } from '../api/client';
 import { useAppStore } from '../store';
 import SetRow from '../components/workout/SetRow';
@@ -63,6 +68,12 @@ export default function ActiveWorkout() {
   const [videoLoading, setVideoLoading] = useState(false);
   // Default to 'male' - gender preference can be updated via the toggle
   const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('male');
+  // Warmup and stretches state
+  const [warmup, setWarmup] = useState<WarmupResponse | null>(null);
+  const [stretches, setStretches] = useState<StretchResponse | null>(null);
+  const [warmupStretchLoading, setWarmupStretchLoading] = useState(false);
+  const [warmupExpanded, setWarmupExpanded] = useState(false);
+  const [stretchesExpanded, setStretchesExpanded] = useState(false);
   // Layout preference: video on left (true) or right (false) - persists to localStorage
   const [videoOnLeft, setVideoOnLeft] = useState<boolean>(() => {
     const saved = localStorage.getItem('workout-video-position');
@@ -177,6 +188,48 @@ export default function ActiveWorkout() {
       .then((info) => setVideoInfo(info))
       .finally(() => setVideoLoading(false));
   }, [workout?.exercises, currentExerciseIndex, selectedGender]);
+
+  // Fetch warmup and stretches when workout loads
+  useEffect(() => {
+    if (!workout?.id) return;
+
+    const fetchWarmupAndStretches = async () => {
+      setWarmupStretchLoading(true);
+      try {
+        // Try to get existing warmup and stretches
+        const [warmupData, stretchData] = await Promise.all([
+          getWorkoutWarmup(workout.id),
+          getWorkoutStretches(workout.id),
+        ]);
+
+        if (warmupData) {
+          setWarmup(warmupData);
+        }
+        if (stretchData) {
+          setStretches(stretchData);
+        }
+
+        // If neither exist, generate them
+        if (!warmupData && !stretchData) {
+          const result = await createWorkoutWarmupAndStretches(workout.id);
+          setWarmup(result.warmup);
+          setStretches(result.stretches);
+        } else if (!warmupData) {
+          // Only warmup missing - this shouldn't happen normally
+          console.log('Warmup not found, stretches exist');
+        } else if (!stretchData) {
+          // Only stretches missing - this shouldn't happen normally
+          console.log('Stretches not found, warmup exists');
+        }
+      } catch (error) {
+        console.error('Failed to fetch warmup/stretches:', error);
+      } finally {
+        setWarmupStretchLoading(false);
+      }
+    };
+
+    fetchWarmupAndStretches();
+  }, [workout?.id]);
 
   // Create workout log mutation
   const createWorkoutLogMutation = useMutation({
@@ -574,6 +627,68 @@ export default function ActiveWorkout() {
   // Expanded content - accordion style with inline set details
   const expandedContent = (
     <div className="space-y-2">
+      {/* Warmup Section */}
+      {warmup && warmup.exercises_json && warmup.exercises_json.length > 0 && (
+        <div className="space-y-0">
+          <button
+            onClick={() => setWarmupExpanded(!warmupExpanded)}
+            className={`
+              w-full flex items-center gap-3 p-3 rounded-xl
+              transition-all duration-200
+              ${warmupExpanded ? 'bg-orange-500/20' : 'bg-orange-500/10'}
+            `}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-500/20 text-orange-400 flex-shrink-0">
+              <span className="text-lg">🔥</span>
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className={`font-medium text-sm ${warmupExpanded ? 'text-orange-400' : 'text-text'}`}>
+                Warm-Up
+              </p>
+              <p className="text-xs text-text-muted">
+                {warmup.exercises_json.length} exercises • {warmup.duration_minutes} min
+              </p>
+            </div>
+            <svg
+              className={`w-4 h-4 text-text-muted transition-transform duration-200 ${warmupExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {warmupExpanded && (
+            <div className="mt-2 ml-4 pl-4 border-l-2 border-orange-500/30 space-y-2 pb-2">
+              {warmup.exercises_json.map((ex, idx) => (
+                <div key={idx} className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm text-text">{ex.name}</span>
+                    <span className="text-xs text-orange-400 bg-orange-500/20 px-2 py-0.5 rounded-full">
+                      {ex.duration_seconds}s
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    {ex.reps > 1 ? `${ex.reps} reps` : ''} {ex.muscle_group && `• ${ex.muscle_group}`}
+                  </p>
+                  {ex.notes && (
+                    <p className="text-xs text-text-secondary mt-1 italic">{ex.notes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Loading state for warmup/stretches */}
+      {warmupStretchLoading && (
+        <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm text-text-secondary">Loading warmup & stretches...</span>
+        </div>
+      )}
+
       {/* Accordion Exercise List */}
       {workout.exercises.map((exercise, index) => {
         const sets = exerciseSets.get(index) || [];
@@ -705,6 +820,60 @@ export default function ActiveWorkout() {
           </div>
         );
       })}
+
+      {/* Stretches Section */}
+      {stretches && stretches.exercises_json && stretches.exercises_json.length > 0 && (
+        <div className="space-y-0">
+          <button
+            onClick={() => setStretchesExpanded(!stretchesExpanded)}
+            className={`
+              w-full flex items-center gap-3 p-3 rounded-xl
+              transition-all duration-200
+              ${stretchesExpanded ? 'bg-blue-500/20' : 'bg-blue-500/10'}
+            `}
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/20 text-blue-400 flex-shrink-0">
+              <span className="text-lg">🧘</span>
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className={`font-medium text-sm ${stretchesExpanded ? 'text-blue-400' : 'text-text'}`}>
+                Cool-Down Stretches
+              </p>
+              <p className="text-xs text-text-muted">
+                {stretches.exercises_json.length} stretches • {stretches.duration_minutes} min
+              </p>
+            </div>
+            <svg
+              className={`w-4 h-4 text-text-muted transition-transform duration-200 ${stretchesExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {stretchesExpanded && (
+            <div className="mt-2 ml-4 pl-4 border-l-2 border-blue-500/30 space-y-2 pb-2">
+              {stretches.exercises_json.map((ex, idx) => (
+                <div key={idx} className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm text-text">{ex.name}</span>
+                    <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded-full">
+                      {ex.duration_seconds}s hold
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    {ex.muscle_group && `${ex.muscle_group}`}
+                  </p>
+                  {ex.notes && (
+                    <p className="text-xs text-text-secondary mt-1 italic">{ex.notes}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Finish Button at bottom */}
       <div className="pt-4">

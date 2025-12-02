@@ -4,7 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useAppStore } from '../store';
 import { createUser, updateUser, generateWorkout } from '../api/client';
 import { createLogger } from '../utils/logger';
-import { GlassCard, GlassButton, GlassInput, SelectionChip, ProgressBar } from '../components/ui';
 
 const log = createLogger('onboarding');
 
@@ -16,48 +15,48 @@ const Icons = {
     </svg>
   ),
   User: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
     </svg>
   ),
   Scale: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
     </svg>
   ),
   Target: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
   ),
   Calendar: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
   ),
   Cog: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   ),
   Heart: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
     </svg>
   ),
   Sunrise: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   ),
   Sun: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
     </svg>
   ),
   Moon: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
   ),
@@ -66,23 +65,23 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   ),
-  Sparkles: () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  Check: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   ),
 };
 
 // Constants
 const GENDERS = [
-  { id: 'male', label: 'Male', icon: '♂️' },
-  { id: 'female', label: 'Female', icon: '♀️' },
+  { id: 'male', label: 'Male', icon: 'M' },
+  { id: 'female', label: 'Female', icon: 'F' },
 ] as const;
 
 const FITNESS_LEVELS = [
-  { id: 'beginner', label: 'Beginner', desc: 'New to fitness or returning after a break', icon: '🌱' },
-  { id: 'intermediate', label: 'Intermediate', desc: 'Regular exercise for 6+ months', icon: '💪' },
-  { id: 'advanced', label: 'Advanced', desc: 'Consistent training for 2+ years', icon: '🔥' },
+  { id: 'beginner', label: 'Beginner', desc: 'New to fitness or returning after a break' },
+  { id: 'intermediate', label: 'Intermediate', desc: 'Regular exercise for 6+ months' },
+  { id: 'advanced', label: 'Advanced', desc: 'Consistent training for 2+ years' },
 ] as const;
 
 const GOALS = [
@@ -161,6 +160,9 @@ const INJURY_OPTIONS = [
   'Wrist/elbow pain',
   'Neck pain',
   'Hip issues',
+  'Leg pain',
+  'Ankle issues',
+  'Other',
   'None',
 ];
 
@@ -172,6 +174,7 @@ const HEALTH_CONDITIONS = [
   'Arthritis',
   'Pregnancy',
   'Recent surgery',
+  'Other',
   'None',
 ];
 
@@ -206,6 +209,88 @@ const feetInchesToCm = (feet: number, inches: number) => {
 
 const kgToLbs = (kg: number) => Math.round(kg * 2.205);
 const lbsToKg = (lbs: number) => Math.round(lbs / 2.205);
+
+// Reusable UI Components
+const SelectionChip = ({
+  selected,
+  onClick,
+  children,
+  variant = 'default'
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  variant?: 'default' | 'warning';
+}) => (
+  <button
+    onClick={onClick}
+    className={`
+      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+      ${selected
+        ? variant === 'warning'
+          ? 'bg-amber-100 text-amber-800 border-2 border-amber-300'
+          : 'bg-gray-900 text-white'
+        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
+      }
+    `}
+  >
+    {children}
+  </button>
+);
+
+const Input = ({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  suffix,
+  error,
+  hint,
+  required,
+  ...props
+}: {
+  label?: string;
+  type?: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  suffix?: React.ReactNode;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  [key: string]: unknown;
+}) => (
+  <div>
+    {label && (
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+    )}
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`
+          w-full px-4 py-3 rounded-xl border text-gray-900 placeholder-gray-400
+          focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent
+          transition-all duration-200
+          ${error ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}
+        `}
+        {...props}
+      />
+      {suffix && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+          {suffix}
+        </div>
+      )}
+    </div>
+    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    {hint && !error && <p className="text-gray-500 text-xs mt-1">{hint}</p>}
+  </div>
+);
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -352,32 +437,15 @@ export default function Onboarding() {
           setGenerationProgress('Your schedule is ready!');
         }
 
-        // Store pending generation for background processing of remaining workouts
-        localStorage.setItem('pendingWorkoutGeneration', JSON.stringify({
-          user_id: data.id,
-          month_start_date: todayDate,
-          selected_days: onboardingData.selectedDays,
-          duration_minutes: onboardingData.workoutDuration,
-        }));
-
         setTimeout(() => {
-          navigate('/');
+          navigate('/', { state: { fromOnboarding: true, isGeneratingInBackground: true } });
         }, 1000);
       } catch (error) {
         log.error('Failed to generate first workout', error);
         setGenerationProgress('Could not generate workout. Redirecting...');
 
-        const fallbackToday = new Date();
-        const fallbackTodayDate = fallbackToday.toISOString().split('T')[0];
-        localStorage.setItem('pendingWorkoutGeneration', JSON.stringify({
-          user_id: data.id,
-          month_start_date: fallbackTodayDate,
-          selected_days: onboardingData.selectedDays,
-          duration_minutes: onboardingData.workoutDuration,
-        }));
-
         setTimeout(() => {
-          navigate('/');
+          navigate('/', { state: { fromOnboarding: true, isGeneratingInBackground: true } });
         }, 1500);
       }
     },
@@ -522,37 +590,31 @@ export default function Onboarding() {
   // Loading screen
   if (isGenerating || createUserMutation.isPending) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Animated background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        </div>
-
-        <GlassCard className="max-w-md w-full p-8 text-center relative z-10">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse glow-primary">
-            <Icons.Sparkles />
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
           </div>
-          <h2 className="text-2xl font-bold text-text mb-2">Setting Up Your Plan</h2>
-          <p className="text-text-secondary mb-6">{generationProgress || 'Creating your profile...'}</p>
-          <ProgressBar current={60} total={100} variant="glow" />
-        </GlassCard>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Setting Up Your Plan</h2>
+          <p className="text-gray-500 mb-8">{generationProgress || 'Creating your profile...'}</p>
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="bg-gray-900 h-2 rounded-full w-3/5 transition-all duration-500" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-white flex items-center justify-center px-6 py-10">
+      <div className="w-full max-w-lg">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">BLive</h1>
+        </div>
 
-      <div className="w-full max-w-lg relative z-10">
         {/* Step indicators */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div className="flex justify-center gap-2 mb-8">
           {STEPS.map((s, i) => (
             <button
               key={i}
@@ -560,42 +622,39 @@ export default function Onboarding() {
               disabled={i > step}
               className={`
                 relative flex items-center justify-center w-10 h-10 rounded-full
-                transition-all duration-300
+                transition-all duration-200
                 ${i === step
-                  ? 'bg-gradient-to-br from-primary to-primary-dark glow-primary scale-110'
+                  ? 'bg-gray-900 text-white scale-110'
                   : i < step
-                  ? 'bg-accent/20 border border-accent/50'
-                  : 'bg-white/5 border border-white/10'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-400'
                 }
                 ${i < step ? 'cursor-pointer hover:scale-105' : ''}
               `}
             >
-              <s.Icon />
-              {i < step && (
-                <div className="absolute inset-0 flex items-center justify-center bg-accent rounded-full">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
+              {i < step ? (
+                <Icons.Check />
+              ) : (
+                <s.Icon />
               )}
             </button>
           ))}
         </div>
 
         {/* Main card */}
-        <GlassCard className="p-8 spring-in" variant="elevated">
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
           {/* Step 0: Personal Info */}
           {step === 0 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center mx-auto mb-4 glow-primary">
+                <div className="w-16 h-16 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Icons.Dumbbell />
                 </div>
-                <h1 className="text-3xl font-bold text-text text-glow-primary">Welcome!</h1>
-                <p className="text-text-secondary mt-2">Let's personalize your fitness journey</p>
+                <h2 className="text-2xl font-bold text-gray-900">Welcome!</h2>
+                <p className="text-gray-500 mt-1">Let's personalize your fitness journey</p>
               </div>
 
-              <GlassInput
+              <Input
                 label="Your Name"
                 placeholder="Enter your name"
                 value={onboardingData.name}
@@ -608,8 +667,8 @@ export default function Onboarding() {
               />
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">
-                  Gender <span className="text-coral">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Gender <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   {GENDERS.map((g) => (
@@ -620,28 +679,27 @@ export default function Onboarding() {
                         if (errors.gender) setErrors((prev) => ({ ...prev, gender: '' }));
                       }}
                       className={`
-                        p-4 rounded-xl border transition-all duration-200
+                        p-4 rounded-xl border-2 transition-all duration-200
                         flex items-center justify-center gap-3
                         ${onboardingData.gender === g.id
-                          ? 'border-primary bg-primary/20 text-primary shadow-[0_0_20px_rgba(6,182,212,0.3)]'
+                          ? 'border-gray-900 bg-gray-900 text-white'
                           : errors.gender
-                          ? 'border-coral/50 bg-coral/5 text-text-secondary'
-                          : 'border-white/10 bg-white/5 text-text-secondary hover:border-white/20'
+                          ? 'border-red-300 bg-red-50 text-gray-600'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }
                       `}
                     >
-                      <span className="text-2xl">{g.icon}</span>
+                      <span className="text-lg font-bold">{g.icon}</span>
                       <span className="font-medium">{g.label}</span>
                     </button>
                   ))}
                 </div>
                 {errors.gender && (
-                  <p className="text-coral text-sm mt-2">{errors.gender}</p>
+                  <p className="text-red-500 text-sm mt-2">{errors.gender}</p>
                 )}
-                <p className="text-xs text-text-muted mt-2">Required for accurate health metrics</p>
               </div>
 
-              <GlassInput
+              <Input
                 label="Age"
                 type="number"
                 value={onboardingData.age}
@@ -654,52 +712,49 @@ export default function Onboarding() {
 
           {/* Step 1: Body Metrics */}
           {step === 1 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-text">Body Metrics</h1>
-                <p className="text-text-secondary mt-1">Help us personalize your workouts</p>
+                <h2 className="text-2xl font-bold text-gray-900">Body Metrics</h2>
+                <p className="text-gray-500 mt-1">Help us personalize your workouts</p>
               </div>
 
               {/* Height */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium text-text-secondary">Height</label>
+                  <label className="text-sm font-medium text-gray-700">Height</label>
                   <button
                     onClick={handleToggleHeightUnit}
-                    className="text-sm text-primary hover:text-primary-light transition-colors"
+                    className="text-sm text-gray-900 font-medium hover:underline"
                   >
                     Switch to {useMetricHeight ? 'ft/in' : 'cm'}
                   </button>
                 </div>
                 {useMetricHeight ? (
-                  <GlassInput
+                  <Input
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     value={heightCmStr}
                     onChange={(e) => handleHeightCmChange(e.target.value)}
                     placeholder="170"
-                    suffix={<span className="text-text-muted">cm</span>}
+                    suffix={<span className="text-gray-400">cm</span>}
                   />
                 ) : (
                   <div className="flex gap-3">
-                    <GlassInput
+                    <Input
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       value={heightFeetStr}
                       onChange={(e) => handleHeightFeetChange(e.target.value)}
                       placeholder="5"
-                      suffix={<span className="text-text-muted">ft</span>}
+                      suffix={<span className="text-gray-400">ft</span>}
                     />
-                    <GlassInput
+                    <Input
                       type="text"
                       inputMode="numeric"
-                      pattern="[0-9]*"
                       value={heightInchesStr}
                       onChange={(e) => handleHeightInchesChange(e.target.value)}
                       placeholder="7"
-                      suffix={<span className="text-text-muted">in</span>}
+                      suffix={<span className="text-gray-400">in</span>}
                     />
                   </div>
                 )}
@@ -708,59 +763,57 @@ export default function Onboarding() {
               {/* Weight */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium text-text-secondary">Current Weight</label>
+                  <label className="text-sm font-medium text-gray-700">Current Weight</label>
                   <button
                     onClick={handleToggleWeightUnit}
-                    className="text-sm text-primary hover:text-primary-light transition-colors"
+                    className="text-sm text-gray-900 font-medium hover:underline"
                   >
                     Switch to {useMetricWeight ? 'lbs' : 'kg'}
                   </button>
                 </div>
-                <GlassInput
+                <Input
                   type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
                   value={weightStr}
                   onChange={(e) => handleWeightChange(e.target.value, useMetricWeight)}
                   placeholder={useMetricWeight ? '70' : '154'}
-                  suffix={<span className="text-text-muted">{useMetricWeight ? 'kg' : 'lbs'}</span>}
+                  suffix={<span className="text-gray-400">{useMetricWeight ? 'kg' : 'lbs'}</span>}
                 />
               </div>
 
               {/* Target Weight */}
-              <GlassInput
+              <Input
                 label="Target Weight (optional)"
                 type="text"
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={targetWeightStr}
                 onChange={(e) => handleTargetWeightChange(e.target.value, useMetricWeight)}
                 placeholder="Leave blank if none"
-                suffix={<span className="text-text-muted">{useMetricWeight ? 'kg' : 'lbs'}</span>}
+                suffix={<span className="text-gray-400">{useMetricWeight ? 'kg' : 'lbs'}</span>}
               />
 
               {/* Advanced Measurements */}
-              <div className="border-t border-white/10 pt-4">
+              <div className="border-t border-gray-200 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowAdvancedMeasurements(!showAdvancedMeasurements)}
                   className="flex items-center justify-between w-full text-left group"
                 >
                   <div>
-                    <span className="text-sm font-medium text-text-secondary group-hover:text-text transition-colors">
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
                       Advanced Measurements
                     </span>
-                    <span className="text-xs text-text-muted ml-2">(optional)</span>
+                    <span className="text-xs text-gray-400 ml-2">(optional)</span>
                   </div>
-                  <div className={`transition-transform duration-200 ${showAdvancedMeasurements ? 'rotate-180' : ''}`}>
+                  <div className={`transition-transform duration-200 text-gray-400 ${showAdvancedMeasurements ? 'rotate-180' : ''}`}>
                     <Icons.ChevronDown />
                   </div>
                 </button>
 
                 {showAdvancedMeasurements && (
-                  <div className="mt-4 space-y-4 p-4 bg-white/5 rounded-xl border border-white/10 fade-in-up">
+                  <div className="mt-4 space-y-4 p-4 bg-gray-50 rounded-xl">
                     <div className="grid grid-cols-3 gap-3">
-                      <GlassInput
+                      <Input
                         label="Waist"
                         type="text"
                         inputMode="numeric"
@@ -772,7 +825,7 @@ export default function Onboarding() {
                         }}
                         placeholder="cm"
                       />
-                      <GlassInput
+                      <Input
                         label="Hip"
                         type="text"
                         inputMode="numeric"
@@ -784,7 +837,7 @@ export default function Onboarding() {
                         }}
                         placeholder="cm"
                       />
-                      <GlassInput
+                      <Input
                         label="Neck"
                         type="text"
                         inputMode="numeric"
@@ -797,7 +850,7 @@ export default function Onboarding() {
                         placeholder="cm"
                       />
                     </div>
-                    <GlassInput
+                    <Input
                       label="Body Fat %"
                       type="text"
                       inputMode="decimal"
@@ -810,7 +863,7 @@ export default function Onboarding() {
                       placeholder="e.g., 18.5"
                       hint="If known"
                     />
-                    <GlassInput
+                    <Input
                       label="Resting Heart Rate"
                       type="text"
                       inputMode="numeric"
@@ -821,12 +874,12 @@ export default function Onboarding() {
                         setOnboardingData({ restingHeartRate: sanitized ? parseInt(sanitized) : undefined });
                       }}
                       placeholder="e.g., 65"
-                      suffix={<span className="text-text-muted text-xs">bpm</span>}
+                      suffix={<span className="text-gray-400 text-xs">bpm</span>}
                     />
                     <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-2">Blood Pressure</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Pressure</label>
                       <div className="flex items-center gap-2">
-                        <GlassInput
+                        <Input
                           type="text"
                           inputMode="numeric"
                           value={bpSystolicStr}
@@ -836,10 +889,9 @@ export default function Onboarding() {
                             setOnboardingData({ bloodPressureSystolic: sanitized ? parseInt(sanitized) : undefined });
                           }}
                           placeholder="120"
-                          className="flex-1"
                         />
-                        <span className="text-text-muted">/</span>
-                        <GlassInput
+                        <span className="text-gray-400">/</span>
+                        <Input
                           type="text"
                           inputMode="numeric"
                           value={bpDiastolicStr}
@@ -849,9 +901,8 @@ export default function Onboarding() {
                             setOnboardingData({ bloodPressureDiastolic: sanitized ? parseInt(sanitized) : undefined });
                           }}
                           placeholder="80"
-                          className="flex-1"
                         />
-                        <span className="text-text-muted text-xs">mmHg</span>
+                        <span className="text-gray-400 text-xs">mmHg</span>
                       </div>
                     </div>
                   </div>
@@ -862,43 +913,38 @@ export default function Onboarding() {
 
           {/* Step 2: Fitness Background */}
           {step === 2 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-text">Fitness Background</h1>
-                <p className="text-text-secondary mt-1">Tell us about your fitness journey</p>
+                <h2 className="text-2xl font-bold text-gray-900">Fitness Background</h2>
+                <p className="text-gray-500 mt-1">Tell us about your fitness journey</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Fitness Level</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Fitness Level</label>
                 <div className="space-y-2">
                   {FITNESS_LEVELS.map((level) => (
                     <button
                       key={level.id}
                       onClick={() => setOnboardingData({ fitnessLevel: level.id })}
                       className={`
-                        w-full p-4 text-left rounded-xl border transition-all duration-200
+                        w-full p-4 text-left rounded-xl border-2 transition-all duration-200
                         ${onboardingData.fitnessLevel === level.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{level.icon}</span>
-                        <div>
-                          <div className="font-semibold text-text">{level.label}</div>
-                          <div className="text-sm text-text-secondary">{level.desc}</div>
-                        </div>
-                      </div>
+                      <div className="font-semibold text-gray-900">{level.label}</div>
+                      <div className="text-sm text-gray-500">{level.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">
-                  Goals <span className="text-coral">*</span>
-                  <span className="text-text-muted font-normal ml-1">(select all that apply)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Goals <span className="text-red-500">*</span>
+                  <span className="text-gray-400 font-normal ml-1">(select all that apply)</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {GOALS.map((goal) => (
@@ -909,26 +955,24 @@ export default function Onboarding() {
                         toggleArrayItem('goals', goal);
                         if (errors.goals) setErrors((prev) => ({ ...prev, goals: '' }));
                       }}
-                      variant="primary"
                     >
                       {goal}
                     </SelectionChip>
                   ))}
                 </div>
                 {errors.goals && (
-                  <p className="text-coral text-sm mt-2">{errors.goals}</p>
+                  <p className="text-red-500 text-sm mt-2">{errors.goals}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Previous Experience</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Previous Experience</label>
                 <div className="flex flex-wrap gap-2">
                   {WORKOUT_EXPERIENCE.map((exp) => (
                     <SelectionChip
                       key={exp}
                       selected={onboardingData.workoutExperience.includes(exp)}
                       onClick={() => toggleArrayItem('workoutExperience', exp, 'None')}
-                      variant="secondary"
                     >
                       {exp}
                     </SelectionChip>
@@ -940,16 +984,16 @@ export default function Onboarding() {
 
           {/* Step 3: Schedule */}
           {step === 3 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-text">Your Schedule</h1>
-                <p className="text-text-secondary mt-1">When do you want to work out?</p>
+                <h2 className="text-2xl font-bold text-gray-900">Your Schedule</h2>
+                <p className="text-gray-500 mt-1">When do you want to work out?</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">
-                  Select Workout Days <span className="text-coral">*</span>
-                  <span className="text-text-muted font-normal ml-1">({onboardingData.selectedDays.length} days/week)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Select Workout Days <span className="text-red-500">*</span>
+                  <span className="text-gray-400 font-normal ml-1">({onboardingData.selectedDays.length} days/week)</span>
                 </label>
                 <div className="grid grid-cols-7 gap-2">
                   {DAYS_OF_WEEK.map((day) => (
@@ -961,13 +1005,13 @@ export default function Onboarding() {
                       }}
                       title={day.label}
                       className={`
-                        aspect-square flex flex-col items-center justify-center rounded-xl border
+                        aspect-square flex flex-col items-center justify-center rounded-xl border-2
                         transition-all duration-200
                         ${onboardingData.selectedDays.includes(day.id)
-                          ? 'border-primary bg-gradient-to-br from-primary to-primary-dark text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                          ? 'border-gray-900 bg-gray-900 text-white'
                           : errors.selectedDays
-                          ? 'border-coral/50 bg-coral/5 text-text-secondary'
-                          : 'border-white/10 bg-white/5 text-text-secondary hover:border-white/20'
+                          ? 'border-red-300 bg-red-50 text-gray-600'
+                          : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }
                       `}
                     >
@@ -976,52 +1020,52 @@ export default function Onboarding() {
                   ))}
                 </div>
                 {errors.selectedDays && (
-                  <p className="text-coral text-sm mt-2">{errors.selectedDays}</p>
+                  <p className="text-red-500 text-sm mt-2">{errors.selectedDays}</p>
                 )}
-                <p className="text-xs text-text-muted mt-2">M=Monday, T=Tuesday, W=Wednesday, T=Thursday, F=Friday, S=Saturday, S=Sunday</p>
+                <p className="text-xs text-gray-400 mt-2">M=Monday, T=Tuesday, W=Wednesday, T=Thursday, F=Friday, S=Saturday, S=Sunday</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Preferred Time</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Preferred Time</label>
                 <div className="grid grid-cols-3 gap-3">
                   {PREFERRED_TIMES.map((time) => (
                     <button
                       key={time.id}
                       onClick={() => setOnboardingData({ preferredTime: time.id })}
                       className={`
-                        p-4 rounded-xl border transition-all duration-200 text-center
+                        p-4 rounded-xl border-2 transition-all duration-200 text-center
                         ${onboardingData.preferredTime === time.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className={`mx-auto mb-2 ${onboardingData.preferredTime === time.id ? 'text-primary' : 'text-text-secondary'}`}>
+                      <div className={`mx-auto mb-2 ${onboardingData.preferredTime === time.id ? 'text-gray-900' : 'text-gray-400'}`}>
                         <time.Icon />
                       </div>
-                      <div className="text-sm font-medium text-text">{time.label}</div>
+                      <div className="text-sm font-medium text-gray-900">{time.label}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Workout Duration</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Workout Duration</label>
                 <div className="grid grid-cols-5 gap-2">
                   {WORKOUT_DURATIONS.map((duration) => (
                     <button
                       key={duration}
                       onClick={() => setOnboardingData({ workoutDuration: duration })}
                       className={`
-                        p-3 rounded-xl border transition-all duration-200 text-center
+                        p-3 rounded-xl border-2 transition-all duration-200 text-center
                         ${onboardingData.workoutDuration === duration
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="font-bold text-text">{duration}</div>
-                      <div className="text-xs text-text-muted">min</div>
+                      <div className="font-bold">{duration}</div>
+                      <div className={`text-xs ${onboardingData.workoutDuration === duration ? 'text-gray-300' : 'text-gray-400'}`}>min</div>
                     </button>
                   ))}
                 </div>
@@ -1031,65 +1075,64 @@ export default function Onboarding() {
 
           {/* Step 4: Workout Preferences */}
           {step === 4 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-text">Workout Preferences</h1>
-                <p className="text-text-secondary mt-1">Customize your training style</p>
+                <h2 className="text-2xl font-bold text-gray-900">Workout Preferences</h2>
+                <p className="text-gray-500 mt-1">Customize your training style</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Training Split</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Training Split</label>
                 <div className="space-y-2">
                   {TRAINING_SPLITS.map((split) => (
                     <button
                       key={split.id}
                       onClick={() => setOnboardingData({ trainingSplit: split.id })}
                       className={`
-                        w-full p-4 text-left rounded-xl border transition-all duration-200
+                        w-full p-4 text-left rounded-xl border-2 transition-all duration-200
                         ${onboardingData.trainingSplit === split.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="font-semibold text-text">{split.label}</div>
-                      <div className="text-sm text-text-secondary">{split.desc}</div>
+                      <div className="font-semibold text-gray-900">{split.label}</div>
+                      <div className="text-sm text-gray-500">{split.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Intensity Level</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Intensity Level</label>
                 <div className="grid grid-cols-3 gap-2">
                   {INTENSITY_LEVELS.map((intensity) => (
                     <button
                       key={intensity.id}
                       onClick={() => setOnboardingData({ intensityPreference: intensity.id })}
                       className={`
-                        p-3 rounded-xl border transition-all duration-200 text-center
+                        p-3 rounded-xl border-2 transition-all duration-200 text-center
                         ${onboardingData.intensityPreference === intensity.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="font-semibold text-sm text-text">{intensity.label}</div>
-                      <div className="text-xs text-text-muted mt-1">{intensity.desc}</div>
+                      <div className="font-semibold text-sm text-gray-900">{intensity.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{intensity.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Equipment Available</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Equipment Available</label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT.map((equip) => (
                     <SelectionChip
                       key={equip}
                       selected={onboardingData.equipment.includes(equip)}
                       onClick={() => toggleArrayItem('equipment', equip)}
-                      variant="secondary"
                     >
                       {equip}
                     </SelectionChip>
@@ -1098,22 +1141,22 @@ export default function Onboarding() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Workout Variety</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Workout Variety</label>
                 <div className="grid grid-cols-2 gap-3">
                   {WORKOUT_VARIETY.map((variety) => (
                     <button
                       key={variety.id}
                       onClick={() => setOnboardingData({ workoutVariety: variety.id })}
                       className={`
-                        p-4 rounded-xl border transition-all duration-200 text-left
+                        p-4 rounded-xl border-2 transition-all duration-200 text-left
                         ${onboardingData.workoutVariety === variety.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="font-semibold text-sm text-text">{variety.label}</div>
-                      <div className="text-xs text-text-muted mt-1">{variety.desc}</div>
+                      <div className="font-semibold text-sm text-gray-900">{variety.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{variety.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -1123,14 +1166,14 @@ export default function Onboarding() {
 
           {/* Step 5: Health & Limitations */}
           {step === 5 && (
-            <div className="space-y-6 fade-in-up">
+            <div className="space-y-6">
               <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-text">Health & Limitations</h1>
-                <p className="text-text-secondary mt-1">Help us keep your workouts safe</p>
+                <h2 className="text-2xl font-bold text-gray-900">Health & Limitations</h2>
+                <p className="text-gray-500 mt-1">Help us keep your workouts safe</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Any Injuries or Pain?</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Any Injuries or Pain?</label>
                 <div className="flex flex-wrap gap-2">
                   {INJURY_OPTIONS.map((injury) => (
                     <SelectionChip
@@ -1146,7 +1189,7 @@ export default function Onboarding() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Health Conditions</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Health Conditions</label>
                 <div className="flex flex-wrap gap-2">
                   {HEALTH_CONDITIONS.map((condition) => (
                     <SelectionChip
@@ -1162,22 +1205,22 @@ export default function Onboarding() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-3">Daily Activity Level</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Daily Activity Level</label>
                 <div className="space-y-2">
                   {ACTIVITY_LEVELS.map((level) => (
                     <button
                       key={level.id}
                       onClick={() => setOnboardingData({ activityLevel: level.id })}
                       className={`
-                        w-full p-4 text-left rounded-xl border transition-all duration-200
+                        w-full p-4 text-left rounded-xl border-2 transition-all duration-200
                         ${onboardingData.activityLevel === level.id
-                          ? 'border-primary bg-primary/20 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                          : 'border-white/10 bg-white/5 hover:border-white/20'
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
                         }
                       `}
                     >
-                      <div className="font-semibold text-text">{level.label}</div>
-                      <div className="text-sm text-text-secondary">{level.desc}</div>
+                      <div className="font-semibold text-gray-900">{level.label}</div>
+                      <div className="text-sm text-gray-500">{level.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -1186,25 +1229,30 @@ export default function Onboarding() {
           )}
 
           {/* Navigation */}
-          <div className="flex gap-4 mt-8 pt-6 border-t border-white/10">
+          <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
             {step > 0 && (
-              <GlassButton
-                variant="secondary"
+              <button
                 onClick={() => setStep(step - 1)}
-                fullWidth
+                className="flex-1 px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-all"
               >
                 Back
-              </GlassButton>
+              </button>
             )}
-            <GlassButton
+            <button
               onClick={handleNext}
-              loading={createUserMutation.isPending || isGenerating}
-              fullWidth
+              disabled={createUserMutation.isPending || isGenerating}
+              className="flex-1 px-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 disabled:opacity-50 transition-all"
             >
-              {step === 5 ? 'Create My Plan' : 'Continue'}
-            </GlassButton>
+              {createUserMutation.isPending || isGenerating ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+              ) : step === 5 ? (
+                'Create My Plan'
+              ) : (
+                'Continue'
+              )}
+            </button>
           </div>
-        </GlassCard>
+        </div>
       </div>
     </div>
   );

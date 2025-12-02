@@ -47,6 +47,7 @@ class LangGraphCoachService:
             "current_workout": request.current_workout.model_dump() if request.current_workout else None,
             "workout_schedule": request.workout_schedule.model_dump() if request.workout_schedule else None,
             "conversation_history": request.conversation_history,
+            "image_base64": request.image_base64,  # Pass image for food analysis
 
             # Intent extraction (will be filled by nodes)
             "intent": None,

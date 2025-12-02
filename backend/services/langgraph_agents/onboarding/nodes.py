@@ -4,7 +4,7 @@ Node implementations for the Onboarding LangGraph agent.
 AI-driven onboarding - no hardcoded questions!
 """
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -19,9 +19,71 @@ from .prompts import (
 )
 from core.config import get_settings
 from core.logger import get_logger
+from services.training_program_service import get_training_program_map_sync
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Non-gym activity patterns - activities that don't require gym workouts
+NON_GYM_ACTIVITIES = {
+    # Walking/Steps
+    'walk': {'activity': 'walking', 'complement': 'lower body strength and stretching'},
+    'walking': {'activity': 'walking', 'complement': 'lower body strength and stretching'},
+    'steps': {'activity': 'step counting', 'complement': 'lower body strength and stretching'},
+    '10k steps': {'activity': 'step counting', 'complement': 'lower body strength and stretching'},
+    '10000 steps': {'activity': 'step counting', 'complement': 'lower body strength and stretching'},
+    'daily steps': {'activity': 'step counting', 'complement': 'lower body strength and stretching'},
+
+    # Outdoor Cycling (not spin class)
+    'cycling outdoors': {'activity': 'outdoor cycling', 'complement': 'core and upper body strength'},
+    'bike outdoors': {'activity': 'outdoor cycling', 'complement': 'core and upper body strength'},
+    'road cycling': {'activity': 'outdoor cycling', 'complement': 'core and upper body strength'},
+    'mountain biking': {'activity': 'mountain biking', 'complement': 'core and upper body strength'},
+
+    # Outdoor Running (as primary, not training for)
+    'jogging': {'activity': 'jogging', 'complement': 'leg strength and mobility'},
+    'jog': {'activity': 'jogging', 'complement': 'leg strength and mobility'},
+    'just run': {'activity': 'running', 'complement': 'leg strength and mobility'},
+    'just running': {'activity': 'running', 'complement': 'leg strength and mobility'},
+
+    # Meditation/Mindfulness only
+    'meditation only': {'activity': 'meditation', 'complement': 'light stretching and mobility'},
+    'just meditation': {'activity': 'meditation', 'complement': 'light stretching and mobility'},
+    'just meditate': {'activity': 'meditation', 'complement': 'light stretching and mobility'},
+
+    # Sports without gym training
+    'just play': {'activity': 'recreational sports', 'complement': 'injury prevention exercises'},
+    'casual sports': {'activity': 'recreational sports', 'complement': 'injury prevention exercises'},
+
+    # Stretching only
+    'just stretch': {'activity': 'stretching', 'complement': 'light mobility work'},
+    'stretching only': {'activity': 'stretching', 'complement': 'light mobility work'},
+}
+
+
+def detect_non_gym_activity(user_message: str) -> Optional[Dict[str, str]]:
+    """
+    Detect if user's goal is a non-gym activity.
+
+    Returns:
+        dict with 'activity' and 'complement' if detected, None otherwise
+    """
+    user_lower = user_message.lower().strip()
+
+    # Check for explicit non-gym phrases
+    for pattern, info in NON_GYM_ACTIVITIES.items():
+        if pattern in user_lower:
+            logger.info(f"[Non-Gym Detection] Detected non-gym activity: {info['activity']}")
+            return info
+
+    # Check for step goals with numbers (e.g., "walk 10000 steps", "5k steps daily")
+    import re
+    step_pattern = r'\b(\d+k?)\s*(steps?|walking)\b'
+    if re.search(step_pattern, user_lower):
+        logger.info(f"[Non-Gym Detection] Detected step goal in message")
+        return {'activity': 'step counting', 'complement': 'lower body strength and stretching'}
+
+    return None
 
 
 async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
@@ -318,8 +380,141 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     logger.info(f"[Extract Data] Current missing fields: {missing}")
     logger.info(f"[Extract Data] User message: {user_message}")
 
+    # NON-GYM ACTIVITY DETECTION: If user mentions walking/steps/etc, auto-set complementary goals
+    if "goals" in missing:
+        non_gym_info = detect_non_gym_activity(user_message)
+        if non_gym_info:
+            # Map activity to appropriate complementary workout goals
+            activity_goals = {
+                'walking': ["General Fitness", "Flexibility", "Improve Endurance"],
+                'step counting': ["General Fitness", "Flexibility", "Improve Endurance"],
+                'outdoor cycling': ["General Fitness", "Increase Strength", "Improve Endurance"],
+                'mountain biking': ["General Fitness", "Increase Strength", "Improve Endurance"],
+                'jogging': ["General Fitness", "Flexibility", "Improve Endurance"],
+                'running': ["General Fitness", "Flexibility", "Improve Endurance"],
+                'meditation': ["General Fitness", "Flexibility"],
+                'recreational sports': ["General Fitness", "Flexibility"],
+                'stretching': ["General Fitness", "Flexibility"],
+            }
+            goals = activity_goals.get(non_gym_info['activity'], ["General Fitness", "Flexibility"])
+            logger.info(f"[Extract Data] Non-gym activity '{non_gym_info['activity']}' detected, setting complementary goals: {goals}")
+            return {
+                "collected_data": {
+                    **collected_data,
+                    "goals": goals,
+                },
+                "validation_errors": {},
+            }
+
     # PRE-PROCESSING: Handle common simple patterns before AI extraction
     extracted = {}
+
+    # If missing name and user provides it
+    if "name" in missing:
+        import re
+        user_lower = user_message.lower().strip()
+
+        # Pattern: "My name is X" or "I'm X" or "I am X" or "call me X" or just a single word/name
+        name_patterns = [
+            r"(?:my name is|i'm|i am|call me|it's|im)\s+([a-zA-Z][a-zA-Z\s'-]*?)(?:,|\.|\!|$|\s+i'm|\s+i am|\s+and)",
+            r"^([a-zA-Z][a-zA-Z'-]*?)(?:,|\.|\!|$)",  # Just a name at the start
+        ]
+
+        for pattern in name_patterns:
+            match = re.search(pattern, user_lower, re.IGNORECASE)
+            if match:
+                name = match.group(1).strip().title()
+                # Validate it's a reasonable name (not too long, not a common word)
+                common_words = {'the', 'and', 'or', 'but', 'if', 'then', 'yes', 'no', 'ok', 'okay', 'hi', 'hey', 'what', 'how', 'when', 'where', 'why'}
+                if len(name) <= 30 and name.lower() not in common_words:
+                    extracted["name"] = name
+                    logger.info(f"[Extract Data] ✅ Pre-processed: name = {extracted['name']}")
+                    break
+
+    # If missing age and user provides it
+    if "age" in missing:
+        import re
+        # Pattern: "25 years old" or "I'm 25" or "age 25" or just "25" when context is about age
+        age_patterns = [
+            r"(?:i'm|i am|age|aged)\s*(\d{1,3})\s*(?:years?\s*old)?",
+            r"(\d{1,3})\s*years?\s*old",
+            r"^(\d{1,3})$",  # Just a number
+        ]
+
+        for pattern in age_patterns:
+            match = re.search(pattern, user_message, re.IGNORECASE)
+            if match:
+                age = int(match.group(1))
+                if 13 <= age <= 100:
+                    extracted["age"] = age
+                    logger.info(f"[Extract Data] ✅ Pre-processed: age = {extracted['age']}")
+                    break
+
+    # If missing gender and user provides it
+    if "gender" in missing:
+        user_lower = user_message.lower()
+        if 'male' in user_lower and 'female' not in user_lower:
+            extracted["gender"] = "male"
+            logger.info(f"[Extract Data] ✅ Pre-processed: gender = male")
+        elif 'female' in user_lower:
+            extracted["gender"] = "female"
+            logger.info(f"[Extract Data] ✅ Pre-processed: gender = female")
+        elif user_lower.strip() in ['m', 'man', 'guy', 'boy']:
+            extracted["gender"] = "male"
+            logger.info(f"[Extract Data] ✅ Pre-processed: gender = male")
+        elif user_lower.strip() in ['f', 'woman', 'girl', 'lady']:
+            extracted["gender"] = "female"
+            logger.info(f"[Extract Data] ✅ Pre-processed: gender = female")
+
+    # If missing height and user provides it
+    if "heightCm" in missing:
+        import re
+        user_lower = user_message.lower()
+
+        # Pattern: "170cm" or "170 cm" or "1.70m" or "5'10" or "5 feet 10 inches"
+        cm_match = re.search(r'(\d{2,3})\s*(?:cm|centimeters?)', user_lower)
+        m_match = re.search(r'(\d+)[.,](\d+)\s*(?:m|meters?)', user_lower)
+        ft_in_match = re.search(r"(\d+)['\s]*(?:feet?|ft)?['\s]*(\d+)?[\"]*(?:\s*(?:inches?|in))?", user_lower)
+
+        if cm_match:
+            height = int(cm_match.group(1))
+            if 100 <= height <= 250:
+                extracted["heightCm"] = height
+                logger.info(f"[Extract Data] ✅ Pre-processed: heightCm = {height}")
+        elif m_match:
+            meters = float(f"{m_match.group(1)}.{m_match.group(2)}")
+            height = int(meters * 100)
+            if 100 <= height <= 250:
+                extracted["heightCm"] = height
+                logger.info(f"[Extract Data] ✅ Pre-processed: heightCm = {height}")
+        elif ft_in_match:
+            feet = int(ft_in_match.group(1))
+            inches = int(ft_in_match.group(2)) if ft_in_match.group(2) else 0
+            height = int((feet * 12 + inches) * 2.54)
+            if 100 <= height <= 250:
+                extracted["heightCm"] = height
+                logger.info(f"[Extract Data] ✅ Pre-processed: heightCm = {height}")
+
+    # If missing weight and user provides it
+    if "weightKg" in missing:
+        import re
+        user_lower = user_message.lower()
+
+        # Pattern: "70kg" or "70 kg" or "154lbs" or "154 lbs"
+        kg_match = re.search(r'(\d{2,3})\s*(?:kg|kilograms?|kilos?)', user_lower)
+        lbs_match = re.search(r'(\d{2,3})\s*(?:lbs?|pounds?)', user_lower)
+
+        if kg_match:
+            weight = int(kg_match.group(1))
+            if 30 <= weight <= 300:
+                extracted["weightKg"] = weight
+                logger.info(f"[Extract Data] ✅ Pre-processed: weightKg = {weight}")
+        elif lbs_match:
+            lbs = int(lbs_match.group(1))
+            weight = round(lbs * 0.453592)
+            if 30 <= weight <= 300:
+                extracted["weightKg"] = weight
+                logger.info(f"[Extract Data] ✅ Pre-processed: weightKg = {weight}")
 
     # If missing days_per_week and user says a number 1-7
     if "days_per_week" in missing:
@@ -360,17 +555,144 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
             extracted["selected_days"] = selected_indices
             logger.info(f"[Extract Data] ✅ Pre-processed: selected_days = {extracted['selected_days']}")
 
-    # If we found simple patterns, skip AI extraction for those fields
+    # If missing equipment and user sends equipment value
+    if "equipment" in missing:
+        # Map user input (case-insensitive) to valid equipment values
+        equipment_map = {
+            'full gym': 'Full Gym',
+            'dumbbells': 'Dumbbells',
+            'dumbbell': 'Dumbbells',
+            'resistance bands': 'Resistance Bands',
+            'resistance band': 'Resistance Bands',
+            'bands': 'Resistance Bands',
+            'bodyweight only': 'Bodyweight Only',
+            'bodyweight': 'Bodyweight Only',
+            'barbell': 'Barbell',
+            'kettlebell': 'Kettlebell',
+            'kettlebells': 'Kettlebell',
+            'cable machine': 'Cable Machine',
+            'cable': 'Cable Machine',
+            'pull-up bar': 'Pull-up Bar',
+            'pull up bar': 'Pull-up Bar',
+            'bench': 'Bench',
+        }
+        user_lower = user_message.strip().lower()
+        matched_equipment = []
+
+        # Check for exact match first
+        if user_lower in equipment_map:
+            matched_equipment.append(equipment_map[user_lower])
+        else:
+            # Check for partial matches
+            for key, value in equipment_map.items():
+                if key in user_lower:
+                    if value not in matched_equipment:
+                        matched_equipment.append(value)
+
+        if matched_equipment:
+            # Merge with existing equipment if any
+            existing = collected_data.get("equipment", [])
+            merged_equipment = list(set(existing + matched_equipment))
+            extracted["equipment"] = merged_equipment
+            logger.info(f"[Extract Data] ✅ Pre-processed: equipment = {extracted['equipment']}")
+
+    # If missing goals and user sends goals value
+    if "goals" in missing:
+        # Map user input (case-insensitive) to valid goal values
+        goals_map = {
+            'build muscle': 'Build Muscle',
+            'muscle': 'Build Muscle',
+            'lose weight': 'Lose Weight',
+            'weight loss': 'Lose Weight',
+            'fat loss': 'Lose Weight',
+            'increase strength': 'Increase Strength',
+            'get stronger': 'Increase Strength',
+            'strength': 'Increase Strength',
+            'improve endurance': 'Improve Endurance',
+            'endurance': 'Improve Endurance',
+            'cardio': 'Improve Endurance',
+            'general fitness': 'General Fitness',
+            'stay fit': 'General Fitness',
+            'stay healthy': 'General Fitness',
+            'tone': 'General Fitness',
+            'toning': 'General Fitness',
+        }
+
+        # Get training program map dynamically from database/cache
+        training_program_map = get_training_program_map_sync()
+
+        user_lower = user_message.strip().lower()
+        matched_goals = []
+
+        # Check for exact match in goals_map first
+        if user_lower in goals_map:
+            matched_goals.append(goals_map[user_lower])
+        else:
+            # Check for partial matches in goals_map
+            for key, value in goals_map.items():
+                if key in user_lower:
+                    if value not in matched_goals:
+                        matched_goals.append(value)
+
+        # Also check training program map for specialized programs
+        for key, goals_list in training_program_map.items():
+            if key in user_lower:
+                for goal in goals_list:
+                    if goal not in matched_goals:
+                        matched_goals.append(goal)
+
+        if matched_goals:
+            # Merge with existing goals if any
+            existing = collected_data.get("goals", [])
+            merged_goals = list(set(existing + matched_goals))
+            extracted["goals"] = merged_goals
+            logger.info(f"[Extract Data] ✅ Pre-processed: goals = {extracted['goals']}")
+
+    # If missing fitness_level and user sends fitness level value
+    if "fitness_level" in missing:
+        fitness_level_map = {
+            'beginner': 'beginner',
+            'newbie': 'beginner',
+            'new': 'beginner',
+            'intermediate': 'intermediate',
+            'medium': 'intermediate',
+            'advanced': 'advanced',
+            'expert': 'advanced',
+            'pro': 'advanced',
+        }
+        user_lower = user_message.strip().lower()
+
+        if user_lower in fitness_level_map:
+            extracted["fitness_level"] = fitness_level_map[user_lower]
+            logger.info(f"[Extract Data] ✅ Pre-processed: fitness_level = {extracted['fitness_level']}")
+
+    # If we found data via pre-processing, use it
     if extracted:
         merged = collected_data.copy()
         merged.update(extracted)
-        logger.info(f"[Extract Data] 🎯 Used pre-processing, skipping AI for simple numeric response")
-        return {
-            "collected_data": merged,
-            "validation_errors": {},
-        }
+        logger.info(f"[Extract Data] 🎯 Pre-processed: {list(extracted.keys())}")
 
-    # Otherwise, continue with AI extraction as normal...
+        # Calculate how many fields we still need after pre-processing
+        remaining_missing = []
+        for field in REQUIRED_FIELDS:
+            value = merged.get(field)
+            if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
+                remaining_missing.append(field)
+
+        # If we extracted most/all expected data from a multi-info message, skip AI
+        # Otherwise, let AI try to extract remaining data
+        if len(extracted) >= 3 or len(remaining_missing) == 0:
+            logger.info(f"[Extract Data] ✅ Pre-processing extracted {len(extracted)} fields, skipping AI")
+            return {
+                "collected_data": merged,
+                "validation_errors": {},
+            }
+        else:
+            # Continue to AI extraction with merged data as base
+            collected_data = merged
+            logger.info(f"[Extract Data] ℹ️ Pre-processing got {len(extracted)} fields, trying AI for remaining: {remaining_missing}")
+
+    # Continue with AI extraction for complex messages or remaining fields...
 
     # Build extraction prompt
     extraction_prompt = DATA_EXTRACTION_SYSTEM_PROMPT.format(
