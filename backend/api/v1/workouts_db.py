@@ -9,10 +9,11 @@ ENDPOINTS:
 - DELETE /api/v1/workouts-db/{id} - Delete workout
 - POST /api/v1/workouts-db/{id}/complete - Mark workout as completed
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from typing import List, Optional
 from datetime import datetime, timedelta
 import json
+import asyncio
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -20,7 +21,8 @@ from models.schemas import (
     Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
     SwapWorkoutsRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
     GenerateMonthlyRequest, GenerateMonthlyResponse,
-    RegenerateWorkoutRequest, RevertWorkoutRequest, WorkoutVersionInfo
+    RegenerateWorkoutRequest, RevertWorkoutRequest, WorkoutVersionInfo,
+    PendingWorkoutGenerationStatus, ScheduleBackgroundGenerationRequest
 )
 from services.openai_service import OpenAIService
 from services.rag_service import WorkoutRAGService
@@ -1435,3 +1437,222 @@ async def create_workout_warmup_and_stretches(
     except Exception as e:
         logger.error(f"Failed to create warmup and stretches: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Background Workout Generation
+# ============================================
+
+from services.job_queue_service import get_job_queue_service
+
+
+async def _run_background_generation(
+    job_id: str,
+    user_id: str,
+    month_start_date: str,
+    duration_minutes: int,
+    selected_days: List[int],
+    weeks: int
+):
+    """Background task to generate remaining workouts with database-backed job tracking."""
+    logger.info(f"🔄 Starting background generation for user {user_id} (job {job_id})")
+
+    job_queue = get_job_queue_service()
+
+    try:
+        # Update job status to in_progress
+        job_queue.update_job_status(job_id, "in_progress")
+
+        # Create the request and call the existing generate_remaining_workouts logic
+        request = GenerateMonthlyRequest(
+            user_id=user_id,
+            month_start_date=month_start_date,
+            duration_minutes=duration_minutes,
+            selected_days=selected_days,
+            weeks=weeks
+        )
+
+        # Call the synchronous generation
+        result = await generate_remaining_workouts(request)
+
+        # Update job as completed
+        job_queue.update_job_status(
+            job_id,
+            "completed",
+            total_generated=result.total_generated
+        )
+
+        logger.info(f"✅ Background generation completed for user {user_id}: {result.total_generated} workouts")
+
+    except Exception as e:
+        logger.error(f"❌ Background generation failed for user {user_id}: {e}")
+        job_queue.update_job_status(
+            job_id,
+            "failed",
+            error_message=str(e)
+        )
+
+
+@router.post("/schedule-background-generation")
+async def schedule_background_generation(
+    request: ScheduleBackgroundGenerationRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Schedule workout generation to run in the background on the server.
+
+    This endpoint returns immediately after scheduling the task.
+    Use GET /generation-status/{user_id} to check progress.
+
+    Jobs are persisted to database for reliability across server restarts.
+    """
+    logger.info(f"📅 Scheduling background generation for user {request.user_id}")
+
+    job_queue = get_job_queue_service()
+
+    # Check if already generating
+    existing_job = job_queue.get_user_pending_job(request.user_id)
+    if existing_job and existing_job.get("status") == "in_progress":
+        return {
+            "success": True,
+            "message": "Generation already in progress",
+            "status": "in_progress",
+            "job_id": existing_job.get("id")
+        }
+
+    # Create a new job in the database
+    job_id = job_queue.create_job(
+        user_id=request.user_id,
+        month_start_date=request.month_start_date,
+        duration_minutes=request.duration_minutes,
+        selected_days=request.selected_days,
+        weeks=request.weeks
+    )
+
+    # Schedule the background task with job_id
+    background_tasks.add_task(
+        _run_background_generation,
+        job_id,
+        request.user_id,
+        request.month_start_date,
+        request.duration_minutes,
+        request.selected_days,
+        request.weeks
+    )
+
+    return {
+        "success": True,
+        "message": "Workout generation scheduled",
+        "status": "pending",
+        "job_id": job_id
+    }
+
+
+@router.get("/generation-status/{user_id}", response_model=PendingWorkoutGenerationStatus)
+async def get_generation_status(user_id: str):
+    """Get the status of background workout generation for a user."""
+    job_queue = get_job_queue_service()
+
+    # Check for any pending/in-progress job first
+    job = job_queue.get_user_pending_job(user_id)
+
+    if not job:
+        # Check the latest completed job
+        job = job_queue.get_latest_job_for_user(user_id)
+
+    if not job:
+        # No job found - check if user has sufficient workouts
+        db = get_supabase_db()
+        workouts = db.list_workouts(user_id, limit=50)
+
+        return PendingWorkoutGenerationStatus(
+            user_id=user_id,
+            status="none",
+            total_expected=0,
+            total_generated=len(workouts) if workouts else 0,
+            error_message=None
+        )
+
+    return PendingWorkoutGenerationStatus(
+        user_id=user_id,
+        status=job.get("status", "unknown"),
+        total_expected=job.get("total_expected", 0),
+        total_generated=job.get("total_generated", 0),
+        error_message=job.get("error_message")
+    )
+
+
+@router.post("/ensure-workouts-generated")
+async def ensure_workouts_generated(
+    request: ScheduleBackgroundGenerationRequest,
+    background_tasks: BackgroundTasks
+):
+    """
+    Check if user has sufficient workouts, and trigger generation if not.
+
+    This is meant to be called when the Home page loads to ensure workouts
+    exist even if the initial onboarding generation failed.
+
+    Jobs are persisted to database for reliability across server restarts.
+    """
+    db = get_supabase_db()
+    job_queue = get_job_queue_service()
+
+    # Get user's workout count
+    workouts = db.list_workouts(request.user_id, limit=100)
+    workout_count = len(workouts) if workouts else 0
+
+    # Calculate expected minimum workouts (at least 2 weeks worth)
+    min_expected = 2 * len(request.selected_days)
+
+    if workout_count >= min_expected:
+        return {
+            "success": True,
+            "message": "Sufficient workouts exist",
+            "workout_count": workout_count,
+            "needs_generation": False
+        }
+
+    # Check if already generating
+    existing_job = job_queue.get_user_pending_job(request.user_id)
+    if existing_job and existing_job.get("status") == "in_progress":
+        return {
+            "success": True,
+            "message": "Generation already in progress",
+            "workout_count": workout_count,
+            "needs_generation": True,
+            "status": "in_progress",
+            "job_id": existing_job.get("id")
+        }
+
+    # Need to generate more workouts
+    logger.info(f"⚠️ User {request.user_id} has only {workout_count} workouts, triggering generation")
+
+    # Create a new job in the database
+    job_id = job_queue.create_job(
+        user_id=request.user_id,
+        month_start_date=request.month_start_date,
+        duration_minutes=request.duration_minutes,
+        selected_days=request.selected_days,
+        weeks=request.weeks
+    )
+
+    # Schedule the background task with job_id
+    background_tasks.add_task(
+        _run_background_generation,
+        job_id,
+        request.user_id,
+        request.month_start_date,
+        request.duration_minutes,
+        request.selected_days,
+        request.weeks
+    )
+
+    return {
+        "success": True,
+        "message": "Workout generation scheduled",
+        "workout_count": workout_count,
+        "needs_generation": True,
+        "status": "pending",
+        "job_id": job_id
+    }

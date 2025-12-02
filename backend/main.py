@@ -23,6 +23,7 @@ from services.openai_service import OpenAIService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from services.exercise_rag_service import get_exercise_rag_service
+from services.job_queue_service import get_job_queue_service
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -98,6 +99,50 @@ async def lifespan(app: FastAPI):
         logger.error("Workouts will fall back to AI-generated exercises")
 
     logger.info("All services initialized (LangGraph agents ready)")
+
+    # Check for pending workout generation jobs and resume them
+    logger.info("Checking for pending workout generation jobs...")
+    try:
+        job_queue = get_job_queue_service()
+
+        # First, cancel any stale jobs (older than 24 hours)
+        job_queue.cancel_stale_jobs(older_than_hours=24)
+
+        # Get pending jobs to resume
+        pending_jobs = job_queue.get_pending_jobs()
+
+        if pending_jobs:
+            logger.info(f"🔄 Found {len(pending_jobs)} pending workout generation jobs to resume")
+
+            # Import the background generation function
+            from api.v1.workouts_db import _run_background_generation
+            import asyncio
+
+            for job in pending_jobs:
+                job_id = job.get("id")
+                user_id = job.get("user_id")
+                status = job.get("status")
+
+                logger.info(f"  - Resuming job {job_id} for user {user_id} (status: {status})")
+
+                # Create an async task to resume the job
+                asyncio.create_task(
+                    _run_background_generation(
+                        job_id=str(job_id),
+                        user_id=str(user_id),
+                        month_start_date=str(job.get("month_start_date")),
+                        duration_minutes=job.get("duration_minutes", 45),
+                        selected_days=job.get("selected_days", [0, 2, 4]),
+                        weeks=job.get("weeks", 11)
+                    )
+                )
+        else:
+            logger.info("✅ No pending workout generation jobs")
+
+    except Exception as e:
+        logger.error(f"⚠️ Failed to check/resume pending jobs: {e}")
+        # Don't fail startup if job recovery fails
+
     logger.info(f"Server running at http://{settings.host}:{settings.port}")
     logger.info(f"API docs at http://{settings.host}:{settings.port}/docs")
 

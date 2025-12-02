@@ -12,6 +12,8 @@ NEED
 9. Browser notifications?
 10. Generate images of workout programs
 Generate an image prompt and an image rationale for a fitness app banner based on the archetype of [INSERT CHARACTER NAME HERE]. 
+11. Need badges like gravl to show accomplishments
+12. 
 
 The prompt must fulfill the following strategic criteria:
 1.  **Safety & Legal Firewall:** Explicitly instruct the image generation to avoid all trademarked elements: no masks, no specific logos, no official armor/costume designs, and no character name in the final visual.

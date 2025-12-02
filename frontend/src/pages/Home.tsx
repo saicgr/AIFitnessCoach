@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
-import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts } from '../api/client';
+import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, ensureWorkoutsGenerated } from '../api/client';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
 import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
 import WorkoutDetailPanel from '../components/WorkoutDetailPanel';
@@ -217,6 +217,57 @@ export default function Home() {
       setWorkouts(data);
     }
   }, [data, setWorkouts]);
+
+  // Recovery check: Ensure user has sufficient workouts generated
+  // This catches cases where background generation failed during onboarding
+  useEffect(() => {
+    const checkAndEnsureWorkouts = async () => {
+      // Only check if user is loaded and workouts have been fetched
+      if (!user || !data || isBackgroundGenerating) return;
+
+      // If user has onboarding completed but very few workouts, trigger recovery
+      // Expected: ~12 weeks * 2-3 days/week = 24-36 workouts
+      // Recovery threshold: less than 10 workouts indicates failed generation
+      if (user.onboarding_completed && data.length < 10) {
+        log.info(`🔧 Recovery check: User has ${data.length} workouts (expected 24+). Triggering background generation...`);
+        setIsBackgroundGenerating(true);
+
+        try {
+          // Get user preferences for generation
+          const preferences = typeof user.preferences === 'string'
+            ? JSON.parse(user.preferences)
+            : user.preferences || {};
+
+          const selectedDays = preferences.selected_days || [0, 2, 4]; // Default Mon/Wed/Fri
+          const workoutDuration = preferences.workout_duration || 45;
+
+          const today = new Date();
+          const monthStartDate = today.toISOString().split('T')[0];
+
+          const result = await ensureWorkoutsGenerated({
+            user_id: String(user.id),
+            month_start_date: monthStartDate,
+            duration_minutes: workoutDuration,
+            selected_days: selectedDays,
+            weeks: 11, // Generate remaining weeks
+          });
+
+          log.info(`✅ Recovery result: ${result.message}`);
+
+          // Refetch workouts after a delay to pick up newly generated ones
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
+            setIsBackgroundGenerating(false);
+          }, 5000);
+        } catch (err) {
+          log.error('Failed to ensure workouts generated:', err);
+          setIsBackgroundGenerating(false);
+        }
+      }
+    };
+
+    checkAndEnsureWorkouts();
+  }, [user, data, isBackgroundGenerating, queryClient]);
 
   // Get today's date for filtering
   const today = new Date().toISOString().split('T')[0];

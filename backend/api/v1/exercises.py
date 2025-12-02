@@ -252,24 +252,28 @@ async def get_exercise_from_library_by_name(name: str):
         db = get_supabase_db()
 
         # First try exact match (case-insensitive)
-        result = db.client.table("exercise_library").select("*").ilike("name", name).limit(1).execute()
+        # Note: exercise_library uses 'exercise_name' column, not 'name'
+        result = db.client.table("exercise_library").select("*").ilike("exercise_name", name).limit(1).execute()
 
         if not result.data:
             # Try fuzzy match - search for name containing the search term
-            result = db.client.table("exercise_library").select("*").ilike("name", f"%{name}%").limit(1).execute()
+            result = db.client.table("exercise_library").select("*").ilike("exercise_name", f"%{name}%").limit(1).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Exercise not found in library")
 
         exercise = result.data[0]
 
+        # Map exercise_library columns to expected response format
+        # Columns: id, exercise_name, body_part, equipment, target_muscle, secondary_muscles,
+        #          instructions, difficulty_level, category, gif_url, video_s3_path, raw_data, created_at
         return {
             "id": exercise.get("id"),
-            "name": exercise.get("name"),
+            "name": exercise.get("exercise_name"),
             "instructions": exercise.get("instructions"),
-            "muscle_group": exercise.get("muscle_group"),
+            "muscle_group": exercise.get("target_muscle") or exercise.get("body_part"),
             "equipment": exercise.get("equipment"),
-            "video_url": exercise.get("video_url"),
+            "video_url": exercise.get("video_s3_path") or exercise.get("gif_url"),
         }
 
     except HTTPException:

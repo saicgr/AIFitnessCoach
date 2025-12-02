@@ -24,7 +24,7 @@ import {
   createUser,
   updateUser,
   generateMonthlyWorkouts,
-  generateRemainingWorkouts,
+  scheduleBackgroundGeneration,
   getWorkouts,
   deleteWorkout,
 } from '../api/client';
@@ -308,10 +308,10 @@ const ConversationalOnboarding: FC = () => {
       log.info('User saved:', savedUser);
 
       setWorkoutLoadingProgress(25);
-      setWorkoutLoadingMessage('Generating your first week of workouts...');
+      setWorkoutLoadingMessage('Generating your first 2 weeks of workouts...');
 
-      // Generate workouts - week 1 first, then remaining weeks in background
-      log.info('Starting workout generation - week 1 first...');
+      // Generate workouts - first 2 weeks first, then remaining weeks in background
+      log.info('Starting workout generation - first 2 weeks first...');
       try {
         // Convert day names to indices (0=Mon, 1=Tue, ..., 6=Sun)
         const dayNameToIndex: Record<string, number> = {
@@ -372,45 +372,45 @@ const ConversationalOnboarding: FC = () => {
           });
         }, 500);
 
-        // STEP 1: Generate just week 1 first (fast, so user can start immediately)
-        setWorkoutLoadingMessage(`Creating your first week of personalized workouts...`);
+        // STEP 1: Generate first 2 weeks (so user has enough workouts to start)
+        setWorkoutLoadingMessage(`Creating your first 2 weeks of personalized workouts...`);
 
-        const week1Result = await generateMonthlyWorkouts({
+        const first2WeeksResult = await generateMonthlyWorkouts({
           user_id: String(savedUser.id),
           month_start_date: monthStartDate,
           duration_minutes: finalData.workoutDuration || 45,
           selected_days: selectedDayIndices,
-          weeks: 1,  // Just week 1 for immediate use
+          weeks: 2,  // First 2 weeks for immediate use
         });
 
         clearInterval(progressInterval);
         setWorkoutLoadingProgress(90);
-        log.info(`Generated ${week1Result.total_generated} workouts for week 1!`);
+        log.info(`Generated ${first2WeeksResult.total_generated} workouts for first 2 weeks!`);
 
-        // STEP 2: Fire off remaining weeks in the background (don't wait)
-        // User will see their workouts grow as they're generated
+        // STEP 2: Schedule remaining weeks to be generated on the SERVER
+        // This ensures generation continues even if user navigates away
         const remainingWeeksRequest = {
           user_id: String(savedUser.id),
           month_start_date: monthStartDate,
           duration_minutes: finalData.workoutDuration || 45,
           selected_days: selectedDayIndices,
-          weeks: 11,  // Weeks 2-12
+          weeks: 10,  // Weeks 3-12
         };
 
-        // Fire and forget - don't await, just log results
-        generateRemainingWorkouts(remainingWeeksRequest)
-          .then((result) => {
-            log.info(`✅ Background generation complete: ${result.total_generated} additional workouts created!`);
-          })
-          .catch((err) => {
-            log.error('⚠️ Background workout generation failed:', err);
-            // Silently fail - user already has week 1
-          });
+        // Schedule server-side background generation - returns immediately
+        // The server will continue generating even if the client disconnects
+        try {
+          const scheduleResult = await scheduleBackgroundGeneration(remainingWeeksRequest);
+          log.info(`✅ Server-side background generation scheduled: ${scheduleResult.message}`);
+        } catch (scheduleErr) {
+          log.error('⚠️ Failed to schedule background generation:', scheduleErr);
+          // Non-critical - user already has week 1, and Home page will retry
+        }
 
         setWorkoutLoadingProgress(95);
-        setWorkoutLoadingMessage(`Week 1 ready! More workouts generating in background...`);
+        setWorkoutLoadingMessage(`First 2 weeks ready! More workouts generating in background...`);
       } catch (workoutErr: any) {
-        log.error('Failed to generate week 1 workouts:', workoutErr);
+        log.error('Failed to generate first 2 weeks workouts:', workoutErr);
         log.error('Error details:', workoutErr?.response?.data || workoutErr?.message || 'Unknown error');
         // Don't fail onboarding if workout generation fails
         setWorkoutLoadingMessage('Workouts will be generated later. Finishing setup...');
@@ -664,11 +664,11 @@ const ConversationalOnboarding: FC = () => {
               {Math.round(workoutLoadingProgress)}% complete
             </p>
 
-            {/* Badge - shows week 1 first, then remaining weeks in background */}
+            {/* Badge - shows first 2 weeks, then remaining weeks in background */}
             <div className="flex justify-center mt-6">
               <div className="px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30">
                 <span className="text-sm font-medium text-primary">
-                  {workoutLoadingProgress < 90 ? 'Week 1 First' : '12 Weeks of Workouts'}
+                  {workoutLoadingProgress < 90 ? 'First 2 Weeks' : '12 Weeks of Workouts'}
                 </span>
               </div>
             </div>

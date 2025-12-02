@@ -603,3 +603,25 @@ class RegenerateStretchRequest(BaseModel):
     stretch_id: str  # UUID of the stretch to regenerate
     workout_id: str  # UUID of the workout
     duration_minutes: Optional[int] = 5
+
+
+# ============================================
+# Background Workout Generation
+# ============================================
+
+class PendingWorkoutGenerationStatus(BaseModel):
+    """Status response for pending workout generation."""
+    user_id: str
+    status: str  # pending, in_progress, completed, failed
+    total_expected: int = 0
+    total_generated: int = 0
+    error_message: Optional[str] = None
+
+
+class ScheduleBackgroundGenerationRequest(BaseModel):
+    """Request to schedule background workout generation."""
+    user_id: str
+    month_start_date: str
+    duration_minutes: int = 45
+    selected_days: List[int]
+    weeks: int = 11

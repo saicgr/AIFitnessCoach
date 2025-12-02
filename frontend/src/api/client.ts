@@ -171,6 +171,64 @@ export const generateRemainingWorkouts = async (request: GenerateMonthlyRequest)
   };
 };
 
+// Background workout generation - runs on the server and doesn't depend on client connection
+export interface ScheduleBackgroundGenerationRequest {
+  user_id: string;
+  month_start_date: string;
+  duration_minutes: number;
+  selected_days: number[];
+  weeks: number;
+}
+
+export interface BackgroundGenerationResponse {
+  success: boolean;
+  message: string;
+  status: string;
+}
+
+export interface GenerationStatusResponse {
+  user_id: string;
+  status: 'none' | 'pending' | 'in_progress' | 'completed' | 'failed';
+  total_expected: number;
+  total_generated: number;
+  error_message: string | null;
+}
+
+export interface EnsureWorkoutsResponse {
+  success: boolean;
+  message: string;
+  workout_count: number;
+  needs_generation: boolean;
+  status?: string;
+}
+
+export const scheduleBackgroundGeneration = async (
+  request: ScheduleBackgroundGenerationRequest
+): Promise<BackgroundGenerationResponse> => {
+  const { data } = await api.post<BackgroundGenerationResponse>(
+    '/workouts-db/schedule-background-generation',
+    request
+  );
+  return data;
+};
+
+export const getGenerationStatus = async (userId: string): Promise<GenerationStatusResponse> => {
+  const { data } = await api.get<GenerationStatusResponse>(
+    `/workouts-db/generation-status/${userId}`
+  );
+  return data;
+};
+
+export const ensureWorkoutsGenerated = async (
+  request: ScheduleBackgroundGenerationRequest
+): Promise<EnsureWorkoutsResponse> => {
+  const { data } = await api.post<EnsureWorkoutsResponse>(
+    '/workouts-db/ensure-workouts-generated',
+    request
+  );
+  return data;
+};
+
 export const completeWorkout = async (workoutId: string): Promise<Workout> => {
   const { data } = await api.post<WorkoutBackend>(`/workouts-db/${workoutId}/complete`);
   return parseWorkout(data);

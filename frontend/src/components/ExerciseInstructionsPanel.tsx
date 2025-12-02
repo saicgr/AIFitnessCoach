@@ -20,37 +20,34 @@ function formatNotes(notes: string): string[] {
     .filter(part => part.length > 0);
 }
 
-// Check if notes appear truncated (less than 150 chars or ends abruptly)
-function isTruncated(notes: string | undefined): boolean {
-  if (!notes) return false;
-  // Check if it's suspiciously short or ends without a period/punctuation
-  return notes.length > 0 && notes.length < 250 && !notes.endsWith('.');
-}
-
 export default function ExerciseInstructionsPanel({ exercise }: ExerciseInstructionsPanelProps) {
   const [fullInstructions, setFullInstructions] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch full instructions if current notes appear truncated
+  // Always fetch full instructions from exercise library when panel opens
+  // The workout exercise notes may be truncated, so we always try to get the full version
   useEffect(() => {
     const fetchFullInstructions = async () => {
-      if (isTruncated(exercise.notes) && exercise.name) {
-        setIsLoading(true);
-        try {
-          const details = await getExerciseFromLibraryByName(exercise.name);
-          if (details?.instructions && details.instructions.length > (exercise.notes?.length || 0)) {
-            setFullInstructions(details.instructions);
-          }
-        } catch {
-          // Silently fail - we'll just show the existing notes
-        } finally {
-          setIsLoading(false);
+      if (!exercise.name) return;
+
+      setIsLoading(true);
+      setFullInstructions(null); // Reset on exercise change
+
+      try {
+        const details = await getExerciseFromLibraryByName(exercise.name);
+        if (details?.instructions) {
+          // Use library instructions if they exist and are longer/more complete
+          setFullInstructions(details.instructions);
         }
+      } catch {
+        // Silently fail - we'll just show the existing notes
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchFullInstructions();
-  }, [exercise.name, exercise.notes]);
+  }, [exercise.name]);
 
   // Use full instructions if available, otherwise fall back to exercise notes
   const displayNotes = fullInstructions || exercise.notes;
