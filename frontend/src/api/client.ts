@@ -36,7 +36,7 @@ import { useAppStore } from '../store';
 const log = createLogger('api');
 
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
