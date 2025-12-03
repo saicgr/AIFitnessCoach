@@ -183,6 +183,10 @@ export default function Home() {
   // Track if we've already attempted top-up this session to prevent duplicate calls
   const [topUpAttempted, setTopUpAttempted] = useState(false);
 
+  // Track recent workout operations (swap/delete) to skip auto-regeneration
+  // This prevents regenerating workouts when user intentionally moves/deletes them
+  const [recentWorkoutOperation, setRecentWorkoutOperation] = useState<number | null>(null);
+
   // PROGRESSIVE GENERATION: Check if user needs more workouts generated
   // Triggers when user has ≤3 upcoming (uncompleted) workouts
   useEffect(() => {
@@ -190,6 +194,13 @@ export default function Home() {
       // Only check if user is loaded and workouts have been fetched
       if (!user || !data || isBackgroundGenerating || topUpAttempted) return;
       if (!user.onboarding_completed) return;
+
+      // Skip if there was a recent workout operation (swap/delete) in the last 30 seconds
+      // This prevents regenerating workouts the user just moved or deleted
+      if (recentWorkoutOperation && Date.now() - recentWorkoutOperation < 30000) {
+        log.info('⏭️ Skipping top-up check - recent workout operation detected');
+        return;
+      }
 
       // Count upcoming (uncompleted) workouts
       const today = new Date();
@@ -278,7 +289,7 @@ export default function Home() {
     };
 
     checkAndTopUpWorkouts();
-  }, [user, data, isBackgroundGenerating, topUpAttempted, queryClient, onboardingData, setOnboardingData]);
+  }, [user, data, isBackgroundGenerating, topUpAttempted, recentWorkoutOperation, queryClient, onboardingData, setOnboardingData]);
 
   // Get today's date for filtering
   const today = new Date().toISOString().split('T')[0];
@@ -699,6 +710,7 @@ export default function Home() {
                   onSelectWorkout={isDesktop ? handleSelectWorkout : undefined}
                   selectedWorkoutId={selectedWorkoutId}
                   compact={!!selectedExercise}
+                  onWorkoutOperation={() => setRecentWorkoutOperation(Date.now())}
                 />
               </div>
 

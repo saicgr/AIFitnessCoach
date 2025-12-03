@@ -25,6 +25,7 @@ interface WorkoutTimelineProps {
   onSelectWorkout?: (workoutId: string) => void;
   selectedWorkoutId?: string | null;
   compact?: boolean; // For 4-panel layout when exercise is selected
+  onWorkoutOperation?: () => void; // Called when workout is swapped/deleted
 }
 
 interface DraggableWorkoutCardProps {
@@ -559,10 +560,14 @@ function WorkoutSettingsModal({ isOpen, workout, onClose, onSave, onRevert }: Wo
   );
 }
 
-export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout, isBackgroundGenerating = false, onSelectWorkout, selectedWorkoutId, compact = false }: WorkoutTimelineProps) {
+export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout, isBackgroundGenerating = false, onSelectWorkout, selectedWorkoutId, compact = false, onWorkoutOperation }: WorkoutTimelineProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [activeWorkout, setActiveWorkout] = useState<Workout | null>(null);
   const [showReasonModal, setShowReasonModal] = useState(false);
+
+  // Get selected workout days from onboarding data
+  const { onboardingData } = useAppStore();
+  const selectedDays = onboardingData?.selectedDays || [];
   const [pendingSwap, setPendingSwap] = useState<{ workoutId: string; newDate: string } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ workoutId: string; workoutName: string } | null>(null);
@@ -611,6 +616,8 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       return await swapWorkout(params);
     },
     onSuccess: () => {
+      // Notify parent that a workout operation occurred (prevents auto-regeneration)
+      onWorkoutOperation?.();
       queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
       setShowReasonModal(false);
       setPendingSwap(null);
@@ -627,6 +634,8 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
       return await deleteWorkout(workoutId);
     },
     onSuccess: (_, workoutId) => {
+      // Notify parent that a workout operation occurred (prevents auto-regeneration)
+      onWorkoutOperation?.();
       const updatedWorkouts = workouts.filter(w => w.id !== workoutId);
       setWorkouts(updatedWorkouts);
       queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
@@ -857,6 +866,13 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
             const isPast = isPastDate(date);
             const dateStr = toDateString(date);
 
+            // Check if this day is a selected workout day
+            // JavaScript: Sunday=0, Monday=1, ..., Saturday=6
+            // Our format: Monday=0, Tuesday=1, ..., Sunday=6
+            const jsDay = date.getDay(); // 0=Sunday, 1=Monday, etc.
+            const dayIndex = jsDay === 0 ? 6 : jsDay - 1; // Convert to 0=Monday format
+            const isSelectedWorkoutDay = selectedDays.includes(dayIndex);
+
             return (
               <DayCard key={dateStr} date={date} isToday={isToday} isPast={isPast}>
                 <DroppableDayWrapper dateString={dateStr}>
@@ -879,7 +895,7 @@ export default function WorkoutTimeline({ workouts, isLoading, onGenerateWorkout
                       isToday={isToday}
                       isPast={isPast}
                       onAddWorkout={onGenerateWorkout}
-                      isGenerating={isBackgroundGenerating}
+                      isGenerating={isBackgroundGenerating && isSelectedWorkoutDay}
                       compact={compact}
                     />
                   )}

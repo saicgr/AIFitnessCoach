@@ -2,13 +2,12 @@ IMMEDIATE:
 2. Deploy easy vercel and render
 
 NEED
-0. AI Onboarding. DONE
+0. AI Onboarding Review Screen. 
 0.1. Suggest workouts based on Age as well
 1. Send email to the signed up email from AI coach to workout and current workout
 2. Send app notifications from coach to workout
 3. Send app notifications from coach like morning, midday, night to send over screenshots from myfitnesspal or more.
-4. Need image input to read images. DONE
-5. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
+4. Need image input to read images from my fitness pal. 
 6. program_variants needs more populated Variants
 7. Create a restore table to record deleted data of user and help restoring data.
 8. Data Import Export
@@ -29,11 +28,13 @@ The prompt must fulfill the following strategic criteria:
 
 The final response must include the detailed image prompt, the generated image, and the legal/strategic rationale for its safety.
 12. Warmup and Stretchs in chromaDB
-13. 
+13. /gymhelp reddit review and ideas for app
+2. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
+5. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
+
 
 FUTURE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
-2. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
 3. Multi agent add a supervisor pattern where one agent routes to specialists:
 NutritionAgent - meal planning, macros
 InjuryAgent - rehab exercises, modifications
