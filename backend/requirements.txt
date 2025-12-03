@@ -18,7 +18,7 @@ langgraph==0.0.62
 # Database
 sqlalchemy==2.0.23
 aiosqlite==0.19.0
-supabase==2.3.4
+supabase>=2.5.0
 psycopg2-binary==2.9.9
 asyncpg==0.29.0
 
@@ -28,7 +28,7 @@ pydantic==2.6.0
 pydantic-settings==2.1.0
 
 # HTTP Client
-httpx>=0.24.0,<0.26
+httpx>=0.27.0
 
 # Email
 resend==2.0.0
