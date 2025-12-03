@@ -55,7 +55,7 @@ export default function AuthCallback() {
         // Redirect based on onboarding status
         setTimeout(() => {
           if (user.onboarding_completed) {
-            navigate('/', { replace: true });
+            navigate('/home', { replace: true });
           } else {
             navigate('/onboarding/chat', { replace: true });
           }

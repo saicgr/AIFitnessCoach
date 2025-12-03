@@ -1,3 +1,8 @@
+IMMEDIATE:
+1. Onboarding multiple workout generations
+2. Deploy easy vercel and render
+4. Website landing page
+
 NEED
 0. AI Onboarding. DONE
 0.1. Suggest workouts based on Age as well
@@ -10,10 +15,13 @@ NEED
 7. Create a restore table to record deleted data of user and help restoring data.
 8. Data Import Export
 9. Browser notifications?
-10. Generate images of workout programs
+10. Data Work: Generate images of workout programs
 Generate an image prompt and an image rationale for a fitness app banner based on the archetype of [INSERT CHARACTER NAME HERE]. 
 11. Need badges like gravl to show accomplishments
-12. 
+12. AI suggesting workout programs and exercises after hitting add workout -- suggesting agent
+13. AI review onboarding -- onboarding review agent
+14. Water tracking remainders.
+15. Water intake during working out (optional input)
 
 The prompt must fulfill the following strategic criteria:
 1.  **Safety & Legal Firewall:** Explicitly instruct the image generation to avoid all trademarked elements: no masks, no specific logos, no official armor/costume designs, and no character name in the final visual.
@@ -22,8 +30,8 @@ The prompt must fulfill the following strategic criteria:
 4.  **Program Naming:** Create a safe, high-value program name (e.g., "The Velocity Protocol") and a fitness-focused tagline to be overlayed on the final image.
 
 The final response must include the detailed image prompt, the generated image, and the legal/strategic rationale for its safety.
-11. Integrate workout programs.
 12. Warmup and Stretchs in chromaDB
+13. 
 
 FUTURE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
@@ -34,3 +42,144 @@ InjuryAgent - rehab exercises, modifications
 ProgressAgent - analytics, goal tracking
 4. Lifetime subscription discount during holidays, PromoCode offers in reddit etc.
 5. API Public swagger UI  
+
+VIRAL:
+1️⃣ AI-Powered “Body Transformation Simulation” (Instant Share Hook)
+
+Users upload a photo → AI generates:
+	•	30-day version
+	•	60-day version
+	•	90-day version
+
+Completely realistic, personalized based on goals.
+
+People share this everywhere.
+Instant virality.
+
+This feature alone makes bLive explode.
+
+⸻
+
+2️⃣ Daily AI Voice Coach / Hype Messages (Emotion + Habit Loop)
+
+Instead of generic text:
+
+Your AI coach speaks to the user daily:
+	•	“You crushed yesterday. Today, let’s beat 1%.”
+	•	“Hey, don’t skip today. I believe in you.”
+
+Users get attached → they stay → they share.
+
+Make the AI coach feel alive.
+This creates bond + retention + sharing.
+
+⸻
+
+3️⃣ AI Tracks Your Progress — Visually (Shareable Progress Scenes)
+
+Every week the app generates:
+
+🟢 Poster-like collage
+🟢 Animated story
+🟢 Achievements
+🟢 Streak tracker
+
+For Instagram, TikTok, Snapchat, Threads.
+
+Fitness progress is one of the most viral content categories.
+
+⸻
+
+4️⃣ “Live Mode” — AI Counts Reps in Real Time (OMG Moment)
+
+Using your camera, the AI:
+	•	counts reps
+	•	corrects form
+	•	tracks depth range
+	•	gives encouragement
+
+This is a wow moment people show their friends.
+
+⸻
+
+5️⃣ Challenges with Friends (Viral Loop Trigger)
+
+Allow users to:
+	•	Create a challenge
+	•	Invite friends
+	•	Bet healthy stakes (not money — but something fun)
+	•	Share winner badges
+
+Challenges = built-in virality.
+
+⸻
+
+6️⃣ AI Personalized Diet / Grocery Plan (Life Integration)
+
+People love “one app for everything.”
+
+If bLive tells you:
+	•	What to eat
+	•	Exact portion sizes
+	•	Grocery list
+	•	Macros tailored to your body
+
+You become indispensable.
+
+⸻
+
+7️⃣ “bLive Energy Score” (Your Unique Metric = Stickiness)
+
+Create your OWN metric like:
+	•	Apple’s activity rings
+	•	Whoop recovery score
+	•	Fitbit readiness
+
+Example:
+
+Energy Score: 76/100 — trending upward.
+
+People LOVE sharing a score that represents their identity.
+
+⸻
+
+8️⃣ One-Click Social Story Generator
+
+Every workout → generates:
+	•	A reel
+	•	A story card
+	•	A progress badge
+	•	A motivational clip
+
+Viral fitness apps win by making sharing effortless.
+
+⸻
+
+9️⃣ Gamify the Experience (“Feel Alive Levels”)
+
+Level 1 → 100.
+
+Each level unlocks:
+	•	new themes
+	•	AI persona voices
+	•	workout zones
+	•	unique badges
+
+People will grind levels just like games.
+
+⸻
+
+🔟 AI That Learns Your Personality (Retention Weapon)
+
+If bLive adapts its tone based on the user:
+	•	supportive
+	•	tough love
+	•	humorous
+	•	military style
+	•	therapist vibe
+
+People will feel bonded.
+They talk about it.
+They tell friends.
+
+This creates emotional virality.

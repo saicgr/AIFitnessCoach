@@ -625,3 +625,34 @@ class ScheduleBackgroundGenerationRequest(BaseModel):
     duration_minutes: int = 45
     selected_days: List[int]
     weeks: int = 11
+
+
+# ============================================
+# Workout Exercise Modification Models
+# ============================================
+
+class WorkoutExerciseItem(BaseModel):
+    """Individual exercise in a workout."""
+    name: str
+    sets: int = 3
+    reps: int = 10
+    weight: Optional[float] = None
+    rest_seconds: int = 60
+    notes: Optional[str] = None
+    target_muscles: Optional[List[str]] = None
+    equipment: Optional[str] = None
+
+
+class UpdateWorkoutExercisesRequest(BaseModel):
+    """Request to update exercises in a workout."""
+    exercises: List[WorkoutExerciseItem]
+
+
+class UpdateWarmupExercisesRequest(BaseModel):
+    """Request to update warmup exercises in a workout."""
+    exercises: List[WarmupExercise]
+
+
+class UpdateStretchExercisesRequest(BaseModel):
+    """Request to update stretch exercises in a workout."""
+    exercises: List[StretchExercise]

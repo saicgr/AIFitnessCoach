@@ -11,14 +11,13 @@ interface ExerciseVideoPanelProps {
 export default function ExerciseVideoPanel({ exercise, onClose }: ExerciseVideoPanelProps) {
   const [videoInfo, setVideoInfo] = useState<VideoResponse | null>(null);
   const [videoLoading, setVideoLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const fetchVideo = async () => {
       setVideoLoading(true);
       setVideoInfo(null);
-      setIsPlaying(false);
 
       try {
         const info = await getExerciseVideoInfo(exercise.name);
@@ -82,7 +81,9 @@ export default function ExerciseVideoPanel({ exercise, onClose }: ExerciseVideoP
               ref={videoRef}
               src={videoInfo.url}
               className="w-full h-full object-contain"
+              autoPlay
               loop
+              muted
               playsInline
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}

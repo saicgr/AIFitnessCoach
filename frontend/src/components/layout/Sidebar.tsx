@@ -17,6 +17,7 @@ import {
   sidebarTap,
   activeIndicatorVariants,
 } from '../../utils/animations';
+import { useAppStore } from '../../store';
 
 interface NavItem {
   path: string;
@@ -24,11 +25,12 @@ interface NavItem {
   icon: React.ReactNode;
   activeColor: string;
   glowColor: string;
+  isWidget?: boolean;  // If true, clicking opens widget instead of navigating
 }
 
 const navItems: NavItem[] = [
   {
-    path: '/',
+    path: '/home',
     label: 'Schedule',
     activeColor: 'text-primary',
     glowColor: 'rgba(6, 182, 212, 0.4)',
@@ -62,10 +64,22 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    path: '/library',
+    label: 'Library',
+    activeColor: 'text-blue-400',
+    glowColor: 'rgba(96, 165, 250, 0.4)',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ),
+  },
+  {
     path: '/chat',
     label: 'AI Coach',
     activeColor: 'text-secondary',
     glowColor: 'rgba(168, 85, 247, 0.4)',
+    isWidget: true,  // Opens chat widget instead of navigating
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -87,6 +101,15 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const { chatWidgetState, setChatWidgetOpen } = useAppStore();
+
+  const handleItemClick = (item: NavItem) => {
+    if (item.isWidget) {
+      // Toggle the chat widget open
+      setChatWidgetOpen(true);
+    }
+    // For non-widget items, the Link handles navigation
+  };
 
   return (
     <motion.aside
@@ -115,73 +138,91 @@ export default function Sidebar() {
       {/* Navigation Items */}
       <nav className="flex-1 flex flex-col items-center gap-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = item.isWidget ? chatWidgetState.isOpen : location.pathname === item.path;
+
+          // Common content for the nav item
+          const navContent = (
+            <motion.div
+              className={`
+                group relative flex flex-col items-center justify-center
+                w-14 h-14 rounded-2xl transition-colors
+                ${isActive
+                  ? `bg-white/10 ${item.activeColor}`
+                  : 'text-text-muted hover:text-text-secondary'
+                }
+              `}
+              whileHover={!isActive ? sidebarHover : { scale: 1.02 }}
+              whileTap={sidebarTap}
+              animate={isActive ? {
+                boxShadow: [
+                  `0 0 0 ${item.glowColor}`,
+                  `0 0 20px ${item.glowColor}`,
+                  `0 0 0 ${item.glowColor}`,
+                ],
+              } : {}}
+              transition={isActive ? {
+                boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+              } : undefined}
+            >
+              {/* Active indicator */}
+              <AnimatePresence>
+                {isActive && (
+                  <motion.div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 bg-primary rounded-r-full"
+                    variants={activeIndicatorVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  />
+                )}
+              </AnimatePresence>
+
+              {item.icon}
+
+              {/* Label - shows on hover with animation */}
+              <AnimatePresence>
+                <motion.span
+                  className={`
+                    absolute left-full ml-4 px-3 py-1.5 rounded-lg
+                    bg-surface border border-white/10 shadow-xl
+                    text-sm font-medium text-text whitespace-nowrap
+                    pointer-events-none
+                    opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                  `}
+                  initial={{ opacity: 0, x: 8, scale: 0.95 }}
+                  whileHover={{ opacity: 1, x: 0, scale: 1 }}
+                >
+                  {item.label}
+                </motion.span>
+              </AnimatePresence>
+            </motion.div>
+          );
+
           return (
             <motion.div
               key={item.path}
               variants={sidebarItemVariants}
               className="relative"
             >
-              <Link
-                to={item.path}
-                className="block"
-                title={item.label}
-              >
-                <motion.div
-                  className={`
-                    group relative flex flex-col items-center justify-center
-                    w-14 h-14 rounded-2xl transition-colors
-                    ${isActive
-                      ? `bg-white/10 ${item.activeColor}`
-                      : 'text-text-muted hover:text-text-secondary'
-                    }
-                  `}
-                  whileHover={!isActive ? sidebarHover : { scale: 1.02 }}
-                  whileTap={sidebarTap}
-                  animate={isActive ? {
-                    boxShadow: [
-                      `0 0 0 ${item.glowColor}`,
-                      `0 0 20px ${item.glowColor}`,
-                      `0 0 0 ${item.glowColor}`,
-                    ],
-                  } : {}}
-                  transition={isActive ? {
-                    boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-                  } : undefined}
+              {item.isWidget ? (
+                // Widget items use a button that opens the widget
+                <button
+                  onClick={() => handleItemClick(item)}
+                  className="block"
+                  title={item.label}
                 >
-                  {/* Active indicator */}
-                  <AnimatePresence>
-                    {isActive && (
-                      <motion.div
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 bg-primary rounded-r-full"
-                        variants={activeIndicatorVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
-                      />
-                    )}
-                  </AnimatePresence>
-
-                  {item.icon}
-
-                  {/* Label - shows on hover with animation */}
-                  <AnimatePresence>
-                    <motion.span
-                      className={`
-                        absolute left-full ml-4 px-3 py-1.5 rounded-lg
-                        bg-surface border border-white/10 shadow-xl
-                        text-sm font-medium text-text whitespace-nowrap
-                        pointer-events-none
-                        opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                      `}
-                      initial={{ opacity: 0, x: 8, scale: 0.95 }}
-                      whileHover={{ opacity: 1, x: 0, scale: 1 }}
-                    >
-                      {item.label}
-                    </motion.span>
-                  </AnimatePresence>
-                </motion.div>
-              </Link>
+                  {navContent}
+                </button>
+              ) : (
+                // Regular nav items use Link for navigation
+                <Link
+                  to={item.path}
+                  className="block"
+                  title={item.label}
+                >
+                  {navContent}
+                </Link>
+              )}
             </motion.div>
           );
         })}

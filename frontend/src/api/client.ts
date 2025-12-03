@@ -941,4 +941,229 @@ export const deleteFoodLog = async (logId: string): Promise<void> => {
   await api.delete(`/nutrition/food-logs/${logId}`);
 };
 
+// ============================================
+// Library (Exercises & Programs)
+// ============================================
+
+export interface LibraryExercise {
+  id: string;  // UUID
+  name: string;  // Cleaned name without gender suffix
+  original_name: string;  // Original name with gender suffix (for video lookup)
+  body_part: string;
+  equipment?: string;  // Can be null
+  target_muscle?: string;
+  secondary_muscles?: string;
+  instructions?: string;
+  difficulty_level?: number;
+  category?: string;
+  gif_url?: string;
+  video_url?: string;
+  gender?: string;  // male/female/null
+}
+
+export interface LibraryProgram {
+  id: string;  // UUID
+  name: string;
+  category: string;
+  subcategory?: string;
+  difficulty_level?: string;
+  duration_weeks?: number;
+  sessions_per_week?: number;
+  session_duration_minutes?: number;
+  tags?: string[];
+  goals?: string[];
+  description?: string;
+  short_description?: string;
+  celebrity_name?: string;
+}
+
+export interface BodyPartCount {
+  name: string;
+  count: number;
+}
+
+export interface ProgramCategoryCount {
+  name: string;
+  count: number;
+}
+
+export interface ExercisesByBodyPart {
+  body_part: string;
+  count: number;
+  exercises: LibraryExercise[];
+}
+
+export interface ProgramsByCategory {
+  category: string;
+  count: number;
+  programs: LibraryProgram[];
+}
+
+// Get all body parts with exercise counts
+export const getBodyParts = async (): Promise<BodyPartCount[]> => {
+  const { data } = await api.get<BodyPartCount[]>('/library/exercises/body-parts');
+  return data;
+};
+
+// List exercises with optional filters
+export const getLibraryExercises = async (options?: {
+  body_part?: string;
+  equipment?: string;
+  difficulty?: number;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryExercise[]> => {
+  const params = new URLSearchParams();
+  if (options?.body_part) params.append('body_part', options.body_part);
+  if (options?.equipment) params.append('equipment', options.equipment);
+  if (options?.difficulty) params.append('difficulty', options.difficulty.toString());
+  if (options?.search) params.append('search', options.search);
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.offset) params.append('offset', options.offset.toString());
+  const { data } = await api.get<LibraryExercise[]>(`/library/exercises?${params.toString()}`);
+  return data;
+};
+
+// Get exercises grouped by body part
+export const getExercisesGrouped = async (limitPerGroup?: number): Promise<ExercisesByBodyPart[]> => {
+  const params = limitPerGroup ? `?limit_per_group=${limitPerGroup}` : '';
+  const { data } = await api.get<ExercisesByBodyPart[]>(`/library/exercises/grouped${params}`);
+  return data;
+};
+
+// Get single exercise details
+export const getLibraryExercise = async (exerciseId: string): Promise<LibraryExercise> => {
+  const { data } = await api.get<LibraryExercise>(`/library/exercises/${exerciseId}`);
+  return data;
+};
+
+// Get all program categories with counts
+export const getProgramCategories = async (): Promise<ProgramCategoryCount[]> => {
+  const { data } = await api.get<ProgramCategoryCount[]>('/library/programs/categories');
+  return data;
+};
+
+// List programs with optional filters
+export const getLibraryPrograms = async (options?: {
+  category?: string;
+  difficulty?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryProgram[]> => {
+  const params = new URLSearchParams();
+  if (options?.category) params.append('category', options.category);
+  if (options?.difficulty) params.append('difficulty', options.difficulty);
+  if (options?.search) params.append('search', options.search);
+  if (options?.limit) params.append('limit', options.limit.toString());
+  if (options?.offset) params.append('offset', options.offset.toString());
+  const { data } = await api.get<LibraryProgram[]>(`/library/programs?${params.toString()}`);
+  return data;
+};
+
+// Get programs grouped by category
+export const getProgramsGrouped = async (limitPerGroup?: number): Promise<ProgramsByCategory[]> => {
+  const params = limitPerGroup ? `?limit_per_group=${limitPerGroup}` : '';
+  const { data } = await api.get<ProgramsByCategory[]>(`/library/programs/grouped${params}`);
+  return data;
+};
+
+// Get single program details (with full workouts)
+export const getLibraryProgram = async (programId: string): Promise<LibraryProgram & { workouts?: unknown }> => {
+  const { data } = await api.get<LibraryProgram & { workouts?: unknown }>(`/library/programs/${programId}`);
+  return data;
+};
+
+// ============================================
+// Workout Exercise Modification
+// ============================================
+
+export interface WorkoutExerciseItem {
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  rest_seconds: number;
+  notes?: string;
+  target_muscles?: string[];
+  equipment?: string;
+}
+
+export interface UpdateWorkoutExercisesRequest {
+  exercises: WorkoutExerciseItem[];
+}
+
+export interface WarmupExerciseItem {
+  name: string;
+  sets: number;
+  reps?: number;
+  duration_seconds?: number;
+  rest_seconds: number;
+  equipment: string;
+  muscle_group: string;
+  notes?: string;
+}
+
+export interface UpdateWarmupExercisesRequest {
+  exercises: WarmupExerciseItem[];
+}
+
+export interface StretchExerciseItem {
+  name: string;
+  sets: number;
+  reps: number;
+  duration_seconds: number;
+  rest_seconds: number;
+  equipment: string;
+  muscle_group: string;
+  notes?: string;
+}
+
+export interface UpdateStretchExercisesRequest {
+  exercises: StretchExerciseItem[];
+}
+
+/**
+ * Update exercises in a workout (add, remove, reorder)
+ */
+export const updateWorkoutExercises = async (
+  workoutId: string,
+  exercises: WorkoutExerciseItem[]
+): Promise<Workout> => {
+  const { data } = await api.put<WorkoutBackend>(
+    `/workouts-db/${workoutId}/exercises`,
+    { exercises }
+  );
+  return parseWorkout(data);
+};
+
+/**
+ * Update warmup exercises for a workout
+ */
+export const updateWarmupExercises = async (
+  workoutId: string,
+  exercises: WarmupExerciseItem[]
+): Promise<{ success: boolean; exercises_count: number }> => {
+  const { data } = await api.put<{ success: boolean; exercises_count: number }>(
+    `/workouts-db/${workoutId}/warmup/exercises`,
+    { exercises }
+  );
+  return data;
+};
+
+/**
+ * Update stretch exercises for a workout
+ */
+export const updateStretchExercises = async (
+  workoutId: string,
+  exercises: StretchExerciseItem[]
+): Promise<{ success: boolean; exercises_count: number }> => {
+  const { data } = await api.put<{ success: boolean; exercises_count: number }>(
+    `/workouts-db/${workoutId}/stretches/exercises`,
+    { exercises }
+  );
+  return data;
+};
+
 export default api;

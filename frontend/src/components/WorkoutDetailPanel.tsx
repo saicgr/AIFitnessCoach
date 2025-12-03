@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getWorkout, deleteWorkout, getWorkoutWarmup, getWorkoutStretches, getWorkoutAISummary, type WarmupResponse, type StretchResponse } from '../api/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import {
+  getWorkout, deleteWorkout, getWorkoutWarmup, getWorkoutStretches, getWorkoutAISummary,
+  updateWorkoutExercises, updateWarmupExercises, updateStretchExercises,
+  type WarmupResponse, type StretchResponse, type WorkoutExerciseItem, type WarmupExerciseItem, type StretchExerciseItem
+} from '../api/client';
 import { useAppStore } from '../store';
 import type { Workout, WorkoutExercise } from '../types';
 import { GlassCard, GlassButton } from './ui';
+import ExerciseLibraryModal from './ExerciseLibraryModal';
 
 interface WorkoutDetailPanelProps {
   workoutId: string | null;
@@ -14,9 +19,28 @@ interface WorkoutDetailPanelProps {
   onSelectExercise?: (exercise: WorkoutExercise) => void;
 }
 
+// Editable exercise item for drag-and-drop
+interface EditableExercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: number;
+  weight?: number;
+  rest_seconds: number;
+  target_muscles?: string[];
+  equipment?: string;
+}
+
 export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercise }: WorkoutDetailPanelProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { setCurrentWorkout, removeWorkout, setActiveWorkoutId } = useAppStore();
+
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [editedExercises, setEditedExercises] = useState<EditableExercise[]>([]);
+  const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // State for warmups and stretches
   const [warmup, setWarmup] = useState<WarmupResponse | null>(null);
@@ -24,13 +48,17 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
   const [loadingWarmupStretches, setLoadingWarmupStretches] = useState(false);
   const [warmupExpanded, setWarmupExpanded] = useState(false);
   const [stretchesExpanded, setStretchesExpanded] = useState(false);
+  const [warmupEditMode, setWarmupEditMode] = useState(false);
+  const [stretchesEditMode, setStretchesEditMode] = useState(false);
+  const [editedWarmup, setEditedWarmup] = useState<WarmupExerciseItem[]>([]);
+  const [editedStretches, setEditedStretches] = useState<StretchExerciseItem[]>([]);
 
   // State for AI summary modal
   const [showAISummary, setShowAISummary] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [loadingAISummary, setLoadingAISummary] = useState(false);
 
-  const { data: workout, isLoading } = useQuery<Workout>({
+  const { data: workout, isLoading, refetch } = useQuery<Workout>({
     queryKey: ['workout', workoutId],
     queryFn: () => getWorkout(workoutId!),
     enabled: !!workoutId,
@@ -42,7 +70,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
     }
   }, [workout, setCurrentWorkout]);
 
-  // Reset expanded states when workout changes
+  // Reset states when workout changes
   useEffect(() => {
     setWarmupExpanded(false);
     setStretchesExpanded(false);
@@ -50,14 +78,63 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
     setStretches(null);
     setShowAISummary(false);
     setAiSummary(null);
+    setEditMode(false);
+    setWarmupEditMode(false);
+    setStretchesEditMode(false);
   }, [workoutId]);
+
+  // Initialize edited exercises when entering edit mode
+  useEffect(() => {
+    if (editMode && workout) {
+      setEditedExercises(workout.exercises.map((ex, idx) => ({
+        id: `ex-${idx}-${ex.name}`,
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        rest_seconds: ex.rest_seconds || 60,
+        target_muscles: ex.target_muscles,
+        equipment: ex.equipment,
+      })));
+    }
+  }, [editMode, workout]);
+
+  // Initialize edited warmup/stretches when entering edit mode
+  useEffect(() => {
+    if (warmupEditMode && warmup?.exercises_json) {
+      setEditedWarmup(warmup.exercises_json.map(ex => ({
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        duration_seconds: ex.duration_seconds,
+        rest_seconds: ex.rest_seconds,
+        equipment: ex.equipment || 'none',
+        muscle_group: ex.muscle_group || '',
+        notes: ex.notes,
+      })));
+    }
+  }, [warmupEditMode, warmup]);
+
+  useEffect(() => {
+    if (stretchesEditMode && stretches?.exercises_json) {
+      setEditedStretches(stretches.exercises_json.map(ex => ({
+        name: ex.name,
+        sets: ex.sets || 1,
+        reps: ex.reps || 1,
+        duration_seconds: ex.duration_seconds || 30,
+        rest_seconds: ex.rest_seconds || 0,
+        equipment: ex.equipment || 'none',
+        muscle_group: ex.muscle_group || '',
+        notes: ex.notes,
+      })));
+    }
+  }, [stretchesEditMode, stretches]);
 
   // Handler for fetching AI summary
   const handleGetAISummary = async () => {
     if (!workoutId) return;
-
     setShowAISummary(true);
-    if (aiSummary) return; // Already fetched
+    if (aiSummary) return;
 
     setLoadingAISummary(true);
     try {
@@ -71,19 +148,16 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
     }
   };
 
-  // Fetch warmups and stretches when workout loads (they should already exist from backend)
+  // Fetch warmups and stretches when workout loads
   useEffect(() => {
     const fetchWarmupAndStretches = async () => {
       if (!workoutId) return;
-
       setLoadingWarmupStretches(true);
       try {
         const [warmupData, stretchData] = await Promise.all([
           getWorkoutWarmup(workoutId),
           getWorkoutStretches(workoutId)
         ]);
-
-        // Set whatever data exists - don't generate on-demand
         setWarmup(warmupData);
         setStretches(stretchData);
       } catch (error) {
@@ -113,11 +187,94 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
     }
   };
 
-  // Handle exercise click - pass to parent if callback provided
+  // Handle exercise click
   const handleExerciseClick = (exercise: WorkoutExercise) => {
-    if (onSelectExercise) {
+    if (onSelectExercise && !editMode) {
       onSelectExercise(exercise);
     }
+  };
+
+  // Save exercise changes
+  const handleSaveExercises = async () => {
+    if (!workoutId) return;
+    setSaving(true);
+    try {
+      const exercises: WorkoutExerciseItem[] = editedExercises.map(ex => ({
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        rest_seconds: ex.rest_seconds,
+        target_muscles: ex.target_muscles,
+        equipment: ex.equipment,
+      }));
+      await updateWorkoutExercises(workoutId, exercises);
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      setEditMode(false);
+    } catch (error) {
+      console.error('Error saving exercises:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Save warmup changes
+  const handleSaveWarmup = async () => {
+    if (!workoutId) return;
+    setSaving(true);
+    try {
+      await updateWarmupExercises(workoutId, editedWarmup);
+      const warmupData = await getWorkoutWarmup(workoutId);
+      setWarmup(warmupData);
+      setWarmupEditMode(false);
+    } catch (error) {
+      console.error('Error saving warmup:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Save stretches changes
+  const handleSaveStretches = async () => {
+    if (!workoutId) return;
+    setSaving(true);
+    try {
+      await updateStretchExercises(workoutId, editedStretches);
+      const stretchData = await getWorkoutStretches(workoutId);
+      setStretches(stretchData);
+      setStretchesEditMode(false);
+    } catch (error) {
+      console.error('Error saving stretches:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Remove exercise
+  const handleRemoveExercise = (id: string) => {
+    setEditedExercises(prev => prev.filter(ex => ex.id !== id));
+  };
+
+  // Add exercises from library
+  const handleAddExercises = useCallback((exercises: Array<{ exercise: { name: string; body_part: string; equipment?: string }; sets: number; reps: number }>) => {
+    const newExercises: EditableExercise[] = exercises.map((item, idx) => ({
+      id: `new-${Date.now()}-${idx}`,
+      name: item.exercise.name,
+      sets: item.sets,
+      reps: item.reps,
+      rest_seconds: 60,
+      target_muscles: [item.exercise.body_part],
+      equipment: item.exercise.equipment,
+    }));
+    setEditedExercises(prev => [...prev, ...newExercises]);
+  }, []);
+
+  // Update exercise field
+  const handleUpdateExercise = (id: string, field: keyof EditableExercise, value: number | string) => {
+    setEditedExercises(prev =>
+      prev.map(ex => ex.id === id ? { ...ex, [field]: value } : ex)
+    );
   };
 
   // Empty state when no workout selected
@@ -206,9 +363,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
           {/* Workout Header Card */}
           <div
             className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-primary to-secondary"
-            style={{
-              boxShadow: '0 0 30px rgba(6, 182, 212, 0.2), 0 10px 30px rgba(0,0,0,0.2)',
-            }}
+            style={{ boxShadow: '0 0 30px rgba(6, 182, 212, 0.2), 0 10px 30px rgba(0,0,0,0.2)' }}
           >
             <h1 className="text-xl font-bold text-white">{workout.name}</h1>
             <div className="flex flex-wrap gap-2 mt-3">
@@ -253,16 +408,16 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
               </GlassButton>
               <GlassButton
                 variant="secondary"
-                onClick={() => navigate('/chat')}
+                onClick={() => setEditMode(!editMode)}
                 fullWidth
                 size="sm"
                 icon={
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 }
               >
-                Modify
+                {editMode ? 'Cancel' : 'Edit'}
               </GlassButton>
             </div>
           )}
@@ -311,19 +466,73 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                   </p>
                 </div>
               </div>
-              <svg
-                className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${warmupExpanded ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="flex items-center gap-2">
+                {warmupExpanded && warmup?.exercises_json?.length && !warmupEditMode && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setWarmupEditMode(true); setWarmupExpanded(true); }}
+                    className="p-1 text-text-muted hover:text-orange-400 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+                <svg
+                  className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${warmupExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </button>
 
             {warmupExpanded && (
               <div className="mt-3">
-                {loadingWarmupStretches ? (
+                {warmupEditMode ? (
+                  <div className="space-y-2">
+                    <Reorder.Group axis="y" values={editedWarmup} onReorder={setEditedWarmup} className="space-y-2">
+                      {editedWarmup.map((exercise, index) => (
+                        <Reorder.Item key={`warmup-${index}-${exercise.name}`} value={exercise}>
+                          <div className="p-2 bg-orange-500/10 rounded-lg border border-orange-500/30 cursor-grab active:cursor-grabbing">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                </svg>
+                                <span className="text-text text-xs font-medium">{exercise.name}</span>
+                              </div>
+                              <button
+                                onClick={() => setEditedWarmup(prev => prev.filter((_, i) => i !== index))}
+                                className="p-1 text-red-400 hover:text-red-300"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </Reorder.Item>
+                      ))}
+                    </Reorder.Group>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => setWarmupEditMode(false)}
+                        className="flex-1 px-3 py-2 bg-white/10 text-text-secondary rounded-lg text-xs hover:bg-white/20"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveWarmup}
+                        disabled={saving}
+                        className="flex-1 px-3 py-2 bg-orange-500 text-white rounded-lg text-xs hover:bg-orange-600 disabled:opacity-50"
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                ) : loadingWarmupStretches ? (
                   <div className="flex items-center justify-center py-3">
                     <div className="flex items-center gap-2 text-text-secondary">
                       <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
@@ -333,10 +542,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                 ) : warmup?.exercises_json?.length ? (
                   <div className="space-y-1.5">
                     {warmup.exercises_json.map((exercise, index) => (
-                      <div
-                        key={index}
-                        className="p-2 bg-orange-500/5 rounded-lg border border-orange-500/20"
-                      >
+                      <div key={index} className="p-2 bg-orange-500/5 rounded-lg border border-orange-500/20">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <span className="w-5 h-5 bg-orange-500/20 text-orange-400 rounded flex items-center justify-center text-xs font-bold">
@@ -359,62 +565,146 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
             )}
           </GlassCard>
 
-          {/* Exercises */}
+          {/* Exercises Section */}
           <GlassCard className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 bg-primary/20 rounded-lg text-primary">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg text-primary">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-text">Exercises</h2>
+                  <p className="text-xs text-text-secondary">
+                    {editMode ? editedExercises.length : workout.exercises.length} exercises
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-sm font-semibold text-text">Exercises</h2>
-                <p className="text-xs text-text-secondary">{workout.exercises.length} exercises</p>
-              </div>
+              {editMode && (
+                <button
+                  onClick={() => setShowAddExerciseModal(true)}
+                  className="p-1.5 bg-primary/20 rounded-lg text-primary hover:bg-primary/30 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </button>
+              )}
             </div>
 
-            <div className="space-y-2">
-              {workout.exercises.map((exercise, index) => (
-                <motion.div
-                  key={index}
-                  onClick={() => handleExerciseClick(exercise)}
-                  className="p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer group hover:bg-white/10 hover:border-primary/30 transition-all"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 bg-primary/20 text-primary rounded flex items-center justify-center text-xs font-bold">
-                          {index + 1}
-                        </span>
-                        <h3 className="font-medium text-text text-sm">{exercise.name}</h3>
-                        {/* Play icon indicator */}
-                        <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-primary transition-colors" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                      <div className="mt-1.5 flex flex-wrap gap-1.5 ml-7">
-                        <span className="px-2 py-0.5 bg-white/5 text-text-secondary text-xs rounded border border-white/10">
-                          {exercise.sets} sets
-                        </span>
-                        <span className="px-2 py-0.5 bg-white/5 text-text-secondary text-xs rounded border border-white/10">
-                          {exercise.reps} reps
-                        </span>
-                        {exercise.weight && (
-                          <span className="px-2 py-0.5 bg-accent/15 text-accent text-xs rounded border border-accent/30">
-                            {exercise.weight} lbs
+            {editMode ? (
+              <div className="space-y-2">
+                <Reorder.Group axis="y" values={editedExercises} onReorder={setEditedExercises} className="space-y-2">
+                  {editedExercises.map((exercise) => (
+                    <Reorder.Item key={exercise.id} value={exercise}>
+                      <motion.div
+                        className="p-3 bg-white/5 rounded-xl border border-white/10 cursor-grab active:cursor-grabbing"
+                        layout
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2 flex-1">
+                            <svg className="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                            </svg>
+                            <h3 className="font-medium text-text text-sm">{exercise.name}</h3>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveExercise(exercise.id)}
+                            className="p-1 text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="mt-2 flex gap-2 ml-6">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={exercise.sets}
+                              onChange={(e) => handleUpdateExercise(exercise.id, 'sets', parseInt(e.target.value) || 1)}
+                              className="w-12 px-2 py-1 bg-white/10 rounded text-text text-xs text-center"
+                              min={1}
+                            />
+                            <span className="text-xs text-text-secondary">sets</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={exercise.reps}
+                              onChange={(e) => handleUpdateExercise(exercise.id, 'reps', parseInt(e.target.value) || 1)}
+                              className="w-12 px-2 py-1 bg-white/10 rounded text-text text-xs text-center"
+                              min={1}
+                            />
+                            <span className="text-xs text-text-secondary">reps</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
+
+                {/* Save/Cancel buttons */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setEditMode(false)}
+                    className="flex-1 px-3 py-2 bg-white/10 text-text-secondary rounded-lg text-sm hover:bg-white/20 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveExercises}
+                    disabled={saving}
+                    className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/80 transition-colors disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {workout.exercises.map((exercise, index) => (
+                  <motion.div
+                    key={index}
+                    onClick={() => handleExerciseClick(exercise)}
+                    className="p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer group hover:bg-white/10 hover:border-primary/30 transition-all"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 bg-primary/20 text-primary rounded flex items-center justify-center text-xs font-bold">
+                            {index + 1}
                           </span>
-                        )}
+                          <h3 className="font-medium text-text text-sm">{exercise.name}</h3>
+                          <svg className="w-3.5 h-3.5 text-text-muted group-hover:text-primary transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5 ml-7">
+                          <span className="px-2 py-0.5 bg-white/5 text-text-secondary text-xs rounded border border-white/10">
+                            {exercise.sets} sets
+                          </span>
+                          <span className="px-2 py-0.5 bg-white/5 text-text-secondary text-xs rounded border border-white/10">
+                            {exercise.reps} reps
+                          </span>
+                          {exercise.weight && (
+                            <span className="px-2 py-0.5 bg-accent/15 text-accent text-xs rounded border border-accent/30">
+                              {exercise.weight} lbs
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs text-text-muted bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                        {exercise.rest_seconds}s rest
                       </div>
                     </div>
-                    <div className="text-xs text-text-muted bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                      {exercise.rest_seconds}s rest
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </GlassCard>
 
           {/* Stretches Section */}
@@ -440,19 +730,73 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                   </p>
                 </div>
               </div>
-              <svg
-                className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${stretchesExpanded ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="flex items-center gap-2">
+                {stretchesExpanded && stretches?.exercises_json?.length && !stretchesEditMode && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setStretchesEditMode(true); setStretchesExpanded(true); }}
+                    className="p-1 text-text-muted hover:text-green-400 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+                <svg
+                  className={`w-4 h-4 text-text-secondary transition-transform duration-200 ${stretchesExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </button>
 
             {stretchesExpanded && (
               <div className="mt-3">
-                {loadingWarmupStretches ? (
+                {stretchesEditMode ? (
+                  <div className="space-y-2">
+                    <Reorder.Group axis="y" values={editedStretches} onReorder={setEditedStretches} className="space-y-2">
+                      {editedStretches.map((stretch, index) => (
+                        <Reorder.Item key={`stretch-${index}-${stretch.name}`} value={stretch}>
+                          <div className="p-2 bg-green-500/10 rounded-lg border border-green-500/30 cursor-grab active:cursor-grabbing">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                </svg>
+                                <span className="text-text text-xs font-medium">{stretch.name}</span>
+                              </div>
+                              <button
+                                onClick={() => setEditedStretches(prev => prev.filter((_, i) => i !== index))}
+                                className="p-1 text-red-400 hover:text-red-300"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </Reorder.Item>
+                      ))}
+                    </Reorder.Group>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={() => setStretchesEditMode(false)}
+                        className="flex-1 px-3 py-2 bg-white/10 text-text-secondary rounded-lg text-xs hover:bg-white/20"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveStretches}
+                        disabled={saving}
+                        className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg text-xs hover:bg-green-600 disabled:opacity-50"
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                ) : loadingWarmupStretches ? (
                   <div className="flex items-center justify-center py-3">
                     <div className="flex items-center gap-2 text-text-secondary">
                       <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
@@ -462,10 +806,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                 ) : stretches?.exercises_json?.length ? (
                   <div className="space-y-1.5">
                     {stretches.exercises_json.map((stretch, index) => (
-                      <div
-                        key={index}
-                        className="p-2 bg-green-500/5 rounded-lg border border-green-500/20"
-                      >
+                      <div key={index} className="p-2 bg-green-500/5 rounded-lg border border-green-500/20">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <span className="w-5 h-5 bg-green-500/20 text-green-400 rounded flex items-center justify-center text-xs font-bold">
@@ -525,12 +866,19 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
       </motion.div>
     </AnimatePresence>
 
-    {/* Workout Summary Modal - Portal to body for proper z-index */}
+    {/* Exercise Library Modal */}
+    <ExerciseLibraryModal
+      isOpen={showAddExerciseModal}
+      onClose={() => setShowAddExerciseModal(false)}
+      onAddExercises={handleAddExercises}
+      existingExerciseNames={editedExercises.map(ex => ex.name)}
+    />
+
+    {/* Workout Summary Modal */}
     {createPortal(
       <AnimatePresence>
         {showAISummary && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -538,8 +886,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]"
               onClick={() => setShowAISummary(false)}
             />
-
-            {/* Centered Compact Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -548,7 +894,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
               className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg max-h-[70vh] overflow-hidden rounded-2xl bg-surface border border-white/10"
               style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
             >
-              {/* Header */}
               <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-gradient-to-br from-secondary/30 to-primary/30 rounded-xl">
@@ -570,8 +915,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                   </svg>
                 </button>
               </div>
-
-              {/* Content */}
               <div className="px-5 py-4 overflow-y-auto max-h-[calc(70vh-120px)]">
                 {loadingAISummary ? (
                   <div className="flex flex-col items-center justify-center py-12">
@@ -581,9 +924,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                   </div>
                 ) : aiSummary ? (
                   <div className="space-y-4">
-                    {/* Parse and render the markdown summary */}
                     {aiSummary.split('\n').map((line, index) => {
-                      // Handle "Today's Intention:" header
                       if (line.includes("Today's Intention:") || line.includes("**Today's Intention:**")) {
                         return (
                           <div key={index} className="mb-4">
@@ -594,8 +935,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           </div>
                         );
                       }
-
-                      // Handle exercise bullet points with bold names
                       if (line.startsWith('- **') || line.startsWith('• **')) {
                         const match = line.match(/[-•]\s*\*\*(.+?)\*\*[:\s]*(.+)/);
                         if (match) {
@@ -616,8 +955,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           );
                         }
                       }
-
-                      // Handle regular bullet points
                       if (line.startsWith('- ') || line.startsWith('• ')) {
                         return (
                           <div key={index} className="flex items-start gap-2 text-text-secondary">
@@ -626,8 +963,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           </div>
                         );
                       }
-
-                      // Handle section headers
                       if (line.startsWith('##')) {
                         return (
                           <h3 key={index} className="text-md font-bold text-text mt-4">
@@ -635,8 +970,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           </h3>
                         );
                       }
-
-                      // Regular text
                       if (line.trim()) {
                         return (
                           <p key={index} className="text-text-secondary">
@@ -644,7 +977,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           </p>
                         );
                       }
-
                       return null;
                     })}
                   </div>
@@ -665,8 +997,6 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                   </div>
                 )}
               </div>
-
-              {/* Footer with powered by */}
               <div className="px-5 py-2.5 border-t border-white/10 flex items-center justify-center gap-2 text-xs text-text-muted">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

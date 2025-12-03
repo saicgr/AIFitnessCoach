@@ -96,6 +96,16 @@ interface AppState {
   exerciseProgress: Record<string, boolean>;
   setExerciseComplete: (exerciseId: string, complete: boolean) => void;
   resetExerciseProgress: () => void;
+
+  // Chat Widget state
+  chatWidgetState: {
+    isOpen: boolean;
+    sizeMode: 'minimized' | 'medium' | 'maximized';
+    hasUnreadMessages: boolean;
+  };
+  setChatWidgetOpen: (open: boolean) => void;
+  setChatWidgetSize: (size: 'minimized' | 'medium' | 'maximized') => void;
+  setHasUnreadMessages: (hasUnread: boolean) => void;
 }
 
 const defaultOnboarding: OnboardingData = {
@@ -302,6 +312,25 @@ export const useAppStore = create<AppState>()(
           exerciseProgress: { ...state.exerciseProgress, [exerciseId]: complete },
         })),
       resetExerciseProgress: () => set({ exerciseProgress: {} }),
+
+      // Chat Widget
+      chatWidgetState: {
+        isOpen: false,
+        sizeMode: 'medium',
+        hasUnreadMessages: false,
+      },
+      setChatWidgetOpen: (open) =>
+        set((state) => ({
+          chatWidgetState: { ...state.chatWidgetState, isOpen: open },
+        })),
+      setChatWidgetSize: (size) =>
+        set((state) => ({
+          chatWidgetState: { ...state.chatWidgetState, sizeMode: size },
+        })),
+      setHasUnreadMessages: (hasUnread) =>
+        set((state) => ({
+          chatWidgetState: { ...state.chatWidgetState, hasUnreadMessages: hasUnread },
+        })),
     }),
     {
       name: 'fitness-coach-storage',
@@ -374,6 +403,11 @@ export const clearAppStorage = () => {
     currentWorkout: null,
     activeWorkoutId: null,
     exerciseProgress: {},
+    chatWidgetState: {
+      isOpen: false,
+      sizeMode: 'medium',
+      hasUnreadMessages: false,
+    },
   });
   applyThemeToDocument('dark');
 };

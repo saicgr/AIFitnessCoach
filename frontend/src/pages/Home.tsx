@@ -233,13 +233,9 @@ export default function Home() {
         setIsBackgroundGenerating(true);
 
         try {
-          // Get user preferences for generation
-          const preferences = typeof user.preferences === 'string'
-            ? JSON.parse(user.preferences)
-            : user.preferences || {};
-
-          const selectedDays = preferences.selected_days || [0, 2, 4]; // Default Mon/Wed/Fri
-          const workoutDuration = preferences.workout_duration || 45;
+          // Get user preferences from onboardingData (persisted in store)
+          const selectedDays = onboardingData?.selectedDays || [0, 2, 4]; // Default Mon/Wed/Fri
+          const workoutDuration = onboardingData?.workoutDuration || 45;
 
           const today = new Date();
           const monthStartDate = today.toISOString().split('T')[0];
