@@ -12,6 +12,8 @@ import { useAppStore } from '../store';
 import type { Workout, WorkoutExercise } from '../types';
 import { GlassCard, GlassButton } from './ui';
 import ExerciseLibraryModal from './ExerciseLibraryModal';
+import ExerciseSwapModal from './ExerciseSwapModal';
+import type { LibraryExercise } from '../api/client';
 
 interface WorkoutDetailPanelProps {
   workoutId: string | null;
@@ -58,6 +60,11 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [loadingAISummary, setLoadingAISummary] = useState(false);
 
+  // State for exercise swap modal
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapExerciseIndex, setSwapExerciseIndex] = useState<number>(-1);
+  const [swapExercise, setSwapExercise] = useState<WorkoutExercise | null>(null);
+
   const { data: workout, isLoading, refetch } = useQuery<Workout>({
     queryKey: ['workout', workoutId],
     queryFn: () => getWorkout(workoutId!),
@@ -93,7 +100,7 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
         reps: ex.reps,
         weight: ex.weight,
         rest_seconds: ex.rest_seconds || 60,
-        target_muscles: ex.target_muscles,
+        muscle_group: ex.muscle_group,
         equipment: ex.equipment,
       })));
     }
@@ -270,6 +277,59 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
     setEditedExercises(prev => [...prev, ...newExercises]);
   }, []);
 
+  // Handle opening swap modal for an exercise
+  const handleOpenSwapModal = (exercise: WorkoutExercise, index: number) => {
+    setSwapExercise(exercise);
+    setSwapExerciseIndex(index);
+    setShowSwapModal(true);
+  };
+
+  // Handle swapping an exercise
+  const handleSwapExercise = async (newExercise: LibraryExercise, sets: number, reps: number) => {
+    if (!workoutId || !workout || swapExerciseIndex < 0) return;
+
+    setSaving(true);
+    try {
+      // Create the new exercises array with the swap
+      const updatedExercises: WorkoutExerciseItem[] = workout.exercises.map((ex, idx) => {
+        if (idx === swapExerciseIndex) {
+          return {
+            name: newExercise.name,
+            sets: sets,
+            reps: reps,
+            weight: ex.weight,
+            rest_seconds: ex.rest_seconds || 60,
+            target_muscles: [newExercise.body_part],
+            equipment: newExercise.equipment,
+          };
+        }
+        return {
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight,
+          rest_seconds: ex.rest_seconds || 60,
+          target_muscles: ex.muscle_group ? [ex.muscle_group] : undefined,
+          equipment: ex.equipment,
+        };
+      });
+
+      // Save to database
+      await updateWorkoutExercises(workoutId, updatedExercises);
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['workouts'] });
+
+      // Close modal
+      setShowSwapModal(false);
+      setSwapExercise(null);
+      setSwapExerciseIndex(-1);
+    } catch (error) {
+      console.error('Error swapping exercise:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Update exercise field
   const handleUpdateExercise = (id: string, field: keyof EditableExercise, value: number | string) => {
     setEditedExercises(prev =>
@@ -390,37 +450,60 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
             )}
           </div>
 
+          {/* Completion Status Banner */}
+          {isCompleted && (
+            <div className="p-3 bg-accent/10 border border-accent/30 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/20 rounded-lg">
+                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-accent">Workout Completed!</p>
+                  <p className="text-xs text-text-muted">
+                    {workout.completed_at && `Finished ${new Date(workout.completed_at).toLocaleDateString()}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
-          {!isCompleted && (
-            <div className="flex gap-2">
-              <GlassButton
-                variant="primary"
-                onClick={handleStartWorkout}
-                fullWidth
-                size="sm"
-                icon={
+          <div className="flex gap-2">
+            <GlassButton
+              variant={isCompleted ? 'secondary' : 'primary'}
+              onClick={handleStartWorkout}
+              fullWidth
+              size="sm"
+              icon={
+                isCompleted ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : (
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
-                }
-              >
-                Start
-              </GlassButton>
-              <GlassButton
-                variant="secondary"
-                onClick={() => setEditMode(!editMode)}
-                fullWidth
-                size="sm"
-                icon={
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                }
-              >
-                {editMode ? 'Cancel' : 'Edit'}
-              </GlassButton>
-            </div>
-          )}
+                )
+              }
+            >
+              {isCompleted ? 'Restart' : 'Start'}
+            </GlassButton>
+            <GlassButton
+              variant="secondary"
+              onClick={() => setEditMode(!editMode)}
+              fullWidth
+              size="sm"
+              icon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              }
+            >
+              {editMode ? 'Cancel' : 'Edit'}
+            </GlassButton>
+          </div>
 
           {/* Workout Summary Button */}
           <motion.button
@@ -667,13 +750,14 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                 {workout.exercises.map((exercise, index) => (
                   <motion.div
                     key={index}
-                    onClick={() => handleExerciseClick(exercise)}
-                    className="p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer group hover:bg-white/10 hover:border-primary/30 transition-all"
+                    className="p-3 bg-white/5 rounded-xl border border-white/10 group hover:bg-white/10 hover:border-primary/30 transition-all"
                     whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div
+                        className="flex-1 cursor-pointer"
+                        onClick={() => handleExerciseClick(exercise)}
+                      >
                         <div className="flex items-center gap-2">
                           <span className="w-5 h-5 bg-primary/20 text-primary rounded flex items-center justify-center text-xs font-bold">
                             {index + 1}
@@ -697,8 +781,27 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
                           )}
                         </div>
                       </div>
-                      <div className="text-xs text-text-muted bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                        {exercise.rest_seconds}s rest
+                      <div className="flex items-center gap-2">
+                        {/* Shuffle/Swap Button */}
+                        {!isCompleted && (
+                          <motion.button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSwapModal(exercise, index);
+                            }}
+                            className="p-1.5 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors opacity-0 group-hover:opacity-100"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Swap exercise"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                          </motion.button>
+                        )}
+                        <div className="text-xs text-text-muted bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                          {exercise.rest_seconds}s rest
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -872,6 +975,18 @@ export default function WorkoutDetailPanel({ workoutId, onClose, onSelectExercis
       onClose={() => setShowAddExerciseModal(false)}
       onAddExercises={handleAddExercises}
       existingExerciseNames={editedExercises.map(ex => ex.name)}
+    />
+
+    {/* Exercise Swap Modal */}
+    <ExerciseSwapModal
+      isOpen={showSwapModal}
+      onClose={() => {
+        setShowSwapModal(false);
+        setSwapExercise(null);
+        setSwapExerciseIndex(-1);
+      }}
+      currentExercise={swapExercise}
+      onSwap={handleSwapExercise}
     />
 
     {/* Workout Summary Modal */}

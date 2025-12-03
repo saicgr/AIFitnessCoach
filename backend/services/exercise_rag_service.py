@@ -87,25 +87,63 @@ class ExerciseRAGService:
 
     async def index_all_exercises(self, batch_size: int = 100) -> int:
         """
-        Index all exercises from the exercise_library table.
+        Index all exercises from the exercise_library_cleaned view.
 
+        Uses the cleaned/deduplicated view and only indexes exercises with videos.
         Call this once to populate the vector store, or periodically to update.
         Uses batch embedding API to minimize API calls.
 
         Returns:
             Number of exercises indexed
         """
-        logger.info("🔄 Starting exercise library indexing...")
+        logger.info("🔄 Starting exercise library indexing (using cleaned view)...")
 
-        # Fetch all exercises from Supabase
-        result = self.client.table("exercise_library").select("*").execute()
-        exercises = result.data or []
+        # Fetch all exercises from cleaned view using pagination (Supabase 1000 row limit)
+        all_exercises = []
+        page_size = 1000
+        offset = 0
 
-        if not exercises:
-            logger.warning("No exercises found in exercise_library table")
+        while True:
+            result = self.client.table("exercise_library_cleaned").select("*").range(
+                offset, offset + page_size - 1
+            ).execute()
+
+            if not result.data:
+                break
+
+            all_exercises.extend(result.data)
+
+            if len(result.data) < page_size:
+                break
+
+            offset += page_size
+
+        if not all_exercises:
+            logger.warning("No exercises found in exercise_library_cleaned view")
             return 0
 
-        logger.info(f"📊 Found {len(exercises)} exercises to index")
+        # Filter: only exercises with videos, and deduplicate by lowercase name
+        # Note: The cleaned view uses 'video_url' (not 'video_s3_path') and 'name' (not 'exercise_name_cleaned')
+        seen_names: set = set()
+        exercises = []
+        for ex in all_exercises:
+            # Skip exercises without videos
+            # View column is 'video_url', fallback to 'video_s3_path' for compatibility
+            if not ex.get("video_url") and not ex.get("video_s3_path"):
+                continue
+
+            # Get cleaned name - view uses 'name' column
+            exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "")))
+
+            # Case-insensitive deduplication (prefer Title Case)
+            lower_name = exercise_name.lower()
+            if lower_name in seen_names:
+                continue
+            seen_names.add(lower_name)
+
+            exercises.append(ex)
+
+        logger.info(f"📊 Found {len(exercises)} exercises to index (filtered from {len(all_exercises)}, only with videos, deduplicated)")
         indexed_count = 0
 
         # Process in batches (OpenAI supports up to 2048 texts per call)
@@ -125,12 +163,15 @@ class ExerciseRAGService:
                 doc_id = f"ex_{ex.get('id', '')}"
                 exercise_text = self._build_exercise_text(ex)
 
+                # Get cleaned name - view uses 'name' column (fallback for compatibility)
+                exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "Unknown")))
+
                 ids.append(doc_id)
                 documents.append(exercise_text)
                 # ChromaDB only accepts str, int, float, bool - convert None to empty string
                 metadatas.append({
                     "exercise_id": str(ex.get("id") or ""),
-                    "name": str(ex.get("exercise_name") or "Unknown"),
+                    "name": exercise_name,
                     "body_part": str(ex.get("body_part") or ""),
                     "equipment": str(ex.get("equipment") or "bodyweight"),
                     "target_muscle": str(ex.get("target_muscle") or ""),
@@ -139,6 +180,7 @@ class ExerciseRAGService:
                     "category": str(ex.get("category") or ""),
                     "gif_url": str(ex.get("gif_url") or ""),
                     "instructions": str(ex.get("instructions") or "")[:500],
+                    "has_video": "true",  # All indexed exercises have videos
                 })
 
             # Get ALL embeddings in ONE API call
@@ -174,7 +216,8 @@ class ExerciseRAGService:
 
     def _build_exercise_text(self, exercise: Dict) -> str:
         """Build rich text representation of an exercise for embedding."""
-        name = exercise.get("exercise_name", "Unknown")
+        # Use cleaned name - view uses 'name' column (fallback for compatibility)
+        name = exercise.get("name", exercise.get("exercise_name_cleaned", exercise.get("exercise_name", "Unknown")))
         body_part = exercise.get("body_part", "")
         equipment = exercise.get("equipment", "bodyweight")
         target = exercise.get("target_muscle", "")
@@ -716,8 +759,8 @@ Select exactly {count} exercises that are SAFE for this user."""
         equipment: List[str],
         count: int,
     ) -> List[Dict[str, Any]]:
-        """Fallback to direct database query if RAG fails."""
-        logger.warning("Using fallback selection from database")
+        """Fallback to direct database query if RAG fails. Uses cleaned view."""
+        logger.warning("Using fallback selection from database (cleaned view)")
 
         # Map focus to body parts
         focus_map = {
@@ -732,20 +775,37 @@ Select exactly {count} exercises that are SAFE for this user."""
 
         body_part = focus_map.get(focus_area.lower(), "chest")
 
-        result = self.client.table("exercise_library").select("*").ilike(
+        # Use cleaned view instead of raw table
+        result = self.client.table("exercise_library_cleaned").select("*").ilike(
             "body_part", f"%{body_part}%"
-        ).limit(count * 2).execute()
+        ).limit(count * 4).execute()
 
         exercises = result.data or []
 
-        # Filter by equipment
+        # Filter by equipment and only include exercises with videos
         equipment_lower = [eq.lower() for eq in equipment] + ["body weight", "bodyweight"]
+        seen_names: set = set()
         filtered = []
+
         for ex in exercises:
+            # Skip exercises without videos - view uses 'video_url' column
+            if not ex.get("video_url") and not ex.get("video_s3_path"):
+                continue
+
+            # Get cleaned name - view uses 'name' column (fallback for compatibility)
+            exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "Unknown")))
+
+            # Case-insensitive deduplication
+            lower_name = exercise_name.lower()
+            if lower_name in seen_names:
+                continue
+            seen_names.add(lower_name)
+
+            # Filter by equipment
             ex_eq = (ex.get("equipment", "") or "").lower()
             if any(eq in ex_eq for eq in equipment_lower):
                 filtered.append({
-                    "name": ex.get("exercise_name", "Unknown"),
+                    "name": exercise_name,
                     "target_muscle": ex.get("target_muscle", ""),
                     "body_part": ex.get("body_part", ""),
                     "equipment": ex.get("equipment", "bodyweight"),

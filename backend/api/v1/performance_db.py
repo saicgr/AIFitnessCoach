@@ -10,8 +10,9 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/weekly-volume - Get weekly volume
 """
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -292,4 +293,122 @@ async def list_weekly_volumes(
 
     except Exception as e:
         logger.error(f"Error listing weekly volumes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ Streaks ============
+
+class StreakResponse(BaseModel):
+    """Response model for workout streaks."""
+    current_streak: int  # Current consecutive days
+    longest_streak: int  # Best ever streak
+    last_workout_date: Optional[str] = None  # ISO date string
+    is_active_today: bool  # Did user workout today?
+    streak_at_risk: bool  # Will lose streak if no workout today?
+
+
+@router.get("/streak/{user_id}", response_model=StreakResponse)
+async def get_user_streak(user_id: str):
+    """
+    Get workout streak information for a user.
+
+    Streak is calculated based on consecutive days with completed workouts.
+    A day counts if any workout was completed on that date.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get all workout logs for the user, ordered by completion date
+        rows = db.list_workout_logs(user_id=user_id, limit=500)
+
+        if not rows:
+            return StreakResponse(
+                current_streak=0,
+                longest_streak=0,
+                last_workout_date=None,
+                is_active_today=False,
+                streak_at_risk=False,
+            )
+
+        # Extract unique dates when workouts were completed
+        workout_dates: set = set()
+        for row in rows:
+            completed_at = row.get("completed_at")
+            if completed_at:
+                # Parse ISO datetime and extract date
+                if isinstance(completed_at, str):
+                    dt = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                    workout_dates.add(dt.date())
+                elif isinstance(completed_at, datetime):
+                    workout_dates.add(completed_at.date())
+
+        if not workout_dates:
+            return StreakResponse(
+                current_streak=0,
+                longest_streak=0,
+                last_workout_date=None,
+                is_active_today=False,
+                streak_at_risk=False,
+            )
+
+        # Sort dates in descending order (most recent first)
+        sorted_dates = sorted(workout_dates, reverse=True)
+        last_workout = sorted_dates[0]
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+
+        # Calculate current streak
+        current_streak = 0
+        check_date = today
+
+        # Start counting from today or yesterday
+        if last_workout == today:
+            current_streak = 1
+            check_date = today - timedelta(days=1)
+        elif last_workout == yesterday:
+            current_streak = 1
+            check_date = yesterday - timedelta(days=1)
+        else:
+            # Streak is broken - last workout was more than 1 day ago
+            current_streak = 0
+            check_date = None
+
+        # Count consecutive days going backwards
+        if check_date:
+            while check_date in workout_dates:
+                current_streak += 1
+                check_date -= timedelta(days=1)
+
+        # Calculate longest streak ever
+        longest_streak = 0
+        sorted_asc = sorted(workout_dates)
+
+        if sorted_asc:
+            streak = 1
+            for i in range(1, len(sorted_asc)):
+                if sorted_asc[i] - sorted_asc[i-1] == timedelta(days=1):
+                    streak += 1
+                else:
+                    longest_streak = max(longest_streak, streak)
+                    streak = 1
+            longest_streak = max(longest_streak, streak)
+
+        # Ensure current streak is considered for longest
+        longest_streak = max(longest_streak, current_streak)
+
+        is_active_today = last_workout == today
+        streak_at_risk = (current_streak > 0 and not is_active_today)
+
+        logger.info(f"Streak for user {user_id}: current={current_streak}, longest={longest_streak}")
+
+        return StreakResponse(
+            current_streak=current_streak,
+            longest_streak=longest_streak,
+            last_workout_date=last_workout.isoformat(),
+            is_active_today=is_active_today,
+            streak_at_risk=streak_at_risk,
+        )
+
+    except Exception as e:
+        logger.error(f"Error calculating streak: {e}")
         raise HTTPException(status_code=500, detail=str(e))

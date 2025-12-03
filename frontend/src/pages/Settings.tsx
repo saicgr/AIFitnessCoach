@@ -92,6 +92,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   ),
+  Water: () => (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21c4.418 0 8-3.134 8-7 0-4.418-8-11-8-11S4 9.582 4 14c0 3.866 3.582 7 8 7z" />
+    </svg>
+  ),
 };
 
 // Section Header component
@@ -606,6 +611,207 @@ export default function Settings() {
                 </div>
               </>
             )}
+          </div>
+        </GlassCard>
+
+        {/* Hydration Settings Section */}
+        <GlassCard className="p-6">
+          <SectionHeader
+            icon={<Icons.Water />}
+            title="Hydration"
+            subtitle="Stay hydrated during workouts"
+          />
+
+          <div className="space-y-4">
+            {/* Hydration Reminders Toggle */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-xl">
+                  <Icons.Bell />
+                </div>
+                <div>
+                  <p className="font-medium text-text">Workout Reminders</p>
+                  <p className="text-xs text-text-secondary">Get reminded to drink during workouts</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotificationSettings({ hydrationRemindersEnabled: !notificationSettings.hydrationRemindersEnabled })}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                  notificationSettings.hydrationRemindersEnabled
+                    ? 'bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                    : 'bg-white/20 border border-white/30'
+                }`}
+              >
+                <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                  notificationSettings.hydrationRemindersEnabled ? 'left-7' : 'left-1'
+                }`} />
+              </button>
+            </div>
+
+            {/* Reminder Interval - only show if reminders enabled */}
+            {notificationSettings.hydrationRemindersEnabled && (
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Reminder Interval</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {([30, 45, 60, 90] as const).map((minutes) => (
+                    <button
+                      key={minutes}
+                      onClick={() => setNotificationSettings({ hydrationReminderInterval: minutes })}
+                      className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        notificationSettings.hydrationReminderInterval === minutes
+                          ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                          : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
+                      }`}
+                    >
+                      {minutes}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Daily Goal */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Daily Goal</p>
+                {/* Unit Toggle */}
+                <button
+                  onClick={() => setNotificationSettings({
+                    hydrationUnit: notificationSettings.hydrationUnit === 'oz' ? 'ml' : 'oz'
+                  })}
+                  className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-text-muted transition-colors"
+                >
+                  {notificationSettings.hydrationUnit?.toUpperCase() || 'OZ'}
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { ml: 2000, oz: 68 },
+                  { ml: 2500, oz: 85 },
+                  { ml: 3000, oz: 101 },
+                  { ml: 3500, oz: 118 },
+                ].map((goal) => {
+                  const displayValue = notificationSettings.hydrationUnit === 'ml' ? goal.ml : goal.oz;
+                  const unit = notificationSettings.hydrationUnit === 'ml' ? 'ml' : 'oz';
+                  const isSelected = notificationSettings.hydrationDailyGoalMl === goal.ml;
+                  return (
+                    <button
+                      key={goal.ml}
+                      onClick={() => setNotificationSettings({ hydrationDailyGoalMl: goal.ml })}
+                      className={`px-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        isSelected
+                          ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                          : 'bg-white/5 text-text-secondary hover:bg-white/10 border border-white/10'
+                      }`}
+                    >
+                      {displayValue}{unit}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-text-muted mt-2">
+                {notificationSettings.hydrationUnit === 'ml'
+                  ? `${notificationSettings.hydrationDailyGoalMl || 2500}ml per day`
+                  : `${Math.round((notificationSettings.hydrationDailyGoalMl || 2500) / 29.574)}oz per day`
+                }
+              </p>
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Weekly Summary Section */}
+        <GlassCard className="p-6">
+          <SectionHeader
+            icon={<Icons.Sparkles />}
+            title="Weekly Summary"
+            subtitle="AI-generated workout reports"
+          />
+
+          <div className="space-y-4">
+            {/* Weekly Summary Toggle */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-xl">
+                  <Icons.Email />
+                </div>
+                <div>
+                  <p className="font-medium text-text">Weekly Summary Emails</p>
+                  <p className="text-xs text-text-secondary">Get AI-powered workout summaries</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const isEnabled = notificationSettings.summaryEmailFrequencies?.includes('weekly');
+                  if (isEnabled) {
+                    setNotificationSettings({
+                      summaryEmailFrequencies: notificationSettings.summaryEmailFrequencies?.filter(f => f !== 'weekly') || []
+                    });
+                  } else {
+                    setNotificationSettings({
+                      summaryEmailFrequencies: [...(notificationSettings.summaryEmailFrequencies || []), 'weekly']
+                    });
+                  }
+                }}
+                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                  notificationSettings.summaryEmailFrequencies?.includes('weekly')
+                    ? 'bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]'
+                    : 'bg-white/20 border border-white/30'
+                }`}
+              >
+                <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                  notificationSettings.summaryEmailFrequencies?.includes('weekly') ? 'left-7' : 'left-1'
+                }`} />
+              </button>
+            </div>
+
+            {/* What's included */}
+            {notificationSettings.summaryEmailFrequencies?.includes('weekly') && (
+              <div className="border-t border-white/10 pt-4">
+                <p className="text-xs font-medium text-text-secondary uppercase tracking-wide mb-3">Summary Includes</p>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Workout stats & completion', icon: '📊', always: true },
+                    { label: 'AI-generated highlights', icon: '✨', always: true },
+                    { label: 'Personal records achieved', icon: '🏆', always: true },
+                    { label: 'Motivational message', icon: '💪', always: true },
+                    { label: 'Tips for next week', icon: '💡', always: true },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-2 text-sm text-text-muted">
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                      {item.always && <Icons.Check />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Achievement Notifications */}
+            <div className="border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-500/10 rounded-xl text-yellow-400">
+                    <Icons.Sparkles />
+                  </div>
+                  <div>
+                    <p className="font-medium text-text">Achievement Alerts</p>
+                    <p className="text-xs text-text-secondary">Get notified when you earn achievements</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNotificationSettings({ motivationEmailsEnabled: !notificationSettings.motivationEmailsEnabled })}
+                  className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                    notificationSettings.motivationEmailsEnabled
+                      ? 'bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.4)]'
+                      : 'bg-white/20 border border-white/30'
+                  }`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full transition-all duration-300 bg-white ${
+                    notificationSettings.motivationEmailsEnabled ? 'left-7' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+            </div>
           </div>
         </GlassCard>
 

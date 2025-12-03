@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -480,7 +480,7 @@ export default function Library() {
     queryFn: () => getLibraryExercises({
       body_part: selectedBodyPart || undefined,
       search: searchQuery || undefined,
-      limit: 2000,  // Increased to show all deduplicated exercises (~1872)
+      limit: 5000,  // Fetch all exercises from the library
     }),
     enabled: activeTab === 'exercises',
   });
@@ -499,6 +499,12 @@ export default function Library() {
   const isLoading = activeTab === 'exercises'
     ? loadingExercises || loadingBodyParts
     : loadingPrograms || loadingCategories;
+
+  // Filter to only show exercises with videos
+  const exercisesWithVideos = useMemo(() => {
+    if (!exercises) return [];
+    return exercises.filter(ex => ex.video_url);
+  }, [exercises]);
 
   // Close exercise detail when changing filters
   useEffect(() => {
@@ -626,13 +632,13 @@ export default function Library() {
           <>
             {/* Exercise count */}
             <div className="text-sm text-text-muted">
-              {exercises?.length || 0} exercises found
+              {exercisesWithVideos.length} exercises found
             </div>
 
             {/* Exercise Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {exercises && exercises.length > 0 ? (
-                exercises.map((exercise: LibraryExercise) => (
+              {exercisesWithVideos.length > 0 ? (
+                exercisesWithVideos.map((exercise: LibraryExercise) => (
                   <ExerciseCard
                     key={exercise.id}
                     exercise={exercise}

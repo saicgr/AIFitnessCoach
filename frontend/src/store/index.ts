@@ -35,6 +35,12 @@ interface AppState {
 
     // Motivation emails
     motivationEmailsEnabled: boolean;
+
+    // Hydration reminders
+    hydrationRemindersEnabled: boolean;
+    hydrationReminderInterval: 30 | 45 | 60 | 90; // minutes
+    hydrationDailyGoalMl: number;
+    hydrationUnit: 'ml' | 'oz';
   };
   setNotificationSettings: (settings: Partial<AppState['notificationSettings']>) => void;
   setIncludedInSummary: (data: Partial<AppState['notificationSettings']['includedInSummary']>) => void;
@@ -134,8 +140,9 @@ const defaultOnboarding: OnboardingData = {
   workoutExperience: [],
 
   // Screen 4: Schedule
-  daysPerWeek: 4,
-  selectedDays: [0, 1, 3, 4],  // Mon, Tue, Thu, Fri default
+  // IMPORTANT: Start with empty selectedDays - will be populated from user preferences
+  daysPerWeek: 3,
+  selectedDays: [],  // Empty until user sets during onboarding
   preferredTime: 'morning',
   workoutDuration: 45,
 
@@ -151,7 +158,7 @@ const defaultOnboarding: OnboardingData = {
   activityLevel: 'lightly_active',
 };
 
-const STORAGE_VERSION = 6;
+const STORAGE_VERSION = 8;  // v8: Added hydration reminder settings
 
 // Helper to apply theme class to document
 const applyThemeToDocument = (theme: 'dark' | 'light') => {
@@ -197,6 +204,10 @@ export const useAppStore = create<AppState>()(
           dinner: true,
         },
         motivationEmailsEnabled: false,
+        hydrationRemindersEnabled: false,
+        hydrationReminderInterval: 60,
+        hydrationDailyGoalMl: 2500,
+        hydrationUnit: 'oz',
       },
       setNotificationSettings: (settings) =>
         set((state) => ({
@@ -359,6 +370,10 @@ export const useAppStore = create<AppState>()(
               foodTrackingEnabled: false,
               foodTrackingMeals: { breakfast: true, lunch: true, dinner: true },
               motivationEmailsEnabled: false,
+              hydrationRemindersEnabled: false,
+              hydrationReminderInterval: 60 as const,
+              hydrationDailyGoalMl: 2500,
+              hydrationUnit: 'oz' as const,
             },
           };
         }
@@ -394,6 +409,10 @@ export const clearAppStorage = () => {
       foodTrackingEnabled: false,
       foodTrackingMeals: { breakfast: true, lunch: true, dinner: true },
       motivationEmailsEnabled: false,
+      hydrationRemindersEnabled: false,
+      hydrationReminderInterval: 60,
+      hydrationDailyGoalMl: 2500,
+      hydrationUnit: 'oz',
     },
     session: null,
     user: null,

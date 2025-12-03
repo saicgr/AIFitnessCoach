@@ -90,8 +90,10 @@ export function extractOnboardingData(backend: UserBackend): Partial<OnboardingD
     workoutExperience: preferences.workout_experience || [],
 
     // Schedule
-    daysPerWeek: preferences.days_per_week || 4,
-    selectedDays: preferences.selected_days || [0, 1, 3, 4],
+    // IMPORTANT: Don't use hardcoded defaults for selectedDays
+    // If not set in backend, return empty array so frontend knows data is missing
+    daysPerWeek: preferences.days_per_week || (preferences.selected_days?.length || 3),
+    selectedDays: preferences.selected_days || [],
     preferredTime: preferences.preferred_time || 'morning',
     workoutDuration: preferences.workout_duration || 45,
 

@@ -86,9 +86,43 @@ def detect_non_gym_activity(user_message: str) -> Optional[Dict[str, str]]:
     return None
 
 
+def get_field_value(collected: Dict[str, Any], field: str) -> Any:
+    """
+    Get a field value from collected data, checking both snake_case and camelCase.
+
+    The frontend stores data in camelCase but backend uses snake_case.
+    This helper checks both variants to ensure we don't miss collected data.
+    """
+    # Map of snake_case fields to their camelCase equivalents
+    snake_to_camel = {
+        "days_per_week": "daysPerWeek",
+        "selected_days": "selectedDays",
+        "workout_duration": "workoutDuration",
+        "fitness_level": "fitnessLevel",
+        "height_cm": "heightCm",
+        "weight_kg": "weightKg",
+    }
+
+    camel_to_snake = {v: k for k, v in snake_to_camel.items()}
+
+    # Try the field as-is first
+    value = collected.get(field)
+
+    # If not found or empty, try the alternative case
+    if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
+        alt_field = snake_to_camel.get(field) or camel_to_snake.get(field)
+        if alt_field:
+            value = collected.get(alt_field)
+
+    return value
+
+
 async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
     """
     Check if onboarding is complete by examining collected data.
+
+    IMPORTANT: Handles both snake_case (backend) and camelCase (frontend) keys!
+    Frontend stores data in camelCase but backend expects snake_case.
 
     Returns:
         - is_complete: True if all required fields are collected
@@ -99,8 +133,12 @@ async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
     collected = state.get("collected_data", {})
     missing = []
 
+    logger.info(f"[Check Completion] Collected data keys: {list(collected.keys())}")
+
     for field in REQUIRED_FIELDS:
-        value = collected.get(field)
+        # Use helper to check both snake_case and camelCase
+        value = get_field_value(collected, field)
+
         # Check if field is missing or empty
         if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
             missing.append(field)
@@ -298,6 +336,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for {next_field}")
 
         # PRIORITY 1: If AI is asking about specific days and we have days_per_week, show quick replies for days
+        # Note: missing list uses snake_case field names from REQUIRED_FIELDS
+        # We check if days_per_week is NOT missing (i.e., already collected)
         elif is_asking_specific_days and "selected_days" in missing and "days_per_week" not in missing:
             quick_replies = QUICK_REPLIES["selected_days"]
             is_multi_select = True  # Days is multi-select
@@ -370,13 +410,15 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     collected_data = state.get("collected_data", {})
 
     # Calculate what's missing based on collected_data (missing_fields may not be set yet)
+    # Use get_field_value helper to check both snake_case and camelCase keys
     from .prompts import REQUIRED_FIELDS
     missing = []
     for field in REQUIRED_FIELDS:
-        value = collected_data.get(field)
+        value = get_field_value(collected_data, field)
         if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
             missing.append(field)
 
+    logger.info(f"[Extract Data] Collected data keys: {list(collected_data.keys())}")
     logger.info(f"[Extract Data] Current missing fields: {missing}")
     logger.info(f"[Extract Data] User message: {user_message}")
 
@@ -673,9 +715,10 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         logger.info(f"[Extract Data] 🎯 Pre-processed: {list(extracted.keys())}")
 
         # Calculate how many fields we still need after pre-processing
+        # Use get_field_value helper to check both snake_case and camelCase keys
         remaining_missing = []
         for field in REQUIRED_FIELDS:
-            value = merged.get(field)
+            value = get_field_value(merged, field)
             if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
                 remaining_missing.append(field)
 

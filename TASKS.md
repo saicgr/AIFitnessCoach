@@ -1,7 +1,5 @@
 IMMEDIATE:
-1. Onboarding multiple workout generations
 2. Deploy easy vercel and render
-4. Website landing page
 
 NEED
 0. AI Onboarding. DONE
@@ -183,3 +181,43 @@ They talk about it.
 They tell friends.
 
 This creates emotional virality.
+
+
+METRICS:
+2. Body Composition Metrics
+
+These are tracked weekly or monthly:
+	•	Weight
+	•	Body fat %
+	•	Muscle mass
+	•	Waist / hip / chest measurements
+	•	Progress photos
+	•	BMI (rarely useful but often included)
+
+3. Strength Progression
+
+Trainers track every lift trend:
+	•	1RM estimations (bench, squat, deadlift)
+	•	Reps × sets × weight per exercise
+	•	RPE (rate of perceived exertion)
+	•	Volume load (total kg lifted per workout)
+	•	Progressive overload trends
+
+8. Adherence & Consistency
+
+This is what keeps clients accountable:
+	•	% of workouts completed
+	•	Missed workout reasons
+	•	On-time check-in rate
+	•	Time spent per workout
+	•	Trainer-assigned tasks followed?
+
+10. Program Adjustments
+
+Trainers track why they modify things:
+	•	Exercise regressions/progressions
+	•	Injury accommodations
+	•	Changes in goals
+	•	Plateau indicators
+	•	Deload weeks
+	•	Phase transitions (hypertrophy → strength → power)

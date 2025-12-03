@@ -42,7 +42,7 @@ export default function ExerciseLibraryModal({
     queryFn: () => getLibraryExercises({
       body_part: selectedBodyPart || undefined,
       search: searchQuery || undefined,
-      limit: 100,
+      limit: 5000,  // Fetch all exercises from the library
     }),
   });
 

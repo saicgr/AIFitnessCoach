@@ -3,6 +3,9 @@ from fastapi import APIRouter
 from api.v1 import chat, health, workouts, performance
 from api.v1 import users, exercises, workouts_db, performance_db
 from api.v1 import metrics, videos, onboarding, reminders, nutrition, library
+from api.v1 import exercise_suggestions
+from api.v1 import hydration
+from api.v1 import feedback, achievements, summaries
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -36,3 +39,18 @@ router.include_router(nutrition.router, prefix="/nutrition", tags=["Nutrition"])
 
 # Library browsing endpoints (exercises & programs)
 router.include_router(library.router, prefix="/library", tags=["Library"])
+
+# Exercise suggestion agent endpoint
+router.include_router(exercise_suggestions.router, prefix="/exercise-suggestions", tags=["Exercise Suggestions"])
+
+# Hydration tracking endpoints
+router.include_router(hydration.router, prefix="/hydration", tags=["Hydration"])
+
+# Workout and exercise feedback endpoints
+router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
+
+# Achievements and milestones endpoints
+router.include_router(achievements.router, prefix="/achievements", tags=["Achievements"])
+
+# Weekly summaries and notification preferences
+router.include_router(summaries.router, prefix="/summaries", tags=["Summaries"])

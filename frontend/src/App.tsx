@@ -17,6 +17,7 @@ import Profile from './pages/Profile';
 import Metrics from './pages/Metrics';
 import Nutrition from './pages/Nutrition';
 import Library from './pages/Library';
+import Achievements from './pages/Achievements';
 import ChatWidget from './components/chat/ChatWidget';
 
 function App() {
@@ -92,6 +93,7 @@ function App() {
         <Route path="/metrics" element={<Metrics />} />
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/achievements" element={<Achievements />} />
       </Routes>
       {/* Global Chat Widget - renders via portal, only for authenticated users */}
       {isValidUser && <ChatWidget />}

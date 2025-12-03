@@ -735,6 +735,23 @@ export const updateWeeklyVolume = async (
 };
 
 // ============================================
+// Workout Streaks
+// ============================================
+
+export interface StreakResponse {
+  current_streak: number;  // Current consecutive days
+  longest_streak: number;  // Best ever streak
+  last_workout_date: string | null;  // ISO date string
+  is_active_today: boolean;  // Did user workout today?
+  streak_at_risk: boolean;  // Will lose streak if no workout today?
+}
+
+export const getUserStreak = async (userId: string): Promise<StreakResponse> => {
+  const { data } = await api.get<StreakResponse>(`/performance-db/streak/${userId}`);
+  return data;
+};
+
+// ============================================
 // Exercise Videos
 // ============================================
 
@@ -1163,6 +1180,628 @@ export const updateStretchExercises = async (
     `/workouts-db/${workoutId}/stretches/exercises`,
     { exercises }
   );
+  return data;
+};
+
+// ============================================
+// Exercise Suggestion Agent
+// ============================================
+
+export interface ExerciseSuggestionRequest {
+  user_id: string;  // UUID string
+  message: string;  // User's request (e.g., "I don't have dumbbells")
+  current_exercise: {
+    name: string;
+    sets: number;
+    reps: number;
+    muscle_group?: string;
+    equipment?: string;
+  };
+  user_equipment?: string[];
+  user_injuries?: string[];
+  user_fitness_level?: string;
+}
+
+export interface ExerciseSuggestion {
+  id?: string;
+  name: string;
+  body_part?: string;
+  equipment?: string;
+  target_muscle?: string;
+  reason: string;
+  tip?: string;
+  rank: number;  // 1 = best match, 2 = second best, etc.
+}
+
+export interface ExerciseSuggestionResponse {
+  suggestions: ExerciseSuggestion[];
+  message: string;
+  swap_reason?: string;
+}
+
+/**
+ * Get AI-powered exercise suggestions using the LangGraph agent.
+ * This endpoint analyzes WHY the user wants to swap and finds the best alternatives.
+ */
+export const getExerciseSuggestions = async (
+  request: ExerciseSuggestionRequest
+): Promise<ExerciseSuggestionResponse> => {
+  const { data } = await api.post<ExerciseSuggestionResponse>(
+    '/exercise-suggestions/suggest',
+    request
+  );
+  return data;
+};
+
+// ============================================
+// Hydration Tracking
+// ============================================
+
+export interface HydrationLog {
+  id: string;
+  user_id: string;
+  drink_type: 'water' | 'protein_shake' | 'sports_drink' | 'coffee' | 'other';
+  amount_ml: number;
+  workout_id?: string;
+  notes?: string;
+  logged_at?: string;
+}
+
+export interface HydrationLogCreate {
+  user_id: string;
+  drink_type: 'water' | 'protein_shake' | 'sports_drink' | 'coffee' | 'other';
+  amount_ml: number;
+  workout_id?: string;
+  notes?: string;
+}
+
+export interface DailyHydrationSummary {
+  date: string;
+  total_ml: number;
+  water_ml: number;
+  protein_shake_ml: number;
+  sports_drink_ml: number;
+  other_ml: number;
+  goal_ml: number;
+  goal_percentage: number;
+  entries: HydrationLog[];
+}
+
+export interface HydrationGoal {
+  user_id: string;
+  daily_goal_ml: number;
+}
+
+/**
+ * Log a hydration intake entry.
+ */
+export const logHydration = async (data: HydrationLogCreate): Promise<HydrationLog> => {
+  const { data: response } = await api.post<HydrationLog>('/hydration/log', data);
+  return response;
+};
+
+/**
+ * Quick log hydration with minimal parameters.
+ * Common amounts: 250ml (glass), 500ml (bottle), 750ml (large bottle)
+ */
+export const quickLogHydration = async (
+  userId: string,
+  drinkType: string = 'water',
+  amountMl: number = 250,
+  workoutId?: string
+): Promise<HydrationLog> => {
+  const params = new URLSearchParams({
+    drink_type: drinkType,
+    amount_ml: amountMl.toString(),
+  });
+  if (workoutId) {
+    params.append('workout_id', workoutId);
+  }
+  const { data } = await api.post<HydrationLog>(`/hydration/quick-log/${userId}?${params}`);
+  return data;
+};
+
+/**
+ * Get daily hydration summary for a user.
+ */
+export const getDailyHydration = async (
+  userId: string,
+  date?: string
+): Promise<DailyHydrationSummary> => {
+  const params = date ? `?date_str=${date}` : '';
+  const { data } = await api.get<DailyHydrationSummary>(`/hydration/daily/${userId}${params}`);
+  return data;
+};
+
+/**
+ * Get hydration logs for a user.
+ */
+export const getHydrationLogs = async (
+  userId: string,
+  workoutId?: string,
+  days: number = 7
+): Promise<HydrationLog[]> => {
+  const params = new URLSearchParams({ days: days.toString() });
+  if (workoutId) {
+    params.append('workout_id', workoutId);
+  }
+  const { data } = await api.get<HydrationLog[]>(`/hydration/logs/${userId}?${params}`);
+  return data;
+};
+
+/**
+ * Delete a hydration log entry.
+ */
+export const deleteHydrationLog = async (logId: string): Promise<void> => {
+  await api.delete(`/hydration/log/${logId}`);
+};
+
+/**
+ * Get user's daily hydration goal.
+ */
+export const getHydrationGoal = async (userId: string): Promise<HydrationGoal> => {
+  const { data } = await api.get<HydrationGoal>(`/hydration/goal/${userId}`);
+  return data;
+};
+
+/**
+ * Update user's daily hydration goal.
+ */
+export const updateHydrationGoal = async (
+  userId: string,
+  dailyGoalMl: number
+): Promise<HydrationGoal> => {
+  const { data } = await api.put<HydrationGoal>(`/hydration/goal/${userId}`, {
+    daily_goal_ml: dailyGoalMl,
+  });
+  return data;
+};
+
+// ============================================
+// Workout Exit / Quit Tracking
+// ============================================
+
+export type WorkoutExitReason =
+  | 'completed'
+  | 'too_tired'
+  | 'out_of_time'
+  | 'not_feeling_well'
+  | 'equipment_unavailable'
+  | 'injury'
+  | 'other';
+
+export interface WorkoutExitCreate {
+  user_id: string;
+  workout_id: string;
+  exit_reason: WorkoutExitReason;
+  exit_notes?: string;
+  exercises_completed: number;
+  total_exercises: number;
+  sets_completed: number;
+  time_spent_seconds: number;
+  progress_percentage: number;
+}
+
+export interface WorkoutExit {
+  id: string;
+  user_id: string;
+  workout_id: string;
+  exit_reason: WorkoutExitReason;
+  exit_notes?: string;
+  exercises_completed: number;
+  total_exercises: number;
+  sets_completed: number;
+  time_spent_seconds: number;
+  progress_percentage: number;
+  exited_at: string;
+}
+
+export interface WorkoutExitStats {
+  total_exits: number;
+  exits_by_reason: Record<string, number>;
+  avg_progress_at_exit: number;
+  total_time_spent_seconds: number;
+}
+
+/**
+ * Log a workout exit/quit event with reason and progress tracking.
+ */
+export const logWorkoutExit = async (
+  workoutId: string,
+  exitData: WorkoutExitCreate
+): Promise<WorkoutExit> => {
+  const { data } = await api.post<WorkoutExit>(
+    `/workouts-db/${workoutId}/exit`,
+    exitData
+  );
+  return data;
+};
+
+/**
+ * Get all exit records for a workout.
+ */
+export const getWorkoutExits = async (workoutId: string): Promise<WorkoutExit[]> => {
+  const { data } = await api.get<WorkoutExit[]>(`/workouts-db/${workoutId}/exits`);
+  return data;
+};
+
+/**
+ * Get exit statistics for a user - helpful for understanding workout completion patterns.
+ */
+export const getUserExitStats = async (userId: string): Promise<WorkoutExitStats> => {
+  const { data } = await api.get<WorkoutExitStats>(`/workouts-db/user/${userId}/exit-stats`);
+  return data;
+};
+
+// ============================================
+// Workout Feedback
+// ============================================
+
+export type DifficultyFelt = 'too_easy' | 'just_right' | 'too_hard';
+export type EnergyLevel = 'exhausted' | 'tired' | 'good' | 'energized' | 'great';
+
+export interface ExerciseFeedbackCreate {
+  user_id: string;
+  workout_id: string;
+  exercise_name: string;
+  exercise_index: number;
+  rating: number; // 1-5
+  comment?: string;
+  difficulty_felt?: DifficultyFelt;
+  would_do_again?: boolean;
+}
+
+export interface ExerciseFeedback extends ExerciseFeedbackCreate {
+  id: string;
+  created_at: string;
+}
+
+export interface WorkoutFeedbackCreate {
+  user_id: string;
+  workout_id: string;
+  overall_rating: number; // 1-5
+  energy_level?: EnergyLevel;
+  overall_difficulty?: DifficultyFelt;
+  comment?: string;
+  would_recommend?: boolean;
+  exercise_feedback?: ExerciseFeedbackCreate[];
+}
+
+export interface WorkoutFeedback {
+  id: string;
+  user_id: string;
+  workout_id: string;
+  overall_rating: number;
+  energy_level?: EnergyLevel;
+  overall_difficulty?: DifficultyFelt;
+  comment?: string;
+  would_recommend: boolean;
+  completed_at: string;
+  created_at: string;
+}
+
+export interface WorkoutFeedbackWithExercises extends WorkoutFeedback {
+  exercise_feedback: ExerciseFeedback[];
+}
+
+export interface FeedbackStats {
+  total_feedback: number;
+  average_rating: number;
+  rating_distribution: Record<string, number>;
+  energy_level_distribution: Record<string, number>;
+  difficulty_distribution: Record<string, number>;
+}
+
+/**
+ * Submit feedback for a completed workout with optional per-exercise ratings.
+ */
+export const submitWorkoutFeedback = async (
+  workoutId: string,
+  feedback: WorkoutFeedbackCreate
+): Promise<WorkoutFeedbackWithExercises> => {
+  const { data } = await api.post<WorkoutFeedbackWithExercises>(
+    `/feedback/workout/${workoutId}`,
+    feedback
+  );
+  return data;
+};
+
+/**
+ * Get feedback for a specific workout.
+ */
+export const getWorkoutFeedback = async (
+  workoutId: string,
+  userId: string
+): Promise<WorkoutFeedbackWithExercises> => {
+  const { data } = await api.get<WorkoutFeedbackWithExercises>(
+    `/feedback/workout/${workoutId}?user_id=${userId}`
+  );
+  return data;
+};
+
+/**
+ * Get feedback statistics for a user.
+ */
+export const getUserFeedbackStats = async (userId: string): Promise<FeedbackStats> => {
+  const { data } = await api.get<FeedbackStats>(`/feedback/user/${userId}/stats`);
+  return data;
+};
+
+// ============================================
+// Achievements & Milestones
+// ============================================
+
+export interface AchievementType {
+  id: string;
+  name: string;
+  description: string;
+  category: 'strength' | 'consistency' | 'weight' | 'cardio' | 'habit';
+  icon: string;
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  points: number;
+  threshold_value?: number;
+  threshold_unit?: string;
+  is_repeatable: boolean;
+}
+
+export interface UserAchievement {
+  id: string;
+  user_id: string;
+  achievement_id: string;
+  earned_at: string;
+  trigger_value?: number;
+  trigger_details?: Record<string, unknown>;
+  is_notified: boolean;
+  achievement?: AchievementType;
+}
+
+export interface UserStreak {
+  id: string;
+  user_id: string;
+  streak_type: 'workout' | 'hydration' | 'protein' | 'sleep';
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date?: string;
+  streak_start_date?: string;
+}
+
+export interface PersonalRecord {
+  id: string;
+  user_id: string;
+  exercise_name: string;
+  record_type: 'weight' | 'reps' | 'time' | 'distance';
+  record_value: number;
+  record_unit: string;
+  previous_value?: number;
+  improvement_percentage?: number;
+  workout_id?: string;
+  achieved_at: string;
+}
+
+export interface AchievementsSummary {
+  total_points: number;
+  total_achievements: number;
+  recent_achievements: UserAchievement[];
+  current_streaks: UserStreak[];
+  personal_records: PersonalRecord[];
+  achievements_by_category: Record<string, number>;
+}
+
+export interface NewAchievementNotification {
+  achievement: AchievementType;
+  earned_at: string;
+  trigger_value?: number;
+  trigger_details?: Record<string, unknown>;
+  is_first_time: boolean;
+}
+
+/**
+ * Get all available achievement types.
+ */
+export const getAchievementTypes = async (): Promise<AchievementType[]> => {
+  const { data } = await api.get<AchievementType[]>('/achievements/types');
+  return data;
+};
+
+/**
+ * Get all achievements earned by a user.
+ */
+export const getUserAchievements = async (userId: string): Promise<UserAchievement[]> => {
+  const { data } = await api.get<UserAchievement[]>(`/achievements/user/${userId}`);
+  return data;
+};
+
+/**
+ * Get achievements summary including streaks and PRs.
+ */
+export const getAchievementsSummary = async (userId: string): Promise<AchievementsSummary> => {
+  const { data } = await api.get<AchievementsSummary>(`/achievements/user/${userId}/summary`);
+  return data;
+};
+
+/**
+ * Get unnotified achievements (new achievements user hasn't seen).
+ */
+export const getUnnotifiedAchievements = async (userId: string): Promise<NewAchievementNotification[]> => {
+  const { data } = await api.get<NewAchievementNotification[]>(`/achievements/user/${userId}/unnotified`);
+  return data;
+};
+
+/**
+ * Mark achievements as notified (user has seen them).
+ */
+export const markAchievementsNotified = async (
+  userId: string,
+  achievementIds?: string[]
+): Promise<void> => {
+  await api.post(`/achievements/user/${userId}/mark-notified`, { achievement_ids: achievementIds });
+};
+
+/**
+ * Get user's current streaks.
+ */
+export const getUserStreaks = async (userId: string): Promise<UserStreak[]> => {
+  const { data } = await api.get<UserStreak[]>(`/achievements/user/${userId}/streaks`);
+  return data;
+};
+
+/**
+ * Update a streak (called when user completes an activity).
+ */
+export const updateStreak = async (
+  userId: string,
+  streakType: string
+): Promise<{ success: boolean; new_achievements: Array<{ id: string; name: string; icon: string; points: number }> }> => {
+  const { data } = await api.post(`/achievements/user/${userId}/streaks/${streakType}/update`);
+  return data;
+};
+
+/**
+ * Get user's personal records.
+ */
+export const getUserPRs = async (userId: string, exerciseName?: string): Promise<PersonalRecord[]> => {
+  const params = exerciseName ? `?exercise_name=${encodeURIComponent(exerciseName)}` : '';
+  const { data } = await api.get<PersonalRecord[]>(`/achievements/user/${userId}/prs${params}`);
+  return data;
+};
+
+/**
+ * Check and record a potential PR.
+ */
+export const checkAndRecordPR = async (
+  userId: string,
+  exerciseName: string,
+  recordType: string,
+  value: number,
+  unit: string,
+  workoutId?: string
+): Promise<{ is_new_pr: boolean; pr?: PersonalRecord }> => {
+  const { data } = await api.post(`/achievements/user/${userId}/prs/check`, {
+    exercise_name: exerciseName,
+    record_type: recordType,
+    value,
+    unit,
+    workout_id: workoutId
+  });
+  return data;
+};
+
+// ============================================
+// Weekly Summaries
+// ============================================
+
+export interface WeeklySummary {
+  id: string;
+  user_id: string;
+  week_start: string;
+  week_end: string;
+  workouts_completed: number;
+  workouts_scheduled: number;
+  total_exercises: number;
+  total_sets: number;
+  total_time_minutes: number;
+  calories_burned_estimate: number;
+  current_streak: number;
+  streak_status?: 'growing' | 'maintained' | 'broken';
+  prs_achieved: number;
+  pr_details?: Array<{ exercise_name: string; old_value?: number; new_value: number; unit: string }>;
+  ai_summary?: string;
+  ai_highlights?: string[];
+  ai_encouragement?: string;
+  ai_next_week_tips?: string[];
+  ai_generated_at?: string;
+  email_sent: boolean;
+  push_sent: boolean;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  id?: string;
+  user_id: string;
+  weekly_summary_enabled: boolean;
+  weekly_summary_day: string;
+  weekly_summary_time: string;
+  email_notifications_enabled: boolean;
+  email_workout_reminders: boolean;
+  email_achievement_alerts: boolean;
+  email_weekly_summary: boolean;
+  email_motivation_messages: boolean;
+  push_notifications_enabled: boolean;
+  push_workout_reminders: boolean;
+  push_achievement_alerts: boolean;
+  push_weekly_summary: boolean;
+  push_hydration_reminders: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  timezone: string;
+}
+
+export interface NotificationPreferencesUpdate {
+  weekly_summary_enabled?: boolean;
+  weekly_summary_day?: string;
+  weekly_summary_time?: string;
+  email_notifications_enabled?: boolean;
+  email_workout_reminders?: boolean;
+  email_achievement_alerts?: boolean;
+  email_weekly_summary?: boolean;
+  email_motivation_messages?: boolean;
+  push_notifications_enabled?: boolean;
+  push_workout_reminders?: boolean;
+  push_achievement_alerts?: boolean;
+  push_weekly_summary?: boolean;
+  push_hydration_reminders?: boolean;
+  quiet_hours_start?: string;
+  quiet_hours_end?: string;
+  timezone?: string;
+}
+
+/**
+ * Generate a weekly summary for a user.
+ */
+export const generateWeeklySummary = async (
+  userId: string,
+  weekStart?: string
+): Promise<WeeklySummary> => {
+  const params = weekStart ? `?week_start=${weekStart}` : '';
+  const { data } = await api.post<WeeklySummary>(`/summaries/generate/${userId}${params}`);
+  return data;
+};
+
+/**
+ * Get weekly summaries for a user.
+ */
+export const getUserWeeklySummaries = async (
+  userId: string,
+  limit = 12
+): Promise<WeeklySummary[]> => {
+  const { data } = await api.get<WeeklySummary[]>(`/summaries/user/${userId}?limit=${limit}`);
+  return data;
+};
+
+/**
+ * Get the latest weekly summary.
+ */
+export const getLatestWeeklySummary = async (userId: string): Promise<WeeklySummary | null> => {
+  const { data } = await api.get<WeeklySummary | null>(`/summaries/user/${userId}/latest`);
+  return data;
+};
+
+/**
+ * Get notification preferences for a user.
+ */
+export const getNotificationPreferences = async (userId: string): Promise<NotificationPreferences> => {
+  const { data } = await api.get<NotificationPreferences>(`/summaries/preferences/${userId}`);
+  return data;
+};
+
+/**
+ * Update notification preferences.
+ */
+export const updateNotificationPreferences = async (
+  userId: string,
+  prefs: NotificationPreferencesUpdate
+): Promise<NotificationPreferences> => {
+  const { data } = await api.put<NotificationPreferences>(`/summaries/preferences/${userId}`, prefs);
   return data;
 };
 

@@ -656,3 +656,319 @@ class UpdateWarmupExercisesRequest(BaseModel):
 class UpdateStretchExercisesRequest(BaseModel):
     """Request to update stretch exercises in a workout."""
     exercises: List[StretchExercise]
+
+
+# ============================================
+# Hydration Tracking Models
+# ============================================
+
+class HydrationLogCreate(BaseModel):
+    """Request to log hydration intake."""
+    user_id: str  # UUID string
+    drink_type: str  # "water", "protein_shake", "sports_drink", "coffee", "other"
+    amount_ml: int  # Amount in milliliters
+    workout_id: Optional[str] = None  # Optional workout association
+    notes: Optional[str] = None
+
+
+class HydrationLog(BaseModel):
+    """Hydration log entry."""
+    id: str
+    user_id: str
+    drink_type: str
+    amount_ml: int
+    workout_id: Optional[str] = None
+    notes: Optional[str] = None
+    logged_at: Optional[datetime] = None
+
+
+class DailyHydrationSummary(BaseModel):
+    """Summary of daily hydration."""
+    date: str  # ISO date string
+    total_ml: int
+    water_ml: int
+    protein_shake_ml: int
+    sports_drink_ml: int
+    other_ml: int
+    goal_ml: int  # User's daily goal
+    goal_percentage: float  # Percentage of goal reached
+    entries: List[HydrationLog]
+
+
+class HydrationGoalUpdate(BaseModel):
+    """Update user's daily hydration goal."""
+    daily_goal_ml: int  # Default 2500ml / ~84oz
+
+
+class HydrationReminderSettings(BaseModel):
+    """Hydration reminder settings."""
+    enabled: bool = True
+    interval_minutes: int = 60  # Remind every 60 minutes
+    start_time: str = "08:00"  # Start reminding at 8 AM
+    end_time: str = "22:00"  # Stop reminding at 10 PM
+    during_workout_only: bool = False  # Only remind during active workouts
+
+
+# ============================================
+# Workout Exit / Quit Tracking Models
+# ============================================
+
+class WorkoutExitCreate(BaseModel):
+    """Request to log a workout exit/quit event."""
+    user_id: str  # UUID string
+    workout_id: str  # UUID string
+    exit_reason: str  # "completed", "too_tired", "out_of_time", "not_feeling_well", "equipment_unavailable", "injury", "other"
+    exit_notes: Optional[str] = None  # Optional additional notes
+    exercises_completed: int = 0  # Number of exercises completed before exit
+    total_exercises: int = 0  # Total exercises in workout
+    sets_completed: int = 0  # Total sets completed
+    time_spent_seconds: int = 0  # Total time spent in workout
+    progress_percentage: float = 0.0  # Percentage of workout completed (0-100)
+
+
+class WorkoutExit(BaseModel):
+    """Workout exit log entry."""
+    id: str  # UUID string
+    user_id: str
+    workout_id: str
+    exit_reason: str
+    exit_notes: Optional[str] = None
+    exercises_completed: int
+    total_exercises: int
+    sets_completed: int
+    time_spent_seconds: int
+    progress_percentage: float
+    exited_at: datetime
+
+
+# ============================================
+# Exercise Feedback Models
+# ============================================
+
+class ExerciseFeedbackCreate(BaseModel):
+    """Create feedback for an individual exercise."""
+    user_id: str
+    workout_id: str
+    exercise_name: str
+    exercise_index: int
+    rating: int = Field(..., ge=1, le=5)  # 1-5 stars
+    comment: Optional[str] = None
+    difficulty_felt: Optional[str] = None  # "too_easy", "just_right", "too_hard"
+    would_do_again: bool = True
+
+
+class ExerciseFeedback(BaseModel):
+    """Exercise feedback entry."""
+    id: str
+    user_id: str
+    workout_id: str
+    exercise_name: str
+    exercise_index: int
+    rating: int
+    comment: Optional[str] = None
+    difficulty_felt: Optional[str] = None
+    would_do_again: bool = True
+    created_at: datetime
+
+
+class WorkoutFeedbackCreate(BaseModel):
+    """Create overall workout feedback."""
+    user_id: str
+    workout_id: str
+    overall_rating: int = Field(..., ge=1, le=5)  # 1-5 stars
+    energy_level: Optional[str] = None  # "exhausted", "tired", "good", "energized", "great"
+    overall_difficulty: Optional[str] = None  # "too_easy", "just_right", "too_hard"
+    comment: Optional[str] = None
+    would_recommend: bool = True
+    exercise_feedback: Optional[List[ExerciseFeedbackCreate]] = None  # Individual exercise feedback
+
+
+class WorkoutFeedback(BaseModel):
+    """Overall workout feedback entry."""
+    id: str
+    user_id: str
+    workout_id: str
+    overall_rating: int
+    energy_level: Optional[str] = None
+    overall_difficulty: Optional[str] = None
+    comment: Optional[str] = None
+    would_recommend: bool = True
+    completed_at: datetime
+    created_at: datetime
+
+
+class WorkoutFeedbackWithExercises(WorkoutFeedback):
+    """Workout feedback including individual exercise ratings."""
+    exercise_feedback: List[ExerciseFeedback] = []
+
+
+# ============================================
+# Achievements & Milestones Models
+# ============================================
+
+class AchievementType(BaseModel):
+    """Achievement definition."""
+    id: str
+    name: str
+    description: str
+    category: str  # 'strength', 'consistency', 'weight', 'cardio', 'habit'
+    icon: str
+    tier: str  # 'bronze', 'silver', 'gold', 'platinum'
+    points: int
+    threshold_value: Optional[float] = None
+    threshold_unit: Optional[str] = None
+    is_repeatable: bool = False
+
+
+class UserAchievement(BaseModel):
+    """User's earned achievement."""
+    id: str
+    user_id: str
+    achievement_id: str
+    earned_at: datetime
+    trigger_value: Optional[float] = None
+    trigger_details: Optional[dict] = None
+    is_notified: bool = False
+    # Joined achievement info
+    achievement: Optional[AchievementType] = None
+
+
+class UserStreak(BaseModel):
+    """User's streak tracking."""
+    id: str
+    user_id: str
+    streak_type: str  # 'workout', 'hydration', 'protein', 'sleep'
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_activity_date: Optional[str] = None  # ISO date
+    streak_start_date: Optional[str] = None  # ISO date
+
+
+class PersonalRecord(BaseModel):
+    """Personal record entry."""
+    id: str
+    user_id: str
+    exercise_name: str
+    record_type: str  # 'weight', 'reps', 'time', 'distance'
+    record_value: float
+    record_unit: str  # 'lbs', 'kg', 'reps', 'seconds', 'km', 'miles'
+    previous_value: Optional[float] = None
+    improvement_percentage: Optional[float] = None
+    workout_id: Optional[str] = None
+    achieved_at: datetime
+
+
+class AchievementsSummary(BaseModel):
+    """Summary of user's achievements and progress."""
+    total_points: int = 0
+    total_achievements: int = 0
+    recent_achievements: List[UserAchievement] = []
+    current_streaks: List[UserStreak] = []
+    personal_records: List[PersonalRecord] = []
+    achievements_by_category: dict = {}  # {category: count}
+
+
+class NewAchievementNotification(BaseModel):
+    """Notification for a newly earned achievement."""
+    achievement: AchievementType
+    earned_at: datetime
+    trigger_value: Optional[float] = None
+    trigger_details: Optional[dict] = None
+    is_first_time: bool = True
+
+
+# ============================================
+# Weekly Summary Models
+# ============================================
+
+class WeeklySummaryCreate(BaseModel):
+    """Request to generate a weekly summary."""
+    user_id: str
+    week_start: str  # ISO date string
+
+
+class WeeklySummary(BaseModel):
+    """Weekly workout summary with AI-generated content."""
+    id: str
+    user_id: str
+    week_start: str
+    week_end: str
+
+    # Stats
+    workouts_completed: int = 0
+    workouts_scheduled: int = 0
+    total_exercises: int = 0
+    total_sets: int = 0
+    total_time_minutes: int = 0
+    calories_burned_estimate: int = 0
+
+    # Streak info
+    current_streak: int = 0
+    streak_status: Optional[str] = None  # 'growing', 'maintained', 'broken'
+
+    # PRs
+    prs_achieved: int = 0
+    pr_details: Optional[List[dict]] = None
+
+    # AI-generated content
+    ai_summary: Optional[str] = None
+    ai_highlights: Optional[List[str]] = None
+    ai_encouragement: Optional[str] = None
+    ai_next_week_tips: Optional[List[str]] = None
+    ai_generated_at: Optional[datetime] = None
+
+    # Notification status
+    email_sent: bool = False
+    push_sent: bool = False
+
+    created_at: datetime
+
+
+class NotificationPreferences(BaseModel):
+    """User notification preferences."""
+    id: Optional[str] = None
+    user_id: str
+
+    # Weekly summary
+    weekly_summary_enabled: bool = True
+    weekly_summary_day: str = "sunday"
+    weekly_summary_time: str = "09:00"
+
+    # Email notifications
+    email_notifications_enabled: bool = True
+    email_workout_reminders: bool = True
+    email_achievement_alerts: bool = True
+    email_weekly_summary: bool = True
+    email_motivation_messages: bool = False
+
+    # Push notifications
+    push_notifications_enabled: bool = False
+    push_workout_reminders: bool = True
+    push_achievement_alerts: bool = True
+    push_weekly_summary: bool = False
+    push_hydration_reminders: bool = False
+
+    # Timing
+    quiet_hours_start: str = "22:00"
+    quiet_hours_end: str = "07:00"
+    timezone: str = "America/New_York"
+
+
+class NotificationPreferencesUpdate(BaseModel):
+    """Update notification preferences."""
+    weekly_summary_enabled: Optional[bool] = None
+    weekly_summary_day: Optional[str] = None
+    weekly_summary_time: Optional[str] = None
+    email_notifications_enabled: Optional[bool] = None
+    email_workout_reminders: Optional[bool] = None
+    email_achievement_alerts: Optional[bool] = None
+    email_weekly_summary: Optional[bool] = None
+    email_motivation_messages: Optional[bool] = None
+    push_notifications_enabled: Optional[bool] = None
+    push_workout_reminders: Optional[bool] = None
+    push_achievement_alerts: Optional[bool] = None
+    push_weekly_summary: Optional[bool] = None
+    push_hydration_reminders: Optional[bool] = None
+    quiet_hours_start: Optional[str] = None
+    quiet_hours_end: Optional[str] = None
+    timezone: Optional[str] = None

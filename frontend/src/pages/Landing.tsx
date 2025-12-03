@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 
 // Apple-style animations - very subtle, purposeful
 const fade = {
@@ -17,24 +17,338 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.15 } },
 };
 
+// Carousel slides data - app features showcase
+const carouselSlides = [
+  {
+    id: 1,
+    title: 'AI-Powered Workouts',
+    description: 'Get personalized workout plans tailored to your goals, equipment, and schedule.',
+    gradient: 'from-blue-600 via-cyan-500 to-teal-400',
+    icon: (
+      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      </svg>
+    ),
+  },
+  {
+    id: 2,
+    title: 'Smart Coaching',
+    description: 'Chat with your AI coach anytime. Get form tips, nutrition advice, and motivation.',
+    gradient: 'from-purple-600 via-violet-500 to-fuchsia-400',
+    icon: (
+      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    ),
+  },
+  {
+    id: 3,
+    title: 'Real-time Tracking',
+    description: 'Log your sets, reps, and weights as you train. Rest timers keep you on track.',
+    gradient: 'from-green-600 via-emerald-500 to-teal-400',
+    icon: (
+      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
+    id: 4,
+    title: 'Progress Analytics',
+    description: 'Visualize your gains. Track personal records, streaks, and strength trends.',
+    gradient: 'from-orange-600 via-amber-500 to-yellow-400',
+    icon: (
+      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+      </svg>
+    ),
+  },
+];
+
+// Phone showcase features - expandable buttons like Apple
+const phoneFeatures = [
+  {
+    id: 'personalized',
+    label: 'Personalized Plans',
+    color: '#f97316', // orange
+    description: 'AI creates custom workouts based on your goals, equipment, and available time.',
+    hasIcon: true,
+  },
+  {
+    id: 'ai-coach',
+    label: 'AI Coach',
+    color: '',
+    description: 'Chat with your coach 24/7 for form tips, exercise swaps, and motivation.',
+    hasIcon: false,
+  },
+  {
+    id: 'tracking',
+    label: 'Real-time Tracking',
+    color: '',
+    description: 'Log sets, reps, and weights as you train with automatic rest timers.',
+    hasIcon: false,
+  },
+  {
+    id: 'videos',
+    label: 'Exercise Videos',
+    color: '',
+    description: 'Watch proper form demonstrations for every exercise in your workout.',
+    hasIcon: false,
+  },
+  {
+    id: 'analytics',
+    label: 'Progress Analytics',
+    color: '',
+    description: 'Track personal records, streaks, and visualize your strength gains over time.',
+    hasIcon: false,
+  },
+  {
+    id: 'nutrition',
+    label: 'Nutrition Tracking',
+    color: '',
+    description: 'Log meals with photos and get instant macro breakdowns from your AI coach.',
+    hasIcon: false,
+  },
+  {
+    id: 'scheduling',
+    label: 'Smart Scheduling',
+    color: '',
+    description: 'Weekly workout plans that automatically adapt to your schedule.',
+    hasIcon: false,
+  },
+];
+
+// Feature gallery data
+const galleryFeatures = [
+  {
+    id: 1,
+    title: 'Exercise Library',
+    subtitle: '100+ exercises with video demos',
+    gradient: 'from-blue-500 to-cyan-400',
+    icon: (
+      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+      </svg>
+    ),
+  },
+  {
+    id: 2,
+    title: 'Nutrition Tracking',
+    subtitle: 'Photo-based meal logging',
+    gradient: 'from-orange-500 to-amber-400',
+    icon: (
+      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+      </svg>
+    ),
+  },
+  {
+    id: 3,
+    title: 'Smart Scheduling',
+    subtitle: 'Weekly plans that adapt to you',
+    gradient: 'from-purple-500 to-violet-400',
+    icon: (
+      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+      </svg>
+    ),
+  },
+  {
+    id: 4,
+    title: 'Warmup & Cooldown',
+    subtitle: 'Auto-generated mobility work',
+    gradient: 'from-green-500 to-emerald-400',
+    icon: (
+      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+      </svg>
+    ),
+  },
+  {
+    id: 5,
+    title: 'Rest Timers',
+    subtitle: 'Optimized recovery between sets',
+    gradient: 'from-pink-500 to-rose-400',
+    icon: (
+      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+];
+
+// Stats data
+const stats = [
+  { value: 100, suffix: '+', label: 'Exercises' },
+  { value: 24, suffix: '/7', label: 'AI Coach' },
+  { value: 1000, suffix: '+', label: 'Workouts Generated' },
+];
+
+// Typing animation messages
+const chatMessages = [
+  { role: 'user', text: 'My shoulder feels tight today' },
+  { role: 'ai', text: "I've adjusted your workout to focus on lower body and core. Added shoulder mobility stretches to your cooldown. Ready when you are! 💪" },
+];
+
+// Animated Counter Hook
+function useCounter(target: number, duration: number = 2000, shouldStart: boolean = false) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!shouldStart) return;
+
+    let startTime: number | null = null;
+    let animationFrame: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(easeOut * target));
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [target, duration, shouldStart]);
+
+  return count;
+}
+
+// Typing Animation Component
+function TypingText({ text, onComplete }: { text: string; onComplete?: () => void }) {
+  const [displayText, setDisplayText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayText(text.slice(0, index + 1));
+        index++;
+      } else {
+        setIsComplete(true);
+        clearInterval(interval);
+        onComplete?.();
+      }
+    }, 30);
+
+    return () => clearInterval(interval);
+  }, [text, onComplete]);
+
+  return (
+    <span>
+      {displayText}
+      {!isComplete && <span className="animate-pulse">|</span>}
+    </span>
+  );
+}
+
 export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const progressRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+  const [chatStep, setChatStep] = useState(0);
+  const [chatStarted, setChatStarted] = useState(false);
+  const [activePhoneFeature, setActivePhoneFeature] = useState<string | null>('personalized');
 
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+
+  const statsInView = useInView(statsRef, { once: true, margin: '-100px' });
+  const chatInView = useInView(chatRef, { once: true, margin: '-100px' });
+  const phoneInView = useInView(phoneRef, { once: true, margin: '-100px' });
+
+  // Scroll handler
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Auto-advance carousel with progress animation
+  useEffect(() => {
+    // Reset progress when slide changes
+    setProgress(0);
+    lastTimeRef.current = 0;
+
+    // Don't run animation if paused or hovering
+    if (isPaused || isHovering) {
+      if (progressRef.current) {
+        cancelAnimationFrame(progressRef.current);
+        progressRef.current = null;
+      }
+      return;
+    }
+
+    const DURATION = 5000; // 5 seconds per slide
+
+    const animate = (timestamp: number) => {
+      if (!lastTimeRef.current) {
+        lastTimeRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - lastTimeRef.current;
+      const newProgress = Math.min((elapsed / DURATION) * 100, 100);
+
+      setProgress(newProgress);
+
+      if (newProgress >= 100) {
+        // Advance to next slide
+        setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+      } else {
+        progressRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    progressRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (progressRef.current) {
+        cancelAnimationFrame(progressRef.current);
+      }
+    };
+  }, [isPaused, isHovering, currentSlide]);
+
+  // Start chat animation when in view
+  useEffect(() => {
+    if (chatInView && !chatStarted) {
+      setChatStarted(true);
+      setChatStep(1);
+    }
+  }, [chatInView, chatStarted]);
+
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setMobileMenuOpen(false);
   };
 
+  const scrollGallery = useCallback((direction: 'left' | 'right') => {
+    if (!galleryRef.current) return;
+    const scrollAmount = 320;
+    galleryRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  }, []);
+
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white/20">
-      {/* Navigation - Apple style */}
+    <div className="min-h-screen bg-black text-white selection:bg-white/20 overflow-x-hidden">
+      {/* Navigation */}
       <motion.nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
@@ -47,40 +361,28 @@ export default function Landing() {
       >
         <div className="max-w-[980px] mx-auto px-6 lg:px-4">
           <div className="flex items-center justify-between h-12">
-            {/* Logo */}
             <Link to="/" className="text-[21px] font-semibold tracking-[-0.01em] text-white/90 hover:text-white transition-colors">
               BLive
             </Link>
 
-            {/* Desktop Nav - Apple style minimal */}
             <div className="hidden md:flex items-center gap-7">
-              <button
-                onClick={() => scrollTo('features')}
-                className="text-xs text-white/80 hover:text-white transition-colors"
-              >
+              <button onClick={() => scrollTo('highlights')} className="text-xs text-white/80 hover:text-white transition-colors">
+                Highlights
+              </button>
+              <button onClick={() => scrollTo('features')} className="text-xs text-white/80 hover:text-white transition-colors">
                 Features
               </button>
-              <button
-                onClick={() => scrollTo('how-it-works')}
-                className="text-xs text-white/80 hover:text-white transition-colors"
-              >
+              <button onClick={() => scrollTo('how-it-works')} className="text-xs text-white/80 hover:text-white transition-colors">
                 How It Works
               </button>
-              <Link
-                to="/login"
-                className="text-xs text-white/80 hover:text-white transition-colors"
-              >
+              <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
                 Sign In
               </Link>
-              <Link
-                to="/login"
-                className="text-xs px-4 py-1.5 bg-white text-black rounded-full hover:bg-white/90 transition-colors"
-              >
+              <Link to="/login" className="text-xs px-4 py-1.5 bg-white text-black rounded-full hover:bg-white/90 transition-colors">
                 Get Started
               </Link>
             </div>
 
-            {/* Mobile Menu Toggle */}
             <button
               className="md:hidden text-white/80 hover:text-white"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -97,25 +399,29 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Mobile Menu - Apple style overlay */}
-        {mobileMenuOpen && (
-          <motion.div
-            className="md:hidden absolute top-12 left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/[0.04]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="max-w-[980px] mx-auto px-6 py-4 flex flex-col gap-4">
-              <button onClick={() => scrollTo('features')} className="text-sm text-white/80 hover:text-white text-left py-2">Features</button>
-              <button onClick={() => scrollTo('how-it-works')} className="text-sm text-white/80 hover:text-white text-left py-2">How It Works</button>
-              <Link to="/login" className="text-sm text-white/80 hover:text-white py-2">Sign In</Link>
-              <Link to="/login" className="text-sm text-center py-2.5 bg-white text-black rounded-full mt-2">Get Started</Link>
-            </div>
-          </motion.div>
-        )}
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              className="md:hidden absolute top-12 left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/[0.04]"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="max-w-[980px] mx-auto px-6 py-4 flex flex-col gap-4">
+                <button onClick={() => scrollTo('highlights')} className="text-sm text-white/80 hover:text-white text-left py-2">Highlights</button>
+                <button onClick={() => scrollTo('features')} className="text-sm text-white/80 hover:text-white text-left py-2">Features</button>
+                <button onClick={() => scrollTo('how-it-works')} className="text-sm text-white/80 hover:text-white text-left py-2">How It Works</button>
+                <Link to="/login" className="text-sm text-white/80 hover:text-white py-2">Sign In</Link>
+                <Link to="/login" className="text-sm text-center py-2.5 bg-white text-black rounded-full mt-2">Get Started</Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
-      {/* Hero Section - Apple style large typography */}
+      {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-12">
         <motion.div
           className="max-w-[680px] mx-auto text-center"
@@ -123,10 +429,7 @@ export default function Landing() {
           animate="visible"
           variants={stagger}
         >
-          <motion.p
-            variants={fade}
-            className="text-[17px] text-[#6e6e73] mb-3"
-          >
+          <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-3">
             Introducing
           </motion.p>
 
@@ -159,7 +462,7 @@ export default function Landing() {
               Get started
             </Link>
             <button
-              onClick={() => scrollTo('features')}
+              onClick={() => scrollTo('highlights')}
               className="min-w-[160px] px-7 py-3 text-[#2997ff] text-[17px] hover:underline transition-all"
             >
               Learn more →
@@ -167,155 +470,543 @@ export default function Landing() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator - very subtle */}
+        {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.3 }}
           transition={{ delay: 1.5, duration: 1 }}
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
+          <motion.svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
             <path stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
+          </motion.svg>
         </motion.div>
       </section>
 
-      {/* Features Section - Apple style cards */}
-      <section id="features" className="py-20 sm:py-28 px-6">
+      {/* Highlights Carousel Section */}
+      <section id="highlights" className="py-20 sm:py-28 px-6">
         <div className="max-w-[980px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
             variants={stagger}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
-              Built for results.
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b] max-w-[600px] mx-auto">
-              Everything you need to transform your training, beautifully designed and incredibly intuitive.
+            <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-2">
+              Get the highlights.
             </motion.p>
+            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]">
+              See what's new.
+            </motion.h2>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          {/* Carousel */}
+          <div
+            ref={carouselRef}
+            className="relative"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
           >
-            {/* Feature Card 1 */}
-            <motion.div
-              variants={fadeUp}
-              className="group p-8 sm:p-10 rounded-3xl bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors duration-500"
-            >
-              <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
-              </div>
-              <h3 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.01em] mb-3">Personalized Plans</h3>
-              <p className="text-[15px] sm:text-[17px] text-[#86868b] leading-[1.47]">
-                AI creates workouts tailored to your goals, equipment, and schedule. Auto-generates warmups and cool-downs.
-              </p>
-            </motion.div>
+            <div className="overflow-hidden rounded-3xl">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const }}
+                  className={`relative h-[400px] sm:h-[480px] bg-gradient-to-br ${carouselSlides[currentSlide].gradient} flex flex-col items-center justify-center p-8 sm:p-12`}
+                >
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="mb-6"
+                  >
+                    {carouselSlides[currentSlide].icon}
+                  </motion.div>
+                  <motion.h3
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-[28px] sm:text-[40px] font-semibold text-white text-center mb-4"
+                  >
+                    {carouselSlides[currentSlide].title}
+                  </motion.h3>
+                  <motion.p
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                    className="text-[17px] sm:text-[19px] text-white/90 text-center max-w-[500px]"
+                  >
+                    {carouselSlides[currentSlide].description}
+                  </motion.p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-            {/* Feature Card 2 */}
-            <motion.div
-              variants={fadeUp}
-              className="group p-8 sm:p-10 rounded-3xl bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors duration-500"
-            >
-              <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-400 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
+            {/* Carousel Controls - Apple-style progress bars */}
+            <div className="flex items-center justify-center gap-4 mt-6">
+              {/* Progress Bar Indicators */}
+              <div className="flex items-center gap-2">
+                {carouselSlides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
+                    style={{ width: index === currentSlide ? '48px' : '24px' }}
+                    aria-label={`Go to slide ${index + 1}`}
+                  >
+                    {/* Background track */}
+                    <div className="absolute inset-0 bg-white/20" />
+                    {/* Progress fill */}
+                    <div
+                      className="absolute inset-y-0 left-0 bg-white rounded-full transition-none"
+                      style={{
+                        width: index === currentSlide
+                          ? `${progress}%`
+                          : index < currentSlide
+                            ? '100%'
+                            : '0%',
+                      }}
+                    />
+                  </button>
+                ))}
               </div>
-              <h3 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.01em] mb-3">Real-time Tracking</h3>
-              <p className="text-[15px] sm:text-[17px] text-[#86868b] leading-[1.47]">
-                Log sets, reps, and weights as you train. Rest timers and exercise videos keep you on track.
-              </p>
-            </motion.div>
 
-            {/* Feature Card 3 */}
-            <motion.div
-              variants={fadeUp}
-              className="group p-8 sm:p-10 rounded-3xl bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors duration-500"
-            >
-              <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-400 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-                </svg>
-              </div>
-              <h3 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.01em] mb-3">AI Coach</h3>
-              <p className="text-[15px] sm:text-[17px] text-[#86868b] leading-[1.47]">
-                Chat with your coach 24/7. Get form tips, swap exercises, and track nutrition from photos.
-              </p>
-            </motion.div>
+              {/* Play/Pause */}
+              <button
+                onClick={() => setIsPaused(!isPaused)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label={isPaused ? 'Play' : 'Pause'}
+              >
+                {isPaused ? (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Feature Card 4 */}
-            <motion.div
-              variants={fadeUp}
-              className="group p-8 sm:p-10 rounded-3xl bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors duration-500"
-            >
-              <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-                </svg>
+      {/* Phone Showcase Section - Apple iPhone style */}
+      <section className="py-20 sm:py-28 px-6">
+        <div className="max-w-[980px] mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-16"
+          >
+            Take a closer look.
+          </motion.h2>
+
+          <motion.div
+            ref={phoneRef}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="rounded-3xl bg-[#1d1d1f] p-8 sm:p-12 lg:p-16"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Left side - Feature buttons */}
+              <div className="space-y-3">
+                {phoneFeatures.map((feature, index) => (
+                  <motion.button
+                    key={feature.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={phoneInView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ delay: index * 0.1, duration: 0.5 }}
+                    onClick={() => setActivePhoneFeature(activePhoneFeature === feature.id ? null : feature.id)}
+                    className={`w-full text-left px-5 py-3.5 rounded-full transition-all duration-300 flex items-center gap-3 ${
+                      activePhoneFeature === feature.id
+                        ? 'bg-[#2d2d2f]'
+                        : 'bg-[#2d2d2f]/50 hover:bg-[#2d2d2f]'
+                    }`}
+                  >
+                    {/* Icon or plus */}
+                    <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                      feature.hasIcon && feature.color ? '' : 'border border-white/20'
+                    }`}
+                    style={feature.hasIcon && feature.color ? { backgroundColor: feature.color } : {}}>
+                      {feature.hasIcon && feature.color ? (
+                        <span className="w-2 h-2 rounded-full bg-white" />
+                      ) : (
+                        <svg className="w-3 h-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="text-[15px] sm:text-[17px] text-white font-medium">{feature.label}</span>
+                  </motion.button>
+                ))}
+
+                {/* Expanded description */}
+                <AnimatePresence mode="wait">
+                  {activePhoneFeature && (
+                    <motion.div
+                      key={activePhoneFeature}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-[15px] text-[#86868b] leading-relaxed pt-4 pl-14">
+                        {phoneFeatures.find(f => f.id === activePhoneFeature)?.description}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <h3 className="text-[24px] sm:text-[28px] font-semibold tracking-[-0.01em] mb-3">Progress Analytics</h3>
-              <p className="text-[15px] sm:text-[17px] text-[#86868b] leading-[1.47]">
-                Track personal records, streaks, and strength trends. See your progress visualized over time.
-              </p>
-            </motion.div>
+
+              {/* Right side - 3D Phone mockup */}
+              <div className="relative flex justify-center lg:justify-end">
+                <motion.div
+                  className="relative"
+                  animate={{
+                    rotateY: activePhoneFeature ? [0, -5, 0] : 0,
+                  }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  style={{ perspective: 1000 }}
+                >
+                  {/* Phone frame with 3D effect */}
+                  <div
+                    className="relative w-[280px] sm:w-[320px] rounded-[3rem] p-3 shadow-2xl"
+                    style={{
+                      background: 'linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 50%, #0a0a0a 100%)',
+                      boxShadow: `
+                        0 50px 100px -20px rgba(0, 0, 0, 0.8),
+                        0 30px 60px -10px rgba(0, 0, 0, 0.6),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                        inset 0 -1px 0 rgba(0, 0, 0, 0.3)
+                      `,
+                      transform: 'rotateY(-8deg) rotateX(2deg)',
+                      transformStyle: 'preserve-3d',
+                    }}
+                  >
+                    {/* Dynamic Island */}
+                    <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
+
+                    {/* Screen */}
+                    <div
+                      className="relative rounded-[2.5rem] overflow-hidden bg-black"
+                      style={{ aspectRatio: '9/19.5' }}
+                    >
+                      {/* Screen content - App UI simulation */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a]">
+                        {/* Status bar */}
+                        <div className="flex items-center justify-between px-6 pt-14 pb-2">
+                          <span className="text-[11px] text-white/60 font-medium">9:41</span>
+                          <div className="flex items-center gap-1">
+                            <svg className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z" opacity={0.3}/>
+                              <path d="M12 5c-3.86 0-7 3.14-7 7h2c0-2.76 2.24-5 5-5V5z"/>
+                            </svg>
+                            <svg className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/>
+                            </svg>
+                          </div>
+                        </div>
+
+                        {/* App content based on active feature */}
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={activePhoneFeature || 'default'}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            className="px-4 pt-2"
+                          >
+                            {activePhoneFeature === 'personalized' && (
+                              <div className="space-y-3">
+                                <div className="text-[10px] text-white/40 uppercase tracking-wider">Today's Workout</div>
+                                <div className="bg-gradient-to-br from-orange-500/20 to-amber-500/10 rounded-2xl p-4 border border-orange-500/20">
+                                  <div className="text-white font-semibold mb-1">Upper Body Strength</div>
+                                  <div className="text-[11px] text-white/60">45 min • 6 exercises</div>
+                                  <div className="flex gap-2 mt-3">
+                                    <span className="px-2 py-1 rounded-full bg-white/10 text-[9px] text-white/80">Push</span>
+                                    <span className="px-2 py-1 rounded-full bg-white/10 text-[9px] text-white/80">Dumbbells</span>
+                                  </div>
+                                </div>
+                                <div className="bg-[#1d1d1f] rounded-xl p-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                      <span className="text-[10px]">💪</span>
+                                    </div>
+                                    <div>
+                                      <div className="text-[12px] text-white">Bench Press</div>
+                                      <div className="text-[10px] text-white/50">4 sets × 8 reps</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'ai-coach' && (
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 mb-4">
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500" />
+                                  <div>
+                                    <div className="text-[12px] text-white font-medium">AI Coach</div>
+                                    <div className="text-[9px] text-green-400">Online</div>
+                                  </div>
+                                </div>
+                                <div className="bg-[#2d2d2f] rounded-2xl rounded-bl-sm p-3 max-w-[85%]">
+                                  <p className="text-[11px] text-white/90 leading-relaxed">
+                                    Great work on yesterday's session! Ready for today's upper body workout?
+                                  </p>
+                                </div>
+                                <div className="bg-blue-500 rounded-2xl rounded-br-sm p-3 max-w-[85%] ml-auto">
+                                  <p className="text-[11px] text-white leading-relaxed">
+                                    Yes! But my shoulder is a bit sore.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'tracking' && (
+                              <div className="space-y-3">
+                                <div className="text-center py-4">
+                                  <div className="text-[40px] font-bold text-white">1:32</div>
+                                  <div className="text-[11px] text-white/50 uppercase tracking-wider">Rest Timer</div>
+                                </div>
+                                <div className="bg-[#1d1d1f] rounded-xl p-4">
+                                  <div className="flex justify-between items-center mb-3">
+                                    <span className="text-[12px] text-white">Set 3 of 4</span>
+                                    <span className="text-[12px] text-green-400">Completed</span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    {[1,2,3,4].map(i => (
+                                      <div key={i} className={`flex-1 h-1.5 rounded-full ${i <= 3 ? 'bg-green-500' : 'bg-white/20'}`} />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'videos' && (
+                              <div className="space-y-3">
+                                <div className="bg-[#1d1d1f] rounded-xl overflow-hidden">
+                                  <div className="h-32 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                      <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z" />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                  <div className="p-3">
+                                    <div className="text-[12px] text-white font-medium">Dumbbell Row</div>
+                                    <div className="text-[10px] text-white/50">Proper form demonstration</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'analytics' && (
+                              <div className="space-y-3">
+                                <div className="text-[10px] text-white/40 uppercase tracking-wider">This Week</div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="bg-[#1d1d1f] rounded-xl p-3">
+                                    <div className="text-[20px] font-bold text-white">4</div>
+                                    <div className="text-[10px] text-white/50">Workouts</div>
+                                  </div>
+                                  <div className="bg-[#1d1d1f] rounded-xl p-3">
+                                    <div className="text-[20px] font-bold text-orange-400">🔥 12</div>
+                                    <div className="text-[10px] text-white/50">Day Streak</div>
+                                  </div>
+                                </div>
+                                <div className="bg-[#1d1d1f] rounded-xl p-3">
+                                  <div className="text-[10px] text-white/50 mb-2">Bench Press PR</div>
+                                  <div className="text-[16px] font-bold text-green-400">185 lbs ↑</div>
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'nutrition' && (
+                              <div className="space-y-3">
+                                <div className="text-[10px] text-white/40 uppercase tracking-wider">Today's Nutrition</div>
+                                <div className="flex justify-between">
+                                  {[
+                                    { label: 'Protein', value: '142g', color: 'bg-blue-500' },
+                                    { label: 'Carbs', value: '185g', color: 'bg-green-500' },
+                                    { label: 'Fat', value: '65g', color: 'bg-orange-500' },
+                                  ].map(macro => (
+                                    <div key={macro.label} className="text-center">
+                                      <div className={`w-10 h-10 mx-auto rounded-full ${macro.color}/20 flex items-center justify-center mb-1`}>
+                                        <div className={`w-6 h-6 rounded-full ${macro.color}`} />
+                                      </div>
+                                      <div className="text-[11px] text-white font-medium">{macro.value}</div>
+                                      <div className="text-[9px] text-white/50">{macro.label}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {activePhoneFeature === 'scheduling' && (
+                              <div className="space-y-3">
+                                <div className="text-[10px] text-white/40 uppercase tracking-wider">This Week</div>
+                                <div className="space-y-2">
+                                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, i) => (
+                                    <div key={day} className={`flex items-center gap-3 p-2 rounded-lg ${i === 1 ? 'bg-blue-500/20 border border-blue-500/30' : ''}`}>
+                                      <span className="text-[11px] text-white/60 w-8">{day}</span>
+                                      <span className="text-[11px] text-white">
+                                        {['Upper Body', 'Lower Body', 'Rest', 'Push', 'Pull'][i]}
+                                      </span>
+                                      {i < 2 && <span className="ml-auto text-[9px] text-green-400">✓</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {!activePhoneFeature && (
+                              <div className="flex items-center justify-center h-48">
+                                <p className="text-[13px] text-white/40">Select a feature</p>
+                              </div>
+                            )}
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Home indicator */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* Reflection/glow effect */}
+                  <div
+                    className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full opacity-20 blur-3xl"
+                    style={{
+                      background: activePhoneFeature === 'personalized' ? '#f97316' : '#0071e3',
+                    }}
+                  />
+                </motion.div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* How It Works - Apple style numbered steps */}
-      <section id="how-it-works" className="py-20 sm:py-28 px-6 bg-[#000000]">
-        <div className="max-w-[980px] mx-auto">
+      {/* Feature Gallery Section */}
+      <section id="features" className="py-20 sm:py-28 px-6 bg-[#000000]">
+        <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
             variants={stagger}
-            className="text-center mb-16"
+            className="flex items-end justify-between mb-8"
           >
-            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
-              Start in minutes.
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b]">
-              Three simple steps to your first workout.
-            </motion.p>
+            <div>
+              <motion.p variants={fade} className="text-[17px] text-[#6e6e73] mb-2">
+                Take a closer look.
+              </motion.p>
+              <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]">
+                Features that work.
+              </motion.h2>
+            </div>
+
+            {/* Navigation Arrows */}
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                onClick={() => scrollGallery('left')}
+                className="p-3 rounded-full bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors"
+                aria-label="Scroll left"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => scrollGallery('right')}
+                className="p-3 rounded-full bg-[#1d1d1f] hover:bg-[#2d2d2f] transition-colors"
+                aria-label="Scroll right"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+          {/* Horizontal Scroll Gallery */}
+          <div
+            ref={galleryRef}
+            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {[
-              { num: '1', title: 'Sign up', desc: 'Create your account with Google. Takes seconds.' },
-              { num: '2', title: 'Tell us about you', desc: 'Quick conversation to understand your goals.' },
-              { num: '3', title: 'Start training', desc: 'Get your first AI workout instantly.' },
-            ].map((step, i) => (
-              <motion.div key={i} variants={fadeUp} className="text-center">
-                <div className="text-[64px] sm:text-[80px] font-semibold text-[#1d1d1f] leading-none mb-4">
-                  {step.num}
+            {galleryFeatures.map((feature) => (
+              <motion.div
+                key={feature.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+                className="flex-shrink-0 w-[280px] sm:w-[320px] snap-start"
+              >
+                <div className="h-[360px] p-6 rounded-3xl bg-[#1d1d1f] hover:bg-[#252527] transition-colors flex flex-col">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-auto`}>
+                    {feature.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-[21px] font-semibold text-white mb-1">{feature.title}</h3>
+                    <p className="text-[15px] text-[#86868b]">{feature.subtitle}</p>
+                  </div>
                 </div>
-                <h3 className="text-[21px] sm:text-[24px] font-semibold tracking-[-0.01em] mb-2">{step.title}</h3>
-                <p className="text-[15px] sm:text-[17px] text-[#86868b]">{step.desc}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section with Animated Counters */}
+      <section className="py-20 sm:py-28 px-6">
+        <div className="max-w-[980px] mx-auto">
+          <motion.div
+            ref={statsRef}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12"
+          >
+            {stats.map((stat, index) => {
+              const count = useCounter(stat.value, 2000, statsInView);
+              return (
+                <motion.div key={index} variants={fadeUp} className="text-center">
+                  <div className="text-[56px] sm:text-[72px] font-semibold tracking-[-0.02em] leading-none mb-2">
+                    <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                      {count}{stat.suffix}
+                    </span>
+                  </div>
+                  <p className="text-[17px] text-[#86868b]">{stat.label}</p>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
 
-      {/* Coach Preview - Apple style product showcase */}
-      <section className="py-20 sm:py-28 px-6">
+      {/* AI Coach Demo with Typing Animation */}
+      <section className="py-20 sm:py-28 px-6 bg-[#000000]">
         <div className="max-w-[980px] mx-auto">
           <motion.div
             initial="hidden"
@@ -348,8 +1039,8 @@ export default function Landing() {
               </div>
             </motion.div>
 
-            {/* Chat UI - Apple style card */}
-            <motion.div variants={fadeUp}>
+            {/* Interactive Chat Demo */}
+            <motion.div variants={fadeUp} ref={chatRef}>
               <div className="p-6 rounded-3xl bg-[#1d1d1f]">
                 {/* Header */}
                 <div className="flex items-center gap-3 pb-4 border-b border-white/[0.05]">
@@ -360,29 +1051,55 @@ export default function Landing() {
                   </div>
                   <div>
                     <div className="text-[15px] font-medium text-[#f5f5f7]">AI Coach</div>
-                    <div className="text-[13px] text-[#30d158]">Online</div>
+                    <div className="text-[13px] text-[#30d158] flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#30d158] animate-pulse" />
+                      Online
+                    </div>
                   </div>
                 </div>
 
-                {/* Messages */}
-                <div className="py-5 space-y-4">
-                  <div className="flex justify-end">
-                    <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md bg-[#0071e3] text-[15px] text-white">
-                      My shoulder feels tight today
-                    </div>
-                  </div>
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-[#2d2d2f] text-[15px] text-[#f5f5f7]">
-                      I've adjusted your workout to focus on lower body today. Added some shoulder mobility work for your cooldown.
-                    </div>
-                  </div>
+                {/* Animated Messages */}
+                <div className="py-5 space-y-4 min-h-[180px]">
+                  <AnimatePresence>
+                    {chatStep >= 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-end"
+                      >
+                        <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md bg-[#0071e3] text-[15px] text-white">
+                          <TypingText
+                            text={chatMessages[0].text}
+                            onComplete={() => setTimeout(() => setChatStep(2), 500)}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {chatStep >= 2 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-start"
+                      >
+                        <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-[#2d2d2f] text-[15px] text-[#f5f5f7]">
+                          <TypingText text={chatMessages[1].text} />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Input */}
                 <div className="pt-4 border-t border-white/[0.05]">
-                  <div className="px-4 py-3 rounded-xl bg-[#2d2d2f] text-[15px] text-[#86868b]">
-                    Message
-                  </div>
+                  <Link
+                    to="/login"
+                    className="block w-full px-4 py-3 rounded-xl bg-[#2d2d2f] hover:bg-[#3d3d3f] text-[15px] text-center text-[#86868b] hover:text-white transition-colors"
+                  >
+                    Try it yourself →
+                  </Link>
                 </div>
               </div>
             </motion.div>
@@ -390,7 +1107,54 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Final CTA - Apple style */}
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 sm:py-28 px-6">
+        <div className="max-w-[980px] mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={stagger}
+            className="text-center mb-16"
+          >
+            <motion.h2 variants={fadeUp} className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4">
+              Start in minutes.
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[#86868b]">
+              Three simple steps to your first workout.
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+          >
+            {[
+              { num: '1', title: 'Sign up', desc: 'Create your account with Google. Takes seconds.', color: 'from-blue-500 to-cyan-400' },
+              { num: '2', title: 'Tell us about you', desc: 'Quick conversation to understand your goals.', color: 'from-purple-500 to-violet-400' },
+              { num: '3', title: 'Start training', desc: 'Get your first AI workout instantly.', color: 'from-green-500 to-emerald-400' },
+            ].map((step, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                whileHover={{ y: -4 }}
+                className="text-center p-8 rounded-3xl bg-[#1d1d1f] hover:bg-[#252527] transition-all"
+              >
+                <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} items-center justify-center mb-6`}>
+                  <span className="text-[28px] font-bold text-white">{step.num}</span>
+                </div>
+                <h3 className="text-[21px] sm:text-[24px] font-semibold tracking-[-0.01em] mb-2">{step.title}</h3>
+                <p className="text-[15px] sm:text-[17px] text-[#86868b]">{step.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
       <section className="py-20 sm:py-32 px-6">
         <motion.div
           initial="hidden"
@@ -414,12 +1178,13 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Footer - Apple style minimal */}
+      {/* Footer */}
       <footer className="py-5 px-6 border-t border-[#424245]">
         <div className="max-w-[980px] mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
             <p>Copyright © {new Date().getFullYear()} BLive. All rights reserved.</p>
             <div className="flex items-center gap-6">
+              <button onClick={() => scrollTo('highlights')} className="hover:text-[#f5f5f7] transition-colors">Highlights</button>
               <button onClick={() => scrollTo('features')} className="hover:text-[#f5f5f7] transition-colors">Features</button>
               <button onClick={() => scrollTo('how-it-works')} className="hover:text-[#f5f5f7] transition-colors">How It Works</button>
               <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>

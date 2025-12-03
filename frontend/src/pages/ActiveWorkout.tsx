@@ -13,16 +13,24 @@ import {
   getWorkoutWarmup,
   getWorkoutStretches,
   createWorkoutWarmupAndStretches,
+  updateWorkoutExercises,
+  logWorkoutExit,
   type VideoResponse,
   type WarmupResponse,
   type StretchResponse,
+  type LibraryExercise,
+  type WorkoutExerciseItem,
+  type WorkoutExitReason,
 } from '../api/client';
 import { useAppStore } from '../store';
 import SetRow from '../components/workout/SetRow';
 import BottomSheet from '../components/workout/BottomSheet';
 import ExerciseListModal from '../components/workout/ExerciseListModal';
 import VideoPlayer from '../components/workout/VideoPlayer';
-import type { Workout, ActiveSet, PerformanceLogDetailed, StrengthRecord } from '../types';
+import ExerciseSwapModal from '../components/ExerciseSwapModal';
+import HydrationTracker from '../components/workout/HydrationTracker';
+import WorkoutFeedbackModal from '../components/workout/WorkoutFeedbackModal';
+import type { Workout, ActiveSet, PerformanceLogDetailed, StrengthRecord, WorkoutExercise } from '../types';
 
 // Epley formula for 1RM estimation
 const calculate1RM = (weight: number, reps: number): number => {
@@ -79,6 +87,18 @@ export default function ActiveWorkout() {
     const saved = localStorage.getItem('workout-video-position');
     return saved !== 'right'; // Default to left if not set
   });
+  // Exercise swap modal state
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapExerciseIndex, setSwapExerciseIndex] = useState<number | null>(null);
+
+  // Exit confirmation modal state
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [selectedExitReason, setSelectedExitReason] = useState<WorkoutExitReason | null>(null);
+  const [exitNotes, setExitNotes] = useState('');
+  const [isExiting, setIsExiting] = useState(false);
+
+  // Feedback modal state
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const { data: workout, isLoading: workoutLoading } = useQuery<Workout>({
     queryKey: ['workout', id],
@@ -257,7 +277,92 @@ export default function ActiveWorkout() {
     mutationFn: () => completeWorkout(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workouts'] });
-      navigate('/');
+      // Show feedback modal instead of navigating immediately
+      setShowFeedbackModal(true);
+    },
+  });
+
+  // Handle feedback modal close - navigate home
+  const handleFeedbackClose = () => {
+    setShowFeedbackModal(false);
+    navigate('/home');
+  };
+
+  // Exit workout mutation (for tracking quit reasons)
+  const exitMutation = useMutation({
+    mutationFn: (reason: WorkoutExitReason) => {
+      const exercises = workout?.exercises || [];
+      const completedSetsCount = Array.from(exerciseSets.values()).flat().filter(s => s.isCompleted).length;
+      const completedExercisesCount = Array.from(exerciseSets.entries()).filter(
+        ([, sets]) => sets.length > 0 && sets.every(s => s.isCompleted)
+      ).length;
+      const totalExercises = exercises.length;
+      const progressPercentage = totalExercises > 0
+        ? Math.round((completedExercisesCount / totalExercises) * 100)
+        : 0;
+
+      return logWorkoutExit(id!, {
+        user_id: String(user?.id || ''),
+        workout_id: id!,
+        exit_reason: reason,
+        exit_notes: exitNotes || undefined,
+        exercises_completed: completedExercisesCount,
+        total_exercises: totalExercises,
+        sets_completed: completedSetsCount,
+        time_spent_seconds: totalElapsedTime,
+        progress_percentage: progressPercentage,
+      });
+    },
+    onSuccess: () => {
+      setShowExitModal(false);
+      // Don't navigate here - handleConfirmExit will handle it
+      // If completed, it will call completeMutation which shows feedback
+      // If not completed, we navigate home below
+    },
+    onError: (error) => {
+      console.error('Failed to log workout exit:', error);
+      setShowExitModal(false);
+    },
+  });
+
+  // Handle exit button click - show modal
+  const handleExitClick = () => {
+    setShowExitModal(true);
+    setSelectedExitReason(null);
+    setExitNotes('');
+  };
+
+  // Handle confirming exit with reason
+  const handleConfirmExit = async () => {
+    if (!selectedExitReason) return;
+    setIsExiting(true);
+    try {
+      // Log the exit reason
+      await exitMutation.mutateAsync(selectedExitReason);
+
+      // If user selected "completed", mark the workout as done and show feedback modal
+      if (selectedExitReason === 'completed') {
+        await completeMutation.mutateAsync();
+        // completeMutation.onSuccess will show the feedback modal
+      } else {
+        // For non-completed exits, navigate home directly
+        navigate('/home');
+      }
+    } catch (error) {
+      console.error('Failed to exit workout:', error);
+      // Even on error, navigate home so user isn't stuck
+      navigate('/home');
+    } finally {
+      setIsExiting(false);
+    }
+  };
+
+  // Update exercises mutation (for swapping)
+  const updateExercisesMutation = useMutation({
+    mutationFn: (exercises: WorkoutExerciseItem[]) =>
+      updateWorkoutExercises(id!, exercises),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workout', id] });
     },
   });
 
@@ -476,6 +581,68 @@ export default function ActiveWorkout() {
     }
   };
 
+  // Handle exercise swap
+  const handleSwapExercise = async (newExercise: LibraryExercise, sets: number, reps: number) => {
+    if (swapExerciseIndex === null || !workout) return;
+
+    const currentExerciseData = workout.exercises[swapExerciseIndex];
+
+    try {
+      // Create updated exercises array with the swapped exercise
+      const updatedExercises: WorkoutExerciseItem[] = workout.exercises.map((ex, idx) => {
+        if (idx === swapExerciseIndex) {
+          return {
+            name: newExercise.name,
+            sets,
+            reps,
+            weight: currentExerciseData.weight,
+            rest_seconds: currentExerciseData.rest_seconds || 90,
+            notes: currentExerciseData.notes,
+            equipment: newExercise.equipment || 'bodyweight',
+            target_muscles: newExercise.target_muscle ? [newExercise.target_muscle] : undefined,
+          };
+        }
+        return {
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight,
+          rest_seconds: ex.rest_seconds || 90,
+          notes: ex.notes,
+          equipment: ex.equipment,
+          target_muscles: ex.muscle_group ? [ex.muscle_group] : undefined,
+        };
+      });
+
+      await updateExercisesMutation.mutateAsync(updatedExercises);
+
+      // Reset the sets for the swapped exercise
+      const newSets: ActiveSet[] = [];
+      for (let i = 1; i <= sets; i++) {
+        newSets.push({
+          setNumber: i,
+          setType: 'working',
+          targetWeight: 0,
+          targetReps: reps,
+          actualWeight: 0,
+          actualReps: reps,
+          isCompleted: false,
+        });
+      }
+      setExerciseSets(new Map(exerciseSets.set(swapExerciseIndex, newSets)));
+
+      setShowSwapModal(false);
+      setSwapExerciseIndex(null);
+    } catch (error) {
+      console.error('Failed to swap exercise:', error);
+    }
+  };
+
+  const openSwapModal = (exerciseIndex: number) => {
+    setSwapExerciseIndex(exerciseIndex);
+    setShowSwapModal(true);
+  };
+
   const getCompletedSetsCount = () => {
     let count = 0;
     exerciseSets.forEach((sets) => {
@@ -515,15 +682,27 @@ export default function ActiveWorkout() {
     <div className="space-y-3">
       {/* Exercise tags and name */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-0.5 bg-white/10 rounded-full text-text-secondary uppercase tracking-wider">
-            {currentExercise.equipment || 'Bodyweight'}
-          </span>
-          {currentExercise.muscle_group && (
-            <span className="text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
-              {currentExercise.muscle_group}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs px-2 py-0.5 bg-white/10 rounded-full text-text-secondary uppercase tracking-wider">
+              {currentExercise.equipment || 'Bodyweight'}
             </span>
-          )}
+            {currentExercise.muscle_group && (
+              <span className="text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
+                {currentExercise.muscle_group}
+              </span>
+            )}
+          </div>
+          {/* Swap button */}
+          <button
+            onClick={() => openSwapModal(currentExerciseIndex)}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg text-text-secondary hover:text-text transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Swap
+          </button>
         </div>
         <h2 className="text-xl font-bold text-text">{currentExercise.name}</h2>
         <p className="text-text-secondary">{currentExercise.sets} sets × {currentExercise.reps} reps</p>
@@ -689,6 +868,14 @@ export default function ActiveWorkout() {
         </div>
       )}
 
+      {/* Hydration Tracker */}
+      {user && (
+        <HydrationTracker
+          userId={String(user.id)}
+          workoutId={workout.id}
+        />
+      )}
+
       {/* Accordion Exercise List */}
       {workout.exercises.map((exercise, index) => {
         const sets = exerciseSets.get(index) || [];
@@ -761,12 +948,29 @@ export default function ActiveWorkout() {
             {/* Expanded Set Details (only for expanded exercise) */}
             {isExpanded && (
               <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/30 space-y-3 pb-2">
-                {/* Muscle group tag */}
-                {exercise.muscle_group && (
-                  <span className="inline-block text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
-                    {exercise.muscle_group}
-                  </span>
-                )}
+                {/* Tags row with swap button */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {exercise.muscle_group && (
+                      <span className="inline-block text-xs px-2 py-0.5 bg-primary/20 rounded-full text-primary uppercase tracking-wider">
+                        {exercise.muscle_group}
+                      </span>
+                    )}
+                  </div>
+                  {/* Swap button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSwapModal(index);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1 text-xs bg-white/10 hover:bg-white/20 rounded-lg text-text-secondary hover:text-text transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    Swap
+                  </button>
+                </div>
 
                 {/* Set-by-set table */}
                 <div className="rounded-xl overflow-hidden">
@@ -923,7 +1127,7 @@ export default function ActiveWorkout() {
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center justify-between mb-3">
           <button
-            onClick={() => navigate(`/workout/${id}`)}
+            onClick={handleExitClick}
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-text-secondary hover:bg-white/20 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -997,6 +1201,17 @@ export default function ActiveWorkout() {
         />
       )}
 
+      {/* Exercise Swap Modal */}
+      <ExerciseSwapModal
+        isOpen={showSwapModal}
+        onClose={() => {
+          setShowSwapModal(false);
+          setSwapExerciseIndex(null);
+        }}
+        currentExercise={swapExerciseIndex !== null ? (workout.exercises[swapExerciseIndex] as WorkoutExercise) : null}
+        onSwap={handleSwapExercise}
+      />
+
       {/* DESKTOP LAYOUT (lg and up) - Side by side with toggle */}
       <div className="hidden lg:flex h-screen relative">
         {/* Layout Toggle Button - centered between panels */}
@@ -1041,7 +1256,7 @@ export default function ActiveWorkout() {
         <header className="fixed top-0 left-0 right-0 z-30 px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(`/workout/${id}`)}
+              onClick={handleExitClick}
               className="w-10 h-10 bg-black/40 backdrop-blur-lg rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1121,6 +1336,120 @@ export default function ActiveWorkout() {
           padding-top: max(12px, env(safe-area-inset-top));
         }
       `}</style>
+
+      {/* Exit Confirmation Modal */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface rounded-2xl w-full max-w-md shadow-2xl border border-white/10 overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-white/10">
+              <h2 className="text-lg font-semibold text-text">Leave Workout?</h2>
+              <p className="text-sm text-text-muted mt-1">
+                You've been working out for {formatTime(totalElapsedTime)}. Why are you leaving?
+              </p>
+            </div>
+
+            {/* Exit Reason Options */}
+            <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+              {([
+                { value: 'completed' as const, label: 'Finished workout', icon: '✅', description: "I'm done!" },
+                { value: 'too_tired' as const, label: 'Too tired', icon: '😴', description: 'Need a break' },
+                { value: 'out_of_time' as const, label: 'Out of time', icon: '⏰', description: 'Have to go' },
+                { value: 'not_feeling_well' as const, label: 'Not feeling well', icon: '🤒', description: 'Feeling unwell' },
+                { value: 'equipment_unavailable' as const, label: 'Equipment unavailable', icon: '🏋️', description: "Can't access equipment" },
+                { value: 'injury' as const, label: 'Pain / injury', icon: '🩹', description: 'Experiencing discomfort' },
+                { value: 'other' as const, label: 'Other reason', icon: '💭', description: 'Something else' },
+              ]).map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setSelectedExitReason(option.value)}
+                  className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${
+                    selectedExitReason === option.value
+                      ? 'bg-primary/20 border-2 border-primary'
+                      : 'bg-white/5 border-2 border-transparent hover:bg-white/10'
+                  }`}
+                >
+                  <span className="text-2xl">{option.icon}</span>
+                  <div className="text-left">
+                    <div className="font-medium text-text">{option.label}</div>
+                    <div className="text-xs text-text-muted">{option.description}</div>
+                  </div>
+                  {selectedExitReason === option.value && (
+                    <svg className="w-5 h-5 text-primary ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Notes input (shown for 'other' or always) */}
+            {selectedExitReason && (
+              <div className="px-4 pb-2">
+                <textarea
+                  value={exitNotes}
+                  onChange={(e) => setExitNotes(e.target.value)}
+                  placeholder="Add a note (optional)"
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-text text-sm placeholder:text-text-muted resize-none focus:outline-none focus:border-primary/50"
+                  rows={2}
+                />
+              </div>
+            )}
+
+            {/* Progress Summary */}
+            <div className="px-4 pb-4">
+              <div className="bg-white/5 rounded-lg p-3 flex items-center justify-between text-sm">
+                <span className="text-text-muted">Progress</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-text">
+                    {Array.from(exerciseSets.entries()).filter(
+                      ([, sets]) => sets.length > 0 && sets.every(s => s.isCompleted)
+                    ).length} / {workout?.exercises?.length || 0} exercises
+                  </span>
+                  <span className="text-text-muted">|</span>
+                  <span className="text-text">
+                    {Array.from(exerciseSets.values()).flat().filter(s => s.isCompleted).length} sets
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="p-4 border-t border-white/10 flex gap-3">
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-3 px-4 bg-white/10 hover:bg-white/15 rounded-xl font-medium text-text transition-colors"
+              >
+                Keep Going
+              </button>
+              <button
+                onClick={handleConfirmExit}
+                disabled={!selectedExitReason || isExiting}
+                className="flex-1 py-3 px-4 bg-red-500/80 hover:bg-red-500 rounded-xl font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isExiting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Leave Workout'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Workout Feedback Modal */}
+      <WorkoutFeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={handleFeedbackClose}
+        workoutId={id!}
+        userId={String(user?.id || '')}
+        exercises={workout?.exercises?.map(ex => ({ name: ex.name })) || []}
+        onFeedbackSubmitted={handleFeedbackClose}
+      />
     </div>
   );
 }

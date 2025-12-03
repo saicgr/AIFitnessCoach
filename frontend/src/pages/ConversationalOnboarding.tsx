@@ -24,7 +24,6 @@ import {
   createUser,
   updateUser,
   generateMonthlyWorkouts,
-  scheduleBackgroundGeneration,
   getWorkouts,
   deleteWorkout,
 } from '../api/client';
@@ -34,6 +33,7 @@ import DayPickerComponent from '../components/chat/DayPickerComponent';
 import HealthChecklistModal from '../components/chat/HealthChecklistModal';
 import BasicInfoForm from '../components/chat/BasicInfoForm';
 import { createLogger } from '../utils/logger';
+import type { OnboardingData } from '../types';
 
 const log = createLogger('ConversationalOnboarding');
 
@@ -112,9 +112,41 @@ const ConversationalOnboarding: FC = () => {
 
       log.info('Backend response:', response);
 
-      // Update collected data
+      // Update collected data - normalize snake_case keys to camelCase
       if (response.extracted_data && Object.keys(response.extracted_data).length > 0) {
-        updateCollectedData(response.extracted_data);
+        const extracted = response.extracted_data as Record<string, any>;
+        const normalized: Partial<OnboardingData> = {};
+
+        // Map snake_case to camelCase for common fields
+        const keyMap: Record<string, keyof OnboardingData> = {
+          'selected_days': 'selectedDays',
+          'days_per_week': 'daysPerWeek',
+          'fitness_level': 'fitnessLevel',
+          'height_cm': 'heightCm',
+          'weight_kg': 'weightKg',
+          'target_weight_kg': 'targetWeightKg',
+          'workout_duration': 'workoutDuration',
+          'preferred_time': 'preferredTime',
+          'training_split': 'trainingSplit',
+          'intensity_preference': 'intensityPreference',
+          'workout_variety': 'workoutVariety',
+          'activity_level': 'activityLevel',
+          'active_injuries': 'activeInjuries',
+          'health_conditions': 'healthConditions',
+          'workout_experience': 'workoutExperience',
+        };
+
+        for (const [key, value] of Object.entries(extracted)) {
+          if (keyMap[key]) {
+            (normalized as any)[keyMap[key]] = value;
+          } else {
+            // Already camelCase or unknown key - keep as-is
+            (normalized as any)[key] = value;
+          }
+        }
+
+        log.info('Normalized extracted data:', normalized);
+        updateCollectedData(normalized);
       }
 
       // Check if complete
@@ -271,9 +303,16 @@ const ConversationalOnboarding: FC = () => {
       setWorkoutLoadingProgress(15);
       setWorkoutLoadingMessage('Creating your fitness profile...');
 
+      // Normalize selectedDays - support both camelCase (DayPicker) and snake_case (AI extraction)
+      // This ensures selected_days is always saved to the backend
+      const normalizedSelectedDays = finalData.selectedDays || (finalData as any).selected_days || [];
+      const normalizedDaysPerWeek = finalData.daysPerWeek || (finalData as any).days_per_week || normalizedSelectedDays.length || 3;
+
+      log.info('📅 Saving to backend', { selectedDays: normalizedSelectedDays, daysPerWeek: normalizedDaysPerWeek });
+
       // Create/update user in Supabase
       const userData = {
-        fitness_level: finalData.fitnessLevel || 'beginner',
+        fitness_level: finalData.fitnessLevel || (finalData as any).fitness_level || 'beginner',
         goals: JSON.stringify(finalData.goals || []),
         equipment: JSON.stringify(finalData.equipment || []),
         active_injuries: JSON.stringify(injuries),
@@ -282,17 +321,17 @@ const ConversationalOnboarding: FC = () => {
           name: finalData.name,
           age: finalData.age,
           gender: finalData.gender,
-          height_cm: finalData.heightCm,
-          weight_kg: finalData.weightKg,
-          target_weight_kg: finalData.targetWeightKg,
-          days_per_week: finalData.daysPerWeek,
-          selected_days: finalData.selectedDays,
-          workout_duration: finalData.workoutDuration,
-          preferred_time: finalData.preferredTime,
-          training_split: finalData.trainingSplit || 'full_body',
-          intensity_preference: finalData.intensityPreference || 'moderate',
-          workout_variety: finalData.workoutVariety || 'varied',
-          activity_level: finalData.activityLevel || 'lightly_active',
+          height_cm: finalData.heightCm || (finalData as any).height_cm,
+          weight_kg: finalData.weightKg || (finalData as any).weight_kg,
+          target_weight_kg: finalData.targetWeightKg || (finalData as any).target_weight_kg,
+          days_per_week: normalizedDaysPerWeek,
+          selected_days: normalizedSelectedDays,
+          workout_duration: finalData.workoutDuration || (finalData as any).workout_duration || 45,
+          preferred_time: finalData.preferredTime || (finalData as any).preferred_time || 'morning',
+          training_split: finalData.trainingSplit || (finalData as any).training_split || 'full_body',
+          intensity_preference: finalData.intensityPreference || (finalData as any).intensity_preference || 'moderate',
+          workout_variety: finalData.workoutVariety || (finalData as any).workout_variety || 'varied',
+          activity_level: finalData.activityLevel || (finalData as any).activity_level || 'lightly_active',
           health_conditions: conditions,
         }),
       };
@@ -313,28 +352,24 @@ const ConversationalOnboarding: FC = () => {
       // Generate workouts - first 2 weeks first, then remaining weeks in background
       log.info('Starting workout generation - first 2 weeks first...');
       try {
-        // Convert day names to indices (0=Mon, 1=Tue, ..., 6=Sun)
+        // Convert day names to indices if needed (0=Mon, 1=Tue, ..., 6=Sun)
         const dayNameToIndex: Record<string, number> = {
           'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
           'Friday': 4, 'Saturday': 5, 'Sunday': 6
         };
 
+        // Use the normalized days from above, but convert if they're strings
         let selectedDayIndices: number[] = [];
-        // Support both camelCase (from DayPicker) and snake_case (from backend AI extraction)
-        const rawDays = (finalData.selectedDays || (finalData as any).selected_days || []) as (number | string)[];
-
-        log.info('Raw selected_days from finalData:', rawDays);
-
-        if (rawDays.length > 0) {
-          if (typeof rawDays[0] === 'string') {
+        if (normalizedSelectedDays.length > 0) {
+          if (typeof normalizedSelectedDays[0] === 'string') {
             // Convert day names to indices
-            selectedDayIndices = (rawDays as string[])
+            selectedDayIndices = (normalizedSelectedDays as string[])
               .map((day) => dayNameToIndex[day])
               .filter((idx): idx is number => idx !== undefined);
             log.info('Converted day names to indices:', selectedDayIndices);
           } else {
             // Already indices
-            selectedDayIndices = rawDays as number[];
+            selectedDayIndices = normalizedSelectedDays as number[];
             log.info('Days already as indices:', selectedDayIndices);
           }
         }
@@ -348,7 +383,7 @@ const ConversationalOnboarding: FC = () => {
         const today = new Date();
         const monthStartDate = today.toISOString().split('T')[0];
 
-        log.info('Selected day indices:', selectedDayIndices);
+        log.info('🏋️ Generating workouts for day indices:', selectedDayIndices);
 
         // Delete any existing workouts from previous onboarding attempts
         try {
@@ -372,7 +407,9 @@ const ConversationalOnboarding: FC = () => {
           });
         }, 500);
 
-        // STEP 1: Generate first 2 weeks (so user has enough workouts to start)
+        // PROGRESSIVE GENERATION: Only generate current + next week
+        // More weeks will be generated automatically when user completes workouts
+        // This saves API costs and keeps workouts fresh/relevant
         setWorkoutLoadingMessage(`Creating your first 2 weeks of personalized workouts...`);
 
         const first2WeeksResult = await generateMonthlyWorkouts({
@@ -380,35 +417,15 @@ const ConversationalOnboarding: FC = () => {
           month_start_date: monthStartDate,
           duration_minutes: finalData.workoutDuration || 45,
           selected_days: selectedDayIndices,
-          weeks: 2,  // First 2 weeks for immediate use
+          weeks: 2,  // Current week + next week only
         });
 
         clearInterval(progressInterval);
-        setWorkoutLoadingProgress(90);
-        log.info(`Generated ${first2WeeksResult.total_generated} workouts for first 2 weeks!`);
-
-        // STEP 2: Schedule remaining weeks to be generated on the SERVER
-        // This ensures generation continues even if user navigates away
-        const remainingWeeksRequest = {
-          user_id: String(savedUser.id),
-          month_start_date: monthStartDate,
-          duration_minutes: finalData.workoutDuration || 45,
-          selected_days: selectedDayIndices,
-          weeks: 10,  // Weeks 3-12
-        };
-
-        // Schedule server-side background generation - returns immediately
-        // The server will continue generating even if the client disconnects
-        try {
-          const scheduleResult = await scheduleBackgroundGeneration(remainingWeeksRequest);
-          log.info(`✅ Server-side background generation scheduled: ${scheduleResult.message}`);
-        } catch (scheduleErr) {
-          log.error('⚠️ Failed to schedule background generation:', scheduleErr);
-          // Non-critical - user already has week 1, and Home page will retry
-        }
-
         setWorkoutLoadingProgress(95);
-        setWorkoutLoadingMessage(`First 2 weeks ready! More workouts generating in background...`);
+        log.info(`✅ Generated ${first2WeeksResult.total_generated} workouts for first 2 weeks!`);
+        log.info('📅 Additional weeks will be generated progressively as user completes workouts');
+
+        setWorkoutLoadingMessage(`Your workouts are ready!`);
       } catch (workoutErr: any) {
         log.error('Failed to generate first 2 weeks workouts:', workoutErr);
         log.error('Error details:', workoutErr?.response?.data || workoutErr?.message || 'Unknown error');
@@ -424,9 +441,9 @@ const ConversationalOnboarding: FC = () => {
       // Brief delay to show completion
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Success! Navigate to home with state to indicate background generation
+      // Success! Navigate to home
       setShowWorkoutLoading(false);
-      navigate('/', { state: { fromOnboarding: true, isGeneratingInBackground: true } });
+      navigate('/', { state: { fromOnboarding: true } });
     } catch (err: any) {
       log.error('Failed to complete onboarding:', err);
       setShowWorkoutLoading(false);

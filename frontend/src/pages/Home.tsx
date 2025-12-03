@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
-import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, ensureWorkoutsGenerated } from '../api/client';
+import { getWorkouts, generateWorkout, deleteWorkout, generateWeeklyWorkouts, ensureWorkoutsGenerated, getUserWithBackend, getUserStreak } from '../api/client';
+import { extractOnboardingData } from '../types';
 import GenerateWorkoutModal from '../components/GenerateWorkoutModal';
 import WorkoutTimeline from '../components/WorkoutTimelineWithDnD';
 import WorkoutDetailPanel from '../components/WorkoutDetailPanel';
@@ -12,7 +13,7 @@ import ExerciseInstructionsPanel from '../components/ExerciseInstructionsPanel';
 import { DashboardLayout } from '../components/layout';
 import { GlassCard, GlassButton } from '../components/ui';
 import { createLogger } from '../utils/logger';
-import type { Workout, WorkoutExercise } from '../types';
+import type { WorkoutExercise } from '../types';
 
 // Hook to detect desktop breakpoint (lg: 1024px)
 function useIsDesktop() {
@@ -39,42 +40,6 @@ import {
 } from '../utils/animations';
 
 const log = createLogger('home');
-
-// Calculate current workout streak
-function calculateStreak(workouts: Workout[]): number {
-  const completedWorkouts = workouts
-    .filter(w => w.completed_at)
-    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
-
-  if (completedWorkouts.length === 0) return 0;
-
-  // Get unique completion dates
-  const completionDates = [...new Set(
-    completedWorkouts.map(w => new Date(w.completed_at!).toISOString().split('T')[0])
-  )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
-  // Calculate current streak
-  let currentStreak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  for (let i = 0; i < completionDates.length; i++) {
-    const checkDate = new Date(today);
-    checkDate.setDate(today.getDate() - i);
-    const checkDateStr = checkDate.toISOString().split('T')[0];
-
-    if (completionDates.includes(checkDateStr)) {
-      currentStreak++;
-    } else if (i === 0) {
-      // Today doesn't have a workout, check if yesterday does
-      continue;
-    } else {
-      break;
-    }
-  }
-
-  return currentStreak;
-}
 
 // Stats card component - Premium redesign with animations
 function StatCard({ value, label, icon, color, index = 0 }: { value: string | number; label: string; icon: React.ReactNode; color: string; index?: number }) {
@@ -140,7 +105,7 @@ export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { user, workouts, setWorkouts, onboardingData } = useAppStore();
+  const { user, workouts, setWorkouts, onboardingData, setOnboardingData } = useAppStore();
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
   const [pendingGenerateData, setPendingGenerateData] = useState<{
@@ -185,31 +150,28 @@ export default function Home() {
     }
   }, [user, navigate]);
 
-  // Handle navigation from onboarding - show background generation state
+  // Handle navigation from onboarding - clear state
   useEffect(() => {
-    const state = location.state as { fromOnboarding?: boolean; isGeneratingInBackground?: boolean } | null;
-    if (state?.fromOnboarding && state?.isGeneratingInBackground) {
-      log.info('Arrived from onboarding - workouts generating in background');
-      setIsBackgroundGenerating(true);
-
+    const state = location.state as { fromOnboarding?: boolean } | null;
+    if (state?.fromOnboarding) {
+      log.info('Arrived from onboarding');
       // Clear the navigation state to prevent re-triggering on refresh
       navigate('/', { replace: true });
-
-      // Auto-disable background generating after a timeout (workouts should be loaded by then)
-      const timeout = setTimeout(() => {
-        setIsBackgroundGenerating(false);
-        // Refetch workouts to ensure we have the latest
-        queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
-      }, 15000); // 15 seconds should be enough for background generation
-
-      return () => clearTimeout(timeout);
     }
-  }, [location.state, navigate, queryClient, user?.id]);
+  }, [location.state, navigate]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['workouts', user?.id],
     queryFn: () => getWorkouts(user!.id),
     enabled: !!user,
+  });
+
+  // Fetch streak data from backend
+  const { data: streakData } = useQuery({
+    queryKey: ['streak', user?.id],
+    queryFn: () => getUserStreak(String(user!.id)),
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   useEffect(() => {
@@ -218,52 +180,105 @@ export default function Home() {
     }
   }, [data, setWorkouts]);
 
-  // Recovery check: Ensure user has sufficient workouts generated
-  // This catches cases where background generation failed during onboarding
+  // Track if we've already attempted top-up this session to prevent duplicate calls
+  const [topUpAttempted, setTopUpAttempted] = useState(false);
+
+  // PROGRESSIVE GENERATION: Check if user needs more workouts generated
+  // Triggers when user has ≤3 upcoming (uncompleted) workouts
   useEffect(() => {
-    const checkAndEnsureWorkouts = async () => {
+    const checkAndTopUpWorkouts = async () => {
       // Only check if user is loaded and workouts have been fetched
-      if (!user || !data || isBackgroundGenerating) return;
+      if (!user || !data || isBackgroundGenerating || topUpAttempted) return;
+      if (!user.onboarding_completed) return;
 
-      // If user has onboarding completed but very few workouts, trigger recovery
-      // Expected: ~12 weeks * 2-3 days/week = 24-36 workouts
-      // Recovery threshold: less than 10 workouts indicates failed generation
-      if (user.onboarding_completed && data.length < 10) {
-        log.info(`🔧 Recovery check: User has ${data.length} workouts (expected 24+). Triggering background generation...`);
-        setIsBackgroundGenerating(true);
+      // Count upcoming (uncompleted) workouts
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-        try {
-          // Get user preferences from onboardingData (persisted in store)
-          const selectedDays = onboardingData?.selectedDays || [0, 2, 4]; // Default Mon/Wed/Fri
-          const workoutDuration = onboardingData?.workoutDuration || 45;
+      const upcomingWorkouts = data.filter(w => {
+        if (w.completed_at) return false;
+        if (!w.scheduled_date) return true; // Count unscheduled as upcoming
+        const workoutDate = new Date(w.scheduled_date);
+        return workoutDate >= today;
+      });
 
-          const today = new Date();
-          const monthStartDate = today.toISOString().split('T')[0];
+      log.info(`📊 Progressive check: ${upcomingWorkouts.length} upcoming workouts`);
 
-          const result = await ensureWorkoutsGenerated({
-            user_id: String(user.id),
-            month_start_date: monthStartDate,
-            duration_minutes: workoutDuration,
-            selected_days: selectedDays,
-            weeks: 11, // Generate remaining weeks
-          });
+      // If user has enough upcoming workouts, no need to generate more
+      if (upcomingWorkouts.length > 3) {
+        return;
+      }
 
-          log.info(`✅ Recovery result: ${result.message}`);
+      log.info(`📅 Running low on workouts (${upcomingWorkouts.length} remaining). Generating next week...`);
+      setTopUpAttempted(true);
+      setIsBackgroundGenerating(true);
 
-          // Refetch workouts after a delay to pick up newly generated ones
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
-            setIsBackgroundGenerating(false);
-          }, 5000);
-        } catch (err) {
-          log.error('Failed to ensure workouts generated:', err);
-          setIsBackgroundGenerating(false);
+      try {
+        // Get selected_days from local store or backend
+        let selectedDays = onboardingData?.selectedDays;
+        let workoutDuration = onboardingData?.workoutDuration || 45;
+
+        if (!selectedDays || selectedDays.length === 0) {
+          log.info('📡 Fetching selectedDays from backend...');
+          try {
+            const { backend } = await getUserWithBackend(user.id);
+            const freshData = extractOnboardingData(backend);
+            selectedDays = freshData.selectedDays || [];
+            workoutDuration = freshData.workoutDuration || 45;
+
+            if (selectedDays.length > 0) {
+              setOnboardingData(freshData);
+            }
+          } catch (syncErr) {
+            log.error('Failed to sync from backend:', syncErr);
+          }
         }
+
+        if (!selectedDays || selectedDays.length === 0) {
+          log.warn('⚠️ No selectedDays found - user needs to set workout days in Profile');
+          setIsBackgroundGenerating(false);
+          return;
+        }
+
+        // Find the latest scheduled workout date to determine where to start generating
+        const scheduledDates = data
+          .filter(w => w.scheduled_date)
+          .map(w => new Date(w.scheduled_date!))
+          .sort((a, b) => b.getTime() - a.getTime());
+
+        // Start generating from the day after the latest workout, or today if no workouts
+        const startDate = scheduledDates.length > 0
+          ? new Date(scheduledDates[0].getTime() + 24 * 60 * 60 * 1000)
+          : today;
+
+        const startDateStr = startDate.toISOString().split('T')[0];
+        log.info(`🏋️ Generating 1 week of workouts starting from ${startDateStr}`);
+
+        const result = await ensureWorkoutsGenerated({
+          user_id: String(user.id),
+          month_start_date: startDateStr,
+          duration_minutes: workoutDuration,
+          selected_days: selectedDays,
+          weeks: 1, // Only generate 1 week at a time (progressive)
+        });
+
+        log.info(`✅ Top-up result: ${result.message}`);
+
+        // Refetch workouts to show the new ones
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['workouts', user?.id] });
+          setIsBackgroundGenerating(false);
+          // Reset topUpAttempted so we can check again later
+          setTopUpAttempted(false);
+        }, 3000);
+      } catch (err) {
+        log.error('Failed to top-up workouts:', err);
+        setIsBackgroundGenerating(false);
       }
     };
 
-    checkAndEnsureWorkouts();
-  }, [user, data, isBackgroundGenerating, queryClient]);
+    checkAndTopUpWorkouts();
+  }, [user, data, isBackgroundGenerating, topUpAttempted, queryClient, onboardingData, setOnboardingData]);
 
   // Get today's date for filtering
   const today = new Date().toISOString().split('T')[0];
@@ -375,7 +390,9 @@ export default function Home() {
   const completedWorkouts = workouts.filter((w) => w.completed_at);
   // Get user's name from backend user object first, then onboardingData, then fallback
   const userName = user?.name || onboardingData?.name || 'there';
-  const streak = calculateStreak(workouts);
+  // Use streak from backend API
+  const streak = streakData?.current_streak ?? 0;
+  const streakAtRisk = streakData?.streak_at_risk ?? false;
 
   const handleOpenGenerateModal = () => {
     setGenerateError(null);
@@ -482,14 +499,28 @@ export default function Home() {
                   <p className="text-text-secondary text-sm font-medium">Welcome back,</p>
                   <h1 className="text-2xl lg:text-3xl font-bold text-text">{userName}</h1>
                   {streak > 0 && (
-                    <motion.p
-                      className="text-orange text-sm font-medium mt-1"
+                    <motion.div
+                      className="flex items-center gap-2 mt-1"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.4 }}
                     >
-                      {streak} day streak!
-                    </motion.p>
+                      <motion.span
+                        className="text-xl"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 2, repeatDelay: 1 }}
+                      >
+                        🔥
+                      </motion.span>
+                      <span className="text-orange text-sm font-semibold">
+                        {streak} day streak!
+                      </span>
+                      {streakAtRisk && (
+                        <span className="text-xs text-yellow-500 font-medium animate-pulse">
+                          (workout today to keep it!)
+                        </span>
+                      )}
+                    </motion.div>
                   )}
                 </motion.div>
               </motion.div>
@@ -536,6 +567,34 @@ export default function Home() {
                     <div className="text-xs text-text-secondary">Level</div>
                   </div>
                 </motion.div>
+
+                {/* Streak Stat Card */}
+                <motion.div
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${
+                    streakAtRisk
+                      ? 'bg-yellow-500/10 border-yellow-500/30'
+                      : 'bg-white/5 border-white/10'
+                  }`}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <motion.div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      streak > 0 ? 'bg-orange/20' : 'bg-white/10'
+                    }`}
+                    whileHover={{ rotate: 10 }}
+                    animate={streak > 0 ? { scale: [1, 1.1, 1] } : {}}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  >
+                    <span className="text-xl">{streak > 0 ? '🔥' : '💪'}</span>
+                  </motion.div>
+                  <div>
+                    <div className="text-lg font-bold text-text">{streak}</div>
+                    <div className="text-xs text-text-secondary">
+                      {streakAtRisk ? 'Streak at risk!' : 'Day Streak'}
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
             </div>
           </div>
@@ -563,15 +622,11 @@ export default function Home() {
                 }
               />
               <StatCard
-                value={user.goals.length}
-                label="Goals"
-                color="text-secondary"
+                value={streak}
+                label={streakAtRisk ? 'At Risk!' : 'Day Streak'}
+                color="text-orange"
                 index={1}
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                }
+                icon={<span className="text-lg">{streak > 0 ? '🔥' : '💪'}</span>}
               />
               <StatCard
                 value={user.fitness_level.charAt(0).toUpperCase() + user.fitness_level.slice(1)}

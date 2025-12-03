@@ -26,8 +26,8 @@ logger = get_logger(__name__)
 class LibraryExercise(BaseModel):
     """Exercise from the library."""
     id: str  # UUID in database
-    name: str  # Cleaned name without gender suffix
-    original_name: str  # Original name with gender suffix (for video lookup)
+    name: str  # Cleaned name (Title Case, no gender suffix)
+    original_name: str  # Original name (for video lookup)
     body_part: str
     equipment: Optional[str] = None  # Can be null in database
     target_muscle: Optional[str] = None
@@ -37,7 +37,6 @@ class LibraryExercise(BaseModel):
     category: Optional[str] = None
     gif_url: Optional[str] = None
     video_url: Optional[str] = None
-    gender: Optional[str] = None  # male/female/None
 
 
 class LibraryProgram(BaseModel):
@@ -152,13 +151,17 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
         row: Database row
         from_cleaned_view: True if row is from exercise_library_cleaned view,
                           False if from base exercise_library table
+
+    View columns: id, name, original_name, body_part, equipment, target_muscle,
+                  secondary_muscles, instructions, difficulty_level, category,
+                  gif_url, video_url
     """
     if from_cleaned_view:
-        # From cleaned view - has exercise_name_cleaned column
+        # From cleaned view - uses 'name' and 'original_name' columns
         return LibraryExercise(
             id=row.get("id"),
-            name=row.get("exercise_name_cleaned", row.get("exercise_name", "")),
-            original_name=row.get("exercise_name", ""),
+            name=row.get("name", ""),
+            original_name=row.get("original_name", ""),
             body_part=normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
             equipment=row.get("equipment", ""),
             target_muscle=row.get("target_muscle"),
@@ -167,8 +170,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             difficulty_level=row.get("difficulty_level"),
             category=row.get("category"),
             gif_url=row.get("gif_url"),
-            video_url=row.get("video_s3_path"),
-            gender=row.get("gender"),
+            video_url=row.get("video_url"),
         )
     else:
         # From base table - clean name manually
@@ -188,7 +190,6 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_s3_path"),
-            gender=None,
         )
 
 
@@ -253,7 +254,7 @@ async def list_exercises(
     equipment: Optional[str] = None,
     difficulty: Optional[int] = None,
     search: Optional[str] = None,
-    limit: int = Query(default=100, ge=1, le=2000),
+    limit: int = Query(default=2000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
 ):
     """
@@ -283,13 +284,15 @@ async def list_exercises(
                 query = query.eq("difficulty_level", difficulty)
             if search:
                 # Search in both cleaned name and original name
-                query = query.or_(f"exercise_name_cleaned.ilike.%{search}%,exercise_name.ilike.%{search}%")
+                # Note: The view uses 'name' and 'original_name' columns
+                query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%")
 
             # Calculate how many rows we still need
             rows_needed = min(page_size, limit - len(all_rows))
 
             # Execute query with pagination
-            result = query.order("exercise_name_cleaned").range(
+            # Note: The view uses 'name' column, not 'exercise_name_cleaned'
+            result = query.order("name").range(
                 current_offset, current_offset + rows_needed - 1
             ).execute()
 
@@ -304,13 +307,14 @@ async def list_exercises(
             current_offset += rows_needed
 
         # Convert to exercises (from cleaned view)
+        # View already handles deduplication and name cleaning
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
 
         # Filter by normalized body part if specified
         if body_part:
             exercises = [e for e in exercises if e.body_part.lower() == body_part.lower()]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment})")
+        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, deduplicated from {len(all_rows)})")
         return exercises
 
     except Exception as e:
