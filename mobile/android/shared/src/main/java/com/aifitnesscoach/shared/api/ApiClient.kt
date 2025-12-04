@@ -24,7 +24,7 @@ object ApiClient {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(90, TimeUnit.SECONDS) // Long timeout for Render cold start
             .readTimeout(120, TimeUnit.SECONDS) // Long timeout for AI responses
             .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor { chain ->
@@ -53,4 +53,5 @@ object ApiClient {
     val workoutApi: WorkoutApi by lazy { retrofit.create(WorkoutApi::class.java) }
     val chatApi: ChatApi by lazy { retrofit.create(ChatApi::class.java) }
     val exerciseApi: ExerciseApi by lazy { retrofit.create(ExerciseApi::class.java) }
+    val onboardingApi: OnboardingApi by lazy { retrofit.create(OnboardingApi::class.java) }
 }

@@ -1,5 +1,6 @@
 package com.aifitnesscoach.app.screens.chat
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,12 +25,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aifitnesscoach.app.ui.theme.*
+import com.aifitnesscoach.shared.api.ApiClient
+import com.aifitnesscoach.shared.models.ChatMessage as ApiChatMessage
+import com.aifitnesscoach.shared.models.ChatRequest
+import kotlinx.coroutines.launch
+
+private const val TAG = "ChatScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
+    userId: String = "",
     onBackClick: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     var messageText by remember { mutableStateOf("") }
     var messages by remember {
         mutableStateOf(
@@ -44,6 +53,35 @@ fun ChatScreen(
     }
     var isLoading by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+
+    // Load chat history on mount
+    LaunchedEffect(userId) {
+        if (userId.isNotBlank()) {
+            try {
+                Log.d(TAG, "🔍 Loading chat history for user: $userId")
+                val history = ApiClient.chatApi.getChatHistory(userId)
+                if (history.isNotEmpty()) {
+                    messages = history.map { msg ->
+                        ChatMessage(
+                            id = msg.id ?: System.currentTimeMillis().toString(),
+                            content = msg.content,
+                            isFromUser = msg.role == "user"
+                        )
+                    }
+                    Log.d(TAG, "✅ Loaded ${history.size} messages from history")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to load chat history: ${e.message}", e)
+            }
+        }
+    }
+
+    // Scroll to bottom when new message is added
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -229,23 +267,55 @@ fun ChatScreen(
                         FilledIconButton(
                             onClick = {
                                 if (messageText.isNotBlank()) {
+                                    val userMessage = messageText.trim()
+                                    val userMsgId = System.currentTimeMillis().toString()
+
                                     // Add user message
                                     messages = messages + ChatMessage(
-                                        id = System.currentTimeMillis().toString(),
-                                        content = messageText,
+                                        id = userMsgId,
+                                        content = userMessage,
                                         isFromUser = true
                                     )
                                     messageText = ""
                                     isLoading = true
 
-                                    // TODO: Send to API and get response
-                                    // Simulate response for now
-                                    messages = messages + ChatMessage(
-                                        id = (System.currentTimeMillis() + 1).toString(),
-                                        content = "I'll help you with that! Let me check your workout plan...",
-                                        isFromUser = false
-                                    )
-                                    isLoading = false
+                                    // Send to API
+                                    scope.launch {
+                                        try {
+                                            Log.d(TAG, "🔍 Sending message to AI coach...")
+                                            val conversationHistory = messages.map { msg ->
+                                                ApiChatMessage(
+                                                    userId = userId,
+                                                    role = if (msg.isFromUser) "user" else "assistant",
+                                                    content = msg.content
+                                                )
+                                            }
+
+                                            val request = ChatRequest(
+                                                userId = userId,
+                                                message = userMessage,
+                                                conversationHistory = conversationHistory
+                                            )
+
+                                            val response = ApiClient.chatApi.sendMessage(request)
+                                            Log.d(TAG, "✅ Received AI response: ${response.response.take(50)}...")
+
+                                            messages = messages + ChatMessage(
+                                                id = (System.currentTimeMillis() + 1).toString(),
+                                                content = response.response,
+                                                isFromUser = false
+                                            )
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "❌ Chat API error: ${e.message}", e)
+                                            messages = messages + ChatMessage(
+                                                id = (System.currentTimeMillis() + 1).toString(),
+                                                content = "Sorry, I'm having trouble connecting right now. Please try again in a moment.",
+                                                isFromUser = false
+                                            )
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
                                 }
                             },
                             enabled = messageText.isNotBlank() && !isLoading,

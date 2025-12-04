@@ -2,6 +2,9 @@ package com.aifitnesscoach.shared.api
 
 import com.aifitnesscoach.shared.models.Workout
 import com.aifitnesscoach.shared.models.WorkoutGenerateRequest
+import com.aifitnesscoach.shared.models.GenerateMonthlyRequest
+import com.aifitnesscoach.shared.models.GenerateMonthlyResponse
+import com.aifitnesscoach.shared.models.RegenerateWorkoutRequest
 import retrofit2.http.*
 
 interface WorkoutApi {
@@ -24,8 +27,17 @@ interface WorkoutApi {
         @Body workout: Workout
     ): Workout
 
+    @DELETE("api/v1/workouts-db/{workout_id}")
+    suspend fun deleteWorkout(@Path("workout_id") workoutId: String)
+
     @POST("api/v1/workouts-db/{workout_id}/complete")
     suspend fun completeWorkout(@Path("workout_id") workoutId: String): Workout
+
+    @PATCH("api/v1/workouts-db/{workout_id}/reschedule")
+    suspend fun rescheduleWorkout(
+        @Path("workout_id") workoutId: String,
+        @Query("new_date") newDate: String
+    ): Workout
 
     @POST("api/v1/workouts-db/generate")
     suspend fun generateWorkout(@Body request: WorkoutGenerateRequest): Workout
@@ -34,11 +46,14 @@ interface WorkoutApi {
     suspend fun generateWeeklyPlan(@Body request: WorkoutGenerateRequest): List<Workout>
 
     @POST("api/v1/workouts-db/generate-monthly")
-    suspend fun generateMonthlyPlan(@Body request: WorkoutGenerateRequest): List<Workout>
+    suspend fun generateMonthlyWorkouts(@Body request: GenerateMonthlyRequest): GenerateMonthlyResponse
 
     @GET("api/v1/workouts-db/{workout_id}/warmup")
     suspend fun getWarmup(@Path("workout_id") workoutId: String): List<com.aifitnesscoach.shared.models.Exercise>
 
     @GET("api/v1/workouts-db/{workout_id}/stretches")
     suspend fun getStretches(@Path("workout_id") workoutId: String): List<com.aifitnesscoach.shared.models.Exercise>
+
+    @POST("api/v1/workouts-db/regenerate")
+    suspend fun regenerateWorkout(@Body request: RegenerateWorkoutRequest): Workout
 }

@@ -30,6 +30,8 @@ val PureBlack = Color(0xFF000000)      // Main background (OLED optimized)
 val NearBlack = Color(0xFF0A0A0A)      // Card surfaces
 val Elevated = Color(0xFF141414)       // Elevated surfaces
 val GlassSurface = Color(0xFF1A1A1A)   // Glass effect base
+val SurfaceLight = Color(0xFF1F1F1F)   // Light surface for inputs
+val SurfaceDark = Color(0xFF0D0D0D)    // Dark surface for bottom bars
 
 // Text Colors
 val TextPrimary = Color(0xFFFAFAFA)    // Main content

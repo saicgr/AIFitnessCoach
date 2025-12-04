@@ -26,7 +26,7 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            // Removed applicationIdSuffix so package name matches Google OAuth client
         }
         release {
             isMinifyEnabled = true
@@ -97,6 +97,9 @@ dependencies {
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Retrofit (for HttpException)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

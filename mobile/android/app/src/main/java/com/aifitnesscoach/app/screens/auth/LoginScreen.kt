@@ -1,5 +1,6 @@
 package com.aifitnesscoach.app.screens.auth
 
+import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,17 +16,74 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aifitnesscoach.app.auth.AuthRepository
+import com.aifitnesscoach.app.auth.AuthState
 import com.aifitnesscoach.app.ui.theme.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
+    authRepository: AuthRepository,
     onLoginSuccess: (isNewUser: Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val authState by authRepository.authState.collectAsState()
+
     var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var loadingMessage by remember { mutableStateOf("Signing in...") }
+    var loadingSeconds by remember { mutableStateOf(0) }
+
+    // Update loading message after a delay to show server is waking up
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            loadingSeconds = 0
+            loadingMessage = "Signing in..."
+            while (isLoading) {
+                delay(1000)
+                loadingSeconds++
+                when {
+                    loadingSeconds >= 5 && loadingSeconds < 15 -> {
+                        loadingMessage = "Waking up the server..."
+                    }
+                    loadingSeconds >= 15 && loadingSeconds < 30 -> {
+                        loadingMessage = "Almost there..."
+                    }
+                    loadingSeconds >= 30 -> {
+                        loadingMessage = "First request takes longer, hang tight!"
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle auth state changes
+    LaunchedEffect(authState) {
+        when (val state = authState) {
+            is AuthState.Authenticated -> {
+                isLoading = false
+                onLoginSuccess(state.isNewUser)
+            }
+            is AuthState.Error -> {
+                isLoading = false
+                errorMessage = state.message
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+            is AuthState.Loading -> {
+                // Keep current loading state
+            }
+            is AuthState.NotAuthenticated -> {
+                isLoading = false
+            }
+        }
+    }
 
     // Animated glow effect
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
@@ -133,6 +191,27 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.weight(0.5f))
 
+            // Error message
+            errorMessage?.let { error ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Red.copy(alpha = 0.1f))
+                        .border(1.dp, Color.Red.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = error,
+                        color = Color.Red.copy(alpha = 0.9f),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             // Login buttons in glass card
             Box(
                 modifier = Modifier
@@ -167,7 +246,10 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             isLoading = true
-                            onLoginSuccess(true)
+                            errorMessage = null
+                            scope.launch {
+                                authRepository.signInWithGoogle()
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -181,11 +263,20 @@ fun LoginScreen(
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(20.dp),
                                 color = Color.Black,
                                 strokeWidth = 2.dp
                             )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = loadingMessage,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
                         } else {
+                            // Google logo
+                            GoogleLogo(modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Continue with Google",
                                 fontSize = 16.sp,
@@ -196,9 +287,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Email Sign In Button
+                    // Email Sign In Button (placeholder for future)
                     OutlinedButton(
-                        onClick = { /* TODO */ },
+                        onClick = { /* TODO: Email sign in */ },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -213,7 +304,8 @@ fun LoginScreen(
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = TextPrimary
-                        )
+                        ),
+                        enabled = !isLoading
                     ) {
                         Text(
                             text = "Continue with Email",
@@ -237,5 +329,22 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+}
+
+@Composable
+private fun GoogleLogo(modifier: Modifier = Modifier) {
+    // Simple Google "G" representation
+    Box(
+        modifier = modifier
+            .background(Color.Transparent),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "G",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF4285F4) // Google Blue
+        )
     }
 }
