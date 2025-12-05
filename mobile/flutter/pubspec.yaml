@@ -1,0 +1,49 @@
+name: ai_fitness_coach
+description: "AI-powered fitness coaching app with personalized workouts"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Networking
+  dio: ^5.4.3+1
+  pretty_dio_logger: ^1.4.0
+
+  # Auth
+  google_sign_in: ^6.2.1
+  flutter_secure_storage: ^9.2.2
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # Utils
+  intl: ^0.19.0
+  json_annotation: ^4.9.0
+  equatable: ^2.0.5
+  uuid: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.9
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true

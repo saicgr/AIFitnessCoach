@@ -1,0 +1,193 @@
+import 'dart:convert';
+import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user.g.dart';
+
+@JsonSerializable()
+class User extends Equatable {
+  final String id;
+  final String? username;
+  final String? name;
+  final String? email;
+  @JsonKey(name: 'fitness_level')
+  final String? fitnessLevel;
+  final String? goals; // JSON string
+  final String? equipment; // JSON string
+  final String? preferences; // JSON string
+  @JsonKey(name: 'active_injuries')
+  final String? activeInjuries; // JSON string
+  @JsonKey(name: 'height_cm')
+  final double? heightCm;
+  @JsonKey(name: 'weight_kg')
+  final double? weightKg;
+  final int? age;
+  @JsonKey(name: 'date_of_birth')
+  final String? dateOfBirth;
+  final String? gender;
+  @JsonKey(name: 'onboarding_completed')
+  final bool? onboardingCompleted;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
+
+  const User({
+    required this.id,
+    this.username,
+    this.name,
+    this.email,
+    this.fitnessLevel,
+    this.goals,
+    this.equipment,
+    this.preferences,
+    this.activeInjuries,
+    this.heightCm,
+    this.weightKg,
+    this.age,
+    this.dateOfBirth,
+    this.gender,
+    this.onboardingCompleted,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+  Map<String, dynamic> toJson() => _$UserToJson(this);
+
+  /// Parse goals from JSON string
+  List<String> get goalsList {
+    if (goals == null || goals!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(goals!);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Parse equipment from JSON string
+  List<String> get equipmentList {
+    if (equipment == null || equipment!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(equipment!);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Parse active injuries from JSON string
+  List<String> get injuriesList {
+    if (activeInjuries == null || activeInjuries!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(activeInjuries!);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Get display name
+  String get displayName => name ?? username ?? 'User';
+
+  /// Check if onboarding is done
+  bool get isOnboardingComplete => onboardingCompleted == true;
+
+  /// Get photo URL (placeholder for now - would come from auth provider)
+  String? get photoUrl => null;
+
+  /// Get fitness goal (first goal from goals list)
+  String? get fitnessGoal {
+    final goals = goalsList;
+    return goals.isNotEmpty ? goals.first : null;
+  }
+
+  /// Get workouts per week from preferences
+  int? get workoutsPerWeek {
+    if (preferences == null || preferences!.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['workouts_per_week'] != null) {
+        return decoded['workouts_per_week'] as int;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        username,
+        name,
+        email,
+        fitnessLevel,
+        goals,
+        equipment,
+        onboardingCompleted,
+      ];
+
+  User copyWith({
+    String? id,
+    String? username,
+    String? name,
+    String? email,
+    String? fitnessLevel,
+    String? goals,
+    String? equipment,
+    String? preferences,
+    String? activeInjuries,
+    double? heightCm,
+    double? weightKg,
+    int? age,
+    String? dateOfBirth,
+    String? gender,
+    bool? onboardingCompleted,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      fitnessLevel: fitnessLevel ?? this.fitnessLevel,
+      goals: goals ?? this.goals,
+      equipment: equipment ?? this.equipment,
+      preferences: preferences ?? this.preferences,
+      activeInjuries: activeInjuries ?? this.activeInjuries,
+      heightCm: heightCm ?? this.heightCm,
+      weightKg: weightKg ?? this.weightKg,
+      age: age ?? this.age,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      gender: gender ?? this.gender,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+}
+
+/// Request model for Google auth
+@JsonSerializable()
+class GoogleAuthRequest {
+  @JsonKey(name: 'access_token')
+  final String accessToken;
+
+  const GoogleAuthRequest({required this.accessToken});
+
+  factory GoogleAuthRequest.fromJson(Map<String, dynamic> json) =>
+      _$GoogleAuthRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$GoogleAuthRequestToJson(this);
+}
