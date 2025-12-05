@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 
 
 # ============================================
@@ -34,6 +34,7 @@ class UserCreate(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[int] = None
+    date_of_birth: Optional[str] = None  # ISO date string: "1990-05-15"
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
     target_weight_kg: Optional[float] = None
@@ -61,6 +62,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[int] = None
+    date_of_birth: Optional[str] = None  # ISO date string: "1990-05-15"
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
     target_weight_kg: Optional[float] = None

@@ -5,6 +5,8 @@ import com.aifitnesscoach.shared.models.WorkoutGenerateRequest
 import com.aifitnesscoach.shared.models.GenerateMonthlyRequest
 import com.aifitnesscoach.shared.models.GenerateMonthlyResponse
 import com.aifitnesscoach.shared.models.RegenerateWorkoutRequest
+import com.aifitnesscoach.shared.models.WorkoutSummaryResponse
+import com.aifitnesscoach.shared.models.WorkoutFeedbackRequest
 import retrofit2.http.*
 
 interface WorkoutApi {
@@ -56,4 +58,13 @@ interface WorkoutApi {
 
     @POST("api/v1/workouts-db/regenerate")
     suspend fun regenerateWorkout(@Body request: RegenerateWorkoutRequest): Workout
+
+    @GET("api/v1/workouts-db/{workout_id}/summary")
+    suspend fun getWorkoutSummary(@Path("workout_id") workoutId: String): WorkoutSummaryResponse
+
+    @POST("api/v1/feedback/workout/{workout_id}")
+    suspend fun submitWorkoutFeedback(
+        @Path("workout_id") workoutId: String,
+        @Body feedback: WorkoutFeedbackRequest
+    ): Map<String, Any>
 }

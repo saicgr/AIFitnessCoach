@@ -951,7 +951,8 @@ private fun BasicInfoForm(
     onSubmit: (String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf<LocalDate?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var gender by remember { mutableStateOf("") }
     // Height - separate states for cm vs ft/inches (matching web exactly)
     var heightCm by remember { mutableStateOf("") }
@@ -963,6 +964,17 @@ private fun BasicInfoForm(
     var weightUnit by remember { mutableStateOf("kg") } // "kg" or "lbs"
 
     val genderOptions = listOf("Male", "Female", "Other")
+
+    // Calculate age from DOB
+    val age = dateOfBirth?.let { dob ->
+        val today = LocalDate.now()
+        var years = today.year - dob.year
+        if (today.monthValue < dob.monthValue ||
+            (today.monthValue == dob.monthValue && today.dayOfMonth < dob.dayOfMonth)) {
+            years -= 1
+        }
+        years
+    }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = Cyan,
@@ -1003,23 +1015,38 @@ private fun BasicInfoForm(
             )
         }
 
-        // Age and Gender row
+        // Date of Birth and Gender row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Age", fontSize = 12.sp, color = TextSecondary)
+                Text("Date of Birth", fontSize = 12.sp, color = TextSecondary)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
-                    value = age,
-                    onValueChange = { if (it.all { c -> c.isDigit() }) age = it },
-                    placeholder = { Text("e.g., 25", color = TextMuted) },
-                    modifier = Modifier.fillMaxWidth(),
+                    value = dateOfBirth?.let {
+                        "${it.monthValue.toString().padStart(2, '0')}/${it.dayOfMonth.toString().padStart(2, '0')}/${it.year}"
+                    } ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    placeholder = { Text("MM/DD/YYYY", color = TextMuted) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
                     colors = textFieldColors,
                     shape = RoundedCornerShape(8.dp),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = "Select date",
+                            tint = TextSecondary,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable { showDatePicker = true }
+                        )
+                    },
+                    enabled = false // Disable text input, use picker only
                 )
             }
 
@@ -1059,6 +1086,64 @@ private fun BasicInfoForm(
                         }
                     }
                 }
+            }
+        }
+
+        // Date Picker Dialog
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = dateOfBirth?.let {
+                    java.time.ZoneOffset.UTC.let { zone ->
+                        it.atStartOfDay().toInstant(zone).toEpochMilli()
+                    }
+                },
+                yearRange = IntRange(1920, LocalDate.now().year - 13) // Must be at least 13 years old
+            )
+
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                dateOfBirth = java.time.Instant.ofEpochMilli(millis)
+                                    .atZone(java.time.ZoneOffset.UTC)
+                                    .toLocalDate()
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("OK", color = Cyan)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancel", color = TextSecondary)
+                    }
+                },
+                colors = DatePickerDefaults.colors(
+                    containerColor = SurfaceDark
+                )
+            ) {
+                DatePicker(
+                    state = datePickerState,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = SurfaceDark,
+                        titleContentColor = TextPrimary,
+                        headlineContentColor = TextPrimary,
+                        weekdayContentColor = TextSecondary,
+                        subheadContentColor = TextSecondary,
+                        yearContentColor = TextSecondary,
+                        currentYearContentColor = Cyan,
+                        selectedYearContentColor = Color.White,
+                        selectedYearContainerColor = Cyan,
+                        dayContentColor = TextSecondary,
+                        selectedDayContentColor = Color.White,
+                        selectedDayContainerColor = Cyan,
+                        todayContentColor = Cyan,
+                        todayDateBorderColor = Cyan
+                    )
+                )
             }
         }
 
@@ -1194,7 +1279,7 @@ private fun BasicInfoForm(
 
         // Continue button
         val isHeightValid = if (heightUnit == "cm") heightCm.isNotBlank() else (heightFeet.isNotBlank() && heightInches.isNotBlank())
-        val isFormValid = name.isNotBlank() && age.isNotBlank() && gender.isNotBlank() && isHeightValid && weight.isNotBlank()
+        val isFormValid = name.isNotBlank() && dateOfBirth != null && gender.isNotBlank() && isHeightValid && weight.isNotBlank()
 
         Button(
             onClick = {
@@ -1213,7 +1298,11 @@ private fun BasicInfoForm(
                     (weight.toDoubleOrNull() ?: 154.0) / 2.20462
                 }
 
-                val formData = "My name is $name, I'm $age years old, $gender, ${finalHeightCm.toInt()}cm tall, and I weigh ${finalWeightKg.toInt()}kg"
+                // Format DOB as ISO string for backend
+                val dobString = dateOfBirth?.format(DateTimeFormatter.ISO_LOCAL_DATE) ?: ""
+
+                // Include both age (calculated) and date_of_birth for AI workout generation
+                val formData = "My name is $name, I'm $age years old (born $dobString), $gender, ${finalHeightCm.toInt()}cm tall, and I weigh ${finalWeightKg.toInt()}kg"
                 onSubmit(formData)
             },
             modifier = Modifier
@@ -1579,6 +1668,8 @@ private suspend fun completeOnboardingWithWorkouts(
         // Extract data from collectedData map
         val name = collectedData["name"]?.toString()
         val age = (collectedData["age"] as? Number)?.toInt()
+        val dateOfBirth = collectedData["dateOfBirth"]?.toString()
+            ?: collectedData["date_of_birth"]?.toString()
         val gender = collectedData["gender"]?.toString()
         val heightCm = (collectedData["heightCm"] as? Number)?.toDouble()
             ?: (collectedData["height_cm"] as? Number)?.toDouble()
@@ -1662,6 +1753,7 @@ private suspend fun completeOnboardingWithWorkouts(
             name = name,
             gender = gender,
             age = age,
+            dateOfBirth = dateOfBirth,  // ISO date string for age-appropriate workouts
             heightCm = heightCm,
             weightKg = weightKg,
             selectedDays = selectedDays.toString()  // JSON array string: "[0, 2, 4]"

@@ -24,6 +24,7 @@ data class User(
     @SerialName("height_cm") val heightCm: Double? = null,
     @SerialName("weight_kg") val weightKg: Double? = null,
     val age: Int? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,  // ISO date string: "1990-05-15"
     val gender: String? = null,
     @SerialName("body_fat_percent") val bodyFatPercent: Double? = null,
     @SerialName("resting_heart_rate") val restingHeartRate: Int? = null,
@@ -70,6 +71,7 @@ data class UserUpdateRequest(
     val name: String? = null,
     val gender: String? = null,
     val age: Int? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,  // ISO date string: "1990-05-15"
     @SerialName("height_cm") val heightCm: Double? = null,
     @SerialName("weight_kg") val weightKg: Double? = null,
     @SerialName("target_weight_kg") val targetWeightKg: Double? = null,

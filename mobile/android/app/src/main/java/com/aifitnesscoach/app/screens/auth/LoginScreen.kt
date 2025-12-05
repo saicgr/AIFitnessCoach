@@ -74,7 +74,10 @@ fun LoginScreen(
             is AuthState.Error -> {
                 isLoading = false
                 errorMessage = state.message
-                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                // Don't show toast for cancellation - it's not really an error
+                if (!state.message.contains("cancelled", ignoreCase = true)) {
+                    Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                }
             }
             is AuthState.Loading -> {
                 // Keep current loading state

@@ -108,6 +108,12 @@ class AuthRepository(private val context: Context) {
     }
 
     suspend fun signInWithGoogle(): Result<Boolean> {
+        // If already authenticated, don't try to sign in again
+        if (_authState.value is AuthState.Authenticated) {
+            Log.d(TAG, "Already authenticated, skipping sign-in")
+            return Result.success(true)
+        }
+
         return try {
             _authState.value = AuthState.Loading
 
@@ -135,9 +141,28 @@ class AuthRepository(private val context: Context) {
                 startLegacySignIn()
                 Result.success(false) // Will be updated by handleSignInResult
             }
+        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+            Log.d(TAG, "User cancelled sign-in")
+            _authState.value = AuthState.NotAuthenticated
+            Result.success(false)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // Coroutine was cancelled (e.g., screen navigated away) - not an error
+            Log.d(TAG, "Sign-in coroutine cancelled")
+            throw e  // Re-throw to properly cancel the coroutine
         } catch (e: Exception) {
+            // Check if it's a composition cancellation (navigation away)
+            if (e::class.simpleName == "LeftCompositionCancellationException" ||
+                e.message?.contains("left the composition", ignoreCase = true) == true) {
+                Log.d(TAG, "Sign-in cancelled due to navigation")
+                return Result.success(false)
+            }
             Log.e(TAG, "Google sign-in failed", e)
-            _authState.value = AuthState.Error(e.message ?: "Sign in failed")
+            val errorMessage = when {
+                e.message?.contains("cancelled", ignoreCase = true) == true -> "Sign in cancelled"
+                e.message?.contains("canceled", ignoreCase = true) == true -> "Sign in cancelled"
+                else -> "Sign in failed. Please try again."
+            }
+            _authState.value = AuthState.Error(errorMessage)
             Result.failure(e)
         }
     }
@@ -165,7 +190,13 @@ class AuthRepository(private val context: Context) {
             }
         } catch (e: ApiException) {
             Log.e(TAG, "Google sign-in failed with code: ${e.statusCode}", e)
-            _authState.value = AuthState.Error("Sign in failed: ${e.message}")
+            // Status code 12501 means user cancelled, 12500 is generic sign-in failure
+            val errorMessage = when (e.statusCode) {
+                12501 -> "Sign in cancelled"
+                12500 -> "Sign in failed. Please try again."
+                else -> "Sign in failed: ${e.statusCode}"
+            }
+            _authState.value = AuthState.Error(errorMessage)
             Result.failure(e)
         }
     }

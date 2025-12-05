@@ -1,6 +1,3 @@
-IMMEDIATE:
-2. Deploy easy vercel and render
-
 NEED
 0. AI Onboarding Review Screen. 
 0.1. Suggest workouts based on Age as well

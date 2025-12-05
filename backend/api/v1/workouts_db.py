@@ -1262,9 +1262,14 @@ async def revert_workout(request: RevertWorkoutRequest):
 # ==================== AI SUMMARY ENDPOINT ====================
 
 @router.get("/{workout_id}/summary")
-async def get_workout_ai_summary(workout_id: str):
-    """Generate an AI summary/description of a workout explaining the intention and benefits."""
-    logger.info(f"Generating AI summary for workout {workout_id}")
+async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False):
+    """
+    Generate an AI summary/description of a workout explaining the intention and benefits.
+
+    Summaries are cached in Supabase per workout per user. Use force_regenerate=true to
+    bypass the cache and generate a fresh summary.
+    """
+    logger.info(f"Getting AI summary for workout {workout_id} (force_regenerate={force_regenerate})")
     try:
         db = get_supabase_db()
 
@@ -1275,13 +1280,23 @@ async def get_workout_ai_summary(workout_id: str):
             raise HTTPException(status_code=404, detail="Workout not found")
 
         workout_data = result.data[0]
+        user_id = workout_data.get("user_id")
+
+        # Check for cached summary first (unless force_regenerate)
+        if not force_regenerate:
+            cached = db.client.table("workout_summaries").select("summary").eq(
+                "workout_id", workout_id
+            ).eq("user_id", user_id).execute()
+
+            if cached.data:
+                logger.info(f"Returning cached summary for workout {workout_id}")
+                return {"summary": cached.data[0]["summary"], "cached": True}
 
         # Parse exercises
         exercises = parse_json_field(workout_data.get("exercises_json"), [])
         target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
 
         # Get user info for goals and fitness level
-        user_id = workout_data.get("user_id")
         user_result = db.client.table("users").select("goals, fitness_level").eq("id", user_id).execute()
 
         user_goals = []
@@ -1291,6 +1306,9 @@ async def get_workout_ai_summary(workout_id: str):
             fitness_level = user_result.data[0].get("fitness_level", "intermediate")
 
         # Generate the AI summary
+        import time
+        start_time = time.time()
+
         openai_service = OpenAIService()
         summary = await openai_service.generate_workout_summary(
             workout_name=workout_data.get("name", "Workout"),
@@ -1300,7 +1318,46 @@ async def get_workout_ai_summary(workout_id: str):
             fitness_level=fitness_level
         )
 
-        return {"summary": summary}
+        generation_time_ms = int((time.time() - start_time) * 1000)
+
+        # Calculate workout metadata for storage
+        duration_minutes = workout_data.get("duration_minutes", 0)
+        calories_estimate = duration_minutes * 6 if duration_minutes else len(exercises) * 5
+
+        # Store the summary in Supabase (upsert)
+        summary_record = {
+            "workout_id": workout_id,
+            "user_id": user_id,
+            "summary": summary,
+            "workout_name": workout_data.get("name"),
+            "workout_type": workout_data.get("type"),
+            "exercise_count": len(exercises),
+            "duration_minutes": duration_minutes,
+            "calories_estimate": calories_estimate,
+            "model_used": "gpt-4",
+            "generation_time_ms": generation_time_ms,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+        try:
+            # Try to upsert (insert or update on conflict)
+            existing = db.client.table("workout_summaries").select("id").eq(
+                "workout_id", workout_id
+            ).eq("user_id", user_id).execute()
+
+            if existing.data:
+                db.client.table("workout_summaries").update(summary_record).eq(
+                    "id", existing.data[0]["id"]
+                ).execute()
+                logger.info(f"Updated cached summary for workout {workout_id}")
+            else:
+                db.client.table("workout_summaries").insert(summary_record).execute()
+                logger.info(f"Stored new summary for workout {workout_id}")
+        except Exception as store_error:
+            # Don't fail the request if storage fails, just log it
+            logger.warning(f"Failed to store workout summary: {store_error}")
+
+        return {"summary": summary, "cached": False}
 
     except HTTPException:
         raise

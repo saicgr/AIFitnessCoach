@@ -91,3 +91,18 @@ data class RegenerateWorkoutRequest(
     val equipment: List<String>? = null,
     @SerialName("focus_areas") val focusAreas: List<String>? = null
 )
+
+@Serializable
+data class WorkoutSummaryResponse(
+    val summary: String
+)
+
+@Serializable
+data class WorkoutFeedbackRequest(
+    @SerialName("workout_id") val workoutId: String,
+    @SerialName("user_id") val userId: String,
+    @SerialName("overall_rating") val overallRating: Int,  // 1-5
+    @SerialName("difficulty_rating") val difficultyRating: String? = null,  // too_easy, just_right, too_hard
+    @SerialName("energy_level") val energyLevel: Int? = null,  // 1-5
+    val comments: String? = null
+)

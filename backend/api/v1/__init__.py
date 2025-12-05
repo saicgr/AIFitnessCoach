@@ -5,7 +5,7 @@ from api.v1 import users, exercises, workouts_db, performance_db
 from api.v1 import metrics, videos, onboarding, reminders, nutrition, library
 from api.v1 import exercise_suggestions
 from api.v1 import hydration
-from api.v1 import feedback, achievements, summaries
+from api.v1 import feedback, achievements, summaries, insights
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -54,3 +54,6 @@ router.include_router(achievements.router, prefix="/achievements", tags=["Achiev
 
 # Weekly summaries and notification preferences
 router.include_router(summaries.router, prefix="/summaries", tags=["Summaries"])
+
+# User insights and weekly progress
+router.include_router(insights.router, tags=["Insights"])

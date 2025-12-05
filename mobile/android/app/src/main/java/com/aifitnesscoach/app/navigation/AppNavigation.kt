@@ -38,6 +38,7 @@ import com.aifitnesscoach.app.screens.profile.ProfileScreen
 import com.aifitnesscoach.app.screens.nutrition.NutritionScreen
 import com.aifitnesscoach.app.screens.achievements.AchievementsScreen
 import com.aifitnesscoach.app.screens.settings.SettingsScreen
+import com.aifitnesscoach.app.screens.workout.WorkoutCompleteScreen
 import com.aifitnesscoach.app.ui.theme.PureBlack
 import com.aifitnesscoach.shared.models.Workout
 
@@ -63,6 +64,7 @@ sealed class Screen(val route: String) {
         fun createRoute(workoutId: String) = "workout/$workoutId"
     }
     object ActiveWorkout : Screen("active-workout")
+    object WorkoutComplete : Screen("workout-complete")
 }
 
 // Bottom navigation items
@@ -90,8 +92,10 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // State for active workout
+    // State for active workout and completion
     var activeWorkout by remember { mutableStateOf<Workout?>(null) }
+    var completedWorkout by remember { mutableStateOf<Workout?>(null) }
+    var workoutDuration by remember { mutableStateOf(0) }
 
     // Check existing session on app startup
     LaunchedEffect(Unit) {
@@ -313,8 +317,29 @@ fun AppNavigation(
                             activeWorkout = null
                             navController.popBackStack()
                         },
-                        onWorkoutComplete = {
+                        onWorkoutComplete = { durationMinutes ->
+                            // Save workout info for complete screen
+                            completedWorkout = workout
+                            workoutDuration = durationMinutes
                             activeWorkout = null
+                            navController.navigate(Screen.WorkoutComplete.route) {
+                                popUpTo(Screen.Home.route)
+                            }
+                        }
+                    )
+                }
+            }
+
+            composable(Screen.WorkoutComplete.route) {
+                val workout = completedWorkout
+                if (workout != null) {
+                    WorkoutCompleteScreen(
+                        workout = workout,
+                        userId = currentUser?.id ?: "",
+                        actualDurationMinutes = workoutDuration,
+                        onDone = {
+                            completedWorkout = null
+                            workoutDuration = 0
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Home.route) { inclusive = true }
                             }

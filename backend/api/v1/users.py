@@ -287,6 +287,24 @@ async def update_user(user_id: str, user: UserUpdate):
             )
             update_data["preferences"] = final_preferences
 
+        # Handle personal/health fields
+        if user.name is not None:
+            update_data["name"] = user.name
+        if user.gender is not None:
+            update_data["gender"] = user.gender
+        if user.age is not None:
+            update_data["age"] = user.age
+        if user.date_of_birth is not None:
+            update_data["date_of_birth"] = user.date_of_birth
+        if user.height_cm is not None:
+            update_data["height_cm"] = user.height_cm
+        if user.weight_kg is not None:
+            update_data["weight_kg"] = user.weight_kg
+        if user.target_weight_kg is not None:
+            update_data["target_weight_kg"] = user.target_weight_kg
+        if user.activity_level is not None:
+            update_data["activity_level"] = user.activity_level
+
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")

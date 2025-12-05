@@ -58,7 +58,7 @@ data class ActiveSet(
 fun ActiveWorkoutScreen(
     workout: Workout,
     onExitWorkout: () -> Unit,
-    onWorkoutComplete: () -> Unit
+    onWorkoutComplete: (durationMinutes: Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val exercises = remember { workout.getExercises() }
@@ -260,14 +260,15 @@ fun ActiveWorkoutScreen(
                     onClick = {
                         scope.launch {
                             isCompleting = true
+                            val durationMinutes = (totalElapsedSeconds + 30) / 60 // Round to nearest minute
                             try {
                                 ApiClient.workoutApi.completeWorkout(workout.id!!)
                                 Log.d(TAG, "✅ Workout completed successfully")
-                                onWorkoutComplete()
+                                onWorkoutComplete(durationMinutes)
                             } catch (e: Exception) {
                                 Log.e(TAG, "❌ Failed to complete workout: ${e.message}", e)
                                 // Still navigate away on error
-                                onWorkoutComplete()
+                                onWorkoutComplete(durationMinutes)
                             } finally {
                                 isCompleting = false
                             }
