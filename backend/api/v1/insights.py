@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from db.supabase_db import get_supabase_db
+from core.supabase_db import get_supabase_db
 from services.openai_service import OpenAIService
 
 logger = logging.getLogger(__name__)
