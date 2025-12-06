@@ -7,7 +7,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/library/library_screen.dart';
-import '../screens/onboarding/onboarding_screen.dart';
+import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
@@ -55,10 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
 
-      // Onboarding
+      // Onboarding (AI Conversational)
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) => const ConversationalOnboardingScreen(),
       ),
 
       // Main app shell with bottom nav

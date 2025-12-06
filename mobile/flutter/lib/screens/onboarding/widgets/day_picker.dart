@@ -1,0 +1,193 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../core/constants/app_colors.dart';
+
+/// Day picker component for selecting workout days
+/// Shows M T W T F S S buttons with multi-select capability
+class DayPicker extends StatefulWidget {
+  final int daysPerWeek;
+  final ValueChanged<List<int>> onSelect;
+  final List<int> initialSelected;
+
+  const DayPicker({
+    super.key,
+    required this.daysPerWeek,
+    required this.onSelect,
+    this.initialSelected = const [],
+  });
+
+  @override
+  State<DayPicker> createState() => _DayPickerState();
+}
+
+class _DayPickerState extends State<DayPicker> {
+  late Set<int> _selectedDays;
+
+  static const _days = [
+    (label: 'M', full: 'Monday', value: 0),
+    (label: 'T', full: 'Tuesday', value: 1),
+    (label: 'W', full: 'Wednesday', value: 2),
+    (label: 'T', full: 'Thursday', value: 3),
+    (label: 'F', full: 'Friday', value: 4),
+    (label: 'S', full: 'Saturday', value: 5),
+    (label: 'S', full: 'Sunday', value: 6),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDays = Set.from(widget.initialSelected);
+  }
+
+  void _toggleDay(int dayValue) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selectedDays.contains(dayValue)) {
+        _selectedDays.remove(dayValue);
+      } else if (_selectedDays.length < widget.daysPerWeek) {
+        _selectedDays.add(dayValue);
+      }
+    });
+  }
+
+  void _handleConfirm() {
+    if (_selectedDays.length == widget.daysPerWeek) {
+      HapticFeedback.mediumImpact();
+      widget.onSelect(_selectedDays.toList()..sort());
+    }
+  }
+
+  bool get _canConfirm => _selectedDays.length == widget.daysPerWeek;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 52, top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select ${widget.daysPerWeek} days (${_selectedDays.length}/${widget.daysPerWeek} selected)',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Day grid
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: _days.map((day) {
+              final isSelected = _selectedDays.contains(day.value);
+              final isDisabled =
+                  !isSelected && _selectedDays.length >= widget.daysPerWeek;
+
+              return GestureDetector(
+                onTap: isDisabled ? null : () => _toggleDay(day.value),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppColors.cyanGradient : null,
+                    color: isSelected
+                        ? null
+                        : isDisabled
+                            ? AppColors.glassSurface.withOpacity(0.3)
+                            : AppColors.glassSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isSelected
+                        ? null
+                        : Border.all(
+                            color: isDisabled
+                                ? AppColors.cardBorder.withOpacity(0.3)
+                                : AppColors.cardBorder,
+                          ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.cyan.withOpacity(0.5),
+                              blurRadius: 20,
+                              spreadRadius: 0,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      day.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? Colors.white
+                            : isDisabled
+                                ? AppColors.textMuted.withOpacity(0.5)
+                                : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+
+          // Selected days preview
+          if (_selectedDays.isNotEmpty)
+            Text(
+              'Selected: ${_selectedDays.toList()..sort()..map((d) => _days[d].full).join(', ')}',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textMuted,
+              ),
+            ),
+
+          const SizedBox(height: 12),
+
+          // Confirm button
+          GestureDetector(
+            onTap: _canConfirm ? _handleConfirm : null,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                gradient: _canConfirm ? AppColors.cyanGradient : null,
+                color: _canConfirm ? null : AppColors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: _canConfirm
+                    ? [
+                        BoxShadow(
+                          color: AppColors.cyan.withOpacity(0.5),
+                          blurRadius: 20,
+                          spreadRadius: 0,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Text(
+                  _canConfirm
+                      ? 'Confirm Days'
+                      : 'Select ${widget.daysPerWeek - _selectedDays.length} more day${widget.daysPerWeek - _selectedDays.length != 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: _canConfirm ? Colors.white : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

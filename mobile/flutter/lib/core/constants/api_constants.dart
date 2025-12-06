@@ -3,10 +3,15 @@ class ApiConstants {
   ApiConstants._();
 
   /// Base URL for the backend API
-  static const String baseUrl = 'https://ai-fitness-coach-api.onrender.com';
+  static const String baseUrl = 'https://aifitnesscoach-zqi3.onrender.com';
 
   /// API version prefix
   static const String apiVersion = '/api/v1';
+
+  /// Supabase configuration
+  static const String supabaseUrl = 'https://hpbzfahijszqmgsybuor.supabase.co';
+  static const String supabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwYnpmYWhpanN6cW1nc3lidW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjEzOTYsImV4cCI6MjA3OTgzNzM5Nn0.udv4b7UPhLLEfiWo7qd5ezqNTZ7KBXqzW_CwroNowAM';
 
   /// Full API base URL
   static String get apiBaseUrl => '$baseUrl$apiVersion';

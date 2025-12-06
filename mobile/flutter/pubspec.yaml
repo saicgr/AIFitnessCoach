@@ -27,6 +27,7 @@ dependencies:
   # Auth
   google_sign_in: ^6.2.1
   flutter_secure_storage: ^9.2.2
+  supabase_flutter: ^2.8.4
 
   # Navigation
   go_router: ^14.2.0

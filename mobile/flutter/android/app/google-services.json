@@ -16,6 +16,14 @@
         {
           "client_id": "763543360320-hjregsh5hn0lvp610sjr36m34f9fh2bj.apps.googleusercontent.com",
           "client_type": 3
+        },
+        {
+          "client_id": "763543360320-android-debug.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aifitnesscoach.app",
+            "certificate_hash": "edcc2973fe25a2b160004eae3bead094f9860b79"
+          }
         }
       ],
       "api_key": [

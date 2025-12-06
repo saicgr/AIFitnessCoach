@@ -346,6 +346,74 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/{user_id}/reset-onboarding")
+async def reset_onboarding(user_id: str):
+    """
+    Reset onboarding - clears workouts and resets onboarding status.
+
+    This allows the user to go through onboarding again without
+    deleting their account.
+    """
+    logger.info(f"Resetting onboarding for user: id={user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Check if user exists
+        existing = db.get_user(user_id)
+        if not existing:
+            logger.warning(f"User not found for onboarding reset: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get workout IDs first
+        workouts = db.list_workouts(user_id, limit=1000)
+        workout_ids = [w["id"] for w in workouts]
+
+        # Get workout_log IDs
+        logs = db.list_workout_logs(user_id, limit=1000)
+        log_ids = [log["id"] for log in logs]
+
+        # Delete performance_logs by workout_log IDs
+        for log_id in log_ids:
+            db.delete_performance_logs_by_workout_log(log_id)
+
+        # Delete workout_logs
+        db.delete_workout_logs_by_user(user_id)
+
+        # Delete workout_changes by workout IDs
+        for workout_id in workout_ids:
+            db.delete_workout_changes_by_workout(workout_id)
+
+        # Delete workouts
+        for workout_id in workout_ids:
+            db.delete_workout(workout_id)
+
+        # Delete achievements and streaks
+        try:
+            db.client.table("user_achievements").delete().eq("user_id", user_id).execute()
+            db.client.table("user_streaks").delete().eq("user_id", user_id).execute()
+        except Exception as e:
+            logger.warning(f"Could not delete achievements/streaks: {e}")
+
+        # Reset onboarding status
+        db.update_user(user_id, {
+            "onboarding_completed": False,
+            "onboarding_conversation": None,
+            "onboarding_conversation_completed_at": None
+        })
+
+        logger.info(f"Onboarding reset complete for user {user_id}")
+
+        # Return updated user
+        updated_user = db.get_user(user_id)
+        return row_to_user(updated_user)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset onboarding: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/{user_id}/reset")
 async def full_reset(user_id: str):
     """

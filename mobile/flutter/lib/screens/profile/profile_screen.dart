@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -174,6 +176,11 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   _SettingItem(
+                    icon: Icons.restart_alt,
+                    title: 'Reset Onboarding',
+                    onTap: () => _showResetOnboardingDialog(context, ref),
+                  ),
+                  _SettingItem(
                     icon: Icons.help_outline,
                     title: 'Help & Support',
                     onTap: () {},
@@ -260,6 +267,86 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => _EditProfileSheet(),
     );
+  }
+
+  void _showResetOnboardingDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.elevated,
+        title: const Text('Reset Onboarding?'),
+        content: const Text(
+          'This will delete your account and all data. You\'ll need to sign in again and go through onboarding to create a new workout plan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _resetOnboarding(context, ref);
+            },
+            child: const Text(
+              'Delete & Reset',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resetOnboarding(BuildContext context, WidgetRef ref) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Call backend to fully delete user account
+      final response = await apiClient.delete(
+        '${ApiConstants.users}/$userId/reset',
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (response.statusCode == 200) {
+        // Sign out and navigate to login
+        await ref.read(authStateProvider.notifier).signOut();
+        if (context.mounted) {
+          context.go('/login');
+        }
+      } else {
+        throw Exception('Failed to delete account');
+      }
+    } catch (e) {
+      // Close loading dialog if still showing
+      if (context.mounted) Navigator.pop(context);
+
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 

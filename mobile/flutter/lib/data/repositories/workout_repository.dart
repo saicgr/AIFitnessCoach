@@ -91,17 +91,17 @@ class WorkoutRepository {
     required List<int> selectedDays,
     int durationMinutes = 45,
     int weeks = 4,
+    String? monthStartDate,
   }) async {
     try {
       debugPrint('🔍 [Workout] Generating monthly workouts...');
-      final now = DateTime.now();
-      final monthStart = DateTime(now.year, now.month, 1);
+      final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
 
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/generate-monthly',
         data: {
           'user_id': userId,
-          'month_start_date': monthStart.toIso8601String().split('T')[0],
+          'month_start_date': startDate,
           'selected_days': selectedDays,
           'duration_minutes': durationMinutes,
           'weeks': weeks,

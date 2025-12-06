@@ -6,6 +6,13 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import 'onboarding_data.dart';
+import 'steps/personal_info_step.dart';
+import 'steps/body_metrics_step.dart';
+import 'steps/fitness_background_step.dart';
+import 'steps/schedule_step.dart';
+import 'steps/preferences_step.dart';
+import 'steps/health_step.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -15,195 +22,118 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final _scrollController = ScrollController();
-  final _textController = TextEditingController();
-  final _focusNode = FocusNode();
+  final PageController _pageController = PageController();
+  final OnboardingData _data = OnboardingData();
+  int _currentStep = 0;
+  bool _isSubmitting = false;
 
-  final List<_ChatMessage> _messages = [];
-  Map<String, dynamic> _collectedData = {};
-  List<_QuickReply> _quickReplies = [];
-  bool _isLoading = false;
-  bool _isComplete = false;
+  static const _stepTitles = [
+    'Personal',
+    'Body',
+    'Fitness',
+    'Schedule',
+    'Prefs',
+    'Health',
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    _startOnboarding();
-  }
+  static const _stepIcons = [
+    Icons.person_outline,
+    Icons.monitor_weight_outlined,
+    Icons.fitness_center,
+    Icons.calendar_today,
+    Icons.tune,
+    Icons.favorite_border,
+  ];
 
   @override
   void dispose() {
-    _scrollController.dispose();
-    _textController.dispose();
-    _focusNode.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  Future<void> _startOnboarding() async {
-    // Initial greeting
-    await Future.delayed(const Duration(milliseconds: 500));
-    _addAssistantMessage(
-      "Hey! 👋 I'm your AI fitness coach. Let's set up your personalized workout plan.",
-    );
-    await Future.delayed(const Duration(milliseconds: 800));
-    _addAssistantMessage(
-      "First, what should I call you?",
-      quickReplies: [],
+  void _goToStep(int step) {
+    if (step < 0 || step > 5) return;
+    setState(() => _currentStep = step);
+    _pageController.animateToPage(
+      step,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
     );
   }
 
-  void _addAssistantMessage(String content, {List<_QuickReply>? quickReplies}) {
-    setState(() {
-      _messages.add(_ChatMessage(role: 'assistant', content: content));
-      if (quickReplies != null) {
-        _quickReplies = quickReplies;
-      }
-    });
-    _scrollToBottom();
+  void _nextStep() {
+    if (_currentStep < 5) {
+      _goToStep(_currentStep + 1);
+    } else {
+      _submitOnboarding();
+    }
   }
 
-  void _addUserMessage(String content) {
-    setState(() {
-      _messages.add(_ChatMessage(role: 'user', content: content));
-      _quickReplies = [];
-    });
-    _scrollToBottom();
+  void _previousStep() {
+    if (_currentStep > 0) {
+      _goToStep(_currentStep - 1);
+    }
   }
 
-  Future<void> _sendMessage(String message) async {
-    if (message.trim().isEmpty || _isLoading) return;
-
-    _addUserMessage(message);
-    _textController.clear();
-
-    setState(() => _isLoading = true);
+  Future<void> _submitOnboarding() async {
+    setState(() => _isSubmitting = true);
 
     try {
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
 
-      // Build conversation history
-      final history = _messages.map((m) => {
-        'role': m.role,
-        'content': m.content,
-      }).toList();
+      debugPrint('🔍 [Onboarding] Submitting data for user: $userId');
+      debugPrint('🔍 [Onboarding] Data: ${_data.toJson()}');
 
-      final response = await apiClient.post(
-        '${ApiConstants.onboarding}/parse-response',
-        data: {
-          'user_id': userId,
-          'message': message,
-          'current_data': _collectedData,
-          'conversation_history': history,
-        },
+      // Update user profile
+      final response = await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: _data.toJson(),
       );
 
       if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Onboarding] Profile updated successfully');
 
-        // Update collected data
-        final extractedData = data['extracted_data'] as Map<String, dynamic>?;
-        if (extractedData != null) {
-          _collectedData.addAll(extractedData);
+        // Refresh user data
+        await ref.read(authStateProvider.notifier).refreshUser();
+
+        if (mounted) {
+          // Show success and navigate
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Setup complete! Creating your workout plan...'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+
+          // Navigate to home
+          context.go('/home');
         }
-
-        // Check if complete
-        final isComplete = data['is_complete'] as bool? ?? false;
-        if (isComplete) {
-          _completeOnboarding();
-          return;
-        }
-
-        // Show next question
-        final nextQuestion = data['next_question'] as Map<String, dynamic>?;
-        if (nextQuestion != null) {
-          final question = nextQuestion['question'] as String?;
-          final replies = nextQuestion['quick_replies'] as List?;
-
-          List<_QuickReply> quickReplies = [];
-          if (replies != null) {
-            quickReplies = replies.map((r) {
-              final map = r as Map<String, dynamic>;
-              return _QuickReply(
-                label: map['label'] as String,
-                value: map['value'] as String,
-              );
-            }).toList();
-          }
-
-          await Future.delayed(const Duration(milliseconds: 500));
-          _addAssistantMessage(question ?? '', quickReplies: quickReplies);
-          setState(() => _quickReplies = quickReplies);
-        }
+      } else {
+        throw Exception('Failed to update profile: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('❌ [Onboarding] Error: $e');
-      _addAssistantMessage(
-        "Sorry, I had trouble understanding that. Could you try again?",
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _completeOnboarding() async {
-    setState(() {
-      _isComplete = true;
-      _isLoading = true;
-    });
-
-    _addAssistantMessage(
-      "Perfect! 🎉 I've got everything I need. Let me create your personalized workout plan...",
-    );
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-
-      // Update user profile
-      await apiClient.put(
-        '${ApiConstants.users}/$userId',
-        data: {
-          ..._collectedData,
-          'onboarding_completed': true,
-        },
-      );
-
-      // Refresh user data
-      await ref.read(authStateProvider.notifier).refreshUser();
-
-      await Future.delayed(const Duration(seconds: 2));
-
-      _addAssistantMessage(
-        "All set! Your workout plan is ready. Let's crush it! 💪",
-      );
-
-      await Future.delayed(const Duration(seconds: 1));
-
       if (mounted) {
-        context.go('/home');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
-    } catch (e) {
-      debugPrint('❌ [Onboarding] Complete error: $e');
-      _addAssistantMessage(
-        "There was an issue setting up your plan. Please try again.",
-      );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
+
+  void _onDataChanged() {
+    setState(() {});
+  }
+
+  bool get _canProceed => _data.isStepValid(_currentStep);
 
   @override
   Widget build(BuildContext context) {
@@ -211,227 +141,223 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       backgroundColor: AppColors.pureBlack,
       appBar: AppBar(
         backgroundColor: AppColors.pureBlack,
-        title: const Text('Setup'),
+        title: Text(
+          'Step ${_currentStep + 1} of 6',
+          style: const TextStyle(fontSize: 16),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => context.go('/login'),
+          onPressed: () => _showExitDialog(),
         ),
+        actions: [
+          if (_currentStep > 0)
+            TextButton(
+              onPressed: _previousStep,
+              child: const Text(
+                'Back',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [
-          // Progress indicator
-          LinearProgressIndicator(
-            value: _calculateProgress(),
-            backgroundColor: AppColors.glassSurface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+          // Step indicator
+          _StepIndicator(
+            currentStep: _currentStep,
+            titles: _stepTitles,
+            icons: _stepIcons,
+            onStepTap: (step) {
+              // Only allow going back to completed steps
+              if (step <= _currentStep) {
+                _goToStep(step);
+              }
+            },
           ),
 
-          // Messages
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && _isLoading) {
-                  return _TypingIndicator();
-                }
-                return _MessageBubble(message: _messages[index])
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .slideY(begin: 0.1);
-              },
-            ),
-          ),
-
-          // Quick replies
-          if (_quickReplies.isNotEmpty && !_isLoading)
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _quickReplies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final reply = _quickReplies[index];
-                  return _QuickReplyChip(
-                    label: reply.label,
-                    onTap: () => _sendMessage(reply.value),
-                  );
-                },
+          // Progress bar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (_currentStep + 1) / 6,
+                backgroundColor: AppColors.glassSurface,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                minHeight: 4,
               ),
             ),
+          ),
 
-          // Input field
-          _InputBar(
-            controller: _textController,
-            focusNode: _focusNode,
-            isLoading: _isLoading,
-            isComplete: _isComplete,
-            onSend: _sendMessage,
+          // Page content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              onPageChanged: (page) => setState(() => _currentStep = page),
+              children: [
+                PersonalInfoStep(data: _data, onDataChanged: _onDataChanged),
+                BodyMetricsStep(data: _data, onDataChanged: _onDataChanged),
+                FitnessBackgroundStep(data: _data, onDataChanged: _onDataChanged),
+                ScheduleStep(data: _data, onDataChanged: _onDataChanged),
+                PreferencesStep(data: _data, onDataChanged: _onDataChanged),
+                HealthStep(data: _data, onDataChanged: _onDataChanged),
+              ],
+            ),
+          ),
+
+          // Bottom button
+          _BottomButton(
+            isLastStep: _currentStep == 5,
+            isEnabled: _canProceed && !_isSubmitting,
+            isLoading: _isSubmitting,
+            onPressed: _nextStep,
           ),
         ],
       ),
     );
   }
 
-  double _calculateProgress() {
-    final requiredFields = [
-      'name',
-      'goals',
-      'equipment',
-      'days_per_week',
-      'workout_duration',
-      'fitness_level',
-    ];
-    final completed = requiredFields.where((f) => _collectedData.containsKey(f)).length;
-    return completed / requiredFields.length;
-  }
-}
-
-class _ChatMessage {
-  final String role;
-  final String content;
-
-  _ChatMessage({required this.role, required this.content});
-}
-
-class _QuickReply {
-  final String label;
-  final String value;
-
-  _QuickReply({required this.label, required this.value});
-}
-
-class _MessageBubble extends StatelessWidget {
-  final _ChatMessage message;
-
-  const _MessageBubble({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final isUser = message.role == 'user';
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
+  void _showExitDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.elevated,
+        title: const Text('Exit Setup?'),
+        content: const Text(
+          'Your progress will be lost. Are you sure you want to exit?',
         ),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan : AppColors.elevated,
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: isUser ? const Radius.circular(4) : null,
-            bottomLeft: !isUser ? const Radius.circular(4) : null,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Stay'),
           ),
-        ),
-        child: Text(
-          message.content,
-          style: TextStyle(
-            color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
-            fontSize: 15,
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/login');
+            },
+            child: const Text(
+              'Exit',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _TypingIndicator extends StatelessWidget {
+class _StepIndicator extends StatelessWidget {
+  final int currentStep;
+  final List<String> titles;
+  final List<IconData> icons;
+  final ValueChanged<int> onStepTap;
+
+  const _StepIndicator({
+    required this.currentStep,
+    required this.titles,
+    required this.icons,
+    required this.onStepTap,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.elevated,
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomLeft: const Radius.circular(4),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.textMuted,
-                shape: BoxShape.circle,
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(6, (index) {
+          final isActive = index == currentStep;
+          final isCompleted = index < currentStep;
+
+          return GestureDetector(
+            onTap: () => onStepTap(index),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.cyan
+                          : isCompleted
+                              ? AppColors.success.withOpacity(0.2)
+                              : AppColors.glassSurface,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.cyan
+                            : isCompleted
+                                ? AppColors.success
+                                : AppColors.cardBorder,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: isCompleted
+                          ? const Icon(
+                              Icons.check,
+                              size: 18,
+                              color: AppColors.success,
+                            )
+                          : Icon(
+                              icons[index],
+                              size: 18,
+                              color: isActive
+                                  ? Colors.white
+                                  : AppColors.textMuted,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    titles[index],
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      color: isActive
+                          ? AppColors.cyan
+                          : isCompleted
+                              ? AppColors.success
+                              : AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
-            )
-                .animate(
-                  onPlay: (controller) => controller.repeat(),
-                )
-                .fadeIn(delay: Duration(milliseconds: index * 200))
-                .then()
-                .fadeOut(delay: const Duration(milliseconds: 400));
-          }),
-        ),
+            ),
+          );
+        }),
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms);
   }
 }
 
-class _QuickReplyChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickReplyChip({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.glassSurface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.cyan,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InputBar extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
+class _BottomButton extends StatelessWidget {
+  final bool isLastStep;
+  final bool isEnabled;
   final bool isLoading;
-  final bool isComplete;
-  final Function(String) onSend;
+  final VoidCallback onPressed;
 
-  const _InputBar({
-    required this.controller,
-    required this.focusNode,
+  const _BottomButton({
+    required this.isLastStep,
+    required this.isEnabled,
     required this.isLoading,
-    required this.isComplete,
-    required this.onSend,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
+        24,
         16,
-        12,
-        16,
-        MediaQuery.of(context).padding.bottom + 12,
+        24,
+        MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
         color: AppColors.nearBlack,
@@ -439,43 +365,47 @@ class _InputBar extends StatelessWidget {
           top: BorderSide(color: AppColors.cardBorder.withOpacity(0.5)),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              enabled: !isLoading && !isComplete,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: isComplete ? 'Setup complete!' : 'Type your answer...',
-                filled: true,
-                fillColor: AppColors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-              onSubmitted: onSend,
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: isEnabled ? onPressed : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isLastStep ? AppColors.success : AppColors.cyan,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: AppColors.glassSurface,
+            disabledForegroundColor: AppColors.textMuted,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: isLoading || isComplete
-                ? null
-                : () => onSend(controller.text),
-            icon: Icon(
-              Icons.send_rounded,
-              color: isLoading || isComplete
-                  ? AppColors.textMuted
-                  : AppColors.cyan,
-            ),
-          ),
-        ],
+          child: isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isLastStep ? 'Complete Setup' : 'Continue',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      isLastStep ? Icons.check : Icons.arrow_forward,
+                      size: 20,
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
