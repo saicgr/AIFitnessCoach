@@ -330,7 +330,17 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
                 quick_replies = QUICK_REPLIES.get("workout_duration")
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for workout_duration")
             elif next_field in QUICK_REPLIES:
-                response.content = f"One more thing - please tell me about your {next_field.replace('_', ' ')}."
+                # Convert field names to human-readable text
+                field_display_names = {
+                    "weightKg": "weight",
+                    "heightCm": "height",
+                    "fitness_level": "fitness level",
+                    "days_per_week": "workout schedule (how many days per week)",
+                    "selected_days": "preferred workout days",
+                    "workout_duration": "workout duration",
+                }
+                display_name = field_display_names.get(next_field, next_field.replace('_', ' '))
+                response.content = f"One more thing - please tell me about your {display_name}."
                 quick_replies = QUICK_REPLIES[next_field]
                 is_multi_select = next_field in multi_select_fields
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for {next_field}")
@@ -542,15 +552,24 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         import re
         user_lower = user_message.lower()
 
-        # Pattern: "70kg" or "70 kg" or "154lbs" or "154 lbs"
-        kg_match = re.search(r'(\d{2,3})\s*(?:kg|kilograms?|kilos?)', user_lower)
-        lbs_match = re.search(r'(\d{2,3})\s*(?:lbs?|pounds?)', user_lower)
+        # Pattern: "70kg" or "70 kg" or "100.5kg" or "154lbs" or "154 lbs"
+        # Supports decimals like "100.0kg" or "100.5kg"
+        kg_match = re.search(r'(\d{2,3}(?:\.\d+)?)\s*(?:kg|kilograms?|kilos?)', user_lower)
+        lbs_match = re.search(r'(\d{2,3}(?:\.\d+)?)\s*(?:lbs?|pounds?)', user_lower)
+
+        # Also match "weigh X" pattern like "weigh 100.0kg" or "weigh 150"
+        weigh_match = re.search(r'weigh\s+(\d{2,3}(?:\.\d+)?)\s*(?:kg|kilograms?|kilos?)?', user_lower)
 
         if kg_match:
-            weight = int(kg_match.group(1))
+            weight = float(kg_match.group(1))
             if 30 <= weight <= 300:
-                extracted["weightKg"] = weight
-                logger.info(f"[Extract Data] ✅ Pre-processed: weightKg = {weight}")
+                extracted["weightKg"] = round(weight, 1)
+                logger.info(f"[Extract Data] ✅ Pre-processed: weightKg = {extracted['weightKg']}")
+        elif weigh_match:
+            weight = float(weigh_match.group(1))
+            if 30 <= weight <= 300:
+                extracted["weightKg"] = round(weight, 1)
+                logger.info(f"[Extract Data] ✅ Pre-processed: weightKg = {extracted['weightKg']} (from 'weigh' pattern)")
         elif lbs_match:
             lbs = int(lbs_match.group(1))
             weight = round(lbs * 0.453592)
