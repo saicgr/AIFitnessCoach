@@ -12,7 +12,7 @@ class MainShell extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/library')) return 1;
-    if (location.startsWith('/metrics')) return 2;
+    if (location.startsWith('/schedule')) return 2;
     if (location.startsWith('/profile')) return 3;
     return 0;
   }
@@ -26,7 +26,7 @@ class MainShell extends StatelessWidget {
         context.go('/library');
         break;
       case 2:
-        context.go('/metrics');
+        context.go('/schedule');
         break;
       case 3:
         context.go('/profile');
@@ -62,9 +62,9 @@ class MainShell extends StatelessWidget {
             label: 'Library',
           ),
           NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart, color: AppColors.cyan),
-            label: 'Metrics',
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_today, color: AppColors.cyan),
+            label: 'Schedule',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

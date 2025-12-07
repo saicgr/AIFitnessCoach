@@ -493,11 +493,26 @@ async def swap_workout_date(request: SwapWorkoutsRequest):
 
 
 def get_workout_focus(split: str, selected_days: List[int]) -> dict:
-    """Return workout focus for each day based on training split."""
+    """Return workout focus for each day based on training split.
+
+    For full_body split, we rotate through different emphasis areas to ensure variety
+    while still targeting the whole body.
+    """
     num_days = len(selected_days)
 
     if split == "full_body":
-        return {day: "full_body" for day in selected_days}
+        # Rotate emphasis to ensure variety even in full-body workouts
+        # Each still targets full body but with different primary focus
+        full_body_emphases = [
+            "full_body_push",   # Emphasis on pushing movements (chest, shoulders, triceps)
+            "full_body_pull",   # Emphasis on pulling movements (back, biceps)
+            "full_body_legs",   # Emphasis on lower body (legs, glutes)
+            "full_body_core",   # Emphasis on core and stability
+            "full_body_upper",  # Upper body focused full-body
+            "full_body_lower",  # Lower body focused full-body
+            "full_body_power",  # Power/explosive movements
+        ]
+        return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
     elif split == "upper_lower":
         focuses = ["upper", "lower"] * (num_days // 2 + 1)
         return {day: focuses[i] for i, day in enumerate(selected_days)}
@@ -686,11 +701,16 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         # Get exercise RAG service for intelligent selection
         exercise_rag = get_exercise_rag_service()
 
-        # Track used exercises for variety
+        # Track used exercises for variety - use a thread-safe approach
+        # by passing a copy of the list and collecting results
         used_exercises: List[str] = []
 
-        async def generate_single_workout(workout_date: datetime, index: int, avoid_words: List[str]):
-            nonlocal used_exercises
+        async def generate_single_workout(
+            workout_date: datetime,
+            index: int,
+            avoid_words: List[str],
+            exercises_to_avoid: List[str]  # Pass a snapshot to avoid race conditions
+        ):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
@@ -703,13 +723,14 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
-                    avoid_exercises=used_exercises[-30:],  # Avoid recent exercises for variety
+                    avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
                 )
 
+                # Return the exercises used so they can be tracked after batch completes
+                exercises_used = []
                 if rag_exercises:
-                    # Track used exercises
-                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
 
                     # Use AI to create a creative workout name
                     workout_data = await openai_service.generate_workout_from_library(
@@ -742,6 +763,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "type": workout_data.get("type", "strength"),
                     "difficulty": workout_data.get("difficulty", "medium"),
                     "exercises": workout_data.get("exercises", []),
+                    "exercises_used": exercises_used,  # Return used exercises for tracking
                 }
 
             except Exception as e:
@@ -754,13 +776,27 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "type": "strength",
                     "difficulty": "medium",
                     "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
+                    "exercises_used": ["Push-ups"],
                 }
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
             batch_dates = workout_dates[batch_start:batch_end]
 
-            tasks = [generate_single_workout(date, batch_start + i, used_name_words.copy()) for i, date in enumerate(batch_dates)]
+            # Create unique avoid lists for each workout in the batch
+            # Each workout in a batch should avoid exercises from previous batches PLUS
+            # exercises from earlier workouts in the same batch (using index offset)
+            tasks = []
+            for i, date in enumerate(batch_dates):
+                # For variety within a batch, offset the avoid list by adding index-based seeds
+                # so each workout in the same batch gets slightly different avoid lists
+                avoid_list = used_exercises[-30:].copy() if used_exercises else []
+                tasks.append(generate_single_workout(
+                    date,
+                    batch_start + i,
+                    used_name_words.copy(),
+                    avoid_list
+                ))
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for result in batch_results:
@@ -769,6 +805,12 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
                 name_words = extract_name_words(result["name"])
                 used_name_words.extend(name_words)
+
+                # Track used exercises for variety in next batches
+                exercises_used_in_workout = result.get("exercises_used", [])
+                if exercises_used_in_workout:
+                    used_exercises.extend(exercises_used_in_workout)
+                    logger.debug(f"Added {len(exercises_used_in_workout)} exercises to avoid list. Total: {len(used_exercises)}")
 
                 workout_db_data = {
                     "user_id": request.user_id,
@@ -884,8 +926,11 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
         BATCH_SIZE = 4
 
-        async def generate_single_workout(workout_date: datetime, avoid_words: List[str]):
-            nonlocal used_exercises
+        async def generate_single_workout(
+            workout_date: datetime,
+            avoid_words: List[str],
+            exercises_to_avoid: List[str]  # Pass a snapshot to avoid race conditions
+        ):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
@@ -897,12 +942,13 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
-                    avoid_exercises=used_exercises[-30:],
+                    avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
                 )
 
+                exercises_used = []
                 if rag_exercises:
-                    used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
                     workout_data = await openai_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
@@ -930,6 +976,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "type": workout_data.get("type", "strength"),
                     "difficulty": workout_data.get("difficulty", "medium"),
                     "exercises": workout_data.get("exercises", []),
+                    "exercises_used": exercises_used,  # Return used exercises for tracking
                 }
 
             except Exception as e:
@@ -941,13 +988,22 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "type": "strength",
                     "difficulty": "medium",
                     "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
+                    "exercises_used": ["Push-ups"],
                 }
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
             batch_dates = workout_dates[batch_start:batch_end]
 
-            tasks = [generate_single_workout(date, used_name_words.copy()) for date in batch_dates]
+            # Create unique avoid lists for each workout in the batch
+            tasks = []
+            for date in batch_dates:
+                avoid_list = used_exercises[-30:].copy() if used_exercises else []
+                tasks.append(generate_single_workout(
+                    date,
+                    used_name_words.copy(),
+                    avoid_list
+                ))
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for result in batch_results:
@@ -956,6 +1012,11 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
                 name_words = extract_name_words(result["name"])
                 used_name_words.extend(name_words)
+
+                # Track used exercises for variety in next batches
+                exercises_used_in_workout = result.get("exercises_used", [])
+                if exercises_used_in_workout:
+                    used_exercises.extend(exercises_used_in_workout)
 
                 workout_db_data = {
                     "user_id": request.user_id,

@@ -12,6 +12,12 @@
 # Chroma vector store data
 backend/data/chroma/
 
+# Local data directory
+backend/data/
+
+# Pip install output (accidental)
+backend/=*
+
 # Python
 __pycache__/
 *.py[cod]

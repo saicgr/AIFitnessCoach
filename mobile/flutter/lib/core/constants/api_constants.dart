@@ -41,4 +41,7 @@ class ApiConstants {
   static const String onboarding = '/onboarding';
   static const String metrics = '/metrics';
   static const String feedback = '/feedback';
+  static const String hydration = '/hydration';
+  static const String nutrition = '/nutrition';
+  static const String summaries = '/summaries';
 }

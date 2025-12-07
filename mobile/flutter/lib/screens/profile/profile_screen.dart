@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -14,7 +15,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
-    final workoutsState = ref.watch(workoutsProvider);
+    ref.watch(workoutsProvider); // Watch to trigger updates
     final user = authState.user;
 
     final completedCount = ref.read(workoutsProvider.notifier).completedCount;
@@ -146,11 +147,64 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
+              // Quick Access section
+              _SectionHeader(title: 'QUICK ACCESS'),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.emoji_events,
+                      title: 'Achievements',
+                      color: AppColors.orange,
+                      onTap: () => context.push('/achievements'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.water_drop,
+                      title: 'Hydration',
+                      color: AppColors.electricBlue,
+                      onTap: () => context.push('/hydration'),
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 200.ms),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.restaurant,
+                      title: 'Nutrition',
+                      color: AppColors.success,
+                      onTap: () => context.push('/nutrition'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.summarize,
+                      title: 'Weekly Summary',
+                      color: AppColors.purple,
+                      onTap: () => context.push('/summaries'),
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 220.ms),
+
+              const SizedBox(height: 32),
+
               // Settings section
               _SectionHeader(title: 'SETTINGS'),
               const SizedBox(height: 12),
 
-              _SettingsCard(
+              _SettingsCardWithRef(
+                ref: ref,
                 items: [
                   _SettingItem(
                     icon: Icons.person_outline,
@@ -169,11 +223,7 @@ class ProfileScreen extends ConsumerWidget {
                   _SettingItem(
                     icon: Icons.dark_mode_outlined,
                     title: 'Dark Mode',
-                    trailing: Switch(
-                      value: true,
-                      onChanged: null,
-                      activeColor: AppColors.cyan,
-                    ),
+                    isThemeToggle: true,
                   ),
                   _SettingItem(
                     icon: Icons.restart_alt,
@@ -585,17 +635,96 @@ class _ProfileInfoItem {
   });
 }
 
+class _SettingItem {
+  final IconData icon;
+  final String title;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+  final bool isThemeToggle;
+
+  const _SettingItem({
+    required this.icon,
+    required this.title,
+    this.onTap,
+    this.trailing,
+    this.isThemeToggle = false,
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
-// Settings Card
+// Quick Access Card
 // ─────────────────────────────────────────────────────────────────
 
-class _SettingsCard extends StatelessWidget {
-  final List<_SettingItem> items;
+class _QuickAccessCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _SettingsCard({required this.items});
+  const _QuickAccessCard({
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.elevated,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Settings Card With Ref (for theme toggle)
+// ─────────────────────────────────────────────────────────────────
+
+class _SettingsCardWithRef extends ConsumerWidget {
+  final List<_SettingItem> items;
+  final WidgetRef ref;
+
+  const _SettingsCardWithRef({
+    required this.items,
+    required this.ref,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef widgetRef) {
+    final isDark = widgetRef.watch(themeModeProvider) == ThemeMode.dark;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.elevated,
@@ -632,7 +761,15 @@ class _SettingsCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (item.trailing != null)
+                      if (item.isThemeToggle)
+                        Switch(
+                          value: isDark,
+                          onChanged: (value) {
+                            widgetRef.read(themeModeProvider.notifier).toggle();
+                          },
+                          activeColor: AppColors.cyan,
+                        )
+                      else if (item.trailing != null)
                         item.trailing!
                       else if (item.onTap != null)
                         const Icon(
@@ -655,20 +792,6 @@ class _SettingsCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SettingItem {
-  final IconData icon;
-  final String title;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  const _SettingItem({
-    required this.icon,
-    required this.title,
-    this.onTap,
-    this.trailing,
-  });
 }
 
 // ─────────────────────────────────────────────────────────────────

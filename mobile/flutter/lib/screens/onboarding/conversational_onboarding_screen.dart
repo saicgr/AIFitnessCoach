@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,10 +26,12 @@ class ConversationalOnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _ConversationalOnboardingScreenState
-    extends ConsumerState<ConversationalOnboardingScreen> {
+    extends ConsumerState<ConversationalOnboardingScreen>
+    with SingleTickerProviderStateMixin {
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
   final _inputFocusNode = FocusNode();
+  late AnimationController _typingAnimationController;
 
   bool _isLoading = false;
   bool _showHealthChecklist = false;
@@ -43,6 +46,10 @@ class _ConversationalOnboardingScreenState
   @override
   void initState() {
     super.initState();
+    _typingAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeConversation();
     });
@@ -50,6 +57,7 @@ class _ConversationalOnboardingScreenState
 
   @override
   void dispose() {
+    _typingAnimationController.dispose();
     _scrollController.dispose();
     _inputController.dispose();
     _inputFocusNode.dispose();
@@ -317,30 +325,35 @@ class _ConversationalOnboardingScreenState
           finalData['daysPerWeek'] as int? ?? selectedDays.length;
 
       // Update user profile
+      // Convert lists to JSON strings as required by the API
+      final goalsJson = jsonEncode(finalData['goals'] ?? []);
+      final equipmentJson = jsonEncode(finalData['equipment'] ?? []);
+      final injuriesJson = jsonEncode(injuries);
+      final preferencesJson = jsonEncode({
+        'name': finalData['name'],
+        'age': finalData['age'],
+        'gender': finalData['gender'],
+        'height_cm': finalData['heightCm'],
+        'weight_kg': finalData['weightKg'],
+        'target_weight_kg': finalData['targetWeightKg'],
+        'days_per_week': daysPerWeek,
+        'selected_days': selectedDays,
+        'workout_duration': finalData['workoutDuration'] ?? 45,
+        'preferred_time': finalData['preferredTime'] ?? 'morning',
+        'training_split': finalData['trainingSplit'] ?? 'full_body',
+        'intensity_preference': finalData['intensityPreference'] ?? 'moderate',
+        'workout_variety': finalData['workoutVariety'] ?? 'varied',
+        'activity_level': finalData['activityLevel'] ?? 'lightly_active',
+        'health_conditions': conditions,
+      });
+
       final userData = {
         'fitness_level': finalData['fitnessLevel'] ?? 'beginner',
-        'goals': finalData['goals'] ?? [],
-        'equipment': finalData['equipment'] ?? [],
-        'active_injuries': injuries,
+        'goals': goalsJson,
+        'equipment': equipmentJson,
+        'active_injuries': injuriesJson,
         'onboarding_completed': true,
-        'preferences': {
-          'name': finalData['name'],
-          'age': finalData['age'],
-          'gender': finalData['gender'],
-          'height_cm': finalData['heightCm'],
-          'weight_kg': finalData['weightKg'],
-          'target_weight_kg': finalData['targetWeightKg'],
-          'days_per_week': daysPerWeek,
-          'selected_days': selectedDays,
-          'workout_duration': finalData['workoutDuration'] ?? 45,
-          'preferred_time': finalData['preferredTime'] ?? 'morning',
-          'training_split': finalData['trainingSplit'] ?? 'full_body',
-          'intensity_preference':
-              finalData['intensityPreference'] ?? 'moderate',
-          'workout_variety': finalData['workoutVariety'] ?? 'varied',
-          'activity_level': finalData['activityLevel'] ?? 'lightly_active',
-          'health_conditions': conditions,
-        },
+        'preferences': preferencesJson,
       };
 
       await apiClient.put(
@@ -755,6 +768,13 @@ class _ConversationalOnboardingScreenState
             decoration: BoxDecoration(
               gradient: AppColors.cyanGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cyan.withOpacity(0.4),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: const Center(
               child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
@@ -762,20 +782,25 @@ class _ConversationalOnboardingScreenState
           ),
           const SizedBox(width: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: AppColors.glassSurface,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(20),
+              ),
               border: Border.all(color: AppColors.cardBorder),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildDot(0),
-                const SizedBox(width: 4),
-                _buildDot(150),
-                const SizedBox(width: 4),
-                _buildDot(300),
+                _buildAnimatedDot(0.0),
+                const SizedBox(width: 6),
+                _buildAnimatedDot(0.2),
+                const SizedBox(width: 6),
+                _buildAnimatedDot(0.4),
               ],
             ),
           ),
@@ -784,18 +809,33 @@ class _ConversationalOnboardingScreenState
     );
   }
 
-  Widget _buildDot(int delay) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.3, end: 1.0),
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(value),
-            shape: BoxShape.circle,
+  Widget _buildAnimatedDot(double delay) {
+    return AnimatedBuilder(
+      animation: _typingAnimationController,
+      builder: (context, child) {
+        // Calculate bouncing animation with delay
+        final progress = (_typingAnimationController.value + delay) % 1.0;
+        // Create a bounce effect: up for first half, down for second half
+        final bounce = progress < 0.5
+            ? progress * 2  // 0 to 1
+            : 2 - progress * 2;  // 1 to 0
+
+        return Transform.translate(
+          offset: Offset(0, -6 * bounce),
+          child: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: AppColors.cyan.withOpacity(0.5 + 0.5 * bounce),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cyan.withOpacity(0.3 * bounce),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
           ),
         );
       },

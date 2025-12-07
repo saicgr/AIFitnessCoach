@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/models/workout.dart';
 import '../data/repositories/auth_repository.dart';
+import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
+import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/summaries/weekly_summary_screen.dart';
+import '../screens/schedule/schedule_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
@@ -78,61 +83,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/metrics',
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: Scaffold(
-                backgroundColor: const Color(0xFF000000),
-                body: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Metrics',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Track your progress',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.grey,
-                              ),
-                        ),
-                        const Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.bar_chart,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Coming Soon',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Detailed stats and progress charts',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            path: '/schedule',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ScheduleScreen(),
             ),
           ),
           GoRoute(
@@ -223,38 +176,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Achievements
       GoRoute(
         path: '/achievements',
-        builder: (context, state) => Scaffold(
-          backgroundColor: const Color(0xFF000000),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF000000),
-            title: const Text('Achievements'),
-          ),
-          body: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.emoji_events,
-                  size: 64,
-                  color: Colors.amber,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Coming Soon',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Badges and achievements',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ),
+        builder: (context, state) => const AchievementsScreen(),
+      ),
+
+      // Hydration
+      GoRoute(
+        path: '/hydration',
+        builder: (context, state) => const HydrationScreen(),
+      ),
+
+      // Nutrition
+      GoRoute(
+        path: '/nutrition',
+        builder: (context, state) => const NutritionScreen(),
+      ),
+
+      // Weekly Summaries
+      GoRoute(
+        path: '/summaries',
+        builder: (context, state) => const WeeklySummaryScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
