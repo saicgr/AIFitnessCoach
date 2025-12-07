@@ -314,7 +314,33 @@ class ExerciseRAGService:
 
             # Filter by equipment compatibility
             ex_equipment = (meta.get("equipment", "") or "").lower()
-            equipment_lower = [eq.lower() for eq in equipment] + ["body weight", "bodyweight", "none"]
+
+            # Expand "Full Gym" and similar general options to include all gym equipment
+            FULL_GYM_EQUIPMENT = [
+                "barbell", "dumbbell", "dumbbells", "cable", "cable machine",
+                "machine", "kettlebell", "bench", "ez bar", "smith machine",
+                "lat pulldown", "leg press", "pull-up bar", "pullup bar",
+                "resistance band", "medicine ball", "stability ball", "trx",
+                "body weight", "bodyweight", "none"
+            ]
+
+            HOME_GYM_EQUIPMENT = [
+                "dumbbell", "dumbbells", "kettlebell", "resistance band",
+                "pull-up bar", "pullup bar", "bench", "stability ball",
+                "body weight", "bodyweight", "none"
+            ]
+
+            # Build equipment list based on user selection
+            equipment_lower = [eq.lower() for eq in equipment]
+
+            # Expand general equipment options
+            if "full gym" in equipment_lower:
+                equipment_lower = FULL_GYM_EQUIPMENT
+            elif "home gym" in equipment_lower:
+                equipment_lower = HOME_GYM_EQUIPMENT
+            else:
+                # Always include bodyweight as an option
+                equipment_lower = equipment_lower + ["body weight", "bodyweight", "none"]
 
             if not any(eq in ex_equipment for eq in equipment_lower):
                 continue
@@ -559,8 +585,22 @@ class ExerciseRAGService:
         goals: List[str],
     ) -> str:
         """Build a semantic search query for exercises."""
+        # Handle full_body emphasis variations for better variety
+        focus_keywords = {
+            "full_body_push": "full body workout emphasis on push movements chest shoulders triceps pressing",
+            "full_body_pull": "full body workout emphasis on pull movements back biceps rowing pulling",
+            "full_body_legs": "full body workout emphasis on legs lower body squats lunges glutes hamstrings",
+            "full_body_core": "full body workout emphasis on core abs stability planks",
+            "full_body_upper": "full body workout upper body focus chest back shoulders arms",
+            "full_body_lower": "full body workout lower body focus legs glutes quads hamstrings calves",
+            "full_body_power": "full body workout power explosive movements plyometrics jumps",
+            "full_body": "full body balanced workout compound exercises",
+        }
+
+        focus_query = focus_keywords.get(focus_area, f"Exercises for {focus_area} workout")
+
         query_parts = [
-            f"Exercises for {focus_area} workout",
+            focus_query,
             f"Equipment: {', '.join(equipment) if equipment else 'bodyweight'}",
             f"Fitness level: {fitness_level}",
         ]
