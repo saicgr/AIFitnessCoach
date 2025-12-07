@@ -34,6 +34,7 @@ s3_client = boto3.client(
 
 BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'ai-fitness-coach')
 VIDEO_BASE_PREFIX = "VERTICAL VIDEOS/"  # Base folder for all videos
+IMAGE_BASE_PREFIX = "ILLUSTRATIONS/"  # Base folder for all images
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
 
@@ -128,6 +129,75 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get video URL: {str(e)}")
+
+
+@router.get("/exercise-images/{exercise_name:path}")
+async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
+    """
+    Get presigned image URL by exercise name.
+
+    Looks up the exercise in exercise_library table and generates a presigned URL
+    for the associated S3 illustration image.
+
+    If gender is specified ('male' or 'female'), tries to find gendered variant first.
+
+    Args:
+        exercise_name: Name of the exercise to lookup
+        gender: Optional gender preference ('male' or 'female')
+
+    Returns:
+        Presigned URL and expiration time
+    """
+    try:
+        db = get_supabase_db()
+
+        # Build list of exercise names to try
+        # Strip any existing gender suffix to get base name
+        base_name = exercise_name.replace('_male', '').replace('_female', '').replace('_Male', '').replace('_Female', '')
+
+        search_names = []
+        if gender in ('male', 'female'):
+            search_names.append(f"{base_name}_{gender}")
+        search_names.append(exercise_name)  # Original name as fallback
+        search_names.append(base_name)      # Base name as last resort
+
+        # Try each name variant
+        found_result = None
+        for name in search_names:
+            result = db.client.table("exercise_library").select(
+                "image_s3_path, exercise_name"
+            ).ilike("exercise_name", name).limit(1).execute()
+
+            if result.data and result.data[0].get("image_s3_path"):
+                found_result = result.data[0]
+                break
+
+        if not found_result:
+            raise HTTPException(status_code=404, detail="Image not found for exercise")
+
+        s3_path = found_result["image_s3_path"]
+        found_exercise_name = found_result["exercise_name"]
+
+        # s3_path format: s3://bucket/key
+        # Extract key from s3:// URI
+        key = s3_path.replace(f"s3://{BUCKET_NAME}/", "")
+
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': BUCKET_NAME, 'Key': key},
+            ExpiresIn=PRESIGNED_URL_EXPIRATION
+        )
+
+        return {
+            "url": url,
+            "expires_in": PRESIGNED_URL_EXPIRATION,
+            "exercise_name": found_exercise_name
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get image URL: {str(e)}")
 
 
 @router.get("/videos/list/")

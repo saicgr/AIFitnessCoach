@@ -191,6 +191,8 @@ class ExerciseLibraryService:
                 'body_part': ex.get('body_part', ''),
                 'notes': ex.get('instructions', '') or 'Focus on proper form',
                 'gif_url': ex.get('gif_url', ''),
+                'image_s3_path': ex.get('image_s3_path', ''),
+                'video_s3_path': ex.get('video_s3_path', ''),
                 'library_id': ex.get('id', ''),
             })
 
