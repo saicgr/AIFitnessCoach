@@ -15,6 +15,7 @@ dependencies:
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
   flutter_animate: ^4.5.0
+  fl_chart: ^0.69.0
 
   # State Management
   flutter_riverpod: ^2.5.1

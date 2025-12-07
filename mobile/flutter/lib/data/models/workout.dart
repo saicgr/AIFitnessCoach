@@ -116,12 +116,19 @@ class Workout extends Equatable {
     final equipment = <String>{};
     for (final exercise in exercises) {
       if (exercise.equipment != null && exercise.equipment!.isNotEmpty) {
-        equipment.add(exercise.equipment!);
+        String eq = exercise.equipment!;
+        // Normalize equipment names
+        final lowerEq = eq.toLowerCase();
+        if (lowerEq.contains('none') ||
+            lowerEq == 'bodyweight' ||
+            lowerEq == 'body weight') {
+          eq = 'Bodyweight';
+        }
+        equipment.add(eq);
       }
     }
-    equipment.remove('body weight');
-    equipment.remove('bodyweight');
-    equipment.remove('none');
+    // Remove bodyweight variations - we only show actual equipment needed
+    equipment.removeWhere((e) => e.toLowerCase() == 'bodyweight');
     return equipment.toList();
   }
 

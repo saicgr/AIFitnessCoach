@@ -1,0 +1,830 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/models/workout.dart';
+import '../../../data/repositories/workout_repository.dart';
+import '../../../data/services/api_client.dart';
+
+/// Shows a bottom sheet with workout actions
+Future<void> showWorkoutActionsSheet(
+  BuildContext context,
+  WidgetRef ref,
+  Workout workout, {
+  VoidCallback? onRefresh,
+}) async {
+  await showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) => _WorkoutActionsSheet(
+      workout: workout,
+      onRefresh: onRefresh,
+    ),
+  );
+}
+
+class _WorkoutActionsSheet extends ConsumerStatefulWidget {
+  final Workout workout;
+  final VoidCallback? onRefresh;
+
+  const _WorkoutActionsSheet({required this.workout, this.onRefresh});
+
+  @override
+  ConsumerState<_WorkoutActionsSheet> createState() => _WorkoutActionsSheetState();
+}
+
+class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
+  bool _isLoading = false;
+  String? _loadingAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.nearBlack,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textMuted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Workout Options',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.workout.name ?? 'Workout',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                children: [
+                  _ActionTile(
+                    icon: Icons.calendar_month,
+                    title: 'Reschedule',
+                    subtitle: 'Change workout date',
+                    isLoading: _loadingAction == 'reschedule',
+                    onTap: () => _handleReschedule(context),
+                  ),
+                  _ActionTile(
+                    icon: Icons.refresh,
+                    title: 'Regenerate',
+                    subtitle: 'Create a new workout for this day',
+                    isLoading: _loadingAction == 'regenerate',
+                    onTap: () => _handleRegenerate(context),
+                  ),
+                  _ActionTile(
+                    icon: Icons.history,
+                    title: 'Version History',
+                    subtitle: 'View and restore previous versions',
+                    isLoading: _loadingAction == 'versions',
+                    onTap: () => _handleVersionHistory(context),
+                  ),
+                  _ActionTile(
+                    icon: Icons.directions_run,
+                    title: 'Generate Warmup',
+                    subtitle: 'Create warmup exercises',
+                    isLoading: _loadingAction == 'warmup',
+                    onTap: () => _handleGenerateWarmup(context),
+                  ),
+                  _ActionTile(
+                    icon: Icons.self_improvement,
+                    title: 'Generate Stretches',
+                    subtitle: 'Create cool-down stretches',
+                    isLoading: _loadingAction == 'stretches',
+                    onTap: () => _handleGenerateStretches(context),
+                  ),
+                  _ActionTile(
+                    icon: Icons.delete_outline,
+                    title: 'Delete Workout',
+                    subtitle: 'Remove this workout',
+                    isDestructive: true,
+                    isLoading: _loadingAction == 'delete',
+                    onTap: () => _handleDelete(context),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleReschedule(BuildContext context) async {
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.tryParse(widget.workout.scheduledDate ?? '') ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.cyan,
+              surface: AppColors.nearBlack,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (newDate != null && mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadingAction = 'reschedule';
+      });
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final success = await repo.rescheduleWorkout(
+        widget.workout.id!,
+        newDate.toIso8601String().split('T')[0],
+      );
+
+      setState(() {
+        _isLoading = false;
+        _loadingAction = null;
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (success) {
+          widget.onRefresh?.call();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout rescheduled'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to reschedule workout'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleRegenerate(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.nearBlack,
+        title: const Text('Regenerate Workout?'),
+        content: const Text(
+          'This will create a new workout plan for this day. The current workout will be saved in version history.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.cyan),
+            child: const Text('Regenerate'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadingAction = 'regenerate';
+      });
+
+      final userId = await ref.read(apiClientProvider).getUserId();
+      final repo = ref.read(workoutRepositoryProvider);
+      final workout = await repo.regenerateWorkout(
+        workoutId: widget.workout.id!,
+        userId: userId!,
+      );
+
+      setState(() {
+        _isLoading = false;
+        _loadingAction = null;
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (workout != null) {
+          widget.onRefresh?.call();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout regenerated'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to regenerate workout'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleVersionHistory(BuildContext context) async {
+    setState(() {
+      _loadingAction = 'versions';
+    });
+
+    final repo = ref.read(workoutRepositoryProvider);
+    final versions = await repo.getWorkoutVersions(widget.workout.id!);
+
+    setState(() {
+      _loadingAction = null;
+    });
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _VersionHistorySheet(
+        workoutId: widget.workout.id!,
+        versions: versions,
+        onRevert: () {
+          widget.onRefresh?.call();
+        },
+      ),
+    );
+  }
+
+  Future<void> _handleGenerateWarmup(BuildContext context) async {
+    setState(() {
+      _isLoading = true;
+      _loadingAction = 'warmup';
+    });
+
+    final repo = ref.read(workoutRepositoryProvider);
+    final warmup = await repo.generateWarmup(widget.workout.id!);
+
+    setState(() {
+      _isLoading = false;
+      _loadingAction = null;
+    });
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    if (warmup.isNotEmpty) {
+      await showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => _WarmupStretchesSheet(
+          title: 'Warmup Exercises',
+          exercises: warmup,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to generate warmup'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGenerateStretches(BuildContext context) async {
+    setState(() {
+      _isLoading = true;
+      _loadingAction = 'stretches';
+    });
+
+    final repo = ref.read(workoutRepositoryProvider);
+    final stretches = await repo.generateStretches(widget.workout.id!);
+
+    setState(() {
+      _isLoading = false;
+      _loadingAction = null;
+    });
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    if (stretches.isNotEmpty) {
+      await showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (context) => _WarmupStretchesSheet(
+          title: 'Cool-Down Stretches',
+          exercises: stretches,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to generate stretches'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleDelete(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.nearBlack,
+        title: const Text('Delete Workout?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadingAction = 'delete';
+      });
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final success = await repo.deleteWorkout(widget.workout.id!);
+
+      setState(() {
+        _isLoading = false;
+        _loadingAction = null;
+      });
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (success) {
+          widget.onRefresh?.call();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout deleted'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    }
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isDestructive;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.isDestructive = false,
+    this.isLoading = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (isDestructive ? AppColors.error : AppColors.cyan).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(icon, color: isDestructive ? AppColors.error : AppColors.cyan),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: color.withOpacity(0.7), fontSize: 12),
+      ),
+      onTap: isLoading ? null : onTap,
+    );
+  }
+}
+
+// Version History Sheet
+class _VersionHistorySheet extends ConsumerWidget {
+  final String workoutId;
+  final List<Map<String, dynamic>> versions;
+  final VoidCallback? onRevert;
+
+  const _VersionHistorySheet({
+    required this.workoutId,
+    required this.versions,
+    this.onRevert,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.nearBlack,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                const Icon(Icons.history, color: AppColors.cyan),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Version History',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // Versions list
+          Flexible(
+            child: versions.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.history, size: 48, color: AppColors.textMuted),
+                        SizedBox(height: 16),
+                        Text(
+                          'No version history',
+                          style: TextStyle(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: versions.length,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemBuilder: (context, index) {
+                      final version = versions[index];
+                      final versionNum = version['version'] ?? index + 1;
+                      final createdAt = version['created_at'] ?? '';
+                      final name = version['name'] ?? 'Version $versionNum';
+                      final isCurrent = index == 0;
+
+                      return ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isCurrent
+                                ? AppColors.cyan.withOpacity(0.2)
+                                : AppColors.elevated,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'v$versionNum',
+                              style: TextStyle(
+                                color: isCurrent ? AppColors.cyan : AppColors.textMuted,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        title: Text(name),
+                        subtitle: Text(
+                          _formatDate(createdAt),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: isCurrent
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'CURRENT',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              )
+                            : TextButton(
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      backgroundColor: AppColors.nearBlack,
+                                      title: const Text('Revert to this version?'),
+                                      content: Text('Restore "$name"?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppColors.cyan,
+                                          ),
+                                          child: const Text('Revert'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirm == true) {
+                                    final repo = ref.read(workoutRepositoryProvider);
+                                    await repo.revertWorkout(workoutId, versionNum);
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      onRevert?.call();
+                                    }
+                                  }
+                                },
+                                child: const Text('Revert'),
+                              ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return dateStr;
+    }
+  }
+}
+
+// Warmup/Stretches Sheet
+class _WarmupStretchesSheet extends StatelessWidget {
+  final String title;
+  final List<Map<String, dynamic>> exercises;
+
+  const _WarmupStretchesSheet({
+    required this.title,
+    required this.exercises,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.nearBlack,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Icon(
+                  title.contains('Warmup') ? Icons.directions_run : Icons.self_improvement,
+                  color: AppColors.orange,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // Exercises list
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: exercises.length,
+              padding: const EdgeInsets.all(16),
+              itemBuilder: (context, index) {
+                final exercise = exercises[index];
+                final name = exercise['name'] ?? 'Exercise ${index + 1}';
+                final duration = exercise['duration_seconds'] ?? exercise['duration'] ?? 30;
+                final instructions = exercise['instructions'] ?? '';
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.elevated,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      // Index
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.orange.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              color: AppColors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (instructions.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                instructions,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Duration
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.glassSurface,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${duration}s',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

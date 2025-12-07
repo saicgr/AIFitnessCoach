@@ -14,6 +14,7 @@ import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
+import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
@@ -195,6 +196,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/summaries',
         builder: (context, state) => const WeeklySummaryScreen(),
+      ),
+
+      // Health Metrics Dashboard
+      GoRoute(
+        path: '/metrics',
+        builder: (context, state) => const MetricsDashboardScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

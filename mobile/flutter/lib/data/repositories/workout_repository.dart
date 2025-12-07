@@ -178,6 +178,138 @@ class WorkoutRepository {
       return false;
     }
   }
+
+  /// Get workout versions (history)
+  Future<List<Map<String, dynamic>>> getWorkoutVersions(String workoutId) async {
+    try {
+      final response = await _apiClient.get('${ApiConstants.workouts}/$workoutId/versions');
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data as List);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching versions: $e');
+      return [];
+    }
+  }
+
+  /// Revert workout to a previous version
+  Future<Workout?> revertWorkout(String workoutId, int version) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/revert',
+        data: {'workout_id': workoutId, 'version': version},
+      );
+      if (response.statusCode == 200) {
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error reverting workout: $e');
+      return null;
+    }
+  }
+
+  /// Generate warmup exercises for a workout
+  Future<List<Map<String, dynamic>>> generateWarmup(String workoutId) async {
+    try {
+      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/warmup');
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error generating warmup: $e');
+      return [];
+    }
+  }
+
+  /// Generate stretches for a workout
+  Future<List<Map<String, dynamic>>> generateStretches(String workoutId) async {
+    try {
+      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/stretches');
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error generating stretches: $e');
+      return [];
+    }
+  }
+
+  /// Generate both warmup and stretches
+  Future<Map<String, List<Map<String, dynamic>>>> generateWarmupAndStretches(String workoutId) async {
+    try {
+      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/warmup-and-stretches');
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return {
+          'warmup': List<Map<String, dynamic>>.from(data['warmup']?['exercises'] ?? []),
+          'stretches': List<Map<String, dynamic>>.from(data['stretches']?['exercises'] ?? []),
+        };
+      }
+      return {'warmup': [], 'stretches': []};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error generating warmup/stretches: $e');
+      return {'warmup': [], 'stretches': []};
+    }
+  }
+
+  /// Get AI exercise swap suggestions
+  Future<List<Map<String, dynamic>>> getExerciseSuggestions({
+    required String workoutId,
+    required String exerciseName,
+    required String userId,
+    String? reason,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/exercise-suggestions/suggest',
+        data: {
+          'workout_id': workoutId,
+          'exercise_name': exerciseName,
+          'user_id': userId,
+          if (reason != null) 'reason': reason,
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting exercise suggestions: $e');
+      return [];
+    }
+  }
+
+  /// Swap an exercise in a workout
+  Future<Workout?> swapExercise({
+    required String workoutId,
+    required String oldExerciseName,
+    required String newExerciseName,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/swap',
+        data: {
+          'workout_id': workoutId,
+          'old_exercise_name': oldExerciseName,
+          'new_exercise_name': newExerciseName,
+        },
+      );
+      if (response.statusCode == 200) {
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error swapping exercise: $e');
+      return null;
+    }
+  }
 }
 
 /// Workouts state notifier

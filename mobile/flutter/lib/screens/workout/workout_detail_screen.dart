@@ -7,6 +7,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
+import 'widgets/workout_actions_sheet.dart';
+import 'widgets/exercise_swap_sheet.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -115,6 +117,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               ),
               onPressed: () => context.pop(),
             ),
+            actions: [
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassSurface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.more_vert, size: 20),
+                ),
+                onPressed: () => _showWorkoutActions(context, ref, workout),
+              ),
+              const SizedBox(width: 8),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -309,6 +325,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 return _ExerciseCard(
                   exercise: exercise,
                   index: index,
+                  workoutId: widget.workoutId,
+                  onSwap: (updatedWorkout) {
+                    setState(() => _workout = updatedWorkout);
+                  },
                 ).animate().fadeIn(delay: Duration(milliseconds: 200 + index * 50));
               },
               childCount: exercises.length,
@@ -337,6 +357,21 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         ),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Future<void> _showWorkoutActions(
+    BuildContext context,
+    WidgetRef ref,
+    Workout workout,
+  ) async {
+    await showWorkoutActionsSheet(
+      context,
+      ref,
+      workout,
+      onRefresh: () {
+        _loadWorkout();
+      },
     );
   }
 }
@@ -403,14 +438,21 @@ class _StatCard extends StatelessWidget {
 // Exercise Card
 // ─────────────────────────────────────────────────────────────────
 
-class _ExerciseCard extends StatelessWidget {
+class _ExerciseCard extends ConsumerWidget {
   final WorkoutExercise exercise;
   final int index;
+  final String workoutId;
+  final Function(Workout) onSwap;
 
-  const _ExerciseCard({required this.exercise, required this.index});
+  const _ExerciseCard({
+    required this.exercise,
+    required this.index,
+    required this.workoutId,
+    required this.onSwap,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Container(
@@ -498,6 +540,34 @@ class _ExerciseCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+
+                  // Swap button
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.swap_horiz,
+                        size: 18,
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                    onPressed: () async {
+                      final updatedWorkout = await showExerciseSwapSheet(
+                        context,
+                        ref,
+                        workoutId: workoutId,
+                        exercise: exercise,
+                      );
+                      if (updatedWorkout != null) {
+                        onSwap(updatedWorkout);
+                      }
+                    },
+                    tooltip: 'Swap exercise',
                   ),
 
                   // Index badge

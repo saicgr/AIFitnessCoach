@@ -32,7 +32,7 @@ class ApiConstants {
   // Endpoint paths
   static const String auth = '/users/auth/google';
   static const String users = '/users';
-  static const String workouts = '/workouts-db';
+  static const String workouts = '/workouts';
   static const String chat = '/chat';
   static const String exercises = '/exercises';
   static const String library = '/library';

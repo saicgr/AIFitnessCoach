@@ -1,4 +1,5 @@
 <!-- Can you uninstall and install flutter app? -->
+<!-- compare and contrast web code to flutter code -->
 
 NEED
 0. AI Onboarding Review Screen. 

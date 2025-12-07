@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/exercise.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -344,144 +347,388 @@ class _TodaysGoalCard extends StatelessWidget {
 // Next Workout Card
 // ─────────────────────────────────────────────────────────────────
 
-class _NextWorkoutCard extends StatelessWidget {
+class _NextWorkoutCard extends ConsumerStatefulWidget {
   final Workout workout;
   final VoidCallback onStart;
 
   const _NextWorkoutCard({required this.workout, required this.onStart});
 
   @override
+  ConsumerState<_NextWorkoutCard> createState() => _NextWorkoutCardState();
+}
+
+class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
+  bool _isRegenerating = false;
+  bool _isSkipping = false;
+
+  String _getScheduledDateLabel(String? scheduledDate) {
+    if (scheduledDate == null) return 'Scheduled';
+    try {
+      final date = DateTime.parse(scheduledDate);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final workoutDate = DateTime(date.year, date.month, date.day);
+
+      if (workoutDate == today) {
+        return 'Today';
+      } else if (workoutDate == tomorrow) {
+        return 'Tomorrow';
+      } else {
+        final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
+      }
+    } catch (_) {
+      return 'Scheduled';
+    }
+  }
+
+  Future<void> _regenerateWorkout() async {
+    setState(() => _isRegenerating = true);
+
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      setState(() => _isRegenerating = false);
+      return;
+    }
+
+    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      final newWorkout = await repo.regenerateWorkout(
+        workoutId: widget.workout.id!,
+        userId: userId,
+      );
+
+      if (newWorkout != null && mounted) {
+        ref.read(workoutsProvider.notifier).refresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Workout regenerated!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to regenerate: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isRegenerating = false);
+    }
+  }
+
+  Future<void> _skipWorkout() async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.elevated,
+        title: const Text('Skip Workout?'),
+        content: const Text('This workout will be marked as skipped and won\'t count towards your weekly goal.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Skip'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isSkipping = true);
+
+    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      // Reschedule to mark as skipped - move to yesterday so it's "past"
+      final success = await repo.deleteWorkout(widget.workout.id!);
+
+      if (success && mounted) {
+        ref.read(workoutsProvider.notifier).refresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Workout skipped'),
+            backgroundColor: AppColors.textMuted,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to skip: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() => _isSkipping = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final workout = widget.workout;
     final difficultyColor = AppColors.getDifficultyColor(workout.difficulty ?? 'medium');
     final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
+    final exercises = workout.exercises;
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.elevated,
-              AppColors.elevated.withOpacity(0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      child: GestureDetector(
+        onTap: widget.onStart, // Navigate to detail on card tap
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.elevated,
+                AppColors.elevated.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header badges
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'NEXT WORKOUT',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
-                      letterSpacing: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Exercise preview strip at top
+              if (exercises.isNotEmpty)
+                Stack(
+                  children: [
+                    Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: AppColors.glassSurface,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+                      ),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        itemCount: exercises.length.clamp(0, 5),
+                        itemBuilder: (context, index) {
+                          final exercise = exercises[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _ExerciseImageThumbnail(
+                              exercise: exercise,
+                              size: 44,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                    if (exercises.length > 5)
+                      Positioned(
+                        right: 8,
+                        top: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.pureBlack.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '+${exercises.length - 5}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: typeColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    workout.type?.toUpperCase() ?? 'STRENGTH',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: typeColor,
-                      letterSpacing: 0.5,
+
+              // Main card content
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header badges
+                    Row(
+                      children: [
+                        // Scheduled date badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.cyan.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_today, size: 10, color: AppColors.cyan),
+                              const SizedBox(width: 4),
+                              Text(
+                                _getScheduledDateLabel(workout.scheduledDate),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.cyan,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: typeColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            workout.type?.toUpperCase() ?? 'STRENGTH',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: typeColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: difficultyColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            (workout.difficulty ?? 'Medium').capitalize(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: difficultyColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: difficultyColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    (workout.difficulty ?? 'Medium').capitalize(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: difficultyColor,
+                    const SizedBox(height: 16),
+
+                    // Title
+                    Text(
+                      workout.name ?? 'Workout',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
-            // Title
-            Text(
-              workout.name ?? 'Workout',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
+                    // Stats row
+                    Row(
+                      children: [
+                        _StatPill(
+                          icon: Icons.timer_outlined,
+                          value: '${workout.durationMinutes ?? 45}m',
+                        ),
+                        const SizedBox(width: 12),
+                        _StatPill(
+                          icon: Icons.fitness_center,
+                          value: '${workout.exerciseCount} exercises',
+                        ),
+                        const SizedBox(width: 12),
+                        _StatPill(
+                          icon: Icons.local_fire_department,
+                          value: '~${workout.estimatedCalories} cal',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 
-            // Stats row
-            Row(
-              children: [
-                _StatPill(
-                  icon: Icons.timer_outlined,
-                  value: '${workout.durationMinutes ?? 45}m',
-                ),
-                const SizedBox(width: 12),
-                _StatPill(
-                  icon: Icons.fitness_center,
-                  value: '${workout.exerciseCount} exercises',
-                ),
-                const SizedBox(width: 12),
-                _StatPill(
-                  icon: Icons.local_fire_department,
-                  value: '~${workout.estimatedCalories} cal',
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                    // Start button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push('/active-workout', extra: workout),
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Start Workout'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
 
-            // Start button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onStart,
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Start Workout'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
-            ),
+                    const SizedBox(height: 12),
 
-            // Equipment
-            if (workout.equipmentNeeded.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                '🏋️ ${workout.equipmentNeeded.take(3).join(' • ')}${workout.equipmentNeeded.length > 3 ? ' +${workout.equipmentNeeded.length - 3} more' : ''}',
-                style: Theme.of(context).textTheme.bodySmall,
+                    // Regenerate and Skip buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isRegenerating ? null : _regenerateWorkout,
+                            icon: _isRegenerating
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.refresh, size: 18),
+                            label: Text(_isRegenerating ? 'Regenerating...' : 'Regenerate'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.purple,
+                              side: const BorderSide(color: AppColors.purple),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isSkipping ? null : _skipWorkout,
+                            icon: _isSkipping
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.skip_next, size: 18),
+                            label: Text(_isSkipping ? 'Skipping...' : 'Skip'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textMuted,
+                              side: const BorderSide(color: AppColors.textMuted),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Equipment
+                    if (workout.equipmentNeeded.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        '🏋️ ${workout.equipmentNeeded.take(3).join(' • ')}${workout.equipmentNeeded.length > 3 ? ' +${workout.equipmentNeeded.length - 3} more' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -840,6 +1087,152 @@ class _ErrorCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Exercise Image Widget
+// ─────────────────────────────────────────────────────────────────
+
+class _ExerciseImageThumbnail extends ConsumerStatefulWidget {
+  final WorkoutExercise exercise;
+  final double size;
+
+  const _ExerciseImageThumbnail({
+    required this.exercise,
+    this.size = 44,
+  });
+
+  @override
+  ConsumerState<_ExerciseImageThumbnail> createState() =>
+      _ExerciseImageThumbnailState();
+}
+
+class _ExerciseImageThumbnailState
+    extends ConsumerState<_ExerciseImageThumbnail> {
+  String? _imageUrl;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  // Simple in-memory cache for presigned URLs (shared across all instances)
+  static final Map<String, String> _urlCache = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageUrl();
+  }
+
+  Future<void> _loadImageUrl() async {
+    final exerciseName = widget.exercise.name;
+    if (exerciseName.isEmpty || exerciseName == 'Exercise') {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      return;
+    }
+
+    // Check cache first
+    final cacheKey = exerciseName.toLowerCase();
+    if (_urlCache.containsKey(cacheKey)) {
+      if (mounted) {
+        setState(() {
+          _imageUrl = _urlCache[cacheKey];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get(
+        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final url = response.data['url'] as String?;
+        if (url != null && mounted) {
+          _urlCache[cacheKey] = url;
+          setState(() {
+            _imageUrl = url;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Don't render anything if there's an error or no image (no fallback)
+    if (_hasError && !_isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: BoxDecoration(
+        color: AppColors.elevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.cyan,
+          ),
+        ),
+      );
+    }
+
+    // If no image URL, return empty - no fallback icons
+    if (_imageUrl == null) {
+      return const SizedBox.shrink();
+    }
+
+    return CachedNetworkImage(
+      imageUrl: _imageUrl!,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => const Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.cyan,
+          ),
+        ),
+      ),
+      // On network error loading the image, show empty instead of fallback icon
+      errorWidget: (_, __, ___) => const SizedBox.shrink(),
     );
   }
 }

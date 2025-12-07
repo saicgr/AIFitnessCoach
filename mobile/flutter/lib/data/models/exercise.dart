@@ -25,6 +25,10 @@ class WorkoutExercise extends Equatable {
   final String? gifUrl;
   @JsonKey(name: 'video_url')
   final String? videoUrl;
+  @JsonKey(name: 'image_s3_path')
+  final String? imageS3Path;
+  @JsonKey(name: 'video_s3_path')
+  final String? videoS3Path;
   @JsonKey(name: 'body_part')
   final String? bodyPart;
   final String? equipment;
@@ -51,6 +55,8 @@ class WorkoutExercise extends Equatable {
     this.notes,
     this.gifUrl,
     this.videoUrl,
+    this.imageS3Path,
+    this.videoS3Path,
     this.bodyPart,
     this.equipment,
     this.muscleGroup,
@@ -133,6 +139,8 @@ class WorkoutExercise extends Equatable {
     String? notes,
     String? gifUrl,
     String? videoUrl,
+    String? imageS3Path,
+    String? videoS3Path,
     String? bodyPart,
     String? equipment,
     String? muscleGroup,
@@ -154,6 +162,8 @@ class WorkoutExercise extends Equatable {
       notes: notes ?? this.notes,
       gifUrl: gifUrl ?? this.gifUrl,
       videoUrl: videoUrl ?? this.videoUrl,
+      imageS3Path: imageS3Path ?? this.imageS3Path,
+      videoS3Path: videoS3Path ?? this.videoS3Path,
       bodyPart: bodyPart ?? this.bodyPart,
       equipment: equipment ?? this.equipment,
       muscleGroup: muscleGroup ?? this.muscleGroup,
@@ -258,10 +268,18 @@ class LibraryExercise extends Equatable {
   /// Get type (category)
   String? get type => category;
 
-  /// Get equipment as list
+  /// Get equipment as list (normalized)
   List<String>? get equipment {
     if (equipmentRequired == null || equipmentRequired!.isEmpty) return null;
-    return equipmentRequired!.split(',').map((e) => e.trim()).toList();
+    return equipmentRequired!.split(',').map((e) {
+      final eq = e.trim();
+      final lower = eq.toLowerCase();
+      // Normalize "None (Bodyweight)" and similar to just "Bodyweight"
+      if (lower.contains('none') || lower == 'bodyweight' || lower == 'body weight') {
+        return 'Bodyweight';
+      }
+      return eq;
+    }).toList();
   }
 
   /// Get instructions as list
