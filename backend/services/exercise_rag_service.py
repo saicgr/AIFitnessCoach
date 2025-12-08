@@ -338,11 +338,31 @@ class ExerciseRAGService:
                 equipment_lower = FULL_GYM_EQUIPMENT
             elif "home gym" in equipment_lower:
                 equipment_lower = HOME_GYM_EQUIPMENT
+            elif "bodyweight only" in equipment_lower:
+                # User wants ONLY bodyweight exercises
+                equipment_lower = ["body weight", "bodyweight", "none", ""]
             else:
-                # Always include bodyweight as an option
+                # Always include bodyweight as an option in addition to selected equipment
                 equipment_lower = equipment_lower + ["body weight", "bodyweight", "none"]
 
-            if not any(eq in ex_equipment for eq in equipment_lower):
+            # Check if exercise equipment matches user's equipment
+            # Use partial matching for flexibility (e.g., "Dumbbells" matches "dumbbell")
+            equipment_match = False
+            for eq in equipment_lower:
+                if eq and (eq in ex_equipment or ex_equipment in eq):
+                    equipment_match = True
+                    break
+
+            if not equipment_match:
+                # Also check exercise name for equipment clues (e.g., "Kettlebell Swing")
+                exercise_name_lower = meta.get("name", "").lower()
+                for eq in equipment_lower:
+                    if eq and eq in exercise_name_lower:
+                        equipment_match = True
+                        break
+
+            if not equipment_match:
+                logger.debug(f"Filtered out '{meta.get('name')}' - equipment '{ex_equipment}' not in {equipment_lower}")
                 continue
 
             # Get exercise name

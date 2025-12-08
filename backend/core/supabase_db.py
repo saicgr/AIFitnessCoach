@@ -77,8 +77,14 @@ class SupabaseDB:
         limit: int = 50,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
-        """List workouts for a user with filters."""
+        """List workouts for a user with filters.
+
+        Only returns current (non-superseded) workouts and deduplicates by scheduled_date.
+        """
         query = self.client.table("workouts").select("*").eq("user_id", user_id)
+
+        # IMPORTANT: Only show current workouts (filter out superseded versions from SCD2)
+        query = query.eq("is_current", True)
 
         if is_completed is not None:
             query = query.eq("is_completed", is_completed)
@@ -87,8 +93,30 @@ class SupabaseDB:
         if to_date:
             query = query.lte("scheduled_date", to_date)
 
-        result = query.order("scheduled_date", desc=True).range(offset, offset + limit - 1).execute()
-        return result.data or []
+        # Fetch more than needed to account for duplicates, then deduplicate
+        fetch_limit = (limit + offset) * 3  # Fetch extra to handle duplicates
+        result = query.order("scheduled_date", desc=True).order("created_at", desc=True).limit(fetch_limit).execute()
+
+        if not result.data:
+            return []
+
+        # Deduplicate: keep only the most recently created workout per scheduled_date
+        seen_dates = set()
+        deduplicated = []
+        for workout in result.data:
+            # Extract just the date part (YYYY-MM-DD)
+            scheduled_date = workout.get("scheduled_date", "")
+            if scheduled_date:
+                date_only = scheduled_date.split("T")[0]
+            else:
+                date_only = workout.get("id")  # Use ID as fallback for workouts without dates
+
+            if date_only not in seen_dates:
+                seen_dates.add(date_only)
+                deduplicated.append(workout)
+
+        # Apply offset and limit to deduplicated results
+        return deduplicated[offset:offset + limit]
 
     def create_workout(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new workout."""

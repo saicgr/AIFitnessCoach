@@ -200,7 +200,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
                   // Target muscle
                   if (exercise.primaryMuscle != null || exercise.muscleGroup != null)
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -220,8 +222,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                             ),
                           ),
                         ),
-                        if (exercise.equipment != null) ...[
-                          const SizedBox(width: 8),
+                        if (exercise.equipment != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -239,7 +240,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                               ),
                             ),
                           ),
-                        ],
                       ],
                     ),
                   const SizedBox(height: 24),

@@ -330,6 +330,97 @@ class WorkoutRepository {
       return null;
     }
   }
+
+  /// Get AI-generated workout summary
+  Future<String?> getWorkoutSummary(String workoutId) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching AI summary for workout: $workoutId');
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId/summary',
+        options: Options(
+          receiveTimeout: const Duration(minutes: 2), // AI generation can take time
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final summary = data['summary'] as String?;
+        debugPrint('✅ [Workout] Got AI summary: ${summary != null ? summary.substring(0, summary.length > 50 ? 50 : summary.length) : "null"}...');
+        return summary;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching workout summary: $e');
+      return null;
+    }
+  }
+
+  /// Create a workout log (when workout completes)
+  Future<Map<String, dynamic>?> createWorkoutLog({
+    required String workoutId,
+    required String userId,
+    required String setsJson,
+    required int totalTimeSeconds,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Creating workout log for workout: $workoutId');
+      final response = await _apiClient.post(
+        '/performance-db/workout-logs',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          'sets_json': setsJson,
+          'total_time_seconds': totalTimeSeconds,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout log created successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error creating workout log: $e');
+      return null;
+    }
+  }
+
+  /// Log a single set performance
+  Future<Map<String, dynamic>?> logSetPerformance({
+    required String workoutLogId,
+    required String userId,
+    required String exerciseId,
+    required String exerciseName,
+    required int setNumber,
+    required int repsCompleted,
+    required double weightKg,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Logging set $setNumber for $exerciseName');
+      final response = await _apiClient.post(
+        '/performance-db/logs',
+        data: {
+          'workout_log_id': workoutLogId,
+          'user_id': userId,
+          'exercise_id': exerciseId,
+          'exercise_name': exerciseName,
+          'set_number': setNumber,
+          'reps_completed': repsCompleted,
+          'weight_kg': weightKg,
+          'is_completed': true,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Set logged successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error logging set performance: $e');
+      return null;
+    }
+  }
 }
 
 /// Workouts state notifier

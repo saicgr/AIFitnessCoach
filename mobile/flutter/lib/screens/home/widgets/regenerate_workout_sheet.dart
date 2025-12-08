@@ -42,11 +42,17 @@ class _RegenerateWorkoutSheetState
   // Custom "Other" inputs
   String _customFocusArea = '';
   String _customInjury = '';
+  String _customEquipment = '';
+  String _customWorkoutType = '';
   bool _showFocusAreaInput = false;
   bool _showInjuryInput = false;
+  bool _showEquipmentInput = false;
+  bool _showWorkoutTypeInput = false;
 
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
+  final TextEditingController _equipmentController = TextEditingController();
+  final TextEditingController _workoutTypeController = TextEditingController();
 
   final List<String> _difficulties = ['easy', 'medium', 'hard'];
   final List<String> _workoutTypes = [
@@ -124,6 +130,8 @@ class _RegenerateWorkoutSheetState
   void dispose() {
     _focusAreaController.dispose();
     _injuryController.dispose();
+    _equipmentController.dispose();
+    _workoutTypeController.dispose();
     super.dispose();
   }
 
@@ -151,6 +159,17 @@ class _RegenerateWorkoutSheetState
         allInjuries.add(_customInjury);
       }
 
+      // Combine selected equipment with custom one
+      final allEquipment = _selectedEquipment.toList();
+      if (_customEquipment.isNotEmpty) {
+        allEquipment.add(_customEquipment);
+      }
+
+      // Use custom workout type if entered, otherwise selected
+      final workoutType = _customWorkoutType.isNotEmpty
+          ? _customWorkoutType
+          : _selectedWorkoutType;
+
       final repo = ref.read(workoutRepositoryProvider);
       final newWorkout = await repo.regenerateWorkout(
         workoutId: widget.workout.id!,
@@ -159,8 +178,8 @@ class _RegenerateWorkoutSheetState
         durationMinutes: _selectedDuration.round(),
         focusAreas: allFocusAreas,
         injuries: allInjuries,
-        equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
-        workoutType: _selectedWorkoutType,
+        equipment: allEquipment.isNotEmpty ? allEquipment : null,
+        workoutType: workoutType,
       );
 
       if (mounted) {
@@ -329,45 +348,133 @@ class _RegenerateWorkoutSheetState
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _workoutTypes.map((type) {
-              final isSelected = _selectedWorkoutType?.toLowerCase() == type.toLowerCase();
-              return GestureDetector(
+            children: [
+              ..._workoutTypes.map((type) {
+                final isSelected = _selectedWorkoutType?.toLowerCase() == type.toLowerCase() &&
+                    _customWorkoutType.isEmpty;
+                return GestureDetector(
+                  onTap: _isRegenerating
+                      ? null
+                      : () {
+                          setState(() {
+                            _selectedWorkoutType = isSelected ? null : type;
+                            _customWorkoutType = ''; // Clear custom when selecting preset
+                          });
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.cyan.withOpacity(0.2)
+                          : AppColors.elevated,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.cyan
+                            : AppColors.cardBorder.withOpacity(0.3),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      type,
+                      style: TextStyle(
+                        color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              // "Other" chip
+              GestureDetector(
                 onTap: _isRegenerating
                     ? null
-                    : () {
-                        setState(() {
-                          _selectedWorkoutType = isSelected ? null : type;
-                        });
-                      },
+                    : () => setState(() => _showWorkoutTypeInput = !_showWorkoutTypeInput),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected
+                    color: _customWorkoutType.isNotEmpty
                         ? AppColors.cyan.withOpacity(0.2)
                         : AppColors.elevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected
+                      color: _customWorkoutType.isNotEmpty
                           ? AppColors.cyan
                           : AppColors.cardBorder.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
+                      width: _customWorkoutType.isNotEmpty ? 2 : 1,
                     ),
                   ),
-                  child: Text(
-                    type,
-                    style: TextStyle(
-                      color: isSelected ? AppColors.cyan : AppColors.textSecondary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      fontSize: 13,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showWorkoutTypeInput ? Icons.close : Icons.add,
+                        size: 14,
+                        color: _customWorkoutType.isNotEmpty ? AppColors.cyan : AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _customWorkoutType.isNotEmpty ? _customWorkoutType : 'Other',
+                        style: TextStyle(
+                          color: _customWorkoutType.isNotEmpty ? AppColors.cyan : AppColors.textSecondary,
+                          fontWeight: _customWorkoutType.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
+          // Custom input field
+          if (_showWorkoutTypeInput) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _workoutTypeController,
+              decoration: InputDecoration(
+                hintText: 'Enter custom workout type (e.g., "Mobility")',
+                hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.elevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.cyan),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.check, color: AppColors.cyan),
+                  onPressed: () {
+                    setState(() {
+                      _customWorkoutType = _workoutTypeController.text.trim();
+                      _selectedWorkoutType = null; // Clear preset selection
+                      _showWorkoutTypeInput = false;
+                    });
+                  },
+                ),
+              ),
+              style: const TextStyle(color: AppColors.textPrimary),
+              onSubmitted: (value) {
+                setState(() {
+                  _customWorkoutType = value.trim();
+                  _selectedWorkoutType = null; // Clear preset selection
+                  _showWorkoutTypeInput = false;
+                });
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -522,9 +629,9 @@ class _RegenerateWorkoutSheetState
                     ),
               ),
               const Spacer(),
-              if (_selectedEquipment.isNotEmpty)
+              if (_selectedEquipment.isNotEmpty || _customEquipment.isNotEmpty)
                 Text(
-                  '${_selectedEquipment.length} selected',
+                  '${_selectedEquipment.length + (_customEquipment.isNotEmpty ? 1 : 0)} selected',
                   style: const TextStyle(color: AppColors.success, fontSize: 12),
                 ),
             ],
@@ -538,51 +645,135 @@ class _RegenerateWorkoutSheetState
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _equipmentOptions.map((equipment) {
-              final isSelected = _selectedEquipment.contains(equipment);
-              return GestureDetector(
+            children: [
+              ..._equipmentOptions.map((equipment) {
+                final isSelected = _selectedEquipment.contains(equipment);
+                return GestureDetector(
+                  onTap: _isRegenerating
+                      ? null
+                      : () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedEquipment.remove(equipment);
+                            } else {
+                              _selectedEquipment.add(equipment);
+                            }
+                          });
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.success.withOpacity(0.2) : AppColors.elevated,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected ? AppColors.success : AppColors.cardBorder.withOpacity(0.3),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isSelected) ...[
+                          const Icon(Icons.check, size: 14, color: AppColors.success),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          equipment,
+                          style: TextStyle(
+                            color: isSelected ? AppColors.success : AppColors.textSecondary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              // "Other" chip
+              GestureDetector(
                 onTap: _isRegenerating
                     ? null
-                    : () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedEquipment.remove(equipment);
-                          } else {
-                            _selectedEquipment.add(equipment);
-                          }
-                        });
-                      },
+                    : () => setState(() => _showEquipmentInput = !_showEquipmentInput),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.success.withOpacity(0.2) : AppColors.elevated,
+                    color: _customEquipment.isNotEmpty
+                        ? AppColors.success.withOpacity(0.2)
+                        : AppColors.elevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? AppColors.success : AppColors.cardBorder.withOpacity(0.3),
-                      width: isSelected ? 2 : 1,
+                      color: _customEquipment.isNotEmpty
+                          ? AppColors.success
+                          : AppColors.cardBorder.withOpacity(0.3),
+                      width: _customEquipment.isNotEmpty ? 2 : 1,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (isSelected) ...[
-                        const Icon(Icons.check, size: 14, color: AppColors.success),
-                        const SizedBox(width: 4),
-                      ],
+                      Icon(
+                        _showEquipmentInput ? Icons.close : Icons.add,
+                        size: 14,
+                        color: _customEquipment.isNotEmpty ? AppColors.success : AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        equipment,
+                        _customEquipment.isNotEmpty ? _customEquipment : 'Other',
                         style: TextStyle(
-                          color: isSelected ? AppColors.success : AppColors.textSecondary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          color: _customEquipment.isNotEmpty ? AppColors.success : AppColors.textSecondary,
+                          fontWeight: _customEquipment.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
+          // Custom input field
+          if (_showEquipmentInput) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _equipmentController,
+              decoration: InputDecoration(
+                hintText: 'Enter custom equipment (e.g., "TRX Bands")',
+                hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.elevated,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.success),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.check, color: AppColors.success),
+                  onPressed: () {
+                    setState(() {
+                      _customEquipment = _equipmentController.text.trim();
+                      _showEquipmentInput = false;
+                    });
+                  },
+                ),
+              ),
+              style: const TextStyle(color: AppColors.textPrimary),
+              onSubmitted: (value) {
+                setState(() {
+                  _customEquipment = value.trim();
+                  _showEquipmentInput = false;
+                });
+              },
+            ),
+          ],
         ],
       ),
     );

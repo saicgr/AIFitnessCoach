@@ -539,11 +539,14 @@ Return ONLY a JSON object with:
         exercises: List[Dict],
         target_muscles: List[str],
         user_goals: List[str],
-        fitness_level: str
+        fitness_level: str,
+        workout_id: str = None,
+        duration_minutes: int = 45,
+        workout_type: str = None,
+        difficulty: str = None
     ) -> str:
         """
-        Generate an AI summary/description of a workout explaining the intention
-        and benefits of each exercise.
+        Generate an AI summary/description of a workout using the Workout Insights agent.
 
         Args:
             workout_name: Name of the workout
@@ -551,55 +554,66 @@ Return ONLY a JSON object with:
             target_muscles: Target muscle groups
             user_goals: User's fitness goals
             fitness_level: User's fitness level
+            workout_id: Optional workout ID
+            duration_minutes: Workout duration in minutes
+            workout_type: Type of workout (strength, cardio, etc.)
+            difficulty: Difficulty level
 
         Returns:
-            Markdown-formatted workout summary
+            Plain-text workout summary (2-3 sentences, no markdown)
         """
-        # Format exercises for the prompt
-        exercise_details = "\n".join([
-            f"- {ex.get('name', 'Unknown')}: {ex.get('sets', 3)} sets x {ex.get('reps', 10)} reps, targets {ex.get('muscle_group', 'unknown')}"
-            for ex in exercises
-        ])
-
-        prompt = f"""Generate a motivating workout summary for "{workout_name}".
-
-WORKOUT DETAILS:
-{exercise_details}
-
-Target muscles: {', '.join(target_muscles) if target_muscles else 'Full body'}
-User goals: {', '.join(user_goals) if user_goals else 'General fitness'}
-Fitness level: {fitness_level}
-
-Create a summary with:
-1. **Today's Intention:** A 2-3 sentence overview of the workout's purpose and what the user will achieve
-2. For each exercise, a bullet point explaining:
-   - Why this exercise is included
-   - What specific benefits it provides for muscle growth/strength
-   - How it connects to the user's goals
-3. **Overall benefit:** A closing statement about how these exercises work together
-
-Format your response in clear, motivating language. Use bullet points with exercise names in **bold**.
-Keep it concise but informative - aim for 150-250 words total."""
-
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert fitness coach providing educational and motivating workout explanations. Be concise, scientific, and encouraging."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=600
+            # Use the Workout Insights LangGraph agent
+            from services.langgraph_agents.workout_insights.graph import generate_workout_insights
+
+            summary = await generate_workout_insights(
+                workout_id=workout_id or "unknown",
+                workout_name=workout_name,
+                exercises=exercises,
+                duration_minutes=duration_minutes,
+                workout_type=workout_type,
+                difficulty=difficulty,
+                user_goals=user_goals,
+                fitness_level=fitness_level,
             )
 
-            return response.choices[0].message.content.strip()
+            return summary
 
         except Exception as e:
-            print(f"Error generating workout summary: {e}")
-            return f"**{workout_name}**\n\nThis workout targets {', '.join(target_muscles) if target_muscles else 'multiple muscle groups'} with {len(exercises)} carefully selected exercises to help you reach your fitness goals."
+            print(f"Error generating workout summary with agent: {e}")
+
+            # Fallback: generate simple summary without agent
+            try:
+                exercise_details = "\n".join([
+                    f"- {ex.get('name', 'Unknown')}: {ex.get('sets', 3)} sets x {ex.get('reps', 10)} reps"
+                    for ex in exercises[:5]
+                ])
+
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a fitness coach. Write a SHORT 2-3 sentence workout summary. Plain text only, no markdown."
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Summarize this {workout_name} workout with {len(exercises)} exercises targeting {', '.join(target_muscles) if target_muscles else 'full body'} for {fitness_level} level."
+                        }
+                    ],
+                    temperature=0.7,
+                    max_tokens=100
+                )
+
+                summary = response.choices[0].message.content.strip()
+                # Strip markdown
+                summary = summary.replace('**', '').replace('*', '').replace('# ', '').replace('- ', '')
+                return summary
+
+            except Exception as fallback_error:
+                print(f"Fallback summary generation also failed: {fallback_error}")
+                targets = ', '.join(target_muscles) if target_muscles else 'multiple muscle groups'
+                return f"This {workout_name} targets {targets} with {len(exercises)} exercises designed to help you reach your fitness goals."
 
     def get_coach_system_prompt(self, context: str = "") -> str:
         """

@@ -140,6 +140,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: _SectionHeader(
                     title: 'UPCOMING',
                     subtitle: '${upcomingWorkouts.length} workouts',
+                    actionText: 'View All',
+                    onAction: () => context.push('/schedule'),
                   ),
                 ),
                 SliverList(
@@ -183,8 +185,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
+  final String? actionText;
+  final VoidCallback? onAction;
 
-  const _SectionHeader({required this.title, this.subtitle});
+  const _SectionHeader({
+    required this.title,
+    this.subtitle,
+    this.actionText,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +220,30 @@ class _SectionHeader extends StatelessWidget {
               ),
             ),
           ],
+          const Spacer(),
+          if (actionText != null && onAction != null)
+            GestureDetector(
+              onTap: onAction,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionText!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: AppColors.cyan,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

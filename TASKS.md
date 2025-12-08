@@ -1,6 +1,33 @@
 <!-- Can you delete data and uninstall and install flutter app? -->
 <!-- compare and contrast web code to flutter code -->
 
+<!-- startups that can combine tech innovation with strong fundamentals -->
+
+<!-- Startups need to implement strong encryption, secure cloud infrastructure, and transparent privacy policies. Ensuring data privacy and security isn’t just a best practice – it’s often a deal-breaker issue for investors. As one developer guide notes, handling sensitive health metrics requires stringent protection and regulatory compliance from day one -->
+
+<!-- Investors may ask if an app anonymizes user data, how it stores or shares data with third parties, and whether it has obtained necessary user consents. -->
+
+<!-- An investor will scrutinize engagement metrics and tactics: Does the app use gamification (badges, challenges, leaderboards) to encourage regular use? Does it foster a community or accountability (friends, groups, or trainer interactions) to keep people hooked? Without compelling engagement hooks, even a great AI feature could fall flat. -->
+
+<!-- investors need to be convinced that an AI fitness app’s cool features translate into genuine habit formation for users. Some mitigations they look for: evidence of a core group of power users (even if overall churn is high, having a loyal base is valuable), or unique content that competitors don’t have, or integration into user’s daily life (for example, connected to a wearable that they use constantly) -->
+
+<!-- Investors are therefore concerned with how accurate, personalized, and effective the AI really is. -->
+
+<!-- If an AI recommends an overly intense workout that causes injury, that’s a serious issue. So, reliability is a big question mark. -->
+
+<!-- larger companies could incorporate similar AI features quickly – for instance, MyFitnessPal or Nike could roll out an AI coach update, instantly challenging a startup’s unique selling point. The presence of big players and copycats is a constant strategic risk. Differentiation is the keyword – without it, market saturation is a serious concern. -->
+
+<!-- Investors worry about monetization metrics like ARPU and LTV in this sector. If an app spends, say, $30 in ads to acquire a user, but that user only subscribes for 3 months at $10/month, the math doesn’t work (CAC > LTV) -->
+
+Data Work:
+1. Generate images of workout programs
+Generate an image prompt and an image rationale for a fitness app banner based on the archetype of [INSERT CHARACTER NAME HERE]. 
+The prompt must fulfill the following strategic criteria:
+	1.  **Safety & Legal Firewall:** Explicitly instruct the image generation to avoid all trademarked elements: no masks, no specific logos, no official armor/costume designs, and no character name in the final visual.
+	2.  **Fitness Focus:** The subject must be a highly fit individual performing a strength, power, or functional training movement relevant to the character's archetype.
+	3.  **Vibe Translation:** Use the character's core color palette (e.g., red/blue for Superman) and their defining physical traits (e.g., speed, strength, durability) to create the mood.
+	4.  **Program Naming:** Create a safe, high-value program name (e.g., "The Velocity Protocol") and a fitness-focused tagline to be overlayed on the final image.
+
 NEED
 0. AI Onboarding Review Screen. 
 0.1. Suggest workouts based on Age as well
@@ -12,8 +39,6 @@ NEED
 7. Create a restore table to record deleted data of user and help restoring data.
 8. Data Import Export
 9. Browser notifications?
-10. Data Work: Generate images of workout programs
-Generate an image prompt and an image rationale for a fitness app banner based on the archetype of [INSERT CHARACTER NAME HERE]. 
 11. Need badges like gravl to show accomplishments
 12. AI suggesting workout programs and exercises after hitting add workout -- suggesting agent
 13. AI review onboarding -- onboarding review agent
@@ -21,18 +46,11 @@ Generate an image prompt and an image rationale for a fitness app banner based o
 15. Water intake during working out (optional input)
 16. Move from Oauth tindewjobs project to aiftinesscoach progject GCP
 17. Exercise Detail screen
-
-The prompt must fulfill the following strategic criteria:
-1.  **Safety & Legal Firewall:** Explicitly instruct the image generation to avoid all trademarked elements: no masks, no specific logos, no official armor/costume designs, and no character name in the final visual.
-2.  **Fitness Focus:** The subject must be a highly fit individual performing a strength, power, or functional training movement relevant to the character's archetype.
-3.  **Vibe Translation:** Use the character's core color palette (e.g., red/blue for Superman) and their defining physical traits (e.g., speed, strength, durability) to create the mood.
-4.  **Program Naming:** Create a safe, high-value program name (e.g., "The Velocity Protocol") and a fitness-focused tagline to be overlayed on the final image.
-
 The final response must include the detailed image prompt, the generated image, and the legal/strategic rationale for its safety.
-12. Warmup and Stretchs in chromaDB
-13. /gymhelp reddit review and ideas for app
-2. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
-5. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
+18. Warmup and Stretchs in chromaDB
+19. /gymhelp reddit review and ideas for app
+20. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
+21. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
 
 
 FUTURE

@@ -7,6 +7,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 
 /// Expanded exercise card that shows the SET/LBS/REP table inline
+/// Collapsible by default - shows sets/reps summary when collapsed
 /// Tapping opens the full exercise detail screen with autoplay video
 class ExpandedExerciseCard extends ConsumerStatefulWidget {
   final WorkoutExercise exercise;
@@ -14,6 +15,7 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
   final String workoutId;
   final VoidCallback? onTap;
   final VoidCallback? onSwap;
+  final bool initiallyExpanded;
 
   const ExpandedExerciseCard({
     super.key,
@@ -22,6 +24,7 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
     required this.workoutId,
     this.onTap,
     this.onSwap,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -31,11 +34,13 @@ class ExpandedExerciseCard extends ConsumerStatefulWidget {
 class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   String? _imageUrl;
   bool _isLoadingImage = true;
+  late bool _isExpanded;
   static final Map<String, String> _imageCache = {};
 
   @override
   void initState() {
     super.initState();
+    _isExpanded = widget.initiallyExpanded;
     _loadImage();
   }
 
@@ -128,43 +133,147 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             // Header: Image + Exercise Name + Actions (TAPPABLE)
             _buildHeader(context, exercise),
 
-            // Divider
-            Divider(
-              color: AppColors.cardBorder.withOpacity(0.3),
-              height: 1,
+            // Collapsed summary - shows sets/reps when collapsed
+            if (!_isExpanded)
+              _buildCollapsedSummary(totalSets, repRange, restSeconds),
+
+            // Expandable section
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              firstChild: Column(
+                children: [
+                  // Divider
+                  Divider(
+                    color: AppColors.cardBorder.withOpacity(0.3),
+                    height: 1,
+                  ),
+
+                  // Rest Timer Row
+                  _buildRestTimerRow(restSeconds),
+
+                  // Divider
+                  Divider(
+                    color: AppColors.cardBorder.withOpacity(0.3),
+                    height: 1,
+                  ),
+
+                  // Set Table Header
+                  _buildTableHeader(),
+
+                  // Set Rows
+                  ...List.generate(warmupSets, (i) => _buildSetRow(
+                    setLabel: 'W',
+                    isWarmup: true,
+                    weight: null,
+                    repRange: repRange,
+                  )),
+                  ...List.generate(totalSets, (i) => _buildSetRow(
+                    setLabel: '${i + 1}',
+                    isWarmup: false,
+                    weight: exercise.weight,
+                    repRange: repRange,
+                  )),
+
+                  const SizedBox(height: 8),
+                ],
+              ),
+              secondChild: const SizedBox.shrink(),
             ),
-
-            // Rest Timer Row
-            _buildRestTimerRow(restSeconds),
-
-            // Divider
-            Divider(
-              color: AppColors.cardBorder.withOpacity(0.3),
-              height: 1,
-            ),
-
-            // Set Table Header
-            _buildTableHeader(),
-
-            // Set Rows
-            ...List.generate(warmupSets, (i) => _buildSetRow(
-              setLabel: 'W',
-              isWarmup: true,
-              weight: null,
-              repRange: repRange,
-            )),
-            ...List.generate(totalSets, (i) => _buildSetRow(
-              setLabel: '${i + 1}',
-              isWarmup: false,
-              weight: exercise.weight,
-              repRange: repRange,
-            )),
-
-            const SizedBox(height: 8),
           ],
         ),
         ),
       ),
+    );
+  }
+
+  /// Collapsed summary showing sets x reps when card is collapsed
+  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface.withOpacity(0.3),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.cardBorder.withOpacity(0.3),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Sets info
+          _buildSummaryChip(
+            Icons.repeat,
+            '${totalSets + 2} sets',
+            AppColors.cyan,
+          ),
+          const SizedBox(width: 12),
+          // Reps info
+          _buildSummaryChip(
+            Icons.fitness_center,
+            '$repRange reps',
+            AppColors.purple,
+          ),
+          const SizedBox(width: 12),
+          // Rest time
+          _buildSummaryChip(
+            Icons.timer_outlined,
+            _formatRestTime(restSeconds),
+            AppColors.orange,
+          ),
+          const Spacer(),
+          // Expand button
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Details',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: AppColors.cyan,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryChip(IconData icon, String text, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
@@ -205,22 +314,26 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  const SizedBox(height: 6),
+                  // Exercise details from library
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
-                      Icon(
-                        Icons.touch_app,
-                        size: 12,
-                        color: AppColors.cyan.withOpacity(0.7),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Tap for video & details',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.cyan.withOpacity(0.7),
+                      if (exercise.muscleGroup != null || exercise.primaryMuscle != null)
+                        _buildInfoChip(
+                          Icons.fitness_center,
+                          _shortenMuscle(exercise.primaryMuscle ?? exercise.muscleGroup ?? ''),
+                          AppColors.cyan,
                         ),
-                      ),
+                      if (exercise.equipment != null && exercise.equipment!.isNotEmpty)
+                        _buildInfoChip(
+                          Icons.sports_gymnastics,
+                          _shortenEquipment(exercise.equipment!),
+                          AppColors.purple,
+                        ),
+                      // Breathing guidance chip
+                      _buildBreathingChip(context),
                     ],
                   ),
                 ],
@@ -317,6 +430,37 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               color: AppColors.purple,
             ),
           ),
+          const Spacer(),
+          // Collapse button
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.textMuted.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Collapse',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.keyboard_arrow_up,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -372,6 +516,434 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         ],
       ),
     );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _shortenMuscle(String muscle) {
+    // Take first muscle group if there are multiple
+    if (muscle.contains(',')) {
+      muscle = muscle.split(',').first.trim();
+    }
+    // Extract just the main muscle name from parentheses format
+    // e.g., "Chest (Pectoralis Major)" -> "Chest"
+    final match = RegExp(r'^([^(]+)').firstMatch(muscle);
+    if (match != null) {
+      return match.group(1)!.trim();
+    }
+    // Limit length
+    return muscle.length > 15 ? '${muscle.substring(0, 15)}...' : muscle;
+  }
+
+  String _shortenEquipment(String equipment) {
+    // Normalize and shorten equipment names
+    final lower = equipment.toLowerCase();
+    if (lower.contains('bodyweight') || lower.contains('none')) {
+      return 'Bodyweight';
+    }
+    if (lower.contains('dumbbell')) return 'Dumbbells';
+    if (lower.contains('barbell')) return 'Barbell';
+    if (lower.contains('cable')) return 'Cable';
+    if (lower.contains('machine')) return 'Machine';
+    if (lower.contains('kettlebell')) return 'Kettlebell';
+    if (lower.contains('stability')) return 'Stability Ball';
+    // Limit length
+    return equipment.length > 12 ? '${equipment.substring(0, 12)}...' : equipment;
+  }
+
+  Widget _buildBreathingChip(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showBreathingGuidance(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: AppColors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.air, size: 12, color: AppColors.green),
+            const SizedBox(width: 4),
+            Text(
+              'Breathing',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.green,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBreathingGuidance(BuildContext context) {
+    final breathingPattern = _getBreathingPattern();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textMuted.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title with icon
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.air,
+                    color: AppColors.green,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Breathing Guide',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        widget.exercise.name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Breathing pattern
+            _buildBreathingStep(
+              icon: Icons.arrow_downward_rounded,
+              title: breathingPattern['inhale']!['phase']!,
+              description: breathingPattern['inhale']!['action']!,
+              color: AppColors.cyan,
+            ),
+            const SizedBox(height: 16),
+            _buildBreathingStep(
+              icon: Icons.arrow_upward_rounded,
+              title: breathingPattern['exhale']!['phase']!,
+              description: breathingPattern['exhale']!['action']!,
+              color: AppColors.orange,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Pro tip
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    color: AppColors.yellow,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      breathingPattern['tip']!['text']!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBreathingStep({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Map<String, Map<String, String>> _getBreathingPattern() {
+    final exerciseName = widget.exercise.name.toLowerCase();
+    final category = (widget.exercise.muscleGroup ?? '').toLowerCase();
+
+    // Pushing exercises (chest, shoulders, triceps)
+    if (_isPushExercise(exerciseName, category)) {
+      return {
+        'inhale': {
+          'phase': 'Inhale (Lowering)',
+          'action': 'Breathe in as you lower the weight or bring it toward your body.',
+        },
+        'exhale': {
+          'phase': 'Exhale (Pushing)',
+          'action': 'Breathe out forcefully as you push the weight away from your body.',
+        },
+        'tip': {
+          'text': 'Keep your core tight and maintain steady breathing throughout the movement.',
+        },
+      };
+    }
+
+    // Pulling exercises (back, biceps)
+    if (_isPullExercise(exerciseName, category)) {
+      return {
+        'inhale': {
+          'phase': 'Inhale (Extending)',
+          'action': 'Breathe in as you extend your arms or lower the weight.',
+        },
+        'exhale': {
+          'phase': 'Exhale (Pulling)',
+          'action': 'Breathe out as you pull the weight toward your body.',
+        },
+        'tip': {
+          'text': 'Focus on squeezing your back muscles at peak contraction while exhaling.',
+        },
+      };
+    }
+
+    // Squat and leg press movements
+    if (_isSquatMovement(exerciseName)) {
+      return {
+        'inhale': {
+          'phase': 'Inhale (Descending)',
+          'action': 'Take a deep breath before descending and hold as you lower.',
+        },
+        'exhale': {
+          'phase': 'Exhale (Rising)',
+          'action': 'Exhale forcefully as you drive up through your heels.',
+        },
+        'tip': {
+          'text': 'Use the Valsalva maneuver for heavy lifts: brace your core with a deep breath.',
+        },
+      };
+    }
+
+    // Deadlift and hip hinge movements
+    if (_isHingeMovement(exerciseName)) {
+      return {
+        'inhale': {
+          'phase': 'Inhale (Setup/Lowering)',
+          'action': 'Breathe in deeply at the top, brace your core before descending.',
+        },
+        'exhale': {
+          'phase': 'Exhale (Lifting)',
+          'action': 'Exhale once you pass the sticking point while driving hips forward.',
+        },
+        'tip': {
+          'text': 'Keep your spine neutral and core braced throughout the entire lift.',
+        },
+      };
+    }
+
+    // Core/Ab exercises
+    if (_isCoreExercise(exerciseName, category)) {
+      return {
+        'inhale': {
+          'phase': 'Inhale (Relaxing)',
+          'action': 'Breathe in during the eccentric phase or rest position.',
+        },
+        'exhale': {
+          'phase': 'Exhale (Contracting)',
+          'action': 'Breathe out as you contract your abs and crunch or lift.',
+        },
+        'tip': {
+          'text': 'Focus on drawing your belly button toward your spine as you exhale.',
+        },
+      };
+    }
+
+    // Cardio and dynamic movements
+    if (_isCardioMovement(exerciseName)) {
+      return {
+        'inhale': {
+          'phase': 'Rhythmic Breathing',
+          'action': 'Breathe in through your nose for 2-3 counts.',
+        },
+        'exhale': {
+          'phase': 'Controlled Exhale',
+          'action': 'Breathe out through your mouth for 2-3 counts.',
+        },
+        'tip': {
+          'text': 'Find a breathing rhythm that matches your movement pace.',
+        },
+      };
+    }
+
+    // Default pattern for general resistance training
+    return {
+      'inhale': {
+        'phase': 'Inhale (Eccentric)',
+        'action': 'Breathe in during the lowering or stretching phase.',
+      },
+      'exhale': {
+        'phase': 'Exhale (Concentric)',
+        'action': 'Breathe out during the lifting or contracting phase.',
+      },
+      'tip': {
+        'text': 'Never hold your breath. Maintain controlled breathing throughout.',
+      },
+    };
+  }
+
+  bool _isPushExercise(String name, String category) {
+    return name.contains('press') ||
+        name.contains('push') ||
+        name.contains('fly') ||
+        name.contains('dip') ||
+        name.contains('extension') ||
+        category.contains('chest') ||
+        category.contains('shoulder') ||
+        category.contains('tricep');
+  }
+
+  bool _isPullExercise(String name, String category) {
+    return name.contains('row') ||
+        name.contains('pull') ||
+        name.contains('curl') ||
+        name.contains('lat') ||
+        category.contains('back') ||
+        category.contains('bicep');
+  }
+
+  bool _isSquatMovement(String name) {
+    return name.contains('squat') ||
+        name.contains('leg press') ||
+        name.contains('lunge') ||
+        name.contains('split squat');
+  }
+
+  bool _isHingeMovement(String name) {
+    return name.contains('deadlift') ||
+        name.contains('rdl') ||
+        name.contains('hip thrust') ||
+        name.contains('good morning') ||
+        name.contains('romanian');
+  }
+
+  bool _isCoreExercise(String name, String category) {
+    return name.contains('crunch') ||
+        name.contains('plank') ||
+        name.contains('sit-up') ||
+        name.contains('ab ') ||
+        name.contains('core') ||
+        name.contains('twist') ||
+        category.contains('core') ||
+        category.contains('abs');
+  }
+
+  bool _isCardioMovement(String name) {
+    return name.contains('jump') ||
+        name.contains('burpee') ||
+        name.contains('mountain climber') ||
+        name.contains('running') ||
+        name.contains('sprint') ||
+        name.contains('cardio');
   }
 
   Widget _buildSetRow({

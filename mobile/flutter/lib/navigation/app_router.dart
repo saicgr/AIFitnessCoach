@@ -13,12 +13,14 @@ import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
-import '../screens/schedule/schedule_screen.dart';
+import '../screens/social/social_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
+import '../screens/schedule/schedule_screen.dart';
+import '../screens/splash/splash_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 
@@ -38,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     debugLogDiagnostics: true,
     refreshListenable: authNotifier,
     redirect: (context, state) {
@@ -46,17 +48,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authStateProvider);
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
+      final isOnSplash = state.matchedLocation == '/splash';
       final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
 
-      // Still loading - don't redirect
+      // Still loading - stay on splash (or go to splash if starting)
       if (authState.status == AuthStatus.initial ||
           authState.status == AuthStatus.loading) {
-        return null;
+        // If we're on splash, stay there
+        if (isOnSplash) return null;
+        // Otherwise redirect to splash
+        return '/splash';
+      }
+
+      // Auth is resolved - redirect from splash to appropriate destination
+      if (isOnSplash) {
+        if (isLoggedIn) {
+          final user = authState.user;
+          if (user != null && !user.isOnboardingComplete) {
+            return '/onboarding';
+          }
+          return '/home';
+        } else {
+          return '/login';
+        }
       }
 
       // Not logged in and not on login page -> go to login
-      if (!isLoggedIn && !isLoggingIn) {
+      if (!isLoggedIn && !isLoggingIn && !isOnSplash) {
         return '/login';
       }
 
@@ -72,6 +91,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Splash - shown while auth is loading
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
       // Login
       GoRoute(
         path: '/login',
@@ -101,9 +126,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/schedule',
+            path: '/social',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: ScheduleScreen(),
+              child: SocialScreen(),
             ),
           ),
           GoRoute(
@@ -247,6 +272,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/metrics',
         builder: (context, state) => const MetricsDashboardScreen(),
+      ),
+
+      // Schedule (full screen with drag & drop)
+      GoRoute(
+        path: '/schedule',
+        builder: (context, state) => const ScheduleScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

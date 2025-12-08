@@ -34,6 +34,11 @@ class AppColors {
   static const Color coral = Color(0xFFF43F5E);
   static const Color magenta = Color(0xFFEC4899);
   static const Color limeGreen = Color(0xFFD4FF00);
+  static const Color green = Color(0xFF22C55E);
+  static const Color yellow = Color(0xFFFACC15);
+
+  // Surface colors
+  static const Color surface = Color(0xFF121212);
 
   // Semantic Colors
   static const Color success = Color(0xFF22C55E);

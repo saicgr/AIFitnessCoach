@@ -28,6 +28,7 @@ from models.schemas import (
 )
 from services.openai_service import OpenAIService
 from services.rag_service import WorkoutRAGService
+from services.langgraph_agents.workout_insights.graph import generate_workout_insights
 from services.exercise_library_service import get_exercise_library_service
 from services.exercise_rag_service import get_exercise_rag_service
 from services.warmup_stretch_service import get_warmup_stretch_service
@@ -1125,7 +1126,13 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         if workout_type_override:
             logger.info(f"🏋️ Regenerating with workout type override: {workout_type_override}")
 
-        logger.info(f"Regenerating workout with: fitness_level={fitness_level}, equipment={equipment}, difficulty={user_difficulty}, workout_type={workout_type_override}")
+        logger.info(f"🎯 Regenerating workout with: fitness_level={fitness_level}")
+        logger.info(f"  - equipment={equipment} (from request: {request.equipment})")
+        logger.info(f"  - difficulty={user_difficulty}")
+        logger.info(f"  - workout_type={workout_type_override}")
+        logger.info(f"  - duration_minutes={request.duration_minutes}")
+        logger.info(f"  - injuries={injuries}")
+        logger.info(f"  - focus_areas={focus_areas}")
 
         openai_service = OpenAIService()
         exercise_rag = get_exercise_rag_service()
@@ -1149,6 +1156,13 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         focus_area = focus_areas[0] if focus_areas else "full_body"
 
+        # Calculate exercise count based on duration
+        # Rule: ~7 minutes per exercise (including rest) for a balanced workout
+        # Shorter workouts = fewer exercises, longer workouts = more exercises
+        target_duration = request.duration_minutes or 45
+        exercise_count = max(3, min(10, target_duration // 7))  # 3-10 exercises
+        logger.info(f"🎯 Target duration: {target_duration} mins -> {exercise_count} exercises")
+
         try:
             # Use RAG to intelligently select exercises from ChromaDB/Supabase
             # Pass injuries to filter out contraindicated exercises
@@ -1157,7 +1171,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 equipment=equipment if isinstance(equipment, list) else [],
                 fitness_level=fitness_level,
                 goals=goals if isinstance(goals, list) else [],
-                count=6,
+                count=exercise_count,  # Dynamic count based on duration
                 avoid_exercises=[],  # Don't avoid any since we're regenerating
                 injuries=injuries if injuries else None,
             )
@@ -1464,17 +1478,19 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
             user_goals = parse_json_field(user_result.data[0].get("goals"), [])
             fitness_level = user_result.data[0].get("fitness_level", "intermediate")
 
-        # Generate the AI summary
+        # Generate the AI summary using LangGraph agent
         import time
         start_time = time.time()
 
-        openai_service = OpenAIService()
-        summary = await openai_service.generate_workout_summary(
+        summary = await generate_workout_insights(
+            workout_id=workout_id,
             workout_name=workout_data.get("name", "Workout"),
             exercises=exercises,
-            target_muscles=target_muscles,
+            duration_minutes=workout_data.get("duration_minutes", 45),
+            workout_type=workout_data.get("type"),
+            difficulty=workout_data.get("difficulty"),
             user_goals=user_goals,
-            fitness_level=fitness_level
+            fitness_level=fitness_level,
         )
 
         generation_time_ms = int((time.time() - start_time) * 1000)
@@ -1493,7 +1509,7 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
             "exercise_count": len(exercises),
             "duration_minutes": duration_minutes,
             "calories_estimate": calories_estimate,
-            "model_used": "gpt-4",
+            "model_used": "gpt-4o-mini",
             "generation_time_ms": generation_time_ms,
             "generated_at": datetime.utcnow().isoformat()
         }
