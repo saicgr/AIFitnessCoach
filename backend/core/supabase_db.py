@@ -756,6 +756,173 @@ class SupabaseDB:
             "daily_fat_target_g": None,
         }
 
+    # ==================== WORKOUT REGENERATIONS ====================
+
+    def record_workout_regeneration(
+        self,
+        user_id: str,
+        original_workout_id: str,
+        new_workout_id: str,
+        difficulty: str = None,
+        duration_minutes: int = None,
+        workout_type: str = None,
+        equipment: List[str] = None,
+        focus_areas: List[str] = None,
+        injuries: List[str] = None,
+        custom_focus_area: str = None,
+        custom_injury: str = None,
+        generation_method: str = "ai",
+        used_rag: bool = False,
+        generation_time_ms: int = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Record a workout regeneration event for analytics.
+        Also records custom inputs and equipment combinations.
+        """
+        try:
+            # Insert regeneration record
+            data = {
+                "user_id": user_id,
+                "original_workout_id": original_workout_id,
+                "new_workout_id": new_workout_id,
+                "selected_difficulty": difficulty,
+                "selected_duration_minutes": duration_minutes,
+                "selected_workout_type": workout_type,
+                "selected_equipment": json.dumps(equipment or []),
+                "selected_focus_areas": json.dumps(focus_areas or []),
+                "selected_injuries": json.dumps(injuries or []),
+                "custom_focus_area": custom_focus_area,
+                "custom_injury": custom_injury,
+                "generation_method": generation_method,
+                "used_rag": used_rag,
+                "generation_time_ms": generation_time_ms,
+            }
+            result = self.client.table("workout_regenerations").insert(data).execute()
+            regeneration = result.data[0] if result.data else None
+
+            # Record custom focus area if provided
+            if custom_focus_area and custom_focus_area.strip():
+                self._upsert_custom_input(user_id, "focus_area", custom_focus_area.strip())
+
+            # Record custom injury if provided
+            if custom_injury and custom_injury.strip():
+                self._upsert_custom_input(user_id, "injury", custom_injury.strip())
+
+            # Record equipment combination if provided
+            if equipment and len(equipment) > 0:
+                self._upsert_equipment_usage(user_id, equipment)
+
+            return regeneration
+        except Exception as e:
+            # Log error but don't fail the regeneration
+            print(f"Warning: Failed to record regeneration analytics: {e}")
+            return None
+
+    def _upsert_custom_input(self, user_id: str, input_type: str, input_value: str) -> None:
+        """Upsert a custom input (focus area or injury)."""
+        try:
+            # Check if exists
+            existing = (
+                self.client.table("custom_workout_inputs")
+                .select("id, usage_count")
+                .eq("user_id", user_id)
+                .eq("input_type", input_type)
+                .eq("input_value", input_value)
+                .execute()
+            )
+
+            if existing.data:
+                # Update existing
+                self.client.table("custom_workout_inputs").update({
+                    "usage_count": existing.data[0]["usage_count"] + 1,
+                    "last_used_at": datetime.utcnow().isoformat()
+                }).eq("id", existing.data[0]["id"]).execute()
+            else:
+                # Insert new
+                self.client.table("custom_workout_inputs").insert({
+                    "user_id": user_id,
+                    "input_type": input_type,
+                    "input_value": input_value,
+                }).execute()
+        except Exception as e:
+            print(f"Warning: Failed to upsert custom input: {e}")
+
+    def _upsert_equipment_usage(self, user_id: str, equipment: List[str]) -> None:
+        """Upsert an equipment usage record."""
+        try:
+            import hashlib
+            equipment_json = json.dumps(sorted(equipment))
+            combination_hash = hashlib.md5(equipment_json.encode()).hexdigest()
+
+            # Check if exists
+            existing = (
+                self.client.table("equipment_usage_analytics")
+                .select("id, usage_count")
+                .eq("user_id", user_id)
+                .eq("combination_hash", combination_hash)
+                .execute()
+            )
+
+            if existing.data:
+                # Update existing
+                self.client.table("equipment_usage_analytics").update({
+                    "usage_count": existing.data[0]["usage_count"] + 1,
+                    "last_used_at": datetime.utcnow().isoformat()
+                }).eq("id", existing.data[0]["id"]).execute()
+            else:
+                # Insert new
+                self.client.table("equipment_usage_analytics").insert({
+                    "user_id": user_id,
+                    "equipment_combination": equipment_json,
+                    "combination_hash": combination_hash,
+                }).execute()
+        except Exception as e:
+            print(f"Warning: Failed to upsert equipment usage: {e}")
+
+    def get_user_regeneration_analytics(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get regeneration history for a user."""
+        result = (
+            self.client.table("workout_regenerations")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return result.data or []
+
+    def get_popular_custom_inputs(self, input_type: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Get popular custom inputs across all users for suggestions."""
+        result = (
+            self.client.table("custom_workout_inputs")
+            .select("input_value, usage_count")
+            .eq("input_type", input_type)
+            .order("usage_count", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return result.data or []
+
+    def get_user_custom_inputs(self, user_id: str, input_type: str = None) -> List[Dict[str, Any]]:
+        """Get custom inputs for a specific user."""
+        query = self.client.table("custom_workout_inputs").select("*").eq("user_id", user_id)
+        if input_type:
+            query = query.eq("input_type", input_type)
+        result = query.order("usage_count", desc=True).execute()
+        return result.data or []
+
+    def get_user_equipment_preferences(self, user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get user's most used equipment combinations."""
+        result = (
+            self.client.table("equipment_usage_analytics")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("usage_count", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return result.data or []
+
     # ==================== FULL USER RESET ====================
 
     def full_user_reset(self, user_id: str) -> bool:

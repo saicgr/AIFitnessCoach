@@ -26,6 +26,7 @@ class ChromaCloudClient:
         self.exercise_collection_name = "fitness_exercises"
         self.rag_collection_name = "fitness_rag_knowledge"
         self.workout_collection_name = "workout_plans"
+        self.custom_inputs_collection_name = "custom_workout_inputs"
 
     def get_or_create_collection(self, collection_name: str):
         """Get or create a collection in Chroma Cloud."""
@@ -53,6 +54,10 @@ class ChromaCloudClient:
     def get_workout_collection(self):
         """Get the workout plans collection."""
         return self.get_or_create_collection(self.workout_collection_name)
+
+    def get_custom_inputs_collection(self):
+        """Get the custom workout inputs collection (focus areas, injuries)."""
+        return self.get_or_create_collection(self.custom_inputs_collection_name)
 
     def add_documents(
         self,

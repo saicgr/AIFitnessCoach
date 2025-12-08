@@ -173,6 +173,8 @@ class RegenerateWorkoutRequest(BaseModel):
     difficulty: Optional[str] = None
     equipment: Optional[List[str]] = None
     focus_areas: Optional[List[str]] = None
+    injuries: Optional[List[str]] = None  # List of injury areas to avoid (e.g., "Shoulder", "Knee")
+    workout_type: Optional[str] = None  # Workout style: "Strength", "HIIT", "Cardio", "Flexibility", etc.
 
 
 class RevertWorkoutRequest(BaseModel):

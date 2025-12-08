@@ -18,16 +18,33 @@ import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
+import '../screens/workout/exercise_detail_screen.dart';
+import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
+
+/// Listenable for auth state changes to trigger router refresh
+class _AuthStateNotifier extends ChangeNotifier {
+  _AuthStateNotifier(this._ref) {
+    _ref.listen<AuthState>(authStateProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+
+  final Ref _ref;
+}
 
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final authNotifier = _AuthStateNotifier(ref);
 
   return GoRouter(
     initialLocation: '/login',
     debugLogDiagnostics: true,
+    refreshListenable: authNotifier,
     redirect: (context, state) {
+      // Read auth state fresh each time redirect is called
+      final authState = ref.read(authStateProvider);
+
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
@@ -110,6 +127,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final workoutId = state.pathParameters['id']!;
           return WorkoutDetailScreen(workoutId: workoutId);
+        },
+      ),
+
+      // Exercise detail (full screen with autoplay video)
+      GoRoute(
+        path: '/exercise-detail',
+        builder: (context, state) {
+          final exercise = state.extra as WorkoutExercise?;
+          if (exercise == null) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text('No exercise data'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.pop(),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return ExerciseDetailScreen(exercise: exercise);
         },
       ),
 

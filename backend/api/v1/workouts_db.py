@@ -1109,7 +1109,23 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         # Get user-selected difficulty (easy/medium/hard) - will override AI-generated difficulty
         user_difficulty = request.difficulty
 
-        logger.info(f"Regenerating workout with: fitness_level={fitness_level}, equipment={equipment}, difficulty={user_difficulty}")
+        # Get injuries from request (user-selected) or fall back to user profile
+        injuries = request.injuries or []
+        if not injuries:
+            # Check user's active injuries from profile
+            user_injuries = parse_json_field(user.get("active_injuries"), [])
+            if user_injuries:
+                injuries = user_injuries
+
+        if injuries:
+            logger.info(f"🩹 Regenerating workout avoiding exercises for injuries: {injuries}")
+
+        # Get workout type from request
+        workout_type_override = request.workout_type
+        if workout_type_override:
+            logger.info(f"🏋️ Regenerating with workout type override: {workout_type_override}")
+
+        logger.info(f"Regenerating workout with: fitness_level={fitness_level}, equipment={equipment}, difficulty={user_difficulty}, workout_type={workout_type_override}")
 
         openai_service = OpenAIService()
         exercise_rag = get_exercise_rag_service()
@@ -1135,6 +1151,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         try:
             # Use RAG to intelligently select exercises from ChromaDB/Supabase
+            # Pass injuries to filter out contraindicated exercises
             rag_exercises = await exercise_rag.select_exercises_for_workout(
                 focus_area=focus_area,
                 equipment=equipment if isinstance(equipment, list) else [],
@@ -1142,6 +1159,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 goals=goals if isinstance(goals, list) else [],
                 count=6,
                 avoid_exercises=[],  # Don't avoid any since we're regenerating
+                injuries=injuries if injuries else None,
             )
 
             if rag_exercises:
@@ -1167,7 +1185,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
             exercises = workout_data.get("exercises", [])
             workout_name = workout_data.get("name", "Regenerated Workout")
-            workout_type = workout_data.get("type", existing.get("type", "strength"))
+            # Use user-selected workout type if provided, otherwise use AI-generated or existing
+            workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             # Use user-selected difficulty if provided, otherwise use AI-generated or default
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")
 
@@ -1200,8 +1219,11 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 "fitness_level": fitness_level,
                 "equipment": equipment,
                 "difficulty": difficulty,
+                "workout_type": workout_type,
+                "workout_type_override": workout_type_override,
                 "used_rag": used_rag,
                 "focus_area": focus_area,
+                "injuries_considered": injuries if injuries else [],
             }),
         }
 
@@ -1223,6 +1245,82 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         regenerated = row_to_workout(new_workout)
         await index_workout_to_rag(regenerated)
+
+        # Record regeneration analytics for tracking user customization patterns
+        try:
+            # Extract custom inputs (focus area/injury typed in "Other" field)
+            custom_focus_area = None
+            custom_injury = None
+
+            # Check if focus_areas contains a custom entry (not from predefined list)
+            predefined_focus_areas = [
+                "full_body", "upper_body", "lower_body", "core", "back", "chest",
+                "shoulders", "arms", "legs", "glutes", "cardio", "flexibility"
+            ]
+            if focus_areas:
+                for fa in focus_areas:
+                    if fa and fa.lower() not in [p.lower() for p in predefined_focus_areas]:
+                        custom_focus_area = fa
+                        break
+
+            # Check if injuries contains a custom entry
+            predefined_injuries = [
+                "shoulder", "knee", "back", "wrist", "ankle", "hip", "neck", "elbow"
+            ]
+            if injuries:
+                for inj in injuries:
+                    if inj and inj.lower() not in [p.lower() for p in predefined_injuries]:
+                        custom_injury = inj
+                        break
+
+            import time
+            generation_end_time = time.time()
+            generation_time_ms = int((generation_end_time - time.time()) * 1000) if 'generation_start_time' not in dir() else None
+
+            db.record_workout_regeneration(
+                user_id=request.user_id,
+                original_workout_id=request.workout_id,
+                new_workout_id=new_workout["id"],
+                difficulty=user_difficulty,
+                duration_minutes=request.duration_minutes,
+                workout_type=workout_type_override,
+                equipment=equipment if isinstance(equipment, list) else [],
+                focus_areas=focus_areas if focus_areas else [],
+                injuries=injuries if injuries else [],
+                custom_focus_area=custom_focus_area,
+                custom_injury=custom_injury,
+                generation_method="rag_regenerate" if used_rag else "ai_regenerate",
+                used_rag=used_rag,
+                generation_time_ms=generation_time_ms,
+            )
+            logger.info(f"📊 Recorded regeneration analytics for workout {new_workout['id']}")
+
+            # Index custom inputs to ChromaDB for AI retrieval (fire-and-forget)
+            if custom_focus_area or custom_injury:
+                try:
+                    from services.custom_inputs_rag_service import get_custom_inputs_rag_service
+                    custom_rag = get_custom_inputs_rag_service()
+
+                    if custom_focus_area:
+                        await custom_rag.index_custom_input(
+                            input_type="focus_area",
+                            input_value=custom_focus_area,
+                            user_id=request.user_id,
+                        )
+                        logger.info(f"🔍 Indexed custom focus area to ChromaDB: {custom_focus_area}")
+
+                    if custom_injury:
+                        await custom_rag.index_custom_input(
+                            input_type="injury",
+                            input_value=custom_injury,
+                            user_id=request.user_id,
+                        )
+                        logger.info(f"🔍 Indexed custom injury to ChromaDB: {custom_injury}")
+                except Exception as chroma_error:
+                    logger.warning(f"⚠️ Failed to index custom inputs to ChromaDB: {chroma_error}")
+        except Exception as analytics_error:
+            # Don't fail the regeneration if analytics recording fails
+            logger.warning(f"⚠️ Failed to record regeneration analytics: {analytics_error}")
 
         return regenerated
 

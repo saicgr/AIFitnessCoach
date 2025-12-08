@@ -1,4 +1,4 @@
-<!-- Can you uninstall and install flutter app? -->
+<!-- Can you delete data and uninstall and install flutter app? -->
 <!-- compare and contrast web code to flutter code -->
 
 NEED
@@ -20,6 +20,7 @@ Generate an image prompt and an image rationale for a fitness app banner based o
 14. Water tracking remainders.
 15. Water intake during working out (optional input)
 16. Move from Oauth tindewjobs project to aiftinesscoach progject GCP
+17. Exercise Detail screen
 
 The prompt must fulfill the following strategic criteria:
 1.  **Safety & Legal Firewall:** Explicitly instruct the image generation to avoid all trademarked elements: no masks, no specific logos, no official armor/costume designs, and no character name in the final visual.

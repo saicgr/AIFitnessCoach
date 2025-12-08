@@ -9,6 +9,7 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import 'widgets/regenerate_workout_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -358,7 +359,6 @@ class _NextWorkoutCard extends ConsumerStatefulWidget {
 }
 
 class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
-  bool _isRegenerating = false;
   bool _isSkipping = false;
 
   String _getScheduledDateLabel(String? scheduledDate) {
@@ -385,45 +385,22 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
   }
 
   Future<void> _regenerateWorkout() async {
-    setState(() => _isRegenerating = true);
+    // Show the regenerate customization sheet
+    final newWorkout = await showRegenerateWorkoutSheet(
+      context,
+      ref,
+      widget.workout,
+    );
 
-    final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
-
-    if (userId == null) {
-      setState(() => _isRegenerating = false);
-      return;
-    }
-
-    final repo = ref.read(workoutRepositoryProvider);
-    try {
-      final newWorkout = await repo.regenerateWorkout(
-        workoutId: widget.workout.id!,
-        userId: userId,
+    // If a new workout was returned, refresh the list
+    if (newWorkout != null && mounted) {
+      ref.read(workoutsProvider.notifier).refresh();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Workout regenerated!'),
+          backgroundColor: AppColors.success,
+        ),
       );
-
-      if (newWorkout != null && mounted) {
-        ref.read(workoutsProvider.notifier).refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout regenerated!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to regenerate: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-
-    if (mounted) {
-      setState(() => _isRegenerating = false);
     }
   }
 
@@ -492,80 +469,60 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: GestureDetector(
-        onTap: widget.onStart, // Navigate to detail on card tap
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.elevated,
-                AppColors.elevated.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.elevated,
+              AppColors.elevated.withOpacity(0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Exercise preview strip at top
-              if (exercises.isNotEmpty)
-                Stack(
-                  children: [
-                    Container(
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: AppColors.glassSurface,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
-                      ),
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        itemCount: exercises.length.clamp(0, 5),
-                        itemBuilder: (context, index) {
-                          final exercise = exercises[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _ExerciseImageThumbnail(
-                              exercise: exercise,
-                              size: 44,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    if (exercises.length > 5)
-                      Positioned(
-                        right: 8,
-                        top: 16,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.pureBlack.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '+${exercises.length - 5}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Exercise preview strip at top - tappable to navigate
+            if (exercises.isNotEmpty)
+              GestureDetector(
+                onTap: widget.onStart,
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppColors.glassSurface,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
+                  ),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    itemCount: exercises.length,
+                    itemBuilder: (context, index) {
+                      final exercise = exercises[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _ExerciseImageThumbnail(
+                          exercise: exercise,
+                          size: 44,
                         ),
-                      ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
+              ),
 
-              // Main card content
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header badges
-                    Row(
+            // Main card content
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header badges - tappable to navigate
+                  GestureDetector(
+                    onTap: widget.onStart,
+                    child: Row(
                       children: [
                         // Scheduled date badge
                         Container(
@@ -626,19 +583,25 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
 
-                    // Title
-                    Text(
+                  // Title - tappable to navigate
+                  GestureDetector(
+                    onTap: widget.onStart,
+                    child: Text(
                       workout.name ?? 'Workout',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                  ),
+                  const SizedBox(height: 8),
 
-                    // Stats row
-                    Row(
+                  // Stats row - tappable to navigate
+                  GestureDetector(
+                    onTap: widget.onStart,
+                    child: Row(
                       children: [
                         _StatPill(
                           icon: Icons.timer_outlined,
@@ -656,79 +619,76 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
 
-                    // Start button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => context.push('/active-workout', extra: workout),
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Start Workout'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
+                  // Start button - NOT wrapped, handles its own taps
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.push('/active-workout', extra: workout),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Start Workout'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
+                  ),
 
+                  const SizedBox(height: 12),
+
+                  // Regenerate and Skip buttons - NOT wrapped, handle their own taps
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _regenerateWorkout,
+                          icon: const Icon(Icons.auto_awesome, size: 18),
+                          label: const Text('Customize'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.purple,
+                            side: const BorderSide(color: AppColors.purple),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isSkipping ? null : _skipWorkout,
+                          icon: _isSkipping
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.skip_next, size: 18),
+                          label: Text(_isSkipping ? 'Skipping...' : 'Skip'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.textMuted,
+                            side: const BorderSide(color: AppColors.textMuted),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Equipment - tappable to navigate
+                  if (workout.equipmentNeeded.isNotEmpty) ...[
                     const SizedBox(height: 12),
-
-                    // Regenerate and Skip buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isRegenerating ? null : _regenerateWorkout,
-                            icon: _isRegenerating
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.refresh, size: 18),
-                            label: Text(_isRegenerating ? 'Regenerating...' : 'Regenerate'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.purple,
-                              side: const BorderSide(color: AppColors.purple),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _isSkipping ? null : _skipWorkout,
-                            icon: _isSkipping
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.skip_next, size: 18),
-                            label: Text(_isSkipping ? 'Skipping...' : 'Skip'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textMuted,
-                              side: const BorderSide(color: AppColors.textMuted),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Equipment
-                    if (workout.equipmentNeeded.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
+                    GestureDetector(
+                      onTap: widget.onStart,
+                      child: Text(
                         '🏋️ ${workout.equipmentNeeded.take(3).join(' • ')}${workout.equipmentNeeded.length > 3 ? ' +${workout.equipmentNeeded.length - 3} more' : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -938,16 +898,18 @@ class _UpcomingWorkoutCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: InkWell(
-        onTap: onTap,
+      child: Material(
+        color: AppColors.elevated,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.elevated,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
+        child: InkWell(
+          onTap: () {
+            print('🎯 [UpcomingCard] Tapped: ${workout.name}');
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            child: Row(
             children: [
               // Date badge
               Container(
@@ -1008,6 +970,7 @@ class _UpcomingWorkoutCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

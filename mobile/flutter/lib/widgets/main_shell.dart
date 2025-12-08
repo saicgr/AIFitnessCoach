@@ -40,11 +40,16 @@ class MainShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/chat'),
-        backgroundColor: AppColors.purple,
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/chat'),
+          backgroundColor: AppColors.purple,
+          heroTag: 'mainChatFab',
+          child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) => _onItemTapped(context, index),

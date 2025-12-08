@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
@@ -131,8 +132,20 @@ class WorkoutRepository {
     String? difficulty,
     int? durationMinutes,
     List<String>? focusAreas,
+    List<String>? injuries,
+    List<String>? equipment,
+    String? workoutType,
   }) async {
     try {
+      debugPrint('🔍 [Workout] Regenerating workout $workoutId with:');
+      debugPrint('  - difficulty: $difficulty');
+      debugPrint('  - durationMinutes: $durationMinutes');
+      debugPrint('  - focusAreas: $focusAreas');
+      debugPrint('  - injuries: $injuries');
+      debugPrint('  - equipment: $equipment');
+      debugPrint('  - workoutType: $workoutType');
+
+      // Use longer timeout for regeneration (AI generation can take time + server cold start)
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/regenerate',
         data: {
@@ -141,7 +154,14 @@ class WorkoutRepository {
           if (difficulty != null) 'difficulty': difficulty,
           if (durationMinutes != null) 'duration_minutes': durationMinutes,
           if (focusAreas != null) 'focus_areas': focusAreas,
+          if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
+          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+          if (workoutType != null) 'workout_type': workoutType,
         },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 5), // Longer timeout for AI generation + cold start
+        ),
       );
 
       if (response.statusCode == 200) {
