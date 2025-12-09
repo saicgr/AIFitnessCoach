@@ -47,6 +47,10 @@ from models.feedback import (
     WorkoutFeedbackCreate,
     WorkoutFeedback,
     WorkoutFeedbackWithExercises,
+    DrinkIntakeCreate,
+    DrinkIntake,
+    RestIntervalCreate,
+    RestInterval,
 )
 
 from models.achievements import (

@@ -16,6 +16,7 @@ import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
+import '../screens/workout/list_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
@@ -208,6 +209,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             );
           }
+          // Use video-based workout screen with set tracking overlay
           return ActiveWorkoutScreen(workout: workout);
         },
       ),
@@ -240,6 +242,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             workout: data['workout'] as Workout,
             duration: data['duration'] as int,
             calories: data['calories'] as int,
+            workoutLogId: data['workoutLogId'] as String?,
+            exercisesPerformance: data['exercisesPerformance'] as List<Map<String, dynamic>>?,
+            totalRestSeconds: data['totalRestSeconds'] as int?,
+            avgRestSeconds: data['avgRestSeconds'] as double?,
+            totalSets: data['totalSets'] as int?,
+            totalReps: data['totalReps'] as int?,
+            totalVolumeKg: data['totalVolumeKg'] as double?,
           );
         },
       ),

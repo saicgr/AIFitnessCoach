@@ -2,20 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
   final int duration;
   final int calories;
+  // Additional workout performance data for AI Coach feedback
+  final String? workoutLogId;
+  final List<Map<String, dynamic>>? exercisesPerformance;
+  final int? totalRestSeconds;
+  final double? avgRestSeconds;
+  final int? totalSets;
+  final int? totalReps;
+  final double? totalVolumeKg;
 
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
     required this.duration,
     required this.calories,
+    this.workoutLogId,
+    this.exercisesPerformance,
+    this.totalRestSeconds,
+    this.avgRestSeconds,
+    this.totalSets,
+    this.totalReps,
+    this.totalVolumeKg,
   });
 
   @override
@@ -29,42 +46,227 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   String? _aiSummary;
   bool _isLoadingSummary = true;
 
+  // Achievements state
+  Map<String, dynamic>? _achievements;
+  bool _isLoadingAchievements = true;
+  List<Map<String, dynamic>> _newPRs = [];
+  bool _showExerciseProgress = false;
+  Map<String, List<Map<String, dynamic>>> _exerciseProgressData = {};
+  Map<String, bool> _expandedExercises = {};
+
+  // Confetti controller for celebrations
+  late ConfettiController _confettiController;
+
   @override
   void initState() {
     super.initState();
-    _loadWorkoutSummary();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _loadAICoachFeedback();
+    _loadAchievements();
+    _loadExerciseProgress();
   }
 
-  Future<void> _loadWorkoutSummary() async {
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAICoachFeedback() async {
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
-      // Simulate loading AI summary (in real app, this would be an API call)
-      await Future.delayed(const Duration(seconds: 2));
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
 
+      // Debug logging to track the AI Coach feedback flow
+      debugPrint('🤖 [AI Coach] Starting feedback load...');
+      debugPrint('🤖 [AI Coach] userId: $userId');
+      debugPrint('🤖 [AI Coach] workoutLogId: ${widget.workoutLogId}');
+      debugPrint('🤖 [AI Coach] workoutId: ${widget.workout.id}');
+      debugPrint('🤖 [AI Coach] exercisesPerformance: ${widget.exercisesPerformance?.length ?? 0} exercises');
+
+      // Only call AI Coach API if we have the required data
+      if (userId != null &&
+          widget.workoutLogId != null &&
+          widget.workout.id != null) {
+
+        // Build exercises list from workout exercises or provided performance data
+        final exercisesList = widget.exercisesPerformance ??
+            widget.workout.exercises.map((e) => {
+              'name': e.name,
+              'sets': e.sets ?? 3,
+              'reps': e.reps ?? 10,
+              'weight_kg': e.weight ?? 0.0,
+            }).toList();
+
+        final feedback = await workoutRepo.getAICoachFeedback(
+          workoutLogId: widget.workoutLogId!,
+          workoutId: widget.workout.id!,
+          userId: userId,
+          workoutName: widget.workout.name ?? 'Workout',
+          workoutType: widget.workout.type ?? 'strength',
+          exercises: exercisesList,
+          totalTimeSeconds: widget.duration,
+          totalRestSeconds: widget.totalRestSeconds ?? 0,
+          avgRestSeconds: widget.avgRestSeconds ?? 0.0,
+          caloriesBurned: widget.calories,
+          totalSets: widget.totalSets ?? exercisesList.length * 3,
+          totalReps: widget.totalReps ?? exercisesList.length * 30,
+          totalVolumeKg: widget.totalVolumeKg ?? 0.0,
+        );
+
+        debugPrint('🤖 [AI Coach] API call completed, feedback: ${feedback != null ? "received (${feedback.length} chars)" : "null"}');
+        if (feedback != null && mounted) {
+          setState(() {
+            _aiSummary = feedback;
+            _isLoadingSummary = false;
+          });
+          return;
+        }
+      } else {
+        debugPrint('🤖 [AI Coach] Skipping API call - missing required data');
+        debugPrint('🤖 [AI Coach] userId is null: ${userId == null}');
+        debugPrint('🤖 [AI Coach] workoutLogId is null: ${widget.workoutLogId == null}');
+        debugPrint('🤖 [AI Coach] workoutId is null: ${widget.workout.id == null}');
+      }
+
+      // Fallback to generated summary if API call fails
+      debugPrint('🤖 [AI Coach] Using fallback summary');
       setState(() {
-        _aiSummary = _generateSummary();
+        _aiSummary = _generateFallbackSummary();
         _isLoadingSummary = false;
       });
     } catch (e) {
+      debugPrint('Error loading AI Coach feedback: $e');
       setState(() {
+        _aiSummary = _generateFallbackSummary();
         _isLoadingSummary = false;
       });
     }
   }
 
-  String _generateSummary() {
+  String _generateFallbackSummary() {
     final workout = widget.workout;
     final minutes = widget.duration ~/ 60;
     final exercises = workout.exercises.length;
 
     final summaries = [
-      "Great workout! You crushed ${exercises} exercises in $minutes minutes. Your consistency is building real strength.",
+      "Great workout! You crushed $exercises exercises in $minutes minutes. Your consistency is building real strength.",
       "Solid session! You're making progress every time you show up. Keep pushing, and the results will follow.",
       "Another workout in the books! Your dedication is paying off. Recovery is just as important - rest well tonight.",
       "Well done! You completed all $exercises exercises. Focus on form next time to maximize gains.",
     ];
 
     return summaries[DateTime.now().second % summaries.length];
+  }
+
+  Future<void> _loadAchievements() async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null) {
+        final achievements = await workoutRepo.getUserAchievements(userId: userId);
+
+        if (achievements.isNotEmpty && mounted) {
+          // Detect new PRs from this workout
+          final newPRs = _detectNewPRs(achievements);
+
+          setState(() {
+            _achievements = achievements;
+            _newPRs = newPRs;
+            _isLoadingAchievements = false;
+          });
+
+          // Play confetti if there are new PRs
+          if (newPRs.isNotEmpty) {
+            _confettiController.play();
+          }
+          return;
+        }
+      }
+
+      setState(() {
+        _isLoadingAchievements = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading achievements: $e');
+      setState(() {
+        _isLoadingAchievements = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _detectNewPRs(Map<String, dynamic> achievements) {
+    // Compare current workout exercises with personal records
+    final prs = achievements['exercise_personal_records'] as List? ?? [];
+    final currentExercises = widget.exercisesPerformance ?? [];
+    final newPRs = <Map<String, dynamic>>[];
+
+    for (final ex in currentExercises) {
+      final exName = ex['name'] ?? ex['exercise_name'] ?? '';
+      final exWeight = (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble();
+
+      // Find matching PR
+      final matchingPR = prs.firstWhere(
+        (pr) => (pr['exercise_name'] ?? '').toString().toLowerCase() == exName.toString().toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (matchingPR != null) {
+        final prWeight = (matchingPR['weight_kg'] ?? 0.0).toDouble();
+        // Check if current weight equals PR (meaning this session set the PR)
+        if (exWeight >= prWeight && exWeight > 0) {
+          newPRs.add({
+            'exercise_name': exName,
+            'weight_kg': exWeight,
+            'previous_pr': prWeight < exWeight ? prWeight : null,
+          });
+        }
+      }
+    }
+
+    return newPRs;
+  }
+
+  Future<void> _loadExerciseProgress() async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) return;
+
+      final exercises = widget.exercisesPerformance ?? widget.workout.exercises.map((e) => {
+        'name': e.name,
+      }).toList();
+
+      // Load progress for each exercise
+      final progressData = <String, List<Map<String, dynamic>>>{};
+      for (final ex in exercises.take(5)) {
+        final exName = ex['name'] ?? ex['exercise_name'] ?? '';
+        if (exName.isEmpty) continue;
+
+        final history = await workoutRepo.getExerciseProgress(
+          userId: userId,
+          exerciseName: exName,
+        );
+
+        if (history.isNotEmpty) {
+          progressData[exName] = history;
+          _expandedExercises[exName] = false;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _exerciseProgressData = progressData;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading exercise progress: $e');
+    }
   }
 
   Future<void> _submitFeedback() async {
@@ -115,8 +317,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -169,7 +373,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                 const SizedBox(height: 32),
 
-                // Stats Grid
+                // Stats Grid - Row 1
                 Row(
                   children: [
                     Expanded(
@@ -200,6 +404,40 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                   ],
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 12),
+
+                // Stats Grid - Row 2 (Total Weight)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.scale,
+                        value: '${(widget.totalVolumeKg ?? 0).toStringAsFixed(0)} kg',
+                        label: 'Total Weight',
+                        color: AppColors.success,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.repeat,
+                        value: '${widget.totalSets ?? 0}',
+                        label: 'Sets',
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.format_list_numbered,
+                        value: '${widget.totalReps ?? 0}',
+                        label: 'Reps',
+                        color: AppColors.purple,
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.1),
 
                 const SizedBox(height: 24),
 
@@ -260,6 +498,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ],
                   ),
                 ).animate().fadeIn(delay: 500.ms),
+
+                // New PRs / Achievements Section
+                if (_newPRs.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildNewPRsSection(),
+                ],
+
+                // Exercise Progress Section (Minimizable graphs)
+                if (_exerciseProgressData.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildExerciseProgressSection(),
+                ],
 
                 const SizedBox(height: 32),
 
@@ -372,7 +622,277 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             ),
           ),
         ),
+          ),
+          // Confetti overlay for achievements
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              particleDrag: 0.05,
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              gravity: 0.2,
+              shouldLoop: false,
+              colors: const [
+                AppColors.success,
+                AppColors.cyan,
+                AppColors.purple,
+                AppColors.orange,
+                Colors.yellow,
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildNewPRsSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.success.withOpacity(0.2),
+            AppColors.orange.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.success.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.emoji_events,
+                  size: 20,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'NEW PERSONAL RECORDS!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ..._newPRs.map((pr) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.star, color: AppColors.orange, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${pr['exercise_name']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.success,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
+        ],
+      ),
+    ).animate().fadeIn(delay: 550.ms).scale(
+      begin: const Offset(0.9, 0.9),
+      duration: 400.ms,
+      curve: Curves.elasticOut,
+    );
+  }
+
+  Widget _buildExerciseProgressSection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with expand/collapse toggle
+          InkWell(
+            onTap: () {
+              setState(() {
+                _showExerciseProgress = !_showExerciseProgress;
+              });
+            },
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.show_chart,
+                      size: 16,
+                      color: AppColors.purple,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Exercise Progress',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.purple,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _showExerciseProgress ? Icons.expand_less : Icons.expand_more,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expandable content
+          if (_showExerciseProgress) ...[
+            const Divider(height: 1, color: AppColors.cardBorder),
+            ...(_exerciseProgressData.entries.map((entry) => _buildExerciseProgressTile(
+              entry.key,
+              entry.value,
+            ))).toList(),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(delay: 600.ms);
+  }
+
+  Widget _buildExerciseProgressTile(String exerciseName, List<Map<String, dynamic>> history) {
+    final isExpanded = _expandedExercises[exerciseName] ?? false;
+    final maxWeight = history.fold<double>(0, (max, item) =>
+      (item['weight_kg'] ?? 0.0).toDouble() > max ? (item['weight_kg'] ?? 0.0).toDouble() : max
+    );
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _expandedExercises[exerciseName] = !isExpanded;
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    exerciseName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Text(
+                  'PR: ${maxWeight.toStringAsFixed(1)} kg',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: AppColors.textMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isExpanded && history.isNotEmpty) ...[
+          Container(
+            height: 100,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _buildSimpleProgressChart(history, maxWeight),
+          ),
+        ],
+        const Divider(height: 1, color: AppColors.cardBorder),
+      ],
+    );
+  }
+
+  Widget _buildSimpleProgressChart(List<Map<String, dynamic>> history, double maxWeight) {
+    final sortedHistory = List<Map<String, dynamic>>.from(history)
+      ..sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
+
+    if (sortedHistory.isEmpty) {
+      return const Center(child: Text('No data', style: TextStyle(color: AppColors.textMuted)));
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: sortedHistory.take(7).map((item) {
+        final weight = (item['weight_kg'] ?? 0.0).toDouble();
+        final heightPercent = maxWeight > 0 ? (weight / maxWeight) : 0.0;
+
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  '${weight.toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  height: (60 * heightPercent).toDouble(),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.purple.withOpacity(0.7),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

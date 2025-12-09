@@ -92,3 +92,55 @@ class WorkoutFeedback(BaseModel):
 class WorkoutFeedbackWithExercises(WorkoutFeedback):
     """Workout feedback including individual exercise ratings."""
     exercise_feedback: List[ExerciseFeedback] = []
+
+
+# Drink Intake during workout
+
+class DrinkIntakeCreate(BaseModel):
+    """Request to log drink intake during workout."""
+    user_id: str  # UUID string
+    workout_log_id: str  # UUID string - links to workout_logs table
+    amount_ml: int  # Amount in milliliters
+    drink_type: str = "water"  # "water", "sports_drink", "protein_shake", "bcaa", "other"
+    notes: Optional[str] = None
+
+
+class DrinkIntake(BaseModel):
+    """Drink intake log entry."""
+    id: str  # UUID string
+    user_id: str
+    workout_log_id: str
+    amount_ml: int
+    drink_type: str
+    notes: Optional[str] = None
+    logged_at: datetime
+
+
+# Rest Intervals between sets/exercises
+
+class RestIntervalCreate(BaseModel):
+    """Request to log rest interval during workout."""
+    user_id: str  # UUID string
+    workout_log_id: str  # UUID string - links to workout_logs table
+    exercise_index: int  # Index of the exercise in workout
+    exercise_name: str
+    set_number: Optional[int] = None  # Which set the rest followed (null = between exercises)
+    rest_duration_seconds: int  # Actual rest taken
+    prescribed_rest_seconds: Optional[int] = None  # What was recommended
+    rest_type: str = "between_sets"  # "between_sets", "between_exercises", "unplanned"
+    notes: Optional[str] = None
+
+
+class RestInterval(BaseModel):
+    """Rest interval log entry."""
+    id: str  # UUID string
+    user_id: str
+    workout_log_id: str
+    exercise_index: int
+    exercise_name: str
+    set_number: Optional[int] = None
+    rest_duration_seconds: int
+    prescribed_rest_seconds: Optional[int] = None
+    rest_type: str
+    notes: Optional[str] = None
+    logged_at: datetime

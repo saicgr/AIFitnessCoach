@@ -3,17 +3,25 @@ Workout and Exercise Feedback API endpoints.
 
 Allows users to rate workouts (1-5 stars) with optional comments
 for both overall workout and individual exercises.
+
+Also includes AI Coach feedback using RAG for personalized workout analysis.
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
 from datetime import datetime
+from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import (
     ExerciseFeedbackCreate, ExerciseFeedback,
     WorkoutFeedbackCreate, WorkoutFeedback, WorkoutFeedbackWithExercises
+)
+from services.openai_service import OpenAIService
+from services.workout_feedback_rag_service import (
+    WorkoutFeedbackRAGService,
+    generate_workout_feedback
 )
 
 router = APIRouter()
@@ -351,4 +359,332 @@ async def get_exercise_feedback_stats(exercise_name: str, user_id: str = None):
 
     except Exception as e:
         logger.error(f"Failed to get exercise feedback stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# AI Coach Feedback Endpoints (RAG-powered)
+# ============================================
+
+class ExercisePerformance(BaseModel):
+    """Exercise performance data for a workout session."""
+    name: str
+    sets: int
+    reps: int
+    weight_kg: float
+
+
+class AICoachFeedbackRequest(BaseModel):
+    """Request body for AI Coach feedback generation."""
+    user_id: str
+    workout_log_id: str
+    workout_id: str
+    workout_name: str
+    workout_type: str = "strength"
+    exercises: List[ExercisePerformance]
+    total_time_seconds: int
+    total_rest_seconds: int = 0
+    avg_rest_seconds: float = 0.0
+    calories_burned: int = 0
+    total_sets: int = 0
+    total_reps: int = 0
+    total_volume_kg: float = 0.0
+
+
+class AICoachFeedbackResponse(BaseModel):
+    """Response from AI Coach feedback generation."""
+    feedback: str
+    indexed: bool = False
+    workout_log_id: str
+
+
+# Singleton services (lazy initialization)
+_openai_service: Optional[OpenAIService] = None
+_feedback_rag_service: Optional[WorkoutFeedbackRAGService] = None
+
+
+def get_openai_service() -> OpenAIService:
+    """Get or create OpenAI service singleton."""
+    global _openai_service
+    if _openai_service is None:
+        _openai_service = OpenAIService()
+    return _openai_service
+
+
+def get_feedback_rag_service() -> WorkoutFeedbackRAGService:
+    """Get or create Workout Feedback RAG service singleton."""
+    global _feedback_rag_service
+    if _feedback_rag_service is None:
+        _feedback_rag_service = WorkoutFeedbackRAGService(get_openai_service())
+    return _feedback_rag_service
+
+
+@router.post("/ai-coach", response_model=AICoachFeedbackResponse)
+async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
+    """
+    Generate AI Coach feedback for a completed workout.
+
+    This endpoint:
+    1. Stores the workout session data in ChromaDB for future RAG retrieval
+    2. Retrieves past workout history for comparison
+    3. Generates short, personalized feedback using the AI Coach
+
+    The feedback includes:
+    - Performance summary (time, calories, sets)
+    - Weight progression compared to previous sessions
+    - Rest pattern analysis
+    - Motivational note
+    """
+    logger.info(f"Generating AI Coach feedback for user {request.user_id}, workout {request.workout_name}")
+
+    try:
+        openai_service = get_openai_service()
+        rag_service = get_feedback_rag_service()
+
+        # Convert exercises to dict format
+        exercises_data = [
+            {
+                "name": ex.name,
+                "sets": ex.sets,
+                "reps": ex.reps,
+                "weight_kg": ex.weight_kg,
+            }
+            for ex in request.exercises
+        ]
+
+        # Prepare current session data
+        current_session = {
+            "workout_log_id": request.workout_log_id,
+            "workout_id": request.workout_id,
+            "workout_name": request.workout_name,
+            "workout_type": request.workout_type,
+            "exercises": exercises_data,
+            "total_time_seconds": request.total_time_seconds,
+            "total_rest_seconds": request.total_rest_seconds,
+            "avg_rest_seconds": request.avg_rest_seconds,
+            "calories_burned": request.calories_burned,
+            "total_sets": request.total_sets,
+            "total_reps": request.total_reps,
+            "total_volume_kg": request.total_volume_kg,
+            "completed_at": datetime.utcnow().isoformat(),
+        }
+
+        # Generate AI feedback
+        feedback = await generate_workout_feedback(
+            openai_service=openai_service,
+            rag_service=rag_service,
+            user_id=request.user_id,
+            current_session=current_session,
+        )
+
+        # Index the workout session for future RAG retrieval
+        indexed = False
+        try:
+            await rag_service.index_workout_session(
+                workout_log_id=request.workout_log_id,
+                workout_id=request.workout_id,
+                user_id=request.user_id,
+                workout_name=request.workout_name,
+                workout_type=request.workout_type,
+                exercises=exercises_data,
+                total_time_seconds=request.total_time_seconds,
+                total_rest_seconds=request.total_rest_seconds,
+                avg_rest_seconds=request.avg_rest_seconds,
+                calories_burned=request.calories_burned,
+                total_sets=request.total_sets,
+                total_reps=request.total_reps,
+                total_volume_kg=request.total_volume_kg,
+                completed_at=current_session["completed_at"],
+            )
+            indexed = True
+            logger.info(f"Indexed workout session {request.workout_log_id} for RAG")
+        except Exception as e:
+            logger.warning(f"Failed to index workout session: {e}")
+
+        return AICoachFeedbackResponse(
+            feedback=feedback,
+            indexed=indexed,
+            workout_log_id=request.workout_log_id,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to generate AI Coach feedback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-coach/history/{user_id}")
+async def get_ai_coach_workout_history(user_id: str, limit: int = 10):
+    """
+    Get user's workout history stored in the RAG system.
+
+    This allows the frontend to display past workout summaries
+    and the AI Coach's analysis of workout patterns.
+    """
+    logger.info(f"Getting AI Coach workout history for user {user_id}")
+
+    try:
+        rag_service = get_feedback_rag_service()
+
+        sessions = await rag_service.get_user_workout_history(
+            user_id=user_id,
+            n_results=limit,
+        )
+
+        # Format response
+        history = []
+        for session in sessions:
+            meta = session.get("metadata", {})
+            history.append({
+                "workout_log_id": meta.get("workout_log_id"),
+                "workout_id": meta.get("workout_id"),
+                "workout_name": meta.get("workout_name"),
+                "workout_type": meta.get("workout_type"),
+                "exercise_count": meta.get("exercise_count"),
+                "total_time_seconds": meta.get("total_time_seconds"),
+                "calories_burned": meta.get("calories_burned"),
+                "total_sets": meta.get("total_sets"),
+                "total_reps": meta.get("total_reps"),
+                "total_volume_kg": meta.get("total_volume_kg"),
+                "completed_at": meta.get("completed_at"),
+            })
+
+        return {
+            "user_id": user_id,
+            "session_count": len(history),
+            "sessions": history,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get AI Coach workout history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-coach/exercise-progress/{user_id}/{exercise_name}")
+async def get_exercise_progress(user_id: str, exercise_name: str, limit: int = 10):
+    """
+    Get weight progression history for a specific exercise.
+
+    This allows the frontend to display charts showing
+    how the user has progressed on specific exercises over time.
+    """
+    logger.info(f"Getting exercise progress for user {user_id}, exercise {exercise_name}")
+
+    try:
+        rag_service = get_feedback_rag_service()
+
+        history = await rag_service.get_exercise_weight_history(
+            user_id=user_id,
+            exercise_name=exercise_name,
+            n_results=limit,
+        )
+
+        return {
+            "user_id": user_id,
+            "exercise_name": exercise_name,
+            "data_points": len(history),
+            "history": history,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get exercise progress: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-coach/stats")
+async def get_ai_coach_rag_stats():
+    """Get statistics for the AI Coach RAG system."""
+    try:
+        rag_service = get_feedback_rag_service()
+        return rag_service.get_stats()
+    except Exception as e:
+        logger.error(f"Failed to get AI Coach stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-coach/achievements/{user_id}")
+async def get_user_achievements(user_id: str):
+    """
+    Get user personal records and achievements from workout history.
+
+    This endpoint analyzes past workout data to detect:
+    - Highest weight lifted for each exercise (Personal Records)
+    - Highest total volume in a single workout
+    - New PRs achieved in the current session
+    - Workout streaks and milestones
+    """
+    logger.info(f"Getting achievements for user {user_id}")
+
+    try:
+        rag_service = get_feedback_rag_service()
+
+        # Get all workout history for user
+        sessions = await rag_service.get_user_workout_history(
+            user_id=user_id,
+            n_results=100,  # Get more history for achievements
+        )
+
+        # Calculate achievements
+        exercise_prs = {}  # {exercise_name: {weight_kg, reps, date, workout_name}}
+        workout_volume_record = None  # {total_volume_kg, workout_name, date}
+        total_workouts = len(sessions)
+        total_volume_lifted = 0.0
+        total_calories_burned = 0
+
+        for session in sessions:
+            meta = session.get("metadata", {})
+            exercises = meta.get("exercises", [])
+            session_volume = meta.get("total_volume_kg", 0) or 0
+            session_calories = meta.get("calories_burned", 0) or 0
+            completed_at = meta.get("completed_at", "")
+            workout_name = meta.get("workout_name", "Unknown")
+
+            total_volume_lifted += session_volume
+            total_calories_burned += session_calories
+
+            # Check if this workout has highest volume
+            if workout_volume_record is None or session_volume > workout_volume_record.get("total_volume_kg", 0):
+                workout_volume_record = {
+                    "total_volume_kg": session_volume,
+                    "workout_name": workout_name,
+                    "date": completed_at,
+                }
+
+            # Check exercise PRs
+            for ex in exercises:
+                ex_name = ex.get("name", "Unknown")
+                ex_weight = ex.get("weight_kg", 0) or 0
+                ex_reps = ex.get("reps", 0) or 0
+
+                if ex_name not in exercise_prs or ex_weight > exercise_prs[ex_name].get("weight_kg", 0):
+                    exercise_prs[ex_name] = {
+                        "weight_kg": ex_weight,
+                        "reps": ex_reps,
+                        "date": completed_at,
+                        "workout_name": workout_name,
+                    }
+
+        # Format response
+        exercise_records = [
+            {
+                "exercise_name": name,
+                "weight_kg": data["weight_kg"],
+                "reps": data["reps"],
+                "date": data["date"],
+                "workout_name": data["workout_name"],
+            }
+            for name, data in sorted(exercise_prs.items(), key=lambda x: x[1]["weight_kg"], reverse=True)
+        ]
+
+        return {
+            "user_id": user_id,
+            "total_workouts": total_workouts,
+            "total_volume_lifted_kg": round(total_volume_lifted, 1),
+            "total_calories_burned": total_calories_burned,
+            "workout_volume_record": workout_volume_record,
+            "exercise_personal_records": exercise_records[:20],  # Top 20 exercises
+            "achievement_count": len(exercise_records),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get user achievements: {e}")
         raise HTTPException(status_code=500, detail=str(e))

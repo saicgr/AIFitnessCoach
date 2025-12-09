@@ -8,6 +8,14 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/workout-logs - List workout logs
 - GET  /api/v1/performance-db/strength-records - Get strength records
 - GET  /api/v1/performance-db/weekly-volume - Get weekly volume
+- POST /api/v1/performance-db/workout-exit - Log workout exit/quit
+- GET  /api/v1/performance-db/workout-exits - List workout exits
+- POST /api/v1/performance-db/drink-intake - Log drink intake during workout
+- GET  /api/v1/performance-db/drink-intake - List drink intakes
+- GET  /api/v1/performance-db/drink-intake/summary/{workout_log_id} - Get drink summary
+- POST /api/v1/performance-db/rest-intervals - Log rest interval
+- GET  /api/v1/performance-db/rest-intervals - List rest intervals
+- GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -21,6 +29,9 @@ from models.schemas import (
     WorkoutLog, WorkoutLogCreate,
     StrengthRecord, StrengthRecordCreate,
     WeeklyVolume, WeeklyVolumeCreate,
+    WorkoutExitCreate, WorkoutExit,
+    DrinkIntakeCreate, DrinkIntake,
+    RestIntervalCreate, RestInterval,
 )
 
 router = APIRouter()
@@ -411,4 +422,241 @@ async def get_user_streak(user_id: str):
 
     except Exception as e:
         logger.error(f"Error calculating streak: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ Workout Exit Tracking ============
+
+def row_to_workout_exit(row: dict) -> WorkoutExit:
+    """Convert a Supabase row dict to WorkoutExit model."""
+    return WorkoutExit(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        workout_id=row.get("workout_id"),
+        exit_reason=row.get("exit_reason"),
+        exit_notes=row.get("exit_notes"),
+        exercises_completed=row.get("exercises_completed", 0),
+        total_exercises=row.get("total_exercises", 0),
+        sets_completed=row.get("sets_completed", 0),
+        time_spent_seconds=row.get("time_spent_seconds", 0),
+        progress_percentage=row.get("progress_percentage", 0.0),
+        exited_at=row.get("exited_at"),
+    )
+
+
+@router.post("/workout-exit", response_model=WorkoutExit)
+async def create_workout_exit(data: WorkoutExitCreate):
+    """Create a workout exit log entry."""
+    try:
+        db = get_supabase_db()
+
+        exit_data = {
+            "user_id": data.user_id,
+            "workout_id": data.workout_id,
+            "exit_reason": data.exit_reason,
+            "exit_notes": data.exit_notes,
+            "exercises_completed": data.exercises_completed,
+            "total_exercises": data.total_exercises,
+            "sets_completed": data.sets_completed,
+            "time_spent_seconds": data.time_spent_seconds,
+            "progress_percentage": data.progress_percentage,
+        }
+
+        created = db.create_workout_exit(exit_data)
+        logger.info(f"Workout exit created: id={created['id']}, user_id={data.user_id}, reason={data.exit_reason}")
+        return row_to_workout_exit(created)
+
+    except Exception as e:
+        logger.error(f"Error creating workout exit: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/workout-exits", response_model=List[WorkoutExit])
+async def list_workout_exits(
+    user_id: str,
+    workout_id: Optional[str] = None,
+    limit: int = Query(default=50, ge=1, le=200),
+):
+    """List workout exits for a user."""
+    try:
+        db = get_supabase_db()
+        rows = db.list_workout_exits(user_id=user_id, workout_id=workout_id, limit=limit)
+        logger.info(f"Listed {len(rows)} workout exits for user {user_id}")
+        return [row_to_workout_exit(row) for row in rows]
+
+    except Exception as e:
+        logger.error(f"Error listing workout exits: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ Drink Intake Tracking ============
+
+def row_to_drink_intake(row: dict) -> DrinkIntake:
+    """Convert a Supabase row dict to DrinkIntake model."""
+    return DrinkIntake(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        workout_log_id=row.get("workout_log_id"),
+        amount_ml=row.get("amount_ml", 0),
+        drink_type=row.get("drink_type", "water"),
+        notes=row.get("notes"),
+        logged_at=row.get("logged_at"),
+    )
+
+
+@router.post("/drink-intake", response_model=DrinkIntake)
+async def create_drink_intake(data: DrinkIntakeCreate):
+    """Log drink intake during workout."""
+    try:
+        db = get_supabase_db()
+
+        intake_data = {
+            "user_id": data.user_id,
+            "workout_log_id": data.workout_log_id,
+            "amount_ml": data.amount_ml,
+            "drink_type": data.drink_type,
+            "notes": data.notes,
+        }
+
+        created = db.create_drink_intake(intake_data)
+        logger.info(f"Drink intake created: id={created['id']}, user_id={data.user_id}, amount={data.amount_ml}ml")
+        return row_to_drink_intake(created)
+
+    except Exception as e:
+        logger.error(f"Error creating drink intake: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/drink-intake", response_model=List[DrinkIntake])
+async def list_drink_intakes(
+    user_id: str,
+    workout_log_id: Optional[str] = None,
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    """List drink intakes for a user."""
+    try:
+        db = get_supabase_db()
+        rows = db.list_drink_intakes(user_id=user_id, workout_log_id=workout_log_id, limit=limit)
+        logger.info(f"Listed {len(rows)} drink intakes for user {user_id}")
+        return [row_to_drink_intake(row) for row in rows]
+
+    except Exception as e:
+        logger.error(f"Error listing drink intakes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class DrinkIntakeSummary(BaseModel):
+    """Summary of drink intake for a workout."""
+    workout_log_id: str
+    total_ml: int
+    intake_count: int
+
+
+@router.get("/drink-intake/summary/{workout_log_id}", response_model=DrinkIntakeSummary)
+async def get_drink_intake_summary(workout_log_id: str):
+    """Get drink intake summary for a workout."""
+    try:
+        db = get_supabase_db()
+        total = db.get_workout_total_drink_intake(workout_log_id)
+        intakes = db.list_drink_intakes(user_id="", workout_log_id=workout_log_id, limit=500)
+        logger.info(f"Drink intake summary for workout {workout_log_id}: {total}ml")
+        return DrinkIntakeSummary(
+            workout_log_id=workout_log_id,
+            total_ml=total,
+            intake_count=len(intakes),
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting drink intake summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ Rest Interval Tracking ============
+
+def row_to_rest_interval(row: dict) -> RestInterval:
+    """Convert a Supabase row dict to RestInterval model."""
+    return RestInterval(
+        id=row.get("id"),
+        user_id=row.get("user_id"),
+        workout_log_id=row.get("workout_log_id"),
+        exercise_index=row.get("exercise_index", 0),
+        exercise_name=row.get("exercise_name", ""),
+        set_number=row.get("set_number"),
+        rest_duration_seconds=row.get("rest_duration_seconds", 0),
+        prescribed_rest_seconds=row.get("prescribed_rest_seconds"),
+        rest_type=row.get("rest_type", "between_sets"),
+        notes=row.get("notes"),
+        logged_at=row.get("logged_at"),
+    )
+
+
+@router.post("/rest-intervals", response_model=RestInterval)
+async def create_rest_interval(data: RestIntervalCreate):
+    """Log rest interval during workout."""
+    try:
+        db = get_supabase_db()
+
+        interval_data = {
+            "user_id": data.user_id,
+            "workout_log_id": data.workout_log_id,
+            "exercise_index": data.exercise_index,
+            "exercise_name": data.exercise_name,
+            "set_number": data.set_number,
+            "rest_duration_seconds": data.rest_duration_seconds,
+            "prescribed_rest_seconds": data.prescribed_rest_seconds,
+            "rest_type": data.rest_type,
+            "notes": data.notes,
+        }
+
+        created = db.create_rest_interval(interval_data)
+        logger.info(f"Rest interval created: id={created['id']}, user_id={data.user_id}, duration={data.rest_duration_seconds}s")
+        return row_to_rest_interval(created)
+
+    except Exception as e:
+        logger.error(f"Error creating rest interval: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/rest-intervals", response_model=List[RestInterval])
+async def list_rest_intervals(
+    user_id: str,
+    workout_log_id: Optional[str] = None,
+    limit: int = Query(default=200, ge=1, le=500),
+):
+    """List rest intervals for a user."""
+    try:
+        db = get_supabase_db()
+        rows = db.list_rest_intervals(user_id=user_id, workout_log_id=workout_log_id, limit=limit)
+        logger.info(f"Listed {len(rows)} rest intervals for user {user_id}")
+        return [row_to_rest_interval(row) for row in rows]
+
+    except Exception as e:
+        logger.error(f"Error listing rest intervals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class RestIntervalStats(BaseModel):
+    """Statistics for rest intervals in a workout."""
+    workout_log_id: str
+    total_rest_seconds: int
+    avg_rest_seconds: float
+    interval_count: int
+    between_sets_count: int
+    between_exercises_count: int
+
+
+@router.get("/rest-intervals/stats/{workout_log_id}", response_model=RestIntervalStats)
+async def get_rest_interval_stats(workout_log_id: str):
+    """Get rest interval statistics for a workout."""
+    try:
+        db = get_supabase_db()
+        stats = db.get_workout_rest_stats(workout_log_id)
+        logger.info(f"Rest interval stats for workout {workout_log_id}: {stats['interval_count']} intervals")
+        return RestIntervalStats(
+            workout_log_id=workout_log_id,
+            **stats,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting rest interval stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))

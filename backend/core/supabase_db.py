@@ -951,6 +951,122 @@ class SupabaseDB:
         )
         return result.data or []
 
+    # ==================== WORKOUT EXITS ====================
+
+    def create_workout_exit(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a workout exit log entry."""
+        result = self.client.table("workout_exits").insert(data).execute()
+        return result.data[0] if result.data else None
+
+    def list_workout_exits(
+        self, user_id: str, workout_id: Optional[str] = None, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List workout exits for a user."""
+        query = self.client.table("workout_exits").select("*").eq("user_id", user_id)
+        if workout_id:
+            query = query.eq("workout_id", workout_id)
+        result = query.order("exited_at", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def delete_workout_exits_by_user(self, user_id: str) -> bool:
+        """Delete all workout exits for a user."""
+        self.client.table("workout_exits").delete().eq("user_id", user_id).execute()
+        return True
+
+    # ==================== DRINK INTAKE ====================
+
+    def create_drink_intake(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a drink intake log entry."""
+        result = self.client.table("drink_intake_logs").insert(data).execute()
+        return result.data[0] if result.data else None
+
+    def list_drink_intakes(
+        self, user_id: str, workout_log_id: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """List drink intakes for a user."""
+        query = self.client.table("drink_intake_logs").select("*").eq("user_id", user_id)
+        if workout_log_id:
+            query = query.eq("workout_log_id", workout_log_id)
+        result = query.order("logged_at", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def get_workout_total_drink_intake(self, workout_log_id: str) -> int:
+        """Get total drink intake for a workout in ml."""
+        result = (
+            self.client.table("drink_intake_logs")
+            .select("amount_ml")
+            .eq("workout_log_id", workout_log_id)
+            .execute()
+        )
+        return sum(row.get("amount_ml", 0) for row in (result.data or []))
+
+    def delete_drink_intakes_by_workout_log(self, workout_log_id: str) -> bool:
+        """Delete all drink intakes for a workout log."""
+        self.client.table("drink_intake_logs").delete().eq("workout_log_id", workout_log_id).execute()
+        return True
+
+    def delete_drink_intakes_by_user(self, user_id: str) -> bool:
+        """Delete all drink intakes for a user."""
+        self.client.table("drink_intake_logs").delete().eq("user_id", user_id).execute()
+        return True
+
+    # ==================== REST INTERVALS ====================
+
+    def create_rest_interval(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a rest interval log entry."""
+        result = self.client.table("rest_intervals").insert(data).execute()
+        return result.data[0] if result.data else None
+
+    def list_rest_intervals(
+        self, user_id: str, workout_log_id: Optional[str] = None, limit: int = 200
+    ) -> List[Dict[str, Any]]:
+        """List rest intervals for a user."""
+        query = self.client.table("rest_intervals").select("*").eq("user_id", user_id)
+        if workout_log_id:
+            query = query.eq("workout_log_id", workout_log_id)
+        result = query.order("logged_at", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def get_workout_rest_stats(self, workout_log_id: str) -> Dict[str, Any]:
+        """Get rest interval statistics for a workout."""
+        result = (
+            self.client.table("rest_intervals")
+            .select("rest_duration_seconds, rest_type")
+            .eq("workout_log_id", workout_log_id)
+            .execute()
+        )
+        intervals = result.data or []
+        if not intervals:
+            return {
+                "total_rest_seconds": 0,
+                "avg_rest_seconds": 0,
+                "interval_count": 0,
+                "between_sets_count": 0,
+                "between_exercises_count": 0,
+            }
+
+        total = sum(i.get("rest_duration_seconds", 0) for i in intervals)
+        between_sets = sum(1 for i in intervals if i.get("rest_type") == "between_sets")
+        between_exercises = sum(1 for i in intervals if i.get("rest_type") == "between_exercises")
+
+        return {
+            "total_rest_seconds": total,
+            "avg_rest_seconds": total / len(intervals) if intervals else 0,
+            "interval_count": len(intervals),
+            "between_sets_count": between_sets,
+            "between_exercises_count": between_exercises,
+        }
+
+    def delete_rest_intervals_by_workout_log(self, workout_log_id: str) -> bool:
+        """Delete all rest intervals for a workout log."""
+        self.client.table("rest_intervals").delete().eq("workout_log_id", workout_log_id).execute()
+        return True
+
+    def delete_rest_intervals_by_user(self, user_id: str) -> bool:
+        """Delete all rest intervals for a user."""
+        self.client.table("rest_intervals").delete().eq("user_id", user_id).execute()
+        return True
+
     # ==================== FULL USER RESET ====================
 
     def full_user_reset(self, user_id: str) -> bool:

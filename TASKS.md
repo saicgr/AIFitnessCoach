@@ -27,9 +27,14 @@ The prompt must fulfill the following strategic criteria:
 	2.  **Fitness Focus:** The subject must be a highly fit individual performing a strength, power, or functional training movement relevant to the character's archetype.
 	3.  **Vibe Translation:** Use the character's core color palette (e.g., red/blue for Superman) and their defining physical traits (e.g., speed, strength, durability) to create the mood.
 	4.  **Program Naming:** Create a safe, high-value program name (e.g., "The Velocity Protocol") and a fitness-focused tagline to be overlayed on the final image.
+8. Data Import Export
+9. Rest is defaulted to 90s need to change it
+10. Planks and some wokrouts do not have sets and reps
+
 
 NEED
 0. AI Onboarding Review Screen. 
+0.05. Achievement Badges, achievement unlocks after workout completion
 0.1. Suggest workouts based on Age as well
 1. Send email to the signed up email from AI coach to workout and current workout
 2. Send app notifications from coach to workout
@@ -37,7 +42,6 @@ NEED
 4. Need image input to read images from my fitness pal. 
 6. program_variants needs more populated Variants
 7. Create a restore table to record deleted data of user and help restoring data.
-8. Data Import Export
 9. Browser notifications?
 11. Need badges like gravl to show accomplishments
 12. AI suggesting workout programs and exercises after hitting add workout -- suggesting agent
@@ -51,6 +55,7 @@ The final response must include the detailed image prompt, the generated image, 
 19. /gymhelp reddit review and ideas for app
 20. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
 21. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
+22. can the dimensions be dynamic? height , padding, size etc?
 
 
 FUTURE

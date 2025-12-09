@@ -113,7 +113,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: AppColors.glassSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
       ),
@@ -214,10 +214,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                     color: AppColors.cyan,
                   ),
                 ),
-                if (widget.exercise.targetMuscles != null &&
-                    widget.exercise.targetMuscles!.isNotEmpty)
+                if (widget.exercise.muscleGroup != null &&
+                    widget.exercise.muscleGroup!.isNotEmpty)
                   Text(
-                    widget.exercise.targetMuscles!.join(', '),
+                    widget.exercise.muscleGroup!,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textMuted.withAlpha(180),

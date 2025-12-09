@@ -361,17 +361,23 @@ class WorkoutRepository {
     required String userId,
     required String setsJson,
     required int totalTimeSeconds,
+    String? metadata,
   }) async {
     try {
       debugPrint('🔍 [Workout] Creating workout log for workout: $workoutId');
+      final data = {
+        'workout_id': workoutId,
+        'user_id': userId,
+        'sets_json': setsJson,
+        'total_time_seconds': totalTimeSeconds,
+      };
+      // Add metadata if provided
+      if (metadata != null) {
+        data['metadata'] = metadata;
+      }
       final response = await _apiClient.post(
-        '/performance-db/workout-logs',
-        data: {
-          'workout_id': workoutId,
-          'user_id': userId,
-          'sets_json': setsJson,
-          'total_time_seconds': totalTimeSeconds,
-        },
+        '/performance/workout-logs',
+        data: data,
       );
       if (response.statusCode == 200) {
         debugPrint('✅ [Workout] Workout log created successfully');
@@ -398,7 +404,7 @@ class WorkoutRepository {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber for $exerciseName');
       final response = await _apiClient.post(
-        '/performance-db/logs',
+        '/performance/logs',
         data: {
           'workout_log_id': workoutLogId,
           'user_id': userId,
@@ -419,6 +425,253 @@ class WorkoutRepository {
     } catch (e) {
       debugPrint('❌ [Workout] Error logging set performance: $e');
       return null;
+    }
+  }
+
+  /// Log workout exit/quit with reason and progress
+  Future<Map<String, dynamic>?> logWorkoutExit({
+    required String workoutId,
+    required String userId,
+    required String exitReason,
+    String? exitNotes,
+    int exercisesCompleted = 0,
+    int totalExercises = 0,
+    int setsCompleted = 0,
+    int timeSpentSeconds = 0,
+    double progressPercentage = 0.0,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Logging workout exit: $workoutId, reason: $exitReason');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/exit',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          'exit_reason': exitReason,
+          'exit_notes': exitNotes,
+          'exercises_completed': exercisesCompleted,
+          'total_exercises': totalExercises,
+          'sets_completed': setsCompleted,
+          'time_spent_seconds': timeSpentSeconds,
+          'progress_percentage': progressPercentage,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout exit logged successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error logging workout exit: $e');
+      return null;
+    }
+  }
+
+  /// Log drink intake during workout
+  Future<Map<String, dynamic>?> logDrinkIntake({
+    required String workoutId,
+    required String userId,
+    required int amountMl,
+    String drinkType = 'water',
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Logging drink intake: ${amountMl}ml');
+      final response = await _apiClient.post(
+        '/performance/drink-intake',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          'amount_ml': amountMl,
+          'drink_type': drinkType,
+          'logged_at': DateTime.now().toIso8601String(),
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Drink intake logged successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error logging drink intake: $e');
+      return null;
+    }
+  }
+
+  /// Log rest interval between sets/exercises
+  Future<Map<String, dynamic>?> logRestInterval({
+    required String workoutLogId,
+    required String userId,
+    required int restSeconds,
+    String? exerciseId,
+    int? setNumber,
+    String restType = 'between_sets', // 'between_sets' or 'between_exercises'
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Logging rest interval: ${restSeconds}s ($restType)');
+      final response = await _apiClient.post(
+        '/performance/rest-intervals',
+        data: {
+          'workout_log_id': workoutLogId,
+          'user_id': userId,
+          'rest_seconds': restSeconds,
+          'exercise_id': exerciseId,
+          'set_number': setNumber,
+          'rest_type': restType,
+          'logged_at': DateTime.now().toIso8601String(),
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Rest interval logged successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error logging rest interval: $e');
+      return null;
+    }
+  }
+
+  /// Get AI Coach feedback for completed workout
+  /// Uses RAG to retrieve past workout history and generate personalized feedback
+  Future<String?> getAICoachFeedback({
+    required String workoutLogId,
+    required String workoutId,
+    required String userId,
+    required String workoutName,
+    required String workoutType,
+    required List<Map<String, dynamic>> exercises,
+    required int totalTimeSeconds,
+    int totalRestSeconds = 0,
+    double avgRestSeconds = 0.0,
+    int caloriesBurned = 0,
+    int totalSets = 0,
+    int totalReps = 0,
+    double totalVolumeKg = 0.0,
+  }) async {
+    try {
+      debugPrint('🤖 [Workout] Requesting AI Coach feedback for: $workoutName');
+
+      // Format exercises for the API
+      final exercisesList = exercises.map((ex) => {
+        'name': ex['name'] ?? ex['exercise_name'] ?? 'Unknown',
+        'sets': ex['sets'] ?? ex['total_sets'] ?? 1,
+        'reps': ex['reps'] ?? ex['total_reps'] ?? 10,
+        'weight_kg': (ex['weight_kg'] ?? ex['weight'] ?? 0.0).toDouble(),
+      }).toList();
+
+      final response = await _apiClient.post(
+        '/feedback/ai-coach',
+        data: {
+          'user_id': userId,
+          'workout_log_id': workoutLogId,
+          'workout_id': workoutId,
+          'workout_name': workoutName,
+          'workout_type': workoutType,
+          'exercises': exercisesList,
+          'total_time_seconds': totalTimeSeconds,
+          'total_rest_seconds': totalRestSeconds,
+          'avg_rest_seconds': avgRestSeconds,
+          'calories_burned': caloriesBurned,
+          'total_sets': totalSets,
+          'total_reps': totalReps,
+          'total_volume_kg': totalVolumeKg,
+        },
+        options: Options(
+          receiveTimeout: const Duration(seconds: 60), // AI generation can take time
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final feedback = data['feedback'] as String?;
+        debugPrint('✅ [Workout] AI Coach feedback received: ${feedback?.substring(0, feedback.length > 50 ? 50 : feedback.length)}...');
+        return feedback;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting AI Coach feedback: $e');
+      return null;
+    }
+  }
+
+  /// Get AI Coach workout history from RAG
+  Future<List<Map<String, dynamic>>> getAICoachWorkoutHistory({
+    required String userId,
+    int limit = 10,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching AI Coach workout history for user: $userId');
+      final response = await _apiClient.get(
+        '/feedback/ai-coach/history/$userId',
+        queryParameters: {'limit': limit},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final sessions = data['sessions'] as List? ?? [];
+        debugPrint('✅ [Workout] Got ${sessions.length} workout sessions from AI Coach history');
+        return List<Map<String, dynamic>>.from(sessions);
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching AI Coach history: $e');
+      return [];
+    }
+  }
+
+  /// Get exercise weight progression from RAG
+  Future<List<Map<String, dynamic>>> getExerciseProgress({
+    required String userId,
+    required String exerciseName,
+    int limit = 10,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching exercise progress for: $exerciseName');
+      final response = await _apiClient.get(
+        '/feedback/ai-coach/exercise-progress/$userId/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: {'limit': limit},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final history = data['history'] as List? ?? [];
+        debugPrint('✅ [Workout] Got ${history.length} data points for $exerciseName');
+        return List<Map<String, dynamic>>.from(history);
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching exercise progress: $e');
+      return [];
+    }
+  }
+
+  /// Get user personal records and achievements
+  Future<Map<String, dynamic>> getUserAchievements({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('🏆 [Workout] Fetching achievements for user: $userId');
+      final response = await _apiClient.get(
+        '/feedback/ai-coach/achievements/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Got achievements data');
+        return data;
+      }
+
+      return {};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching achievements: $e');
+      return {};
     }
   }
 }
