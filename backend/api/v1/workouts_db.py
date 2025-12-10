@@ -2155,6 +2155,149 @@ async def get_workout_exits(workout_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/check-and-regenerate/{user_id}")
+async def check_and_regenerate_workouts(
+    user_id: str,
+    background_tasks: BackgroundTasks,
+    threshold_days: int = Query(default=3, description="Generate if less than this many days of workouts remain")
+):
+    """
+    Check if user has enough upcoming workouts and auto-regenerate if running low.
+
+    This endpoint is designed to be called on home screen load to ensure users
+    always have upcoming workouts scheduled. It:
+    1. Fetches user's workout preferences from their profile
+    2. Checks how many upcoming (incomplete) workouts exist
+    3. If less than threshold_days worth of workouts remain, generates next 2 weeks
+
+    Returns immediately - generation happens in background if needed.
+    """
+    logger.info(f"🔍 Checking workout status for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+        job_queue = get_job_queue_service()
+
+        # Get user data including preferences
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get user preferences for workout days
+        preferences = parse_json_field(user.get("preferences"), {})
+        selected_days = preferences.get("workout_days", [0, 2, 4])  # Default Mon/Wed/Fri
+        duration_minutes = preferences.get("workout_duration", 45)
+
+        # If no workout days configured, use defaults
+        if not selected_days or not isinstance(selected_days, list):
+            selected_days = [0, 2, 4]
+            logger.warning(f"User {user_id} has no workout_days configured, using defaults: {selected_days}")
+
+        # Get upcoming incomplete workouts
+        today = datetime.now().date()
+        future_date = today + timedelta(days=30)  # Look ahead 30 days
+
+        workouts = db.get_workouts_by_date_range(
+            user_id,
+            str(today),
+            str(future_date)
+        )
+
+        # Filter to only incomplete, future workouts
+        upcoming_workouts = [
+            w for w in workouts
+            if not w.get("is_completed", False)
+            and w.get("scheduled_date")
+        ]
+
+        # Count unique upcoming workout days
+        upcoming_dates = set()
+        for w in upcoming_workouts:
+            sched_date = w.get("scheduled_date", "")
+            if sched_date:
+                date_str = str(sched_date)[:10]
+                upcoming_dates.add(date_str)
+
+        upcoming_count = len(upcoming_dates)
+        logger.info(f"User {user_id} has {upcoming_count} upcoming workout days (threshold: {threshold_days})")
+
+        # Check if generation is needed
+        if upcoming_count >= threshold_days:
+            return {
+                "success": True,
+                "needs_generation": False,
+                "upcoming_workout_days": upcoming_count,
+                "message": f"User has sufficient workouts ({upcoming_count} days)"
+            }
+
+        # Check if already generating
+        existing_job = job_queue.get_user_pending_job(user_id)
+        if existing_job and existing_job.get("status") in ["pending", "in_progress"]:
+            return {
+                "success": True,
+                "needs_generation": True,
+                "upcoming_workout_days": upcoming_count,
+                "message": "Generation already in progress",
+                "status": existing_job.get("status"),
+                "job_id": existing_job.get("id")
+            }
+
+        # Need to generate more workouts
+        logger.info(f"⚠️ User {user_id} needs workout generation: only {upcoming_count} days available")
+
+        # Find the last workout date to start generation from
+        if upcoming_workouts:
+            # Get the latest scheduled date and start from the day after
+            latest_date = max(
+                datetime.fromisoformat(str(w.get("scheduled_date"))[:10])
+                for w in upcoming_workouts
+            )
+            start_date = (latest_date + timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            # No upcoming workouts, start from today
+            start_date = str(today)
+
+        # Create a new job in the database
+        job_id = job_queue.create_job(
+            user_id=user_id,
+            month_start_date=start_date,
+            duration_minutes=duration_minutes,
+            selected_days=selected_days,
+            weeks=2  # Generate 2 weeks at a time
+        )
+
+        # Schedule the background task
+        background_tasks.add_task(
+            _run_background_generation,
+            job_id,
+            user_id,
+            start_date,
+            duration_minutes,
+            selected_days,
+            2  # 2 weeks
+        )
+
+        logger.info(f"✅ Scheduled workout generation for user {user_id} starting from {start_date}")
+
+        return {
+            "success": True,
+            "needs_generation": True,
+            "upcoming_workout_days": upcoming_count,
+            "message": "Workout generation scheduled",
+            "status": "pending",
+            "job_id": job_id,
+            "start_date": start_date,
+            "weeks": 2,
+            "selected_days": selected_days
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to check/regenerate workouts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/user/{user_id}/exit-stats")
 async def get_user_exit_stats(user_id: str):
     """Get exit statistics for a user - helpful for understanding workout completion patterns."""

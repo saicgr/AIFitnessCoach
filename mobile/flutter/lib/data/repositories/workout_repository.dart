@@ -174,6 +174,35 @@ class WorkoutRepository {
     }
   }
 
+  /// Check if user needs more workouts and auto-generate if running low
+  /// Returns a map with generation status
+  Future<Map<String, dynamic>> checkAndRegenerateWorkouts(String userId) async {
+    try {
+      debugPrint('🔍 [Workout] Checking workout status for user: $userId');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/check-and-regenerate/$userId',
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Check result: ${data['message']}');
+        if (data['needs_generation'] == true) {
+          debugPrint('🔄 [Workout] Generation scheduled: job_id=${data['job_id']}');
+        }
+        return data;
+      }
+      return {'success': false, 'message': 'Failed to check workout status'};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error checking workout status: $e');
+      // Don't rethrow - this is a background check that shouldn't block the UI
+      return {'success': false, 'message': 'Error: $e'};
+    }
+  }
+
   /// Delete a workout
   Future<bool> deleteWorkout(String workoutId) async {
     try {
@@ -718,6 +747,27 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     if (userId != null) {
       await fetchWorkouts(userId);
     }
+  }
+
+  /// Check if user needs more workouts and trigger generation if needed
+  /// This should be called on home screen load to ensure continuous workout availability
+  Future<Map<String, dynamic>> checkAndRegenerateIfNeeded() async {
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      return {'success': false, 'message': 'No user ID'};
+    }
+
+    final result = await _repository.checkAndRegenerateWorkouts(userId);
+
+    // If generation was triggered, set up a delayed refresh to fetch new workouts
+    if (result['needs_generation'] == true && result['success'] == true) {
+      // Refresh workouts after a delay to allow background generation to complete
+      Future.delayed(const Duration(seconds: 30), () async {
+        await refresh();
+      });
+    }
+
+    return result;
   }
 
   /// Get next workout (closest upcoming incomplete)

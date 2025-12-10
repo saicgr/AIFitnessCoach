@@ -19,13 +19,47 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isCheckingWorkouts = false;
+
   @override
   void initState() {
     super.initState();
-    // Fetch workouts on screen load
+    // Fetch workouts and check if regeneration needed on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workoutsProvider.notifier).refresh();
+      _initializeWorkouts();
     });
+  }
+
+  Future<void> _initializeWorkouts() async {
+    final notifier = ref.read(workoutsProvider.notifier);
+
+    // First refresh to get current workouts
+    await notifier.refresh();
+
+    // Then check if we need to generate more (runs in background)
+    if (!_isCheckingWorkouts) {
+      setState(() => _isCheckingWorkouts = true);
+      try {
+        final result = await notifier.checkAndRegenerateIfNeeded();
+        debugPrint('🔍 [HomeScreen] Workout check result: ${result['message']}');
+
+        // If generation was triggered, show a subtle indicator
+        if (result['needs_generation'] == true && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Generating your upcoming workouts...'),
+              backgroundColor: AppColors.elevated,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isCheckingWorkouts = false);
+        }
+      }
+    }
   }
 
   @override
@@ -115,9 +149,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           workout: nextWorkout,
                           onStart: () => context.push('/workout/${nextWorkout.id}'),
                         )
-                      : _EmptyWorkoutCard(
-                          onGenerate: () => context.go('/onboarding'),
-                        ),
+                      : _isCheckingWorkouts
+                          ? _GeneratingWorkoutsCard()
+                          : _EmptyWorkoutCard(
+                              onGenerate: () async {
+                                // Try to auto-generate first
+                                setState(() => _isCheckingWorkouts = true);
+                                final result = await workoutsNotifier.checkAndRegenerateIfNeeded();
+                                if (mounted) {
+                                  setState(() => _isCheckingWorkouts = false);
+                                  if (result['needs_generation'] != true) {
+                                    // No generation triggered, go to onboarding
+                                    context.go('/onboarding');
+                                  } else {
+                                    // Generation started, show message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Generating your workouts...'),
+                                        backgroundColor: AppColors.elevated,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
                 ),
               ),
 
@@ -802,6 +858,52 @@ class _EmptyWorkoutCard extends StatelessWidget {
             ElevatedButton(
               onPressed: onGenerate,
               child: const Text('Get Started'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Generating Workouts Card (shown during auto-regeneration)
+// ─────────────────────────────────────────────────────────────────
+
+class _GeneratingWorkoutsCard extends StatelessWidget {
+  const _GeneratingWorkoutsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.elevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Generating your workouts...',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Your personalized workout plan is being created',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
             ),
           ],
         ),
