@@ -20,8 +20,12 @@ class ProfileScreen extends ConsumerWidget {
 
     final completedCount = ref.read(workoutsProvider.notifier).completedCount;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      key: const ValueKey('profile_scaffold'),
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -102,47 +106,57 @@ class ProfileScreen extends ConsumerWidget {
               _SectionHeader(title: 'EQUIPMENT'),
               const SizedBox(height: 12),
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.elevated,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: (user?.equipmentList ?? ['Dumbbells', 'Bodyweight']).map((eq) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.glassSurface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            size: 14,
-                            color: AppColors.success,
+              Builder(
+                builder: (context) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+                  final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+                  final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+                  final success = isDark ? AppColors.success : AppColorsLight.success;
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: (user?.equipmentList ?? ['Dumbbells', 'Bodyweight']).map((eq) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            eq,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textPrimary,
-                            ),
+                          decoration: BoxDecoration(
+                            color: glassSurface,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 14,
+                                color: success,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                eq,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                },
               ).animate().fadeIn(delay: 200.ms),
 
               const SizedBox(height: 32),
@@ -486,10 +500,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -507,9 +525,9 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textMuted,
+              color: textMuted,
             ),
           ),
         ],
@@ -529,14 +547,17 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: AppColors.textMuted,
+          color: textMuted,
           letterSpacing: 1.5,
         ),
       ),
@@ -555,9 +576,15 @@ class _ProfileInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -574,12 +601,12 @@ class _ProfileInfoCard extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.2),
+                        color: cyan.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         item.icon,
-                        color: AppColors.cyan,
+                        color: cyan,
                         size: 20,
                       ),
                     ),
@@ -590,9 +617,9 @@ class _ProfileInfoCard extends StatelessWidget {
                         children: [
                           Text(
                             item.label,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textMuted,
+                              color: textMuted,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -610,9 +637,9 @@ class _ProfileInfoCard extends StatelessWidget {
                 ),
               ),
               if (index < items.length - 1)
-                const Divider(
+                Divider(
                   height: 1,
-                  color: AppColors.cardBorder,
+                  color: cardBorder,
                   indent: 68,
                 ),
             ],
@@ -670,12 +697,15 @@ class _QuickAccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -724,12 +754,17 @@ class _SettingsCardWithRef extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
     final isDark = widgetRef.watch(themeModeProvider) == ThemeMode.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    // Wrap in Material with unique key to avoid GlobalKey conflicts when theme changes
+    return Material(
+      key: const ValueKey('settings_card_material'),
+      color: elevatedColor,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         children: items.asMap().entries.map((entry) {
           final index = entry.key;
@@ -749,7 +784,7 @@ class _SettingsCardWithRef extends ConsumerWidget {
                     children: [
                       Icon(
                         item.icon,
-                        color: AppColors.textSecondary,
+                        color: textSecondary,
                         size: 22,
                       ),
                       const SizedBox(width: 12),
@@ -772,18 +807,18 @@ class _SettingsCardWithRef extends ConsumerWidget {
                       else if (item.trailing != null)
                         item.trailing!
                       else if (item.onTap != null)
-                        const Icon(
+                        Icon(
                           Icons.chevron_right,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                         ),
                     ],
                   ),
                 ),
               ),
               if (index < items.length - 1)
-                const Divider(
+                Divider(
                   height: 1,
-                  color: AppColors.cardBorder,
+                  color: cardBorder,
                   indent: 50,
                 ),
             ],

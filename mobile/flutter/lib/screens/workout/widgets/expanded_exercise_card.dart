@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
@@ -114,28 +115,37 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     final repRange = _getRepRange();
     final restSeconds = exercise.restSeconds ?? 90;
 
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.cardBorder.withOpacity(0.3),
+            color: cardBorder.withOpacity(0.3),
           ),
         ),
         child: Material(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header: Image + Exercise Name + Actions (TAPPABLE)
-            _buildHeader(context, exercise),
+            _buildHeader(context, exercise, glassSurface, textMuted),
 
             // Collapsed summary - shows sets/reps when collapsed
             if (!_isExpanded)
-              _buildCollapsedSummary(totalSets, repRange, restSeconds),
+              _buildCollapsedSummary(totalSets, repRange, restSeconds, glassSurface, cardBorder),
 
             // Expandable section
             AnimatedCrossFade(
@@ -147,21 +157,21 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 children: [
                   // Divider
                   Divider(
-                    color: AppColors.cardBorder.withOpacity(0.3),
+                    color: cardBorder.withOpacity(0.3),
                     height: 1,
                   ),
 
                   // Rest Timer Row
-                  _buildRestTimerRow(restSeconds),
+                  _buildRestTimerRow(restSeconds, textSecondary, textMuted),
 
                   // Divider
                   Divider(
-                    color: AppColors.cardBorder.withOpacity(0.3),
+                    color: cardBorder.withOpacity(0.3),
                     height: 1,
                   ),
 
                   // Set Table Header
-                  _buildTableHeader(),
+                  _buildTableHeader(glassSurface, textMuted),
 
                   // Set Rows
                   ...List.generate(warmupSets, (i) => _buildSetRow(
@@ -169,12 +179,22 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     isWarmup: true,
                     weight: null,
                     repRange: repRange,
+                    cardBorder: cardBorder,
+                    glassSurface: glassSurface,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    textSecondary: textSecondary,
                   )),
                   ...List.generate(totalSets, (i) => _buildSetRow(
                     setLabel: '${i + 1}',
                     isWarmup: false,
                     weight: exercise.weight,
                     repRange: repRange,
+                    cardBorder: cardBorder,
+                    glassSurface: glassSurface,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    textSecondary: textSecondary,
                   )),
 
                   const SizedBox(height: 8),
@@ -190,14 +210,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   /// Collapsed summary showing sets x reps when card is collapsed
-  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds) {
+  Widget _buildCollapsedSummary(int totalSets, String repRange, int restSeconds, Color glassSurface, Color cardBorder) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface.withOpacity(0.3),
+        color: glassSurface.withOpacity(0.3),
         border: Border(
           top: BorderSide(
-            color: AppColors.cardBorder.withOpacity(0.3),
+            color: cardBorder.withOpacity(0.3),
           ),
         ),
       ),
@@ -277,7 +297,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, WorkoutExercise exercise) {
+  Widget _buildHeader(BuildContext context, WorkoutExercise exercise, Color glassSurface, Color textMuted) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -293,11 +313,11 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
+                color: glassSurface,
                 borderRadius: BorderRadius.circular(12),
               ),
               clipBehavior: Clip.hardEdge,
-              child: _buildImage(),
+              child: _buildImage(glassSurface, textMuted),
             ),
             const SizedBox(width: 12),
 
@@ -364,7 +384,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(Color glassSurface, Color textMuted) {
     if (_isLoadingImage) {
       return const Center(
         child: SizedBox(
@@ -385,25 +405,25 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         placeholder: (_, __) => const Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan),
         ),
-        errorWidget: (_, __, ___) => _buildPlaceholder(),
+        errorWidget: (_, __, ___) => _buildPlaceholder(glassSurface, textMuted),
       );
     }
 
-    return _buildPlaceholder();
+    return _buildPlaceholder(glassSurface, textMuted);
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(Color glassSurface, Color textMuted) {
     return Container(
-      color: AppColors.glassSurface,
-      child: const Icon(
+      color: glassSurface,
+      child: Icon(
         Icons.fitness_center,
-        color: AppColors.textMuted,
+        color: textMuted,
         size: 28,
       ),
     );
   }
 
-  Widget _buildRestTimerRow(int seconds) {
+  Widget _buildRestTimerRow(int seconds, Color textSecondary, Color textMuted) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -414,11 +434,11 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             color: AppColors.purple,
           ),
           const SizedBox(width: 8),
-          const Text(
+          Text(
             'Rest Timer:',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(width: 8),
@@ -437,7 +457,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.1),
+                color: textMuted.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -448,14 +468,14 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.keyboard_arrow_up,
                     size: 16,
-                    color: AppColors.textMuted,
+                    color: textMuted,
                   ),
                 ],
               ),
@@ -466,13 +486,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     );
   }
 
-  Widget _buildTableHeader() {
+  Widget _buildTableHeader(Color glassSurface, Color textMuted) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface.withOpacity(0.5),
+        color: glassSurface.withOpacity(0.5),
       ),
-      child: const Row(
+      child: Row(
         children: [
           SizedBox(
             width: 50,
@@ -481,7 +501,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textMuted,
+                color: textMuted,
                 letterSpacing: 0.5,
               ),
             ),
@@ -493,7 +513,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -507,7 +527,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -951,13 +971,18 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     required bool isWarmup,
     double? weight,
     required String repRange,
+    required Color cardBorder,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color textSecondary,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppColors.cardBorder.withOpacity(0.2),
+            color: cardBorder.withOpacity(0.2),
           ),
         ),
       ),
@@ -994,7 +1019,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.glassSurface,
+                  color: glassSurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1002,7 +1027,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: weight != null ? AppColors.textPrimary : AppColors.textMuted,
+                    color: weight != null ? textPrimary : textMuted,
                   ),
                 ),
               ),
@@ -1015,9 +1040,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             child: Center(
               child: Text(
                 repRange,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 
@@ -27,9 +28,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final workoutsState = ref.watch(workoutsProvider);
     final selectedWeek = ref.watch(selectedWeekProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: AppColors.pureBlack,
         title: const Text('Schedule'),

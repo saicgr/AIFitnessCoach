@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
 
@@ -156,9 +157,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final warmupSets = 2;
     final repRange = _getRepRange();
     final restSeconds = exercise.restSeconds ?? 120;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
           // App bar with video

@@ -2,14 +2,19 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
+import 'package:flutter/services.dart';
+import '../../widgets/floating_chat/floating_chat_provider.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -91,10 +96,18 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   Widget build(BuildContext context) {
     debugPrint('🔍 [WorkoutDetail] build() - _isLoading: $_isLoading, _isLoadingSummary: $_isLoadingSummary, _workoutSummary: ${_workoutSummary != null}');
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.pureBlack,
-        body: Center(
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: const Center(
           child: CircularProgressIndicator(color: AppColors.cyan),
         ),
       );
@@ -102,9 +115,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
     if (_error != null || _workout == null) {
       return Scaffold(
-        backgroundColor: AppColors.pureBlack,
+        backgroundColor: backgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.pureBlack,
+          backgroundColor: backgroundColor,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -136,7 +149,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final exercises = workout.exercises;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
@@ -178,7 +191,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.glassSurface,
+                          color: glassSurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -236,7 +249,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   ),
                 ],
               ),
-            ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+            ).animate()
+              .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+              .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
           ),
 
           // Equipment Section
@@ -247,12 +262,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'EQUIPMENT NEEDED',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
+                        color: textMuted,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -267,7 +282,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.elevated,
+                            color: elevatedColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -281,9 +296,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                               const SizedBox(width: 6),
                               Text(
                                 equipment,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textPrimary,
+                                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                                 ),
                               ),
                             ],
@@ -293,7 +308,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     ),
                   ],
                 ),
-              ).animate().fadeIn(delay: 150.ms),
+              ).animate()
+              .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+              .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
             ),
           ],
 
@@ -343,12 +360,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     child: const Icon(Icons.fitness_center, color: AppColors.cyan, size: 16),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'EXERCISES',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -406,34 +423,44 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final exercise = exercises[index];
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    print('🎯 [WorkoutDetail] Exercise tapped at index $index: ${exercise.name}');
-                    context.push('/exercise-detail', extra: exercise);
-                  },
-                  child: ExpandedExerciseCard(
-                    key: ValueKey(exercise.id ?? index),
-                    exercise: exercise,
-                    index: index,
-                    workoutId: widget.workoutId,
-                    initiallyExpanded: false, // Collapsed by default
-                    onTap: () {
-                      // Navigation is handled by parent GestureDetector
-                      print('🎯 [Card] onTap called for: ${exercise.name}');
-                      context.push('/exercise-detail', extra: exercise);
-                    },
-                    onSwap: () async {
-                      final updatedWorkout = await showExerciseSwapSheet(
-                        context,
-                        ref,
-                        workoutId: widget.workoutId,
-                        exercise: exercise,
-                      );
-                      if (updatedWorkout != null) {
-                        setState(() => _workout = updatedWorkout);
-                      }
-                    },
+                return AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: AppAnimations.listItem,
+                  child: SlideAnimation(
+                    verticalOffset: 20,
+                    curve: AppAnimations.fastOut,
+                    child: FadeInAnimation(
+                      curve: AppAnimations.fastOut,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          print('🎯 [WorkoutDetail] Exercise tapped at index $index: ${exercise.name}');
+                          context.push('/exercise-detail', extra: exercise);
+                        },
+                        child: ExpandedExerciseCard(
+                          key: ValueKey(exercise.id ?? index),
+                          exercise: exercise,
+                          index: index,
+                          workoutId: widget.workoutId,
+                          initiallyExpanded: false,
+                          onTap: () {
+                            print('🎯 [Card] onTap called for: ${exercise.name}');
+                            context.push('/exercise-detail', extra: exercise);
+                          },
+                          onSwap: () async {
+                            final updatedWorkout = await showExerciseSwapSheet(
+                              context,
+                              ref,
+                              workoutId: widget.workoutId,
+                              exercise: exercise,
+                            );
+                            if (updatedWorkout != null) {
+                              setState(() => _workout = updatedWorkout);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 );
               },
@@ -490,19 +517,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 height: 44,
                 width: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
                   borderRadius: BorderRadius.circular(22),
+                  border: isDark ? null : Border.all(color: cardBorder.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
                   size: 22,
                 ),
               ),
@@ -514,11 +542,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
                   borderRadius: BorderRadius.circular(22),
+                  border: isDark ? null : Border.all(color: cardBorder.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -527,10 +556,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 child: Center(
                   child: Text(
                     workout.name ?? 'Workout',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -546,19 +575,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 height: 44,
                 width: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C1E),
+                  color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
                   borderRadius: BorderRadius.circular(22),
+                  border: isDark ? null : Border.all(color: cardBorder.withOpacity(0.3)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.more_vert_rounded,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
                   size: 22,
                 ),
               ),
@@ -569,30 +599,61 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       ],
       ),
 
-      // Action FABs: AI Chat + Play
-      floatingActionButton: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // AI Chat button
-          FloatingActionButton(
-            heroTag: 'ai_chat',
-            onPressed: () => context.push('/chat'),
-            backgroundColor: AppColors.purple.withOpacity(0.9),
-            foregroundColor: Colors.white,
-            child: const Icon(Icons.auto_awesome, size: 24),
-          ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3),
-          const SizedBox(width: 16),
-          // Play button
-          FloatingActionButton(
-            heroTag: 'start_workout',
-            onPressed: () => context.push('/active-workout', extra: workout),
-            backgroundColor: AppColors.cyan,
-            foregroundColor: AppColors.pureBlack,
-            child: const Icon(Icons.play_arrow_rounded, size: 32),
-          ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // Custom floating buttons: AI + Play
+      floatingActionButton: _buildFloatingButtons(context, ref, workout),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _buildFloatingButtons(BuildContext context, WidgetRef ref, Workout workout) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // AI Coach Button
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            ref.read(floatingChatProvider.notifier).expand();
+          },
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.purple, AppColors.cyan],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cyan.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Play Button (smaller)
+        FloatingActionButton(
+          heroTag: 'start_workout',
+          onPressed: () => context.push('/active-workout', extra: workout),
+          backgroundColor: AppColors.cyan,
+          foregroundColor: AppColors.pureBlack,
+          elevation: 8,
+          child: const Icon(Icons.play_arrow_rounded, size: 28),
+        ),
+      ],
     );
   }
 
@@ -652,6 +713,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   Widget _buildWorkoutSummarySection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     // Try to parse JSON insights
     final insights = _parseInsightsJson(_workoutSummary);
     String? shortPreview;
@@ -709,12 +774,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'AI INSIGHTS',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
+                        color: textMuted,
                         letterSpacing: 1,
                       ),
                     ),
@@ -724,16 +789,16 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         'Generating insights...',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: textSecondary,
                           fontStyle: FontStyle.italic,
                         ),
                       )
                     else if (shortPreview != null)
                       Text(
                         shortPreview,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textPrimary,
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -752,11 +817,19 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
         ),
       ),
-    ).animate().fadeIn(delay: 50.ms).slideY(begin: 0.1);
+    ).animate()
+      .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+      .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate);
   }
 
   /// Show AI insights in a draggable popup modal with formatted sections
   void _showAIInsightsPopup(String summaryJson) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final surfaceColor = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     // Parse JSON insights
     final insights = _parseInsightsJson(summaryJson);
     final headline = insights?['headline'] as String? ?? 'Workout Insights';
@@ -771,9 +844,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         minChildSize: 0.25,
         maxChildSize: 0.7,
         builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -787,7 +860,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.5),
+                      color: textMuted.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -821,20 +894,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         headline,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: AppColors.textMuted),
+                      icon: Icon(Icons.close, color: textMuted),
                     ),
                   ],
                 ),
               ),
               // Divider
               Divider(
-                color: AppColors.cardBorder.withOpacity(0.3),
+                color: cardBorder.withOpacity(0.3),
                 height: 1,
               ),
               // Content - structured sections
@@ -857,9 +930,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       // Fallback for non-JSON or parse error
                       Text(
                         _stripMarkdown(summaryJson),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                           height: 1.6,
                         ),
                       ),
@@ -877,6 +950,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Build a single insight section with icon, colored title, and content
   Widget _buildInsightSection(String icon, String title, String content, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -912,9 +988,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   content,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                     height: 1.4,
                   ),
                 ),
@@ -945,6 +1021,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   Widget _buildTargetedMusclesSection(List<String> muscles) {
     if (muscles.isEmpty) return const SizedBox.shrink();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     // Extract unique short muscle names
     final shortMuscles = muscles
         .map(_shortenMuscleName)
@@ -957,10 +1037,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.cardBorder.withOpacity(0.3),
+            color: cardBorder.withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -1004,7 +1084,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 75.ms).slideY(begin: 0.1);
+    ).animate()
+      .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+      .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate);
   }
 
   /// Build collapsible section header for warmup/stretches
@@ -1016,13 +1098,17 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     required VoidCallback onTap,
     required int itemCount,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: color.withOpacity(0.3),
@@ -1041,10 +1127,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             const SizedBox(width: 12),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
+                color: textMuted,
                 letterSpacing: 1.5,
               ),
             ),
@@ -1067,7 +1153,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
             const Spacer(),
             Icon(
               isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-              color: AppColors.textMuted,
+              color: textMuted,
               size: 20,
             ),
           ],
@@ -1100,11 +1186,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Build warmup/stretch item
   Widget _buildWarmupStretchItem(Map<String, String> item, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: glassSurface,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -1114,9 +1204,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           Expanded(
             child: Text(
               item['name'] ?? '',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: textPrimary,
               ),
             ),
           ),
@@ -1160,11 +1250,15 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -1184,9 +1278,9 @@ class _StatCard extends StatelessWidget {
                   ),
                   TextSpan(
                     text: ' $label',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                     ),
                   ),
                 ],

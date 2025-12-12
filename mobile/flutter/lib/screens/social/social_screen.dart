@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 
 /// Social screen placeholder - Coming Soon
 class SocialScreen extends StatelessWidget {
@@ -7,14 +8,17 @@ class SocialScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             // App Bar
             SliverAppBar(
-              backgroundColor: AppColors.pureBlack,
+              backgroundColor: backgroundColor,
               floating: true,
               title: Text(
                 'Social',
@@ -106,24 +110,28 @@ class SocialScreen extends StatelessWidget {
 
                     // Feature List
                     _buildFeatureItem(
+                      context: context,
                       icon: Icons.group_add_outlined,
                       title: 'Add Friends',
                       description: 'Find and connect with workout buddies',
                     ),
                     const SizedBox(height: 16),
                     _buildFeatureItem(
+                      context: context,
                       icon: Icons.emoji_events_outlined,
                       title: 'Challenges',
                       description: 'Compete in weekly fitness challenges',
                     ),
                     const SizedBox(height: 16),
                     _buildFeatureItem(
+                      context: context,
                       icon: Icons.leaderboard_outlined,
                       title: 'Leaderboards',
                       description: 'See how you rank among friends',
                     ),
                     const SizedBox(height: 16),
                     _buildFeatureItem(
+                      context: context,
                       icon: Icons.share_outlined,
                       title: 'Share Workouts',
                       description: 'Share your achievements with the community',
@@ -142,17 +150,24 @@ class SocialScreen extends StatelessWidget {
   }
 
   Widget _buildFeatureItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String description,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cardBorder.withValues(alpha: 0.3),
+          color: cardBorder.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -161,12 +176,12 @@ class SocialScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.cyan.withValues(alpha: 0.1),
+              color: cyan.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
-              color: AppColors.cyan,
+              color: cyan,
               size: 24,
             ),
           ),
@@ -186,7 +201,7 @@ class SocialScreen extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: textMuted,
                     fontSize: 13,
                   ),
                 ),

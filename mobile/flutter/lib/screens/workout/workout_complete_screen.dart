@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -315,8 +316,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: Stack(
         children: [
           SafeArea(

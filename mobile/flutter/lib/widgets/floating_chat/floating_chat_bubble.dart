@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -171,14 +172,25 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final nearBackgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     return Container(
       height: screenHeight * 0.7,
       decoration: BoxDecoration(
-        color: AppColors.pureBlack,
+        color: backgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.15),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -192,7 +204,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.textMuted,
+              color: textMuted,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -205,9 +217,9 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.cyan, AppColors.purple],
+                      colors: [cyan, purple],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -220,26 +232,28 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'AI Coach',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       Text(
                         _isLoading ? 'Typing...' : 'Online',
                         style: TextStyle(
                           fontSize: 12,
-                          color: _isLoading ? AppColors.orange : AppColors.success,
+                          color: _isLoading
+                              ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                              : (isDark ? AppColors.success : AppColorsLight.success),
                         ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textMuted),
+                  icon: Icon(Icons.close, color: textMuted),
                   onPressed: widget.onClose,
                   tooltip: 'Close',
                 ),
@@ -247,21 +261,23 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             ),
           ),
 
-          const Divider(color: AppColors.cardBorder, height: 1),
+          Divider(color: cardBorder, height: 1),
 
           // Messages
           Expanded(
             child: messagesState.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.cyan),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: cyan),
               ),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+                    Icon(Icons.error_outline,
+                        color: isDark ? AppColors.error : AppColorsLight.error,
+                        size: 40),
                     const SizedBox(height: 12),
-                    const Text('Error loading messages', style: TextStyle(color: AppColors.textMuted)),
+                    Text('Error loading messages', style: TextStyle(color: textMuted)),
                     TextButton(
                       onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
                       child: const Text('Retry'),
@@ -293,9 +309,9 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           Container(
             padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 12),
             decoration: BoxDecoration(
-              color: AppColors.nearBlack,
+              color: nearBackgroundColor,
               border: Border(
-                top: BorderSide(color: AppColors.cardBorder.withValues(alpha: 0.5)),
+                top: BorderSide(color: cardBorder.withValues(alpha: 0.5)),
               ),
             ),
             child: Row(
@@ -308,12 +324,12 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 3,
                     minLines: 1,
-                    style: const TextStyle(fontSize: 14),
+                    style: TextStyle(fontSize: 14, color: textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Ask your AI coach...',
-                      hintStyle: const TextStyle(color: AppColors.textMuted),
+                      hintStyle: TextStyle(color: textMuted),
                       filled: true,
-                      fillColor: AppColors.glassSurface,
+                      fillColor: glassSurface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(20),
                         borderSide: BorderSide.none,
@@ -331,8 +347,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _isLoading
-                          ? [AppColors.textMuted, AppColors.textMuted]
-                          : [AppColors.cyan, AppColors.purple],
+                          ? [textMuted, textMuted]
+                          : [cyan, purple],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -359,6 +375,15 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     final suggestions = [
       'What should I eat before a workout?',
       'How can I improve my form?',
@@ -373,29 +398,29 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           Container(
             width: 60,
             height: 60,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
+                colors: [cyan, purple],
               ),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.smart_toy, size: 30, color: Colors.white),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'How can I help you today?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Ask me anything about fitness',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 24),
@@ -411,21 +436,21 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.elevated,
+                  color: elevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: cardBorder),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.cyan),
+                    Icon(Icons.chat_bubble_outline, size: 16, color: cyan),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         suggestion,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: textPrimary),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.textMuted),
+                    Icon(Icons.arrow_forward_ios, size: 12, color: textMuted),
                   ],
                 ),
               ),
@@ -438,6 +463,11 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.role == 'user';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -448,7 +478,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan : AppColors.elevated,
+          color: isUser ? cyan : elevated,
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomRight: isUser ? const Radius.circular(4) : null,
             bottomLeft: !isUser ? const Radius.circular(4) : null,
@@ -457,7 +487,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
         child: Text(
           message.content,
           style: TextStyle(
-            color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+            color: isUser ? userTextColor : textPrimary,
             fontSize: 14,
             height: 1.4,
           ),
@@ -467,13 +497,17 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   }
 
   Widget _buildTypingIndicator() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(16).copyWith(
             bottomLeft: const Radius.circular(4),
           ),
@@ -485,8 +519,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
               width: 8,
               height: 8,
               margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.textMuted,
+              decoration: BoxDecoration(
+                color: textMuted,
                 shape: BoxShape.circle,
               ),
             )

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -74,12 +77,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final completedCount = workoutsNotifier.completedCount;
     final weeklyProgress = workoutsNotifier.weeklyProgress;
 
+    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: RefreshIndicator(
         onRefresh: () => workoutsNotifier.refresh(),
         color: AppColors.cyan,
-        backgroundColor: AppColors.elevated,
+        backgroundColor: elevatedColor,
         child: SafeArea(
           child: CustomScrollView(
             slivers: [
@@ -128,12 +135,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: _SectionHeader(title: 'TODAY'),
               ),
 
-              // Today's Goal Card
+              // Today's Goal Card with hero entrance animation
               SliverToBoxAdapter(
                 child: _TodaysGoalCard(
                   completed: weeklyProgress.$1,
                   total: weeklyProgress.$2 > 0 ? 1 : 0,
-                ),
+                  isDark: isDark,
+                ).animateHeroEntrance(),
               ),
 
               // Next Workout Card
@@ -182,12 +190,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: _SectionHeader(title: 'YOUR WEEK'),
               ),
 
-              // Weekly Progress
+              // Weekly Progress with slide-rotate animation
               SliverToBoxAdapter(
                 child: _WeeklyProgressCard(
                   completed: weeklyProgress.$1,
                   total: weeklyProgress.$2,
-                ),
+                  isDark: isDark,
+                ).animateSlideRotate(delay: const Duration(milliseconds: 50)),
               ),
 
               // Section: UPCOMING
@@ -205,10 +214,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     (context, index) {
                       if (index >= upcomingWorkouts.length) return null;
                       final workout = upcomingWorkouts[index];
-                      return _UpcomingWorkoutCard(
-                        workout: workout,
-                        onTap: () => context.push('/workout/${workout.id}'),
-                      ).animate().fadeIn(delay: Duration(milliseconds: index * 100));
+                      return AnimationConfiguration.staggeredList(
+                        position: index,
+                        duration: AppAnimations.listItem,
+                        child: SlideAnimation(
+                          verticalOffset: 20,
+                          curve: AppAnimations.fastOut,
+                          child: FadeInAnimation(
+                            curve: AppAnimations.fastOut,
+                            child: _UpcomingWorkoutCard(
+                              workout: workout,
+                              onTap: () => context.push('/workout/${workout.id}'),
+                            ),
+                          ),
+                        ),
+                      );
                     },
                     childCount: upcomingWorkouts.length.clamp(0, 3),
                   ),
@@ -355,19 +375,23 @@ class _StatBadge extends StatelessWidget {
 class _TodaysGoalCard extends StatelessWidget {
   final int completed;
   final int total;
+  final bool isDark;
 
-  const _TodaysGoalCard({required this.completed, required this.total});
+  const _TodaysGoalCard({required this.completed, required this.total, this.isDark = true});
 
   @override
   Widget build(BuildContext context) {
     final isComplete = total > 0 && completed >= total;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
           border: isComplete
               ? Border.all(color: AppColors.success.withOpacity(0.3))
@@ -414,7 +438,7 @@ class _TodaysGoalCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isComplete
                     ? AppColors.success.withOpacity(0.2)
-                    : AppColors.glassSurface,
+                    : glassSurface,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -422,7 +446,7 @@ class _TodaysGoalCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isComplete ? AppColors.success : AppColors.textSecondary,
+                  color: isComplete ? AppColors.success : textSecondary,
                 ),
               ),
             ),
@@ -551,6 +575,11 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     final workout = widget.workout;
     final difficultyColor = AppColors.getDifficultyColor(workout.difficulty ?? 'medium');
     final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
@@ -562,8 +591,8 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.elevated,
-              AppColors.elevated.withOpacity(0.8),
+              elevatedColor,
+              elevatedColor.withOpacity(0.9),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -581,7 +610,7 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                 child: Container(
                   height: 60,
                   decoration: BoxDecoration(
-                    color: AppColors.glassSurface,
+                    color: glassSurface,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
                   ),
                   child: ListView.builder(
@@ -792,22 +821,26 @@ class _StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: glassSurface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
+          Icon(icon, size: 14, color: textSecondary),
           const SizedBox(width: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
         ],
@@ -827,21 +860,26 @@ class _EmptyWorkoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.fitness_center,
               size: 48,
-              color: AppColors.textMuted,
+              color: textMuted,
             ),
             const SizedBox(height: 12),
             Text(
@@ -875,12 +913,15 @@ class _GeneratingWorkoutsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
         ),
@@ -919,21 +960,25 @@ class _GeneratingWorkoutsCard extends StatelessWidget {
 class _WeeklyProgressCard extends StatelessWidget {
   final int completed;
   final int total;
+  final bool isDark;
 
-  const _WeeklyProgressCard({required this.completed, required this.total});
+  const _WeeklyProgressCard({required this.completed, required this.total, this.isDark = true});
 
   @override
   Widget build(BuildContext context) {
     final progress = total > 0 ? completed / total : 0.0;
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final today = DateTime.now().weekday - 1; // 0-indexed
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -961,7 +1006,7 @@ class _WeeklyProgressCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: AppColors.glassSurface,
+                backgroundColor: glassSurface,
                 valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
                 minHeight: 6,
               ),
@@ -983,7 +1028,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                             ? AppColors.cyan.withOpacity(0.2)
                             : isPast
                                 ? AppColors.success.withOpacity(0.2)
-                                : AppColors.glassSurface,
+                                : glassSurface,
                         shape: BoxShape.circle,
                         border: isToday
                             ? Border.all(color: AppColors.cyan, width: 2)
@@ -1003,7 +1048,7 @@ class _WeeklyProgressCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                        color: isToday ? AppColors.cyan : AppColors.textMuted,
+                        color: isToday ? AppColors.cyan : textMuted,
                       ),
                     ),
                   ],
@@ -1029,12 +1074,15 @@ class _UpcomingWorkoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
-        color: AppColors.elevated,
+        color: elevatedColor,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () {
@@ -1098,9 +1146,9 @@ class _UpcomingWorkoutCard extends StatelessWidget {
               ),
 
               // Arrow
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: AppColors.textMuted,
+                color: textMuted,
               ),
             ],
           ),
@@ -1139,12 +1187,15 @@ class _UpcomingWorkoutCard extends StatelessWidget {
 class _LoadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Center(
@@ -1163,12 +1214,15 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.error.withOpacity(0.3)),
         ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
 
@@ -33,9 +34,11 @@ class LibraryScreen extends ConsumerWidget {
     final searchQuery = ref.watch(exerciseSearchProvider);
     final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
     final selectedEquipment = ref.watch(selectedEquipmentProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -55,7 +58,7 @@ class LibraryScreen extends ConsumerWidget {
                   Text(
                     'Browse and learn exercises',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                         ),
                   ),
                 ],
@@ -70,12 +73,20 @@ class LibraryScreen extends ConsumerWidget {
                     ref.read(exerciseSearchProvider.notifier).state = value,
                 decoration: InputDecoration(
                   hintText: 'Search exercises...',
-                  prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                  prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
                   filled: true,
-                  fillColor: AppColors.elevated,
+                  fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+                    borderSide: isDark ? BorderSide.none : BorderSide(color: AppColorsLight.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: isDark ? BorderSide.none : BorderSide(color: AppColorsLight.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -130,16 +141,16 @@ class LibraryScreen extends ConsumerWidget {
             // Exercise list
             Expanded(
               child: exercisesAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.cyan),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
                 ),
                 error: (e, _) => Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
-                        color: AppColors.error,
+                        color: isDark ? AppColors.error : AppColorsLight.error,
                         size: 48,
                       ),
                       const SizedBox(height: 16),
@@ -176,9 +187,9 @@ class LibraryScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.search_off,
-                            color: AppColors.textMuted,
+                            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                             size: 48,
                           ),
                           const SizedBox(height: 16),
@@ -233,6 +244,12 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
@@ -240,10 +257,10 @@ class _FilterChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cyan.withOpacity(0.2) : AppColors.elevated,
+            color: isSelected ? cyan.withOpacity(0.2) : elevated,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+              color: isSelected ? cyan : cardBorder,
             ),
           ),
           child: Text(
@@ -251,7 +268,7 @@ class _FilterChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+              color: isSelected ? cyan : textSecondary,
             ),
           ),
         ),
@@ -271,13 +288,21 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(16),
+          border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
         ),
         child: Row(
           children: [
@@ -286,7 +311,7 @@ class _ExerciseCard extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.glassSurface,
+                color: glassSurface,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(16),
@@ -297,22 +322,22 @@ class _ExerciseCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: exercise.gifUrl!,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
+                      placeholder: (context, url) => Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.cyan,
+                          color: cyan,
                         ),
                       ),
-                      errorWidget: (context, url, error) => const Icon(
+                      errorWidget: (context, url, error) => Icon(
                         Icons.fitness_center,
                         size: 32,
-                        color: AppColors.textMuted,
+                        color: textMuted,
                       ),
                     )
-                  : const Icon(
+                  : Icon(
                       Icons.fitness_center,
                       size: 32,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                     ),
             ),
 
@@ -338,7 +363,7 @@ class _ExerciseCard extends StatelessWidget {
                           _InfoBadge(
                             icon: Icons.accessibility_new,
                             text: exercise.muscleGroup!,
-                            color: AppColors.purple,
+                            color: purple,
                           ),
                           const SizedBox(width: 8),
                         ],
@@ -355,9 +380,9 @@ class _ExerciseCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         exercise.equipment!.take(2).join(', '),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -369,11 +394,11 @@ class _ExerciseCard extends StatelessWidget {
             ),
 
             // Arrow
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
               child: Icon(
                 Icons.chevron_right,
-                color: AppColors.textMuted,
+                color: textMuted,
               ),
             ),
           ],
@@ -441,14 +466,23 @@ class _ExerciseDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBackground = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.nearBlack,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: sheetBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
           controller: scrollController,
@@ -462,7 +496,7 @@ class _ExerciseDetailSheet extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.textMuted,
+                    color: textMuted,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -474,27 +508,28 @@ class _ExerciseDetailSheet extends StatelessWidget {
                 height: 250,
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.elevated,
+                  color: elevated,
                   borderRadius: BorderRadius.circular(16),
+                  border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
                 ),
                 clipBehavior: Clip.hardEdge,
                 child: exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: exercise.gifUrl!,
                         fit: BoxFit.contain,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(color: AppColors.cyan),
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(color: cyan),
                         ),
-                        errorWidget: (context, url, error) => const Icon(
+                        errorWidget: (context, url, error) => Icon(
                           Icons.fitness_center,
                           size: 64,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                         ),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.fitness_center,
                         size: 64,
-                        color: AppColors.textMuted,
+                        color: textMuted,
                       ),
               ),
 
@@ -525,7 +560,7 @@ class _ExerciseDetailSheet extends StatelessWidget {
                         icon: Icons.accessibility_new,
                         label: 'Muscle',
                         value: exercise.muscleGroup!,
-                        color: AppColors.purple,
+                        color: purple,
                       ),
                     if (exercise.difficulty != null)
                       _DetailBadge(
@@ -539,7 +574,7 @@ class _ExerciseDetailSheet extends StatelessWidget {
                         icon: Icons.category,
                         label: 'Type',
                         value: exercise.type!,
-                        color: AppColors.cyan,
+                        color: cyan,
                       ),
                   ],
                 ),
@@ -553,12 +588,12 @@ class _ExerciseDetailSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'EQUIPMENT NEEDED',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -573,23 +608,24 @@ class _ExerciseDetailSheet extends StatelessWidget {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.elevated,
+                              color: elevated,
                               borderRadius: BorderRadius.circular(8),
+                              border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.fitness_center,
                                   size: 14,
-                                  color: AppColors.textSecondary,
+                                  color: textSecondary,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   eq,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: AppColors.textPrimary,
+                                    color: textPrimary,
                                   ),
                                 ),
                               ],
@@ -611,12 +647,12 @@ class _ExerciseDetailSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'INSTRUCTIONS',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -631,16 +667,16 @@ class _ExerciseDetailSheet extends StatelessWidget {
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                  color: AppColors.cyan.withOpacity(0.2),
+                                  color: cyan.withOpacity(0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
                                   child: Text(
                                     '${entry.key + 1}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.cyan,
+                                      color: cyan,
                                     ),
                                   ),
                                 ),
@@ -649,10 +685,10 @@ class _ExerciseDetailSheet extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   entry.value,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     height: 1.5,
-                                    color: AppColors.textPrimary,
+                                    color: textPrimary,
                                   ),
                                 ),
                               ),
@@ -689,11 +725,16 @@ class _DetailBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(8),
+        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -705,9 +746,9 @@ class _DetailBadge extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                 ),
               ),
               Text(

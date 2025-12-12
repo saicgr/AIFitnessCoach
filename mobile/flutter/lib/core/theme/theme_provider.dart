@@ -13,7 +13,7 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const _themeKey = 'theme_mode';
 
-  ThemeModeNotifier() : super(ThemeMode.dark) {
+  ThemeModeNotifier() : super(ThemeMode.light) {
     _loadTheme();
   }
 
@@ -21,7 +21,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final themeString = prefs.getString(_themeKey) ?? 'dark';
+      final themeString = prefs.getString(_themeKey) ?? 'light';
       state = _themeFromString(themeString);
       _updateSystemUI();
     } catch (e) {
@@ -86,7 +86,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       case 'dark':
         return ThemeMode.dark;
       default:
-        return ThemeMode.dark;
+        return ThemeMode.light;
     }
   }
 }
@@ -107,6 +107,7 @@ class AppColorsLight {
   static const Color elevated = Color(0xFFF4F4F5);
   static const Color glassSurface = Color(0xFFE4E4E7);
   static const Color cardBorder = Color(0xFFD4D4D8);
+  static const Color surface = Color(0xFFF9FAFB);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF18181B);

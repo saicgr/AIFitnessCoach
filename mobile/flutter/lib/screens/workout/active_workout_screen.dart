@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
+import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -1739,6 +1741,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         ? _exercises[_currentExerciseIndex + 1]
         : null;
     final progress = (_currentExerciseIndex + 1) / _exercises.length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return WillPopScope(
       onWillPop: () async {
@@ -1746,7 +1750,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         return false;
       },
       child: Scaffold(
-        backgroundColor: AppColors.pureBlack,
+        backgroundColor: backgroundColor,
         body: Stack(
           children: [
             // Full-screen video/image background - tap to hide overlay or pause video

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/theme_provider.dart';
+import 'floating_chat/floating_chat_provider.dart';
 
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
@@ -38,109 +41,167 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = _calculateSelectedIndex(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(
-      color: AppColors.pureBlack,
+      key: const ValueKey('main_shell_material'),
+      color: backgroundColor,
       child: Stack(
         children: [
           // Main content fills the entire screen
           Positioned.fill(
             child: child,
           ),
-          // Floating nav bar at bottom
+          // Floating nav bar at bottom with AI button
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _FloatingNavBar(
+            child: _FloatingNavBarWithAI(
               selectedIndex: selectedIndex,
               onItemTapped: (index) => _onItemTapped(context, index),
             ),
           ),
-          // Note: Floating AI Coach chat bubble is now at app level (GlobalChatBubble in app.dart)
-          // This ensures it appears on ALL screens, not just MainShell screens
         ],
       ),
     );
   }
 }
 
-/// Custom floating navigation bar widget
-class _FloatingNavBar extends StatelessWidget {
+/// Container widget with nav bar and AI button side by side
+class _FloatingNavBarWithAI extends ConsumerWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
-  const _FloatingNavBar({
+  const _FloatingNavBarWithAI({
     required this.selectedIndex,
     required this.onItemTapped,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
+    final shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1);
 
-    // Use IgnorePointer on the outer container to let taps pass through to the floating bubble
-    // Only the actual nav bar buttons should be tappable
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
         bottom: bottomPadding + 16,
       ),
-      // Center the nav bar now that chat button is removed
-      // The floating chat bubble is handled by FloatingChatOverlay at app level
-      child: Center(
-        child: Container(
-          height: 56,
-          constraints: const BoxConstraints(maxWidth: 280),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 25,
-                offset: const Offset(0, 10),
-                spreadRadius: 2,
-              ),
-            ],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Nav bar
+          Container(
+            height: 56,
+            constraints: const BoxConstraints(maxWidth: 280),
+            decoration: BoxDecoration(
+              color: navBarColor,
+              borderRadius: BorderRadius.circular(32),
+              border: isDark ? null : Border.all(color: AppColorsLight.cardBorder, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Home
+                _NavItem(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home_rounded,
+                  label: 'Home',
+                  isSelected: selectedIndex == 0,
+                  onTap: () => onItemTapped(0),
+                ),
+                // Library
+                _NavItem(
+                  icon: Icons.fitness_center_outlined,
+                  selectedIcon: Icons.fitness_center,
+                  label: 'Library',
+                  isSelected: selectedIndex == 1,
+                  onTap: () => onItemTapped(1),
+                ),
+                // Social
+                _NavItem(
+                  icon: Icons.people_outline_rounded,
+                  selectedIcon: Icons.people_rounded,
+                  label: 'Social',
+                  isSelected: selectedIndex == 2,
+                  onTap: () => onItemTapped(2),
+                ),
+                // Profile
+                _NavItem(
+                  icon: Icons.person_outline_rounded,
+                  selectedIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  isSelected: selectedIndex == 3,
+                  onTap: () => onItemTapped(3),
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Home
-              _NavItem(
-                icon: Icons.home_outlined,
-                selectedIcon: Icons.home_rounded,
-                label: 'Home',
-                isSelected: selectedIndex == 0,
-                onTap: () => onItemTapped(0),
-              ),
-              // Library
-              _NavItem(
-                icon: Icons.fitness_center_outlined,
-                selectedIcon: Icons.fitness_center,
-                label: 'Library',
-                isSelected: selectedIndex == 1,
-                onTap: () => onItemTapped(1),
-              ),
-              // Social
-              _NavItem(
-                icon: Icons.people_outline_rounded,
-                selectedIcon: Icons.people_rounded,
-                label: 'Social',
-                isSelected: selectedIndex == 2,
-                onTap: () => onItemTapped(2),
-              ),
-              // Profile
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                selectedIcon: Icons.person_rounded,
-                label: 'Profile',
-                isSelected: selectedIndex == 3,
-                onTap: () => onItemTapped(3),
-              ),
-            ],
+
+          // Spacing between nav bar and AI button
+          const SizedBox(width: 12),
+
+          // AI Coach Button - fixed position
+          _AICoachButton(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              ref.read(floatingChatProvider.notifier).expand();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// AI Coach button with gradient and glow
+class _AICoachButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AICoachButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.purple, AppColors.cyan],
+          ),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cyan.withOpacity(0.5),
+              blurRadius: 18,
+              offset: const Offset(0, 4),
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.auto_awesome,
+            color: Colors.white,
+            size: 26,
           ),
         ),
       ),
@@ -166,6 +227,10 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -178,13 +243,13 @@ class _NavItem extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.cyan.withValues(alpha: 0.15)
+                  ? cyan.withValues(alpha: 0.15)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               isSelected ? selectedIcon : icon,
-              color: isSelected ? AppColors.cyan : AppColors.textMuted,
+              color: isSelected ? cyan : textMuted,
               size: 24,
             ),
           ),

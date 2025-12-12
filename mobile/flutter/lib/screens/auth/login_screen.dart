@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -54,9 +55,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -97,6 +100,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildBranding() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Column(
       children: [
         // App icon
@@ -108,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.cyan.withOpacity(0.3),
+                color: cyan.withOpacity(0.3),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
@@ -139,7 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Text(
           'Your personalized workout companion',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.textSecondary,
+                color: textSecondary,
               ),
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 400.ms),
@@ -148,6 +155,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildFeatures() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
     final features = [
       ('🎯', 'AI-Generated Workouts', 'Personalized to your goals'),
       ('💬', 'Smart Coaching', 'Chat with your AI coach anytime'),
@@ -167,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.glassSurface,
+                  color: glassSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -201,37 +211,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildSignInButton() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // In dark mode use white button, in light mode use a slightly gray/elevated button
+    final buttonColor = isDark ? Colors.white : AppColorsLight.elevated;
+    final buttonTextColor = isDark ? Colors.black87 : AppColorsLight.textPrimary;
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _signInWithGoogle,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          disabledBackgroundColor: Colors.white.withOpacity(0.5),
+          backgroundColor: buttonColor,
+          foregroundColor: buttonTextColor,
+          disabledBackgroundColor: buttonColor.withOpacity(0.5),
+          elevation: isDark ? 0 : 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
+            side: isDark
+                ? BorderSide.none
+                : BorderSide(color: AppColorsLight.cardBorder, width: 1),
           ),
         ),
         child: _isLoading
             ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isDark ? Colors.black54 : AppColorsLight.textMuted,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     _loadingMessage ?? 'Signing in...',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Colors.black54,
+                      color: isDark ? Colors.black54 : AppColorsLight.textMuted,
                     ),
                   ),
                 ],
@@ -249,11 +270,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Continue with Google',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: buttonTextColor,
                     ),
                   ),
                 ],

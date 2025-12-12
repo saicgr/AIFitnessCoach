@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 
 /// Splash screen shown while app initializes and checks auth state.
 /// This prevents the login screen flash when user is already authenticated.
@@ -8,8 +9,13 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -23,14 +29,14 @@ class SplashScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.cyan,
-                    AppColors.purple,
+                    cyan,
+                    purple,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.cyan.withOpacity(0.3),
+                    color: cyan.withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -50,7 +56,7 @@ class SplashScreen extends StatelessWidget {
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.cyan.withOpacity(0.7),
+                  cyan.withOpacity(0.7),
                 ),
               ),
             ),

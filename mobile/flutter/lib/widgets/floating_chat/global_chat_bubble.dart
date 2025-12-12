@@ -1,164 +1,70 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
+import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
-import '../../navigation/app_router.dart' show currentRouteProvider;
 import 'floating_chat_provider.dart';
 
-/// Global chat bubble that appears on ALL screens
-/// Works like Facebook Messenger - always visible and draggable
-class GlobalChatBubble extends ConsumerStatefulWidget {
+/// Global chat overlay that handles the modal chat UI
+/// The AI button is now in main_shell.dart (fixed position beside nav bar)
+class GlobalChatBubble extends ConsumerWidget {
   final Widget child;
 
   const GlobalChatBubble({super.key, required this.child});
 
   @override
-  ConsumerState<GlobalChatBubble> createState() => _GlobalChatBubbleState();
-}
-
-class _GlobalChatBubbleState extends ConsumerState<GlobalChatBubble> {
-  // Routes where the bubble should be hidden
-  static const _hiddenRoutes = [
-    '/splash',
-    '/onboarding',
-    '/login',
-    '/signup',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final chatState = ref.watch(floatingChatProvider);
     final notifier = ref.read(floatingChatProvider.notifier);
-    final currentPath = ref.watch(currentRouteProvider);
 
-    debugPrint('🔍 [GlobalChatBubble] Building - currentPath: $currentPath, isExpanded: ${chatState.isExpanded}');
-
-    // Check if bubble should be hidden on this route
-    final shouldHide = _hiddenRoutes.any((route) => currentPath.startsWith(route));
-
-    debugPrint('🔍 [GlobalChatBubble] shouldHide: $shouldHide');
-
-    // Simple Stack - the child contains the Navigator which provides its own Overlay
+    // Simple Stack - only show modal overlay when expanded
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Main app content (MaterialApp.router provides Navigator with Overlay)
-        widget.child,
+        // Main app content
+        child,
 
-        // Chat bubble and modal (only on appropriate routes)
-        if (!shouldHide) ...[
-          // Expanded chat modal with backdrop
-          if (chatState.isExpanded) ...[
-            // Semi-transparent backdrop - fast fade for snappy feel
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => notifier.collapse(),
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                ).animate().fadeIn(duration: 150.ms, curve: Curves.easeOut),
-              ),
-            ),
-            // Chat modal - smooth spring-like animation
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _ChatModal(
-                onClose: () => notifier.collapse(),
+        // Expanded chat modal with backdrop
+        if (chatState.isExpanded) ...[
+          // Semi-transparent backdrop
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                notifier.collapse();
+              },
+              child: Container(
+                color: Colors.black.withOpacity(0.6),
               ).animate()
-                .slideY(begin: 0.3, end: 0, duration: 250.ms, curve: Curves.easeOutQuart)
-                .fadeIn(duration: 200.ms, curve: Curves.easeOut),
-            ),
-          ],
-
-          // Floating bubble (always visible when not expanded)
-          if (!chatState.isExpanded)
-            _DraggableBubble(
-              right: chatState.bubbleRight,
-              bottom: chatState.bubbleBottom,
-              isDragging: chatState.isDragging,
-              onTap: () => notifier.expand(),
-              onDragStart: () => notifier.setDragging(true),
-              onDragUpdate: (right, bottom) => notifier.updateBubblePosition(right, bottom),
-              onDragEnd: () => notifier.setDragging(false),
-            ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Draggable floating bubble widget
-class _DraggableBubble extends StatelessWidget {
-  final double right;
-  final double bottom;
-  final bool isDragging;
-  final VoidCallback onTap;
-  final VoidCallback onDragStart;
-  final Function(double right, double bottom) onDragUpdate;
-  final VoidCallback onDragEnd;
-
-  const _DraggableBubble({
-    required this.right,
-    required this.bottom,
-    required this.isDragging,
-    required this.onTap,
-    required this.onDragStart,
-    required this.onDragUpdate,
-    required this.onDragEnd,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    return Positioned(
-      right: right,
-      bottom: bottom + bottomPadding,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        onPanStart: (_) => onDragStart(),
-        onPanUpdate: (details) {
-          final newRight = (right - details.delta.dx).clamp(16.0, screenSize.width - 72.0);
-          final newBottom = (bottom - details.delta.dy).clamp(80.0, screenSize.height - 200.0);
-          onDragUpdate(newRight, newBottom);
-        },
-        onPanEnd: (_) => onDragEnd(),
-        child: AnimatedScale(
-          scale: isDragging ? 1.15 : 1.0,
-          duration: const Duration(milliseconds: 150),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.purple, AppColors.cyan],
-              ),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.cyan.withOpacity(isDragging ? 0.7 : 0.4),
-                  blurRadius: isDragging ? 24 : 16,
-                  offset: const Offset(0, 4),
-                  spreadRadius: isDragging ? 4 : 0,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Colors.white,
-              size: 24,
+                .fadeIn(duration: AppAnimations.micro, curve: AppAnimations.linearOut),
             ),
           ),
-        ),
-      ),
+          // Chat modal
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _ChatModal(
+              onClose: () {
+                HapticFeedback.lightImpact();
+                notifier.collapse();
+              },
+            ).animate()
+              .slideY(
+                begin: 0.15,
+                end: 0,
+                duration: AppAnimations.quick,
+                curve: AppAnimations.overshoot,
+              )
+              .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -233,17 +139,29 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final nearBackgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     // Wrap in Material to provide the required ancestor for TextField and other Material widgets
+    // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(
+      key: const ValueKey('chat_modal_material'),
       type: MaterialType.transparency,
       child: Container(
         height: screenHeight * 0.75,
         decoration: BoxDecoration(
-          color: AppColors.pureBlack,
+          color: backgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withOpacity(isDark ? 0.5 : 0.15),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -257,7 +175,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.textMuted,
+              color: textMuted,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -270,9 +188,11 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.cyan, AppColors.purple],
+                      colors: isDark
+                          ? [AppColors.cyan, AppColors.purple]
+                          : [AppColorsLight.cyan, AppColorsLight.purple],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -285,47 +205,53 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'AI Coach',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       Text(
                         _isLoading ? 'Typing...' : 'Online',
                         style: TextStyle(
                           fontSize: 13,
-                          color: _isLoading ? AppColors.orange : AppColors.success,
+                          color: _isLoading
+                              ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                              : (isDark ? AppColors.success : AppColorsLight.success),
                         ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textMuted, size: 24),
+                  icon: Icon(Icons.close, color: textMuted, size: 24),
                   onPressed: widget.onClose,
                 ),
               ],
             ),
           ),
 
-          const Divider(color: AppColors.cardBorder, height: 1),
+          Divider(color: cardBorder, height: 1),
 
           // Messages
           Expanded(
             child: messagesState.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.cyan),
+              loading: () => Center(
+                child: CircularProgressIndicator(
+                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                ),
               ),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+                    Icon(Icons.error_outline,
+                        color: isDark ? AppColors.error : AppColorsLight.error,
+                        size: 40),
                     const SizedBox(height: 12),
-                    const Text('Error loading messages', style: TextStyle(color: AppColors.textMuted)),
+                    Text('Error loading messages', style: TextStyle(color: textMuted)),
                     TextButton(
                       onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(force: true),
                       child: const Text('Retry'),
@@ -357,9 +283,9 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           Container(
             padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 12),
             decoration: BoxDecoration(
-              color: AppColors.nearBlack,
+              color: nearBackgroundColor,
               border: Border(
-                top: BorderSide(color: AppColors.cardBorder.withOpacity(0.5)),
+                top: BorderSide(color: cardBorder.withOpacity(0.5)),
               ),
             ),
             child: Row(
@@ -372,12 +298,12 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     textCapitalization: TextCapitalization.sentences,
                     maxLines: 3,
                     minLines: 1,
-                    style: const TextStyle(fontSize: 15),
+                    style: TextStyle(fontSize: 15, color: textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Ask your AI coach...',
-                      hintStyle: const TextStyle(color: AppColors.textMuted),
+                      hintStyle: TextStyle(color: textMuted),
                       filled: true,
-                      fillColor: AppColors.glassSurface,
+                      fillColor: glassSurface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(22),
                         borderSide: BorderSide.none,
@@ -395,8 +321,10 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _isLoading
-                          ? [AppColors.textMuted, AppColors.textMuted]
-                          : [AppColors.cyan, AppColors.purple],
+                          ? [textMuted, textMuted]
+                          : isDark
+                              ? [AppColors.cyan, AppColors.purple]
+                              : [AppColorsLight.cyan, AppColorsLight.purple],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -424,6 +352,15 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     final suggestions = [
       'What should I eat before a workout?',
       'How can I improve my form?',
@@ -438,29 +375,29 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           Container(
             width: 70,
             height: 70,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
+                colors: [cyan, purple],
               ),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.smart_toy, size: 36, color: Colors.white),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'How can I help you today?',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Ask me anything about fitness',
             style: TextStyle(
               fontSize: 15,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 28),
@@ -476,21 +413,21 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.elevated,
+                  color: elevated,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: cardBorder),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.cyan),
+                    Icon(Icons.chat_bubble_outline, size: 18, color: cyan),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         suggestion,
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+                        style: TextStyle(color: textPrimary, fontSize: 15),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+                    Icon(Icons.arrow_forward_ios, size: 14, color: textMuted),
                   ],
                 ),
               ),
@@ -501,8 +438,13 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
+  Widget _buildMessageBubble(ChatMessage message, {int index = 0}) {
     final isUser = message.role == 'user';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -513,7 +455,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
           maxWidth: MediaQuery.of(context).size.width * 0.78,
         ),
         decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan : AppColors.elevated,
+          color: isUser ? cyan : elevated,
           borderRadius: BorderRadius.circular(18).copyWith(
             bottomRight: isUser ? const Radius.circular(4) : null,
             bottomLeft: !isUser ? const Radius.circular(4) : null,
@@ -522,46 +464,99 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
         child: Text(
           message.content,
           style: TextStyle(
-            color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+            color: isUser ? userTextColor : textPrimary,
             fontSize: 15,
             height: 1.4,
           ),
         ),
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+        .slideX(
+          begin: isUser ? 0.05 : -0.05,
+          end: 0,
+          duration: AppAnimations.quick,
+          curve: AppAnimations.decelerate,
+        );
   }
 
   Widget _buildTypingIndicator() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(18).copyWith(
             bottomLeft: const Radius.circular(4),
           ),
         ),
-        child: Row(
+        child: _BouncingTypingDots(),
+      ),
+    );
+  }
+}
+
+/// Bouncing typing dots animation - Messenger-like wave effect
+class _BouncingTypingDots extends StatefulWidget {
+  @override
+  State<_BouncingTypingDots> createState() => _BouncingTypingDotsState();
+}
+
+class _BouncingTypingDotsState extends State<_BouncingTypingDots>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: AppAnimations.typingCycleDuration,
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (index) {
-            return Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.textMuted,
-                shape: BoxShape.circle,
+            // Stagger each dot with a phase offset
+            final offset = (index * 0.2);
+            final progress = (_controller.value + offset) % 1.0;
+            // Sine wave for smooth bounce: goes 0 -> 1 -> 0 in first half
+            final bounce = math.sin(progress * math.pi * 2) * 0.5 + 0.5;
+            final translateY = -AppAnimations.typingBounceHeight * bounce;
+
+            return Transform.translate(
+              offset: Offset(0, translateY),
+              child: Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withOpacity(0.6 + bounce * 0.4),
+                  shape: BoxShape.circle,
+                ),
               ),
-            )
-                .animate(onPlay: (controller) => controller.repeat())
-                .fadeIn(delay: Duration(milliseconds: index * 200))
-                .then()
-                .fadeOut(delay: const Duration(milliseconds: 400));
+            );
           }),
-        ),
-      ),
+        );
+      },
     );
   }
 }
