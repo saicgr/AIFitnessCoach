@@ -99,7 +99,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   bool get isLoading => _isLoading;
 
   /// Load chat history
-  Future<void> loadHistory() async {
+  /// If force is false, only loads if there are no messages yet
+  Future<void> loadHistory({bool force = false}) async {
+    // Skip loading if we already have messages and not forcing
+    final currentMessages = state.valueOrNull;
+    if (!force && currentMessages != null && currentMessages.isNotEmpty) {
+      debugPrint('🔍 [Chat] Skipping history load - already have ${currentMessages.length} messages');
+      return;
+    }
+
     final userId = await _apiClient.getUserId();
     if (userId == null) return;
 

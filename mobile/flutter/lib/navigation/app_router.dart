@@ -36,11 +36,15 @@ class _AuthStateNotifier extends ChangeNotifier {
   final Ref _ref;
 }
 
+/// Provider that tracks the current route location
+/// This allows widgets to rebuild when navigation happens
+final currentRouteProvider = StateProvider<String>((ref) => '/splash');
+
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/splash',
     debugLogDiagnostics: true,
     refreshListenable: authNotifier,
@@ -307,4 +311,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ),
   );
+
+  // Listen to route changes and update the currentRouteProvider
+  router.routerDelegate.addListener(() {
+    // Get the full location including the actual matched path (not just parent shell)
+    final config = router.routerDelegate.currentConfiguration;
+    // Use fullPath which includes the complete route path
+    final location = config.fullPath.isNotEmpty ? config.fullPath : config.uri.path;
+    debugPrint('GoRouter listener: Route changed to $location (fullPath: ${config.fullPath}, uri: ${config.uri})');
+    // Use Future.microtask to avoid modifying provider during build
+    Future.microtask(() {
+      ref.read(currentRouteProvider.notifier).state = location;
+    });
+  });
+
+  return router;
 });

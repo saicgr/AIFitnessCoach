@@ -919,6 +919,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
   void _togglePause() {
     setState(() => _isPaused = !_isPaused);
+    // Also pause/play the video
+    if (_videoController != null && _videoController!.value.isInitialized) {
+      if (_isPaused) {
+        _videoController!.pause();
+      } else {
+        _videoController!.play();
+      }
+    }
     HapticFeedback.selectionClick();
   }
 
@@ -937,14 +945,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         ? (exercisesWithCompletedSets / _exercises.length * 100).round()
         : 0;
 
+    String? selectedReason;
+    final TextEditingController notesController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          String? selectedReason;
-          final TextEditingController notesController = TextEditingController();
 
           return Container(
             decoration: const BoxDecoration(
@@ -1104,10 +1113,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: selectedReason == null ? null : () async {
+                        onPressed: () async {
                           Navigator.pop(ctx);
                           await _logWorkoutExitAndQuit(
-                            selectedReason!,
+                            selectedReason ?? 'quick_exit',
                             notesController.text.isEmpty ? null : notesController.text,
                             exercisesWithCompletedSets,
                             totalCompletedSets,
@@ -1115,12 +1124,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: selectedReason == null
-                              ? AppColors.elevated
-                              : AppColors.orange,
-                          foregroundColor: selectedReason == null
-                              ? AppColors.textMuted
-                              : Colors.white,
+                          backgroundColor: AppColors.orange,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -2803,16 +2808,20 @@ class _StatChip extends StatelessWidget {
         children: [
           Icon(icon, size: iconSize, color: color),
           SizedBox(width: innerSpacing),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: valueFontSize,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'monospace',
-              color: color,
+          Flexible(
+            child: Text(
+              // If paused, just show the label instead of time + PAUSED to save space
+              label != null ? label! : value,
+              style: TextStyle(
+                fontSize: label != null ? labelFontSize : valueFontSize,
+                fontWeight: FontWeight.bold,
+                fontFamily: label != null ? null : 'monospace',
+                color: label != null ? AppColors.orange : color,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (suffix != null)
+          if (suffix != null && label == null)
             Text(
               ' $suffix',
               style: TextStyle(
@@ -2820,17 +2829,6 @@ class _StatChip extends StatelessWidget {
                 color: color.withOpacity(0.7),
               ),
             ),
-          if (label != null) ...[
-            SizedBox(width: innerSpacing),
-            Text(
-              label!,
-              style: TextStyle(
-                fontSize: labelFontSize,
-                fontWeight: FontWeight.bold,
-                color: AppColors.orange,
-              ),
-            ),
-          ],
         ],
       ),
     );
