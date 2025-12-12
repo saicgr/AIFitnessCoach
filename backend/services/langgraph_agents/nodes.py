@@ -82,6 +82,7 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     - There's a workout context (for workout modifications)
     - There's an image (for food analysis)
     - The intent is nutrition-related
+    - The intent is injury-related (needs injury management tools)
 
     This is the proper LangGraph way - let the LLM with bound tools decide.
     """
@@ -97,6 +98,12 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     ]
     is_nutrition_intent = intent in nutrition_intents
 
+    # Check for injury-related intents (needs tools to record/update injuries)
+    injury_intents = [
+        CoachIntent.REPORT_INJURY,
+    ]
+    is_injury_intent = intent in injury_intents
+
     if has_image:
         logger.info("[Router] Image present -> agent (food analysis)")
         return "agent"
@@ -105,6 +112,9 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
         return "agent"
     elif is_nutrition_intent:
         logger.info(f"[Router] Nutrition intent ({intent}) -> agent (nutrition tools)")
+        return "agent"
+    elif is_injury_intent:
+        logger.info(f"[Router] Injury intent ({intent}) -> agent (injury management tools)")
         return "agent"
     else:
         logger.info("[Router] No workout/image -> respond (simple response)")
@@ -184,10 +194,10 @@ async def agent_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     logger.info("[Agent Node] LLM deciding which tools to use...")
 
-    # Get workout context
-    workout = state.get("current_workout", {})
+    # Get workout context (handle None explicitly)
+    workout = state.get("current_workout") or {}
     workout_id = workout.get("id")
-    exercises = workout.get("exercises", [])
+    exercises = workout.get("exercises", []) or []
     exercise_names = [e.get("name", "Unknown") for e in exercises]
 
     # Build context for LLM
@@ -356,16 +366,16 @@ async def tool_executor_node(state: FitnessCoachState) -> Dict[str, Any]:
     valid_workout_ids = set()
     if current_workout_id:
         valid_workout_ids.add(current_workout_id)
-    workout_schedule = state.get("workout_schedule", {})
+    workout_schedule = state.get("workout_schedule") or {}
     for key in ["yesterday", "today", "tomorrow"]:
         w = workout_schedule.get(key)
         if w and w.get("id"):
             valid_workout_ids.add(w.get("id"))
-    for w in workout_schedule.get("thisWeek", []):
-        if w.get("id"):
+    for w in workout_schedule.get("thisWeek", []) or []:
+        if w and w.get("id"):
             valid_workout_ids.add(w.get("id"))
-    for w in workout_schedule.get("recentCompleted", []):
-        if w.get("id"):
+    for w in workout_schedule.get("recentCompleted", []) or []:
+        if w and w.get("id"):
             valid_workout_ids.add(w.get("id"))
 
     # Create a map of tool names to tool functions
@@ -577,7 +587,8 @@ async def storage_node(state: FitnessCoachState) -> Dict[str, Any]:
     )
 
     logger.info("[Storage Node] Q&A stored successfully")
-    return {}
+    # Must return at least one field for LangGraph
+    return {"rag_context_used": state.get("rag_context_used", False)}
 
 
 async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:

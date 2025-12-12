@@ -235,7 +235,8 @@ class WorkoutFeedbackRAGService:
         similar_sessions = []
         for i, doc_id in enumerate(results["ids"][0]):
             distance = results["distances"][0][i]
-            similarity = 1 / (1 + distance)
+            # Cosine distance: 0-2 range, convert to similarity 0-1
+            similarity = 1 - (distance / 2)
 
             if similarity >= 0.5:  # Lower threshold for exercise matching
                 meta = results["metadatas"][0][i]

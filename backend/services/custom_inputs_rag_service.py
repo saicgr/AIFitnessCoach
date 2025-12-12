@@ -257,7 +257,8 @@ class CustomInputsRAGService:
             for i, doc_id in enumerate(results["ids"][0]):
                 meta = results["metadatas"][0][i]
                 distance = results["distances"][0][i]
-                similarity = 1 / (1 + distance)
+                # Cosine distance: 0-2 range, convert to similarity 0-1
+                similarity = 1 - (distance / 2)
 
                 similar_inputs.append({
                     "input_type": meta.get("input_type", ""),

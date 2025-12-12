@@ -129,8 +129,9 @@ class RAGService:
         similar_docs = []
         for i, doc_id in enumerate(results["ids"][0]):
             distance = results["distances"][0][i]
-            # ChromaDB returns L2 distance, convert to similarity (0-1)
-            similarity = 1 / (1 + distance)
+            # ChromaDB with cosine distance: distance ranges 0-2, convert to similarity 0-1
+            # similarity = 1 - (distance / 2) maps: 0 -> 1.0, 1 -> 0.5, 2 -> 0.0
+            similarity = 1 - (distance / 2)
 
             if similarity >= settings.rag_min_similarity:
                 similar_docs.append({
@@ -381,7 +382,8 @@ class WorkoutRAGService:
         similar_workouts = []
         for i, doc_id in enumerate(results["ids"][0]):
             distance = results["distances"][0][i]
-            similarity = 1 / (1 + distance)
+            # Cosine distance: 0-2 range, convert to similarity 0-1
+            similarity = 1 - (distance / 2)
 
             if similarity >= settings.rag_min_similarity:
                 similar_workouts.append({
@@ -614,7 +616,8 @@ class NutritionRAGService:
         similar_meals = []
         for i, doc_id in enumerate(results["ids"][0]):
             distance = results["distances"][0][i]
-            similarity = 1 / (1 + distance)
+            # Cosine distance: 0-2 range, convert to similarity 0-1
+            similarity = 1 - (distance / 2)
 
             if similarity >= settings.rag_min_similarity:
                 similar_meals.append({
