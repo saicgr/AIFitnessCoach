@@ -26,7 +26,7 @@ class CoachIntent(str, Enum):
 
 class UserProfile(BaseModel):
     """User profile for context in chat."""
-    id: int
+    id: str  # UUID from Supabase
     fitness_level: str = "beginner"
     goals: List[str] = []
     equipment: List[str] = []
@@ -69,7 +69,7 @@ class ChatRequest(BaseModel):
         }
     """
     message: str = Field(..., min_length=1, description="User's message")
-    user_id: int = Field(..., description="User ID")
+    user_id: str = Field(..., description="User ID (UUID from Supabase)")
     user_profile: Optional[UserProfile] = None
     current_workout: Optional[WorkoutContext] = None
     workout_schedule: Optional[WorkoutScheduleContext] = Field(
@@ -126,7 +126,7 @@ class ChatResponse(BaseModel):
 class ChatMessage(BaseModel):
     """Stored chat message."""
     id: Optional[int] = None
-    user_id: int
+    user_id: str  # UUID from Supabase
     user_message: str
     ai_response: str
     intent: str
@@ -140,6 +140,6 @@ class RAGDocument(BaseModel):
     question: str
     answer: str
     intent: str
-    user_id: int
+    user_id: str  # UUID from Supabase
     metadata: Dict[str, Any] = {}
     embedding: Optional[List[float]] = None

@@ -4,7 +4,7 @@ State schema for the Fitness Coach LangGraph agent.
 This TypedDict flows through all nodes, accumulating information
 as the conversation is processed.
 """
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import TypedDict, List, Dict, Any, Optional, Union
 from models.chat import CoachIntent
 
 
@@ -15,7 +15,7 @@ class FitnessCoachState(TypedDict):
     """
     # Input (from ChatRequest)
     user_message: str
-    user_id: int
+    user_id: Union[str, int]  # UUID from Supabase (string) or legacy int
     user_profile: Optional[Dict[str, Any]]
     current_workout: Optional[Dict[str, Any]]
     workout_schedule: Optional[Dict[str, Any]]  # yesterday, today, tomorrow, thisWeek, recentCompleted

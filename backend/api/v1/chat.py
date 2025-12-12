@@ -183,7 +183,7 @@ class RAGSearchRequest(BaseModel):
     """Request for RAG search."""
     query: str
     n_results: int = 5
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None  # UUID from Supabase
 
 
 class RAGSearchResult(BaseModel):

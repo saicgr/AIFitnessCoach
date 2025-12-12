@@ -1,7 +1,7 @@
 """
 State schema for the Exercise Suggestion LangGraph agent.
 """
-from typing import TypedDict, List, Dict, Any, Optional
+from typing import TypedDict, List, Dict, Any, Optional, Union
 
 
 class ExerciseSuggestionState(TypedDict):
@@ -9,7 +9,7 @@ class ExerciseSuggestionState(TypedDict):
     State for the exercise suggestion agent.
     """
     # Input
-    user_id: int
+    user_id: Union[str, int]  # UUID from Supabase (string) or legacy int
     user_message: str  # User's request (e.g., "I don't have dumbbells")
     current_exercise: Dict[str, Any]  # Current exercise being swapped
     user_equipment: Optional[List[str]]  # User's available equipment

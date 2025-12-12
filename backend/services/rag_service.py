@@ -6,7 +6,7 @@ to provide better context to the AI.
 
 Uses Chroma Cloud (cloud-hosted vector database) for all deployments.
 """
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 import uuid
 from core.config import get_settings
@@ -42,7 +42,7 @@ class RAGService:
         question: str,
         answer: str,
         intent: str,
-        user_id: int,
+        user_id: Union[str, int],
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
@@ -87,7 +87,7 @@ class RAGService:
         self,
         query: str,
         n_results: int = None,
-        user_id: Optional[int] = None,
+        user_id: Optional[Union[str, int]] = None,
         intent_filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
@@ -212,7 +212,7 @@ class WorkoutRAGService:
     async def index_workout(
         self,
         workout_id: int,
-        user_id: int,
+        user_id: Union[str, int],
         name: str,
         workout_type: str,
         difficulty: str,
@@ -289,7 +289,7 @@ class WorkoutRAGService:
         self,
         change_id: int,
         workout_id: int,
-        user_id: int,
+        user_id: Union[str, int],
         change_type: str,
         field_changed: Optional[str] = None,
         old_value: Optional[str] = None,
@@ -341,7 +341,7 @@ class WorkoutRAGService:
     async def find_similar_workouts(
         self,
         query: str,
-        user_id: Optional[int] = None,
+        user_id: Optional[Union[str, int]] = None,
         n_results: int = 5,
         workout_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
@@ -399,7 +399,7 @@ class WorkoutRAGService:
     async def get_workout_changes(
         self,
         workout_id: Optional[int] = None,
-        user_id: Optional[int] = None,
+        user_id: Optional[Union[str, int]] = None,
         n_results: int = 10,
     ) -> List[Dict[str, Any]]:
         """
