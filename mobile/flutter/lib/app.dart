@@ -14,6 +14,9 @@ class AiFitnessCoachApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
+      // Use a key that changes with theme to force a clean rebuild
+      // This prevents GlobalKey conflicts when theme changes
+      key: ValueKey('app_${themeMode.name}'),
       title: 'AI Fitness Coach',
       debugShowCheckedModeBanner: false,
       theme: AppThemeLight.theme,
@@ -23,7 +26,10 @@ class AiFitnessCoachApp extends ConsumerWidget {
       builder: (context, child) {
         // Wrap the entire app with GlobalChatBubble for Messenger-style chat
         // This ensures the bubble appears on ALL screens
-        return GlobalChatBubble(child: child ?? const SizedBox.shrink());
+        return GlobalChatBubble(
+          key: const ValueKey('global_chat_bubble'),
+          child: child ?? const SizedBox.shrink(),
+        );
       },
     );
   }
