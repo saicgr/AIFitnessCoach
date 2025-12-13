@@ -212,6 +212,164 @@ def row_to_library_program(row: dict) -> LibraryProgram:
     )
 
 
+# ==================== Filter Option Endpoints ====================
+
+def derive_exercise_type(video_url: str, body_part: str) -> str:
+    """
+    Derive exercise type from video path folder or body part.
+    Video paths look like: s3://ai-fitness-coach/VERTICAL VIDEOS/Yoga/...
+    """
+    if not video_url:
+        # Fallback based on body part
+        if body_part and body_part.lower() in ['core', 'other']:
+            return 'Functional'
+        return 'Strength'
+
+    video_lower = video_url.lower()
+
+    # Check video path for exercise type indicators
+    if 'yoga' in video_lower:
+        return 'Yoga'
+    elif 'stretch' in video_lower or 'mobility' in video_lower:
+        return 'Stretching'
+    elif 'hiit' in video_lower or 'cardio' in video_lower:
+        return 'Cardio'
+    elif 'calisthenics' in video_lower or 'functional' in video_lower:
+        return 'Functional'
+    elif 'abdominals' in video_lower or 'abs' in video_lower:
+        return 'Core'
+    elif any(x in video_lower for x in ['chest', 'back', 'shoulders', 'arms', 'legs', 'bicep', 'tricep']):
+        return 'Strength'
+    else:
+        return 'Strength'
+
+
+@router.get("/exercises/filter-options", response_model=Dict[str, Any])
+async def get_filter_options():
+    """
+    Get all available filter options for exercises.
+    Returns body parts, equipment types, and exercise types with counts.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get all exercises from cleaned view
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "target_muscle, body_part, equipment, video_url")
+
+        # Count by body part
+        body_part_counts: Dict[str, int] = {}
+        equipment_counts: Dict[str, int] = {}
+        exercise_type_counts: Dict[str, int] = {}
+
+        for row in all_rows:
+            # Body part
+            bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            body_part_counts[bp] = body_part_counts.get(bp, 0) + 1
+
+            # Equipment
+            eq = row.get("equipment")
+            if eq and eq.strip():
+                equipment_counts[eq] = equipment_counts.get(eq, 0) + 1
+            else:
+                equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
+
+            # Exercise type (derived from video path)
+            et = derive_exercise_type(row.get("video_url", ""), bp)
+            exercise_type_counts[et] = exercise_type_counts.get(et, 0) + 1
+
+        # Sort each by count
+        def sorted_options(counts: Dict[str, int]) -> List[Dict[str, Any]]:
+            return sorted(
+                [{"name": name, "count": count} for name, count in counts.items()],
+                key=lambda x: x["count"],
+                reverse=True
+            )
+
+        result = {
+            "body_parts": sorted_options(body_part_counts),
+            "equipment": sorted_options(equipment_counts),
+            "exercise_types": sorted_options(exercise_type_counts),
+            "total_exercises": len(all_rows)
+        }
+
+        logger.info(f"Filter options: {len(result['body_parts'])} body parts, {len(result['equipment'])} equipment, {len(result['exercise_types'])} types")
+        return result
+
+    except Exception as e:
+        logger.error(f"Error getting filter options: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/exercises/equipment", response_model=List[Dict[str, Any]])
+async def get_equipment_types():
+    """
+    Get all unique equipment types with exercise counts.
+    Returns a list of equipment that can be used for filtering.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get all exercises from cleaned view
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "equipment")
+
+        # Count by equipment
+        equipment_counts: Dict[str, int] = {}
+        for row in all_rows:
+            eq = row.get("equipment")
+            if eq and eq.strip():
+                equipment_counts[eq] = equipment_counts.get(eq, 0) + 1
+            else:
+                equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
+
+        # Sort by count descending
+        sorted_equipment = sorted(
+            [{"name": name, "count": count} for name, count in equipment_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True
+        )
+
+        logger.info(f"Listed {len(sorted_equipment)} equipment types")
+        return sorted_equipment
+
+    except Exception as e:
+        logger.error(f"Error getting equipment types: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/exercises/types", response_model=List[Dict[str, Any]])
+async def get_exercise_types():
+    """
+    Get all unique exercise types with counts.
+    Types are derived from video paths (Yoga, Stretching, Cardio, Strength, etc.)
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get all exercises from cleaned view
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "video_url, body_part, target_muscle")
+
+        # Count by derived exercise type
+        type_counts: Dict[str, int] = {}
+        for row in all_rows:
+            bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            et = derive_exercise_type(row.get("video_url", ""), bp)
+            type_counts[et] = type_counts.get(et, 0) + 1
+
+        # Sort by count descending
+        sorted_types = sorted(
+            [{"name": name, "count": count} for name, count in type_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True
+        )
+
+        logger.info(f"Listed {len(sorted_types)} exercise types")
+        return sorted_types
+
+    except Exception as e:
+        logger.error(f"Error getting exercise types: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== Exercise Endpoints ====================
 
 @router.get("/exercises/body-parts", response_model=List[Dict[str, Any]])
@@ -252,6 +410,7 @@ async def get_body_parts():
 async def list_exercises(
     body_part: Optional[str] = None,
     equipment: Optional[str] = None,
+    exercise_type: Optional[str] = None,
     difficulty: Optional[int] = None,
     search: Optional[str] = None,
     limit: int = Query(default=2000, ge=1, le=5000),
@@ -262,7 +421,8 @@ async def list_exercises(
     Uses deduplicated view (exercise_library_cleaned) to avoid male/female duplicates.
 
     - body_part: Filter by body part (e.g., "Chest", "Back", "Legs")
-    - equipment: Filter by equipment type
+    - equipment: Filter by equipment type (e.g., "Dumbbells", "Bodyweight")
+    - exercise_type: Filter by exercise type (e.g., "Strength", "Yoga", "Stretching", "Cardio")
     - difficulty: Filter by difficulty level (1-5)
     - search: Search by exercise name (cleaned name)
     """
@@ -314,7 +474,14 @@ async def list_exercises(
         if body_part:
             exercises = [e for e in exercises if e.body_part.lower() == body_part.lower()]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, deduplicated from {len(all_rows)})")
+        # Filter by exercise type (derived from video path)
+        if exercise_type:
+            def matches_type(ex: LibraryExercise) -> bool:
+                derived_type = derive_exercise_type(ex.video_url or "", ex.body_part)
+                return derived_type.lower() == exercise_type.lower()
+            exercises = [e for e in exercises if matches_type(e)]
+
+        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, type={exercise_type}, deduplicated from {len(all_rows)})")
         return exercises
 
     except Exception as e:
