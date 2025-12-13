@@ -277,6 +277,7 @@ CRITICAL TOOL INSTRUCTIONS - SELECTING THE RIGHT WORKOUT:
 AVAILABLE WORKOUT TOOLS:
 - add_exercise_to_workout(workout_id=X, exercise_names=[...]) - Add exercises to a workout
 - remove_exercise_from_workout(workout_id=X, exercise_names=[...]) - Remove exercises from a workout
+- replace_all_exercises(workout_id=X, muscle_group="back|chest|legs|shoulders|arms|core", num_exercises=5) - Replace ALL exercises with exercises targeting a specific muscle group. Use this when user wants to completely change their workout focus (e.g., "change to back exercises", "make it a leg day")
 - modify_workout_intensity(workout_id=X, modification="easier|harder|shorter|longer") - Change intensity
 - reschedule_workout(workout_id=X, new_date="YYYY-MM-DD", reason="...") - Move workout to a different date
 - delete_workout(workout_id=X, reason="...") - Delete/cancel a workout (use when user wants to skip or cancel)
@@ -313,6 +314,8 @@ EXAMPLES:
 - "Add pull-ups to tomorrow's workout" → Use the workout_id for tomorrow from the schedule
 - "Make leg day easier" → Find the leg workout in the schedule and use its ID
 - "Remove squats from today's workout" → Use ID {workout_id}
+- "Replace all exercises with back exercises" / "Make it a back workout" → Use replace_all_exercises(workout_id={workout_id}, muscle_group="back")
+- "Change to leg exercises" / "I want a leg day instead" → Use replace_all_exercises(workout_id={workout_id}, muscle_group="legs")
 - "Move Thursday's workout to Friday" → Use reschedule_workout with the Thursday workout ID
 - "Delete today's workout" / "Cancel my workout" / "Skip today" → Use delete_workout with today's workout ID and reason
 - "I hurt my back" → Ask about severity, then use report_injury(user_id={state['user_id']}, body_part="back", ...)

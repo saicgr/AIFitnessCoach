@@ -76,33 +76,33 @@ class ExerciseFilterOptions {
 // EXERCISE PROVIDERS
 // ═══════════════════════════════════════════════════════════════════
 
-// Single-select filter providers (String? for single selection)
-final selectedMuscleGroupProvider = StateProvider<String?>((ref) => null);
-final selectedEquipmentProvider = StateProvider<String?>((ref) => null);
-final selectedExerciseTypeProvider = StateProvider<String?>((ref) => null);
-final selectedGoalProvider = StateProvider<String?>((ref) => null);
-final selectedSuitableForProvider = StateProvider<String?>((ref) => null);
-final selectedAvoidProvider = StateProvider<String?>((ref) => null);
+// Multi-select filter providers (Set<String> for multiple selections)
+final selectedMuscleGroupsProvider = StateProvider<Set<String>>((ref) => {});
+final selectedEquipmentsProvider = StateProvider<Set<String>>((ref) => {});
+final selectedExerciseTypesProvider = StateProvider<Set<String>>((ref) => {});
+final selectedGoalsProvider = StateProvider<Set<String>>((ref) => {});
+final selectedSuitableForSetProvider = StateProvider<Set<String>>((ref) => {});
+final selectedAvoidSetProvider = StateProvider<Set<String>>((ref) => {});
 
 final exercisesProvider = FutureProvider.autoDispose<List<LibraryExercise>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
-  // Watch single-select filter providers
-  final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
-  final selectedEquipment = ref.watch(selectedEquipmentProvider);
-  final selectedType = ref.watch(selectedExerciseTypeProvider);
-  final selectedGoal = ref.watch(selectedGoalProvider);
-  final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
-  final selectedAvoid = ref.watch(selectedAvoidProvider);
+  // Watch multi-select filter providers
+  final selectedMuscles = ref.watch(selectedMuscleGroupsProvider);
+  final selectedEquipments = ref.watch(selectedEquipmentsProvider);
+  final selectedTypes = ref.watch(selectedExerciseTypesProvider);
+  final selectedGoals = ref.watch(selectedGoalsProvider);
+  final selectedSuitableFor = ref.watch(selectedSuitableForSetProvider);
+  final selectedAvoid = ref.watch(selectedAvoidSetProvider);
 
-  // Build query parameters
+  // Build query parameters with comma-separated values for multi-select
   final queryParams = <String, String>{};
-  if (selectedMuscle != null) queryParams['body_parts'] = selectedMuscle;
-  if (selectedEquipment != null) queryParams['equipment'] = selectedEquipment;
-  if (selectedType != null) queryParams['exercise_types'] = selectedType;
-  if (selectedGoal != null) queryParams['goals'] = selectedGoal;
-  if (selectedSuitableFor != null) queryParams['suitable_for'] = selectedSuitableFor;
-  if (selectedAvoid != null) queryParams['avoid_if'] = selectedAvoid;
+  if (selectedMuscles.isNotEmpty) queryParams['body_parts'] = selectedMuscles.join(',');
+  if (selectedEquipments.isNotEmpty) queryParams['equipment'] = selectedEquipments.join(',');
+  if (selectedTypes.isNotEmpty) queryParams['exercise_types'] = selectedTypes.join(',');
+  if (selectedGoals.isNotEmpty) queryParams['goals'] = selectedGoals.join(',');
+  if (selectedSuitableFor.isNotEmpty) queryParams['suitable_for'] = selectedSuitableFor.join(',');
+  if (selectedAvoid.isNotEmpty) queryParams['avoid_if'] = selectedAvoid.join(',');
 
   final queryString = queryParams.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
   final url = queryString.isNotEmpty
@@ -284,12 +284,12 @@ class _ExercisesTab extends ConsumerWidget {
 
   int _getActiveFilterCount(WidgetRef ref) {
     int count = 0;
-    if (ref.read(selectedMuscleGroupProvider) != null) count++;
-    if (ref.read(selectedEquipmentProvider) != null) count++;
-    if (ref.read(selectedExerciseTypeProvider) != null) count++;
-    if (ref.read(selectedGoalProvider) != null) count++;
-    if (ref.read(selectedSuitableForProvider) != null) count++;
-    if (ref.read(selectedAvoidProvider) != null) count++;
+    count += ref.read(selectedMuscleGroupsProvider).length;
+    count += ref.read(selectedEquipmentsProvider).length;
+    count += ref.read(selectedExerciseTypesProvider).length;
+    count += ref.read(selectedGoalsProvider).length;
+    count += ref.read(selectedSuitableForSetProvider).length;
+    count += ref.read(selectedAvoidSetProvider).length;
     return count;
   }
 
@@ -306,12 +306,12 @@ class _ExercisesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final exercisesAsync = ref.watch(exercisesProvider);
     final searchQuery = ref.watch(exerciseSearchProvider);
-    final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
-    final selectedEquipment = ref.watch(selectedEquipmentProvider);
-    final selectedType = ref.watch(selectedExerciseTypeProvider);
-    final selectedGoal = ref.watch(selectedGoalProvider);
-    final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
-    final selectedAvoid = ref.watch(selectedAvoidProvider);
+    final selectedMuscles = ref.watch(selectedMuscleGroupsProvider);
+    final selectedEquipments = ref.watch(selectedEquipmentsProvider);
+    final selectedTypes = ref.watch(selectedExerciseTypesProvider);
+    final selectedGoals = ref.watch(selectedGoalsProvider);
+    final selectedSuitableFor = ref.watch(selectedSuitableForSetProvider);
+    final selectedAvoid = ref.watch(selectedAvoidSetProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -415,48 +415,66 @@ class _ExercisesTab extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                if (selectedMuscle != null)
-                  _ActiveFilterChip(
-                    label: selectedMuscle,
-                    onRemove: () => ref.read(selectedMuscleGroupProvider.notifier).state = null,
-                  ),
-                if (selectedEquipment != null)
-                  _ActiveFilterChip(
-                    label: selectedEquipment,
-                    onRemove: () => ref.read(selectedEquipmentProvider.notifier).state = null,
-                  ),
-                if (selectedType != null)
-                  _ActiveFilterChip(
-                    label: selectedType,
-                    onRemove: () => ref.read(selectedExerciseTypeProvider.notifier).state = null,
-                  ),
-                if (selectedGoal != null)
-                  _ActiveFilterChip(
-                    label: selectedGoal,
-                    onRemove: () => ref.read(selectedGoalProvider.notifier).state = null,
-                  ),
-                if (selectedSuitableFor != null)
-                  _ActiveFilterChip(
-                    label: selectedSuitableFor,
-                    onRemove: () => ref.read(selectedSuitableForProvider.notifier).state = null,
-                  ),
-                if (selectedAvoid != null)
-                  _ActiveFilterChip(
-                    label: 'Avoid: $selectedAvoid',
-                    onRemove: () => ref.read(selectedAvoidProvider.notifier).state = null,
-                  ),
+                // Body part chips
+                ...selectedMuscles.map((muscle) => _ActiveFilterChip(
+                  label: muscle,
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedMuscles)..remove(muscle);
+                    ref.read(selectedMuscleGroupsProvider.notifier).state = newSet;
+                  },
+                )),
+                // Equipment chips
+                ...selectedEquipments.map((equip) => _ActiveFilterChip(
+                  label: equip,
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedEquipments)..remove(equip);
+                    ref.read(selectedEquipmentsProvider.notifier).state = newSet;
+                  },
+                )),
+                // Type chips
+                ...selectedTypes.map((type) => _ActiveFilterChip(
+                  label: type,
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedTypes)..remove(type);
+                    ref.read(selectedExerciseTypesProvider.notifier).state = newSet;
+                  },
+                )),
+                // Goal chips
+                ...selectedGoals.map((goal) => _ActiveFilterChip(
+                  label: goal,
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedGoals)..remove(goal);
+                    ref.read(selectedGoalsProvider.notifier).state = newSet;
+                  },
+                )),
+                // Suitable for chips
+                ...selectedSuitableFor.map((suitable) => _ActiveFilterChip(
+                  label: suitable,
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedSuitableFor)..remove(suitable);
+                    ref.read(selectedSuitableForSetProvider.notifier).state = newSet;
+                  },
+                )),
+                // Avoid chips
+                ...selectedAvoid.map((avoid) => _ActiveFilterChip(
+                  label: 'Avoid: $avoid',
+                  onRemove: () {
+                    final newSet = Set<String>.from(selectedAvoid)..remove(avoid);
+                    ref.read(selectedAvoidSetProvider.notifier).state = newSet;
+                  },
+                )),
                 // Clear all
                 if (activeFilters > 1)
                   Padding(
                     padding: const EdgeInsets.only(left: 4),
                     child: GestureDetector(
                       onTap: () {
-                        ref.read(selectedMuscleGroupProvider.notifier).state = null;
-                        ref.read(selectedEquipmentProvider.notifier).state = null;
-                        ref.read(selectedExerciseTypeProvider.notifier).state = null;
-                        ref.read(selectedGoalProvider.notifier).state = null;
-                        ref.read(selectedSuitableForProvider.notifier).state = null;
-                        ref.read(selectedAvoidProvider.notifier).state = null;
+                        ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+                        ref.read(selectedEquipmentsProvider.notifier).state = {};
+                        ref.read(selectedExerciseTypesProvider.notifier).state = {};
+                        ref.read(selectedGoalsProvider.notifier).state = {};
+                        ref.read(selectedSuitableForSetProvider.notifier).state = {};
+                        ref.read(selectedAvoidSetProvider.notifier).state = {};
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -527,12 +545,12 @@ class _ExercisesTab extends ConsumerWidget {
                   onAction: searchQuery.isNotEmpty || activeFilters > 0
                       ? () {
                           ref.read(exerciseSearchProvider.notifier).state = '';
-                          ref.read(selectedMuscleGroupProvider.notifier).state = null;
-                          ref.read(selectedEquipmentProvider.notifier).state = null;
-                          ref.read(selectedExerciseTypeProvider.notifier).state = null;
-                          ref.read(selectedGoalProvider.notifier).state = null;
-                          ref.read(selectedSuitableForProvider.notifier).state = null;
-                          ref.read(selectedAvoidProvider.notifier).state = null;
+                          ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+                          ref.read(selectedEquipmentsProvider.notifier).state = {};
+                          ref.read(selectedExerciseTypesProvider.notifier).state = {};
+                          ref.read(selectedGoalsProvider.notifier).state = {};
+                          ref.read(selectedSuitableForSetProvider.notifier).state = {};
+                          ref.read(selectedAvoidSetProvider.notifier).state = {};
                         }
                       : null,
                 );
@@ -620,12 +638,12 @@ class _ExerciseFilterSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filterOptionsAsync = ref.watch(filterOptionsProvider);
-    final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
-    final selectedEquipment = ref.watch(selectedEquipmentProvider);
-    final selectedType = ref.watch(selectedExerciseTypeProvider);
-    final selectedGoal = ref.watch(selectedGoalProvider);
-    final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
-    final selectedAvoid = ref.watch(selectedAvoidProvider);
+    final selectedMuscles = ref.watch(selectedMuscleGroupsProvider);
+    final selectedEquipments = ref.watch(selectedEquipmentsProvider);
+    final selectedTypes = ref.watch(selectedExerciseTypesProvider);
+    final selectedGoals = ref.watch(selectedGoalsProvider);
+    final selectedSuitableFor = ref.watch(selectedSuitableForSetProvider);
+    final selectedAvoid = ref.watch(selectedAvoidSetProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBackground = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -671,12 +689,12 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      ref.read(selectedMuscleGroupProvider.notifier).state = null;
-                      ref.read(selectedEquipmentProvider.notifier).state = null;
-                      ref.read(selectedExerciseTypeProvider.notifier).state = null;
-                      ref.read(selectedGoalProvider.notifier).state = null;
-                      ref.read(selectedSuitableForProvider.notifier).state = null;
-                      ref.read(selectedAvoidProvider.notifier).state = null;
+                      ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+                      ref.read(selectedEquipmentsProvider.notifier).state = {};
+                      ref.read(selectedExerciseTypesProvider.notifier).state = {};
+                      ref.read(selectedGoalsProvider.notifier).state = {};
+                      ref.read(selectedSuitableForSetProvider.notifier).state = {};
+                      ref.read(selectedAvoidSetProvider.notifier).state = {};
                     },
                     child: Text(
                       'Clear all',
@@ -722,10 +740,21 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.accessibility_new,
                           color: purple,
                           options: filterOptions.bodyParts,
-                          selectedValue: selectedMuscle,
-                          onSelect: (value) {
-                            ref.read(selectedMuscleGroupProvider.notifier).state =
-                                selectedMuscle == value ? null : value;
+                          selectedValues: selectedMuscles,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedMuscles);
+                            // Case-insensitive check for existing value
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            print('🔍 [Filter] Toggling muscle: $value, newSet: $newSet');
+                            ref.read(selectedMuscleGroupsProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -737,10 +766,19 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.fitness_center,
                           color: cyan,
                           options: filterOptions.equipment,
-                          selectedValue: selectedEquipment,
-                          onSelect: (value) {
-                            ref.read(selectedEquipmentProvider.notifier).state =
-                                selectedEquipment == value ? null : value;
+                          selectedValues: selectedEquipments,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedEquipments);
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            ref.read(selectedEquipmentsProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -752,10 +790,19 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.category,
                           color: success,
                           options: filterOptions.exerciseTypes,
-                          selectedValue: selectedType,
-                          onSelect: (value) {
-                            ref.read(selectedExerciseTypeProvider.notifier).state =
-                                selectedType == value ? null : value;
+                          selectedValues: selectedTypes,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedTypes);
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            ref.read(selectedExerciseTypesProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -767,10 +814,19 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.track_changes,
                           color: Colors.orange,
                           options: filterOptions.goals,
-                          selectedValue: selectedGoal,
-                          onSelect: (value) {
-                            ref.read(selectedGoalProvider.notifier).state =
-                                selectedGoal == value ? null : value;
+                          selectedValues: selectedGoals,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedGoals);
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            ref.read(selectedGoalsProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -782,10 +838,19 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.person_outline,
                           color: Colors.teal,
                           options: filterOptions.suitableFor,
-                          selectedValue: selectedSuitableFor,
-                          onSelect: (value) {
-                            ref.read(selectedSuitableForProvider.notifier).state =
-                                selectedSuitableFor == value ? null : value;
+                          selectedValues: selectedSuitableFor,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedSuitableFor);
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            ref.read(selectedSuitableForSetProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -797,10 +862,19 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           icon: Icons.warning_amber_rounded,
                           color: Colors.redAccent,
                           options: filterOptions.avoidIf,
-                          selectedValue: selectedAvoid,
-                          onSelect: (value) {
-                            ref.read(selectedAvoidProvider.notifier).state =
-                                selectedAvoid == value ? null : value;
+                          selectedValues: selectedAvoid,
+                          onToggle: (value) {
+                            final newSet = Set<String>.from(selectedAvoid);
+                            final existing = newSet.firstWhere(
+                              (v) => v.toLowerCase() == value.toLowerCase(),
+                              orElse: () => '',
+                            );
+                            if (existing.isNotEmpty) {
+                              newSet.remove(existing);
+                            } else {
+                              newSet.add(value);
+                            }
+                            ref.read(selectedAvoidSetProvider.notifier).state = newSet;
                           },
                         ),
 
@@ -850,7 +924,7 @@ class _ExerciseFilterSheet extends ConsumerWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// FILTER SECTION
+// FILTER SECTION (Multi-select)
 // ═══════════════════════════════════════════════════════════════════
 
 class _FilterSection extends StatefulWidget {
@@ -858,8 +932,8 @@ class _FilterSection extends StatefulWidget {
   final IconData icon;
   final Color color;
   final List<FilterOption> options;
-  final String? selectedValue;
-  final Function(String) onSelect;
+  final Set<String> selectedValues;
+  final Function(String) onToggle;
   final int initialShowCount;
   final bool initiallyExpanded;
 
@@ -868,8 +942,8 @@ class _FilterSection extends StatefulWidget {
     required this.icon,
     required this.color,
     required this.options,
-    required this.selectedValue,
-    required this.onSelect,
+    required this.selectedValues,
+    required this.onToggle,
     this.initialShowCount = 6,
     this.initiallyExpanded = false,
   });
@@ -887,7 +961,7 @@ class _FilterSectionState extends State<_FilterSection> {
   @override
   void initState() {
     super.initState();
-    _isExpanded = widget.initiallyExpanded || widget.selectedValue != null;
+    _isExpanded = widget.initiallyExpanded || widget.selectedValues.isNotEmpty;
   }
 
   @override
@@ -899,8 +973,8 @@ class _FilterSectionState extends State<_FilterSection> {
   @override
   void didUpdateWidget(_FilterSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Auto-expand if a value is selected
-    if (widget.selectedValue != null && !_isExpanded) {
+    // Auto-expand if any value is selected
+    if (widget.selectedValues.isNotEmpty && !_isExpanded) {
       setState(() => _isExpanded = true);
     }
   }
@@ -959,6 +1033,7 @@ class _FilterSectionState extends State<_FilterSection> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔍 [_FilterSection] Building ${widget.title} with selectedValues: ${widget.selectedValues}');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -972,12 +1047,18 @@ class _FilterSectionState extends State<_FilterSection> {
         : filteredOpts.take(widget.initialShowCount).toList();
     final hasMore = filteredOpts.length > widget.initialShowCount && _searchQuery.isEmpty;
 
+    final hasSelection = widget.selectedValues.isNotEmpty;
+    final selectionCount = widget.selectedValues.length;
+    final selectionText = selectionCount == 1
+        ? widget.selectedValues.first
+        : '$selectionCount selected';
+
     return Container(
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: widget.selectedValue != null ? widget.color.withOpacity(0.3) : cardBorder,
+          color: hasSelection ? widget.color.withOpacity(0.3) : cardBorder,
         ),
       ),
       child: Column(
@@ -1004,38 +1085,50 @@ class _FilterSectionState extends State<_FilterSection> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              widget.title,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                              ),
+                            ),
+                            if (hasSelection) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: widget.color.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$selectionCount',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: widget.color,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                        if (widget.selectedValue != null)
+                        if (hasSelection)
                           Text(
-                            widget.selectedValue!,
+                            selectionText,
                             style: TextStyle(
                               fontSize: 12,
                               color: widget.color,
                               fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                       ],
                     ),
                   ),
-                  if (widget.selectedValue != null)
-                    GestureDetector(
-                      onTap: () => widget.onSelect(widget.selectedValue!),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: widget.color.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.close, size: 16, color: widget.color),
-                      ),
-                    ),
                   const SizedBox(width: 8),
                   Icon(
                     _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -1108,15 +1201,17 @@ class _FilterSectionState extends State<_FilterSection> {
                       ),
                     )
                   else
-                  // Options wrap - simplified chips without counts
+                  // Options wrap - multi-select chips
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: displayOptions.map((option) {
-                      final isSelected = widget.selectedValue?.toLowerCase() == option.name.toLowerCase();
+                      final isSelected = widget.selectedValues.any(
+                        (v) => v.toLowerCase() == option.name.toLowerCase()
+                      );
                       final displayName = _shortenName(option.name);
                       return GestureDetector(
-                        onTap: () => widget.onSelect(option.name),
+                        onTap: () => widget.onToggle(option.name),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
@@ -1127,13 +1222,22 @@ class _FilterSectionState extends State<_FilterSection> {
                               width: isSelected ? 2 : 1,
                             ),
                           ),
-                          child: Text(
-                            displayName,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                              color: isSelected ? widget.color : textSecondary,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isSelected) ...[
+                                Icon(Icons.check, size: 16, color: widget.color),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                displayName,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  color: isSelected ? widget.color : textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );

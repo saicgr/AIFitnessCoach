@@ -94,6 +94,119 @@ def remove_exercise_from_workout(
 
 
 @tool
+def replace_all_exercises(
+    workout_id: int,
+    muscle_group: str,
+    num_exercises: int = 5
+) -> Dict[str, Any]:
+    """
+    Replace ALL exercises in a workout with new exercises targeting a specific muscle group.
+    Use this when the user wants to completely change their workout to focus on a different muscle group.
+
+    Args:
+        workout_id: The ID of the workout to modify
+        muscle_group: Target muscle group for new exercises (e.g., "back", "chest", "legs", "shoulders", "arms", "core")
+        num_exercises: Number of new exercises to add (default 5)
+
+    Returns:
+        Result dict with success status, removed exercises, and new exercises
+    """
+    logger.info(f"Tool: Replacing all exercises in workout {workout_id} with {muscle_group} exercises")
+
+    try:
+        db = get_supabase_db()
+        modifier = WorkoutModifier()
+
+        # Get current workout
+        workout = db.get_workout(workout_id)
+        if not workout:
+            return {
+                "success": False,
+                "action": "replace_all_exercises",
+                "workout_id": workout_id,
+                "message": f"Workout with ID {workout_id} not found"
+            }
+
+        # Get current exercises
+        current_exercises = workout.get("exercises", [])
+        old_exercise_names = [e.get("name", "Unknown") for e in current_exercises]
+
+        # Get new exercises for the target muscle group
+        from services.exercise_library_service import ExerciseLibraryService
+        exercise_service = ExerciseLibraryService(db)
+
+        # Get user's equipment
+        user_id = workout.get("user_id")
+        user = db.get_user_by_id(user_id) if user_id else None
+        user_equipment = user.get("equipment", []) if user else []
+
+        # Find exercises for the muscle group
+        new_exercises_data = exercise_service.get_exercises_for_muscle_group(
+            muscle_group=muscle_group,
+            equipment=user_equipment,
+            limit=num_exercises
+        )
+
+        if not new_exercises_data:
+            # Fallback: generate generic exercises for the muscle group
+            muscle_exercises = {
+                "back": ["Pull-ups", "Bent Over Rows", "Lat Pulldowns", "Seated Cable Rows", "Face Pulls"],
+                "chest": ["Push-ups", "Bench Press", "Incline Dumbbell Press", "Cable Flyes", "Dips"],
+                "legs": ["Squats", "Lunges", "Romanian Deadlifts", "Leg Press", "Calf Raises"],
+                "shoulders": ["Overhead Press", "Lateral Raises", "Front Raises", "Face Pulls", "Shrugs"],
+                "arms": ["Bicep Curls", "Tricep Dips", "Hammer Curls", "Skull Crushers", "Chin-ups"],
+                "core": ["Planks", "Crunches", "Russian Twists", "Leg Raises", "Mountain Climbers"],
+            }
+            exercise_names = muscle_exercises.get(muscle_group.lower(), muscle_exercises["back"])[:num_exercises]
+            new_exercises_data = [{"name": name, "sets": 3, "reps": 12} for name in exercise_names]
+
+        # Build new exercises list with proper structure
+        new_exercises = []
+        for i, ex in enumerate(new_exercises_data[:num_exercises]):
+            new_exercises.append({
+                "name": ex.get("name", f"{muscle_group.title()} Exercise {i+1}"),
+                "sets": ex.get("sets", 3),
+                "reps": ex.get("reps", 12),
+                "duration_seconds": ex.get("duration_seconds"),
+                "muscle_group": muscle_group.lower(),
+                "equipment": ex.get("equipment", "bodyweight"),
+                "notes": ex.get("notes", ""),
+            })
+
+        # Update workout with new exercises
+        update_data = {
+            "exercises": new_exercises,
+            "name": f"{muscle_group.title()} Workout",
+            "last_modified_method": "ai_replace_all"
+        }
+
+        db.update_workout(workout_id, update_data)
+
+        new_exercise_names = [e["name"] for e in new_exercises]
+
+        logger.info(f"Replaced {len(old_exercise_names)} exercises with {len(new_exercises)} {muscle_group} exercises")
+
+        return {
+            "success": True,
+            "action": "replace_all_exercises",
+            "workout_id": workout_id,
+            "exercises_removed": old_exercise_names,
+            "exercises_added": new_exercise_names,
+            "muscle_group": muscle_group,
+            "message": f"Replaced all exercises with {len(new_exercises)} {muscle_group} exercises: {', '.join(new_exercise_names)}"
+        }
+
+    except Exception as e:
+        logger.error(f"Error replacing exercises: {e}")
+        return {
+            "success": False,
+            "action": "replace_all_exercises",
+            "workout_id": workout_id,
+            "message": f"Failed to replace exercises: {str(e)}"
+        }
+
+
+@tool
 def modify_workout_intensity(
     workout_id: int,
     modification: str
@@ -1184,6 +1297,7 @@ def get_recent_meals(
 ALL_TOOLS = [
     add_exercise_to_workout,
     remove_exercise_from_workout,
+    replace_all_exercises,
     modify_workout_intensity,
     reschedule_workout,
     delete_workout,

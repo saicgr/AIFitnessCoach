@@ -579,14 +579,14 @@ async def get_body_parts():
 
 @router.get("/exercises", response_model=List[LibraryExercise])
 async def list_exercises(
-    body_part: Optional[str] = None,
-    equipment: Optional[str] = None,
-    exercise_type: Optional[str] = None,
+    body_parts: Optional[str] = Query(default=None, alias="body_parts", description="Comma-separated body parts (e.g., 'Chest,Back')"),
+    equipment: Optional[str] = Query(default=None, description="Comma-separated equipment (e.g., 'Dumbbells,Barbell')"),
+    exercise_types: Optional[str] = Query(default=None, alias="exercise_types", description="Comma-separated types (e.g., 'Strength,Cardio')"),
     difficulty: Optional[int] = None,
     search: Optional[str] = None,
-    goal: Optional[str] = None,
-    suitable_for: Optional[str] = None,
-    avoid_if: Optional[str] = None,
+    goals: Optional[str] = Query(default=None, alias="goals", description="Comma-separated goals (e.g., 'Fat Burn,Muscle Building')"),
+    suitable_for: Optional[str] = Query(default=None, description="Comma-separated suitability (e.g., 'Beginner Friendly,Low Impact')"),
+    avoid_if: Optional[str] = Query(default=None, description="Comma-separated avoid conditions (e.g., 'Stresses Knees,High Impact')"),
     limit: int = Query(default=2000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
 ):
@@ -594,17 +594,28 @@ async def list_exercises(
     List exercises from the exercise library with optional filters.
     Uses deduplicated view (exercise_library_cleaned) to avoid male/female duplicates.
 
-    - body_part: Filter by body part (e.g., "Chest", "Back", "Legs")
-    - equipment: Filter by equipment type (e.g., "Dumbbells", "Bodyweight")
-    - exercise_type: Filter by exercise type (e.g., "Strength", "Yoga", "Stretching", "Cardio")
+    All filter parameters support comma-separated values for multi-select (OR logic within each filter).
+    Multiple filters are combined with AND logic.
+
+    - body_parts: Filter by body parts, comma-separated (e.g., "Chest,Back,Legs")
+    - equipment: Filter by equipment types, comma-separated (e.g., "Dumbbells,Bodyweight")
+    - exercise_types: Filter by exercise types, comma-separated (e.g., "Strength,Yoga,Cardio")
     - difficulty: Filter by difficulty level (1-5)
     - search: Search by exercise name (cleaned name)
-    - goal: Filter by fitness goal (e.g., "Testosterone Boost", "Fat Burn", "Muscle Building")
-    - suitable_for: Filter by suitability (e.g., "Beginner Friendly", "Pregnancy Safe", "Low Impact")
-    - avoid_if: EXCLUDE exercises that stress certain areas (e.g., "Stresses Knees", "High Impact")
+    - goals: Filter by fitness goals, comma-separated (e.g., "Testosterone Boost,Fat Burn")
+    - suitable_for: Filter by suitability, comma-separated (e.g., "Beginner Friendly,Pregnancy Safe")
+    - avoid_if: EXCLUDE exercises that stress certain areas, comma-separated (e.g., "Stresses Knees,High Impact")
     """
     try:
         db = get_supabase_db()
+
+        # Parse comma-separated filter values into lists
+        body_parts_list = [bp.strip() for bp in body_parts.split(",")] if body_parts else []
+        equipment_list = [eq.strip() for eq in equipment.split(",")] if equipment else []
+        exercise_types_list = [et.strip() for et in exercise_types.split(",")] if exercise_types else []
+        goals_list = [g.strip() for g in goals.split(",")] if goals else []
+        suitable_for_list = [sf.strip() for sf in suitable_for.split(",")] if suitable_for else []
+        avoid_if_list = [ai.strip() for ai in avoid_if.split(",")] if avoid_if else []
 
         # For large limits, use pagination to bypass Supabase 1000 row limit
         page_size = 1000
@@ -615,8 +626,9 @@ async def list_exercises(
             # Build query using cleaned/deduplicated view
             query = db.client.table("exercise_library_cleaned").select("*")
 
-            if equipment:
-                query = query.ilike("equipment", f"%{equipment}%")
+            # Equipment filter - handled at query level for single value, or post-filter for multi
+            if len(equipment_list) == 1:
+                query = query.ilike("equipment", f"%{equipment_list[0]}%")
             if difficulty:
                 query = query.eq("difficulty_level", difficulty)
             if search:
@@ -647,31 +659,40 @@ async def list_exercises(
         # View already handles deduplication and name cleaning
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
 
-        # Filter by normalized body part if specified
-        if body_part:
-            exercises = [e for e in exercises if e.body_part.lower() == body_part.lower()]
+        # Filter by body parts (OR logic - match ANY of the selected body parts)
+        if body_parts_list:
+            body_parts_lower = [bp.lower() for bp in body_parts_list]
+            exercises = [e for e in exercises if e.body_part.lower() in body_parts_lower]
 
-        # Filter by exercise type (derived from video path)
-        if exercise_type:
-            def matches_type(ex: LibraryExercise) -> bool:
+        # Filter by equipment (OR logic - match ANY of the selected equipment)
+        if len(equipment_list) > 1:
+            equipment_lower = [eq.lower() for eq in equipment_list]
+            exercises = [e for e in exercises if any(
+                eq in (e.equipment or "").lower() for eq in equipment_lower
+            )]
+
+        # Filter by exercise types (OR logic - match ANY of the selected types)
+        if exercise_types_list:
+            types_lower = [et.lower() for et in exercise_types_list]
+            def matches_any_type(ex: LibraryExercise) -> bool:
                 derived_type = derive_exercise_type(ex.video_url or "", ex.body_part)
-                return derived_type.lower() == exercise_type.lower()
-            exercises = [e for e in exercises if matches_type(e)]
+                return derived_type.lower() in types_lower
+            exercises = [e for e in exercises if matches_any_type(e)]
 
-        # Filter by goal (from database column)
-        if goal:
-            exercises = [e for e in exercises if e.goals and goal in e.goals]
+        # Filter by goals (OR logic - match ANY of the selected goals)
+        if goals_list:
+            exercises = [e for e in exercises if e.goals and any(g in e.goals for g in goals_list)]
 
-        # Filter by suitable_for (from database column)
-        if suitable_for:
-            exercises = [e for e in exercises if e.suitable_for and suitable_for in e.suitable_for]
+        # Filter by suitable_for (OR logic - match ANY of the selected suitability)
+        if suitable_for_list:
+            exercises = [e for e in exercises if e.suitable_for and any(sf in e.suitable_for for sf in suitable_for_list)]
 
-        # Filter by avoid_if - EXCLUDE exercises that stress certain body parts
-        # This is a negative filter - we exclude exercises that match
-        if avoid_if:
-            exercises = [e for e in exercises if not (e.avoid_if and avoid_if in e.avoid_if)]
+        # Filter by avoid_if - EXCLUDE exercises that match ANY of the avoid conditions
+        # This is a negative filter - we exclude exercises that match ANY of the specified conditions
+        if avoid_if_list:
+            exercises = [e for e in exercises if not (e.avoid_if and any(ai in e.avoid_if for ai in avoid_if_list))]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, type={exercise_type}, goal={goal}, suitable_for={suitable_for}, avoid_if={avoid_if})")
+        logger.info(f"Listed {len(exercises)} exercises (body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})")
         return exercises
 
     except Exception as e:

@@ -21,6 +21,7 @@ import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
+import '../screens/settings/settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
@@ -291,6 +292,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/schedule',
         builder: (context, state) => const ScheduleScreen(),
+      ),
+
+      // Settings
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
