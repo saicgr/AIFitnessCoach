@@ -314,3 +314,224 @@ async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: in
     except Exception as e:
         logger.error(f"Error sending hydration reminder: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SCHEDULER ENDPOINTS
+# These are called by external schedulers (e.g., cron jobs, Render cron)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post("/scheduler/check-inactive-users")
+async def check_inactive_users():
+    """
+    Check for users who haven't worked out recently and send guilt notifications.
+
+    This endpoint should be called daily by a cron job.
+
+    Logic:
+    - 1 day missed: "Your muscles miss you!"
+    - 2 days missed: "Your AI Coach is getting lonely..."
+    - 3+ days missed: "It's been X days!"
+    """
+    logger.info("🔔 Running scheduler: checking for inactive users")
+
+    try:
+        db = get_supabase_db()
+        notification_service = get_notification_service()
+
+        # Get all users with FCM tokens
+        users_response = db.client.table("users").select(
+            "id, name, fcm_token, notification_preferences"
+        ).not_.is_("fcm_token", "null").execute()
+
+        users = users_response.data if users_response.data else []
+        logger.info(f"Found {len(users)} users with FCM tokens")
+
+        results = {
+            "total_users": len(users),
+            "notifications_sent": 0,
+            "skipped_preferences": 0,
+            "skipped_no_token": 0,
+            "errors": 0,
+            "details": []
+        }
+
+        from datetime import datetime, timedelta
+        today = datetime.utcnow().date()
+
+        for user in users:
+            user_id = user["id"]
+            fcm_token = user.get("fcm_token")
+
+            if not fcm_token:
+                results["skipped_no_token"] += 1
+                continue
+
+            # Check notification preferences
+            prefs = user.get("notification_preferences") or {}
+            if prefs.get("streak_alerts") is False:
+                results["skipped_preferences"] += 1
+                continue
+
+            try:
+                # Get user's last workout completion
+                workouts_response = db.client.table("workout_summaries").select(
+                    "created_at"
+                ).eq("user_id", user_id).order(
+                    "created_at", desc=True
+                ).limit(1).execute()
+
+                if not workouts_response.data:
+                    # User has never completed a workout - don't guilt them yet
+                    continue
+
+                last_workout_str = workouts_response.data[0]["created_at"]
+                last_workout_date = datetime.fromisoformat(
+                    last_workout_str.replace("Z", "+00:00")
+                ).date()
+
+                days_missed = (today - last_workout_date).days
+
+                # Only send if they've missed at least 1 day
+                if days_missed >= 1:
+                    success = await notification_service.send_missed_workout_guilt(
+                        fcm_token=fcm_token,
+                        days_missed=days_missed,
+                    )
+
+                    if success:
+                        results["notifications_sent"] += 1
+                        results["details"].append({
+                            "user_id": user_id,
+                            "days_missed": days_missed,
+                            "status": "sent"
+                        })
+                    else:
+                        results["errors"] += 1
+                        results["details"].append({
+                            "user_id": user_id,
+                            "days_missed": days_missed,
+                            "status": "failed"
+                        })
+
+            except Exception as e:
+                logger.error(f"Error processing user {user_id}: {e}")
+                results["errors"] += 1
+
+        logger.info(f"✅ Scheduler complete: {results['notifications_sent']} notifications sent")
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ Error in scheduler: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/scheduler/send-workout-reminders")
+async def send_workout_reminders():
+    """
+    Send workout reminders to users who have workouts scheduled for today.
+
+    This endpoint should be called in the morning by a cron job.
+    """
+    logger.info("🔔 Running scheduler: sending workout reminders")
+
+    try:
+        db = get_supabase_db()
+        notification_service = get_notification_service()
+
+        from datetime import datetime
+        today = datetime.utcnow().date()
+        today_str = today.isoformat()
+
+        # Get all workouts scheduled for today
+        workouts_response = db.client.table("workouts").select(
+            "id, name, user_id"
+        ).eq("scheduled_date", today_str).execute()
+
+        workouts = workouts_response.data if workouts_response.data else []
+        logger.info(f"Found {len(workouts)} workouts scheduled for today")
+
+        results = {
+            "total_workouts": len(workouts),
+            "notifications_sent": 0,
+            "skipped_preferences": 0,
+            "skipped_no_token": 0,
+            "errors": 0
+        }
+
+        # Get unique user IDs
+        user_ids = list(set(w["user_id"] for w in workouts))
+
+        for user_id in user_ids:
+            try:
+                user = db.get_user(user_id)
+                if not user:
+                    continue
+
+                fcm_token = user.get("fcm_token")
+                if not fcm_token:
+                    results["skipped_no_token"] += 1
+                    continue
+
+                # Check notification preferences
+                prefs = user.get("notification_preferences") or {}
+                if prefs.get("workout_reminders") is False:
+                    results["skipped_preferences"] += 1
+                    continue
+
+                # Get workout name for this user
+                user_workouts = [w for w in workouts if w["user_id"] == user_id]
+                workout_name = user_workouts[0]["name"] if user_workouts else "today's workout"
+
+                success = await notification_service.send_workout_reminder(
+                    fcm_token=fcm_token,
+                    workout_name=workout_name,
+                    user_name=user.get("name"),
+                )
+
+                if success:
+                    results["notifications_sent"] += 1
+                else:
+                    results["errors"] += 1
+
+            except Exception as e:
+                logger.error(f"Error sending reminder to user {user_id}: {e}")
+                results["errors"] += 1
+
+        logger.info(f"✅ Workout reminders complete: {results['notifications_sent']} sent")
+        return results
+
+    except Exception as e:
+        logger.error(f"❌ Error sending workout reminders: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/scheduler/status")
+async def scheduler_status():
+    """
+    Get information about scheduler endpoints.
+
+    Returns available scheduler endpoints and their descriptions.
+    """
+    return {
+        "status": "ok",
+        "endpoints": [
+            {
+                "path": "/scheduler/check-inactive-users",
+                "method": "POST",
+                "description": "Send guilt notifications to users who haven't worked out",
+                "recommended_schedule": "Daily at 6pm local time"
+            },
+            {
+                "path": "/scheduler/send-workout-reminders",
+                "method": "POST",
+                "description": "Send reminders to users with workouts scheduled today",
+                "recommended_schedule": "Daily at 8am local time"
+            }
+        ],
+        "notes": [
+            "These endpoints should be called by external cron jobs (e.g., Render cron, AWS CloudWatch)",
+            "Each endpoint respects user notification preferences",
+            "Users without FCM tokens are skipped"
+        ]
+    }

@@ -183,6 +183,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
   bool _isLoading = false;
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
@@ -202,17 +203,17 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   }
 
   void _scrollToBottom({bool animate = true}) {
-    // With reverse: true, position 0 is the bottom (newest messages)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
         if (animate) {
           _scrollController.animateTo(
-            0,
+            maxScroll,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         } else {
-          _scrollController.jumpTo(0);
+          _scrollController.jumpTo(maxScroll);
         }
       }
     });
@@ -312,30 +313,33 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   });
                 }
 
-                // Use reverse: true - this automatically shows newest at bottom
-                // With reverse: true, index 0 renders at the BOTTOM of screen
-                // So index 0 = newest message (last in array)
+                // Scroll to bottom when messages first load or when new messages arrive
+                if (messages.length != _lastMessageCount) {
+                  _lastMessageCount = messages.length;
+                  // Use multiple frames to ensure ListView has fully rendered
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.jumpTo(
+                            _scrollController.position.maxScrollExtent,
+                          );
+                        }
+                      });
+                    });
+                  });
+                }
+
                 return ListView.builder(
                   controller: _scrollController,
-                  reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: messages.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
-                    // With reverse: true, index 0 is at bottom
-                    // Typing indicator should be at the very bottom (index 0)
-                    if (_isLoading && index == 0) {
+                    // Typing indicator at the end
+                    if (index == messages.length && _isLoading) {
                       return const _TypingIndicator();
                     }
-
-                    // Adjust for typing indicator
-                    final msgIndex = _isLoading ? index - 1 : index;
-
-                    // Access messages in reverse: index 0 = newest = messages.length - 1
-                    final actualIndex = messages.length - 1 - msgIndex;
-                    if (actualIndex < 0 || actualIndex >= messages.length) {
-                      return const SizedBox.shrink();
-                    }
-                    return _MessageBubble(message: messages[actualIndex]);
+                    return _MessageBubble(message: messages[index]);
                   },
                 );
               },

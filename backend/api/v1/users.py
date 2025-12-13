@@ -609,9 +609,17 @@ async def full_reset(user_id: str):
 
 
 @router.get("/{user_id}/export")
-async def export_user_data(user_id: str):
+async def export_user_data(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
     """
     Export all user data as a ZIP file containing CSV files.
+
+    Query parameters:
+    - start_date: Optional ISO date string (YYYY-MM-DD) for filtering data from this date
+    - end_date: Optional ISO date string (YYYY-MM-DD) for filtering data until this date
 
     The ZIP contains:
     - profile.csv - User profile and settings
@@ -624,7 +632,10 @@ async def export_user_data(user_id: str):
     - streaks.csv - Streak history
     - _metadata.csv - Export metadata for import validation
     """
-    logger.info(f"Exporting data for user: id={user_id}")
+    import time
+    start_time = time.time()
+    logger.info(f"🔄 Starting data export for user: id={user_id}, date_range={start_date} to {end_date}")
+
     try:
         db = get_supabase_db()
 
@@ -634,17 +645,20 @@ async def export_user_data(user_id: str):
             logger.warning(f"User not found for export: id={user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
+        logger.info(f"✅ User verified, generating export...")
+
         # Import here to avoid circular imports
         from services.data_export import export_user_data as do_export
 
-        # Generate ZIP file
-        zip_bytes = do_export(user_id)
+        # Generate ZIP file with date filters
+        zip_bytes = do_export(user_id, start_date=start_date, end_date=end_date)
 
         # Create filename with date
         date_str = datetime.utcnow().strftime("%Y-%m-%d")
         filename = f"fitness_data_{date_str}.zip"
 
-        logger.info(f"Data export complete for user {user_id}, size: {len(zip_bytes)} bytes")
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Data export complete for user {user_id} in {elapsed:.2f}s, size: {len(zip_bytes)} bytes")
 
         # Return as streaming response
         return StreamingResponse(
@@ -659,7 +673,8 @@ async def export_user_data(user_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to export user data: {e}")
+        elapsed = time.time() - start_time
+        logger.error(f"❌ Failed to export user data after {elapsed:.2f}s: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

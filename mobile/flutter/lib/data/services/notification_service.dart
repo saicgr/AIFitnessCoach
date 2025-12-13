@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
@@ -82,17 +84,31 @@ class NotificationPreferences {
       };
 }
 
-/// Notification service for FCM
+/// Notification service for FCM + Local Notifications
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   String? _fcmToken;
 
   String? get fcmToken => _fcmToken;
 
-  /// Initialize Firebase Messaging
+  /// Android notification channel
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'ai_fitness_coach_notifications',
+    'AI Fitness Coach',
+    description: 'Notifications from your AI Fitness Coach',
+    importance: Importance.high,
+    playSound: true,
+  );
+
+  /// Initialize Firebase Messaging and Local Notifications
   Future<void> initialize() async {
     // Set up background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Initialize local notifications
+    await _initializeLocalNotifications();
 
     // Request permission (required for iOS and Android 13+)
     await _requestPermission();
@@ -120,6 +136,40 @@ class NotificationService {
     }
 
     debugPrint('🔔 [FCM] Notification service initialized');
+  }
+
+  /// Initialize local notifications plugin
+  Future<void> _initializeLocalNotifications() async {
+    // Android settings
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // iOS settings
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (response) {
+        debugPrint('🔔 [Local] Notification tapped: ${response.payload}');
+        // TODO: Handle notification tap
+      },
+    );
+
+    // Create Android notification channel
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_channel);
+
+    debugPrint('🔔 [Local] Local notifications initialized');
   }
 
   /// Request notification permission
@@ -155,14 +205,61 @@ class NotificationService {
     }
   }
 
-  /// Handle foreground messages
+  /// Handle foreground messages - show local notification
   void _handleForegroundMessage(RemoteMessage message) {
     debugPrint('🔔 [FCM] Foreground message received:');
     debugPrint('   Title: ${message.notification?.title}');
     debugPrint('   Body: ${message.notification?.body}');
     debugPrint('   Data: ${message.data}');
 
-    // TODO: Show local notification or in-app banner
+    // Show local notification
+    final notification = message.notification;
+    if (notification != null) {
+      _showLocalNotification(
+        title: notification.title ?? 'AI Fitness Coach',
+        body: notification.body ?? '',
+        payload: message.data['action'],
+      );
+    }
+  }
+
+  /// Show a local notification
+  Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      'ai_fitness_coach_notifications',
+      'AI Fitness Coach',
+      channelDescription: 'Notifications from your AI Fitness Coach',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF00D9FF), // Cyan color
+      playSound: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      details,
+      payload: payload,
+    );
+
+    debugPrint('🔔 [Local] Notification shown: $title');
   }
 
   /// Handle when app is opened from notification

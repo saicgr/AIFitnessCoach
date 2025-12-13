@@ -21,13 +21,22 @@ EXPORT_VERSION = "1.0"
 APP_VERSION = "1.0.0"
 
 
-def export_user_data(user_id: str) -> bytes:
+def export_user_data(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> bytes:
     """
     Export all user data to a ZIP file containing CSV files.
 
+    Args:
+        user_id: The user ID to export data for
+        start_date: Optional start date filter (YYYY-MM-DD format)
+        end_date: Optional end date filter (YYYY-MM-DD format)
+
     Returns the ZIP file as bytes.
     """
-    logger.info(f"Starting data export for user: {user_id}")
+    logger.info(f"Starting data export for user: {user_id}, date_range: {start_date} to {end_date}")
 
     db = get_supabase_db()
 
@@ -43,55 +52,60 @@ def export_user_data(user_id: str) -> bytes:
         # Export each data type
         export_counts = {}
 
-        # 1. Profile data
+        # 1. Profile data (always included, no date filter)
         profile_csv = _export_profile(user)
         zip_file.writestr("profile.csv", profile_csv)
         export_counts["profile"] = 1
 
-        # 2. Body metrics
-        metrics = db.list_user_metrics(user_id, limit=10000)
+        # 2. Body metrics - filter by recorded_at
+        metrics = _get_filtered_metrics(db, user_id, start_date, end_date)
         metrics_csv = _export_body_metrics(metrics)
         zip_file.writestr("body_metrics.csv", metrics_csv)
         export_counts["body_metrics"] = len(metrics)
+        logger.debug(f"Exported {len(metrics)} body metrics")
 
-        # 3. Workouts (including non-current for history)
-        workouts = _get_all_workouts(db, user_id)
+        # 3. Workouts - filter by scheduled_date
+        workouts = _get_filtered_workouts(db, user_id, start_date, end_date)
         workouts_csv = _export_workouts(workouts)
         zip_file.writestr("workouts.csv", workouts_csv)
         export_counts["workouts"] = len(workouts)
+        logger.debug(f"Exported {len(workouts)} workouts")
 
-        # 4. Workout logs
-        workout_logs = db.list_workout_logs(user_id, limit=10000)
+        # 4. Workout logs - filter by completed_at
+        workout_logs = _get_filtered_workout_logs(db, user_id, start_date, end_date)
         logs_csv = _export_workout_logs(workout_logs)
         zip_file.writestr("workout_logs.csv", logs_csv)
         export_counts["workout_logs"] = len(workout_logs)
+        logger.debug(f"Exported {len(workout_logs)} workout logs")
 
-        # 5. Performance logs (exercise sets)
-        performance_logs = db.list_performance_logs(user_id, limit=100000)
+        # 5. Performance logs - filter by recorded_at
+        performance_logs = _get_filtered_performance_logs(db, user_id, start_date, end_date)
         sets_csv = _export_exercise_sets(performance_logs)
         zip_file.writestr("exercise_sets.csv", sets_csv)
         export_counts["exercise_sets"] = len(performance_logs)
+        logger.debug(f"Exported {len(performance_logs)} exercise sets")
 
-        # 6. Strength records
-        strength_records = db.list_strength_records(user_id, limit=10000)
+        # 6. Strength records - filter by achieved_at
+        strength_records = _get_filtered_strength_records(db, user_id, start_date, end_date)
         strength_csv = _export_strength_records(strength_records)
         zip_file.writestr("strength_records.csv", strength_csv)
         export_counts["strength_records"] = len(strength_records)
+        logger.debug(f"Exported {len(strength_records)} strength records")
 
-        # 7. User achievements
-        achievements = _get_user_achievements(db, user_id)
+        # 7. User achievements - filter by earned_at
+        achievements = _get_filtered_achievements(db, user_id, start_date, end_date)
         achievements_csv = _export_achievements(achievements)
         zip_file.writestr("achievements.csv", achievements_csv)
         export_counts["achievements"] = len(achievements)
 
-        # 8. User streaks
+        # 8. User streaks (always included, no date filter - current state)
         streaks = _get_user_streaks(db, user_id)
         streaks_csv = _export_streaks(streaks)
         zip_file.writestr("streaks.csv", streaks_csv)
         export_counts["streaks"] = len(streaks)
 
         # 9. Metadata file (for import validation)
-        metadata_csv = _export_metadata(user_id, export_counts)
+        metadata_csv = _export_metadata(user_id, export_counts, start_date, end_date)
         zip_file.writestr("_metadata.csv", metadata_csv)
 
     logger.info(f"Data export complete for user {user_id}: {export_counts}")
@@ -99,6 +113,89 @@ def export_user_data(user_id: str) -> bytes:
     # Get the ZIP file bytes
     zip_buffer.seek(0)
     return zip_buffer.getvalue()
+
+
+# ==================== DATE-FILTERED QUERY FUNCTIONS ====================
+
+
+def _get_filtered_metrics(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get body metrics filtered by date range."""
+    query = db.client.table("user_metrics").select("*").eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("recorded_at", start_date)
+    if end_date:
+        query = query.lte("recorded_at", end_date + "T23:59:59Z")
+
+    result = query.order("recorded_at", desc=True).limit(500).execute()
+    return result.data or []
+
+
+def _get_filtered_workouts(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get workouts filtered by scheduled_date."""
+    query = db.client.table("workouts").select("*").eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("scheduled_date", start_date)
+    if end_date:
+        query = query.lte("scheduled_date", end_date)
+
+    result = query.order("scheduled_date", desc=True).limit(500).execute()
+    return result.data or []
+
+
+def _get_filtered_workout_logs(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get workout logs filtered by completed_at."""
+    query = db.client.table("workout_logs").select("*").eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("completed_at", start_date)
+    if end_date:
+        query = query.lte("completed_at", end_date + "T23:59:59Z")
+
+    result = query.order("completed_at", desc=True).limit(500).execute()
+    return result.data or []
+
+
+def _get_filtered_performance_logs(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get performance logs filtered by recorded_at."""
+    query = db.client.table("performance_logs").select("*").eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("recorded_at", start_date)
+    if end_date:
+        query = query.lte("recorded_at", end_date + "T23:59:59Z")
+
+    result = query.order("recorded_at", desc=True).limit(5000).execute()
+    return result.data or []
+
+
+def _get_filtered_strength_records(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get strength records filtered by achieved_at."""
+    query = db.client.table("strength_records").select("*").eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("achieved_at", start_date)
+    if end_date:
+        query = query.lte("achieved_at", end_date + "T23:59:59Z")
+
+    result = query.order("achieved_at", desc=True).limit(500).execute()
+    return result.data or []
+
+
+def _get_filtered_achievements(db, user_id: str, start_date: Optional[str], end_date: Optional[str]) -> List[Dict[str, Any]]:
+    """Get user achievements filtered by earned_at."""
+    query = db.client.table("user_achievements").select(
+        "*, achievement_types(name, category, tier)"
+    ).eq("user_id", user_id)
+
+    if start_date:
+        query = query.gte("earned_at", start_date)
+    if end_date:
+        query = query.lte("earned_at", end_date + "T23:59:59Z")
+
+    result = query.execute()
+    return result.data or []
 
 
 def _export_profile(user: Dict[str, Any]) -> str:
@@ -181,13 +278,6 @@ def _export_body_metrics(metrics: List[Dict[str, Any]]) -> str:
         ])
 
     return output.getvalue()
-
-
-def _get_all_workouts(db, user_id: str) -> List[Dict[str, Any]]:
-    """Get all workouts including superseded versions."""
-    # Use direct query to get all workouts, not just current
-    result = db.client.table("workouts").select("*").eq("user_id", user_id).order("scheduled_date", desc=True).execute()
-    return result.data or []
 
 
 def _export_workouts(workouts: List[Dict[str, Any]]) -> str:
@@ -312,14 +402,6 @@ def _export_strength_records(records: List[Dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-def _get_user_achievements(db, user_id: str) -> List[Dict[str, Any]]:
-    """Get user achievements with achievement type details."""
-    result = db.client.table("user_achievements").select(
-        "*, achievement_types(name, category, tier)"
-    ).eq("user_id", user_id).execute()
-    return result.data or []
-
-
 def _export_achievements(achievements: List[Dict[str, Any]]) -> str:
     """Export achievements to CSV string."""
     output = io.StringIO()
@@ -374,7 +456,12 @@ def _export_streaks(streaks: List[Dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-def _export_metadata(user_id: str, counts: Dict[str, int]) -> str:
+def _export_metadata(
+    user_id: str,
+    counts: Dict[str, int],
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> str:
     """Export metadata for import validation."""
     output = io.StringIO()
     writer = csv.writer(output)
@@ -387,6 +474,12 @@ def _export_metadata(user_id: str, counts: Dict[str, int]) -> str:
     writer.writerow(["exported_at", datetime.utcnow().isoformat() + "Z"])
     writer.writerow(["app_version", APP_VERSION])
     writer.writerow(["original_user_id", user_id])
+
+    # Date filter info
+    if start_date:
+        writer.writerow(["filter_start_date", start_date])
+    if end_date:
+        writer.writerow(["filter_end_date", end_date])
 
     # Include counts for each data type
     for key, count in counts.items():

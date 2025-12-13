@@ -13,6 +13,7 @@ import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import 'notification_test_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -597,87 +598,13 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showExportDialog(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: Row(
-          children: [
-            Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
-            const SizedBox(width: 12),
-            Text(
-              'Export Data',
-              style: TextStyle(
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Export your fitness data including:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _DialogBulletPoint(
-              text: 'Workout history and progress',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            _DialogBulletPoint(
-              text: 'Personal records',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            _DialogBulletPoint(
-              text: 'Nutrition and hydration logs',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            _DialogBulletPoint(
-              text: 'Profile settings',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Your data will be exported as a ZIP file containing CSV files. You can use this to restore your data if you delete and recreate your account.',
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _exportData(context, ref);
-            },
-            child: Text(
-              'Export',
-              style: TextStyle(color: AppColors.cyan),
-            ),
-          ),
-        ],
+      builder: (context) => _ExportDataDialog(
+        onExport: (startDate, endDate) async {
+          Navigator.pop(context);
+          await _exportData(context, ref, startDate: startDate, endDate: endDate);
+        },
       ),
     );
   }
@@ -763,13 +690,41 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
-    // Show loading indicator
+  Future<void> _exportData(
+    BuildContext context,
+    WidgetRef ref, {
+    String? startDate,
+    String? endDate,
+  }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Show loading dialog with message
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.cyan),
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.cyan),
+            const SizedBox(height: 16),
+            Text(
+              'Exporting your data...',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This may take a few seconds',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -781,11 +736,23 @@ class SettingsScreen extends ConsumerWidget {
         throw Exception('User not found');
       }
 
+      // Build query parameters for date filter
+      final queryParams = <String, String>{};
+      if (startDate != null) queryParams['start_date'] = startDate;
+      if (endDate != null) queryParams['end_date'] = endDate;
+
+      final queryString = queryParams.isNotEmpty
+          ? '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+          : '';
+
       // Call backend to export user data (returns ZIP file bytes)
+      // Use a longer timeout since export can take time for large datasets
       final response = await apiClient.dio.get(
-        '${ApiConstants.users}/$userId/export',
+        '${ApiConstants.users}/$userId/export$queryString',
         options: Options(
           responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
@@ -817,6 +784,26 @@ class SettingsScreen extends ConsumerWidget {
         }
       } else {
         throw Exception('Failed to export data');
+      }
+    } on DioException catch (e) {
+      // Close loading dialog if still showing
+      if (context.mounted) Navigator.pop(context);
+
+      String errorMessage = 'Export failed';
+      if (e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionTimeout) {
+        errorMessage = 'Export timed out. Please try again.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage = 'No internet connection';
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } catch (e) {
       // Close loading dialog if still showing
@@ -1477,7 +1464,6 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           // Test Notification Button
           InkWell(
             onTap: _isSendingTest ? null : _sendTestNotification,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -1523,6 +1509,57 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       color: AppColors.cyan,
                       size: 20,
                     ),
+                ],
+              ),
+            ),
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // All Notification Tests Link
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationTestScreen(),
+                ),
+              );
+            },
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active,
+                    color: AppColors.purple,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'All Notification Tests',
+                          style: TextStyle(
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          'Test workout, nutrition, hydration & more',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: textMuted,
+                  ),
                 ],
               ),
             ),
@@ -1625,5 +1662,349 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
         setState(() => _isSendingTest = false);
       }
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Export Data Dialog with Date Filter
+// ─────────────────────────────────────────────────────────────────
+
+enum _ExportTimeRange {
+  lastMonth,
+  last3Months,
+  last6Months,
+  lastYear,
+  allTime,
+  custom,
+}
+
+class _ExportDataDialog extends StatefulWidget {
+  final Future<void> Function(String? startDate, String? endDate) onExport;
+
+  const _ExportDataDialog({required this.onExport});
+
+  @override
+  State<_ExportDataDialog> createState() => _ExportDataDialogState();
+}
+
+class _ExportDataDialogState extends State<_ExportDataDialog> {
+  _ExportTimeRange _selectedRange = _ExportTimeRange.allTime;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+
+  String _getTimeRangeLabel(_ExportTimeRange range) {
+    switch (range) {
+      case _ExportTimeRange.lastMonth:
+        return 'Last 1 month';
+      case _ExportTimeRange.last3Months:
+        return 'Last 3 months';
+      case _ExportTimeRange.last6Months:
+        return 'Last 6 months';
+      case _ExportTimeRange.lastYear:
+        return 'Last year';
+      case _ExportTimeRange.allTime:
+        return 'All time';
+      case _ExportTimeRange.custom:
+        return 'Custom range';
+    }
+  }
+
+  (String?, String?) _getDateRange() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (_selectedRange) {
+      case _ExportTimeRange.lastMonth:
+        final start = DateTime(today.year, today.month - 1, today.day);
+        return (_formatDate(start), _formatDate(today));
+      case _ExportTimeRange.last3Months:
+        final start = DateTime(today.year, today.month - 3, today.day);
+        return (_formatDate(start), _formatDate(today));
+      case _ExportTimeRange.last6Months:
+        final start = DateTime(today.year, today.month - 6, today.day);
+        return (_formatDate(start), _formatDate(today));
+      case _ExportTimeRange.lastYear:
+        final start = DateTime(today.year - 1, today.month, today.day);
+        return (_formatDate(start), _formatDate(today));
+      case _ExportTimeRange.allTime:
+        return (null, null);
+      case _ExportTimeRange.custom:
+        return (
+          _customStartDate != null ? _formatDate(_customStartDate!) : null,
+          _customEndDate != null ? _formatDate(_customEndDate!) : null,
+        );
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final initialDate = isStart
+        ? (_customStartDate ?? DateTime.now().subtract(const Duration(days: 30)))
+        : (_customEndDate ?? DateTime.now());
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.cyan,
+              onPrimary: Colors.white,
+              surface: isDark ? AppColors.elevated : AppColorsLight.elevated,
+              onSurface: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _customStartDate = picked;
+          // Ensure end date is not before start date
+          if (_customEndDate != null && _customEndDate!.isBefore(picked)) {
+            _customEndDate = picked;
+          }
+        } else {
+          _customEndDate = picked;
+          // Ensure start date is not after end date
+          if (_customStartDate != null && _customStartDate!.isAfter(picked)) {
+            _customStartDate = picked;
+          }
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AlertDialog(
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      title: Row(
+        children: [
+          Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
+          const SizedBox(width: 12),
+          Text(
+            'Export Data',
+            style: TextStyle(
+              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            ),
+          ),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Time Range',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Quick filter chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _ExportTimeRange.values.map((range) {
+                final isSelected = _selectedRange == range;
+                return ChoiceChip(
+                  label: Text(
+                    _getTimeRangeLabel(range),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                    ),
+                  ),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedRange = range);
+                    }
+                  },
+                  selectedColor: AppColors.cyan,
+                  backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  side: BorderSide.none,
+                );
+              }).toList(),
+            ),
+
+            // Custom date pickers
+            if (_selectedRange == _ExportTimeRange.custom) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _DatePickerButton(
+                      label: 'Start',
+                      date: _customStartDate,
+                      onTap: () => _selectDate(context, true),
+                      isDark: isDark,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _DatePickerButton(
+                      label: 'End',
+                      date: _customEndDate,
+                      onTap: () => _selectDate(context, false),
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            Text(
+              'Data to export:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _DialogBulletPoint(
+              text: 'Workout history and progress',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Personal records',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Body measurements',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Profile settings (always included)',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+
+            const SizedBox(height: 12),
+            Text(
+              'Your data will be exported as a ZIP file.',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            final (startDate, endDate) = _getDateRange();
+            widget.onExport(startDate, endDate);
+          },
+          child: Text(
+            'Export',
+            style: TextStyle(color: AppColors.cyan),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DatePickerButton extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _DatePickerButton({
+    required this.label,
+    required this.date,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: AppColors.cyan,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    date != null
+                        ? '${months[date!.month - 1]} ${date!.day}, ${date!.year}'
+                        : 'Select date',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: date != null
+                          ? (isDark ? AppColors.textPrimary : AppColorsLight.textPrimary)
+                          : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
