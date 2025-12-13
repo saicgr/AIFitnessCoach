@@ -125,6 +125,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         value: '${weeklyProgress.$1}',
                         color: AppColors.orange,
                       ),
+                      const SizedBox(width: 4),
+                      _ProgramMenuButton(isDark: isDark),
                     ],
                   ),
                 ),
@@ -365,6 +367,157 @@ class _StatBadge extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Program Menu Button (3-dot menu)
+// ─────────────────────────────────────────────────────────────────
+
+class _ProgramMenuButton extends ConsumerWidget {
+  final bool isDark;
+
+  const _ProgramMenuButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_vert,
+        color: textMuted,
+        size: 24,
+      ),
+      color: elevatedColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+        ),
+      ),
+      offset: const Offset(0, 40),
+      onSelected: (value) {
+        if (value == 'reset_program') {
+          _showResetProgramDialog(context, ref);
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'reset_program',
+          child: Row(
+            children: [
+              Icon(
+                Icons.restart_alt,
+                size: 20,
+                color: AppColors.orange,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Reset Program',
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showResetProgramDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text(
+          'Reset Program?',
+          style: TextStyle(
+            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          ),
+        ),
+        content: Text(
+          'This will delete your current workouts and let you create a new program through onboarding. Your completed workout history will be preserved.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resetProgram(context, ref);
+            },
+            child: const Text(
+              'Reset',
+              style: TextStyle(color: AppColors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _resetProgram(BuildContext context, WidgetRef ref) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Call backend to reset onboarding (keeps account, deletes workouts)
+      final response = await apiClient.dio.post(
+        '/api/v1/users/$userId/reset-onboarding',
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (response.statusCode == 200) {
+        // Navigate to onboarding
+        if (context.mounted) {
+          context.go('/onboarding');
+        }
+      } else {
+        throw Exception('Failed to reset program');
+      }
+    } catch (e) {
+      // Close loading dialog if still showing
+      if (context.mounted) Navigator.pop(context);
+
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 

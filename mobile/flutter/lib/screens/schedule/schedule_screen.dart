@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 
@@ -28,18 +27,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final workoutsState = ref.watch(workoutsProvider);
     final selectedWeek = ref.watch(selectedWeekProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
-        title: const Text('Schedule'),
+        backgroundColor: colors.background,
+        foregroundColor: colors.textPrimary,
+        title: Text('Schedule', style: TextStyle(color: colors.textPrimary)),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.today),
+            icon: Icon(Icons.today, color: colors.textPrimary),
             onPressed: () => _goToToday(ref),
             tooltip: 'Go to today',
           ),
@@ -52,21 +51,22 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             selectedWeek: selectedWeek,
             onPreviousWeek: () => _changeWeek(ref, -1),
             onNextWeek: () => _changeWeek(ref, 1),
+            colors: colors,
           ),
 
           // Week view with drag & drop
           Expanded(
             child: workoutsState.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.cyan),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: colors.cyan),
               ),
               error: (e, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    Icon(Icons.error_outline, size: 48, color: colors.error),
                     const SizedBox(height: 16),
-                    Text('Failed to load: $e'),
+                    Text('Failed to load: $e', style: TextStyle(color: colors.textPrimary)),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.read(workoutsProvider.notifier).refresh(),
@@ -75,24 +75,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ],
                 ),
               ),
-              data: (workouts) => _buildWeekView(context, workouts, selectedWeek),
+              data: (workouts) => _buildWeekView(context, workouts, selectedWeek, colors),
             ),
           ),
 
           // Instructions
           Container(
             padding: const EdgeInsets.all(16),
-            color: AppColors.elevated,
+            color: colors.elevated,
             child: Row(
               children: [
-                Icon(Icons.touch_app, size: 20, color: AppColors.textMuted),
+                Icon(Icons.touch_app, size: 20, color: colors.textMuted),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Long press and drag a workout to reschedule it',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textMuted,
+                      color: colors.textMuted,
                     ),
                   ),
                 ),
@@ -104,7 +104,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Widget _buildWeekView(BuildContext context, List<Workout> workouts, DateTime weekStart) {
+  Widget _buildWeekView(BuildContext context, List<Workout> workouts, DateTime weekStart, ThemeColors colors) {
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
     final today = DateTime.now();
 
@@ -129,18 +129,18 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             },
             onAcceptWithDetails: (details) async {
               setState(() => _targetDayIndex = null);
-              await _rescheduleWorkout(details.data, day);
+              await _rescheduleWorkout(details.data, day, colors);
             },
             builder: (context, candidateData, rejectedData) {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: isTargetDay
-                      ? AppColors.cyan.withOpacity(0.1)
+                      ? colors.cyan.withOpacity(0.1)
                       : Colors.transparent,
                   border: Border(
                     right: BorderSide(
-                      color: AppColors.cardBorder.withOpacity(0.3),
+                      color: colors.cardBorder.withOpacity(0.3),
                       width: 0.5,
                     ),
                   ),
@@ -152,6 +152,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       day: day,
                       isToday: isToday,
                       isTargetDay: isTargetDay,
+                      colors: colors,
                     ),
 
                     // Workouts for the day
@@ -170,8 +171,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: isTargetDay
-                                            ? AppColors.cyan.withOpacity(0.5)
-                                            : AppColors.cardBorder.withOpacity(0.2),
+                                            ? colors.cyan.withOpacity(0.5)
+                                            : colors.cardBorder.withOpacity(0.2),
                                         style: BorderStyle.solid,
                                       ),
                                       borderRadius: BorderRadius.circular(8),
@@ -181,8 +182,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                         isTargetDay ? Icons.add : Icons.remove,
                                         size: 16,
                                         color: isTargetDay
-                                            ? AppColors.cyan
-                                            : AppColors.textMuted.withOpacity(0.3),
+                                            ? colors.cyan
+                                            : colors.textMuted.withOpacity(0.3),
                                       ),
                                     ),
                                   ),
@@ -200,6 +201,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                                       });
                                     },
                                     isDragging: _draggingWorkout?.id == workout.id,
+                                    colors: colors,
                                   );
                                 }).toList(),
                         ),
@@ -223,7 +225,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }).toList();
   }
 
-  Future<void> _rescheduleWorkout(Workout workout, DateTime newDate) async {
+  Future<void> _rescheduleWorkout(Workout workout, DateTime newDate, ThemeColors colors) async {
     final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
 
     // Show loading
@@ -244,7 +246,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ],
         ),
         duration: const Duration(seconds: 1),
-        backgroundColor: AppColors.elevated,
+        backgroundColor: colors.elevated,
       ),
     );
 
@@ -260,7 +262,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}'),
-              backgroundColor: AppColors.success,
+              backgroundColor: colors.success,
             ),
           );
         }
@@ -272,7 +274,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to reschedule: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: colors.error,
           ),
         );
       }
@@ -300,11 +302,13 @@ class _WeekSelector extends StatelessWidget {
   final DateTime selectedWeek;
   final VoidCallback onPreviousWeek;
   final VoidCallback onNextWeek;
+  final ThemeColors colors;
 
   const _WeekSelector({
     required this.selectedWeek,
     required this.onPreviousWeek,
     required this.onNextWeek,
+    required this.colors,
   });
 
   @override
@@ -315,10 +319,10 @@ class _WeekSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: colors.elevated,
         border: Border(
           bottom: BorderSide(
-            color: AppColors.cardBorder.withOpacity(0.3),
+            color: colors.cardBorder.withOpacity(0.3),
           ),
         ),
       ),
@@ -328,7 +332,7 @@ class _WeekSelector extends StatelessWidget {
           IconButton(
             onPressed: onPreviousWeek,
             icon: const Icon(Icons.chevron_left),
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
           ),
           GestureDetector(
             onTap: () {}, // Could open week picker
@@ -337,9 +341,10 @@ class _WeekSelector extends StatelessWidget {
               children: [
                 Text(
                   '${formatter.format(selectedWeek)} - ${formatter.format(weekEnd)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -347,15 +352,15 @@ class _WeekSelector extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: colors.cyan.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
+                    child: Text(
                       'This Week',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                        color: colors.cyan,
                       ),
                     ),
                   ),
@@ -365,7 +370,7 @@ class _WeekSelector extends StatelessWidget {
           IconButton(
             onPressed: onNextWeek,
             icon: const Icon(Icons.chevron_right),
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
           ),
         ],
       ),
@@ -389,11 +394,13 @@ class _DayHeader extends StatelessWidget {
   final DateTime day;
   final bool isToday;
   final bool isTargetDay;
+  final ThemeColors colors;
 
   const _DayHeader({
     required this.day,
     required this.isToday,
     required this.isTargetDay,
+    required this.colors,
   });
 
   @override
@@ -405,13 +412,13 @@ class _DayHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: isToday
-            ? AppColors.cyan.withOpacity(0.1)
+            ? colors.cyan.withOpacity(0.1)
             : isTargetDay
-                ? AppColors.cyan.withOpacity(0.05)
+                ? colors.cyan.withOpacity(0.05)
                 : Colors.transparent,
         border: Border(
           bottom: BorderSide(
-            color: AppColors.cardBorder.withOpacity(0.3),
+            color: colors.cardBorder.withOpacity(0.3),
           ),
         ),
       ),
@@ -422,7 +429,7 @@ class _DayHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: isToday ? AppColors.cyan : AppColors.textMuted,
+              color: isToday ? colors.cyan : colors.textMuted,
               letterSpacing: 0.5,
             ),
           ),
@@ -431,7 +438,7 @@ class _DayHeader extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: isToday ? AppColors.cyan : Colors.transparent,
+              color: isToday ? colors.cyan : Colors.transparent,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -440,7 +447,7 @@ class _DayHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                  color: isToday ? Colors.white : AppColors.textPrimary,
+                  color: isToday ? Colors.white : colors.textPrimary,
                 ),
               ),
             ),
@@ -460,12 +467,14 @@ class _DraggableWorkoutCard extends StatelessWidget {
   final VoidCallback onDragStarted;
   final VoidCallback onDragEnd;
   final bool isDragging;
+  final ThemeColors colors;
 
   const _DraggableWorkoutCard({
     required this.workout,
     required this.onDragStarted,
     required this.onDragEnd,
     required this.isDragging,
+    required this.colors,
   });
 
   @override
@@ -483,9 +492,9 @@ class _DraggableWorkoutCard extends StatelessWidget {
           width: 120,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: colors.elevated,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.cyan, width: 2),
+            border: Border.all(color: colors.cyan, width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -493,10 +502,10 @@ class _DraggableWorkoutCard extends StatelessWidget {
             children: [
               Text(
                 workout.name ?? 'Workout',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -523,12 +532,12 @@ class _DraggableWorkoutCard extends StatelessWidget {
       ),
       childWhenDragging: Opacity(
         opacity: 0.3,
-        child: _WorkoutCard(workout: workout, typeColor: typeColor),
+        child: _WorkoutCard(workout: workout, typeColor: typeColor, colors: colors),
       ),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
         opacity: isDragging ? 0.3 : 1.0,
-        child: _WorkoutCard(workout: workout, typeColor: typeColor),
+        child: _WorkoutCard(workout: workout, typeColor: typeColor, colors: colors),
       ),
     );
   }
@@ -537,10 +546,12 @@ class _DraggableWorkoutCard extends StatelessWidget {
 class _WorkoutCard extends StatelessWidget {
   final Workout workout;
   final Color typeColor;
+  final ThemeColors colors;
 
   const _WorkoutCard({
     required this.workout,
     required this.typeColor,
+    required this.colors,
   });
 
   @override
@@ -552,12 +563,12 @@ class _WorkoutCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isCompleted
-            ? AppColors.success.withOpacity(0.1)
-            : AppColors.elevated,
+            ? colors.success.withOpacity(0.1)
+            : colors.elevated,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isCompleted
-              ? AppColors.success.withOpacity(0.3)
+              ? colors.success.withOpacity(0.3)
               : typeColor.withOpacity(0.3),
           width: 1,
         ),
@@ -574,18 +585,18 @@ class _WorkoutCard extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: isCompleted
-                        ? AppColors.success
-                        : AppColors.textPrimary,
+                        ? colors.success
+                        : colors.textPrimary,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (isCompleted)
-                const Icon(
+                Icon(
                   Icons.check_circle,
                   size: 14,
-                  color: AppColors.success,
+                  color: colors.success,
                 ),
             ],
           ),
@@ -608,9 +619,9 @@ class _WorkoutCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${workout.durationMinutes ?? 45}m',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
-              color: AppColors.textMuted,
+              color: colors.textMuted,
             ),
           ),
         ],

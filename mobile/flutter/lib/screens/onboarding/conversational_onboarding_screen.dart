@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -231,14 +232,40 @@ class _ConversationalOnboardingScreenState
 
   void _handleBasicInfoSubmit({
     required String name,
+    required DateTime dateOfBirth,
     required int age,
     required String gender,
     required int heightCm,
     required double weightKg,
+    required String activityLevel,
   }) {
+    // Store date of birth and activity level in collected data
+    ref.read(onboardingStateProvider.notifier).updateCollectedData({
+      'dateOfBirth': dateOfBirth.toIso8601String().split('T')[0], // YYYY-MM-DD format
+      'activityLevel': activityLevel,
+    });
+
+    // Format activity level for display
+    final activityDisplay = _formatActivityLevel(activityLevel);
+
     final message =
-        "My name is $name, I'm $age years old, $gender, ${heightCm}cm tall, and I weigh ${weightKg}kg";
+        "My name is $name, I'm $age years old, $gender, ${heightCm}cm tall, I weigh ${weightKg}kg, and I'm $activityDisplay";
     _sendMessage(message);
+  }
+
+  String _formatActivityLevel(String level) {
+    switch (level) {
+      case 'sedentary':
+        return 'sedentary (little or no exercise)';
+      case 'lightly_active':
+        return 'lightly active (1-3 days/week)';
+      case 'moderately_active':
+        return 'moderately active (3-5 days/week)';
+      case 'very_active':
+        return 'very active (6-7 days/week)';
+      default:
+        return level;
+    }
   }
 
   void _handleHealthChecklistComplete(List<String> injuries, List<String> conditions) {
@@ -329,15 +356,32 @@ class _ConversationalOnboardingScreenState
       final goalsJson = jsonEncode(finalData['goals'] ?? []);
       final equipmentJson = jsonEncode(finalData['equipment'] ?? []);
       final injuriesJson = jsonEncode(injuries);
+      // Convert day names to indices if needed (0=Mon, 6=Sun)
+      List<int> workoutDayIndices = [];
+      if (selectedDays.isNotEmpty) {
+        final dayNameToIndex = {
+          'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+          'Friday': 4, 'Saturday': 5, 'Sunday': 6,
+        };
+        if (selectedDays.first is String) {
+          workoutDayIndices = (selectedDays as List<dynamic>)
+              .map((d) => dayNameToIndex[d.toString()] ?? 0)
+              .toList();
+        } else {
+          workoutDayIndices = selectedDays.cast<int>();
+        }
+      }
+
       final preferencesJson = jsonEncode({
         'name': finalData['name'],
+        'date_of_birth': finalData['dateOfBirth'],
         'age': finalData['age'],
         'gender': finalData['gender'],
         'height_cm': finalData['heightCm'],
         'weight_kg': finalData['weightKg'],
         'target_weight_kg': finalData['targetWeightKg'],
         'days_per_week': daysPerWeek,
-        'selected_days': selectedDays,
+        'workout_days': workoutDayIndices,  // Use workout_days with indices
         'workout_duration': finalData['workoutDuration'] ?? 45,
         'preferred_time': finalData['preferredTime'] ?? 'morning',
         'training_split': finalData['trainingSplit'] ?? 'full_body',
@@ -354,6 +398,9 @@ class _ConversationalOnboardingScreenState
         'active_injuries': injuriesJson,
         'onboarding_completed': true,
         'preferences': preferencesJson,
+        'date_of_birth': finalData['dateOfBirth'],  // Store at top level for database
+        'age': finalData['age'],  // Store calculated age at top level
+        'activity_level': finalData['activityLevel'] ?? 'lightly_active',  // Store activity level at top level
       };
 
       await apiClient.put(
@@ -365,14 +412,14 @@ class _ConversationalOnboardingScreenState
 
       setState(() {
         _workoutLoadingProgress = 25;
-        _workoutLoadingMessage = 'Generating your first 2 weeks of workouts...';
+        _workoutLoadingMessage = 'Generating your first month of workouts...';
       });
 
       // Generate workouts
       try {
         final workoutRepo = ref.read(workoutRepositoryProvider);
 
-        // Convert day indices
+        // Convert day indices - handle both string day names and int indices
         List<int> dayIndices = [];
         if (selectedDays.isNotEmpty) {
           final dayNameToIndex = {
@@ -385,18 +432,23 @@ class _ConversationalOnboardingScreenState
             'Sunday': 6,
           };
 
-          if (selectedDays.first is String) {
-            dayIndices = (selectedDays as List<String>)
-                .map((d) => dayNameToIndex[d] ?? 0)
-                .toList();
-          } else {
-            dayIndices = selectedDays.cast<int>();
+          for (final day in selectedDays) {
+            if (day is int) {
+              dayIndices.add(day);
+            } else if (day is String) {
+              // Handle string day names
+              dayIndices.add(dayNameToIndex[day] ?? 0);
+            } else if (day is num) {
+              dayIndices.add(day.toInt());
+            }
           }
         }
 
         if (dayIndices.isEmpty) {
           dayIndices = [0, 2, 4]; // Mon, Wed, Fri default
         }
+
+        debugPrint('🏋️ [Onboarding] Workout days selected: $dayIndices (${dayIndices.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', ')})');
 
         final monthStart = DateTime.now().toIso8601String().split('T')[0];
 
@@ -471,14 +523,16 @@ class _ConversationalOnboardingScreenState
         state.collectedData['name'] == null &&
         !_isLoading;
 
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: colors.background,
       body: Stack(
         children: [
           Column(
             children: [
               // Header
-              _buildHeader(),
+              _buildHeader(colors),
 
               // Messages
               Expanded(
@@ -596,7 +650,7 @@ class _ConversationalOnboardingScreenState
               ),
 
               // Input area
-              _buildInputArea(),
+              _buildInputArea(colors),
             ],
           ),
 
@@ -614,7 +668,7 @@ class _ConversationalOnboardingScreenState
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeColors colors) {
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
@@ -623,9 +677,9 @@ class _ConversationalOnboardingScreenState
         bottom: 12,
       ),
       decoration: BoxDecoration(
-        color: AppColors.pureBlack.withOpacity(0.8),
-        border: const Border(
-          bottom: BorderSide(color: AppColors.cardBorder),
+        color: colors.background.withOpacity(0.95),
+        border: Border(
+          bottom: BorderSide(color: colors.cardBorder),
         ),
       ),
       child: Row(
@@ -634,11 +688,11 @@ class _ConversationalOnboardingScreenState
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              gradient: AppColors.cyanGradient,
+              gradient: colors.cyanGradient,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.4),
+                  color: colors.cyan.withOpacity(0.4),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -649,7 +703,7 @@ class _ConversationalOnboardingScreenState
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -658,14 +712,14 @@ class _ConversationalOnboardingScreenState
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 Text(
                   'Setting up your personalized plan...',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -676,7 +730,7 @@ class _ConversationalOnboardingScreenState
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(ThemeColors colors) {
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -685,9 +739,9 @@ class _ConversationalOnboardingScreenState
         bottom: MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
-        color: AppColors.pureBlack.withOpacity(0.8),
-        border: const Border(
-          top: BorderSide(color: AppColors.cardBorder),
+        color: colors.background.withOpacity(0.95),
+        border: Border(
+          top: BorderSide(color: colors.cardBorder),
         ),
       ),
       child: Row(
@@ -697,9 +751,9 @@ class _ConversationalOnboardingScreenState
               controller: _inputController,
               focusNode: _inputFocusNode,
               enabled: !_isLoading && !_showDayPicker,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
               decoration: InputDecoration(
                 isDense: true,
@@ -708,20 +762,20 @@ class _ConversationalOnboardingScreenState
                   vertical: 12,
                 ),
                 hintText: 'Type your message...',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
+                hintStyle: TextStyle(color: colors.textMuted),
                 filled: true,
-                fillColor: AppColors.glassSurface,
+                fillColor: colors.glassSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: colors.cardBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.cyan),
+                  borderSide: BorderSide(color: colors.cyan),
                 ),
               ),
               onSubmitted: _sendMessage,
@@ -737,11 +791,11 @@ class _ConversationalOnboardingScreenState
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                gradient: AppColors.cyanGradient,
+                gradient: colors.cyanGradient,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.cyan.withOpacity(0.5),
+                    color: colors.cyan.withOpacity(0.5),
                     blurRadius: 20,
                     spreadRadius: 0,
                   ),
@@ -758,6 +812,7 @@ class _ConversationalOnboardingScreenState
   }
 
   Widget _buildLoadingIndicator() {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -766,11 +821,11 @@ class _ConversationalOnboardingScreenState
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              gradient: AppColors.cyanGradient,
+              gradient: colors.cyanGradient,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.4),
+                  color: colors.cyan.withOpacity(0.4),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -784,14 +839,14 @@ class _ConversationalOnboardingScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.glassSurface,
+              color: colors.glassSurface,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
                 bottomLeft: Radius.circular(4),
                 bottomRight: Radius.circular(20),
               ),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: colors.cardBorder),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -810,6 +865,7 @@ class _ConversationalOnboardingScreenState
   }
 
   Widget _buildAnimatedDot(double delay) {
+    final colors = context.colors;
     return AnimatedBuilder(
       animation: _typingAnimationController,
       builder: (context, child) {
@@ -826,11 +882,11 @@ class _ConversationalOnboardingScreenState
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.5 + 0.5 * bounce),
+              color: colors.cyan.withOpacity(0.5 + 0.5 * bounce),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.3 * bounce),
+                  color: colors.cyan.withOpacity(0.3 * bounce),
                   blurRadius: 6,
                   spreadRadius: 1,
                 ),
@@ -843,34 +899,35 @@ class _ConversationalOnboardingScreenState
   }
 
   Widget _buildErrorMessage() {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.2),
+        color: colors.error.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error),
+        border: Border.all(color: colors.error),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+          Icon(Icons.error_outline, color: colors.error, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _error!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.error,
+                color: colors.error,
               ),
             ),
           ),
           GestureDetector(
             onTap: () => setState(() => _error = null),
-            child: const Text(
+            child: Text(
               'Dismiss',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.error,
+                color: colors.error,
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -881,6 +938,7 @@ class _ConversationalOnboardingScreenState
   }
 
   Widget _buildWorkoutLoadingModal() {
+    final colors = context.colors;
     return Container(
       color: Colors.black.withOpacity(0.8),
       child: Center(
@@ -888,9 +946,9 @@ class _ConversationalOnboardingScreenState
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: colors.elevated,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: colors.cardBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.5),
@@ -907,7 +965,7 @@ class _ConversationalOnboardingScreenState
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient.scale(0.2),
+                  gradient: colors.cyanGradient.scale(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Stack(
@@ -916,7 +974,7 @@ class _ConversationalOnboardingScreenState
                     Icon(
                       Icons.science,
                       size: 40,
-                      color: AppColors.cyan,
+                      color: colors.cyan,
                     ),
                     SizedBox(
                       width: 80,
@@ -924,7 +982,7 @@ class _ConversationalOnboardingScreenState
                       child: CircularProgressIndicator(
                         value: null,
                         strokeWidth: 4,
-                        color: AppColors.cyan,
+                        color: colors.cyan,
                       ),
                     ),
                   ],
@@ -932,20 +990,20 @@ class _ConversationalOnboardingScreenState
               ),
               const SizedBox(height: 24),
 
-              const Text(
+              Text(
                 'Building Your Workout Plan',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _workoutLoadingMessage,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -955,7 +1013,7 @@ class _ConversationalOnboardingScreenState
               Container(
                 height: 8,
                 decoration: BoxDecoration(
-                  color: AppColors.glassSurface,
+                  color: colors.glassSurface,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: ClipRRect(
@@ -963,40 +1021,16 @@ class _ConversationalOnboardingScreenState
                   child: LinearProgressIndicator(
                     value: _workoutLoadingProgress / 100,
                     backgroundColor: Colors.transparent,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.cyan),
+                    valueColor: AlwaysStoppedAnimation(colors.cyan),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 '${_workoutLoadingProgress.round()}% complete',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient.scale(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.cyan.withOpacity(0.3),
-                  ),
-                ),
-                child: Text(
-                  _workoutLoadingProgress < 90
-                      ? 'First 2 Weeks'
-                      : '12 Weeks of Workouts',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
-                  ),
+                  color: colors.textMuted,
                 ),
               ),
             ],

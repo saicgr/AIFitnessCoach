@@ -550,6 +550,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get age and activity level for personalized workouts
+        user_age = user.get("age")
+        user_activity_level = user.get("activity_level")
 
         workout_focus_map = get_workout_focus(training_split, request.selected_days)
         generated_workouts = []
@@ -580,7 +583,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         goals=goals if isinstance(goals, list) else [],
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
                 else:
                     workout_data = await openai_service.generate_workout_plan(
@@ -589,7 +594,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         equipment=equipment if isinstance(equipment, list) else [],
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
 
                 exercises = workout_data.get("exercises", [])
@@ -679,6 +686,10 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         active_injuries = parse_json_field(user.get("active_injuries"), [])
         health_conditions = preferences.get("health_conditions", [])
 
+        # Get age and activity level for personalized workouts
+        user_age = user.get("age")
+        user_activity_level = user.get("activity_level")
+
         logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}")
         if active_injuries or health_conditions:
             logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
@@ -741,7 +752,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
                         avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
                 else:
                     # Fallback to direct AI generation if RAG fails
@@ -753,7 +766,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
                         avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
 
                 return {
@@ -883,6 +898,10 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
 
+        # Get age and activity level for personalized workouts
+        user_age = user.get("age")
+        user_activity_level = user.get("activity_level")
+
         # Extract active injuries for safety filtering
         injuries_data = parse_json_field(user.get("injuries"), [])
         active_injuries = [
@@ -957,7 +976,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
                         avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
                 else:
                     workout_data = await openai_service.generate_workout_plan(
@@ -967,7 +988,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         duration_minutes=request.duration_minutes or 45,
                         focus_areas=[focus],
                         avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat()
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level
                     )
 
                 return {
@@ -1107,6 +1130,10 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
         goals = parse_json_field(user.get("goals"), [])
 
+        # Get age and activity level for personalized workouts
+        user_age = user.get("age")
+        user_activity_level = user.get("activity_level")
+
         # Get user-selected difficulty (easy/medium/hard) - will override AI-generated difficulty
         user_difficulty = request.difficulty
 
@@ -1185,6 +1212,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                     goals=goals if isinstance(goals, list) else [],
                     duration_minutes=request.duration_minutes or 45,
                     focus_areas=focus_areas if focus_areas else [focus_area],
+                    age=user_age,
+                    activity_level=user_activity_level
                 )
             else:
                 # Fallback to direct generation if RAG fails
@@ -1194,7 +1223,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                     goals=goals if isinstance(goals, list) else [],
                     equipment=equipment if isinstance(equipment, list) else [],
                     duration_minutes=request.duration_minutes or 45,
-                    focus_areas=focus_areas if focus_areas else None
+                    focus_areas=focus_areas if focus_areas else None,
+                    age=user_age,
+                    activity_level=user_activity_level
                 )
 
             exercises = workout_data.get("exercises", [])
@@ -2263,7 +2294,7 @@ async def check_and_regenerate_workouts(
             month_start_date=start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=2  # Generate 2 weeks at a time
+            weeks=4  # Generate 4 weeks (monthly)
         )
 
         # Schedule the background task
@@ -2274,7 +2305,7 @@ async def check_and_regenerate_workouts(
             start_date,
             duration_minutes,
             selected_days,
-            2  # 2 weeks
+            4  # 4 weeks (monthly)
         )
 
         logger.info(f"✅ Scheduled workout generation for user {user_id} starting from {start_date}")
@@ -2287,7 +2318,7 @@ async def check_and_regenerate_workouts(
             "status": "pending",
             "job_id": job_id,
             "start_date": start_date,
-            "weeks": 2,
+            "weeks": 4,
             "selected_days": selected_days
         }
 
