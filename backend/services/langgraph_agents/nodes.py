@@ -570,7 +570,25 @@ async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
         context_parts.append(state["rag_context_formatted"])
 
     full_context = "\n".join(context_parts)
-    system_prompt = openai_service.get_coach_system_prompt(full_context)
+
+    # Get intent for action acknowledgment
+    intent = state.get("intent")
+    intent_str = None
+    if intent:
+        intent_str = intent.value if hasattr(intent, "value") else str(intent)
+
+    # Build action context for the prompt
+    action_context = None
+    if intent_str in ["change_setting", "navigate", "start_workout", "complete_workout", "log_hydration"]:
+        action_context = {
+            "setting_name": state.get("setting_name"),
+            "setting_value": state.get("setting_value"),
+            "destination": state.get("destination"),
+            "hydration_amount": state.get("hydration_amount"),
+        }
+        logger.info(f"[Simple Response] Action intent detected: {intent_str}, context: {action_context}")
+
+    system_prompt = openai_service.get_coach_system_prompt(full_context, intent=intent_str, action_context=action_context)
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

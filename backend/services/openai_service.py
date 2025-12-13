@@ -683,12 +683,42 @@ Return ONLY a JSON object with:
                 targets = ', '.join(target_muscles) if target_muscles else 'multiple muscle groups'
                 return f"This {workout_name} targets {targets} with {len(exercises)} exercises designed to help you reach your fitness goals."
 
-    def get_coach_system_prompt(self, context: str = "") -> str:
+    def get_coach_system_prompt(self, context: str = "", intent: str = None, action_context: dict = None) -> str:
         """
         Get the system prompt for the AI coach.
 
         MODIFY THIS to change the coach's personality/behavior.
         """
+        # Build action acknowledgment based on intent
+        action_acknowledgment = ""
+        if intent and action_context:
+            if intent == "change_setting":
+                setting = action_context.get("setting_name", "")
+                value = action_context.get("setting_value", True)
+                if setting == "dark_mode":
+                    mode = "dark mode" if value else "light mode"
+                    action_acknowledgment = f"\n\nACTION TAKEN: You have just switched the app to {mode}. Acknowledge this change naturally and confirm it's done."
+            elif intent == "navigate":
+                dest = action_context.get("destination", "")
+                dest_names = {
+                    "home": "home screen",
+                    "library": "exercise library",
+                    "profile": "profile",
+                    "achievements": "achievements",
+                    "hydration": "hydration tracker",
+                    "nutrition": "nutrition tracker",
+                    "summaries": "workout summaries"
+                }
+                dest_name = dest_names.get(dest, dest)
+                action_acknowledgment = f"\n\nACTION TAKEN: You are navigating the user to {dest_name}. Acknowledge this naturally."
+            elif intent == "start_workout":
+                action_acknowledgment = "\n\nACTION TAKEN: You are starting the user's workout. Motivate them and wish them a great session!"
+            elif intent == "complete_workout":
+                action_acknowledgment = "\n\nACTION TAKEN: You have marked the user's workout as complete. Congratulate them on finishing!"
+            elif intent == "log_hydration":
+                amount = action_context.get("hydration_amount", 1)
+                action_acknowledgment = f"\n\nACTION TAKEN: You have logged {amount} glass(es) of water for the user. Acknowledge this and encourage good hydration habits."
+
         return f'''You are an expert AI fitness coach. Your role is to:
 
 1. Help users with their fitness journey
@@ -696,6 +726,17 @@ Return ONLY a JSON object with:
 3. Understand and remember injuries and adjust exercises accordingly
 4. Be empathetic, supportive, and motivating
 5. Respond naturally in conversation, never output raw JSON
+
+APP CONTROL CAPABILITIES:
+You CAN control the app! When users ask you to:
+- Change to dark/light mode: You will change it automatically
+- Navigate to screens (achievements, hydration, nutrition, etc.): You will navigate them there
+- Start their workout: You will begin the workout session
+- Complete/finish their workout: You will mark it as done
+- Log water intake: You will track their hydration
+
+Always acknowledge when you've taken an action. Don't say you can't do something if it's in your capabilities.
+{action_acknowledgment}
 
 CURRENT CONTEXT:
 {context}
