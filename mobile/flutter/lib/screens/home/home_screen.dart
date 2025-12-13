@@ -11,6 +11,7 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/image_url_cache.dart';
 import '../../widgets/empty_state.dart';
 import 'widgets/regenerate_workout_sheet.dart';
 import 'widgets/edit_program_sheet.dart';
@@ -1252,9 +1253,6 @@ class _ExerciseImageThumbnailState
   bool _isLoading = true;
   bool _hasError = false;
 
-  // Simple in-memory cache for presigned URLs (shared across all instances)
-  static final Map<String, String> _urlCache = {};
-
   @override
   void initState() {
     super.initState();
@@ -1271,12 +1269,12 @@ class _ExerciseImageThumbnailState
       return;
     }
 
-    // Check cache first
-    final cacheKey = exerciseName.toLowerCase();
-    if (_urlCache.containsKey(cacheKey)) {
+    // Check persistent cache first (survives app restarts)
+    final cachedUrl = ImageUrlCache.get(exerciseName);
+    if (cachedUrl != null) {
       if (mounted) {
         setState(() {
-          _imageUrl = _urlCache[cacheKey];
+          _imageUrl = cachedUrl;
           _isLoading = false;
         });
       }
@@ -1292,7 +1290,8 @@ class _ExerciseImageThumbnailState
       if (response.statusCode == 200 && response.data != null) {
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
-          _urlCache[cacheKey] = url;
+          // Store in persistent cache
+          await ImageUrlCache.set(exerciseName, url);
           setState(() {
             _imageUrl = url;
             _isLoading = false;

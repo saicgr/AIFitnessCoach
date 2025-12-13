@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/constants/api_constants.dart';
+import 'data/services/image_url_cache.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,9 @@ void main() async {
     url: ApiConstants.supabaseUrl,
     anonKey: ApiConstants.supabaseAnonKey,
   );
+
+  // Initialize persistent image URL cache
+  await ImageUrlCache.initialize();
 
   // Set system UI overlay style for dark theme
   SystemChrome.setSystemUIOverlayStyle(

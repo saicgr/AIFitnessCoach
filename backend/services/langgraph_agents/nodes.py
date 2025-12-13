@@ -546,6 +546,15 @@ async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
     # Build context
     context_parts = []
 
+    # Add current date/time context
+    from datetime import datetime
+    import pytz
+    # Use Pacific time (adjust if user timezone is available)
+    pacific = pytz.timezone('America/Los_Angeles')
+    now = datetime.now(pacific)
+    context_parts.append(f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} (Pacific Time)")
+    context_parts.append("")
+
     if state.get("user_profile"):
         profile = state["user_profile"]
         context_parts.append("USER PROFILE:")

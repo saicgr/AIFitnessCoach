@@ -76,25 +76,33 @@ class ExerciseFilterOptions {
 // EXERCISE PROVIDERS
 // ═══════════════════════════════════════════════════════════════════
 
+// Single-select filter providers (String? for single selection)
+final selectedMuscleGroupProvider = StateProvider<String?>((ref) => null);
+final selectedEquipmentProvider = StateProvider<String?>((ref) => null);
+final selectedExerciseTypeProvider = StateProvider<String?>((ref) => null);
+final selectedGoalProvider = StateProvider<String?>((ref) => null);
+final selectedSuitableForProvider = StateProvider<String?>((ref) => null);
+final selectedAvoidProvider = StateProvider<String?>((ref) => null);
+
 final exercisesProvider = FutureProvider.autoDispose<List<LibraryExercise>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
-  // Watch filter providers to trigger refetch when filters change
-  final bodyPart = ref.watch(selectedMuscleGroupProvider);
-  final equipment = ref.watch(selectedEquipmentProvider);
-  final exerciseType = ref.watch(selectedExerciseTypeProvider);
-  final goal = ref.watch(selectedGoalProvider);
-  final suitableFor = ref.watch(selectedSuitableForProvider);
-  final avoidIf = ref.watch(selectedAvoidProvider);
+  // Watch single-select filter providers
+  final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
+  final selectedEquipment = ref.watch(selectedEquipmentProvider);
+  final selectedType = ref.watch(selectedExerciseTypeProvider);
+  final selectedGoal = ref.watch(selectedGoalProvider);
+  final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
+  final selectedAvoid = ref.watch(selectedAvoidProvider);
 
   // Build query parameters
   final queryParams = <String, String>{};
-  if (bodyPart != null) queryParams['body_part'] = bodyPart;
-  if (equipment != null) queryParams['equipment'] = equipment;
-  if (exerciseType != null) queryParams['exercise_type'] = exerciseType;
-  if (goal != null) queryParams['goal'] = goal;
-  if (suitableFor != null) queryParams['suitable_for'] = suitableFor;
-  if (avoidIf != null) queryParams['avoid_if'] = avoidIf;
+  if (selectedMuscle != null) queryParams['body_parts'] = selectedMuscle;
+  if (selectedEquipment != null) queryParams['equipment'] = selectedEquipment;
+  if (selectedType != null) queryParams['exercise_types'] = selectedType;
+  if (selectedGoal != null) queryParams['goals'] = selectedGoal;
+  if (selectedSuitableFor != null) queryParams['suitable_for'] = selectedSuitableFor;
+  if (selectedAvoid != null) queryParams['avoid_if'] = selectedAvoid;
 
   final queryString = queryParams.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
   final url = queryString.isNotEmpty
@@ -121,12 +129,6 @@ final filterOptionsProvider = FutureProvider.autoDispose<ExerciseFilterOptions>(
 });
 
 final exerciseSearchProvider = StateProvider<String>((ref) => '');
-final selectedMuscleGroupProvider = StateProvider<String?>((ref) => null);
-final selectedEquipmentProvider = StateProvider<String?>((ref) => null);
-final selectedExerciseTypeProvider = StateProvider<String?>((ref) => null);
-final selectedGoalProvider = StateProvider<String?>((ref) => null);
-final selectedSuitableForProvider = StateProvider<String?>((ref) => null);
-final selectedAvoidProvider = StateProvider<String?>((ref) => null);
 
 // ═══════════════════════════════════════════════════════════════════
 // PROGRAM PROVIDERS
@@ -879,11 +881,19 @@ class _FilterSection extends StatefulWidget {
 class _FilterSectionState extends State<_FilterSection> {
   bool _showAll = false;
   bool _isExpanded = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _isExpanded = widget.initiallyExpanded || widget.selectedValue != null;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -893,6 +903,28 @@ class _FilterSectionState extends State<_FilterSection> {
     if (widget.selectedValue != null && !_isExpanded) {
       setState(() => _isExpanded = true);
     }
+  }
+
+  List<FilterOption> get _filteredOptions {
+    List<FilterOption> options;
+    if (_searchQuery.isEmpty) {
+      options = List.from(widget.options);
+    } else {
+      options = widget.options
+          .where((opt) => opt.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
+    }
+
+    // Ensure "Other" is always at the end
+    options.sort((a, b) {
+      final aIsOther = a.name.toLowerCase() == 'other';
+      final bIsOther = b.name.toLowerCase() == 'other';
+      if (aIsOther && !bIsOther) return 1;
+      if (!aIsOther && bIsOther) return -1;
+      return 0; // Keep original order for non-"Other" items
+    });
+
+    return options;
   }
 
   String _shortenName(String name) {
@@ -932,11 +964,13 @@ class _FilterSectionState extends State<_FilterSection> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    final displayOptions = _showAll
-        ? widget.options
-        : widget.options.take(widget.initialShowCount).toList();
-    final hasMore = widget.options.length > widget.initialShowCount;
+    final filteredOpts = _filteredOptions;
+    final displayOptions = _showAll || _searchQuery.isNotEmpty
+        ? filteredOpts
+        : filteredOpts.take(widget.initialShowCount).toList();
+    final hasMore = filteredOpts.length > widget.initialShowCount && _searchQuery.isEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -1020,6 +1054,60 @@ class _FilterSectionState extends State<_FilterSection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Search field - only show if many options
+                  if (widget.options.length > 6) ...[
+                    Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: glassSurface,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) => setState(() => _searchQuery = value),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search ${widget.title.toLowerCase()}...',
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            color: textMuted,
+                          ),
+                          prefixIcon: Icon(Icons.search, size: 20, color: textMuted),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: Icon(Icons.close, size: 18, color: textMuted),
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // No results message
+                  if (displayOptions.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Text(
+                          'No matching options',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textMuted,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
                   // Options wrap - simplified chips without counts
                   Wrap(
                     spacing: 8,
