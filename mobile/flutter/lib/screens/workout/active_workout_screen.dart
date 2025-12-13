@@ -267,6 +267,18 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused && _restSecondsRemaining > 0) {
         setState(() => _restSecondsRemaining--);
+
+        // Haptic countdown warnings
+        if (_restSecondsRemaining == 5) {
+          HapticFeedback.lightImpact();
+        } else if (_restSecondsRemaining == 3) {
+          HapticFeedback.mediumImpact();
+        } else if (_restSecondsRemaining == 2) {
+          HapticFeedback.mediumImpact();
+        } else if (_restSecondsRemaining == 1) {
+          HapticFeedback.mediumImpact();
+        }
+
         if (_restSecondsRemaining == 0) _endRest();
       }
     });
@@ -280,7 +292,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       _isResting = false;
       _restSecondsRemaining = 0;
     });
-    HapticFeedback.lightImpact();
+    // Strong haptic feedback when rest ends
+    HapticFeedback.heavyImpact();
+    // Additional vibration pattern for better notification
+    Future.delayed(const Duration(milliseconds: 100), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 200), () {
+      HapticFeedback.mediumImpact();
+    });
   }
 
   void _completeSet() {

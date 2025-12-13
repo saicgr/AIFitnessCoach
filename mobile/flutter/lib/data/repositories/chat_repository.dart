@@ -11,6 +11,7 @@ import '../models/user.dart';
 import '../services/api_client.dart';
 import 'workout_repository.dart';
 import 'auth_repository.dart';
+import 'hydration_repository.dart';
 
 /// Chat repository provider
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -18,17 +19,19 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(apiClient);
 });
 
-/// Chat messages provider - now includes workout context, settings control, and navigation
+/// Chat messages provider - now includes workout context, settings control, navigation, and hydration
 final chatMessagesProvider =
     StateNotifierProvider<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>>(
         (ref) {
   final repository = ref.watch(chatRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
   final workoutsNotifier = ref.watch(workoutsProvider.notifier);
+  final workoutRepository = ref.watch(workoutRepositoryProvider);
   final authState = ref.watch(authStateProvider);
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, authState.user, themeNotifier, router);
+  final hydrationNotifier = ref.watch(hydrationProvider.notifier);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier);
 });
 
 /// Chat repository for API calls
@@ -104,12 +107,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ChatRepository _repository;
   final ApiClient _apiClient;
   final WorkoutsNotifier _workoutsNotifier;
+  final WorkoutRepository _workoutRepository;
   final User? _user;
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
+  final HydrationNotifier _hydrationNotifier;
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._user, this._themeNotifier, this._router)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -287,6 +292,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'navigate':
         _handleNavigation(actionData);
         break;
+      case 'start_workout':
+        _handleStartWorkout(actionData);
+        break;
+      case 'complete_workout':
+        _handleCompleteWorkout(actionData);
+        break;
+      case 'log_hydration':
+        _handleLogHydration(actionData);
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }
@@ -345,6 +359,62 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       debugPrint('🧭 [Chat] Navigated to $route');
     } else {
       debugPrint('🧭 [Chat] Unknown destination: $destination');
+    }
+  }
+
+  /// Handle start workout from AI
+  void _handleStartWorkout(Map<String, dynamic> actionData) {
+    final workoutId = actionData['workout_id'];
+    debugPrint('🏋️ [Chat] Starting workout: $workoutId');
+
+    // Navigate to home (where the workout is) and trigger workout start
+    // The workout will auto-start when the user sees the workout screen
+    _router.go('/home');
+
+    // Navigate to workout detail with start flag
+    if (workoutId != null) {
+      _router.push('/workout/$workoutId?autoStart=true');
+      debugPrint('🏋️ [Chat] Navigated to workout detail with auto-start');
+    }
+  }
+
+  /// Handle complete workout from AI
+  Future<void> _handleCompleteWorkout(Map<String, dynamic> actionData) async {
+    final workoutId = actionData['workout_id'];
+    debugPrint('✅ [Chat] Completing workout: $workoutId');
+
+    if (workoutId != null) {
+      // Mark the workout as complete
+      await _workoutRepository.completeWorkout(workoutId.toString());
+      // Refresh workouts list
+      await _workoutsNotifier.refresh();
+      debugPrint('✅ [Chat] Workout marked as complete');
+    }
+  }
+
+  /// Handle hydration logging from AI
+  Future<void> _handleLogHydration(Map<String, dynamic> actionData) async {
+    final amount = actionData['amount'] as int? ?? 1;
+    debugPrint('💧 [Chat] Logging hydration: $amount glasses');
+
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      debugPrint('❌ [Chat] No user ID for hydration logging');
+      return;
+    }
+
+    // Log water - 1 glass = 250ml
+    final amountMl = amount * 250;
+    final success = await _hydrationNotifier.quickLog(
+      userId: userId,
+      drinkType: 'water',
+      amountMl: amountMl,
+    );
+
+    if (success) {
+      debugPrint('💧 [Chat] Successfully logged $amount glasses ($amountMl ml)');
+    } else {
+      debugPrint('❌ [Chat] Failed to log hydration');
     }
   }
 }

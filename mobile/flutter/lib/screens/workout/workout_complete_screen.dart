@@ -314,6 +314,23 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     return '$secs sec';
   }
 
+  String _getRatingLabel(int rating) {
+    switch (rating) {
+      case 1:
+        return 'Poor - needs improvement';
+      case 2:
+        return 'Fair - could be better';
+      case 3:
+        return 'Good - solid workout';
+      case 4:
+        return 'Great - feeling strong!';
+      case 5:
+        return 'Excellent - crushed it! 💪';
+      default:
+        return 'Tap to rate your workout';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -547,6 +564,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     );
                   }),
                 ).animate().fadeIn(delay: 600.ms),
+
+                // Rating label
+                const SizedBox(height: 8),
+                Text(
+                  _getRatingLabel(_rating),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _rating > 0 ? AppColors.orange : AppColors.textMuted,
+                    fontWeight: _rating > 0 ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                ).animate().fadeIn(delay: 650.ms),
 
                 const SizedBox(height: 24),
 

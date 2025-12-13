@@ -11,6 +11,7 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/empty_state.dart';
 import 'widgets/regenerate_workout_sheet.dart';
 import 'widgets/edit_program_sheet.dart';
 
@@ -118,12 +119,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         icon: Icons.check_circle_outline,
                         value: '$completedCount',
                         color: AppColors.success,
+                        tooltip: 'Total workouts completed',
                       ),
                       const SizedBox(width: 8),
                       _StatBadge(
                         icon: Icons.local_fire_department,
                         value: '${weeklyProgress.$1}',
                         color: AppColors.orange,
+                        tooltip: 'Workouts this week',
                       ),
                       const SizedBox(width: 4),
                       _ProgramMenuButton(isDark: isDark),
@@ -327,16 +330,18 @@ class _StatBadge extends StatelessWidget {
   final IconData icon;
   final String value;
   final Color color;
+  final String? tooltip;
 
   const _StatBadge({
     required this.icon,
     required this.value,
     required this.color,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
@@ -358,6 +363,35 @@ class _StatBadge extends StatelessWidget {
         ],
       ),
     );
+
+    if (tooltip != null) {
+      return Tooltip(
+        message: tooltip!,
+        preferBelow: true,
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.elevated
+              : AppColorsLight.elevated,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        textStyle: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.textPrimary
+              : AppColorsLight.textPrimary,
+          fontSize: 13,
+        ),
+        child: badge,
+      );
+    }
+
+    return badge;
   }
 }
 
@@ -1147,20 +1181,11 @@ class _UpcomingWorkoutCard extends StatelessWidget {
 class _LoadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Container(
+      child: SkeletonCard(
         height: 200,
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(color: AppColors.cyan),
-        ),
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }

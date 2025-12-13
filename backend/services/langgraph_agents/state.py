@@ -33,6 +33,8 @@ class FitnessCoachState(TypedDict):
     setting_value: Optional[bool]
     # Navigation
     destination: Optional[str]
+    # Hydration logging
+    hydration_amount: Optional[int]
 
     # RAG context
     rag_documents: List[Dict[str, Any]]

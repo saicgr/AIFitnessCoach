@@ -57,18 +57,20 @@ class ProfileScreen extends ConsumerWidget {
                   Expanded(
                     child: _StatCard(
                       icon: Icons.local_fire_department,
-                      value: '${(completedCount * 45 * 6)}',
-                      label: 'Calories',
+                      value: '~${(completedCount * 45 * 6)}',
+                      label: 'Est. Cal',
                       color: AppColors.orange,
+                      isEstimate: true,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
                       icon: Icons.timer,
-                      value: '${(completedCount * 45)}',
-                      label: 'Minutes',
+                      value: '~${(completedCount * 45)}',
+                      label: 'Est. Min',
                       color: AppColors.purple,
+                      isEstimate: true,
                     ),
                   ),
                 ],
@@ -740,12 +742,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final bool isEstimate;
 
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
+    this.isEstimate = false,
   });
 
   @override
@@ -754,7 +758,7 @@ class _StatCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
@@ -783,6 +787,16 @@ class _StatCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (isEstimate) {
+      return Tooltip(
+        message: 'Estimated based on workout count',
+        preferBelow: true,
+        child: card,
+      );
+    }
+
+    return card;
   }
 }
 

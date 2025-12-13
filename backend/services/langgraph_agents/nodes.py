@@ -44,6 +44,7 @@ async def intent_extractor_node(state: FitnessCoachState) -> Dict[str, Any]:
         "setting_name": extraction.setting_name,
         "setting_value": extraction.setting_value,
         "destination": extraction.destination,
+        "hydration_amount": extraction.hydration_amount,
     }
 
 
@@ -104,6 +105,20 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
 
     if intent == CoachIntent.NAVIGATE:
         logger.info("[Router] Navigate intent -> respond (no tools needed)")
+        return "respond"
+
+    # Workout action intents - don't need tools, handled via action_data
+    if intent == CoachIntent.START_WORKOUT:
+        logger.info("[Router] Start workout intent -> respond (no tools needed)")
+        return "respond"
+
+    if intent == CoachIntent.COMPLETE_WORKOUT:
+        logger.info("[Router] Complete workout intent -> respond (no tools needed)")
+        return "respond"
+
+    # Quick logging intents - don't need tools, handled via action_data
+    if intent == CoachIntent.LOG_HYDRATION:
+        logger.info("[Router] Log hydration intent -> respond (no tools needed)")
         return "respond"
 
     # Check for nutrition-related intents
@@ -728,6 +743,33 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
                     "success": True,
                 }
                 logger.info(f"[Action Data] Navigation: {destination}")
+        # Handle start workout (no tools needed)
+        elif intent == CoachIntent.START_WORKOUT:
+            workout_id = current_workout.get("id") if current_workout else None
+            action_data = {
+                "action": "start_workout",
+                "workout_id": workout_id,
+                "success": True,
+            }
+            logger.info(f"[Action Data] Start workout: {workout_id}")
+        # Handle complete workout (no tools needed)
+        elif intent == CoachIntent.COMPLETE_WORKOUT:
+            workout_id = current_workout.get("id") if current_workout else None
+            action_data = {
+                "action": "complete_workout",
+                "workout_id": workout_id,
+                "success": True,
+            }
+            logger.info(f"[Action Data] Complete workout: {workout_id}")
+        # Handle hydration logging (no tools needed)
+        elif intent == CoachIntent.LOG_HYDRATION:
+            hydration_amount = state.get("hydration_amount") or 1
+            action_data = {
+                "action": "log_hydration",
+                "amount": hydration_amount,
+                "success": True,
+            }
+            logger.info(f"[Action Data] Log hydration: {hydration_amount} glasses")
         elif current_workout:
             workout_id = current_workout.get("id")
             if intent == CoachIntent.ADD_EXERCISE:

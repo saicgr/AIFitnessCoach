@@ -25,6 +25,11 @@ class CoachIntent(str, Enum):
     # App control intents
     CHANGE_SETTING = "change_setting"
     NAVIGATE = "navigate"
+    # Workout action intents
+    START_WORKOUT = "start_workout"
+    COMPLETE_WORKOUT = "complete_workout"
+    # Quick logging intents
+    LOG_HYDRATION = "log_hydration"
 
 
 class UserProfile(BaseModel):
@@ -101,6 +106,8 @@ class IntentExtraction(BaseModel):
     setting_value: Optional[bool] = None
     # Navigation fields
     destination: Optional[str] = None
+    # Hydration logging fields
+    hydration_amount: Optional[int] = None  # Number of glasses/cups
 
 
 class ChatResponse(BaseModel):

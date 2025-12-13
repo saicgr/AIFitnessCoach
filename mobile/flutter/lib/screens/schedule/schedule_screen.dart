@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
@@ -22,12 +24,20 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Workout? _draggingWorkout;
   int? _targetDayIndex;
+  bool _showDragHint = true; // Show hint only once per session
+
+  // View mode: 'week' for 7-day, 'agenda' for vertical list
+  String _viewMode = 'agenda'; // Default to agenda for better phone UX
 
   @override
   Widget build(BuildContext context) {
     final workoutsState = ref.watch(workoutsProvider);
     final selectedWeek = ref.watch(selectedWeekProvider);
     final colors = context.colors;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Auto-select agenda view on narrow screens
+    final isNarrowScreen = screenWidth < 600;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -37,6 +47,20 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         title: Text('Schedule', style: TextStyle(color: colors.textPrimary)),
         centerTitle: true,
         actions: [
+          // View toggle button
+          IconButton(
+            icon: Icon(
+              _viewMode == 'agenda' ? Icons.calendar_view_week : Icons.view_agenda,
+              color: colors.textPrimary,
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                _viewMode = _viewMode == 'agenda' ? 'week' : 'agenda';
+              });
+            },
+            tooltip: _viewMode == 'agenda' ? 'Week view' : 'Agenda view',
+          ),
           IconButton(
             icon: Icon(Icons.today, color: colors.textPrimary),
             onPressed: () => _goToToday(ref),
@@ -75,32 +99,182 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   ],
                 ),
               ),
-              data: (workouts) => _buildWeekView(context, workouts, selectedWeek, colors),
+              data: (workouts) => _viewMode == 'agenda'
+                  ? _buildAgendaView(context, workouts, selectedWeek, colors)
+                  : _buildWeekView(context, workouts, selectedWeek, colors),
             ),
           ),
 
-          // Instructions
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: colors.elevated,
-            child: Row(
-              children: [
-                Icon(Icons.touch_app, size: 20, color: colors.textMuted),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Long press and drag a workout to reschedule it',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textMuted,
+          // Instructions - dismissible
+          if (_showDragHint)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: colors.elevated,
+              child: Row(
+                children: [
+                  Icon(Icons.touch_app, size: 20, color: colors.textMuted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _viewMode == 'agenda'
+                          ? 'Tap a workout to view details'
+                          : 'Long press and drag to reschedule',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textMuted,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  GestureDetector(
+                    onTap: () => setState(() => _showDragHint = false),
+                    child: Icon(Icons.close, size: 18, color: colors.textMuted),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
+    );
+  }
+
+  /// Agenda view - vertical scrolling list grouped by day (better for phones)
+  Widget _buildAgendaView(BuildContext context, List<Workout> workouts, DateTime weekStart, ThemeColors colors) {
+    final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+    final today = DateTime.now();
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: 7,
+      itemBuilder: (context, index) {
+        final day = days[index];
+        final isToday = day.year == today.year &&
+            day.month == today.month &&
+            day.day == today.day;
+        final isPast = day.isBefore(DateTime(today.year, today.month, today.day));
+        final dayWorkouts = _getWorkoutsForDay(workouts, day);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Day header
+            Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isToday ? colors.cyan : colors.elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: isToday ? null : Border.all(color: colors.cardBorder),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat('E').format(day).toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: isToday ? Colors.white : colors.textMuted,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          '${day.day}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isToday ? Colors.white : colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          DateFormat('EEEE').format(day),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isToday ? colors.cyan : (isPast ? colors.textMuted : colors.textPrimary),
+                          ),
+                        ),
+                        Text(
+                          DateFormat('MMM d, yyyy').format(day),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isToday)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.cyan.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'TODAY',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: colors.cyan,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Workouts for the day
+            if (dayWorkouts.isEmpty)
+              Container(
+                margin: const EdgeInsets.only(left: 60, bottom: 8),
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: colors.elevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_available, size: 20, color: colors.textMuted),
+                    const SizedBox(width: 12),
+                    Text(
+                      isPast ? 'Rest day' : 'No workout scheduled',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ...dayWorkouts.map((workout) => _AgendaWorkoutCard(
+                workout: workout,
+                colors: colors,
+                onTap: () => context.push('/workout/${workout.id}'),
+              )),
+
+            // Divider between days
+            if (index < 6)
+              Divider(
+                color: colors.cardBorder.withOpacity(0.3),
+                height: 24,
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -427,7 +601,7 @@ class _DayHeader extends StatelessWidget {
           Text(
             dayName.toUpperCase(),
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isToday ? colors.cyan : colors.textMuted,
               letterSpacing: 0.5,
@@ -435,8 +609,8 @@ class _DayHeader extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Container(
-            width: 28,
-            height: 28,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: isToday ? colors.cyan : Colors.transparent,
               shape: BoxShape.circle,
@@ -582,7 +756,7 @@ class _WorkoutCard extends StatelessWidget {
                 child: Text(
                   workout.name ?? 'Workout',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: isCompleted
                         ? colors.success
@@ -627,5 +801,164 @@ class _WorkoutCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Agenda View Workout Card (larger, phone-friendly)
+// ─────────────────────────────────────────────────────────────────
+
+class _AgendaWorkoutCard extends StatelessWidget {
+  final Workout workout;
+  final ThemeColors colors;
+  final VoidCallback onTap;
+
+  const _AgendaWorkoutCard({
+    required this.workout,
+    required this.colors,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
+    final isCompleted = workout.isCompleted ?? false;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 60, bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isCompleted
+              ? colors.success.withOpacity(0.1)
+              : colors.elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCompleted
+                ? colors.success.withOpacity(0.4)
+                : typeColor.withOpacity(0.3),
+            width: isCompleted ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Workout type icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: typeColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _getWorkoutIcon(workout.type),
+                color: typeColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Workout details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    workout.name ?? 'Workout',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isCompleted
+                          ? colors.success
+                          : colors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: typeColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          workout.type?.toUpperCase() ?? 'STRENGTH',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: typeColor,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${workout.durationMinutes ?? 45} min',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${workout.exerciseCount} ex',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Status indicator
+            if (isCompleted)
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colors.success.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: colors.success,
+                  size: 20,
+                ),
+              )
+            else
+              Icon(
+                Icons.chevron_right,
+                color: colors.textMuted,
+                size: 24,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getWorkoutIcon(String? type) {
+    switch (type?.toLowerCase()) {
+      case 'strength':
+        return Icons.fitness_center;
+      case 'cardio':
+        return Icons.directions_run;
+      case 'hiit':
+        return Icons.flash_on;
+      case 'flexibility':
+        return Icons.self_improvement;
+      case 'yoga':
+        return Icons.self_improvement;
+      default:
+        return Icons.fitness_center;
+    }
   }
 }

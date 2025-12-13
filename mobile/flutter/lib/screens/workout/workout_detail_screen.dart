@@ -497,9 +497,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               ),
             ),
 
-          // Bottom padding for FAB
+          // Bottom padding for FAB and floating nav bar
           const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
+            child: SizedBox(height: 140),
           ),
         ],
       ),

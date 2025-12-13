@@ -8,6 +8,7 @@ import '../../core/theme/theme_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/program.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/empty_state.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // EXERCISE FILTER OPTIONS MODEL
@@ -520,32 +521,18 @@ class _ExercisesTab extends ConsumerWidget {
               }
 
               if (filtered.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.search_off,
-                        color: textMuted,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('No exercises found'),
-                      if (searchQuery.isNotEmpty || activeFilters > 0)
-                        TextButton(
-                          onPressed: () {
-                            ref.read(exerciseSearchProvider.notifier).state = '';
-                            ref.read(selectedMuscleGroupProvider.notifier).state = null;
-                            ref.read(selectedEquipmentProvider.notifier).state = null;
-                            ref.read(selectedExerciseTypeProvider.notifier).state = null;
-                            ref.read(selectedGoalProvider.notifier).state = null;
-                            ref.read(selectedSuitableForProvider.notifier).state = null;
-                            ref.read(selectedAvoidProvider.notifier).state = null;
-                          },
-                          child: const Text('Clear filters'),
-                        ),
-                    ],
-                  ),
+                return EmptyState.noExercises(
+                  onAction: searchQuery.isNotEmpty || activeFilters > 0
+                      ? () {
+                          ref.read(exerciseSearchProvider.notifier).state = '';
+                          ref.read(selectedMuscleGroupProvider.notifier).state = null;
+                          ref.read(selectedEquipmentProvider.notifier).state = null;
+                          ref.read(selectedExerciseTypeProvider.notifier).state = null;
+                          ref.read(selectedGoalProvider.notifier).state = null;
+                          ref.read(selectedSuitableForProvider.notifier).state = null;
+                          ref.read(selectedAvoidProvider.notifier).state = null;
+                        }
+                      : null,
                 );
               }
 
