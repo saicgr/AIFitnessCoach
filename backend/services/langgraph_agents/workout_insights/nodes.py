@@ -131,57 +131,67 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
 
     llm = ChatOpenAI(
         model="gpt-4o-mini",
-        temperature=0.7,
-        max_tokens=300,
+        temperature=0.85,  # Higher for more variety
+        max_tokens=400,
         api_key=settings.openai_api_key,
     )
 
-    system_prompt = """You are a fitness coach who gives ULTRA SHORT insights. Generate JSON.
+    # Get up to 5 exercise names for context
+    exercise_list = [e.get("name", "") for e in exercises[:5] if e.get("name")]
+    exercises_str = ", ".join(exercise_list) if exercise_list else "various exercises"
 
-STRICT RULES:
-1. Headline: Max 5 words! (e.g., "Build Strong Legs Today!")
-2. Each content: Max 8 words ONLY! Very short phrases.
-3. NO full sentences - use punchy phrases
-4. Focus on ONE key benefit per section
+    system_prompt = """You are a knowledgeable fitness coach giving personalized workout insights. Generate JSON.
 
-Return ONLY valid JSON:
+RULES:
+1. Headline: 4-6 words, reference the SPECIFIC workout or key exercise
+2. Each content: 10-15 words. Be SPECIFIC about exercises/muscles mentioned
+3. Avoid generic phrases like "boost your fitness" or "stay consistent"
+4. Reference ACTUAL exercises from this workout when possible
+5. Give practical, specific advice that applies to THIS workout
+
+Return ONLY valid JSON with 3 sections. Choose section types from this variety:
+- 🎯 Focus: What this workout specifically builds
+- 💪 Key Move: Highlight the most impactful exercise
+- 🔥 Why It Works: Science/benefit behind the workout
+- ⚡ Form Tip: Specific technique for an exercise in this workout
+- 🧠 Mind-Muscle: Connection cue for better engagement
+- ⏱️ Pacing: How to approach rest/intensity
+- 🏆 Challenge: Optional way to push harder
+
 {
-  "headline": "5 word max headline",
+  "headline": "4-6 word headline about THIS workout",
   "sections": [
     {
-      "icon": "🎯",
-      "title": "Goal",
-      "content": "8 words max - key benefit",
-      "color": "cyan"
-    },
-    {
-      "icon": "💪",
-      "title": "Target",
-      "content": "8 words max - muscles hit",
-      "color": "purple"
-    },
-    {
-      "icon": "⚡",
-      "title": "Pro Tip",
-      "content": "8 words max - quick tip",
-      "color": "orange"
+      "icon": "emoji",
+      "title": "Short Title",
+      "content": "10-15 words - specific to this workout",
+      "color": "cyan|purple|orange"
     }
   ]
 }
 
-EXAMPLES of good content (8 words or less):
-- "Builds core strength and stability"
-- "Quads, glutes, hamstrings"
-- "Keep your back straight"
-- "Breathe out on the push"
+GOOD EXAMPLES (specific):
+- "Bench Press builds chest thickness and anterior shoulder strength"
+- "On Rows: squeeze shoulder blades together at peak contraction"
+- "Squats paired with lunges create complete quad development"
 
-DO NOT write long sentences!"""
+BAD EXAMPLES (too generic):
+- "Great workout for building strength"
+- "Stay consistent and give your best effort"
+- "Push through and you'll see results" """
 
-    user_prompt = f"""Workout: {workout_name}
-Type: {workout_focus}
-Muscles: {', '.join(target_muscles[:3]) if target_muscles else 'full body'}
+    user_prompt = f"""Create 3 personalized insights for this specific workout:
 
-Give me 3 ULTRA SHORT insights. Max 8 words per content!"""
+Workout Name: {workout_name}
+Focus Type: {workout_focus}
+Target Muscles: {', '.join(target_muscles[:4]) if target_muscles else 'full body'}
+Exercises Include: {exercises_str}
+Duration: {duration} minutes
+Total Sets: {total_sets}
+User Level: {fitness_level}
+User Goals: {', '.join(user_goals[:2]) if user_goals else 'general fitness'}
+
+Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivational phrases."""
 
     try:
         response = await llm.ainvoke([
@@ -207,18 +217,20 @@ Give me 3 ULTRA SHORT insights. Max 8 words per content!"""
         # Ensure we have valid sections
         if not sections or len(sections) < 2:
             sections = _generate_fallback_sections(
-                workout_focus, target_muscles, exercise_count, duration
+                workout_focus, target_muscles, exercise_count, duration, exercises
             )
 
-        # Truncate headline if too long (max 5 words)
-        if len(headline.split()) > 5:
-            headline = " ".join(headline.split()[:5]) + "!"
+        # Truncate headline if too long (max 7 words)
+        if len(headline.split()) > 7:
+            headline = " ".join(headline.split()[:7])
+            if not headline.endswith(("!", "?")):
+                headline += "!"
 
-        # Truncate section content if too long (max 8 words)
+        # Truncate section content if too long (max 20 words)
         for section in sections:
             words = section.get("content", "").split()
-            if len(words) > 8:
-                section["content"] = " ".join(words[:8])
+            if len(words) > 20:
+                section["content"] = " ".join(words[:20]) + "..."
 
         logger.info(f"[Generate Node] Generated {len(sections)} sections")
 
@@ -234,7 +246,7 @@ Give me 3 ULTRA SHORT insights. Max 8 words per content!"""
 
         # Fallback to structured fallback
         sections = _generate_fallback_sections(
-            workout_focus, target_muscles, exercise_count, duration
+            workout_focus, target_muscles, exercise_count, duration, exercises
         )
         headline = f"Time to work your {workout_focus}!"
 
@@ -249,28 +261,46 @@ def _generate_fallback_sections(
     workout_focus: str,
     target_muscles: List[str],
     exercise_count: int,
-    duration: int
+    duration: int,
+    exercises: List[Dict] = None
 ) -> List[Dict[str, str]]:
-    """Generate fallback sections if AI fails. Max 8 words per content."""
-    muscles_text = ", ".join(target_muscles[:2]) if target_muscles else "full body"
+    """Generate fallback sections if AI fails. More specific content."""
+    muscles_text = ", ".join(target_muscles[:3]) if target_muscles else "multiple muscle groups"
 
-    return [
+    # Get first exercise name if available
+    first_exercise = ""
+    if exercises and len(exercises) > 0:
+        first_exercise = exercises[0].get("name", "")
+
+    sections = [
         {
             "icon": "🎯",
             "title": "Focus",
-            "content": f"{workout_focus.title()} strength training",
+            "content": f"This {workout_focus} session targets {muscles_text} for balanced development",
             "color": "cyan"
         },
         {
             "icon": "💪",
-            "title": "Target",
-            "content": muscles_text,
+            "title": "Structure",
+            "content": f"{exercise_count} exercises across {duration} minutes - work at your own pace",
             "color": "purple"
         },
-        {
-            "icon": "⏱️",
-            "title": "Duration",
-            "content": f"{exercise_count} exercises, {duration} min",
-            "color": "orange"
-        }
     ]
+
+    # Add exercise-specific tip if we have an exercise name
+    if first_exercise:
+        sections.append({
+            "icon": "⚡",
+            "title": "Starting Strong",
+            "content": f"Begin with {first_exercise} - focus on controlled movements and proper form",
+            "color": "orange"
+        })
+    else:
+        sections.append({
+            "icon": "⚡",
+            "title": "Technique",
+            "content": "Control each rep through full range of motion for maximum muscle engagement",
+            "color": "orange"
+        })
+
+    return sections

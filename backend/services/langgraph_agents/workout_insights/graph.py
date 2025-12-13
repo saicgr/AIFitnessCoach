@@ -116,28 +116,45 @@ async def generate_workout_insights(
         return result.get("summary", "")
     except Exception as e:
         logger.error(f"Error generating workout insights: {e}")
-        # Return a simple fallback JSON
+        # Return a workout-specific fallback JSON
         import json
+
+        # Extract first exercise name for personalization
+        first_exercise = ""
+        if exercises and len(exercises) > 0:
+            first_exercise = exercises[0].get("name", "")
+
+        sections = [
+            {
+                "icon": "💪",
+                "title": "Today's Session",
+                "content": f"{len(exercises)} exercises targeting {workout_type or 'full body'} over {duration_minutes} minutes.",
+                "color": "cyan"
+            },
+            {
+                "icon": "⚡",
+                "title": "Approach",
+                "content": "Focus on controlled movements and proper form throughout each set.",
+                "color": "purple"
+            },
+        ]
+
+        if first_exercise:
+            sections.append({
+                "icon": "🎯",
+                "title": "Key Exercise",
+                "content": f"Starting with {first_exercise} - warm up the target muscles first.",
+                "color": "orange"
+            })
+        else:
+            sections.append({
+                "icon": "🎯",
+                "title": "Mindset",
+                "content": "Quality over quantity - focus on muscle engagement each rep.",
+                "color": "orange"
+            })
+
         return json.dumps({
-            "headline": f"Ready for {workout_name}!",
-            "sections": [
-                {
-                    "icon": "💪",
-                    "title": "Workout",
-                    "content": f"{len(exercises)} exercises to boost your fitness.",
-                    "color": "cyan"
-                },
-                {
-                    "icon": "⏱️",
-                    "title": "Duration",
-                    "content": f"About {duration_minutes} minutes of focused work.",
-                    "color": "purple"
-                },
-                {
-                    "icon": "🔥",
-                    "title": "Goal",
-                    "content": "Stay consistent and give your best effort!",
-                    "color": "orange"
-                }
-            ]
+            "headline": f"{workout_name} - Let's Go!",
+            "sections": sections
         })
