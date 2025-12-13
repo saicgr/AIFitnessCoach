@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_provider.dart';
+import '../../navigation/app_router.dart';
 import '../models/chat_message.dart';
 import '../models/workout.dart';
 import '../models/user.dart';
@@ -16,7 +18,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(apiClient);
 });
 
-/// Chat messages provider - now includes workout context and settings control
+/// Chat messages provider - now includes workout context, settings control, and navigation
 final chatMessagesProvider =
     StateNotifierProvider<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>>(
         (ref) {
@@ -25,7 +27,8 @@ final chatMessagesProvider =
   final workoutsNotifier = ref.watch(workoutsProvider.notifier);
   final authState = ref.watch(authStateProvider);
   final themeNotifier = ref.watch(themeModeProvider.notifier);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, authState.user, themeNotifier);
+  final router = ref.watch(routerProvider);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, authState.user, themeNotifier, router);
 });
 
 /// Chat repository for API calls
@@ -103,9 +106,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final WorkoutsNotifier _workoutsNotifier;
   final User? _user;
   final ThemeModeNotifier _themeNotifier;
+  final GoRouter _router;
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._user, this._themeNotifier)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._user, this._themeNotifier, this._router)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -280,7 +284,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'change_setting':
         _handleSettingChange(actionData);
         break;
-      // Other actions can be added here (workout modifications, etc.)
+      case 'navigate':
+        _handleNavigation(actionData);
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }
@@ -309,6 +315,36 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         break;
       default:
         debugPrint('🤖 [Chat] Unknown setting: $settingName');
+    }
+  }
+
+  /// Handle navigation from AI
+  void _handleNavigation(Map<String, dynamic> actionData) {
+    final destination = actionData['destination'] as String?;
+    debugPrint('🧭 [Chat] Navigating to: $destination');
+
+    // Map destination names to routes
+    final routes = {
+      'home': '/home',
+      'library': '/library',
+      'profile': '/profile',
+      'achievements': '/achievements',
+      'hydration': '/hydration',
+      'nutrition': '/nutrition',
+      'summaries': '/summaries',
+    };
+
+    final route = routes[destination];
+    if (route != null) {
+      // Use go for main tabs, push for nested screens
+      if (['home', 'library', 'profile'].contains(destination)) {
+        _router.go(route);
+      } else {
+        _router.push(route);
+      }
+      debugPrint('🧭 [Chat] Navigated to $route');
+    } else {
+      debugPrint('🧭 [Chat] Unknown destination: $destination');
     }
   }
 }

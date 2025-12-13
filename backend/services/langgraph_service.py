@@ -57,6 +57,7 @@ class LangGraphCoachService:
             "body_part": None,
             "setting_name": None,
             "setting_value": None,
+            "destination": None,
 
             # RAG context (will be filled by nodes)
             "rag_documents": [],

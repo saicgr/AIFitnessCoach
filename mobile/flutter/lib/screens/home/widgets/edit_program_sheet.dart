@@ -10,7 +10,6 @@ Future<bool?> showEditProgramSheet(
   BuildContext context,
   WidgetRef ref,
 ) async {
-  // Capture the parent theme to ensure proper inheritance in the modal
   final parentTheme = Theme.of(context);
 
   return showModalBottomSheet<bool>(
@@ -32,81 +31,45 @@ class _EditProgramSheet extends ConsumerStatefulWidget {
 }
 
 class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
+  // Wizard step (0-2)
+  int _currentStep = 0;
+  static const int _totalSteps = 3;
+
   bool _isUpdating = false;
   bool _isLoading = true;
+
+  // Step 1: Schedule
+  final Set<int> _selectedDays = {};
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
+
+  // Step 2: Workout Type & Focus
   String? _selectedWorkoutType;
   final Set<String> _selectedFocusAreas = {};
-  final Set<String> _selectedInjuries = {};
   final Set<String> _selectedEquipment = {};
-  final Set<int> _selectedDays = {}; // 0 = Monday, 6 = Sunday
 
-  // Custom "Other" inputs
-  String _customFocusArea = '';
-  String _customInjury = '';
-  String _customEquipment = '';
-  String _customWorkoutType = '';
-  bool _showFocusAreaInput = false;
-  bool _showInjuryInput = false;
-  bool _showEquipmentInput = false;
-  bool _showWorkoutTypeInput = false;
+  // Step 3: Health (optional)
+  final Set<String> _selectedInjuries = {};
+  final TextEditingController _customInjuryController = TextEditingController();
+  bool _showCustomInjuryField = false;
 
-  final TextEditingController _focusAreaController = TextEditingController();
-  final TextEditingController _injuryController = TextEditingController();
-  final TextEditingController _equipmentController = TextEditingController();
-  final TextEditingController _workoutTypeController = TextEditingController();
-
-  final List<String> _difficulties = ['easy', 'medium', 'hard'];
   final List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final List<String> _workoutTypes = [
-    'Strength',
-    'HIIT',
-    'Cardio',
-    'Flexibility',
-    'Full Body',
-    'Upper Body',
-    'Lower Body',
-    'Core',
-  ];
-  final List<String> _focusAreas = [
-    'Chest',
-    'Back',
-    'Shoulders',
-    'Arms',
-    'Core',
-    'Legs',
-    'Glutes',
-    'Full Body',
-  ];
-  final List<String> _injuries = [
-    'Shoulder',
-    'Lower Back',
-    'Knee',
-    'Elbow',
-    'Wrist',
-    'Ankle',
-    'Hip',
-    'Neck',
-  ];
-  final List<String> _equipmentOptions = [
-    'Dumbbells',
-    'Barbell',
-    'Kettlebell',
-    'Resistance Bands',
-    'Pull-up Bar',
-    'Bench',
-    'Cable Machine',
-    'Bodyweight Only',
-  ];
+  final List<String> _difficulties = ['easy', 'medium', 'hard'];
+  final List<String> _workoutTypes = ['Strength', 'HIIT', 'Cardio', 'Flexibility', 'Full Body', 'Upper Body', 'Lower Body', 'Core'];
+  final List<String> _focusAreas = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Glutes', 'Full Body'];
+  final List<String> _equipmentOptions = ['Dumbbells', 'Barbell', 'Kettlebell', 'Resistance Bands', 'Pull-up Bar', 'Bench', 'Bodyweight Only'];
+  final List<String> _injuries = ['Shoulder', 'Lower Back', 'Knee', 'Elbow', 'Wrist', 'Ankle', 'Hip', 'Neck'];
 
   @override
   void initState() {
     super.initState();
-    // Load preferences after frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadPreferences();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreferences());
+  }
+
+  @override
+  void dispose() {
+    _customInjuryController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadPreferences() async {
@@ -116,7 +79,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     if (userId == null) {
       setState(() {
         _isLoading = false;
-        // Set defaults if no user
         _selectedDays.addAll([0, 2, 4]);
         _selectedFocusAreas.add('Full Body');
       });
@@ -130,79 +92,44 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       if (mounted) {
         setState(() {
           if (prefs != null) {
-            // Set difficulty
-            if (prefs.difficulty != null) {
-              _selectedDifficulty = prefs.difficulty!.toLowerCase();
-            }
+            if (prefs.difficulty != null) _selectedDifficulty = prefs.difficulty!.toLowerCase();
+            if (prefs.durationMinutes != null) _selectedDuration = prefs.durationMinutes!.toDouble().clamp(15, 90);
 
-            // Set duration
-            if (prefs.durationMinutes != null) {
-              _selectedDuration = prefs.durationMinutes!.toDouble().clamp(15, 90);
-            }
-
-            // Set workout type
             if (prefs.workoutType != null && prefs.workoutType!.isNotEmpty) {
-              // Check if it's a standard workout type
               final normalizedType = _workoutTypes.firstWhere(
                 (t) => t.toLowerCase() == prefs.workoutType!.toLowerCase(),
                 orElse: () => '',
               );
-              if (normalizedType.isNotEmpty) {
-                _selectedWorkoutType = normalizedType;
-              } else {
-                _customWorkoutType = prefs.workoutType!;
-              }
+              if (normalizedType.isNotEmpty) _selectedWorkoutType = normalizedType;
             }
 
-            // Set workout days (convert day names to indices)
             _selectedDays.clear();
             if (prefs.workoutDays.isNotEmpty) {
               final dayMap = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6};
               for (final day in prefs.workoutDays) {
                 final index = dayMap[day];
-                if (index != null) {
-                  _selectedDays.add(index);
-                }
+                if (index != null) _selectedDays.add(index);
               }
             } else {
-              // Default to Mon, Wed, Fri
               _selectedDays.addAll([0, 2, 4]);
             }
 
-            // Set equipment
             _selectedEquipment.clear();
             for (final equip in prefs.equipment) {
-              if (_equipmentOptions.contains(equip)) {
-                _selectedEquipment.add(equip);
-              } else if (_customEquipment.isEmpty) {
-                _customEquipment = equip;
-              }
+              if (_equipmentOptions.contains(equip)) _selectedEquipment.add(equip);
             }
 
-            // Set focus areas
             _selectedFocusAreas.clear();
             for (final area in prefs.focusAreas) {
-              if (_focusAreas.contains(area)) {
-                _selectedFocusAreas.add(area);
-              } else if (_customFocusArea.isEmpty) {
-                _customFocusArea = area;
-              }
+              if (_focusAreas.contains(area)) _selectedFocusAreas.add(area);
             }
-            if (_selectedFocusAreas.isEmpty && _customFocusArea.isEmpty) {
-              _selectedFocusAreas.add('Full Body');
-            }
+            if (_selectedFocusAreas.isEmpty) _selectedFocusAreas.add('Full Body');
 
-            // Set injuries
             _selectedInjuries.clear();
             for (final injury in prefs.injuries) {
-              if (_injuries.contains(injury)) {
-                _selectedInjuries.add(injury);
-              } else if (_customInjury.isEmpty) {
-                _customInjury = injury;
-              }
+              if (_injuries.contains(injury)) _selectedInjuries.add(injury);
             }
           } else {
-            // No preferences found, set defaults
             _selectedDays.addAll([0, 2, 4]);
             _selectedFocusAreas.add('Full Body');
           }
@@ -213,7 +140,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // Set defaults on error
           _selectedDays.addAll([0, 2, 4]);
           _selectedFocusAreas.add('Full Body');
         });
@@ -221,22 +147,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     }
   }
 
-  @override
-  void dispose() {
-    _focusAreaController.dispose();
-    _injuryController.dispose();
-    _equipmentController.dispose();
-    _workoutTypeController.dispose();
-    super.dispose();
-  }
-
   Future<void> _updateProgram() async {
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select at least one workout day'),
-          backgroundColor: AppColors.error,
-        ),
+        const SnackBar(content: Text('Please select at least one workout day'), backgroundColor: AppColors.error),
       );
       return;
     }
@@ -252,30 +166,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     }
 
     try {
-      // Combine selected focus areas with custom one
-      final allFocusAreas = _selectedFocusAreas.toList();
-      if (_customFocusArea.isNotEmpty) {
-        allFocusAreas.add(_customFocusArea);
-      }
-
-      // Combine selected injuries with custom one
-      final allInjuries = _selectedInjuries.toList();
-      if (_customInjury.isNotEmpty) {
-        allInjuries.add(_customInjury);
-      }
-
-      // Combine selected equipment with custom one
-      final allEquipment = _selectedEquipment.toList();
-      if (_customEquipment.isNotEmpty) {
-        allEquipment.add(_customEquipment);
-      }
-
-      // Use custom workout type if entered, otherwise selected
-      final workoutType = _customWorkoutType.isNotEmpty
-          ? _customWorkoutType
-          : _selectedWorkoutType;
-
-      // Convert day indices to day names for the API
       final selectedDayNames = _selectedDays.map((i) => _dayNames[i]).toList();
 
       final repo = ref.read(workoutRepositoryProvider);
@@ -283,39 +173,49 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         userId: userId,
         difficulty: _selectedDifficulty,
         durationMinutes: _selectedDuration.round(),
-        focusAreas: allFocusAreas,
-        injuries: allInjuries,
-        equipment: allEquipment.isNotEmpty ? allEquipment : null,
-        workoutType: workoutType,
+        focusAreas: _selectedFocusAreas.toList(),
+        injuries: _selectedInjuries.toList(),
+        equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
+        workoutType: _selectedWorkoutType,
         workoutDays: selectedDayNames,
       );
 
-      if (mounted) {
-        Navigator.pop(context, true);
-      }
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() => _isUpdating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update program: $e'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Failed to update program: $e'), backgroundColor: AppColors.error),
         );
       }
     }
   }
 
+  void _nextStep() {
+    if (_currentStep == 0 && _selectedDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one workout day'), backgroundColor: AppColors.error),
+      );
+      return;
+    }
+    if (_currentStep < _totalSteps - 1) {
+      setState(() => _currentStep++);
+    } else {
+      _updateProgram();
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) setState(() => _currentStep--);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Use Riverpod theme provider for consistent theme detection
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final _SheetColors colors = isDark ? _DarkColors() : _LightColors();
+    final colors = isDark ? _DarkColors() : _LightColors();
 
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
       decoration: BoxDecoration(
         color: colors.elevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -324,199 +224,130 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colors.textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colors.cyan.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.tune,
-                      color: colors.cyan,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Customize Program',
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.textPrimary,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Adjust settings and regenerate future workouts',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: colors.textMuted,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed:
-                        _isUpdating ? null : () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-
+            _buildHeader(colors),
             Divider(height: 1, color: colors.cardBorder),
-
-            // Scrollable content or loading indicator
+            _buildProgressIndicator(colors),
             Expanded(
               child: _isLoading
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(color: colors.cyan),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Loading your preferences...',
-                            style: TextStyle(
-                              color: colors.textMuted,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Workout Days Selection
-                    _buildWorkoutDaysSection(colors),
-
-                    // Workout Type Selection
-                    _buildWorkoutTypeSection(colors),
-
-                    // Difficulty Selection
-                    _buildDifficultySection(colors),
-
-                    // Duration Selection (Slider)
-                    _buildDurationSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Equipment Selection
-                    _buildEquipmentSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Focus Areas Selection
-                    _buildFocusAreasSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Injuries Section (Optional)
-                    _buildInjuriesSection(colors),
-
-                    const SizedBox(height: 24),
-
-                    // Update Button
-                    _buildUpdateButton(colors),
-
-                    // Extra padding
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
+                  ? Center(child: CircularProgressIndicator(color: colors.cyan))
+                  : _buildCurrentStep(colors),
             ),
+            _buildNavigationButtons(colors),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWorkoutDaysSection(_SheetColors colors) {
+  Widget _buildHeader(_SheetColors colors) {
+    final stepTitles = ['Schedule', 'Workout Type', 'Health'];
     return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.cyan.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.tune, color: colors.cyan, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Customize Program',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Step ${_currentStep + 1} of $_totalSteps: ${stepTitles[_currentStep]}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.textMuted),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _isUpdating ? null : () => Navigator.pop(context),
+            icon: Icon(Icons.close, color: colors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator(_SheetColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: List.generate(_totalSteps, (index) {
+          final isActive = index <= _currentStep;
+          final isCurrent = index == _currentStep;
+          return Expanded(
+            child: Container(
+              margin: EdgeInsets.only(right: index < _totalSteps - 1 ? 8 : 0),
+              height: 4,
+              decoration: BoxDecoration(
+                color: isActive ? colors.cyan : colors.glassSurface,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildCurrentStep(_SheetColors colors) {
+    switch (_currentStep) {
+      case 0:
+        return _buildScheduleStep(colors);
+      case 1:
+        return _buildWorkoutTypeStep(colors);
+      case 2:
+        return _buildHealthStep(colors);
+      default:
+        return const SizedBox();
+    }
+  }
+
+  // STEP 1: Schedule
+  Widget _buildScheduleStep(_SheetColors colors) {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_month, size: 20, color: colors.cyan),
-              const SizedBox(width: 8),
-              Text(
-                'Workout Days',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-              const Spacer(),
-              Text(
-                '${_selectedDays.length} days/week',
-                style: TextStyle(color: colors.cyan, fontSize: 12),
-              ),
-            ],
-          ),
+          // Workout Days
+          _buildSectionTitle(colors, Icons.calendar_month, 'Workout Days', '${_selectedDays.length} days/week'),
           const SizedBox(height: 8),
-          Text(
-            'Select which days you want to work out',
-            style: TextStyle(fontSize: 12, color: colors.textMuted),
-          ),
+          Text('Select which days you want to work out', style: TextStyle(fontSize: 13, color: colors.textMuted)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (index) {
               final isSelected = _selectedDays.contains(index);
               return GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedDays.remove(index);
-                          } else {
-                            _selectedDays.add(index);
-                          }
-                        });
-                      },
+                onTap: () => setState(() {
+                  if (isSelected) {
+                    _selectedDays.remove(index);
+                  } else {
+                    _selectedDays.add(index);
+                  }
+                }),
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? colors.cyan.withOpacity(0.2)
-                        : colors.glassSurface,
+                    color: isSelected ? colors.cyan.withOpacity(0.2) : colors.glassSurface,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? colors.cyan : colors.cardBorder,
-                      width: isSelected ? 2 : 1,
-                    ),
+                    border: Border.all(color: isSelected ? colors.cyan : colors.cardBorder, width: isSelected ? 2 : 1),
                   ),
                   child: Center(
                     child: Text(
@@ -532,223 +363,39 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               );
             }),
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildWorkoutTypeSection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.category, size: 20, color: colors.purple),
-              const SizedBox(width: 8),
-              Text(
-                'Workout Type',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Optional - Leave unselected for variety',
-            style: TextStyle(fontSize: 12, color: colors.textMuted),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ..._workoutTypes.map((type) {
-                final isSelected = _selectedWorkoutType?.toLowerCase() == type.toLowerCase() &&
-                    _customWorkoutType.isEmpty;
-                return GestureDetector(
-                  onTap: _isUpdating
-                      ? null
-                      : () {
-                          setState(() {
-                            _selectedWorkoutType = isSelected ? null : type;
-                            _customWorkoutType = '';
-                          });
-                        },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.purple.withOpacity(0.2)
-                          : colors.glassSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? colors.purple
-                            : colors.cardBorder.withOpacity(0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Text(
-                      type,
-                      style: TextStyle(
-                        color: isSelected ? colors.purple : colors.textSecondary,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              // "Other" chip
-              GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () => setState(() => _showWorkoutTypeInput = !_showWorkoutTypeInput),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _customWorkoutType.isNotEmpty
-                        ? colors.purple.withOpacity(0.2)
-                        : colors.glassSurface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _customWorkoutType.isNotEmpty
-                          ? colors.purple
-                          : colors.cardBorder.withOpacity(0.3),
-                      width: _customWorkoutType.isNotEmpty ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _showWorkoutTypeInput ? Icons.close : Icons.add,
-                        size: 14,
-                        color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _customWorkoutType.isNotEmpty ? _customWorkoutType : 'Other',
-                        style: TextStyle(
-                          color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
-                          fontWeight: _customWorkoutType.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Custom input field
-          if (_showWorkoutTypeInput) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _workoutTypeController,
-              decoration: InputDecoration(
-                hintText: 'Enter custom workout type',
-                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
-                filled: true,
-                fillColor: colors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.purple),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.purple),
-                  onPressed: () {
-                    setState(() {
-                      _customWorkoutType = _workoutTypeController.text.trim();
-                      _selectedWorkoutType = null;
-                      _showWorkoutTypeInput = false;
-                    });
-                  },
-                ),
-              ),
-              style: TextStyle(color: colors.textPrimary),
-              onSubmitted: (value) {
-                setState(() {
-                  _customWorkoutType = value.trim();
-                  _selectedWorkoutType = null;
-                  _showWorkoutTypeInput = false;
-                });
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: 32),
 
-  Widget _buildDifficultySection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.speed, size: 20, color: colors.orange),
-              const SizedBox(width: 8),
-              Text(
-                'Difficulty',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-            ],
-          ),
+          // Difficulty
+          _buildSectionTitle(colors, Icons.speed, 'Difficulty', null),
           const SizedBox(height: 12),
           Row(
             children: _difficulties.map((difficulty) {
               final isSelected = _selectedDifficulty == difficulty;
               final color = _getDifficultyColor(difficulty);
+              final icon = _getDifficultyIcon(difficulty);
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    right: difficulty != _difficulties.last ? 8 : 0,
-                  ),
+                  padding: EdgeInsets.only(right: difficulty != _difficulties.last ? 8 : 0),
                   child: GestureDetector(
-                    onTap: _isUpdating
-                        ? null
-                        : () => setState(() => _selectedDifficulty = difficulty),
+                    onTap: () => setState(() => _selectedDifficulty = difficulty),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: isSelected ? color.withOpacity(0.2) : colors.glassSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? color : colors.cardBorder.withOpacity(0.3),
-                          width: isSelected ? 2 : 1,
-                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: isSelected ? color : colors.cardBorder.withOpacity(0.3), width: isSelected ? 2 : 1),
                       ),
-                      child: Center(
-                        child: Text(
-                          difficulty[0].toUpperCase() + difficulty.substring(1),
-                          style: TextStyle(
-                            color: isSelected ? color : colors.textSecondary,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(icon, size: 16, color: isSelected ? color : colors.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            difficulty[0].toUpperCase() + difficulty.substring(1),
+                            style: TextStyle(color: isSelected ? color : colors.textSecondary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
@@ -756,47 +403,11 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               );
             }).toList(),
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildDurationSection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.timer_outlined, size: 20, color: colors.success),
-              const SizedBox(width: 8),
-              Text(
-                'Workout Duration',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colors.success.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${_selectedDuration.round()} min',
-                  style: TextStyle(
-                    color: colors.success,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 32),
+
+          // Duration
+          _buildSectionTitle(colors, Icons.timer_outlined, 'Duration', '${_selectedDuration.round()} min'),
           const SizedBox(height: 16),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
@@ -812,9 +423,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               min: 15,
               max: 90,
               divisions: 15,
-              onChanged: _isUpdating
-                  ? null
-                  : (value) => setState(() => _selectedDuration = value),
+              onChanged: (value) => setState(() => _selectedDuration = value),
             ),
           ),
           Padding(
@@ -832,367 +441,110 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     );
   }
 
-  Widget _buildEquipmentSection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+  // STEP 2: Workout Type & Focus
+  Widget _buildWorkoutTypeStep(_SheetColors colors) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.fitness_center, size: 20, color: colors.cyan),
-              const SizedBox(width: 8),
-              Text(
-                'Equipment Available',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-              const Spacer(),
-              if (_selectedEquipment.isNotEmpty || _customEquipment.isNotEmpty)
-                Text(
-                  '${_selectedEquipment.length + (_customEquipment.isNotEmpty ? 1 : 0)} selected',
-                  style: TextStyle(color: colors.cyan, fontSize: 12),
-                ),
-            ],
-          ),
+          // Workout Type (Optional)
+          _buildSectionTitle(colors, Icons.category, 'Workout Type', 'Optional'),
           const SizedBox(height: 8),
-          Text(
-            'Only generate exercises with selected equipment',
-            style: TextStyle(fontSize: 12, color: colors.textMuted),
-          ),
+          Text('Leave unselected for variety', style: TextStyle(fontSize: 13, color: colors.textMuted)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              ..._equipmentOptions.map((equipment) {
-                final isSelected = _selectedEquipment.contains(equipment);
-                return GestureDetector(
-                  onTap: _isUpdating
-                      ? null
-                      : () {
-                          setState(() {
-                            if (isSelected) {
-                              _selectedEquipment.remove(equipment);
-                            } else {
-                              _selectedEquipment.add(equipment);
-                            }
-                          });
-                        },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? colors.cyan.withOpacity(0.2) : colors.glassSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected ? colors.cyan : colors.cardBorder.withOpacity(0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isSelected) ...[
-                          Icon(Icons.check, size: 14, color: colors.cyan),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          equipment,
-                          style: TextStyle(
-                            color: isSelected ? colors.cyan : colors.textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              // "Other" chip
-              GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () => setState(() => _showEquipmentInput = !_showEquipmentInput),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _customEquipment.isNotEmpty
-                        ? colors.cyan.withOpacity(0.2)
-                        : colors.glassSurface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _customEquipment.isNotEmpty
-                          ? colors.cyan
-                          : colors.cardBorder.withOpacity(0.3),
-                      width: _customEquipment.isNotEmpty ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _showEquipmentInput ? Icons.close : Icons.add,
-                        size: 14,
-                        color: _customEquipment.isNotEmpty ? colors.cyan : colors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _customEquipment.isNotEmpty ? _customEquipment : 'Other',
-                        style: TextStyle(
-                          color: _customEquipment.isNotEmpty ? colors.cyan : colors.textSecondary,
-                          fontWeight: _customEquipment.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            children: _workoutTypes.map((type) {
+              final isSelected = _selectedWorkoutType == type;
+              return _buildChip(colors, type, isSelected, colors.purple, () {
+                setState(() => _selectedWorkoutType = isSelected ? null : type);
+              });
+            }).toList(),
           ),
-          // Custom input field
-          if (_showEquipmentInput) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _equipmentController,
-              decoration: InputDecoration(
-                hintText: 'Enter custom equipment',
-                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
-                filled: true,
-                fillColor: colors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cyan),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.cyan),
-                  onPressed: () {
-                    setState(() {
-                      _customEquipment = _equipmentController.text.trim();
-                      _showEquipmentInput = false;
-                    });
-                  },
-                ),
-              ),
-              style: TextStyle(color: colors.textPrimary),
-              onSubmitted: (value) {
+
+          const SizedBox(height: 32),
+
+          // Equipment
+          _buildSectionTitle(colors, Icons.fitness_center, 'Equipment', _selectedEquipment.isNotEmpty ? '${_selectedEquipment.length} selected' : null),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _equipmentOptions.map((equip) {
+              final isSelected = _selectedEquipment.contains(equip);
+              return _buildChip(colors, equip, isSelected, colors.cyan, () {
                 setState(() {
-                  _customEquipment = value.trim();
-                  _showEquipmentInput = false;
+                  if (isSelected) {
+                    _selectedEquipment.remove(equip);
+                  } else {
+                    _selectedEquipment.add(equip);
+                  }
                 });
-              },
-            ),
-          ],
+              });
+            }).toList(),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Focus Areas
+          _buildSectionTitle(colors, Icons.track_changes, 'Focus Areas', _selectedFocusAreas.isNotEmpty ? '${_selectedFocusAreas.length} selected' : null),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _focusAreas.map((area) {
+              final isSelected = _selectedFocusAreas.contains(area);
+              return _buildChip(colors, area, isSelected, colors.purple, () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedFocusAreas.remove(area);
+                  } else {
+                    _selectedFocusAreas.add(area);
+                  }
+                });
+              });
+            }).toList(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFocusAreasSection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+  // STEP 3: Health (Optional)
+  Widget _buildHealthStep(_SheetColors colors) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.track_changes, size: 20, color: colors.purple),
-              const SizedBox(width: 8),
-              Text(
-                'Focus Areas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-              const Spacer(),
-              if (_selectedFocusAreas.isNotEmpty || _customFocusArea.isNotEmpty)
-                Text(
-                  '${_selectedFocusAreas.length + (_customFocusArea.isNotEmpty ? 1 : 0)} selected',
-                  style: TextStyle(color: colors.purple, fontSize: 12),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ..._focusAreas.map((area) {
-                final isSelected = _selectedFocusAreas.contains(area);
-                return GestureDetector(
-                  onTap: _isUpdating
-                      ? null
-                      : () {
-                          setState(() {
-                            if (isSelected) {
-                              _selectedFocusAreas.remove(area);
-                            } else {
-                              _selectedFocusAreas.add(area);
-                            }
-                          });
-                        },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? colors.purple.withOpacity(0.2) : colors.glassSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected ? colors.purple : colors.cardBorder.withOpacity(0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isSelected) ...[
-                          Icon(Icons.check, size: 14, color: colors.purple),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          area,
-                          style: TextStyle(
-                            color: isSelected ? colors.purple : colors.textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-              // "Other" chip
-              GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () => setState(() => _showFocusAreaInput = !_showFocusAreaInput),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _customFocusArea.isNotEmpty
-                        ? colors.purple.withOpacity(0.2)
-                        : colors.glassSurface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _customFocusArea.isNotEmpty
-                          ? colors.purple
-                          : colors.cardBorder.withOpacity(0.3),
-                      width: _customFocusArea.isNotEmpty ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _showFocusAreaInput ? Icons.close : Icons.add,
-                        size: 14,
-                        color: _customFocusArea.isNotEmpty ? colors.purple : colors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _customFocusArea.isNotEmpty ? _customFocusArea : 'Other',
-                        style: TextStyle(
-                          color: _customFocusArea.isNotEmpty ? colors.purple : colors.textSecondary,
-                          fontWeight: _customFocusArea.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Custom input field
-          if (_showFocusAreaInput) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _focusAreaController,
-              decoration: InputDecoration(
-                hintText: 'Enter custom focus area',
-                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
-                filled: true,
-                fillColor: colors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.purple),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.purple),
-                  onPressed: () {
-                    setState(() {
-                      _customFocusArea = _focusAreaController.text.trim();
-                      _showFocusAreaInput = false;
-                    });
-                  },
-                ),
-              ),
-              style: TextStyle(color: colors.textPrimary),
-              onSubmitted: (value) {
-                setState(() {
-                  _customFocusArea = value.trim();
-                  _showFocusAreaInput = false;
-                });
-              },
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.success.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.success.withOpacity(0.3)),
             ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInjuriesSection(_SheetColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.healing, size: 20, color: colors.error),
-              const SizedBox(width: 8),
-              Text(
-                'Injuries to Consider',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-              ),
-              const Spacer(),
-              if (_selectedInjuries.isNotEmpty || _customInjury.isNotEmpty)
-                Text(
-                  '${_selectedInjuries.length + (_customInjury.isNotEmpty ? 1 : 0)} selected',
-                  style: TextStyle(color: colors.error, fontSize: 12),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: colors.success, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'This step is optional. You can skip it if you have no injuries to report.',
+                    style: TextStyle(fontSize: 13, color: colors.success),
+                  ),
                 ),
-            ],
+              ],
+            ),
           ),
+
+          const SizedBox(height: 24),
+
+          _buildSectionTitle(colors, Icons.healing, 'Injuries to Consider', _selectedInjuries.isNotEmpty ? '${_selectedInjuries.length} selected' : 'None'),
           const SizedBox(height: 8),
-          Text(
-            'AI will avoid exercises that may aggravate these areas',
-            style: TextStyle(fontSize: 12, color: colors.textMuted),
-          ),
+          Text('AI will avoid exercises that may aggravate these areas', style: TextStyle(fontSize: 13, color: colors.textMuted)),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -1200,182 +552,197 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             children: [
               ..._injuries.map((injury) {
                 final isSelected = _selectedInjuries.contains(injury);
-                return GestureDetector(
-                  onTap: _isUpdating
-                      ? null
-                      : () {
-                          setState(() {
-                            if (isSelected) {
-                              _selectedInjuries.remove(injury);
-                            } else {
-                              _selectedInjuries.add(injury);
-                            }
-                          });
-                        },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? colors.error.withOpacity(0.2) : colors.glassSurface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected ? colors.error : colors.cardBorder.withOpacity(0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isSelected) ...[
-                          Icon(Icons.check, size: 14, color: colors.error),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          injury,
-                          style: TextStyle(
-                            color: isSelected ? colors.error : colors.textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _buildChip(colors, injury, isSelected, colors.error, () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedInjuries.remove(injury);
+                    } else {
+                      _selectedInjuries.add(injury);
+                    }
+                  });
+                });
               }),
-              // "Other" chip
-              GestureDetector(
-                onTap: _isUpdating
-                    ? null
-                    : () => setState(() => _showInjuryInput = !_showInjuryInput),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _customInjury.isNotEmpty
-                        ? colors.error.withOpacity(0.2)
-                        : colors.glassSurface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _customInjury.isNotEmpty
-                          ? colors.error
-                          : colors.cardBorder.withOpacity(0.3),
-                      width: _customInjury.isNotEmpty ? 2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _showInjuryInput ? Icons.close : Icons.add,
-                        size: 14,
-                        color: _customInjury.isNotEmpty ? colors.error : colors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _customInjury.isNotEmpty ? _customInjury : 'Other',
-                        style: TextStyle(
-                          color: _customInjury.isNotEmpty ? colors.error : colors.textSecondary,
-                          fontWeight: _customInjury.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Other chip
+              _buildChip(colors, '+ Other', _showCustomInjuryField, colors.orange, () {
+                setState(() => _showCustomInjuryField = !_showCustomInjuryField);
+              }),
             ],
           ),
-          // Custom input field
-          if (_showInjuryInput) ...[
+
+          // Custom injury input field
+          if (_showCustomInjuryField) ...[
             const SizedBox(height: 12),
-            TextField(
-              controller: _injuryController,
-              decoration: InputDecoration(
-                hintText: 'Enter custom injury',
-                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
-                filled: true,
-                fillColor: colors.glassSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customInjuryController,
+                    style: TextStyle(color: colors.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Enter injury/condition',
+                      hintStyle: TextStyle(color: colors.textMuted),
+                      filled: true,
+                      fillColor: colors.glassSurface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onSubmitted: (value) => _addCustomInjury(colors),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cardBorder),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _addCustomInjury(colors),
+                  icon: Icon(Icons.add_circle, color: colors.cyan),
+                  tooltip: 'Add',
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.error),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.error),
-                  onPressed: () {
-                    setState(() {
-                      _customInjury = _injuryController.text.trim();
-                      _showInjuryInput = false;
-                    });
-                  },
-                ),
-              ),
-              style: TextStyle(color: colors.textPrimary),
-              onSubmitted: (value) {
-                setState(() {
-                  _customInjury = value.trim();
-                  _showInjuryInput = false;
-                });
-              },
+              ],
             ),
           ],
+
+          const SizedBox(height: 32),
+
+          // Summary
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.glassSurface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Summary', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
+                const SizedBox(height: 12),
+                _buildSummaryRow(colors, 'Days', _selectedDays.map((i) => _dayNames[i]).join(', ')),
+                _buildSummaryRow(colors, 'Difficulty', _selectedDifficulty[0].toUpperCase() + _selectedDifficulty.substring(1)),
+                _buildSummaryRow(colors, 'Duration', '${_selectedDuration.round()} minutes'),
+                if (_selectedWorkoutType != null) _buildSummaryRow(colors, 'Type', _selectedWorkoutType!),
+                if (_selectedEquipment.isNotEmpty) _buildSummaryRow(colors, 'Equipment', _selectedEquipment.join(', ')),
+                if (_selectedFocusAreas.isNotEmpty) _buildSummaryRow(colors, 'Focus', _selectedFocusAreas.join(', ')),
+                if (_selectedInjuries.isNotEmpty) _buildSummaryRow(colors, 'Injuries', _selectedInjuries.join(', ')),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildUpdateButton(_SheetColors colors) {
+  void _addCustomInjury(_SheetColors colors) {
+    final value = _customInjuryController.text.trim();
+    if (value.isNotEmpty && !_selectedInjuries.contains(value)) {
+      setState(() {
+        _selectedInjuries.add(value);
+        _customInjuryController.clear();
+      });
+    }
+  }
+
+  Widget _buildSummaryRow(_SheetColors colors, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isUpdating ? null : _updateProgram,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.cyan,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(label, style: TextStyle(fontSize: 13, color: colors.textMuted)),
           ),
-          child: _isUpdating
-              ? const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Updating Program...',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Update & Regenerate',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
+          Expanded(
+            child: Text(value, style: TextStyle(fontSize: 13, color: colors.textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavigationButtons(_SheetColors colors) {
+    // Account for floating nav bar (56px) + its bottom margin (16px) + extra spacing (16px)
+    final bottomPadding = MediaQuery.of(context).padding.bottom + 88;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
+      child: Row(
+          children: [
+            if (_currentStep > 0)
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isUpdating ? null : _previousStep,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: colors.cardBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text('Back', style: TextStyle(color: colors.textSecondary)),
                 ),
+              ),
+            if (_currentStep > 0) const SizedBox(width: 12),
+            Expanded(
+              flex: _currentStep == 0 ? 1 : 2,
+              child: ElevatedButton(
+                onPressed: _isUpdating ? null : _nextStep,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.cyan,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isUpdating
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(
+                        _currentStep < _totalSteps - 1 ? 'Continue' : 'Update & Regenerate',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ),
+          ],
+        ),
+    );
+  }
+
+  Widget _buildSectionTitle(_SheetColors colors, IconData icon, String title, String? badge) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: colors.cyan),
+        const SizedBox(width: 8),
+        Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: colors.textPrimary)),
+        if (badge != null) ...[
+          const Spacer(),
+          Text(badge, style: TextStyle(color: colors.cyan, fontSize: 12)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildChip(_SheetColors colors, String label, bool isSelected, Color accentColor, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withOpacity(0.2) : colors.glassSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? accentColor : colors.cardBorder.withOpacity(0.3), width: isSelected ? 2 : 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSelected) ...[
+              Icon(Icons.check, size: 14, color: accentColor),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? accentColor : colors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1393,9 +760,22 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         return AppColors.cyan;
     }
   }
+
+  IconData _getDifficultyIcon(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return Icons.check_circle_outline;
+      case 'medium':
+        return Icons.change_history;
+      case 'hard':
+        return Icons.star_outline;
+      default:
+        return Icons.circle_outlined;
+    }
+  }
 }
 
-/// Theme colors interface for the sheet
+/// Theme colors interface
 abstract class _SheetColors {
   Color get elevated;
   Color get textPrimary;
@@ -1410,7 +790,6 @@ abstract class _SheetColors {
   Color get error;
 }
 
-/// Dark theme colors for the sheet
 class _DarkColors implements _SheetColors {
   @override Color get elevated => AppColors.elevated;
   @override Color get textPrimary => AppColors.textPrimary;
@@ -1425,7 +804,6 @@ class _DarkColors implements _SheetColors {
   @override Color get error => AppColors.error;
 }
 
-/// Light theme colors for the sheet
 class _LightColors implements _SheetColors {
   @override Color get elevated => AppColorsLight.elevated;
   @override Color get textPrimary => AppColorsLight.textPrimary;

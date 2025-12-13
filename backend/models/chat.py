@@ -22,8 +22,9 @@ class CoachIntent(str, Enum):
     ANALYZE_FOOD = "analyze_food"
     NUTRITION_SUMMARY = "nutrition_summary"
     RECENT_MEALS = "recent_meals"
-    # App settings intent
+    # App control intents
     CHANGE_SETTING = "change_setting"
+    NAVIGATE = "navigate"
 
 
 class UserProfile(BaseModel):
@@ -98,6 +99,8 @@ class IntentExtraction(BaseModel):
     # App settings fields
     setting_name: Optional[str] = None
     setting_value: Optional[bool] = None
+    # Navigation fields
+    destination: Optional[str] = None
 
 
 class ChatResponse(BaseModel):

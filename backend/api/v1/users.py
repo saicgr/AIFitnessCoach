@@ -327,23 +327,45 @@ async def get_program_preferences(user_id: str):
 
 def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[str]:
     """Extract workout days from preferences or regeneration data."""
-    # Check latest regeneration first
-    if latest_regen:
-        # Check if we stored workout days in focus_areas or workout_type
-        # The regeneration table stores days_per_week info indirectly
-        pass
+    day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    # Fall back to base preferences
-    days_per_week = base_prefs.get("days_per_week", 3)
+    # Check latest regeneration first (if it has workout_days)
+    if latest_regen and latest_regen.get("selected_workout_days"):
+        selected_days = latest_regen["selected_workout_days"]
+        if isinstance(selected_days, list):
+            # Could be indices or day names
+            if selected_days and isinstance(selected_days[0], int):
+                return [day_names[i] for i in selected_days if 0 <= i < 7]
+            elif selected_days and isinstance(selected_days[0], str):
+                return selected_days
+
+    # Check base preferences - try multiple key names for compatibility
+    # Try "workout_days" first (Flutter app uses this)
+    workout_days = base_prefs.get("workout_days", [])
+    if workout_days:
+        if isinstance(workout_days, list):
+            # Could be indices or day names
+            if workout_days and isinstance(workout_days[0], int):
+                return [day_names[i] for i in workout_days if 0 <= i < 7]
+            elif workout_days and isinstance(workout_days[0], str):
+                return workout_days
+
+    # Try "selected_days" as fallback
     selected_days = base_prefs.get("selected_days", [])
-
-    # If we have selected days stored, convert indices to day names
     if selected_days:
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        return [day_names[i] for i in selected_days if 0 <= i < 7]
+        if isinstance(selected_days, list):
+            if selected_days and isinstance(selected_days[0], int):
+                return [day_names[i] for i in selected_days if 0 <= i < 7]
+            elif selected_days and isinstance(selected_days[0], str):
+                return selected_days
+
+    # Fall back to days_per_week and generate default days
+    days_per_week = base_prefs.get("days_per_week", 3)
 
     # Default: spread days evenly across the week
-    if days_per_week == 3:
+    if days_per_week == 2:
+        return ["Mon", "Thu"]
+    elif days_per_week == 3:
         return ["Mon", "Wed", "Fri"]
     elif days_per_week == 4:
         return ["Mon", "Tue", "Thu", "Fri"]
@@ -353,8 +375,6 @@ def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[st
         return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     elif days_per_week == 7:
         return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    elif days_per_week == 2:
-        return ["Mon", "Thu"]
     else:
         return ["Mon", "Wed", "Fri"]
 

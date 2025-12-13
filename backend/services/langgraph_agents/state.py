@@ -31,6 +31,8 @@ class FitnessCoachState(TypedDict):
     # App settings
     setting_name: Optional[str]
     setting_value: Optional[bool]
+    # Navigation
+    destination: Optional[str]
 
     # RAG context
     rag_documents: List[Dict[str, Any]]

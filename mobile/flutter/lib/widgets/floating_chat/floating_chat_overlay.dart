@@ -73,15 +73,21 @@ class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
               ).animate().fadeIn(duration: 200.ms),
             ),
 
-            // Chat modal
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _ChatModal(
-                onClose: () => ref.read(floatingChatProvider.notifier).collapse(),
-                onMinimize: () => ref.read(floatingChatProvider.notifier).minimize(),
-              ).animate().slideY(begin: 1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic),
+            // Floating chat window - centered with margins
+            Center(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
+                  top: 80,
+                  bottom: bottomPadding + 120,
+                ),
+                child: _ChatModal(
+                  onClose: () => ref.read(floatingChatProvider.notifier).collapse(),
+                  onMinimize: () => ref.read(floatingChatProvider.notifier).minimize(),
+                ).animate().scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 250.ms, curve: Curves.easeOutBack)
+                 .fadeIn(duration: 200.ms),
+              ),
             ),
           ],
 
@@ -229,19 +235,24 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   @override
   Widget build(BuildContext context) {
     final messagesState = ref.watch(chatMessagesProvider);
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      height: screenHeight * 0.7,
+      constraints: const BoxConstraints(maxWidth: 400), // Max width for larger screens
       decoration: BoxDecoration(
         color: AppColors.pureBlack,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+            spreadRadius: 5,
+          ),
+          BoxShadow(
+            color: AppColors.cyan.withValues(alpha: 0.2),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            spreadRadius: 1,
           ),
         ],
       ),
@@ -310,13 +321,13 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             ),
           ),
 
-          // Input bar
+          // Input bar - no bottom padding since floating
           _InputBar(
             controller: _textController,
             focusNode: _focusNode,
             isLoading: _isLoading,
             onSend: _sendMessage,
-            bottomPadding: bottomPadding,
+            bottomPadding: 0,
           ),
         ],
       ),
@@ -559,8 +570,8 @@ class _TypingIndicator extends StatelessWidget {
   }
 }
 
-/// Input bar
-class _InputBar extends StatelessWidget {
+/// Input bar - Stateful to properly manage TextField
+class _InputBar extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isLoading;
@@ -576,11 +587,17 @@ class _InputBar extends StatelessWidget {
   });
 
   @override
+  State<_InputBar> createState() => _InputBarState();
+}
+
+class _InputBarState extends State<_InputBar> {
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPadding + 12),
+      padding: EdgeInsets.fromLTRB(12, 10, 12, widget.bottomPadding + 12),
       decoration: BoxDecoration(
         color: AppColors.nearBlack,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
         border: Border(
           top: BorderSide(color: AppColors.cardBorder.withValues(alpha: 0.5)),
         ),
@@ -589,13 +606,17 @@ class _InputBar extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              enabled: !isLoading,
+              controller: widget.controller,
+              focusNode: widget.focusNode,
+              enabled: !widget.isLoading,
               textCapitalization: TextCapitalization.sentences,
+              autocorrect: true,
+              enableSuggestions: true,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.send,
               maxLines: 3,
               minLines: 1,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Ask your AI coach...',
                 hintStyle: TextStyle(color: AppColors.textMuted),
@@ -610,22 +631,22 @@ class _InputBar extends StatelessWidget {
                   vertical: 10,
                 ),
               ),
-              onSubmitted: (_) => onSend(),
+              onSubmitted: (_) => widget.onSend(),
             ),
           ),
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isLoading
+                colors: widget.isLoading
                     ? [AppColors.textMuted, AppColors.textMuted]
                     : [AppColors.cyan, AppColors.purple],
               ),
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              onPressed: isLoading ? null : onSend,
-              icon: isLoading
+              onPressed: widget.isLoading ? null : widget.onSend,
+              icon: widget.isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,

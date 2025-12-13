@@ -37,6 +37,9 @@ class LibraryExercise(BaseModel):
     category: Optional[str] = None
     gif_url: Optional[str] = None
     video_url: Optional[str] = None
+    goals: Optional[List[str]] = None  # Derived fitness goals
+    suitable_for: Optional[List[str]] = None  # Suitability categories
+    avoid_if: Optional[List[str]] = None  # Injury considerations
 
 
 class LibraryProgram(BaseModel):
@@ -154,7 +157,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
 
     View columns: id, name, original_name, body_part, equipment, target_muscle,
                   secondary_muscles, instructions, difficulty_level, category,
-                  gif_url, video_url
+                  gif_url, video_url, goals, suitable_for, avoid_if
     """
     if from_cleaned_view:
         # From cleaned view - uses 'name' and 'original_name' columns
@@ -171,6 +174,9 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_url"),
+            goals=row.get("goals", []),
+            suitable_for=row.get("suitable_for", []),
+            avoid_if=row.get("avoid_if", []),
         )
     else:
         # From base table - clean name manually
@@ -190,6 +196,9 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             category=row.get("category"),
             gif_url=row.get("gif_url"),
             video_url=row.get("video_s3_path"),
+            goals=row.get("goals", []),
+            suitable_for=row.get("suitable_for", []),
+            avoid_if=row.get("avoid_if", []),
         )
 
 
@@ -244,55 +253,217 @@ def derive_exercise_type(video_url: str, body_part: str) -> str:
         return 'Strength'
 
 
+def derive_goals(name: str, body_part: str, target_muscle: str, video_url: str) -> List[str]:
+    """
+    Derive fitness goals this exercise supports based on name, muscles, and type.
+    """
+    goals = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+    tm_lower = target_muscle.lower() if target_muscle else ""
+    video_lower = video_url.lower() if video_url else ""
+
+    # Testosterone boosting - compound movements targeting large muscle groups
+    testosterone_keywords = ['squat', 'deadlift', 'bench press', 'row', 'pull-up', 'pullup',
+                           'lunge', 'leg press', 'hip thrust', 'clean', 'snatch']
+    if any(kw in name_lower for kw in testosterone_keywords) or bp_lower in ['quadriceps', 'glutes', 'back', 'chest']:
+        goals.append('Testosterone Boost')
+
+    # Weight loss / Fat burn - high intensity, cardio, full body
+    fat_burn_keywords = ['jump', 'burpee', 'hiit', 'cardio', 'mountain climber', 'plank jack',
+                        'high knee', 'sprint', 'skater', 'squat jump', 'box jump']
+    if any(kw in name_lower for kw in fat_burn_keywords) or 'cardio' in video_lower or 'hiit' in video_lower:
+        goals.append('Fat Burn')
+
+    # Muscle building - strength exercises with weights
+    muscle_keywords = ['press', 'curl', 'extension', 'row', 'fly', 'raise', 'pulldown', 'dip']
+    if any(kw in name_lower for kw in muscle_keywords):
+        goals.append('Muscle Building')
+
+    # Flexibility - yoga, stretching
+    flex_keywords = ['stretch', 'yoga', 'pose', 'flexibility', 'mobility', 'pigeon', 'cobra']
+    if any(kw in name_lower for kw in flex_keywords) or 'yoga' in video_lower or 'stretch' in video_lower:
+        goals.append('Flexibility')
+
+    # Core strength
+    core_keywords = ['crunch', 'plank', 'sit-up', 'ab ', 'core', 'twist', 'russian', 'hollow']
+    if any(kw in name_lower for kw in core_keywords) or bp_lower == 'core':
+        goals.append('Core Strength')
+
+    # Pelvic floor / Hip health
+    pelvic_keywords = ['kegel', 'pelvic', 'hip', 'glute bridge', 'clamshell', 'bird dog', 'dead bug']
+    if any(kw in name_lower for kw in pelvic_keywords) or bp_lower in ['hips', 'glutes']:
+        goals.append('Pelvic Health')
+
+    # Posture improvement
+    posture_keywords = ['face pull', 'reverse fly', 'row', 'scapula', 'thoracic', 'cat cow', 'superman']
+    if any(kw in name_lower for kw in posture_keywords) or 'back' in bp_lower:
+        goals.append('Posture')
+
+    return goals if goals else ['General Fitness']
+
+
+def derive_suitable_for(name: str, body_part: str, equipment: str, video_url: str) -> List[str]:
+    """
+    Derive who this exercise is suitable for based on intensity and requirements.
+    """
+    suitable = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+    eq_lower = equipment.lower() if equipment else ""
+    video_lower = video_url.lower() if video_url else ""
+
+    # Beginner friendly - bodyweight, simple movements
+    beginner_safe = ['wall', 'assisted', 'modified', 'seated', 'lying', 'supported']
+    high_impact = ['jump', 'burpee', 'box jump', 'plyometric', 'sprint', 'snatch', 'clean']
+
+    is_bodyweight = not equipment or 'bodyweight' in eq_lower or eq_lower == ''
+    is_high_impact = any(kw in name_lower for kw in high_impact)
+    is_beginner_mod = any(kw in name_lower for kw in beginner_safe)
+
+    if (is_bodyweight and not is_high_impact) or is_beginner_mod:
+        suitable.append('Beginner Friendly')
+
+    # Senior friendly - low impact, seated, stability focused
+    senior_safe = ['chair', 'seated', 'wall', 'balance', 'standing', 'stretch', 'yoga']
+    if any(kw in name_lower for kw in senior_safe) and not is_high_impact:
+        suitable.append('Senior Friendly')
+
+    # Pregnancy safe - no lying flat, no high impact, no heavy abs
+    pregnancy_unsafe = ['crunch', 'sit-up', 'lying leg raise', 'plank', 'burpee', 'jump',
+                       'heavy', 'deadlift', 'v-up', 'twist']
+    pregnancy_safe = ['cat cow', 'bird dog', 'kegel', 'pelvic tilt', 'wall sit',
+                     'seated', 'standing', 'arm', 'shoulder']
+    if any(kw in name_lower for kw in pregnancy_safe) and not any(kw in name_lower for kw in pregnancy_unsafe):
+        suitable.append('Pregnancy Safe')
+
+    # Low impact - good for joint issues
+    if not is_high_impact and ('stretch' in video_lower or 'yoga' in video_lower or is_bodyweight):
+        suitable.append('Low Impact')
+
+    # Home workout friendly
+    home_equipment = ['bodyweight', 'dumbbell', 'resistance band', 'yoga mat', 'chair', '']
+    if not equipment or any(eq in eq_lower for eq in home_equipment):
+        suitable.append('Home Workout')
+
+    return suitable if suitable else ['Gym']
+
+
+def derive_avoids(name: str, body_part: str, equipment: str) -> List[str]:
+    """
+    Derive what body parts/conditions this exercise might stress.
+    Helps users with injuries filter out exercises.
+    """
+    avoids = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+
+    # Exercises that stress the knees
+    knee_stress = ['squat', 'lunge', 'leg press', 'leg extension', 'jump', 'step-up', 'pistol']
+    if any(kw in name_lower for kw in knee_stress) or bp_lower in ['quadriceps', 'glutes']:
+        avoids.append('Stresses Knees')
+
+    # Exercises that stress the lower back
+    back_stress = ['deadlift', 'bent over', 'good morning', 'hyperextension', 'row', 'clean', 'snatch']
+    if any(kw in name_lower for kw in back_stress):
+        avoids.append('Stresses Lower Back')
+
+    # Exercises that stress shoulders
+    shoulder_stress = ['overhead', 'press', 'raise', 'pull-up', 'dip', 'push-up', 'fly']
+    if any(kw in name_lower for kw in shoulder_stress) or bp_lower == 'shoulders':
+        avoids.append('Stresses Shoulders')
+
+    # Exercises that stress wrists
+    wrist_stress = ['push-up', 'plank', 'handstand', 'front rack', 'wrist']
+    if any(kw in name_lower for kw in wrist_stress):
+        avoids.append('Stresses Wrists')
+
+    # High impact on joints
+    high_impact = ['jump', 'burpee', 'box jump', 'plyometric', 'sprint', 'running']
+    if any(kw in name_lower for kw in high_impact):
+        avoids.append('High Impact')
+
+    return avoids
+
+
 @router.get("/exercises/filter-options", response_model=Dict[str, Any])
 async def get_filter_options():
     """
     Get all available filter options for exercises.
-    Returns body parts, equipment types, and exercise types with counts.
+    Returns body parts, equipment types, exercise types, goals, suitable_for, and avoids with counts.
+    Now reads from database columns instead of deriving at runtime.
     """
     try:
         db = get_supabase_db()
 
-        # Get all exercises from cleaned view
-        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "target_muscle, body_part, equipment, video_url")
+        # Get all exercises from cleaned view with all needed fields including new columns
+        all_rows = await fetch_all_rows(
+            db, "exercise_library_cleaned",
+            "name, target_muscle, body_part, equipment, video_url, goals, suitable_for, avoid_if"
+        )
 
-        # Count by body part
+        # Count dictionaries
         body_part_counts: Dict[str, int] = {}
         equipment_counts: Dict[str, int] = {}
         exercise_type_counts: Dict[str, int] = {}
+        goal_counts: Dict[str, int] = {}
+        suitable_counts: Dict[str, int] = {}
+        avoid_counts: Dict[str, int] = {}
 
         for row in all_rows:
-            # Body part
             bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            eq = row.get("equipment", "")
+            video_url = row.get("video_url", "")
+
+            # Body part
             body_part_counts[bp] = body_part_counts.get(bp, 0) + 1
 
-            # Equipment
-            eq = row.get("equipment")
+            # Equipment (normalize)
             if eq and eq.strip():
-                equipment_counts[eq] = equipment_counts.get(eq, 0) + 1
+                eq_simplified = eq.strip()
+                equipment_counts[eq_simplified] = equipment_counts.get(eq_simplified, 0) + 1
             else:
                 equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
 
-            # Exercise type (derived from video path)
-            et = derive_exercise_type(row.get("video_url", ""), bp)
+            # Exercise type (still derived from video path)
+            et = derive_exercise_type(video_url, bp)
             exercise_type_counts[et] = exercise_type_counts.get(et, 0) + 1
 
+            # Goals (from database column)
+            goals = row.get("goals") or []
+            for goal in goals:
+                goal_counts[goal] = goal_counts.get(goal, 0) + 1
+
+            # Suitable for (from database column)
+            suitable = row.get("suitable_for") or []
+            for s in suitable:
+                suitable_counts[s] = suitable_counts.get(s, 0) + 1
+
+            # Avoids (from database column)
+            avoids = row.get("avoid_if") or []
+            for a in avoids:
+                avoid_counts[a] = avoid_counts.get(a, 0) + 1
+
         # Sort each by count
-        def sorted_options(counts: Dict[str, int]) -> List[Dict[str, Any]]:
-            return sorted(
+        def sorted_options(counts: Dict[str, int], limit: int = None) -> List[Dict[str, Any]]:
+            sorted_list = sorted(
                 [{"name": name, "count": count} for name, count in counts.items()],
                 key=lambda x: x["count"],
                 reverse=True
             )
+            return sorted_list[:limit] if limit else sorted_list
 
         result = {
             "body_parts": sorted_options(body_part_counts),
-            "equipment": sorted_options(equipment_counts),
+            "equipment": sorted_options(equipment_counts, limit=20),  # Top 20 equipment
             "exercise_types": sorted_options(exercise_type_counts),
+            "goals": sorted_options(goal_counts),
+            "suitable_for": sorted_options(suitable_counts),
+            "avoid_if": sorted_options(avoid_counts),
             "total_exercises": len(all_rows)
         }
 
-        logger.info(f"Filter options: {len(result['body_parts'])} body parts, {len(result['equipment'])} equipment, {len(result['exercise_types'])} types")
+        logger.info(f"Filter options: {len(result['body_parts'])} body parts, {len(result['goals'])} goals, {len(result['suitable_for'])} suitable_for")
         return result
 
     except Exception as e:
@@ -413,6 +584,9 @@ async def list_exercises(
     exercise_type: Optional[str] = None,
     difficulty: Optional[int] = None,
     search: Optional[str] = None,
+    goal: Optional[str] = None,
+    suitable_for: Optional[str] = None,
+    avoid_if: Optional[str] = None,
     limit: int = Query(default=2000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
 ):
@@ -425,6 +599,9 @@ async def list_exercises(
     - exercise_type: Filter by exercise type (e.g., "Strength", "Yoga", "Stretching", "Cardio")
     - difficulty: Filter by difficulty level (1-5)
     - search: Search by exercise name (cleaned name)
+    - goal: Filter by fitness goal (e.g., "Testosterone Boost", "Fat Burn", "Muscle Building")
+    - suitable_for: Filter by suitability (e.g., "Beginner Friendly", "Pregnancy Safe", "Low Impact")
+    - avoid_if: EXCLUDE exercises that stress certain areas (e.g., "Stresses Knees", "High Impact")
     """
     try:
         db = get_supabase_db()
@@ -481,7 +658,20 @@ async def list_exercises(
                 return derived_type.lower() == exercise_type.lower()
             exercises = [e for e in exercises if matches_type(e)]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, type={exercise_type}, deduplicated from {len(all_rows)})")
+        # Filter by goal (from database column)
+        if goal:
+            exercises = [e for e in exercises if e.goals and goal in e.goals]
+
+        # Filter by suitable_for (from database column)
+        if suitable_for:
+            exercises = [e for e in exercises if e.suitable_for and suitable_for in e.suitable_for]
+
+        # Filter by avoid_if - EXCLUDE exercises that stress certain body parts
+        # This is a negative filter - we exclude exercises that match
+        if avoid_if:
+            exercises = [e for e in exercises if not (e.avoid_if and avoid_if in e.avoid_if)]
+
+        logger.info(f"Listed {len(exercises)} exercises (body_part={body_part}, equipment={equipment}, type={exercise_type}, goal={goal}, suitable_for={suitable_for}, avoid_if={avoid_if})")
         return exercises
 
     except Exception as e:

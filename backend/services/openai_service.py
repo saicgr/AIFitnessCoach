@@ -81,13 +81,14 @@ class OpenAIService:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|report_injury|change_setting|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|report_injury|change_setting|navigate|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
   "body_part": "shoulder|back|knee|ankle|wrist|elbow|hip|neck",
-  "setting_name": "dark_mode|light_mode|notifications",
-  "setting_value": true
+  "setting_name": "dark_mode|notifications",
+  "setting_value": true,
+  "destination": "home|library|profile|achievements|hydration|nutrition|summaries"
 }
 
 INTENT DEFINITIONS:
@@ -97,13 +98,23 @@ INTENT DEFINITIONS:
 - modify_intensity: User wants to change difficulty/duration (e.g., "make it easier", "too hard")
 - reschedule: User wants to change workout timing (e.g., "move to tomorrow")
 - report_injury: User mentions pain/injury (e.g., "my shoulder hurts")
-- change_setting: User wants to change app settings (e.g., "turn on dark mode", "enable dark theme", "switch to light mode", "disable notifications")
+- change_setting: User wants to change app settings (e.g., "turn on dark mode", "enable dark theme", "switch to light mode")
+- navigate: User wants to go to a specific screen (e.g., "show my achievements", "open nutrition", "go to profile")
 - question: General fitness question or unclear intent
 
 SETTING EXTRACTION:
 - For dark mode requests: setting_name="dark_mode", setting_value=true
 - For light mode requests: setting_name="dark_mode", setting_value=false
 - For notification toggles: setting_name="notifications", setting_value=true/false
+
+NAVIGATION EXTRACTION:
+- "show achievements" / "my badges" -> destination="achievements"
+- "hydration" / "water intake" -> destination="hydration"
+- "nutrition" / "my meals" / "calories" -> destination="nutrition"
+- "weekly summary" / "my progress" -> destination="summaries"
+- "go home" / "main screen" -> destination="home"
+- "exercise library" / "browse exercises" -> destination="library"
+- "my profile" / "settings" -> destination="profile"
 
 User message: "''' + user_message + '"'
 
@@ -138,6 +149,7 @@ User message: "''' + user_message + '"'
                 body_part=data.get("body_part"),
                 setting_name=data.get("setting_name"),
                 setting_value=data.get("setting_value"),
+                destination=data.get("destination"),
             )
 
         except Exception as e:

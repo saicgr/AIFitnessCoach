@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 
 /// Social screen placeholder - Coming Soon
-class SocialScreen extends StatelessWidget {
+class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
+
+  @override
+  State<SocialScreen> createState() => _SocialScreenState();
+}
+
+class _SocialScreenState extends State<SocialScreen> {
+  bool _hasJoinedWaitlist = false;
+
+  void _joinWaitlist() {
+    HapticFeedback.mediumImpact();
+    setState(() => _hasJoinedWaitlist = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("We'll notify you when Social features launch!"),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +126,49 @@ class SocialScreen extends StatelessWidget {
                           ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
+
+                    // Waitlist Button
+                    if (!_hasJoinedWaitlist)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _joinWaitlist,
+                          icon: const Icon(Icons.notifications_active_outlined),
+                          label: const Text('Notify Me When Ready'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: AppColors.cyan,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              "You're on the list!",
+                              style: TextStyle(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: 32),
 
                     // Feature List
                     _buildFeatureItem(

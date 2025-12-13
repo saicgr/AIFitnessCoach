@@ -6,24 +6,23 @@ part of 'program.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-LibraryProgram _$LibraryProgramFromJson(Map<String, dynamic> json) =>
-    LibraryProgram(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      category: json['category'] as String,
-      subcategory: json['subcategory'] as String?,
-      difficultyLevel: json['difficulty_level'] as String?,
-      durationWeeks: (json['duration_weeks'] as num?)?.toInt(),
-      sessionsPerWeek: (json['sessions_per_week'] as num?)?.toInt(),
-      sessionDurationMinutes:
-          (json['session_duration_minutes'] as num?)?.toInt(),
-      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
-      goals:
-          (json['goals'] as List<dynamic>?)?.map((e) => e as String).toList(),
-      description: json['description'] as String?,
-      shortDescription: json['short_description'] as String?,
-      celebrityName: json['celebrity_name'] as String?,
-    );
+LibraryProgram _$LibraryProgramFromJson(
+  Map<String, dynamic> json,
+) => LibraryProgram(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  category: json['category'] as String,
+  subcategory: json['subcategory'] as String?,
+  difficultyLevel: json['difficulty_level'] as String?,
+  durationWeeks: (json['duration_weeks'] as num?)?.toInt(),
+  sessionsPerWeek: (json['sessions_per_week'] as num?)?.toInt(),
+  sessionDurationMinutes: (json['session_duration_minutes'] as num?)?.toInt(),
+  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  goals: (json['goals'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  description: json['description'] as String?,
+  shortDescription: json['short_description'] as String?,
+  celebrityName: json['celebrity_name'] as String?,
+);
 
 Map<String, dynamic> _$LibraryProgramToJson(LibraryProgram instance) =>
     <String, dynamic>{

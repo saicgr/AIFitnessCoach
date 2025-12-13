@@ -213,8 +213,8 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
-              // Settings section
-              _SectionHeader(title: 'SETTINGS'),
+              // Account section
+              _SectionHeader(title: 'ACCOUNT'),
               const SizedBox(height: 12),
 
               _SettingsCardWithRef(
@@ -225,6 +225,18 @@ class ProfileScreen extends ConsumerWidget {
                     title: 'Edit Profile',
                     onTap: () => _showEditProfileSheet(context, ref),
                   ),
+                ],
+              ).animate().fadeIn(delay: 250.ms),
+
+              const SizedBox(height: 24),
+
+              // Preferences section
+              _SectionHeader(title: 'PREFERENCES'),
+              const SizedBox(height: 12),
+
+              _SettingsCardWithRef(
+                ref: ref,
+                items: [
                   _SettingItem(
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
@@ -239,11 +251,18 @@ class ProfileScreen extends ConsumerWidget {
                     title: 'Dark Mode',
                     isThemeToggle: true,
                   ),
-                  _SettingItem(
-                    icon: Icons.restart_alt,
-                    title: 'Reset Onboarding',
-                    onTap: () => _showResetOnboardingDialog(context, ref),
-                  ),
+                ],
+              ).animate().fadeIn(delay: 270.ms),
+
+              const SizedBox(height: 24),
+
+              // Support section
+              _SectionHeader(title: 'SUPPORT'),
+              const SizedBox(height: 12),
+
+              _SettingsCardWithRef(
+                ref: ref,
+                items: [
                   _SettingItem(
                     icon: Icons.help_outline,
                     title: 'Help & Support',
@@ -255,7 +274,30 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () {},
                   ),
                 ],
-              ).animate().fadeIn(delay: 250.ms),
+              ).animate().fadeIn(delay: 290.ms),
+
+              const SizedBox(height: 24),
+
+              // Danger Zone section
+              _SectionHeader(title: 'DANGER ZONE'),
+              const SizedBox(height: 12),
+
+              _DangerZoneCard(
+                items: [
+                  _DangerItem(
+                    icon: Icons.refresh,
+                    title: 'Reset Program',
+                    subtitle: 'Delete workouts, keep account',
+                    onTap: () => _showResetProgramDialog(context, ref),
+                  ),
+                  _DangerItem(
+                    icon: Icons.delete_forever,
+                    title: 'Delete Account',
+                    subtitle: 'Permanently delete all data',
+                    onTap: () => _showDeleteAccountDialog(context, ref),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 310.ms),
 
               const SizedBox(height: 32),
 
@@ -333,27 +375,185 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showResetOnboardingDialog(BuildContext context, WidgetRef ref) {
+  void _showResetProgramDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        title: const Text('Reset Onboarding?'),
-        content: const Text(
-          'This will delete your account and all data. You\'ll need to sign in again and go through onboarding to create a new workout plan.',
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Icon(Icons.refresh, color: AppColors.orange, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Reset Program?',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'This will:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DialogBulletPoint(
+              text: 'Delete all your current workouts',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Take you through onboarding again',
+              color: AppColors.orange,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Keep your account and sign-in',
+              color: AppColors.success,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your completed workout history will be preserved.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await _resetOnboarding(context, ref);
+              await _resetProgram(context, ref);
             },
             child: const Text(
-              'Delete & Reset',
+              'Reset Program',
+              style: TextStyle(color: AppColors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Icon(Icons.delete_forever, color: AppColors.error, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Account?',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This action cannot be undone!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This will permanently delete:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DialogBulletPoint(
+              text: 'Your account and profile',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'All workout history',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'All saved preferences',
+              color: AppColors.error,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You will need to sign up again to use the app.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteAccount(context, ref);
+            },
+            child: const Text(
+              'Delete Account',
               style: TextStyle(color: AppColors.error),
             ),
           ),
@@ -362,7 +562,57 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _resetOnboarding(BuildContext context, WidgetRef ref) async {
+  Future<void> _resetProgram(BuildContext context, WidgetRef ref) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Call backend to reset program (keeps account, deletes workouts)
+      final response = await apiClient.dio.post(
+        '/api/v1/users/$userId/reset-onboarding',
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (response.statusCode == 200) {
+        // Navigate to onboarding
+        if (context.mounted) {
+          context.go('/onboarding');
+        }
+      } else {
+        throw Exception('Failed to reset program');
+      }
+    } catch (e) {
+      // Close loading dialog if still showing
+      if (context.mounted) Navigator.pop(context);
+
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
     // Show loading indicator
     showDialog(
       context: context,
@@ -842,17 +1092,96 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   String _selectedLevel = 'Intermediate';
   String _selectedGoal = 'Build Muscle';
   int _workoutsPerWeek = 4;
+  bool _isSaving = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentProfile();
+  }
+
+  void _loadCurrentProfile() {
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+
+    if (user != null) {
+      setState(() {
+        _selectedLevel = user.fitnessLevel ?? 'Intermediate';
+        _selectedGoal = user.fitnessGoal ?? 'Build Muscle';
+        _workoutsPerWeek = user.workoutsPerWeek ?? 4;
+        _isLoading = false;
+      });
+    } else {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    setState(() => _isSaving = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Call API to update user profile
+      await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: {
+          'fitness_level': _selectedLevel,
+          'goals': _selectedGoal,
+          'days_per_week': _workoutsPerWeek,
+        },
+      );
+
+      // Refresh user data in the auth state
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      if (mounted) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update profile: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.elevated;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.glassSurface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.5,
       maxChildSize: 0.9,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.nearBlack,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -863,7 +1192,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted,
+                  color: textMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -882,180 +1211,351 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                   ),
                   const Spacer(),
                   TextButton(
-                    onPressed: () {
-                      // Save changes
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Save'),
+                    onPressed: _isSaving ? null : _saveProfile,
+                    child: _isSaving
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: cyan,
+                            ),
+                          )
+                        : Text('Save', style: TextStyle(color: cyan)),
                   ),
                 ],
               ),
             ),
 
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Fitness level
-                    const Text(
-                      'FITNESS LEVEL',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.5,
+            if (_isLoading)
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(color: cyan),
+                ),
+              )
+            else
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Fitness level
+                      Text(
+                        'FITNESS LEVEL',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      children: ['Beginner', 'Intermediate', 'Advanced'].map((level) {
-                        final isSelected = _selectedLevel == level;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedLevel = level),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.cyan.withOpacity(0.2)
-                                  : AppColors.elevated,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        children: ['Beginner', 'Intermediate', 'Advanced'].map((level) {
+                          final isSelected = _selectedLevel == level;
+                          return GestureDetector(
+                            onTap: _isSaving ? null : () => setState(() => _selectedLevel = level),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
                               ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? cyan.withOpacity(0.2)
+                                    : elevatedColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? cyan : cardBorder,
+                                ),
+                              ),
+                              child: Text(
+                                level,
+                                style: TextStyle(
+                                  color: isSelected ? cyan : textSecondary,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Goals
+                      Text(
+                        'FITNESS GOAL',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          'Build Muscle',
+                          'Lose Weight',
+                          'Increase Endurance',
+                          'Stay Active',
+                        ].map((goal) {
+                          final isSelected = _selectedGoal == goal;
+                          return GestureDetector(
+                            onTap: _isSaving ? null : () => setState(() => _selectedGoal = goal),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? purple.withOpacity(0.2)
+                                    : elevatedColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? purple : cardBorder,
+                                ),
+                              ),
+                              child: Text(
+                                goal,
+                                style: TextStyle(
+                                  color: isSelected ? purple : textSecondary,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Workouts per week
+                      Text(
+                        'WORKOUTS PER WEEK',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: (_workoutsPerWeek > 1 && !_isSaving)
+                                ? () => setState(() => _workoutsPerWeek--)
+                                : null,
+                            icon: const Icon(Icons.remove_circle_outline),
+                            color: cyan,
+                          ),
+                          Container(
+                            width: 60,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: elevatedColor,
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              level,
+                              '$_workoutsPerWeek',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: isSelected ? AppColors.cyan : AppColors.textSecondary,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: cyan,
                               ),
                             ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Goals
-                    const Text(
-                      'FITNESS GOAL',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.5,
+                          IconButton(
+                            onPressed: (_workoutsPerWeek < 7 && !_isSaving)
+                                ? () => setState(() => _workoutsPerWeek++)
+                                : null,
+                            icon: const Icon(Icons.add_circle_outline),
+                            color: cyan,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        'Build Muscle',
-                        'Lose Weight',
-                        'Increase Endurance',
-                        'Stay Active',
-                      ].map((goal) {
-                        final isSelected = _selectedGoal == goal;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selectedGoal = goal),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.purple.withOpacity(0.2)
-                                  : AppColors.elevated,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? AppColors.purple : AppColors.cardBorder,
+                      Center(
+                        child: Text(
+                          'days per week',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: textMuted,
                               ),
-                            ),
-                            child: Text(
-                              goal,
-                              style: TextStyle(
-                                color: isSelected ? AppColors.purple : AppColors.textSecondary,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Workouts per week
-                    const Text(
-                      'WORKOUTS PER WEEK',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          onPressed: _workoutsPerWeek > 1
-                              ? () => setState(() => _workoutsPerWeek--)
-                              : null,
-                          icon: const Icon(Icons.remove_circle_outline),
-                          color: AppColors.cyan,
-                        ),
-                        Container(
-                          width: 60,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.elevated,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '$_workoutsPerWeek',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.cyan,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _workoutsPerWeek < 7
-                              ? () => setState(() => _workoutsPerWeek++)
-                              : null,
-                          icon: const Icon(Icons.add_circle_outline),
-                          color: AppColors.cyan,
-                        ),
-                      ],
-                    ),
-                    Center(
-                      child: Text(
-                        'days per week',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textMuted,
-                            ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Dialog Bullet Point (for reset/delete dialogs)
+// ─────────────────────────────────────────────────────────────────
+
+class _DialogBulletPoint extends StatelessWidget {
+  final String text;
+  final Color color;
+  final bool isDark;
+
+  const _DialogBulletPoint({
+    required this.text,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.only(top: 6, right: 10),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Danger Zone Card
+// ─────────────────────────────────────────────────────────────────
+
+class _DangerItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DangerItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+}
+
+class _DangerZoneCard extends StatelessWidget {
+  final List<_DangerItem> items;
+
+  const _DangerZoneCard({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.error.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        children: items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return Column(
+            children: [
+              InkWell(
+                onTap: item.onTap,
+                borderRadius: index == 0
+                    ? const BorderRadius.vertical(top: Radius.circular(16))
+                    : index == items.length - 1
+                        ? const BorderRadius.vertical(bottom: Radius.circular(16))
+                        : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          item.icon,
+                          color: AppColors.error,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.subtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (index < items.length - 1)
+                Divider(
+                  height: 1,
+                  color: cardBorder,
+                  indent: 68,
+                ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }

@@ -43,6 +43,7 @@ async def intent_extractor_node(state: FitnessCoachState) -> Dict[str, Any]:
         "body_part": extraction.body_part,
         "setting_name": extraction.setting_name,
         "setting_value": extraction.setting_value,
+        "destination": extraction.destination,
     }
 
 
@@ -96,9 +97,13 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     has_image = state.get("image_base64") is not None
     intent = state.get("intent")
 
-    # Check for app settings intent - doesn't need tools, just action_data
+    # Check for app control intents - don't need tools, just action_data
     if intent == CoachIntent.CHANGE_SETTING:
         logger.info("[Router] Change setting intent -> respond (no tools needed)")
+        return "respond"
+
+    if intent == CoachIntent.NAVIGATE:
+        logger.info("[Router] Navigate intent -> respond (no tools needed)")
         return "respond"
 
     # Check for nutrition-related intents
@@ -713,6 +718,16 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
                     "success": True,
                 }
                 logger.info(f"[Action Data] Setting change: {setting_name}={setting_value}")
+        # Handle navigation (no tools needed)
+        elif intent == CoachIntent.NAVIGATE:
+            destination = state.get("destination")
+            if destination:
+                action_data = {
+                    "action": "navigate",
+                    "destination": destination,
+                    "success": True,
+                }
+                logger.info(f"[Action Data] Navigation: {destination}")
         elif current_workout:
             workout_id = current_workout.get("id")
             if intent == CoachIntent.ADD_EXERCISE:

@@ -31,27 +31,42 @@ class ExerciseFilterOptions {
   final List<FilterOption> bodyParts;
   final List<FilterOption> equipment;
   final List<FilterOption> exerciseTypes;
+  final List<FilterOption> goals;
+  final List<FilterOption> suitableFor;
+  final List<FilterOption> avoidIf;
   final int totalExercises;
 
   ExerciseFilterOptions({
     required this.bodyParts,
     required this.equipment,
     required this.exerciseTypes,
+    required this.goals,
+    required this.suitableFor,
+    required this.avoidIf,
     required this.totalExercises,
   });
 
   factory ExerciseFilterOptions.fromJson(Map<String, dynamic> json) {
     return ExerciseFilterOptions(
-      bodyParts: (json['body_parts'] as List)
+      bodyParts: (json['body_parts'] as List? ?? [])
           .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
           .toList(),
-      equipment: (json['equipment'] as List)
+      equipment: (json['equipment'] as List? ?? [])
           .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
           .toList(),
-      exerciseTypes: (json['exercise_types'] as List)
+      exerciseTypes: (json['exercise_types'] as List? ?? [])
           .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
           .toList(),
-      totalExercises: json['total_exercises'] as int,
+      goals: (json['goals'] as List? ?? [])
+          .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      suitableFor: (json['suitable_for'] as List? ?? [])
+          .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      avoidIf: (json['avoid_if'] as List? ?? [])
+          .map((e) => FilterOption.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalExercises: json['total_exercises'] as int? ?? 0,
     );
   }
 }
@@ -62,7 +77,30 @@ class ExerciseFilterOptions {
 
 final exercisesProvider = FutureProvider.autoDispose<List<LibraryExercise>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-  final response = await apiClient.get('${ApiConstants.library}/exercises');
+
+  // Watch filter providers to trigger refetch when filters change
+  final bodyPart = ref.watch(selectedMuscleGroupProvider);
+  final equipment = ref.watch(selectedEquipmentProvider);
+  final exerciseType = ref.watch(selectedExerciseTypeProvider);
+  final goal = ref.watch(selectedGoalProvider);
+  final suitableFor = ref.watch(selectedSuitableForProvider);
+  final avoidIf = ref.watch(selectedAvoidProvider);
+
+  // Build query parameters
+  final queryParams = <String, String>{};
+  if (bodyPart != null) queryParams['body_part'] = bodyPart;
+  if (equipment != null) queryParams['equipment'] = equipment;
+  if (exerciseType != null) queryParams['exercise_type'] = exerciseType;
+  if (goal != null) queryParams['goal'] = goal;
+  if (suitableFor != null) queryParams['suitable_for'] = suitableFor;
+  if (avoidIf != null) queryParams['avoid_if'] = avoidIf;
+
+  final queryString = queryParams.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
+  final url = queryString.isNotEmpty
+      ? '${ApiConstants.library}/exercises?$queryString'
+      : '${ApiConstants.library}/exercises';
+
+  final response = await apiClient.get(url);
 
   if (response.statusCode == 200) {
     final data = response.data as List;
@@ -85,6 +123,9 @@ final exerciseSearchProvider = StateProvider<String>((ref) => '');
 final selectedMuscleGroupProvider = StateProvider<String?>((ref) => null);
 final selectedEquipmentProvider = StateProvider<String?>((ref) => null);
 final selectedExerciseTypeProvider = StateProvider<String?>((ref) => null);
+final selectedGoalProvider = StateProvider<String?>((ref) => null);
+final selectedSuitableForProvider = StateProvider<String?>((ref) => null);
+final selectedAvoidProvider = StateProvider<String?>((ref) => null);
 
 // ═══════════════════════════════════════════════════════════════════
 // PROGRAM PROVIDERS
@@ -243,6 +284,9 @@ class _ExercisesTab extends ConsumerWidget {
     if (ref.read(selectedMuscleGroupProvider) != null) count++;
     if (ref.read(selectedEquipmentProvider) != null) count++;
     if (ref.read(selectedExerciseTypeProvider) != null) count++;
+    if (ref.read(selectedGoalProvider) != null) count++;
+    if (ref.read(selectedSuitableForProvider) != null) count++;
+    if (ref.read(selectedAvoidProvider) != null) count++;
     return count;
   }
 
@@ -262,6 +306,9 @@ class _ExercisesTab extends ConsumerWidget {
     final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
     final selectedEquipment = ref.watch(selectedEquipmentProvider);
     final selectedType = ref.watch(selectedExerciseTypeProvider);
+    final selectedGoal = ref.watch(selectedGoalProvider);
+    final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
+    final selectedAvoid = ref.watch(selectedAvoidProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -358,7 +405,7 @@ class _ExercisesTab extends ConsumerWidget {
         const SizedBox(height: 12),
 
         // Active filter chips (show currently applied filters)
-        if (selectedMuscle != null || selectedEquipment != null || selectedType != null)
+        if (activeFilters > 0)
           SizedBox(
             height: 36,
             child: ListView(
@@ -380,6 +427,21 @@ class _ExercisesTab extends ConsumerWidget {
                     label: selectedType,
                     onRemove: () => ref.read(selectedExerciseTypeProvider.notifier).state = null,
                   ),
+                if (selectedGoal != null)
+                  _ActiveFilterChip(
+                    label: selectedGoal,
+                    onRemove: () => ref.read(selectedGoalProvider.notifier).state = null,
+                  ),
+                if (selectedSuitableFor != null)
+                  _ActiveFilterChip(
+                    label: selectedSuitableFor,
+                    onRemove: () => ref.read(selectedSuitableForProvider.notifier).state = null,
+                  ),
+                if (selectedAvoid != null)
+                  _ActiveFilterChip(
+                    label: 'Avoid: $selectedAvoid',
+                    onRemove: () => ref.read(selectedAvoidProvider.notifier).state = null,
+                  ),
                 // Clear all
                 if (activeFilters > 1)
                   Padding(
@@ -389,6 +451,9 @@ class _ExercisesTab extends ConsumerWidget {
                         ref.read(selectedMuscleGroupProvider.notifier).state = null;
                         ref.read(selectedEquipmentProvider.notifier).state = null;
                         ref.read(selectedExerciseTypeProvider.notifier).state = null;
+                        ref.read(selectedGoalProvider.notifier).state = null;
+                        ref.read(selectedSuitableForProvider.notifier).state = null;
+                        ref.read(selectedAvoidProvider.notifier).state = null;
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -411,7 +476,7 @@ class _ExercisesTab extends ConsumerWidget {
             ),
           ),
 
-        if (selectedMuscle != null || selectedEquipment != null || selectedType != null)
+        if (activeFilters > 0)
           const SizedBox(height: 8),
 
         // Exercise list
@@ -442,7 +507,7 @@ class _ExercisesTab extends ConsumerWidget {
             data: (exercises) {
               var filtered = exercises;
 
-              // Apply search filter
+              // Apply local search filter (backend handles other filters)
               if (searchQuery.isNotEmpty) {
                 filtered = filtered
                     .where((e) =>
@@ -451,52 +516,6 @@ class _ExercisesTab extends ConsumerWidget {
                             false) ||
                         (e.equipmentValue?.toLowerCase().contains(searchQuery.toLowerCase()) ??
                             false))
-                    .toList();
-              }
-
-              // Apply muscle group filter
-              if (selectedMuscle != null) {
-                filtered = filtered
-                    .where((e) => e.muscleGroup?.toLowerCase() == selectedMuscle.toLowerCase())
-                    .toList();
-              }
-
-              // Apply equipment filter
-              if (selectedEquipment != null) {
-                filtered = filtered
-                    .where((e) {
-                      final equipList = e.equipment;
-                      if (equipList == null) return false;
-                      return equipList.any((eq) => eq.toLowerCase() == selectedEquipment.toLowerCase());
-                    })
-                    .toList();
-              }
-
-              // Apply exercise type filter (based on category or derived from video)
-              if (selectedType != null) {
-                filtered = filtered
-                    .where((e) {
-                      // Check category field
-                      if (e.category != null && e.category!.toLowerCase() == selectedType.toLowerCase()) {
-                        return true;
-                      }
-                      // Match based on exercise name patterns for types
-                      final nameLower = e.name.toLowerCase();
-                      final typeLower = selectedType.toLowerCase();
-                      if (typeLower == 'yoga' && (nameLower.contains('yoga') || nameLower.contains('pose'))) {
-                        return true;
-                      }
-                      if (typeLower == 'stretching' && (nameLower.contains('stretch') || nameLower.contains('mobility'))) {
-                        return true;
-                      }
-                      if (typeLower == 'cardio' && (nameLower.contains('cardio') || nameLower.contains('hiit') || nameLower.contains('jump') || nameLower.contains('run'))) {
-                        return true;
-                      }
-                      if (typeLower == 'strength' && (nameLower.contains('press') || nameLower.contains('curl') || nameLower.contains('row') || nameLower.contains('squat') || nameLower.contains('deadlift'))) {
-                        return true;
-                      }
-                      return false;
-                    })
                     .toList();
               }
 
@@ -519,6 +538,9 @@ class _ExercisesTab extends ConsumerWidget {
                             ref.read(selectedMuscleGroupProvider.notifier).state = null;
                             ref.read(selectedEquipmentProvider.notifier).state = null;
                             ref.read(selectedExerciseTypeProvider.notifier).state = null;
+                            ref.read(selectedGoalProvider.notifier).state = null;
+                            ref.read(selectedSuitableForProvider.notifier).state = null;
+                            ref.read(selectedAvoidProvider.notifier).state = null;
                           },
                           child: const Text('Clear filters'),
                         ),
@@ -612,6 +634,9 @@ class _ExerciseFilterSheet extends ConsumerWidget {
     final selectedMuscle = ref.watch(selectedMuscleGroupProvider);
     final selectedEquipment = ref.watch(selectedEquipmentProvider);
     final selectedType = ref.watch(selectedExerciseTypeProvider);
+    final selectedGoal = ref.watch(selectedGoalProvider);
+    final selectedSuitableFor = ref.watch(selectedSuitableForProvider);
+    final selectedAvoid = ref.watch(selectedAvoidProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBackground = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -660,6 +685,9 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                       ref.read(selectedMuscleGroupProvider.notifier).state = null;
                       ref.read(selectedEquipmentProvider.notifier).state = null;
                       ref.read(selectedExerciseTypeProvider.notifier).state = null;
+                      ref.read(selectedGoalProvider.notifier).state = null;
+                      ref.read(selectedSuitableForProvider.notifier).state = null;
+                      ref.read(selectedAvoidProvider.notifier).state = null;
                     },
                     child: Text(
                       'Clear all',
@@ -742,6 +770,51 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                           },
                         ),
 
+                        const SizedBox(height: 24),
+
+                        // Goals section
+                        _FilterSection(
+                          title: 'GOALS',
+                          icon: Icons.track_changes,
+                          color: Colors.orange,
+                          options: filterOptions.goals,
+                          selectedValue: selectedGoal,
+                          onSelect: (value) {
+                            ref.read(selectedGoalProvider.notifier).state =
+                                selectedGoal == value ? null : value;
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Suitable For section
+                        _FilterSection(
+                          title: 'SUITABLE FOR',
+                          icon: Icons.person_outline,
+                          color: Colors.teal,
+                          options: filterOptions.suitableFor,
+                          selectedValue: selectedSuitableFor,
+                          onSelect: (value) {
+                            ref.read(selectedSuitableForProvider.notifier).state =
+                                selectedSuitableFor == value ? null : value;
+                          },
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Avoid If section
+                        _FilterSection(
+                          title: 'AVOID IF YOU HAVE',
+                          icon: Icons.warning_amber_rounded,
+                          color: Colors.redAccent,
+                          options: filterOptions.avoidIf,
+                          selectedValue: selectedAvoid,
+                          onSelect: (value) {
+                            ref.read(selectedAvoidProvider.notifier).state =
+                                selectedAvoid == value ? null : value;
+                          },
+                        ),
+
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -786,13 +859,15 @@ class _ExerciseFilterSheet extends ConsumerWidget {
 // FILTER SECTION
 // ═══════════════════════════════════════════════════════════════════
 
-class _FilterSection extends StatelessWidget {
+class _FilterSection extends StatefulWidget {
   final String title;
   final IconData icon;
   final Color color;
   final List<FilterOption> options;
   final String? selectedValue;
   final Function(String) onSelect;
+  final int initialShowCount;
+  final bool initiallyExpanded;
 
   const _FilterSection({
     required this.title,
@@ -801,7 +876,62 @@ class _FilterSection extends StatelessWidget {
     required this.options,
     required this.selectedValue,
     required this.onSelect,
+    this.initialShowCount = 6,
+    this.initiallyExpanded = false,
   });
+
+  @override
+  State<_FilterSection> createState() => _FilterSectionState();
+}
+
+class _FilterSectionState extends State<_FilterSection> {
+  bool _showAll = false;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded || widget.selectedValue != null;
+  }
+
+  @override
+  void didUpdateWidget(_FilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-expand if a value is selected
+    if (widget.selectedValue != null && !_isExpanded) {
+      setState(() => _isExpanded = true);
+    }
+  }
+
+  String _shortenName(String name) {
+    // Shorten long equipment names
+    if (name.length <= 20) return name;
+
+    // Common abbreviations
+    final replacements = {
+      'Hammer Strength': 'HS',
+      'Iso-Lateral': 'Iso',
+      'MTS ': '',
+      'Machine': 'Mach.',
+      'Resistance Band': 'Res. Band',
+      'Cable Pulley Machine': 'Cable',
+      'Dual Cable Pulley Machine': 'Dual Cable',
+      'Plate-Loaded': 'Plate',
+      'Plate Loaded': 'Plate',
+    };
+
+    String shortened = name;
+    for (final entry in replacements.entries) {
+      shortened = shortened.replaceAll(entry.key, entry.value);
+    }
+
+    // If still too long, truncate
+    if (shortened.length > 25) {
+      shortened = '${shortened.substring(0, 22)}...';
+    }
+
+    return shortened;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -809,79 +939,160 @@ class _FilterSection extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header
-        Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ],
+    final displayOptions = _showAll
+        ? widget.options
+        : widget.options.take(widget.initialShowCount).toList();
+    final hasMore = widget.options.length > widget.initialShowCount;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.selectedValue != null ? widget.color.withOpacity(0.3) : cardBorder,
         ),
-        const SizedBox(height: 12),
-
-        // Options wrap
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: options.map((option) {
-            final isSelected = selectedValue?.toLowerCase() == option.name.toLowerCase();
-            return GestureDetector(
-              onTap: () => onSelect(option.name),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? color.withOpacity(0.2) : elevated,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? color : (isDark ? Colors.transparent : AppColorsLight.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Collapsible header
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: widget.color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(widget.icon, size: 18, color: widget.color),
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      option.name,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? color : textSecondary,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                          ),
+                        ),
+                        if (widget.selectedValue != null)
+                          Text(
+                            widget.selectedValue!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: widget.color,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (widget.selectedValue != null)
+                    GestureDetector(
+                      onTap: () => widget.onSelect(widget.selectedValue!),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: widget.color.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.close, size: 16, color: widget.color),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isSelected ? color.withOpacity(0.3) : textMuted.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${option.count}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? color : textMuted,
+                  const SizedBox(width: 8),
+                  Icon(
+                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Expandable options
+          if (_isExpanded) ...[
+            Divider(height: 1, color: cardBorder),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Options wrap - simplified chips without counts
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: displayOptions.map((option) {
+                      final isSelected = widget.selectedValue?.toLowerCase() == option.name.toLowerCase();
+                      final displayName = _shortenName(option.name);
+                      return GestureDetector(
+                        onTap: () => widget.onSelect(option.name),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? widget.color.withOpacity(0.2) : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? widget.color : Colors.transparent,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Text(
+                            displayName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              color: isSelected ? widget.color : textSecondary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  // Show more/less button
+                  if (hasMore)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showAll = !_showAll),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _showAll ? 'Show less' : 'Show ${widget.options.length - widget.initialShowCount} more',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: widget.color,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _showAll ? Icons.expand_less : Icons.expand_more,
+                              size: 18,
+                              color: widget.color,
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-            );
-          }).toList(),
-        ),
-      ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

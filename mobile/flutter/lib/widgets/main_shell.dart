@@ -87,6 +87,12 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     final navBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
     final shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1);
 
+    // Dynamic sizing based on nav bar dimensions
+    const navBarHeight = 56.0;
+    const navBarRadius = navBarHeight / 2; // Fully rounded ends = 28
+    const itemPadding = 4.0; // Even padding on all sides
+    final itemHeight = navBarHeight - (itemPadding * 2); // 48
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -98,11 +104,11 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
         children: [
           // Nav bar
           Container(
-            height: 56,
+            height: navBarHeight,
             constraints: const BoxConstraints(maxWidth: 280),
             decoration: BoxDecoration(
               color: navBarColor,
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(navBarRadius),
               border: isDark ? null : Border.all(color: AppColorsLight.cardBorder, width: 1),
               boxShadow: [
                 BoxShadow(
@@ -113,42 +119,53 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ),
               ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Home
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: selectedIndex == 0,
-                  onTap: () => onItemTapped(0),
-                ),
-                // Library
-                _NavItem(
-                  icon: Icons.fitness_center_outlined,
-                  selectedIcon: Icons.fitness_center,
-                  label: 'Library',
-                  isSelected: selectedIndex == 1,
-                  onTap: () => onItemTapped(1),
-                ),
-                // Social
-                _NavItem(
-                  icon: Icons.people_outline_rounded,
-                  selectedIcon: Icons.people_rounded,
-                  label: 'Social',
-                  isSelected: selectedIndex == 2,
-                  onTap: () => onItemTapped(2),
-                ),
-                // Profile
-                _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  selectedIcon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => onItemTapped(3),
-                ),
-              ],
+            child: Padding(
+              padding: EdgeInsets.all(itemPadding),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Home - Cyan
+                  _NavItem(
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home_rounded,
+                    label: 'Home',
+                    isSelected: selectedIndex == 0,
+                    onTap: () => onItemTapped(0),
+                    itemHeight: itemHeight,
+                    selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  ),
+                  // Library - Purple
+                  _NavItem(
+                    icon: Icons.fitness_center_outlined,
+                    selectedIcon: Icons.fitness_center,
+                    label: 'Library',
+                    isSelected: selectedIndex == 1,
+                    onTap: () => onItemTapped(1),
+                    itemHeight: itemHeight,
+                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
+                  ),
+                  // Social - Orange
+                  _NavItem(
+                    icon: Icons.people_outline_rounded,
+                    selectedIcon: Icons.people_rounded,
+                    label: 'Social',
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemTapped(2),
+                    itemHeight: itemHeight,
+                    selectedColor: const Color(0xFFFF9500),
+                  ),
+                  // Profile - Green
+                  _NavItem(
+                    icon: Icons.person_outline_rounded,
+                    selectedIcon: Icons.person_rounded,
+                    label: 'Profile',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
+                    itemHeight: itemHeight,
+                    selectedColor: const Color(0xFF34C759),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -216,6 +233,8 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final double itemHeight;
+  final Color selectedColor;
 
   const _NavItem({
     required this.icon,
@@ -223,35 +242,36 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    required this.itemHeight,
+    required this.selectedColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Squircle radius - about 1/3 of height for smooth rounded rectangle
+    final squircleRadius = itemHeight / 3;
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 52,
-        height: 56,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: itemHeight, // Square for even borders
+        height: itemHeight,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? selectedColor.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(squircleRadius),
+        ),
         child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? cyan.withValues(alpha: 0.15)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? cyan : textMuted,
-              size: 24,
-            ),
+          child: Icon(
+            isSelected ? selectedIcon : icon,
+            color: isSelected ? selectedColor : textMuted,
+            size: 24,
           ),
         ),
       ),

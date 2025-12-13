@@ -175,69 +175,53 @@ class WorkoutExercise extends Equatable {
   }
 }
 
-/// Library exercise (full details)
+/// Library exercise (full details from /library/exercises API)
 @JsonSerializable()
 class LibraryExercise extends Equatable {
   final String? id;
-  @JsonKey(name: 'external_id')
-  final String? externalId;
   @JsonKey(name: 'name')
   final String? nameValue;
-  final String? category;
-  final String? subcategory;
-  @JsonKey(name: 'difficulty_level')
-  final int? difficultyLevel;
-  @JsonKey(name: 'primary_muscle')
-  final String? primaryMuscle;
-  @JsonKey(name: 'secondary_muscles')
-  final String? secondaryMuscles;
-  @JsonKey(name: 'equipment_required')
-  final String? equipmentRequired;
+  @JsonKey(name: 'original_name')
+  final String? originalName;
   @JsonKey(name: 'body_part')
   final String? bodyPart;
-  final String? target;
-  @JsonKey(name: 'default_sets')
-  final int? defaultSets;
-  @JsonKey(name: 'default_reps')
-  final int? defaultReps;
-  @JsonKey(name: 'default_duration_seconds')
-  final int? defaultDurationSeconds;
-  @JsonKey(name: 'default_rest_seconds')
-  final int? defaultRestSeconds;
+  @JsonKey(name: 'equipment')
+  final String? equipmentValue;
+  @JsonKey(name: 'target_muscle')
+  final String? targetMuscle;
+  @JsonKey(name: 'secondary_muscles')
+  final String? secondaryMuscles;
+  @JsonKey(name: 'instructions')
+  final String? instructionsValue;
+  @JsonKey(name: 'difficulty_level')
+  final int? difficultyLevel;
+  final String? category;
   @JsonKey(name: 'gif_url')
   final String? gifUrl;
   @JsonKey(name: 'video_url')
   final String? videoUrl;
-  @JsonKey(name: 'instructions')
-  final String? instructionsValue;
-  @JsonKey(name: 'is_compound')
-  final bool? isCompound;
-  @JsonKey(name: 'is_unilateral')
-  final bool? isUnilateral;
-  final String? tags;
+  final List<String>? goals;
+  @JsonKey(name: 'suitable_for')
+  final List<String>? suitableFor;
+  @JsonKey(name: 'avoid_if')
+  final List<String>? avoidIf;
 
   const LibraryExercise({
     this.id,
-    this.externalId,
     this.nameValue,
-    this.category,
-    this.subcategory,
-    this.difficultyLevel,
-    this.primaryMuscle,
-    this.secondaryMuscles,
-    this.equipmentRequired,
+    this.originalName,
     this.bodyPart,
-    this.target,
-    this.defaultSets,
-    this.defaultReps,
-    this.defaultDurationSeconds,
-    this.defaultRestSeconds,
+    this.equipmentValue,
+    this.targetMuscle,
+    this.secondaryMuscles,
+    this.instructionsValue,
+    this.difficultyLevel,
+    this.category,
     this.gifUrl,
     this.videoUrl,
-    this.instructionsValue,
-    this.isCompound,
-    this.isUnilateral,
-    this.tags,
+    this.goals,
+    this.suitableFor,
+    this.avoidIf,
   });
 
   factory LibraryExercise.fromJson(Map<String, dynamic> json) =>
@@ -247,8 +231,8 @@ class LibraryExercise extends Equatable {
   /// Get name (never null for display)
   String get name => nameValue ?? 'Unknown Exercise';
 
-  /// Get muscle group for filtering
-  String? get muscleGroup => primaryMuscle ?? bodyPart;
+  /// Get muscle group for filtering (use body_part as primary)
+  String? get muscleGroup => bodyPart ?? targetMuscle;
 
   /// Get difficulty string
   String? get difficulty {
@@ -270,8 +254,8 @@ class LibraryExercise extends Equatable {
 
   /// Get equipment as list (normalized)
   List<String>? get equipment {
-    if (equipmentRequired == null || equipmentRequired!.isEmpty) return null;
-    return equipmentRequired!.split(',').map((e) {
+    if (equipmentValue == null || equipmentValue!.isEmpty) return null;
+    return equipmentValue!.split(',').map((e) {
       final eq = e.trim();
       final lower = eq.toLowerCase();
       // Normalize "None (Bodyweight)" and similar to just "Bodyweight"
@@ -295,5 +279,5 @@ class LibraryExercise extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, externalId, nameValue, primaryMuscle, bodyPart];
+  List<Object?> get props => [id, nameValue, bodyPart, targetMuscle];
 }
