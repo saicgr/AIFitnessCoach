@@ -135,8 +135,16 @@ class NotificationService:
         except messaging.UnregisteredError:
             logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...")
             return False
+        except messaging.SenderIdMismatchError:
+            logger.error(f"❌ Sender ID mismatch - FCM token belongs to different Firebase project")
+            return False
+        except messaging.InvalidArgumentError as e:
+            logger.error(f"❌ Invalid argument error: {e}")
+            return False
         except Exception as e:
-            logger.error(f"❌ Failed to send notification: {e}")
+            logger.error(f"❌ Failed to send notification: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
 
     async def send_multicast(
