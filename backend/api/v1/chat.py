@@ -67,24 +67,19 @@ async def send_message(
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}")
 
         # Save chat message to database for persistence
+        # The chat_history table stores user_message + ai_response per row
         try:
             db = get_supabase_db()
             chat_data = {
                 "user_id": request.user_id,
-                "role": "user",
-                "content": request.message,
-                "intent": response.intent,
+                "user_message": request.message,
+                "ai_response": response.message,
+                "context_json": json.dumps({
+                    "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                    "rag_context_used": response.rag_context_used,
+                }) if response.intent else None,
             }
             db.create_chat_message(chat_data)
-
-            # Also save assistant response
-            assistant_data = {
-                "user_id": request.user_id,
-                "role": "assistant",
-                "content": response.message,
-                "intent": response.intent,
-            }
-            db.create_chat_message(assistant_data)
             logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}")
         except Exception as db_error:
             # Log but don't fail the request if DB save fails
@@ -111,21 +106,46 @@ async def get_chat_history(user_id: str, limit: int = 100):
     Get chat history for a user.
 
     Returns messages in chronological order (oldest first).
+    Each row in DB contains user_message + ai_response, so we expand to 2 messages.
     """
     logger.info(f"Fetching chat history for user {user_id}, limit={limit}")
     try:
         db = get_supabase_db()
-        result = db.list_chat_history(user_id, limit=limit)
+        # Limit divided by 2 since each row becomes 2 messages
+        result = db.list_chat_history(user_id, limit=(limit + 1) // 2)
 
         messages: List[ChatHistoryItem] = []
         for row in result:
-            messages.append(ChatHistoryItem(
-                id=row.get("id"),
-                role=row.get("role", "user"),
-                content=row.get("content", ""),
-                timestamp=str(row.get("created_at", "")),
-                action_data=None,
-            ))
+            timestamp = str(row.get("timestamp", ""))
+            row_id = row.get("id", 0)
+
+            # Parse context_json for action_data
+            action_data = None
+            if row.get("context_json"):
+                try:
+                    action_data = json.loads(row.get("context_json"))
+                except:
+                    pass
+
+            # Add user message
+            if row.get("user_message"):
+                messages.append(ChatHistoryItem(
+                    id=row_id * 2,  # Unique ID for user message
+                    role="user",
+                    content=row.get("user_message", ""),
+                    timestamp=timestamp,
+                    action_data=None,
+                ))
+
+            # Add assistant response
+            if row.get("ai_response"):
+                messages.append(ChatHistoryItem(
+                    id=row_id * 2 + 1,  # Unique ID for assistant message
+                    role="assistant",
+                    content=row.get("ai_response", ""),
+                    timestamp=timestamp,
+                    action_data=action_data,
+                ))
 
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
         return messages
