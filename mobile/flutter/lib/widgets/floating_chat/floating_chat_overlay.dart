@@ -85,7 +85,7 @@ class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
                 ),
                 child: _ChatModal(
                   onClose: () => ref.read(floatingChatProvider.notifier).collapse(),
-                  onMinimize: () => ref.read(floatingChatProvider.notifier).minimize(),
+                  onMinimize: () => ref.read(floatingChatProvider.notifier).collapse(),
                 ).animate().scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 250.ms, curve: Curves.easeOutBack)
                  .fadeIn(duration: 200.ms),
               ),
@@ -183,6 +183,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
   bool _isLoading = false;
+
+  bool _hasScrolledInitially = false;
 
   @override
   void initState() {
@@ -304,6 +306,14 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   return _EmptyChatState(onSuggestionTap: (suggestion) {
                     _textController.text = suggestion;
                     _sendMessage();
+                  });
+                }
+
+                // Scroll to bottom when messages first load
+                if (!_hasScrolledInitially && messages.isNotEmpty) {
+                  _hasScrolledInitially = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _scrollToBottom();
                   });
                 }
 
@@ -493,7 +503,7 @@ class _EmptyChatState extends StatelessWidget {
   }
 }
 
-/// Message bubble with long-press to copy
+/// Message bubble with long-press to copy, agent colors, and timestamps
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
 
@@ -513,37 +523,166 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
+    final now = DateTime.now();
+    final isToday = time.year == now.year && time.month == now.month && time.day == now.day;
+    final isYesterday = time.year == now.year && time.month == now.month && time.day == now.day - 1;
+
+    final hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    final minuteStr = time.minute.toString().padLeft(2, '0');
+    final timeStr = '$hour:$minuteStr $period';
+
+    if (isToday) {
+      return timeStr;
+    } else if (isYesterday) {
+      return 'Yesterday $timeStr';
+    } else {
+      final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${monthNames[time.month - 1]} ${time.day} $timeStr';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
+    final agentConfig = message.agentConfig;
+    final timestamp = message.timestamp;
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: GestureDetector(
-        onLongPress: () => _copyMessage(context),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
-          ),
-          decoration: BoxDecoration(
-            color: isUser ? AppColors.cyan : AppColors.elevated,
-            borderRadius: BorderRadius.circular(16).copyWith(
-              bottomRight: isUser ? const Radius.circular(4) : null,
-              bottomLeft: !isUser ? const Radius.circular(4) : null,
+    if (!isUser) {
+      debugPrint('🎨 [MessageBubble] message.agentType: ${message.agentType}, agentConfig: ${agentConfig.name} (${agentConfig.displayName})');
+    }
+
+    if (isUser) {
+      // User message - simple cyan bubble
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onLongPress: () => _copyMessage(context),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan,
+                  borderRadius: BorderRadius.circular(16).copyWith(
+                    bottomRight: const Radius.circular(4),
+                  ),
+                ),
+                child: Text(
+                  message.content,
+                  style: const TextStyle(
+                    color: AppColors.pureBlack,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
+                ),
+              ),
             ),
           ),
-          child: Text(
-            message.content,
-            style: TextStyle(
-              color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
-              fontSize: 14,
-              height: 1.4,
+          // Timestamp for user message
+          if (timestamp != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4, bottom: 8),
+              child: Text(
+                _formatTime(timestamp),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textMuted,
+                ),
+              ),
             ),
-          ),
+        ],
+      );
+    }
+
+    // Assistant message with agent color and icon
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Agent avatar
+            Container(
+              width: 28,
+              height: 28,
+              margin: const EdgeInsets.only(right: 8, top: 2),
+              decoration: BoxDecoration(
+                color: agentConfig.primaryColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                agentConfig.icon,
+                size: 16,
+                color: agentConfig.primaryColor,
+              ),
+            ),
+            // Message bubble
+            Flexible(
+              child: GestureDetector(
+                onLongPress: () => _copyMessage(context),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: agentConfig.backgroundColor,
+                    borderRadius: BorderRadius.circular(16).copyWith(
+                      bottomLeft: const Radius.circular(4),
+                    ),
+                    border: Border.all(
+                      color: agentConfig.primaryColor.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Agent name
+                      Text(
+                        agentConfig.displayName,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: agentConfig.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Message content
+                      Text(
+                        message.content,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
+        // Timestamp for assistant message
+        if (timestamp != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 36, bottom: 8),
+            child: Text(
+              _formatTime(timestamp),
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -588,7 +727,7 @@ class _TypingIndicator extends StatelessWidget {
   }
 }
 
-/// Input bar - Stateful to properly manage TextField
+/// Input bar - Stateful to properly manage TextField and agent picker
 class _InputBar extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -609,6 +748,84 @@ class _InputBar extends StatefulWidget {
 }
 
 class _InputBarState extends State<_InputBar> {
+  bool _showAgentPicker = false;
+  OverlayEntry? _overlayEntry;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    _hideAgentPicker();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    final text = widget.controller.text;
+    final cursorPos = widget.controller.selection.baseOffset;
+
+    // Check if user just typed '@' at the start or after a space
+    if (cursorPos > 0 && cursorPos <= text.length) {
+      final charBefore = cursorPos > 1 ? text[cursorPos - 2] : ' ';
+      final currentChar = text[cursorPos - 1];
+
+      if (currentChar == '@' && (charBefore == ' ' || cursorPos == 1)) {
+        _showAgentPickerOverlay();
+        return;
+      }
+    }
+
+    // Hide picker if text changed without @
+    if (_showAgentPicker && !text.contains('@')) {
+      _hideAgentPicker();
+    }
+  }
+
+  void _showAgentPickerOverlay() {
+    if (_showAgentPicker) return;
+
+    setState(() => _showAgentPicker = true);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => _AgentPickerOverlay(
+        onAgentSelected: _onAgentSelected,
+        onDismiss: _hideAgentPicker,
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideAgentPicker() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (_showAgentPicker) {
+      setState(() => _showAgentPicker = false);
+    }
+  }
+
+  void _onAgentSelected(AgentConfig agent) {
+    final text = widget.controller.text;
+    final cursorPos = widget.controller.selection.baseOffset;
+
+    // Find the @ symbol to replace
+    int atIndex = text.lastIndexOf('@', cursorPos - 1);
+    if (atIndex >= 0) {
+      final newText = text.replaceRange(atIndex, cursorPos, '@${agent.name} ');
+      widget.controller.text = newText;
+      widget.controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: atIndex + agent.name.length + 2),
+      );
+    }
+
+    _hideAgentPicker();
+    widget.focusNode.requestFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -636,7 +853,7 @@ class _InputBarState extends State<_InputBar> {
               minLines: 1,
               style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Ask your AI coach...',
+                hintText: 'Ask your AI coach... (@ to pick agent)',
                 hintStyle: TextStyle(color: AppColors.textMuted),
                 filled: true,
                 fillColor: AppColors.glassSurface,
@@ -677,6 +894,148 @@ class _InputBarState extends State<_InputBar> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Agent picker overlay that appears when user types @
+class _AgentPickerOverlay extends StatelessWidget {
+  final Function(AgentConfig) onAgentSelected;
+  final VoidCallback onDismiss;
+
+  const _AgentPickerOverlay({
+    required this.onAgentSelected,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: onDismiss,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.transparent,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 80,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 350),
+                  decoration: BoxDecoration(
+                    color: AppColors.elevated,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.cardBorder),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                        child: Text(
+                          'Ask a specialist',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      ...AgentConfig.allAgents.map((agent) => _AgentOption(
+                        agent: agent,
+                        onTap: () => onAgentSelected(agent),
+                      )),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ).animate().slideY(begin: 0.3, end: 0, duration: 200.ms, curve: Curves.easeOut)
+               .fadeIn(duration: 150.ms),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Single agent option in the picker
+class _AgentOption extends StatelessWidget {
+  final AgentConfig agent;
+  final VoidCallback onTap;
+
+  const _AgentOption({
+    required this.agent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: agent.primaryColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                agent.icon,
+                size: 20,
+                color: agent.primaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '@${agent.name}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: agent.primaryColor,
+                    ),
+                  ),
+                  Text(
+                    agent.displayName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }

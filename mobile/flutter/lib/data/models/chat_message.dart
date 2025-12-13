@@ -1,7 +1,94 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'chat_message.g.dart';
+
+/// Agent types for specialized AI responses
+enum AgentType {
+  @JsonValue('coach')
+  coach,
+  @JsonValue('nutrition')
+  nutrition,
+  @JsonValue('workout')
+  workout,
+  @JsonValue('injury')
+  injury,
+  @JsonValue('hydration')
+  hydration,
+}
+
+/// Agent configuration with colors and icons
+class AgentConfig {
+  final String name;
+  final String displayName;
+  final IconData icon;
+  final Color primaryColor;
+  final Color backgroundColor;
+
+  const AgentConfig({
+    required this.name,
+    required this.displayName,
+    required this.icon,
+    required this.primaryColor,
+    required this.backgroundColor,
+  });
+
+  /// Get agent config by type
+  static AgentConfig forType(AgentType type) {
+    switch (type) {
+      case AgentType.coach:
+        return const AgentConfig(
+          name: 'coach',
+          displayName: 'AI Coach',
+          icon: Icons.smart_toy,
+          primaryColor: Color(0xFF00D9FF), // Cyan
+          backgroundColor: Color(0xFF1A3A4A),
+        );
+      case AgentType.nutrition:
+        return const AgentConfig(
+          name: 'nutrition',
+          displayName: 'Nutrition Expert',
+          icon: Icons.restaurant_menu,
+          primaryColor: Color(0xFF4CAF50), // Green
+          backgroundColor: Color(0xFF1A3A2A),
+        );
+      case AgentType.workout:
+        return const AgentConfig(
+          name: 'workout',
+          displayName: 'Workout Specialist',
+          icon: Icons.fitness_center,
+          primaryColor: Color(0xFFFF6B35), // Orange
+          backgroundColor: Color(0xFF3A2A1A),
+        );
+      case AgentType.injury:
+        return const AgentConfig(
+          name: 'injury',
+          displayName: 'Recovery Advisor',
+          icon: Icons.healing,
+          primaryColor: Color(0xFFE91E63), // Pink
+          backgroundColor: Color(0xFF3A1A2A),
+        );
+      case AgentType.hydration:
+        return const AgentConfig(
+          name: 'hydration',
+          displayName: 'Hydration Tracker',
+          icon: Icons.water_drop,
+          primaryColor: Color(0xFF2196F3), // Blue
+          backgroundColor: Color(0xFF1A2A3A),
+        );
+    }
+  }
+
+  /// Get all available agents
+  static List<AgentConfig> get allAgents => [
+    forType(AgentType.coach),
+    forType(AgentType.nutrition),
+    forType(AgentType.workout),
+    forType(AgentType.injury),
+    forType(AgentType.hydration),
+  ];
+}
 
 /// Chat message model
 @JsonSerializable()
@@ -12,6 +99,8 @@ class ChatMessage extends Equatable {
   final String role; // 'user' or 'assistant'
   final String content;
   final String? intent;
+  @JsonKey(name: 'agent_type')
+  final AgentType? agentType;
   @JsonKey(name: 'created_at')
   final String? createdAt;
 
@@ -21,6 +110,7 @@ class ChatMessage extends Equatable {
     required this.role,
     required this.content,
     this.intent,
+    this.agentType,
     this.createdAt,
   });
 
@@ -34,6 +124,9 @@ class ChatMessage extends Equatable {
   /// Check if message is from assistant
   bool get isAssistant => role == 'assistant';
 
+  /// Get the agent config for this message
+  AgentConfig get agentConfig => AgentConfig.forType(agentType ?? AgentType.coach);
+
   /// Get timestamp as DateTime
   DateTime? get timestamp {
     if (createdAt == null) return null;
@@ -45,7 +138,7 @@ class ChatMessage extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, userId, role, content, createdAt];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt];
 }
 
 /// Chat request model
@@ -82,6 +175,8 @@ class ChatRequest {
 class ChatResponse {
   final String message;
   final String? intent;
+  @JsonKey(name: 'agent_type')
+  final AgentType? agentType;
   @JsonKey(name: 'action_data')
   final Map<String, dynamic>? actionData;
   @JsonKey(name: 'rag_context_used')
@@ -92,6 +187,7 @@ class ChatResponse {
   const ChatResponse({
     required this.message,
     this.intent,
+    this.agentType,
     this.actionData,
     this.ragContextUsed,
     this.similarQuestions,
@@ -109,6 +205,8 @@ class ChatHistoryItem {
   final String role;
   final String content;
   final String? timestamp;
+  @JsonKey(name: 'agent_type')
+  final AgentType? agentType;
   @JsonKey(name: 'action_data')
   final Map<String, dynamic>? actionData;
 
@@ -117,6 +215,7 @@ class ChatHistoryItem {
     required this.role,
     required this.content,
     this.timestamp,
+    this.agentType,
     this.actionData,
   });
 
@@ -129,6 +228,7 @@ class ChatHistoryItem {
         id: id,
         role: role,
         content: content,
+        agentType: agentType,
         createdAt: timestamp,
       );
 }

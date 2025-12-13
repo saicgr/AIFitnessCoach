@@ -12,6 +12,7 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   role: json['role'] as String,
   content: json['content'] as String,
   intent: json['intent'] as String?,
+  agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
   createdAt: json['created_at'] as String?,
 );
 
@@ -22,8 +23,17 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'role': instance.role,
       'content': instance.content,
       'intent': instance.intent,
+      'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'created_at': instance.createdAt,
     };
+
+const _$AgentTypeEnumMap = {
+  AgentType.coach: 'coach',
+  AgentType.nutrition: 'nutrition',
+  AgentType.workout: 'workout',
+  AgentType.injury: 'injury',
+  AgentType.hydration: 'hydration',
+};
 
 ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
   message: json['message'] as String,
@@ -49,6 +59,7 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(
   message: json['message'] as String,
   intent: json['intent'] as String?,
+  agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
   actionData: json['action_data'] as Map<String, dynamic>?,
   ragContextUsed: json['rag_context_used'] as bool?,
   similarQuestions: (json['similar_questions'] as List<dynamic>?)
@@ -60,6 +71,7 @@ Map<String, dynamic> _$ChatResponseToJson(ChatResponse instance) =>
     <String, dynamic>{
       'message': instance.message,
       'intent': instance.intent,
+      'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'action_data': instance.actionData,
       'rag_context_used': instance.ragContextUsed,
       'similar_questions': instance.similarQuestions,
@@ -71,6 +83,7 @@ ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
       role: json['role'] as String,
       content: json['content'] as String,
       timestamp: json['timestamp'] as String?,
+      agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
       actionData: json['action_data'] as Map<String, dynamic>?,
     );
 
@@ -80,5 +93,6 @@ Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
       'role': instance.role,
       'content': instance.content,
       'timestamp': instance.timestamp,
+      'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'action_data': instance.actionData,
     };

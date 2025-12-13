@@ -90,8 +90,11 @@ class ChatRepository {
       );
 
       if (response.statusCode == 200) {
-        final chatResponse = ChatResponse.fromJson(response.data as Map<String, dynamic>);
-        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}');
+        final jsonData = response.data as Map<String, dynamic>;
+        debugPrint('🔍 [Chat] Raw response JSON: $jsonData');
+        debugPrint('🔍 [Chat] agent_type in JSON: ${jsonData['agent_type']}');
+        final chatResponse = ChatResponse.fromJson(jsonData);
+        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}');
         return chatResponse;
       }
       throw Exception('Failed to send message');
@@ -244,11 +247,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // Process action_data if present
       _processActionData(response.actionData);
 
-      // Add assistant response
+      // Add assistant response with agent type
       final assistantMessage = ChatMessage(
         role: 'assistant',
         content: response.message,
         intent: response.intent,
+        agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
       );
 

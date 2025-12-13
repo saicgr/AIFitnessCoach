@@ -8,6 +8,15 @@ from datetime import datetime
 from enum import Enum
 
 
+class AgentType(str, Enum):
+    """Types of specialized agents that can respond to messages."""
+    COACH = "coach"          # Default general fitness coach
+    NUTRITION = "nutrition"  # Nutrition and meal planning specialist
+    WORKOUT = "workout"      # Workout planning and modification specialist
+    INJURY = "injury"        # Injury management and recovery specialist
+    HYDRATION = "hydration"  # Hydration tracking specialist
+
+
 class CoachIntent(str, Enum):
     """Possible intents extracted from user messages."""
     ADD_EXERCISE = "add_exercise"
@@ -118,12 +127,17 @@ class ChatResponse(BaseModel):
         {
             "message": "I've added Barbell Row to your workout!",
             "intent": "add_exercise",
+            "agent_type": "workout",
             "action_data": {"exercise_id": "barbell_row", ...},
             "rag_context_used": true
         }
     """
     message: str = Field(..., description="AI coach response")
     intent: CoachIntent = Field(..., description="Detected intent")
+    agent_type: AgentType = Field(
+        default=AgentType.COACH,
+        description="Which specialized agent responded"
+    )
     action_data: Optional[Dict[str, Any]] = Field(
         None,
         description="Data for workout modifications"

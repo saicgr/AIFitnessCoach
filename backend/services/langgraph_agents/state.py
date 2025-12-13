@@ -60,3 +60,6 @@ class FitnessCoachState(TypedDict):
 
     # Routing
     next_node: Optional[str]
+
+    # Agent routing - which agent was @mentioned
+    mentioned_agent: Optional[str]  # "coach", "nutrition", "workout", "injury", "hydration"

@@ -76,11 +76,12 @@ async def send_message(
                 "ai_response": response.message,
                 "context_json": json.dumps({
                     "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                    "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
                     "rag_context_used": response.rag_context_used,
                 }) if response.intent else None,
             }
             db.create_chat_message(chat_data)
-            logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}")
+            logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}, agent={response.agent_type}")
         except Exception as db_error:
             # Log but don't fail the request if DB save fails
             logger.warning(f"Failed to save chat to database: {db_error}")
@@ -97,6 +98,7 @@ class ChatHistoryItem(BaseModel):
     role: str  # 'user' or 'assistant'
     content: str
     timestamp: str
+    agent_type: Optional[str] = None  # "coach", "nutrition", "workout", "injury", "hydration"
     action_data: Optional[dict] = None
 
 
@@ -119,11 +121,14 @@ async def get_chat_history(user_id: str, limit: int = 100):
             timestamp = str(row.get("timestamp", ""))
             row_id = str(row.get("id", ""))
 
-            # Parse context_json for action_data
+            # Parse context_json for action_data and agent_type
             action_data = None
+            agent_type = None
             if row.get("context_json"):
                 try:
-                    action_data = json.loads(row.get("context_json"))
+                    context = json.loads(row.get("context_json"))
+                    action_data = context
+                    agent_type = context.get("agent_type")
                 except:
                     pass
 
@@ -134,6 +139,7 @@ async def get_chat_history(user_id: str, limit: int = 100):
                     role="user",
                     content=row.get("user_message", ""),
                     timestamp=timestamp,
+                    agent_type=None,
                     action_data=None,
                 ))
 
@@ -144,6 +150,7 @@ async def get_chat_history(user_id: str, limit: int = 100):
                     role="assistant",
                     content=row.get("ai_response", ""),
                     timestamp=timestamp,
+                    agent_type=agent_type,
                     action_data=action_data,
                 ))
 
