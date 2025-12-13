@@ -67,6 +67,8 @@ class UserUpdate(BaseModel):
     workout_variety: Optional[str] = None
     health_conditions: Optional[str] = None  # JSON array
     activity_level: Optional[str] = None
+    # Push notification token
+    fcm_token: Optional[str] = None  # Firebase Cloud Messaging token
 
 
 class User(BaseModel):

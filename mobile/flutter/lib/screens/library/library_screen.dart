@@ -84,38 +84,133 @@ final selectedGoalsProvider = StateProvider<Set<String>>((ref) => {});
 final selectedSuitableForSetProvider = StateProvider<Set<String>>((ref) => {});
 final selectedAvoidSetProvider = StateProvider<Set<String>>((ref) => {});
 
-final exercisesProvider = FutureProvider.autoDispose<List<LibraryExercise>>((ref) async {
-  final apiClient = ref.read(apiClientProvider);
+// Pagination limit for exercises - load 100 at a time for faster initial load
+const int _exercisesPageSize = 100;
 
-  // Watch multi-select filter providers
-  final selectedMuscles = ref.watch(selectedMuscleGroupsProvider);
-  final selectedEquipments = ref.watch(selectedEquipmentsProvider);
-  final selectedTypes = ref.watch(selectedExerciseTypesProvider);
-  final selectedGoals = ref.watch(selectedGoalsProvider);
-  final selectedSuitableFor = ref.watch(selectedSuitableForSetProvider);
-  final selectedAvoid = ref.watch(selectedAvoidSetProvider);
+// State class for paginated exercises
+class ExercisesState {
+  final List<LibraryExercise> exercises;
+  final bool isLoading;
+  final bool hasMore;
+  final int offset;
+  final String? error;
 
-  // Build query parameters with comma-separated values for multi-select
-  final queryParams = <String, String>{};
-  if (selectedMuscles.isNotEmpty) queryParams['body_parts'] = selectedMuscles.join(',');
-  if (selectedEquipments.isNotEmpty) queryParams['equipment'] = selectedEquipments.join(',');
-  if (selectedTypes.isNotEmpty) queryParams['exercise_types'] = selectedTypes.join(',');
-  if (selectedGoals.isNotEmpty) queryParams['goals'] = selectedGoals.join(',');
-  if (selectedSuitableFor.isNotEmpty) queryParams['suitable_for'] = selectedSuitableFor.join(',');
-  if (selectedAvoid.isNotEmpty) queryParams['avoid_if'] = selectedAvoid.join(',');
+  const ExercisesState({
+    this.exercises = const [],
+    this.isLoading = false,
+    this.hasMore = true,
+    this.offset = 0,
+    this.error,
+  });
 
-  final queryString = queryParams.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
-  final url = queryString.isNotEmpty
-      ? '${ApiConstants.library}/exercises?$queryString'
-      : '${ApiConstants.library}/exercises';
-
-  final response = await apiClient.get(url);
-
-  if (response.statusCode == 200) {
-    final data = response.data as List;
-    return data.map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>)).toList();
+  ExercisesState copyWith({
+    List<LibraryExercise>? exercises,
+    bool? isLoading,
+    bool? hasMore,
+    int? offset,
+    String? error,
+  }) {
+    return ExercisesState(
+      exercises: exercises ?? this.exercises,
+      isLoading: isLoading ?? this.isLoading,
+      hasMore: hasMore ?? this.hasMore,
+      offset: offset ?? this.offset,
+      error: error,
+    );
   }
-  throw Exception('Failed to load exercises');
+}
+
+// State notifier for paginated exercises
+class ExercisesNotifier extends StateNotifier<ExercisesState> {
+  final Ref _ref;
+
+  ExercisesNotifier(this._ref) : super(const ExercisesState());
+
+  Future<void> loadExercises({bool refresh = false}) async {
+    if (state.isLoading) return;
+    if (!refresh && !state.hasMore) return;
+
+    final newOffset = refresh ? 0 : state.offset;
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      offset: newOffset,
+      exercises: refresh ? [] : state.exercises,
+      hasMore: refresh ? true : state.hasMore,
+    );
+
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final selectedMuscles = _ref.read(selectedMuscleGroupsProvider);
+      final selectedEquipments = _ref.read(selectedEquipmentsProvider);
+      final selectedTypes = _ref.read(selectedExerciseTypesProvider);
+      final selectedGoals = _ref.read(selectedGoalsProvider);
+      final selectedSuitableFor = _ref.read(selectedSuitableForSetProvider);
+      final selectedAvoid = _ref.read(selectedAvoidSetProvider);
+      final searchQuery = _ref.read(exerciseSearchProvider);
+
+      // Build query parameters
+      final queryParams = <String, String>{};
+      if (selectedMuscles.isNotEmpty) queryParams['body_parts'] = selectedMuscles.join(',');
+      if (selectedEquipments.isNotEmpty) queryParams['equipment'] = selectedEquipments.join(',');
+      if (selectedTypes.isNotEmpty) queryParams['exercise_types'] = selectedTypes.join(',');
+      if (selectedGoals.isNotEmpty) queryParams['goals'] = selectedGoals.join(',');
+      if (selectedSuitableFor.isNotEmpty) queryParams['suitable_for'] = selectedSuitableFor.join(',');
+      if (selectedAvoid.isNotEmpty) queryParams['avoid_if'] = selectedAvoid.join(',');
+      if (searchQuery.isNotEmpty) queryParams['search'] = searchQuery;
+
+      // Add pagination
+      queryParams['limit'] = '$_exercisesPageSize';
+      queryParams['offset'] = '$newOffset';
+
+      final queryString = queryParams.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
+      final url = '${ApiConstants.library}/exercises?$queryString';
+
+      final response = await apiClient.get(url);
+
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        final newExercises = data.map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>)).toList();
+
+        state = state.copyWith(
+          exercises: refresh ? newExercises : [...state.exercises, ...newExercises],
+          isLoading: false,
+          hasMore: newExercises.length >= _exercisesPageSize,
+          offset: newOffset + newExercises.length,
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Failed to load exercises',
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+}
+
+final exercisesNotifierProvider = StateNotifierProvider<ExercisesNotifier, ExercisesState>((ref) {
+  final notifier = ExercisesNotifier(ref);
+  // Auto-load on creation
+  notifier.loadExercises();
+  return notifier;
+});
+
+// Simple provider for backward compatibility (returns current exercises list)
+final exercisesProvider = Provider<AsyncValue<List<LibraryExercise>>>((ref) {
+  final state = ref.watch(exercisesNotifierProvider);
+  if (state.error != null) {
+    return AsyncValue.error(state.error!, StackTrace.current);
+  }
+  if (state.isLoading && state.exercises.isEmpty) {
+    return const AsyncValue.loading();
+  }
+  return AsyncValue.data(state.exercises);
 });
 
 final filterOptionsProvider = FutureProvider.autoDispose<ExerciseFilterOptions>((ref) async {
@@ -279,10 +374,44 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 // EXERCISES TAB
 // ═══════════════════════════════════════════════════════════════════
 
-class _ExercisesTab extends ConsumerWidget {
+class _ExercisesTab extends ConsumerStatefulWidget {
   const _ExercisesTab();
 
-  int _getActiveFilterCount(WidgetRef ref) {
+  @override
+  ConsumerState<_ExercisesTab> createState() => _ExercisesTabState();
+}
+
+class _ExercisesTabState extends ConsumerState<_ExercisesTab> {
+  final ScrollController _scrollController = ScrollController();
+  Set<String> _prevMuscles = {};
+  Set<String> _prevEquipments = {};
+  Set<String> _prevTypes = {};
+  Set<String> _prevGoals = {};
+  Set<String> _prevSuitableFor = {};
+  Set<String> _prevAvoid = {};
+  String _prevSearch = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Load more when near bottom
+      ref.read(exercisesNotifierProvider.notifier).loadExercises();
+    }
+  }
+
+  int _getActiveFilterCount() {
     int count = 0;
     count += ref.read(selectedMuscleGroupsProvider).length;
     count += ref.read(selectedEquipmentsProvider).length;
@@ -293,7 +422,7 @@ class _ExercisesTab extends ConsumerWidget {
     return count;
   }
 
-  void _showFilterSheet(BuildContext context, WidgetRef ref) {
+  void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -303,8 +432,9 @@ class _ExercisesTab extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final exercisesAsync = ref.watch(exercisesProvider);
+  Widget build(BuildContext context) {
+    final exercisesState = ref.watch(exercisesNotifierProvider);
+    final filterOptions = ref.watch(filterOptionsProvider);
     final searchQuery = ref.watch(exerciseSearchProvider);
     final selectedMuscles = ref.watch(selectedMuscleGroupsProvider);
     final selectedEquipments = ref.watch(selectedEquipmentsProvider);
@@ -316,7 +446,31 @@ class _ExercisesTab extends ConsumerWidget {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final activeFilters = _getActiveFilterCount(ref);
+    final activeFilters = _getActiveFilterCount();
+
+    // Get total exercise count from filter options (when no filters applied)
+    final totalExercises = filterOptions.valueOrNull?.totalExercises;
+
+    // Check if filters or search changed and refresh exercises
+    if (selectedMuscles != _prevMuscles ||
+        selectedEquipments != _prevEquipments ||
+        selectedTypes != _prevTypes ||
+        selectedGoals != _prevGoals ||
+        selectedSuitableFor != _prevSuitableFor ||
+        selectedAvoid != _prevAvoid ||
+        searchQuery != _prevSearch) {
+      _prevMuscles = selectedMuscles;
+      _prevEquipments = selectedEquipments;
+      _prevTypes = selectedTypes;
+      _prevGoals = selectedGoals;
+      _prevSuitableFor = selectedSuitableFor;
+      _prevAvoid = selectedAvoid;
+      _prevSearch = searchQuery;
+      // Schedule refresh after build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(exercisesNotifierProvider.notifier).loadExercises(refresh: true);
+      });
+    }
 
     return Column(
       children: [
@@ -356,7 +510,7 @@ class _ExercisesTab extends ConsumerWidget {
               const SizedBox(width: 12),
               // Filter button
               GestureDetector(
-                onTap: () => _showFilterSheet(context, ref),
+                onTap: () => _showFilterSheet(context),
                 child: Container(
                   width: 48,
                   height: 48,
@@ -502,45 +656,42 @@ class _ExercisesTab extends ConsumerWidget {
 
         // Exercise list
         Expanded(
-          child: exercisesAsync.when(
-            loading: () => Center(
-              child: CircularProgressIndicator(color: cyan),
-            ),
-            error: (e, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: isDark ? AppColors.error : AppColorsLight.error,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Failed to load exercises: $e'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => ref.refresh(exercisesProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            ),
-            data: (exercises) {
-              var filtered = exercises;
-
-              // Apply local search filter (backend handles other filters)
-              if (searchQuery.isNotEmpty) {
-                filtered = filtered
-                    .where((e) =>
-                        e.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                        (e.muscleGroup?.toLowerCase().contains(searchQuery.toLowerCase()) ??
-                            false) ||
-                        (e.equipmentValue?.toLowerCase().contains(searchQuery.toLowerCase()) ??
-                            false))
-                    .toList();
+          child: Builder(
+            builder: (context) {
+              // Handle loading state
+              if (exercisesState.isLoading && exercisesState.exercises.isEmpty) {
+                return Center(
+                  child: CircularProgressIndicator(color: cyan),
+                );
               }
 
-              if (filtered.isEmpty) {
+              // Handle error state
+              if (exercisesState.error != null && exercisesState.exercises.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: isDark ? AppColors.error : AppColorsLight.error,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Failed to load exercises: ${exercisesState.error}'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.read(exercisesNotifierProvider.notifier).loadExercises(refresh: true),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Show exercises (backend handles both filters AND search now)
+              final filtered = exercisesState.exercises;
+
+              if (filtered.isEmpty && !exercisesState.isLoading) {
                 return EmptyState.noExercises(
                   onAction: searchQuery.isNotEmpty || activeFilters > 0
                       ? () {
@@ -556,15 +707,76 @@ class _ExercisesTab extends ConsumerWidget {
                 );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: filtered.length,
-                itemBuilder: (context, index) {
-                  final exercise = filtered[index];
-                  return _ExerciseCard(exercise: exercise)
-                      .animate()
-                      .fadeIn(delay: Duration(milliseconds: index * 50));
-                },
+              // Calculate display count - show loading indicator if more available
+              final hasMoreToLoad = exercisesState.hasMore;
+              final itemCount = filtered.length + (hasMoreToLoad ? 1 : 0);
+
+              // Determine count to display:
+              // - If no filters/search and we have total from filter options: use that
+              // - Otherwise use the current filtered count (which is accurate since backend now filters properly)
+              final displayCount = (activeFilters == 0 && searchQuery.isEmpty && totalExercises != null)
+                  ? totalExercises
+                  : filtered.length;
+              // Show "+" only if there might be more to load
+              final showPlus = exercisesState.hasMore && (activeFilters > 0 || searchQuery.isNotEmpty);
+
+              return Column(
+                children: [
+                  // Result count header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          showPlus
+                              ? '$displayCount+ ${displayCount == 1 ? 'exercise' : 'exercises'} found'
+                              : '$displayCount ${displayCount == 1 ? 'exercise' : 'exercises'} found',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Exercise list with infinite scroll
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: itemCount,
+                      itemBuilder: (context, index) {
+                        // Loading indicator at the end
+                        if (index >= filtered.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: exercisesState.isLoading
+                                  ? CircularProgressIndicator(color: cyan)
+                                  : TextButton(
+                                      onPressed: () => ref.read(exercisesNotifierProvider.notifier).loadExercises(),
+                                      child: Text(
+                                        'Load more',
+                                        style: TextStyle(color: cyan),
+                                      ),
+                                    ),
+                            ),
+                          );
+                        }
+
+                        final exercise = filtered[index];
+                        // Only animate the first 10 items to avoid performance issues
+                        if (index < 10) {
+                          return _ExerciseCard(exercise: exercise)
+                              .animate()
+                              .fadeIn(delay: Duration(milliseconds: index * 30));
+                        }
+                        return _ExerciseCard(exercise: exercise);
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -753,7 +965,6 @@ class _ExerciseFilterSheet extends ConsumerWidget {
                             } else {
                               newSet.add(value);
                             }
-                            print('🔍 [Filter] Toggling muscle: $value, newSet: $newSet');
                             ref.read(selectedMuscleGroupsProvider.notifier).state = newSet;
                           },
                         ),
@@ -1033,7 +1244,6 @@ class _FilterSectionState extends State<_FilterSection> {
 
   @override
   Widget build(BuildContext context) {
-    print('🔍 [_FilterSection] Building ${widget.title} with selectedValues: ${widget.selectedValues}');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -1210,34 +1420,38 @@ class _FilterSectionState extends State<_FilterSection> {
                         (v) => v.toLowerCase() == option.name.toLowerCase()
                       );
                       final displayName = _shortenName(option.name);
-                      return GestureDetector(
-                        onTap: () => widget.onToggle(option.name),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected ? widget.color.withOpacity(0.2) : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected ? widget.color : Colors.transparent,
-                              width: isSelected ? 2 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isSelected) ...[
-                                Icon(Icons.check, size: 16, color: widget.color),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                displayName,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                  color: isSelected ? widget.color : textSecondary,
-                                ),
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () => widget.onToggle(option.name),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isSelected ? widget.color.withOpacity(0.2) : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected ? widget.color : Colors.transparent,
+                                width: isSelected ? 2 : 1,
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isSelected) ...[
+                                  Icon(Icons.check, size: 16, color: widget.color),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    color: isSelected ? widget.color : textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

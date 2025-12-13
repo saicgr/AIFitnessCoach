@@ -7,14 +7,19 @@ ENDPOINTS:
 - GET  /api/v1/users/ - Get all users
 - GET  /api/v1/users/{id} - Get user by ID
 - GET  /api/v1/users/{id}/program-preferences - Get user's program preferences
+- GET  /api/v1/users/{id}/export - Export all user data as ZIP
+- POST /api/v1/users/{id}/import - Import user data from ZIP
 - PUT  /api/v1/users/{id} - Update user
 - DELETE /api/v1/users/{id} - Delete user
 - DELETE /api/v1/users/{id}/reset - Full reset (delete all user data)
 """
 import json
-from fastapi import APIRouter, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from pydantic import BaseModel
+import io
 
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
@@ -442,6 +447,11 @@ async def update_user(user_id: str, user: UserUpdate):
         if user.activity_level is not None:
             update_data["activity_level"] = user.activity_level
 
+        # Handle FCM token for push notifications
+        if user.fcm_token is not None:
+            update_data["fcm_token"] = user.fcm_token
+            logger.info(f"Updating FCM token for user {user_id}")
+
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")
@@ -592,4 +602,118 @@ async def full_reset(user_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to reset user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== DATA EXPORT/IMPORT ====================
+
+
+@router.get("/{user_id}/export")
+async def export_user_data(user_id: str):
+    """
+    Export all user data as a ZIP file containing CSV files.
+
+    The ZIP contains:
+    - profile.csv - User profile and settings
+    - body_metrics.csv - Historical body measurements
+    - workouts.csv - All workout plans
+    - workout_logs.csv - Completed workout sessions
+    - exercise_sets.csv - Per-set performance data
+    - strength_records.csv - Personal records
+    - achievements.csv - Earned achievements
+    - streaks.csv - Streak history
+    - _metadata.csv - Export metadata for import validation
+    """
+    logger.info(f"Exporting data for user: id={user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Check if user exists
+        existing = db.get_user(user_id)
+        if not existing:
+            logger.warning(f"User not found for export: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Import here to avoid circular imports
+        from services.data_export import export_user_data as do_export
+
+        # Generate ZIP file
+        zip_bytes = do_export(user_id)
+
+        # Create filename with date
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        filename = f"fitness_data_{date_str}.zip"
+
+        logger.info(f"Data export complete for user {user_id}, size: {len(zip_bytes)} bytes")
+
+        # Return as streaming response
+        return StreamingResponse(
+            io.BytesIO(zip_bytes),
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(len(zip_bytes)),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export user data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{user_id}/import")
+async def import_user_data(user_id: str, file: UploadFile = File(...)):
+    """
+    Import user data from a previously exported ZIP file.
+
+    This will:
+    1. Validate the ZIP structure and metadata
+    2. Parse all CSV files
+    3. Import data with new IDs (preserving relationships)
+    4. Update user profile with imported settings
+
+    WARNING: This may replace existing data. Use with caution.
+    """
+    logger.info(f"Importing data for user: id={user_id}, filename={file.filename}")
+    try:
+        db = get_supabase_db()
+
+        # Check if user exists
+        existing = db.get_user(user_id)
+        if not existing:
+            logger.warning(f"User not found for import: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Validate file type
+        if not file.filename.endswith('.zip'):
+            raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+
+        # Read file content
+        content = await file.read()
+        if len(content) > 50 * 1024 * 1024:  # 50MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 50MB.")
+
+        # Import here to avoid circular imports
+        from services.data_import import import_user_data as do_import
+
+        # Perform import
+        result = do_import(user_id, content)
+
+        logger.info(f"Data import complete for user {user_id}: {result}")
+
+        return {
+            "message": "Data import successful",
+            "user_id": user_id,
+            "imported": result
+        }
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Import validation error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to import user data: {e}")
         raise HTTPException(status_code=500, detail=str(e))

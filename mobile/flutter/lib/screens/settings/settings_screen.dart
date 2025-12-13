@@ -1,12 +1,18 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/notification_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -47,21 +53,20 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 items: [
                   _SettingItem(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    trailing: Switch(
-                      value: true,
-                      onChanged: (value) {},
-                      activeColor: AppColors.cyan,
-                    ),
-                  ),
-                  _SettingItem(
                     icon: Icons.dark_mode_outlined,
                     title: 'Dark Mode',
                     isThemeToggle: true,
                   ),
                 ],
               ).animate().fadeIn(delay: 50.ms),
+
+              const SizedBox(height: 24),
+
+              // Notifications section
+              _SectionHeader(title: 'NOTIFICATIONS'),
+              const SizedBox(height: 12),
+
+              _NotificationsCard().animate().fadeIn(delay: 75.ms),
 
               const SizedBox(height: 24),
 
@@ -109,6 +114,29 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ],
               ).animate().fadeIn(delay: 150.ms),
+
+              const SizedBox(height: 24),
+
+              // Data Management section
+              _SectionHeader(title: 'DATA MANAGEMENT'),
+              const SizedBox(height: 12),
+
+              _SettingsCard(
+                items: [
+                  _SettingItem(
+                    icon: Icons.file_download_outlined,
+                    title: 'Export Data',
+                    subtitle: 'Download your workout data',
+                    onTap: () => _showExportDialog(context, ref),
+                  ),
+                  _SettingItem(
+                    icon: Icons.file_upload_outlined,
+                    title: 'Import Data',
+                    subtitle: 'Restore from backup',
+                    onTap: () => _showImportDialog(context, ref),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 175.ms),
 
               const SizedBox(height: 24),
 
@@ -567,6 +595,463 @@ class SettingsScreen extends ConsumerWidget {
       }
     }
   }
+
+  void _showExportDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Export Data',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Export your fitness data including:',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _DialogBulletPoint(
+              text: 'Workout history and progress',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Personal records',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Nutrition and hydration logs',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            _DialogBulletPoint(
+              text: 'Profile settings',
+              color: AppColors.cyan,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your data will be exported as a ZIP file containing CSV files. You can use this to restore your data if you delete and recreate your account.',
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _exportData(context, ref);
+            },
+            child: Text(
+              'Export',
+              style: TextStyle(color: AppColors.cyan),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showImportDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Row(
+          children: [
+            Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Import Data',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppColors.orange, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This will replace your current data',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.orange,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Select a previously exported ZIP file to restore your data. The import will use whatever data is available in the file.',
+              style: TextStyle(
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _importData(context, ref);
+            },
+            child: Text(
+              'Select File',
+              style: TextStyle(color: AppColors.purple),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.cyan),
+      ),
+    );
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Call backend to export user data (returns ZIP file bytes)
+      final response = await apiClient.dio.get(
+        '${ApiConstants.users}/$userId/export',
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (response.statusCode == 200 && response.data != null) {
+        // Save to temporary file
+        final tempDir = await getTemporaryDirectory();
+        final timestamp = DateTime.now().toIso8601String().split('T')[0];
+        final filePath = '${tempDir.path}/fitness_data_$timestamp.zip';
+        final file = File(filePath);
+        await file.writeAsBytes(response.data as List<int>);
+
+        // Share the file
+        if (context.mounted) {
+          await Share.shareXFiles(
+            [XFile(filePath)],
+            subject: 'AI Fitness Coach Data Export',
+            text: 'My fitness data exported on $timestamp',
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Data exported successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to export data');
+      }
+    } catch (e) {
+      // Close loading dialog if still showing
+      if (context.mounted) Navigator.pop(context);
+
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _importData(BuildContext context, WidgetRef ref) async {
+    try {
+      // Pick ZIP file
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['zip'],
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return; // User cancelled
+      }
+
+      final file = result.files.first;
+      if (file.bytes == null) {
+        throw Exception('Could not read file');
+      }
+
+      // Show confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+            title: Row(
+              children: [
+                Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Import Data',
+                    style: TextStyle(
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'File: ${file.name}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Size: ${(file.size / 1024).toStringAsFixed(1)} KB',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'This will import:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _DialogBulletPoint(
+                  text: 'Workouts & exercise plans',
+                  color: AppColors.purple,
+                  isDark: isDark,
+                ),
+                _DialogBulletPoint(
+                  text: 'Performance history (weights, reps)',
+                  color: AppColors.purple,
+                  isDark: isDark,
+                ),
+                _DialogBulletPoint(
+                  text: 'Personal records',
+                  color: AppColors.purple,
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'New data will be added alongside your existing data.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  'Import',
+                  style: TextStyle(color: AppColors.purple),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      // Show loading indicator
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(color: AppColors.purple),
+          ),
+        );
+      }
+
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      // Create multipart form data
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          file.bytes!,
+          filename: file.name,
+        ),
+      });
+
+      // Call backend to import user data
+      final response = await apiClient.dio.post(
+        '${ApiConstants.users}/$userId/import',
+        data: formData,
+      );
+
+      // Close loading dialog
+      if (context.mounted) Navigator.pop(context);
+
+      if (response.statusCode == 200 && response.data != null) {
+        final imported = response.data['imported'] as Map<String, dynamic>?;
+        final summary = imported?.entries
+            .where((e) => (e.value as int) > 0)
+            .map((e) => '${e.key}: ${e.value}')
+            .join('\n') ?? 'Data imported';
+
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AlertDialog(
+                backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                title: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: AppColors.success, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Import Successful',
+                      style: TextStyle(
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  'Imported:\n$summary',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'OK',
+                      style: TextStyle(color: AppColors.success),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } else {
+        throw Exception('Failed to import data');
+      }
+    } catch (e) {
+      // Close any open dialogs
+      if (context.mounted) {
+        // Pop any open dialogs (loading indicator)
+        Navigator.of(context).pop();
+      }
+
+      // Show error
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Import failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -605,6 +1090,7 @@ class _SectionHeader extends StatelessWidget {
 class _SettingItem {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool isThemeToggle;
@@ -612,6 +1098,7 @@ class _SettingItem {
   const _SettingItem({
     required this.icon,
     required this.title,
+    this.subtitle,
     this.onTap,
     this.trailing,
     this.isThemeToggle = false,
@@ -663,11 +1150,24 @@ class _SettingsCard extends ConsumerWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          item.title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: const TextStyle(
+                                fontSize: 15,
+                              ),
+                            ),
+                            if (item.subtitle != null)
+                              Text(
+                                item.subtitle!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       if (item.isThemeToggle)
@@ -858,5 +1358,272 @@ class _DangerZoneCard extends StatelessWidget {
         }).toList(),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Notifications Card
+// ─────────────────────────────────────────────────────────────────
+
+class _NotificationsCard extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_NotificationsCard> createState() => _NotificationsCardState();
+}
+
+class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
+  bool _isSendingTest = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final notifPrefs = ref.watch(notificationPreferencesProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          // Workout Reminders
+          _buildNotificationToggle(
+            icon: Icons.fitness_center,
+            title: 'Workout Reminders',
+            subtitle: 'Get reminded on workout days',
+            value: notifPrefs.workoutReminders,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setWorkoutReminders(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Nutrition Reminders
+          _buildNotificationToggle(
+            icon: Icons.restaurant,
+            title: 'Nutrition Reminders',
+            subtitle: 'Log your meals',
+            value: notifPrefs.nutritionReminders,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setNutritionReminders(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Hydration Reminders
+          _buildNotificationToggle(
+            icon: Icons.water_drop,
+            title: 'Hydration Reminders',
+            subtitle: 'Stay hydrated',
+            value: notifPrefs.hydrationReminders,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setHydrationReminders(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // AI Coach Messages
+          _buildNotificationToggle(
+            icon: Icons.smart_toy,
+            title: 'AI Coach Messages',
+            subtitle: 'Motivation & tips from your coach',
+            value: notifPrefs.aiCoachMessages,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setAiCoachMessages(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Streak Alerts
+          _buildNotificationToggle(
+            icon: Icons.local_fire_department,
+            title: 'Streak Alerts',
+            subtitle: 'Keep your workout streak alive',
+            value: notifPrefs.streakAlerts,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setStreakAlerts(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Weekly Summary
+          _buildNotificationToggle(
+            icon: Icons.bar_chart,
+            title: 'Weekly Summary',
+            subtitle: 'Your progress report',
+            value: notifPrefs.weeklySummary,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setWeeklySummary(value);
+            },
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Test Notification Button
+          InkWell(
+            onTap: _isSendingTest ? null : _sendTestNotification,
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.science_outlined,
+                    color: AppColors.cyan,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Test Notification',
+                          style: TextStyle(
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          'Send a test push notification',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isSendingTest)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.cyan,
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.send,
+                      color: AppColors.cyan,
+                      size: 20,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationToggle({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color textSecondary,
+    required Color textMuted,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: textSecondary,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.cyan,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendTestNotification() async {
+    setState(() => _isSendingTest = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      final notificationService = ref.read(notificationServiceProvider);
+
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // First, make sure the FCM token is registered
+      await notificationService.registerTokenWithBackend(apiClient, userId);
+
+      // Then send test notification
+      final success = await notificationService.sendTestNotification(apiClient, userId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Test notification sent! Check your notifications.'
+                  : 'Failed to send test notification',
+            ),
+            backgroundColor: success ? AppColors.success : AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingTest = false);
+      }
+    }
   }
 }

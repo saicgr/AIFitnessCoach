@@ -1,30 +1,3 @@
-<!-- Potential New Scenarios:
-Workout Actions
-"Start my workout" → Navigate to workout and auto-start timer
-"Skip today's workout" → Mark as skipped with reason
-"Complete my workout" → Mark current workout as done
-"Show workout history" → Navigate to summaries with filter
-Program Management
-"Generate a new program" → Trigger program regeneration
-"Reset my program" → Clear and regenerate workouts
-"Change my program difficulty" → Adjust difficulty level
-Profile Updates
-"Update my fitness level to advanced"
-"Add dumbbells to my equipment"
-"Remove running from my goals"
-"I weigh 180 pounds now"
-Quick Logging
-"Log 8 glasses of water" → Add hydration entry
-"I slept 7 hours last night" → Log sleep
-"Log my weight as 175" → Update weight
-Social/Sharing
-"Share my progress" → Open share sheet
-"Show my achievements" → Already done
-Timer/Workout Control
-"Set rest timer to 90 seconds"
-"Pause workout"
-"Add 30 seconds to timer" -->
-
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
 Replacing Human Fitness Coaches with AI

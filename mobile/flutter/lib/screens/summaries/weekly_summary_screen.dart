@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
@@ -34,36 +35,43 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(weeklySummaryProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
-        title: const Text('Weekly Summaries'),
+        backgroundColor: backgroundColor,
+        foregroundColor: textPrimary,
+        title: Text('Weekly Summaries', style: TextStyle(color: textPrimary)),
         actions: [
           if (!state.isGenerating)
             IconButton(
-              icon: const Icon(Icons.add),
+              icon: Icon(Icons.add, color: textPrimary),
               onPressed: _generateSummary,
               tooltip: 'Generate Summary',
             ),
         ],
       ),
       body: state.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.purple),
+          ? Center(
+              child: CircularProgressIndicator(color: purple),
             )
           : state.summaries.isEmpty
-              ? _EmptyState(onGenerate: _generateSummary)
+              ? _EmptyState(onGenerate: _generateSummary, isDark: isDark)
               : RefreshIndicator(
                   onRefresh: _loadData,
-                  color: AppColors.purple,
+                  color: purple,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: state.summaries.length,
                     itemBuilder: (context, index) {
                       final summary = state.summaries[index];
-                      return _SummaryCard(summary: summary)
+                      return _SummaryCard(summary: summary, isDark: isDark)
                           .animate()
                           .fadeIn(delay: (50 * index).ms)
                           .slideY(begin: 0.1, delay: (50 * index).ms);
@@ -98,11 +106,20 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
 
 class _SummaryCard extends StatelessWidget {
   final WeeklySummary summary;
+  final bool isDark;
 
-  const _SummaryCard({required this.summary});
+  const _SummaryCard({required this.summary, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return GestureDetector(
       onTap: () => _showDetailSheet(context),
       child: Container(
@@ -111,14 +128,14 @@ class _SummaryCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.purple.withOpacity(0.15),
-              AppColors.cyan.withOpacity(0.1),
+              purple.withOpacity(0.15),
+              cyan.withOpacity(0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.purple.withOpacity(0.3)),
+          border: Border.all(color: purple.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,12 +146,12 @@ class _SummaryCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.2),
+                    color: purple.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.calendar_today,
-                    color: AppColors.purple,
+                    color: purple,
                     size: 20,
                   ),
                 ),
@@ -145,17 +162,17 @@ class _SummaryCard extends StatelessWidget {
                     children: [
                       Text(
                         _formatWeekRange(summary.weekStart, summary.weekEnd),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       Text(
                         '${summary.workoutsCompleted}/${summary.workoutsScheduled} workouts completed',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: textSecondary,
                         ),
                       ),
                     ],
@@ -168,8 +185,9 @@ class _SummaryCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _getCompletionColor(summary.completionRate)
-                        .withOpacity(0.2),
+                    color:
+                        _getCompletionColor(summary.completionRate, isDark)
+                            .withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -177,7 +195,8 @@ class _SummaryCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: _getCompletionColor(summary.completionRate),
+                      color:
+                          _getCompletionColor(summary.completionRate, isDark),
                     ),
                   ),
                 ),
@@ -193,21 +212,24 @@ class _SummaryCard extends StatelessWidget {
                   icon: Icons.fitness_center,
                   value: '${summary.totalExercises}',
                   label: 'exercises',
-                  color: AppColors.cyan,
+                  color: cyan,
+                  isDark: isDark,
                 ),
                 const SizedBox(width: 12),
                 _StatChip(
                   icon: Icons.timer,
                   value: '${summary.totalTimeMinutes}',
                   label: 'minutes',
-                  color: AppColors.orange,
+                  color: isDark ? AppColors.orange : AppColorsLight.orange,
+                  isDark: isDark,
                 ),
                 const SizedBox(width: 12),
                 _StatChip(
                   icon: Icons.local_fire_department,
                   value: '${summary.caloriesBurnedEstimate}',
                   label: 'calories',
-                  color: AppColors.coral,
+                  color: isDark ? AppColors.coral : AppColorsLight.coral,
+                  isDark: isDark,
                 ),
               ],
             ),
@@ -218,11 +240,11 @@ class _SummaryCard extends StatelessWidget {
               Row(
                 children: [
                   if (summary.currentStreak > 0)
-                    _StreakBadge(streak: summary.currentStreak),
+                    _StreakBadge(streak: summary.currentStreak, isDark: isDark),
                   if (summary.currentStreak > 0 && summary.prsAchieved > 0)
                     const SizedBox(width: 12),
                   if (summary.prsAchieved > 0)
-                    _PRBadge(count: summary.prsAchieved),
+                    _PRBadge(count: summary.prsAchieved, isDark: isDark),
                 ],
               ),
             ],
@@ -232,9 +254,9 @@ class _SummaryCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 summary.aiSummary!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                   fontStyle: FontStyle.italic,
                 ),
                 maxLines: 2,
@@ -246,19 +268,19 @@ class _SummaryCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text(
                   'Tap to view details',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: textMuted,
                   ),
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Icon(
                   Icons.keyboard_arrow_down,
                   size: 16,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                 ),
               ],
             ),
@@ -278,13 +300,15 @@ class _SummaryCard extends StatelessWidget {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.nearBlack,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: _SummaryDetailSheet(
             summary: summary,
             scrollController: scrollController,
+            isDark: isDark,
           ),
         ),
       ),
@@ -295,8 +319,18 @@ class _SummaryCard extends StatelessWidget {
     final startDate = DateTime.parse(start);
     final endDate = DateTime.parse(end);
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
 
     if (startDate.month == endDate.month) {
@@ -305,10 +339,10 @@ class _SummaryCard extends StatelessWidget {
     return '${months[startDate.month - 1]} ${startDate.day} - ${months[endDate.month - 1]} ${endDate.day}';
   }
 
-  Color _getCompletionColor(double rate) {
-    if (rate >= 80) return AppColors.success;
-    if (rate >= 50) return AppColors.warning;
-    return AppColors.error;
+  Color _getCompletionColor(double rate, bool isDark) {
+    if (rate >= 80) return isDark ? AppColors.success : AppColorsLight.success;
+    if (rate >= 50) return isDark ? AppColors.warning : AppColorsLight.warning;
+    return isDark ? AppColors.error : AppColorsLight.error;
   }
 }
 
@@ -317,21 +351,26 @@ class _StatChip extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final bool isDark;
 
   const _StatChip({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -348,9 +387,9 @@ class _StatChip extends StatelessWidget {
             ),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: AppColors.textMuted,
+                color: textMuted,
               ),
             ),
           ],
@@ -362,32 +401,35 @@ class _StatChip extends StatelessWidget {
 
 class _StreakBadge extends StatelessWidget {
   final int streak;
+  final bool isDark;
 
-  const _StreakBadge({required this.streak});
+  const _StreakBadge({required this.streak, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.2),
+        color: orange.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.local_fire_department,
             size: 16,
-            color: AppColors.orange,
+            color: orange,
           ),
           const SizedBox(width: 4),
           Text(
             '$streak day streak',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.orange,
+              color: orange,
             ),
           ),
         ],
@@ -398,32 +440,35 @@ class _StreakBadge extends StatelessWidget {
 
 class _PRBadge extends StatelessWidget {
   final int count;
+  final bool isDark;
 
-  const _PRBadge({required this.count});
+  const _PRBadge({required this.count, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.2),
+        color: success.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.trending_up,
             size: 16,
-            color: AppColors.success,
+            color: success,
           ),
           const SizedBox(width: 4),
           Text(
             '$count PRs',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.success,
+              color: success,
             ),
           ),
         ],
@@ -439,14 +484,27 @@ class _PRBadge extends StatelessWidget {
 class _SummaryDetailSheet extends StatelessWidget {
   final WeeklySummary summary;
   final ScrollController scrollController;
+  final bool isDark;
 
   const _SummaryDetailSheet({
     required this.summary,
     required this.scrollController,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Column(
       children: [
         // Handle
@@ -456,7 +514,7 @@ class _SummaryDetailSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.textMuted,
+              color: textMuted,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -472,9 +530,10 @@ class _SummaryDetailSheet extends StatelessWidget {
                 // Title
                 Text(
                   'Week of ${_formatDate(summary.weekStart)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -486,32 +545,32 @@ class _SummaryDetailSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.cyan.withOpacity(0.1),
-                          AppColors.purple.withOpacity(0.1),
+                          cyan.withOpacity(0.1),
+                          purple.withOpacity(0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.cyan.withOpacity(0.2),
+                        color: cyan.withOpacity(0.2),
                       ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: const [
+                          children: [
                             Icon(
                               Icons.auto_awesome,
-                              color: AppColors.cyan,
+                              color: cyan,
                               size: 20,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               'AI Summary',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.cyan,
+                                color: cyan,
                               ),
                             ),
                           ],
@@ -519,9 +578,9 @@ class _SummaryDetailSheet extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           summary.aiSummary!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: AppColors.textPrimary,
+                            color: textPrimary,
                             height: 1.5,
                           ),
                         ),
@@ -534,7 +593,7 @@ class _SummaryDetailSheet extends StatelessWidget {
                 // Highlights
                 if (summary.aiHighlights != null &&
                     summary.aiHighlights!.isNotEmpty) ...[
-                  const _SectionTitle(title: 'Highlights'),
+                  _SectionTitle(title: 'Highlights', isDark: isDark),
                   const SizedBox(height: 12),
                   ...summary.aiHighlights!.map((highlight) {
                     return Padding(
@@ -542,18 +601,18 @@ class _SummaryDetailSheet extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star,
-                            color: AppColors.orange,
+                            color: orange,
                             size: 18,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               highlight,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: textSecondary,
                               ),
                             ),
                           ),
@@ -569,26 +628,26 @@ class _SummaryDetailSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
+                      color: success.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.success.withOpacity(0.2),
+                        color: success.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.favorite,
-                          color: AppColors.success,
+                          color: success,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             summary.aiEncouragement!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textPrimary,
+                              color: textPrimary,
                             ),
                           ),
                         ),
@@ -601,14 +660,14 @@ class _SummaryDetailSheet extends StatelessWidget {
                 // Tips for next week
                 if (summary.aiNextWeekTips != null &&
                     summary.aiNextWeekTips!.isNotEmpty) ...[
-                  const _SectionTitle(title: 'Tips for Next Week'),
+                  _SectionTitle(title: 'Tips for Next Week', isDark: isDark),
                   const SizedBox(height: 12),
                   ...summary.aiNextWeekTips!.asMap().entries.map((entry) {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.elevated,
+                        color: elevated,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -617,16 +676,16 @@ class _SummaryDetailSheet extends StatelessWidget {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: AppColors.purple.withOpacity(0.2),
+                              color: purple.withOpacity(0.2),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Text(
                                 '${entry.key + 1}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.purple,
+                                  color: purple,
                                 ),
                               ),
                             ),
@@ -635,9 +694,9 @@ class _SummaryDetailSheet extends StatelessWidget {
                           Expanded(
                             child: Text(
                               entry.value,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textSecondary,
+                                color: textSecondary,
                               ),
                             ),
                           ),
@@ -659,8 +718,18 @@ class _SummaryDetailSheet extends StatelessWidget {
   String _formatDate(String dateStr) {
     final date = DateTime.parse(dateStr);
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -668,17 +737,18 @@ class _SummaryDetailSheet extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String title;
+  final bool isDark;
 
-  const _SectionTitle({required this.title});
+  const _SectionTitle({required this.title, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
+        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
       ),
     );
   }
@@ -690,11 +760,17 @@ class _SectionTitle extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onGenerate;
+  final bool isDark;
 
-  const _EmptyState({required this.onGenerate});
+  const _EmptyState({required this.onGenerate, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -704,30 +780,30 @@ class _EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.1),
+                color: purple.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.summarize,
                 size: 64,
-                color: AppColors.purple,
+                color: purple,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No summaries yet',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Generate your first weekly summary to see your progress with AI-powered insights',
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textMuted,
+                color: textMuted,
               ),
               textAlign: TextAlign.center,
             ),
@@ -737,7 +813,7 @@ class _EmptyState extends StatelessWidget {
               icon: const Icon(Icons.auto_awesome),
               label: const Text('Generate Summary'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.purple,
+                backgroundColor: purple,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 16,

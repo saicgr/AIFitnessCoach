@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../data/models/hydration.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/services/api_client.dart';
@@ -34,26 +35,34 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(hydrationProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
 
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
-        title: const Text('Hydration'),
+        backgroundColor: backgroundColor,
+        foregroundColor: textPrimary,
+        title: Text('Hydration', style: TextStyle(color: textPrimary)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => _showGoalSettings(context),
+            icon: Icon(Icons.settings_outlined, color: textPrimary),
+            onPressed: () => _showGoalSettings(context, isDark),
           ),
         ],
       ),
       body: state.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.electricBlue),
+          ? Center(
+              child: CircularProgressIndicator(color: electricBlue),
             )
           : RefreshIndicator(
               onRefresh: _loadData,
-              color: AppColors.electricBlue,
+              color: electricBlue,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
@@ -63,6 +72,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                     _WaterProgress(
                       currentMl: state.todaySummary?.totalMl ?? 0,
                       goalMl: state.dailyGoalMl,
+                      isDark: isDark,
                     ).animate().fadeIn().scale(),
 
                     const SizedBox(height: 32),
@@ -70,20 +80,23 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                     // Quick add buttons
                     _QuickAddSection(
                       onAdd: (amount) => _quickLog(amount),
+                      isDark: isDark,
                     ).animate().fadeIn(delay: 100.ms),
 
                     const SizedBox(height: 24),
 
                     // Drink type buttons
                     _DrinkTypeSection(
-                      onSelect: (type) => _showAddDialog(type),
+                      onSelect: (type) => _showAddDialog(type, isDark),
+                      isDark: isDark,
                     ).animate().fadeIn(delay: 150.ms),
 
                     const SizedBox(height: 24),
 
                     // Today's breakdown
                     if (state.todaySummary != null)
-                      _TodayBreakdown(summary: state.todaySummary!)
+                      _TodayBreakdown(
+                              summary: state.todaySummary!, isDark: isDark)
                           .animate()
                           .fadeIn(delay: 200.ms),
 
@@ -91,12 +104,13 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
 
                     // Recent entries
                     if (state.todaySummary?.entries.isNotEmpty == true) ...[
-                      _SectionHeader(title: 'TODAY\'S LOG'),
+                      _SectionHeader(title: 'TODAY\'S LOG', isDark: isDark),
                       const SizedBox(height: 12),
                       ...state.todaySummary!.entries.asMap().entries.map((e) {
                         return _LogEntry(
                           log: e.value,
                           onDelete: () => _deleteLog(e.value.id),
+                          isDark: isDark,
                         ).animate().fadeIn(delay: (50 * e.key).ms);
                       }),
                     ],
@@ -126,9 +140,14 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     }
   }
 
-  Future<void> _showAddDialog(DrinkType type) async {
+  Future<void> _showAddDialog(DrinkType type, bool isDark) async {
     final amountController = TextEditingController(text: '250');
     final notesController = TextEditingController();
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
 
     final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -141,9 +160,9 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
           16,
           MediaQuery.of(context).viewInsets.bottom + 16,
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.nearBlack,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: nearBlack,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -154,7 +173,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textMuted,
+                  color: textMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -169,9 +188,12 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'Log ${type.label}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppColors.textPrimary
+                        : AppColorsLight.textPrimary,
                   ),
                 ),
               ],
@@ -180,11 +202,17 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
             TextField(
               controller: amountController,
               keyboardType: TextInputType.number,
+              style: TextStyle(
+                  color: isDark
+                      ? AppColors.textPrimary
+                      : AppColorsLight.textPrimary),
               decoration: InputDecoration(
                 labelText: 'Amount (ml)',
+                labelStyle: TextStyle(color: textMuted),
                 suffixText: 'ml',
+                suffixStyle: TextStyle(color: textMuted),
                 filled: true,
-                fillColor: AppColors.elevated,
+                fillColor: elevated,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -194,10 +222,15 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: notesController,
+              style: TextStyle(
+                  color: isDark
+                      ? AppColors.textPrimary
+                      : AppColorsLight.textPrimary),
               decoration: InputDecoration(
                 labelText: 'Notes (optional)',
+                labelStyle: TextStyle(color: textMuted),
                 filled: true,
-                fillColor: AppColors.elevated,
+                fillColor: elevated,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -218,7 +251,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricBlue,
+                  backgroundColor: electricBlue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Add'),
@@ -253,40 +286,51 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
     await ref.read(hydrationProvider.notifier).deleteLog(_userId!, logId);
   }
 
-  void _showGoalSettings(BuildContext context) {
+  void _showGoalSettings(BuildContext context, bool isDark) {
     final state = ref.read(hydrationProvider);
     final controller =
         TextEditingController(text: state.dailyGoalMl.toString());
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppColors.nearBlack,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: nearBlack,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Daily Goal',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
+              style: TextStyle(color: textPrimary),
               decoration: InputDecoration(
                 labelText: 'Goal (ml)',
+                labelStyle: TextStyle(color: textMuted),
                 suffixText: 'ml',
+                suffixStyle: TextStyle(color: textMuted),
                 filled: true,
-                fillColor: AppColors.elevated,
+                fillColor: elevated,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -294,9 +338,9 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Recommended: 2000-3000ml per day',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              style: TextStyle(color: textMuted, fontSize: 12),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -312,7 +356,7 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricBlue,
+                  backgroundColor: electricBlue,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text('Update Goal'),
@@ -332,29 +376,41 @@ class _HydrationScreenState extends ConsumerState<HydrationScreen> {
 class _WaterProgress extends StatelessWidget {
   final int currentMl;
   final int goalMl;
+  final bool isDark;
 
   const _WaterProgress({
     required this.currentMl,
     required this.goalMl,
+    required this.isDark,
   });
 
   double get percentage => (currentMl / goalMl).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.electricBlue.withOpacity(0.2),
-            AppColors.cyan.withOpacity(0.1),
+            electricBlue.withOpacity(0.2),
+            cyan.withOpacity(0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.electricBlue.withOpacity(0.3)),
+        border: Border.all(color: electricBlue.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -371,8 +427,8 @@ class _WaterProgress extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: 1,
                     strokeWidth: 12,
-                    backgroundColor: AppColors.glassSurface,
-                    color: AppColors.glassSurface,
+                    backgroundColor: glassSurface,
+                    color: glassSurface,
                   ),
                 ),
                 // Progress circle
@@ -383,7 +439,7 @@ class _WaterProgress extends StatelessWidget {
                     value: percentage,
                     strokeWidth: 12,
                     backgroundColor: Colors.transparent,
-                    color: AppColors.electricBlue,
+                    color: electricBlue,
                     strokeCap: StrokeCap.round,
                   ),
                 ),
@@ -394,15 +450,15 @@ class _WaterProgress extends StatelessWidget {
                     Icon(
                       Icons.water_drop,
                       size: 32,
-                      color: AppColors.electricBlue,
+                      color: electricBlue,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '${(percentage * 100).toInt()}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -413,18 +469,18 @@ class _WaterProgress extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             '${currentMl}ml / ${goalMl}ml',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '${(goalMl - currentMl).clamp(0, goalMl)}ml to go',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
         ],
@@ -439,15 +495,16 @@ class _WaterProgress extends StatelessWidget {
 
 class _QuickAddSection extends StatelessWidget {
   final Function(int) onAdd;
+  final bool isDark;
 
-  const _QuickAddSection({required this.onAdd});
+  const _QuickAddSection({required this.onAdd, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(title: 'QUICK ADD WATER'),
+        _SectionHeader(title: 'QUICK ADD WATER', isDark: isDark),
         const SizedBox(height: 12),
         Row(
           children: QuickAmount.defaults.map((amount) {
@@ -457,6 +514,7 @@ class _QuickAddSection extends StatelessWidget {
                 child: _QuickAddButton(
                   amount: amount,
                   onTap: () => onAdd(amount.ml),
+                  isDark: isDark,
                 ),
               ),
             );
@@ -470,45 +528,54 @@ class _QuickAddSection extends StatelessWidget {
 class _QuickAddButton extends StatelessWidget {
   final QuickAmount amount;
   final VoidCallback onTap;
+  final bool isDark;
 
   const _QuickAddButton({
     required this.amount,
     required this.onTap,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.electricBlue.withOpacity(0.3)),
+          border: Border.all(color: electricBlue.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.add_circle_outline,
-              color: AppColors.electricBlue,
+              color: electricBlue,
               size: 20,
             ),
             const SizedBox(height: 4),
             Text(
               amount.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: textPrimary,
               ),
             ),
             if (amount.description != null)
               Text(
                 amount.description!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                 ),
               ),
           ],
@@ -524,18 +591,24 @@ class _QuickAddButton extends StatelessWidget {
 
 class _DrinkTypeSection extends StatelessWidget {
   final Function(DrinkType) onSelect;
+  final bool isDark;
 
-  const _DrinkTypeSection({required this.onSelect});
+  const _DrinkTypeSection({required this.onSelect, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader(title: 'OTHER DRINKS'),
+        _SectionHeader(title: 'OTHER DRINKS', isDark: isDark),
         const SizedBox(height: 12),
         Row(
-          children: DrinkType.values.where((t) => t != DrinkType.water).map((type) {
+          children:
+              DrinkType.values.where((t) => t != DrinkType.water).map((type) {
             return Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -544,7 +617,7 @@ class _DrinkTypeSection extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: AppColors.elevated,
+                      color: elevated,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -556,9 +629,9 @@ class _DrinkTypeSection extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           type.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.textSecondary,
+                            color: textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -581,26 +654,30 @@ class _DrinkTypeSection extends StatelessWidget {
 
 class _TodayBreakdown extends StatelessWidget {
   final DailyHydrationSummary summary;
+  final bool isDark;
 
-  const _TodayBreakdown({required this.summary});
+  const _TodayBreakdown({required this.summary, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'BREAKDOWN',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
+              color: textMuted,
               letterSpacing: 1.5,
             ),
           ),
@@ -610,24 +687,28 @@ class _TodayBreakdown extends StatelessWidget {
             label: 'Water',
             value: summary.waterMl,
             total: summary.totalMl,
+            isDark: isDark,
           ),
           _BreakdownRow(
             emoji: '🥤',
             label: 'Protein Shake',
             value: summary.proteinShakeMl,
             total: summary.totalMl,
+            isDark: isDark,
           ),
           _BreakdownRow(
             emoji: '⚡',
             label: 'Sports Drink',
             value: summary.sportsDrinkMl,
             total: summary.totalMl,
+            isDark: isDark,
           ),
           _BreakdownRow(
             emoji: '🥛',
             label: 'Other',
             value: summary.otherMl,
             total: summary.totalMl,
+            isDark: isDark,
           ),
         ],
       ),
@@ -640,17 +721,27 @@ class _BreakdownRow extends StatelessWidget {
   final String label;
   final int value;
   final int total;
+  final bool isDark;
 
   const _BreakdownRow({
     required this.emoji,
     required this.label,
     required this.value,
     required this.total,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     final percentage = total > 0 ? value / total : 0.0;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -664,16 +755,16 @@ class _BreakdownRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: percentage,
-                  backgroundColor: AppColors.glassSurface,
-                  color: AppColors.electricBlue,
+                  backgroundColor: glassSurface,
+                  color: electricBlue,
                   borderRadius: BorderRadius.circular(4),
                   minHeight: 6,
                 ),
@@ -683,10 +774,10 @@ class _BreakdownRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             '${value}ml',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
         ],
@@ -702,10 +793,12 @@ class _BreakdownRow extends StatelessWidget {
 class _LogEntry extends StatelessWidget {
   final HydrationLog log;
   final VoidCallback onDelete;
+  final bool isDark;
 
   const _LogEntry({
     required this.log,
     required this.onDelete,
+    required this.isDark,
   });
 
   @override
@@ -715,11 +808,18 @@ class _LogEntry extends StatelessWidget {
         ? '${log.loggedAt!.hour.toString().padLeft(2, '0')}:${log.loggedAt!.minute.toString().padLeft(2, '0')}'
         : '';
 
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final electricBlue =
+        isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -732,18 +832,18 @@ class _LogEntry extends StatelessWidget {
               children: [
                 Text(
                   type.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 if (log.notes != null && log.notes!.isNotEmpty)
                   Text(
                     log.notes!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -753,23 +853,23 @@ class _LogEntry extends StatelessWidget {
           ),
           Text(
             '${log.amountMl}ml',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.electricBlue,
+              color: electricBlue,
             ),
           ),
           const SizedBox(width: 8),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textMuted,
+              color: textMuted,
             ),
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
-            color: AppColors.textMuted,
+            color: textMuted,
             onPressed: onDelete,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -786,17 +886,18 @@ class _LogEntry extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
+  final bool isDark;
 
-  const _SectionHeader({required this.title});
+  const _SectionHeader({required this.title, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: AppColors.textMuted,
+        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
         letterSpacing: 1.5,
       ),
     );

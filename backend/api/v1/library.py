@@ -75,10 +75,19 @@ class ProgramsByCategory(BaseModel):
 
 # ==================== Helper Functions ====================
 
-async def fetch_all_rows(db, table_name: str, select_columns: str = "*", order_by: str = None):
+async def fetch_all_rows(
+    db,
+    table_name: str,
+    select_columns: str = "*",
+    order_by: str = None,
+    equipment_filter: str = None,
+    difficulty_filter: int = None,
+    search_filter: str = None
+):
     """
     Fetch all rows from a Supabase table, handling the 1000 row limit.
     Uses pagination to get all results.
+    Optionally applies DB-level filters before fetching.
     """
     all_rows = []
     page_size = 1000
@@ -86,6 +95,15 @@ async def fetch_all_rows(db, table_name: str, select_columns: str = "*", order_b
 
     while True:
         query = db.client.table(table_name).select(select_columns)
+
+        # Apply optional DB-level filters
+        if equipment_filter:
+            query = query.ilike("equipment", f"%{equipment_filter}%")
+        if difficulty_filter:
+            query = query.eq("difficulty_level", difficulty_filter)
+        if search_filter:
+            query = query.or_(f"name.ilike.%{search_filter}%,original_name.ilike.%{search_filter}%")
+
         if order_by:
             query = query.order(order_by)
         result = query.range(offset, offset + page_size - 1).execute()
@@ -617,48 +635,62 @@ async def list_exercises(
         suitable_for_list = [sf.strip() for sf in suitable_for.split(",")] if suitable_for else []
         avoid_if_list = [ai.strip() for ai in avoid_if.split(",")] if avoid_if else []
 
-        # For large limits, use pagination to bypass Supabase 1000 row limit
-        page_size = 1000
-        all_rows = []
-        current_offset = offset
+        # Determine if we need post-filtering (filters that can't be done at DB level)
+        needs_post_filter = bool(body_parts_list or len(equipment_list) > 1 or
+                                  exercise_types_list or goals_list or
+                                  suitable_for_list or avoid_if_list)
 
-        while len(all_rows) < limit:
-            # Build query using cleaned/deduplicated view
-            query = db.client.table("exercise_library_cleaned").select("*")
+        # If post-filtering is needed, we must fetch ALL matching rows first,
+        # then filter, then apply limit/offset. Otherwise filters would be
+        # applied to a limited subset and miss results.
+        if needs_post_filter:
+            # Fetch all rows (with DB-level filters only)
+            all_rows = await fetch_all_rows(
+                db, "exercise_library_cleaned", "*",
+                equipment_filter=equipment_list[0] if len(equipment_list) == 1 else None,
+                difficulty_filter=difficulty,
+                search_filter=search
+            )
+        else:
+            # No post-filtering needed, can use limit/offset at DB level
+            page_size = 1000
+            all_rows = []
+            current_offset = offset
 
-            # Equipment filter - handled at query level for single value, or post-filter for multi
-            if len(equipment_list) == 1:
-                query = query.ilike("equipment", f"%{equipment_list[0]}%")
-            if difficulty:
-                query = query.eq("difficulty_level", difficulty)
-            if search:
-                # Search in both cleaned name and original name
-                # Note: The view uses 'name' and 'original_name' columns
-                query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%")
+            while len(all_rows) < limit:
+                # Build query using cleaned/deduplicated view
+                query = db.client.table("exercise_library_cleaned").select("*")
 
-            # Calculate how many rows we still need
-            rows_needed = min(page_size, limit - len(all_rows))
+                # Equipment filter - handled at query level for single value
+                if len(equipment_list) == 1:
+                    query = query.ilike("equipment", f"%{equipment_list[0]}%")
+                if difficulty:
+                    query = query.eq("difficulty_level", difficulty)
+                if search:
+                    query = query.or_(f"name.ilike.%{search}%,original_name.ilike.%{search}%")
 
-            # Execute query with pagination
-            # Note: The view uses 'name' column, not 'exercise_name_cleaned'
-            result = query.order("name").range(
-                current_offset, current_offset + rows_needed - 1
-            ).execute()
+                # Calculate how many rows we still need
+                rows_needed = min(page_size, limit - len(all_rows))
 
-            if not result.data:
-                break
+                # Execute query with pagination
+                result = query.order("name").range(
+                    current_offset, current_offset + rows_needed - 1
+                ).execute()
 
-            all_rows.extend(result.data)
+                if not result.data:
+                    break
 
-            if len(result.data) < rows_needed:
-                break  # No more rows available
+                all_rows.extend(result.data)
 
-            current_offset += rows_needed
+                if len(result.data) < rows_needed:
+                    break  # No more rows available
+
+                current_offset += rows_needed
 
         # Convert to exercises (from cleaned view)
-        # View already handles deduplication and name cleaning
         exercises = [row_to_library_exercise(row, from_cleaned_view=True) for row in all_rows]
 
+        # Apply post-filters
         # Filter by body parts (OR logic - match ANY of the selected body parts)
         if body_parts_list:
             body_parts_lower = [bp.lower() for bp in body_parts_list]
@@ -688,9 +720,12 @@ async def list_exercises(
             exercises = [e for e in exercises if e.suitable_for and any(sf in e.suitable_for for sf in suitable_for_list)]
 
         # Filter by avoid_if - EXCLUDE exercises that match ANY of the avoid conditions
-        # This is a negative filter - we exclude exercises that match ANY of the specified conditions
         if avoid_if_list:
             exercises = [e for e in exercises if not (e.avoid_if and any(ai in e.avoid_if for ai in avoid_if_list))]
+
+        # Apply offset and limit AFTER filtering
+        if needs_post_filter:
+            exercises = exercises[offset:offset + limit]
 
         logger.info(f"Listed {len(exercises)} exercises (body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})")
         return exercises

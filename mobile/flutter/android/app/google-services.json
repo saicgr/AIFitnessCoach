@@ -1,44 +1,26 @@
 {
   "project_info": {
-    "project_number": "763543360320",
-    "project_id": "tinderjobs-445903",
-    "storage_bucket": "tinderjobs-445903.appspot.com"
+    "project_number": "843677137160",
+    "project_id": "aifitnesscoach-5e5d3",
+    "storage_bucket": "aifitnesscoach-5e5d3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:763543360320:android:0000000000000000",
+        "mobilesdk_app_id": "1:843677137160:android:815fdef750ec9a218554bd",
         "android_client_info": {
           "package_name": "com.aifitnesscoach.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "763543360320-hjregsh5hn0lvp610sjr36m34f9fh2bj.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "763543360320-android-debug.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.aifitnesscoach.app",
-            "certificate_hash": "edcc2973fe25a2b160004eae3bead094f9860b79"
-          }
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyForConfiguration"
+          "current_key": "AIzaSyDpfxf5mJW5no_vCouRhZXSz4hJwj9uJBQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "763543360320-hjregsh5hn0lvp610sjr36m34f9fh2bj.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

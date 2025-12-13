@@ -1,13 +1,26 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/constants/api_constants.dart';
 import 'data/services/image_url_cache.dart';
+import 'data/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
+  // Initialize SharedPreferences for notification prefs
+  final sharedPreferences = await SharedPreferences.getInstance();
 
   // Initialize Supabase
   await Supabase.initialize(
@@ -32,8 +45,14 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   runApp(
-    const ProviderScope(
-      child: AiFitnessCoachApp(),
+    ProviderScope(
+      overrides: [
+        notificationServiceProvider.overrideWithValue(notificationService),
+        notificationPreferencesProvider.overrideWith(
+          (ref) => NotificationPreferencesNotifier(sharedPreferences),
+        ),
+      ],
+      child: const AiFitnessCoachApp(),
     ),
   );
 }

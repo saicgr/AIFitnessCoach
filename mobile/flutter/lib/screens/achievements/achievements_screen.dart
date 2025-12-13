@@ -44,18 +44,24 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(achievementsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor =
+        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.pureBlack,
-        title: const Text('Achievements'),
+        backgroundColor: backgroundColor,
+        foregroundColor: textPrimary,
+        title: Text('Achievements', style: TextStyle(color: textPrimary)),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.cyan,
-          labelColor: AppColors.cyan,
-          unselectedLabelColor: AppColors.textMuted,
+          indicatorColor: cyan,
+          labelColor: cyan,
+          unselectedLabelColor: textMuted,
           tabs: const [
             Tab(text: 'Summary'),
             Tab(text: 'Badges'),
@@ -64,16 +70,17 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
         ),
       ),
       body: state.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.cyan),
+          ? Center(
+              child: CircularProgressIndicator(color: cyan),
             )
           : TabBarView(
               controller: _tabController,
               children: [
-                _SummaryTab(summary: state.summary),
-                _BadgesTab(achievements: state.achievements),
+                _SummaryTab(summary: state.summary, isDark: isDark),
+                _BadgesTab(achievements: state.achievements, isDark: isDark),
                 _PersonalRecordsTab(
                   records: state.summary?.personalRecords ?? [],
+                  isDark: isDark,
                 ),
               ],
             ),
@@ -87,8 +94,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
 
 class _SummaryTab extends StatelessWidget {
   final AchievementsSummary? summary;
+  final bool isDark;
 
-  const _SummaryTab({this.summary});
+  const _SummaryTab({this.summary, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +105,7 @@ class _SummaryTab extends StatelessWidget {
         icon: Icons.emoji_events,
         title: 'No achievements yet',
         subtitle: 'Complete workouts to earn achievements!',
+        isDark: isDark,
       );
     }
 
@@ -109,18 +118,19 @@ class _SummaryTab extends StatelessWidget {
           _PointsCard(
             totalPoints: summary!.totalPoints,
             totalAchievements: summary!.totalAchievements,
+            isDark: isDark,
           ).animate().fadeIn().slideY(begin: 0.1),
 
           const SizedBox(height: 24),
 
           // Streaks
           if (summary!.currentStreaks.isNotEmpty) ...[
-            _SectionHeader(title: 'CURRENT STREAKS'),
+            _SectionHeader(title: 'CURRENT STREAKS', isDark: isDark),
             const SizedBox(height: 12),
             ...summary!.currentStreaks.map((streak) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _StreakCard(streak: streak),
+                child: _StreakCard(streak: streak, isDark: isDark),
               );
             }).toList(),
             const SizedBox(height: 24),
@@ -128,10 +138,10 @@ class _SummaryTab extends StatelessWidget {
 
           // Recent achievements
           if (summary!.recentAchievements.isNotEmpty) ...[
-            _SectionHeader(title: 'RECENT ACHIEVEMENTS'),
+            _SectionHeader(title: 'RECENT ACHIEVEMENTS', isDark: isDark),
             const SizedBox(height: 12),
             ...summary!.recentAchievements.asMap().entries.map((entry) {
-              return _AchievementCard(achievement: entry.value)
+              return _AchievementCard(achievement: entry.value, isDark: isDark)
                   .animate()
                   .fadeIn(delay: (100 * entry.key).ms);
             }).toList(),
@@ -140,9 +150,10 @@ class _SummaryTab extends StatelessWidget {
           // Categories
           if (summary!.achievementsByCategory.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _SectionHeader(title: 'BY CATEGORY'),
+            _SectionHeader(title: 'BY CATEGORY', isDark: isDark),
             const SizedBox(height: 12),
-            _CategoriesGrid(categories: summary!.achievementsByCategory),
+            _CategoriesGrid(
+                categories: summary!.achievementsByCategory, isDark: isDark),
           ],
 
           const SizedBox(height: 100),
@@ -158,8 +169,9 @@ class _SummaryTab extends StatelessWidget {
 
 class _BadgesTab extends StatelessWidget {
   final List<UserAchievement> achievements;
+  final bool isDark;
 
-  const _BadgesTab({required this.achievements});
+  const _BadgesTab({required this.achievements, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +180,7 @@ class _BadgesTab extends StatelessWidget {
         icon: Icons.military_tech,
         title: 'No badges earned',
         subtitle: 'Keep working out to unlock badges!',
+        isDark: isDark,
       );
     }
 
@@ -182,7 +195,7 @@ class _BadgesTab extends StatelessWidget {
       itemCount: achievements.length,
       itemBuilder: (context, index) {
         final achievement = achievements[index];
-        return _BadgeTile(achievement: achievement)
+        return _BadgeTile(achievement: achievement, isDark: isDark)
             .animate()
             .fadeIn(delay: (50 * index).ms)
             .scale(delay: (50 * index).ms);
@@ -197,8 +210,9 @@ class _BadgesTab extends StatelessWidget {
 
 class _PersonalRecordsTab extends StatelessWidget {
   final List<PersonalRecord> records;
+  final bool isDark;
 
-  const _PersonalRecordsTab({required this.records});
+  const _PersonalRecordsTab({required this.records, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +221,7 @@ class _PersonalRecordsTab extends StatelessWidget {
         icon: Icons.trending_up,
         title: 'No personal records',
         subtitle: 'Lift heavier to set new PRs!',
+        isDark: isDark,
       );
     }
 
@@ -217,7 +232,7 @@ class _PersonalRecordsTab extends StatelessWidget {
         final record = records[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _PRCard(record: record)
+          child: _PRCard(record: record, isDark: isDark)
               .animate()
               .fadeIn(delay: (50 * index).ms)
               .slideX(begin: 0.1, delay: (50 * index).ms),
@@ -234,64 +249,76 @@ class _PersonalRecordsTab extends StatelessWidget {
 class _PointsCard extends StatelessWidget {
   final int totalPoints;
   final int totalAchievements;
+  final bool isDark;
 
   const _PointsCard({
     required this.totalPoints,
     required this.totalAchievements,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.purple.withOpacity(0.3),
-            AppColors.cyan.withOpacity(0.3),
+            purple.withOpacity(0.3),
+            cyan.withOpacity(0.3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        border: Border.all(color: cyan.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.emoji_events,
             size: 48,
-            color: AppColors.orange,
+            color: orange,
           ),
           const SizedBox(height: 12),
           Text(
             '$totalPoints',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 48,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
           ),
-          const Text(
+          Text(
             'Total Points',
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.glassSurface,
+              color: glassSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               '$totalAchievements Achievements Earned',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: textSecondary,
               ),
             ),
           ),
@@ -303,8 +330,9 @@ class _PointsCard extends StatelessWidget {
 
 class _StreakCard extends StatelessWidget {
   final UserStreak streak;
+  final bool isDark;
 
-  const _StreakCard({required this.streak});
+  const _StreakCard({required this.streak, required this.isDark});
 
   IconData get _icon {
     switch (streak.streakType) {
@@ -321,27 +349,34 @@ class _StreakCard extends StatelessWidget {
     }
   }
 
-  Color get _color {
+  Color _getColor() {
     switch (streak.streakType) {
       case 'workout':
-        return AppColors.cyan;
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;
       case 'hydration':
-        return AppColors.electricBlue;
+        return isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
       case 'protein':
-        return AppColors.purple;
+        return isDark ? AppColors.purple : AppColorsLight.purple;
       case 'sleep':
-        return AppColors.magenta;
+        return isDark ? AppColors.magenta : AppColorsLight.magenta;
       default:
-        return AppColors.orange;
+        return isDark ? AppColors.orange : AppColorsLight.orange;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final color = _getColor();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -350,10 +385,10 @@ class _StreakCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _color.withOpacity(0.2),
+              color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(_icon, color: _color, size: 24),
+            child: Icon(_icon, color: color, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -362,17 +397,17 @@ class _StreakCard extends StatelessWidget {
               children: [
                 Text(
                   _formatStreakType(streak.streakType),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 Text(
                   'Best: ${streak.longestStreak} days',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textMuted,
+                    color: textMuted,
                   ),
                 ),
               ],
@@ -383,27 +418,27 @@ class _StreakCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.local_fire_department,
-                    color: AppColors.orange,
+                    color: orange,
                     size: 20,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${streak.currentStreak}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
+                      color: orange,
                     ),
                   ),
                 ],
               ),
-              const Text(
+              Text(
                 'days',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted,
+                  color: textMuted,
                 ),
               ),
             ],
@@ -423,19 +458,25 @@ class _StreakCard extends StatelessWidget {
 
 class _AchievementCard extends StatelessWidget {
   final UserAchievement achievement;
+  final bool isDark;
 
-  const _AchievementCard({required this.achievement});
+  const _AchievementCard({required this.achievement, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final type = achievement.achievement;
     if (type == null) return const SizedBox.shrink();
 
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _getTierColor(type.tier).withOpacity(0.3)),
       ),
@@ -462,18 +503,18 @@ class _AchievementCard extends StatelessWidget {
               children: [
                 Text(
                   type.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   type.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textMuted,
+                    color: textMuted,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -508,29 +549,34 @@ class _AchievementCard extends StatelessWidget {
       case 'silver':
         return const Color(0xFFC0C0C0);
       case 'gold':
-        return AppColors.orange;
+        return isDark ? AppColors.orange : AppColorsLight.orange;
       case 'platinum':
-        return AppColors.cyan;
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;
       default:
-        return AppColors.textSecondary;
+        return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     }
   }
 }
 
 class _BadgeTile extends StatelessWidget {
   final UserAchievement achievement;
+  final bool isDark;
 
-  const _BadgeTile({required this.achievement});
+  const _BadgeTile({required this.achievement, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final type = achievement.achievement;
     if (type == null) return const SizedBox.shrink();
 
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _getTierColor(type.tier).withOpacity(0.3)),
       ),
@@ -559,10 +605,10 @@ class _BadgeTile extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             type.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: textPrimary,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,
@@ -597,28 +643,36 @@ class _BadgeTile extends StatelessWidget {
       case 'silver':
         return const Color(0xFFC0C0C0);
       case 'gold':
-        return AppColors.orange;
+        return isDark ? AppColors.orange : AppColorsLight.orange;
       case 'platinum':
-        return AppColors.cyan;
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;
       default:
-        return AppColors.textSecondary;
+        return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     }
   }
 }
 
 class _PRCard extends StatelessWidget {
   final PersonalRecord record;
+  final bool isDark;
 
-  const _PRCard({required this.record});
+  const _PRCard({required this.record, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+        border: Border.all(color: orange.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -626,12 +680,12 @@ class _PRCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.2),
+              color: orange.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.trending_up,
-              color: AppColors.orange,
+              color: orange,
               size: 24,
             ),
           ),
@@ -642,17 +696,17 @@ class _PRCard extends StatelessWidget {
               children: [
                 Text(
                   record.exerciseName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
                 Text(
                   _formatDate(record.achievedAt),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: textMuted,
                   ),
                 ),
               ],
@@ -663,19 +717,19 @@ class _PRCard extends StatelessWidget {
             children: [
               Text(
                 '${record.recordValue.toStringAsFixed(1)} ${record.recordUnit}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.orange,
+                  color: orange,
                 ),
               ),
               if (record.improvementPercentage != null)
                 Text(
                   '+${record.improvementPercentage!.toStringAsFixed(1)}%',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.success,
+                    color: success,
                   ),
                 ),
             ],
@@ -687,8 +741,18 @@ class _PRCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -696,11 +760,16 @@ class _PRCard extends StatelessWidget {
 
 class _CategoriesGrid extends StatelessWidget {
   final Map<String, int> categories;
+  final bool isDark;
 
-  const _CategoriesGrid({required this.categories});
+  const _CategoriesGrid({required this.categories, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -708,7 +777,7 @@ class _CategoriesGrid extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: elevated,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -722,9 +791,9 @@ class _CategoriesGrid extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '${_formatCategory(entry.key)}: ${entry.value}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textPrimary,
+                  color: textPrimary,
                 ),
               ),
             ],
@@ -754,17 +823,17 @@ class _CategoriesGrid extends StatelessWidget {
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
       case 'strength':
-        return AppColors.purple;
+        return isDark ? AppColors.purple : AppColorsLight.purple;
       case 'consistency':
-        return AppColors.cyan;
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;
       case 'weight':
-        return AppColors.orange;
+        return isDark ? AppColors.orange : AppColorsLight.orange;
       case 'cardio':
-        return AppColors.coral;
+        return isDark ? AppColors.coral : AppColorsLight.coral;
       case 'habit':
-        return AppColors.teal;
+        return isDark ? AppColors.teal : AppColorsLight.teal;
       default:
-        return AppColors.textSecondary;
+        return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     }
   }
 
@@ -778,17 +847,18 @@ class _CategoriesGrid extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
+  final bool isDark;
 
-  const _SectionHeader({required this.title});
+  const _SectionHeader({required this.title, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: AppColors.textMuted,
+        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
         letterSpacing: 1.5,
       ),
     );
@@ -799,35 +869,41 @@ class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool isDark;
 
   const _EmptyState({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textMuted),
+          Icon(icon, size: 64, color: textMuted),
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textMuted,
+              color: textMuted,
             ),
           ),
         ],

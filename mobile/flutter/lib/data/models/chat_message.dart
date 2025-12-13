@@ -24,15 +24,25 @@ class AgentConfig {
   final String displayName;
   final IconData icon;
   final Color primaryColor;
-  final Color backgroundColor;
+  final Color backgroundColorDark;
+  final Color backgroundColorLight;
 
   const AgentConfig({
     required this.name,
     required this.displayName,
     required this.icon,
     required this.primaryColor,
-    required this.backgroundColor,
+    required this.backgroundColorDark,
+    required this.backgroundColorLight,
   });
+
+  /// Get background color based on brightness
+  Color getBackgroundColor(Brightness brightness) {
+    return brightness == Brightness.dark ? backgroundColorDark : backgroundColorLight;
+  }
+
+  /// Legacy getter for backwards compatibility (returns dark mode color)
+  Color get backgroundColor => backgroundColorDark;
 
   /// Get agent config by type
   static AgentConfig forType(AgentType type) {
@@ -43,7 +53,8 @@ class AgentConfig {
           displayName: 'AI Coach',
           icon: Icons.smart_toy,
           primaryColor: Color(0xFF00D9FF), // Cyan
-          backgroundColor: Color(0xFF1A3A4A),
+          backgroundColorDark: Color(0xFF1A3A4A),
+          backgroundColorLight: Color(0xFFE0F7FA), // Light cyan tint
         );
       case AgentType.nutrition:
         return const AgentConfig(
@@ -51,7 +62,8 @@ class AgentConfig {
           displayName: 'Nutrition Expert',
           icon: Icons.restaurant_menu,
           primaryColor: Color(0xFF4CAF50), // Green
-          backgroundColor: Color(0xFF1A3A2A),
+          backgroundColorDark: Color(0xFF1A3A2A),
+          backgroundColorLight: Color(0xFFE8F5E9), // Light green tint
         );
       case AgentType.workout:
         return const AgentConfig(
@@ -59,7 +71,8 @@ class AgentConfig {
           displayName: 'Workout Specialist',
           icon: Icons.fitness_center,
           primaryColor: Color(0xFFFF6B35), // Orange
-          backgroundColor: Color(0xFF3A2A1A),
+          backgroundColorDark: Color(0xFF3A2A1A),
+          backgroundColorLight: Color(0xFFFFF3E0), // Light orange tint
         );
       case AgentType.injury:
         return const AgentConfig(
@@ -67,7 +80,8 @@ class AgentConfig {
           displayName: 'Recovery Advisor',
           icon: Icons.healing,
           primaryColor: Color(0xFFE91E63), // Pink
-          backgroundColor: Color(0xFF3A1A2A),
+          backgroundColorDark: Color(0xFF3A1A2A),
+          backgroundColorLight: Color(0xFFFCE4EC), // Light pink tint
         );
       case AgentType.hydration:
         return const AgentConfig(
@@ -75,7 +89,8 @@ class AgentConfig {
           displayName: 'Hydration Tracker',
           icon: Icons.water_drop,
           primaryColor: Color(0xFF2196F3), // Blue
-          backgroundColor: Color(0xFF1A2A3A),
+          backgroundColorDark: Color(0xFF1A2A3A),
+          backgroundColorLight: Color(0xFFE3F2FD), // Light blue tint
         );
     }
   }

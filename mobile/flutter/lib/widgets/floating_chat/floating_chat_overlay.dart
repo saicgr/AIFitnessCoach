@@ -184,8 +184,6 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
   final _focusNode = FocusNode();
   bool _isLoading = false;
 
-  bool _hasScrolledInitially = false;
-
   @override
   void initState() {
     super.initState();
@@ -203,14 +201,19 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool animate = true}) {
+    // With reverse: true, position 0 is the bottom (newest messages)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        if (animate) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(0);
+        }
       }
     });
   }
@@ -309,23 +312,30 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   });
                 }
 
-                // Scroll to bottom when messages first load
-                if (!_hasScrolledInitially && messages.isNotEmpty) {
-                  _hasScrolledInitially = true;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _scrollToBottom();
-                  });
-                }
-
+                // Use reverse: true - this automatically shows newest at bottom
+                // With reverse: true, index 0 renders at the BOTTOM of screen
+                // So index 0 = newest message (last in array)
                 return ListView.builder(
                   controller: _scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: messages.length + (_isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == messages.length && _isLoading) {
+                    // With reverse: true, index 0 is at bottom
+                    // Typing indicator should be at the very bottom (index 0)
+                    if (_isLoading && index == 0) {
                       return const _TypingIndicator();
                     }
-                    return _MessageBubble(message: messages[index]);
+
+                    // Adjust for typing indicator
+                    final msgIndex = _isLoading ? index - 1 : index;
+
+                    // Access messages in reverse: index 0 = newest = messages.length - 1
+                    final actualIndex = messages.length - 1 - msgIndex;
+                    if (actualIndex < 0 || actualIndex >= messages.length) {
+                      return const SizedBox.shrink();
+                    }
+                    return _MessageBubble(message: messages[actualIndex]);
                   },
                 );
               },
@@ -603,6 +613,10 @@ class _MessageBubble extends StatelessWidget {
     }
 
     // Assistant message with agent color and icon
+    final brightness = Theme.of(context).brightness;
+    final agentBgColor = agentConfig.getBackgroundColor(brightness);
+    final textColor = brightness == Brightness.dark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -632,7 +646,7 @@ class _MessageBubble extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: agentConfig.backgroundColor,
+                    color: agentBgColor,
                     borderRadius: BorderRadius.circular(16).copyWith(
                       bottomLeft: const Radius.circular(4),
                     ),
@@ -657,8 +671,8 @@ class _MessageBubble extends StatelessWidget {
                       // Message content
                       Text(
                         message.content,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: textColor,
                           fontSize: 14,
                           height: 1.4,
                         ),
