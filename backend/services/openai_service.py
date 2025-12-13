@@ -683,12 +683,76 @@ Return ONLY a JSON object with:
                 targets = ', '.join(target_muscles) if target_muscles else 'multiple muscle groups'
                 return f"This {workout_name} targets {targets} with {len(exercises)} exercises designed to help you reach your fitness goals."
 
-    def get_coach_system_prompt(self, context: str = "", intent: str = None, action_context: dict = None) -> str:
+    def get_agent_personality(self, agent_type: str = "coach") -> dict:
+        """
+        Get agent-specific personality settings.
+
+        Returns dict with:
+        - name: Agent display name
+        - emoji: Agent emoji
+        - greeting: How the agent greets users
+        - personality: Core personality traits
+        - expertise: What the agent specializes in
+        """
+        agents = {
+            "coach": {
+                "name": "AI Coach",
+                "emoji": "🏋️",
+                "greeting": "Hey there! I'm your AI Fitness Coach.",
+                "personality": "motivating, supportive, and knowledgeable about all aspects of fitness",
+                "expertise": "workout planning, exercise form, fitness motivation, and overall wellness",
+                "color": "cyan",
+            },
+            "nutrition": {
+                "name": "Nutrition Expert",
+                "emoji": "🥗",
+                "greeting": "Hi! I'm your Nutrition Expert.",
+                "personality": "friendly, health-conscious, and passionate about balanced eating",
+                "expertise": "meal planning, macros, pre/post workout nutrition, healthy recipes, and dietary advice",
+                "color": "green",
+            },
+            "workout": {
+                "name": "Workout Specialist",
+                "emoji": "💪",
+                "greeting": "What's up! I'm your Workout Specialist.",
+                "personality": "energetic, technical, and focused on proper form and technique",
+                "expertise": "exercise selection, workout modifications, muscle targeting, and training techniques",
+                "color": "orange",
+            },
+            "injury": {
+                "name": "Recovery Advisor",
+                "emoji": "🏥",
+                "greeting": "Hello! I'm your Recovery Advisor.",
+                "personality": "caring, cautious, and focused on safe recovery and injury prevention",
+                "expertise": "injury prevention, recovery exercises, stretching, mobility work, and safe modifications",
+                "color": "pink",
+            },
+            "hydration": {
+                "name": "Hydration Coach",
+                "emoji": "💧",
+                "greeting": "Hey! I'm your Hydration Coach.",
+                "personality": "refreshing, encouraging, and focused on optimal hydration",
+                "expertise": "water intake tracking, hydration timing, electrolytes, and performance hydration",
+                "color": "blue",
+            },
+        }
+        return agents.get(agent_type, agents["coach"])
+
+    def get_coach_system_prompt(self, context: str = "", intent: str = None, action_context: dict = None, agent_type: str = "coach") -> str:
         """
         Get the system prompt for the AI coach.
 
         MODIFY THIS to change the coach's personality/behavior.
+
+        Args:
+            context: Current context information
+            intent: Detected intent for action acknowledgment
+            action_context: Context for the action taken
+            agent_type: Type of agent (coach, nutrition, workout, injury, hydration)
         """
+        # Get agent-specific personality
+        agent = self.get_agent_personality(agent_type)
+
         # Build action acknowledgment based on intent
         action_acknowledgment = ""
         if intent and action_context:
@@ -719,7 +783,17 @@ Return ONLY a JSON object with:
                 amount = action_context.get("hydration_amount", 1)
                 action_acknowledgment = f"\n\nACTION TAKEN: You have logged {amount} glass(es) of water for the user. Acknowledge this and encourage good hydration habits."
 
-        return f'''You are an expert AI fitness coach. Your role is to:
+        # Agent-specific introduction
+        agent_intro = f'''{agent["emoji"]} YOU ARE: {agent["name"]}
+Your personality is {agent["personality"]}.
+You specialize in {agent["expertise"]}.
+
+When greeting users or introducing yourself, say something like: "{agent["greeting"]}"
+'''
+
+        return f'''{agent_intro}
+
+You are an expert AI fitness coach. Your role is to:
 
 1. Help users with their fitness journey
 2. Modify workouts based on their needs instantly

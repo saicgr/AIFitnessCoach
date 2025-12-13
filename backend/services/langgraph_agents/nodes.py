@@ -501,8 +501,12 @@ async def response_after_tools_node(state: FitnessCoachState) -> Dict[str, Any]:
 
     full_context = "\n".join(context_parts)
 
+    # Get mentioned agent for agent-specific personality
+    agent_type = state.get("mentioned_agent") or "coach"
+    logger.info(f"[Response After Tools] Using agent personality: {agent_type}")
+
     # Get proper system prompt with instructions for natural response
-    base_prompt = openai_service.get_coach_system_prompt(full_context)
+    base_prompt = openai_service.get_coach_system_prompt(full_context, agent_type=agent_type)
     system_prompt = base_prompt + """
 
 CRITICAL RESPONSE INSTRUCTIONS:
@@ -600,7 +604,11 @@ async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
         }
         logger.info(f"[Simple Response] Action intent detected: {intent_str}, context: {action_context}")
 
-    system_prompt = openai_service.get_coach_system_prompt(full_context, intent=intent_str, action_context=action_context)
+    # Get mentioned agent for agent-specific personality
+    agent_type = state.get("mentioned_agent") or "coach"
+    logger.info(f"[Simple Response] Using agent personality: {agent_type}")
+
+    system_prompt = openai_service.get_coach_system_prompt(full_context, intent=intent_str, action_context=action_context, agent_type=agent_type)
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
