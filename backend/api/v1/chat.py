@@ -93,7 +93,7 @@ async def send_message(
 
 class ChatHistoryItem(BaseModel):
     """Single chat history item."""
-    id: int
+    id: str  # UUID string from Supabase
     role: str  # 'user' or 'assistant'
     content: str
     timestamp: str
@@ -117,7 +117,7 @@ async def get_chat_history(user_id: str, limit: int = 100):
         messages: List[ChatHistoryItem] = []
         for row in result:
             timestamp = str(row.get("timestamp", ""))
-            row_id = row.get("id", 0)
+            row_id = str(row.get("id", ""))
 
             # Parse context_json for action_data
             action_data = None
@@ -130,7 +130,7 @@ async def get_chat_history(user_id: str, limit: int = 100):
             # Add user message
             if row.get("user_message"):
                 messages.append(ChatHistoryItem(
-                    id=row_id * 2,  # Unique ID for user message
+                    id=f"{row_id}_user",  # Unique ID for user message
                     role="user",
                     content=row.get("user_message", ""),
                     timestamp=timestamp,
@@ -140,7 +140,7 @@ async def get_chat_history(user_id: str, limit: int = 100):
             # Add assistant response
             if row.get("ai_response"):
                 messages.append(ChatHistoryItem(
-                    id=row_id * 2 + 1,  # Unique ID for assistant message
+                    id=f"{row_id}_assistant",  # Unique ID for assistant message
                     role="assistant",
                     content=row.get("ai_response", ""),
                     timestamp=timestamp,

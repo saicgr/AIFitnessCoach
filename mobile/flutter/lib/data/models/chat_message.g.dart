@@ -67,7 +67,7 @@ Map<String, dynamic> _$ChatResponseToJson(ChatResponse instance) =>
 
 ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
     ChatHistoryItem(
-      id: (json['id'] as num?)?.toInt(),
+      id: json['id'] as String?,
       role: json['role'] as String,
       content: json['content'] as String,
       timestamp: json['timestamp'] as String?,

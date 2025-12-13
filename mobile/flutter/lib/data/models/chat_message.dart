@@ -105,7 +105,7 @@ class ChatResponse {
 /// Chat history item
 @JsonSerializable()
 class ChatHistoryItem {
-  final int? id;
+  final String? id;  // UUID string from backend
   final String role;
   final String content;
   final String? timestamp;
@@ -126,7 +126,7 @@ class ChatHistoryItem {
 
   /// Convert to ChatMessage
   ChatMessage toChatMessage() => ChatMessage(
-        id: id?.toString(),
+        id: id,
         role: role,
         content: content,
         createdAt: timestamp,
