@@ -55,6 +55,8 @@ class LangGraphCoachService:
             "extracted_muscle_groups": [],
             "modification": None,
             "body_part": None,
+            "setting_name": None,
+            "setting_value": None,
 
             # RAG context (will be filled by nodes)
             "rag_documents": [],

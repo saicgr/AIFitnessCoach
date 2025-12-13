@@ -41,6 +41,8 @@ async def intent_extractor_node(state: FitnessCoachState) -> Dict[str, Any]:
         "extracted_muscle_groups": extraction.muscle_groups,
         "modification": extraction.modification,
         "body_part": extraction.body_part,
+        "setting_name": extraction.setting_name,
+        "setting_value": extraction.setting_value,
     }
 
 
@@ -84,11 +86,20 @@ def should_use_tools(state: FitnessCoachState) -> Literal["agent", "respond"]:
     - The intent is nutrition-related
     - The intent is injury-related (needs injury management tools)
 
+    Routes to respond (no tools) for:
+    - App settings changes (handled via action_data)
+    - General questions
+
     This is the proper LangGraph way - let the LLM with bound tools decide.
     """
     has_workout = state.get("current_workout") is not None
     has_image = state.get("image_base64") is not None
     intent = state.get("intent")
+
+    # Check for app settings intent - doesn't need tools, just action_data
+    if intent == CoachIntent.CHANGE_SETTING:
+        logger.info("[Router] Change setting intent -> respond (no tools needed)")
+        return "respond"
 
     # Check for nutrition-related intents
     nutrition_intents = [
@@ -689,19 +700,32 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
             }
 
     # If no tool results, use intent (fallback to current workout if available)
-    if not action_data and intent and current_workout:
-        workout_id = current_workout.get("id")
-        if intent == CoachIntent.ADD_EXERCISE:
-            action_data = {
-                "action": "add_exercise",
-                "workout_id": workout_id,
-                "exercise_names": state.get("extracted_exercises", []),
-            }
-        elif intent == CoachIntent.REMOVE_EXERCISE:
-            action_data = {
-                "action": "remove_exercise",
-                "workout_id": workout_id,
-                "exercise_names": state.get("extracted_exercises", []),
-            }
+    if not action_data and intent:
+        # Handle app settings changes (no tools needed)
+        if intent == CoachIntent.CHANGE_SETTING:
+            setting_name = state.get("setting_name")
+            setting_value = state.get("setting_value")
+            if setting_name is not None:
+                action_data = {
+                    "action": "change_setting",
+                    "setting_name": setting_name,
+                    "setting_value": setting_value,
+                    "success": True,
+                }
+                logger.info(f"[Action Data] Setting change: {setting_name}={setting_value}")
+        elif current_workout:
+            workout_id = current_workout.get("id")
+            if intent == CoachIntent.ADD_EXERCISE:
+                action_data = {
+                    "action": "add_exercise",
+                    "workout_id": workout_id,
+                    "exercise_names": state.get("extracted_exercises", []),
+                }
+            elif intent == CoachIntent.REMOVE_EXERCISE:
+                action_data = {
+                    "action": "remove_exercise",
+                    "workout_id": workout_id,
+                    "exercise_names": state.get("extracted_exercises", []),
+                }
 
     return {"action_data": action_data}

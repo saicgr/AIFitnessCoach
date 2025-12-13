@@ -22,6 +22,8 @@ class CoachIntent(str, Enum):
     ANALYZE_FOOD = "analyze_food"
     NUTRITION_SUMMARY = "nutrition_summary"
     RECENT_MEALS = "recent_meals"
+    # App settings intent
+    CHANGE_SETTING = "change_setting"
 
 
 class UserProfile(BaseModel):
@@ -93,6 +95,9 @@ class IntentExtraction(BaseModel):
     muscle_groups: List[str] = []
     modification: Optional[str] = None
     body_part: Optional[str] = None
+    # App settings fields
+    setting_name: Optional[str] = None
+    setting_value: Optional[bool] = None
 
 
 class ChatResponse(BaseModel):

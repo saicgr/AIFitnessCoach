@@ -28,6 +28,9 @@ class FitnessCoachState(TypedDict):
     extracted_muscle_groups: List[str]
     modification: Optional[str]
     body_part: Optional[str]
+    # App settings
+    setting_name: Optional[str]
+    setting_value: Optional[bool]
 
     # RAG context
     rag_documents: List[Dict[str, Any]]

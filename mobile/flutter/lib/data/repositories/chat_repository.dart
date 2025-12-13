@@ -1,8 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/theme_provider.dart';
 import '../models/chat_message.dart';
+import '../models/workout.dart';
+import '../models/user.dart';
 import '../services/api_client.dart';
+import 'workout_repository.dart';
+import 'auth_repository.dart';
 
 /// Chat repository provider
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
@@ -10,13 +16,16 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(apiClient);
 });
 
-/// Chat messages provider
+/// Chat messages provider - now includes workout context and settings control
 final chatMessagesProvider =
     StateNotifierProvider<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>>(
         (ref) {
   final repository = ref.watch(chatRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
-  return ChatMessagesNotifier(repository, apiClient);
+  final workoutsNotifier = ref.watch(workoutsProvider.notifier);
+  final authState = ref.watch(authStateProvider);
+  final themeNotifier = ref.watch(themeModeProvider.notifier);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, authState.user, themeNotifier);
 });
 
 /// Chat repository for API calls
@@ -91,9 +100,12 @@ class ChatRepository {
 class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final ChatRepository _repository;
   final ApiClient _apiClient;
+  final WorkoutsNotifier _workoutsNotifier;
+  final User? _user;
+  final ThemeModeNotifier _themeNotifier;
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._user, this._themeNotifier)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -146,11 +158,82 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         'content': m.content,
       }).toList();
 
+      // Build user profile context (matches backend UserProfile model)
+      Map<String, dynamic>? userProfile;
+      if (_user != null) {
+        final user = _user!;
+        userProfile = {
+          'id': user.id,  // Required by backend
+          'fitness_level': user.fitnessLevel ?? 'beginner',
+          'goals': user.goalsList,
+          'equipment': user.equipmentList,
+          'active_injuries': user.injuriesList,
+        };
+        debugPrint('🤖 [Chat] Sending user profile context: $userProfile');
+      }
+
+      // Build current workout context (matches backend WorkoutContext model)
+      Map<String, dynamic>? currentWorkout;
+      final nextWorkout = _workoutsNotifier.nextWorkout;
+      if (nextWorkout != null) {
+        final exercisesList = nextWorkout.exercises?.map((e) {
+          return <String, dynamic>{
+            'name': e.name,
+            'sets': e.sets,
+            'reps': e.reps,
+            'duration_seconds': e.durationSeconds,
+            'muscle_group': e.muscleGroup,
+            'equipment': e.equipment,
+          };
+        }).toList() ?? <Map<String, dynamic>>[];
+
+        currentWorkout = {
+          'id': nextWorkout.id is int ? nextWorkout.id : int.tryParse(nextWorkout.id.toString()) ?? 0,
+          'name': nextWorkout.name ?? 'Workout',
+          'type': nextWorkout.type ?? 'strength',
+          'difficulty': nextWorkout.difficulty ?? 'intermediate',
+          'scheduled_date': nextWorkout.scheduledDate,
+          'is_completed': nextWorkout.isCompleted ?? false,
+          'exercises': exercisesList,
+        };
+        debugPrint('🤖 [Chat] Sending current workout context: ${nextWorkout.name} with ${exercisesList.length} exercises');
+      }
+
+      // Build workout schedule context (matches backend WorkoutScheduleContext)
+      Map<String, dynamic>? workoutSchedule;
+      final upcoming = _workoutsNotifier.upcomingWorkouts;
+      // Only send schedule if we have today's workout
+      if (nextWorkout != null) {
+        final thisWeekWorkouts = upcoming.take(5).map((w) {
+          return <String, dynamic>{
+            'id': w.id is int ? w.id : int.tryParse(w.id.toString()) ?? 0,
+            'name': w.name ?? 'Workout',
+            'type': w.type ?? 'strength',
+            'difficulty': w.difficulty ?? 'intermediate',
+            'scheduled_date': w.scheduledDate,
+            'is_completed': w.isCompleted ?? false,
+            'exercises': <Map<String, dynamic>>[],
+          };
+        }).toList();
+
+        workoutSchedule = {
+          'today': currentWorkout,
+          'thisWeek': thisWeekWorkouts,
+          'recentCompleted': <Map<String, dynamic>>[],
+        };
+      }
+
       final response = await _repository.sendMessage(
         message: message,
         userId: userId,
+        userProfile: userProfile,
+        currentWorkout: currentWorkout,
+        workoutSchedule: workoutSchedule,
         conversationHistory: history,
       );
+
+      // Process action_data if present
+      _processActionData(response.actionData);
 
       // Add assistant response
       final assistantMessage = ChatMessage(
@@ -184,5 +267,48 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Clear history (alias for clear)
   void clearHistory() {
     clear();
+  }
+
+  /// Process action_data from AI response
+  void _processActionData(Map<String, dynamic>? actionData) {
+    if (actionData == null) return;
+
+    final action = actionData['action'] as String?;
+    debugPrint('🤖 [Chat] Processing action_data: $action');
+
+    switch (action) {
+      case 'change_setting':
+        _handleSettingChange(actionData);
+        break;
+      // Other actions can be added here (workout modifications, etc.)
+      default:
+        debugPrint('🤖 [Chat] Unknown action: $action');
+    }
+  }
+
+  /// Handle app setting changes from AI
+  void _handleSettingChange(Map<String, dynamic> actionData) {
+    final settingName = actionData['setting_name'] as String?;
+    final settingValue = actionData['setting_value'] as bool?;
+
+    debugPrint('🤖 [Chat] Changing setting: $settingName = $settingValue');
+
+    switch (settingName) {
+      case 'dark_mode':
+        if (settingValue == true) {
+          _themeNotifier.setTheme(ThemeMode.dark);
+          debugPrint('🌙 [Chat] Dark mode enabled via AI');
+        } else if (settingValue == false) {
+          _themeNotifier.setTheme(ThemeMode.light);
+          debugPrint('☀️ [Chat] Light mode enabled via AI');
+        }
+        break;
+      case 'notifications':
+        // TODO: Implement notification toggle when needed
+        debugPrint('🔔 [Chat] Notifications setting change requested: $settingValue');
+        break;
+      default:
+        debugPrint('🤖 [Chat] Unknown setting: $settingName');
+    }
   }
 }
