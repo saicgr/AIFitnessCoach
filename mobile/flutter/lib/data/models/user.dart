@@ -120,10 +120,47 @@ class User extends Equatable {
       if (decoded is Map && decoded['workouts_per_week'] != null) {
         return decoded['workouts_per_week'] as int;
       }
+      // Fall back to workout_days length if available
+      if (decoded is Map && decoded['workout_days'] != null) {
+        final days = decoded['workout_days'];
+        if (days is List) return days.length;
+      }
       return null;
     } catch (_) {
       return null;
     }
+  }
+
+  /// Get workout days from preferences (0=Mon, 6=Sun)
+  List<int> get workoutDays {
+    if (preferences == null || preferences!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['workout_days'] != null) {
+        final days = decoded['workout_days'];
+        if (days is List) {
+          return days.map((e) => e as int).toList()..sort();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Get workout days as abbreviated day names (Mon, Tue, etc.)
+  List<String> get workoutDayNames {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final days = workoutDays;
+    if (days.isEmpty) return [];
+    return days.map((d) => d >= 0 && d < 7 ? dayNames[d] : '').where((s) => s.isNotEmpty).toList();
+  }
+
+  /// Get workout days as formatted string (e.g., "Mon, Wed, Fri")
+  String get workoutDaysFormatted {
+    final names = workoutDayNames;
+    if (names.isEmpty) return 'Not set';
+    return names.join(', ');
   }
 
   @override

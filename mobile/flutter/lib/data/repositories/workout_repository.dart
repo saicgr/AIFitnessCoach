@@ -174,6 +174,75 @@ class WorkoutRepository {
     }
   }
 
+  /// Update program preferences and regenerate all workouts
+  Future<void> updateProgramAndRegenerate({
+    required String userId,
+    String? difficulty,
+    int? durationMinutes,
+    List<String>? focusAreas,
+    List<String>? injuries,
+    List<String>? equipment,
+    String? workoutType,
+    List<String>? workoutDays,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Updating program and regenerating all workouts');
+      debugPrint('  - difficulty: $difficulty');
+      debugPrint('  - durationMinutes: $durationMinutes');
+      debugPrint('  - focusAreas: $focusAreas');
+      debugPrint('  - injuries: $injuries');
+      debugPrint('  - equipment: $equipment');
+      debugPrint('  - workoutType: $workoutType');
+      debugPrint('  - workoutDays: $workoutDays');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/update-program',
+        data: {
+          'user_id': userId,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
+          if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
+          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+          if (workoutType != null) 'workout_type': workoutType,
+          if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Program updated and workouts regenerated');
+      } else {
+        throw Exception('Failed to update program: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error updating program: $e');
+      rethrow;
+    }
+  }
+
+  /// Get user's current program preferences
+  Future<ProgramPreferences?> getProgramPreferences(String userId) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching program preferences for user: $userId');
+      final response = await _apiClient.get(
+        '${ApiConstants.users}/$userId/program-preferences',
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Program preferences fetched');
+        return ProgramPreferences.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching program preferences: $e');
+      return null;
+    }
+  }
+
   /// Check if user needs more workouts and auto-generate if running low
   /// Returns a map with generation status
   Future<Map<String, dynamic>> checkAndRegenerateWorkouts(String userId) async {
@@ -361,11 +430,12 @@ class WorkoutRepository {
   }
 
   /// Get AI-generated workout summary
-  Future<String?> getWorkoutSummary(String workoutId) async {
+  Future<String?> getWorkoutSummary(String workoutId, {bool forceRegenerate = false}) async {
     try {
-      debugPrint('🔍 [Workout] Fetching AI summary for workout: $workoutId');
+      debugPrint('🔍 [Workout] Fetching AI summary for workout: $workoutId (force=$forceRegenerate)');
       final response = await _apiClient.get(
         '${ApiConstants.workouts}/$workoutId/summary',
+        queryParameters: forceRegenerate ? {'force_regenerate': 'true'} : null,
         options: Options(
           receiveTimeout: const Duration(minutes: 2), // AI generation can take time
         ),
@@ -382,6 +452,11 @@ class WorkoutRepository {
       debugPrint('❌ [Workout] Error fetching workout summary: $e');
       return null;
     }
+  }
+
+  /// Regenerate AI workout summary (bypasses cache)
+  Future<String?> regenerateWorkoutSummary(String workoutId) async {
+    return getWorkoutSummary(workoutId, forceRegenerate: true);
   }
 
   /// Create a workout log (when workout completes)
@@ -822,5 +897,53 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
     final completed = thisWeek.where((w) => w.isCompleted == true).length;
     return (completed, thisWeek.length);
+  }
+}
+
+/// Program preferences model for customization
+class ProgramPreferences {
+  final String? difficulty;
+  final int? durationMinutes;
+  final String? workoutType;
+  final List<String> workoutDays;
+  final List<String> equipment;
+  final List<String> focusAreas;
+  final List<String> injuries;
+  final String? lastUpdated;
+
+  ProgramPreferences({
+    this.difficulty,
+    this.durationMinutes,
+    this.workoutType,
+    this.workoutDays = const [],
+    this.equipment = const [],
+    this.focusAreas = const [],
+    this.injuries = const [],
+    this.lastUpdated,
+  });
+
+  factory ProgramPreferences.fromJson(Map<String, dynamic> json) {
+    return ProgramPreferences(
+      difficulty: json['difficulty'] as String?,
+      durationMinutes: json['duration_minutes'] as int?,
+      workoutType: json['workout_type'] as String?,
+      workoutDays: (json['workout_days'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      equipment: (json['equipment'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      focusAreas: (json['focus_areas'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      injuries: (json['injuries'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      lastUpdated: json['last_updated'] as String?,
+    );
   }
 }

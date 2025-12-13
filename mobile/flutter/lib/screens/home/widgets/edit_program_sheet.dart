@@ -2,49 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
-import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 
-/// Shows a bottom sheet for regenerating workout with customization options
-Future<Workout?> showRegenerateWorkoutSheet(
+/// Shows a bottom sheet for editing program preferences
+Future<bool?> showEditProgramSheet(
   BuildContext context,
   WidgetRef ref,
-  Workout workout,
 ) async {
   // Capture the parent theme to ensure proper inheritance in the modal
   final parentTheme = Theme.of(context);
 
-  return showModalBottomSheet<Workout>(
+  return showModalBottomSheet<bool>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
-      child: _RegenerateWorkoutSheet(workout: workout),
+      child: const _EditProgramSheet(),
     ),
   );
 }
 
-class _RegenerateWorkoutSheet extends ConsumerStatefulWidget {
-  final Workout workout;
-
-  const _RegenerateWorkoutSheet({required this.workout});
+class _EditProgramSheet extends ConsumerStatefulWidget {
+  const _EditProgramSheet();
 
   @override
-  ConsumerState<_RegenerateWorkoutSheet> createState() =>
-      _RegenerateWorkoutSheetState();
+  ConsumerState<_EditProgramSheet> createState() => _EditProgramSheetState();
 }
 
-class _RegenerateWorkoutSheetState
-    extends ConsumerState<_RegenerateWorkoutSheet> {
-  bool _isRegenerating = false;
+class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
+  bool _isUpdating = false;
+  bool _isLoading = true;
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
   String? _selectedWorkoutType;
   final Set<String> _selectedFocusAreas = {};
   final Set<String> _selectedInjuries = {};
   final Set<String> _selectedEquipment = {};
+  final Set<int> _selectedDays = {}; // 0 = Monday, 6 = Sunday
 
   // Custom "Other" inputs
   String _customFocusArea = '';
@@ -62,6 +58,7 @@ class _RegenerateWorkoutSheetState
   final TextEditingController _workoutTypeController = TextEditingController();
 
   final List<String> _difficulties = ['easy', 'medium', 'hard'];
+  final List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   final List<String> _workoutTypes = [
     'Strength',
     'HIIT',
@@ -106,29 +103,120 @@ class _RegenerateWorkoutSheetState
   @override
   void initState() {
     super.initState();
-    // Initialize with current workout values
-    _selectedDifficulty = widget.workout.difficulty?.toLowerCase() ?? 'medium';
-    _selectedDuration = (widget.workout.durationMinutes ?? 45).toDouble();
-    _selectedWorkoutType = widget.workout.type;
+    // Load preferences after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPreferences();
+    });
+  }
 
-    // Pre-select focus areas based on workout type
-    final type = widget.workout.type?.toLowerCase() ?? '';
-    if (type.contains('upper')) {
-      _selectedFocusAreas.addAll(['Chest', 'Back', 'Shoulders', 'Arms']);
-    } else if (type.contains('lower')) {
-      _selectedFocusAreas.addAll(['Legs', 'Glutes']);
-    } else if (type.contains('core')) {
-      _selectedFocusAreas.add('Core');
-    } else {
-      _selectedFocusAreas.add('Full Body');
+  Future<void> _loadPreferences() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      setState(() {
+        _isLoading = false;
+        // Set defaults if no user
+        _selectedDays.addAll([0, 2, 4]);
+        _selectedFocusAreas.add('Full Body');
+      });
+      return;
     }
 
-    // Pre-select equipment from workout
-    if (widget.workout.equipmentNeeded.isNotEmpty) {
-      for (final eq in widget.workout.equipmentNeeded) {
-        if (_equipmentOptions.contains(eq)) {
-          _selectedEquipment.add(eq);
-        }
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final prefs = await repo.getProgramPreferences(userId);
+
+      if (mounted) {
+        setState(() {
+          if (prefs != null) {
+            // Set difficulty
+            if (prefs.difficulty != null) {
+              _selectedDifficulty = prefs.difficulty!.toLowerCase();
+            }
+
+            // Set duration
+            if (prefs.durationMinutes != null) {
+              _selectedDuration = prefs.durationMinutes!.toDouble().clamp(15, 90);
+            }
+
+            // Set workout type
+            if (prefs.workoutType != null && prefs.workoutType!.isNotEmpty) {
+              // Check if it's a standard workout type
+              final normalizedType = _workoutTypes.firstWhere(
+                (t) => t.toLowerCase() == prefs.workoutType!.toLowerCase(),
+                orElse: () => '',
+              );
+              if (normalizedType.isNotEmpty) {
+                _selectedWorkoutType = normalizedType;
+              } else {
+                _customWorkoutType = prefs.workoutType!;
+              }
+            }
+
+            // Set workout days (convert day names to indices)
+            _selectedDays.clear();
+            if (prefs.workoutDays.isNotEmpty) {
+              final dayMap = {'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6};
+              for (final day in prefs.workoutDays) {
+                final index = dayMap[day];
+                if (index != null) {
+                  _selectedDays.add(index);
+                }
+              }
+            } else {
+              // Default to Mon, Wed, Fri
+              _selectedDays.addAll([0, 2, 4]);
+            }
+
+            // Set equipment
+            _selectedEquipment.clear();
+            for (final equip in prefs.equipment) {
+              if (_equipmentOptions.contains(equip)) {
+                _selectedEquipment.add(equip);
+              } else if (_customEquipment.isEmpty) {
+                _customEquipment = equip;
+              }
+            }
+
+            // Set focus areas
+            _selectedFocusAreas.clear();
+            for (final area in prefs.focusAreas) {
+              if (_focusAreas.contains(area)) {
+                _selectedFocusAreas.add(area);
+              } else if (_customFocusArea.isEmpty) {
+                _customFocusArea = area;
+              }
+            }
+            if (_selectedFocusAreas.isEmpty && _customFocusArea.isEmpty) {
+              _selectedFocusAreas.add('Full Body');
+            }
+
+            // Set injuries
+            _selectedInjuries.clear();
+            for (final injury in prefs.injuries) {
+              if (_injuries.contains(injury)) {
+                _selectedInjuries.add(injury);
+              } else if (_customInjury.isEmpty) {
+                _customInjury = injury;
+              }
+            }
+          } else {
+            // No preferences found, set defaults
+            _selectedDays.addAll([0, 2, 4]);
+            _selectedFocusAreas.add('Full Body');
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Set defaults on error
+          _selectedDays.addAll([0, 2, 4]);
+          _selectedFocusAreas.add('Full Body');
+        });
       }
     }
   }
@@ -142,14 +230,24 @@ class _RegenerateWorkoutSheetState
     super.dispose();
   }
 
-  Future<void> _regenerate() async {
-    setState(() => _isRegenerating = true);
+  Future<void> _updateProgram() async {
+    if (_selectedDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select at least one workout day'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isUpdating = true);
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
 
     if (userId == null) {
-      setState(() => _isRegenerating = false);
+      setState(() => _isUpdating = false);
       return;
     }
 
@@ -177,9 +275,11 @@ class _RegenerateWorkoutSheetState
           ? _customWorkoutType
           : _selectedWorkoutType;
 
+      // Convert day indices to day names for the API
+      final selectedDayNames = _selectedDays.map((i) => _dayNames[i]).toList();
+
       final repo = ref.read(workoutRepositoryProvider);
-      final newWorkout = await repo.regenerateWorkout(
-        workoutId: widget.workout.id!,
+      await repo.updateProgramAndRegenerate(
         userId: userId,
         difficulty: _selectedDifficulty,
         durationMinutes: _selectedDuration.round(),
@@ -187,17 +287,18 @@ class _RegenerateWorkoutSheetState
         injuries: allInjuries,
         equipment: allEquipment.isNotEmpty ? allEquipment : null,
         workoutType: workoutType,
+        workoutDays: selectedDayNames,
       );
 
       if (mounted) {
-        Navigator.pop(context, newWorkout);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isRegenerating = false);
+        setState(() => _isUpdating = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to regenerate: $e'),
+            content: Text('Failed to update program: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -213,7 +314,7 @@ class _RegenerateWorkoutSheetState
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
       decoration: BoxDecoration(
         color: colors.elevated,
@@ -244,12 +345,12 @@ class _RegenerateWorkoutSheetState
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: colors.purple.withOpacity(0.2),
+                      color: colors.cyan.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      Icons.auto_awesome,
-                      color: colors.purple,
+                      Icons.tune,
+                      color: colors.cyan,
                       size: 24,
                     ),
                   ),
@@ -259,7 +360,7 @@ class _RegenerateWorkoutSheetState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Regenerate Workout',
+                          'Customize Program',
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -268,7 +369,7 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Customize your new workout',
+                          'Adjust settings and regenerate future workouts',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: colors.textMuted,
@@ -279,7 +380,7 @@ class _RegenerateWorkoutSheetState
                   ),
                   IconButton(
                     onPressed:
-                        _isRegenerating ? null : () => Navigator.pop(context),
+                        _isUpdating ? null : () => Navigator.pop(context),
                     icon: Icon(Icons.close, color: colors.textSecondary),
                   ),
                 ],
@@ -288,15 +389,35 @@ class _RegenerateWorkoutSheetState
 
             Divider(height: 1, color: colors.cardBorder),
 
-            // Scrollable content
+            // Scrollable content or loading indicator
             Expanded(
-              child: SingleChildScrollView(
+              child: _isLoading
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(color: colors.cyan),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading your preferences...',
+                            style: TextStyle(
+                              color: colors.textMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Workout Days Selection
+                    _buildWorkoutDaysSection(colors),
+
                     // Workout Type Selection
                     _buildWorkoutTypeSection(colors),
 
@@ -323,10 +444,10 @@ class _RegenerateWorkoutSheetState
 
                     const SizedBox(height: 24),
 
-                    // Regenerate Button
-                    _buildRegenerateButton(colors),
+                    // Update Button
+                    _buildUpdateButton(colors),
 
-                    // Extra padding to account for FAB overlap
+                    // Extra padding
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -338,7 +459,7 @@ class _RegenerateWorkoutSheetState
     );
   }
 
-  Widget _buildWorkoutTypeSection(_SheetColors colors) {
+  Widget _buildWorkoutDaysSection(_SheetColors colors) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -346,7 +467,85 @@ class _RegenerateWorkoutSheetState
         children: [
           Row(
             children: [
-              Icon(Icons.category, size: 20, color: colors.cyan),
+              Icon(Icons.calendar_month, size: 20, color: colors.cyan),
+              const SizedBox(width: 8),
+              Text(
+                'Workout Days',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+              ),
+              const Spacer(),
+              Text(
+                '${_selectedDays.length} days/week',
+                style: TextStyle(color: colors.cyan, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Select which days you want to work out',
+            style: TextStyle(fontSize: 12, color: colors.textMuted),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(7, (index) {
+              final isSelected = _selectedDays.contains(index);
+              return GestureDetector(
+                onTap: _isUpdating
+                    ? null
+                    : () {
+                        setState(() {
+                          if (isSelected) {
+                            _selectedDays.remove(index);
+                          } else {
+                            _selectedDays.add(index);
+                          }
+                        });
+                      },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colors.cyan.withOpacity(0.2)
+                        : colors.glassSurface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? colors.cyan : colors.cardBorder,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _dayNames[index],
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? colors.cyan : colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkoutTypeSection(_SheetColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.category, size: 20, color: colors.purple),
               const SizedBox(width: 8),
               Text(
                 'Workout Type',
@@ -357,6 +556,11 @@ class _RegenerateWorkoutSheetState
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Optional - Leave unselected for variety',
+            style: TextStyle(fontSize: 12, color: colors.textMuted),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -366,12 +570,12 @@ class _RegenerateWorkoutSheetState
                 final isSelected = _selectedWorkoutType?.toLowerCase() == type.toLowerCase() &&
                     _customWorkoutType.isEmpty;
                 return GestureDetector(
-                  onTap: _isRegenerating
+                  onTap: _isUpdating
                       ? null
                       : () {
                           setState(() {
                             _selectedWorkoutType = isSelected ? null : type;
-                            _customWorkoutType = ''; // Clear custom when selecting preset
+                            _customWorkoutType = '';
                           });
                         },
                   child: Container(
@@ -381,12 +585,12 @@ class _RegenerateWorkoutSheetState
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? colors.cyan.withOpacity(0.2)
+                          ? colors.purple.withOpacity(0.2)
                           : colors.glassSurface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
-                            ? colors.cyan
+                            ? colors.purple
                             : colors.cardBorder.withOpacity(0.3),
                         width: isSelected ? 2 : 1,
                       ),
@@ -394,7 +598,7 @@ class _RegenerateWorkoutSheetState
                     child: Text(
                       type,
                       style: TextStyle(
-                        color: isSelected ? colors.cyan : colors.textSecondary,
+                        color: isSelected ? colors.purple : colors.textSecondary,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                         fontSize: 13,
                       ),
@@ -404,19 +608,19 @@ class _RegenerateWorkoutSheetState
               }),
               // "Other" chip
               GestureDetector(
-                onTap: _isRegenerating
+                onTap: _isUpdating
                     ? null
                     : () => setState(() => _showWorkoutTypeInput = !_showWorkoutTypeInput),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: _customWorkoutType.isNotEmpty
-                        ? colors.cyan.withOpacity(0.2)
+                        ? colors.purple.withOpacity(0.2)
                         : colors.glassSurface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _customWorkoutType.isNotEmpty
-                          ? colors.cyan
+                          ? colors.purple
                           : colors.cardBorder.withOpacity(0.3),
                       width: _customWorkoutType.isNotEmpty ? 2 : 1,
                     ),
@@ -427,13 +631,13 @@ class _RegenerateWorkoutSheetState
                       Icon(
                         _showWorkoutTypeInput ? Icons.close : Icons.add,
                         size: 14,
-                        color: _customWorkoutType.isNotEmpty ? colors.cyan : colors.textSecondary,
+                        color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _customWorkoutType.isNotEmpty ? _customWorkoutType : 'Other',
                         style: TextStyle(
-                          color: _customWorkoutType.isNotEmpty ? colors.cyan : colors.textSecondary,
+                          color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
                           fontWeight: _customWorkoutType.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 13,
                         ),
@@ -450,7 +654,7 @@ class _RegenerateWorkoutSheetState
             TextField(
               controller: _workoutTypeController,
               decoration: InputDecoration(
-                hintText: 'Enter custom workout type (e.g., "Mobility")',
+                hintText: 'Enter custom workout type',
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,
@@ -464,15 +668,15 @@ class _RegenerateWorkoutSheetState
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.cyan),
+                  borderSide: BorderSide(color: colors.purple),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.cyan),
+                  icon: Icon(Icons.check, color: colors.purple),
                   onPressed: () {
                     setState(() {
                       _customWorkoutType = _workoutTypeController.text.trim();
-                      _selectedWorkoutType = null; // Clear preset selection
+                      _selectedWorkoutType = null;
                       _showWorkoutTypeInput = false;
                     });
                   },
@@ -482,7 +686,7 @@ class _RegenerateWorkoutSheetState
               onSubmitted: (value) {
                 setState(() {
                   _customWorkoutType = value.trim();
-                  _selectedWorkoutType = null; // Clear preset selection
+                  _selectedWorkoutType = null;
                   _showWorkoutTypeInput = false;
                 });
               },
@@ -499,9 +703,10 @@ class _RegenerateWorkoutSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Icons.speed, size: 20, color: colors.cyan),
+              Icon(Icons.speed, size: 20, color: colors.orange),
               const SizedBox(width: 8),
               Text(
                 'Difficulty',
@@ -523,7 +728,7 @@ class _RegenerateWorkoutSheetState
                     right: difficulty != _difficulties.last ? 8 : 0,
                   ),
                   child: GestureDetector(
-                    onTap: _isRegenerating
+                    onTap: _isUpdating
                         ? null
                         : () => setState(() => _selectedDifficulty = difficulty),
                     child: Container(
@@ -565,10 +770,10 @@ class _RegenerateWorkoutSheetState
           const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Icons.timer_outlined, size: 20, color: colors.orange),
+              Icon(Icons.timer_outlined, size: 20, color: colors.success),
               const SizedBox(width: 8),
               Text(
-                'Duration',
+                'Workout Duration',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colors.textPrimary,
@@ -578,13 +783,13 @@ class _RegenerateWorkoutSheetState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colors.orange.withOpacity(0.2),
+                  color: colors.success.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${_selectedDuration.round()} min',
                   style: TextStyle(
-                    color: colors.orange,
+                    color: colors.success,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -595,10 +800,10 @@ class _RegenerateWorkoutSheetState
           const SizedBox(height: 16),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: colors.orange,
+              activeTrackColor: colors.success,
               inactiveTrackColor: colors.glassSurface,
-              thumbColor: colors.orange,
-              overlayColor: colors.orange.withOpacity(0.2),
+              thumbColor: colors.success,
+              overlayColor: colors.success.withOpacity(0.2),
               trackHeight: 6,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             ),
@@ -607,7 +812,7 @@ class _RegenerateWorkoutSheetState
               min: 15,
               max: 90,
               divisions: 15,
-              onChanged: _isRegenerating
+              onChanged: _isUpdating
                   ? null
                   : (value) => setState(() => _selectedDuration = value),
             ),
@@ -635,7 +840,7 @@ class _RegenerateWorkoutSheetState
         children: [
           Row(
             children: [
-              Icon(Icons.fitness_center, size: 20, color: colors.success),
+              Icon(Icons.fitness_center, size: 20, color: colors.cyan),
               const SizedBox(width: 8),
               Text(
                 'Equipment Available',
@@ -648,7 +853,7 @@ class _RegenerateWorkoutSheetState
               if (_selectedEquipment.isNotEmpty || _customEquipment.isNotEmpty)
                 Text(
                   '${_selectedEquipment.length + (_customEquipment.isNotEmpty ? 1 : 0)} selected',
-                  style: TextStyle(color: colors.success, fontSize: 12),
+                  style: TextStyle(color: colors.cyan, fontSize: 12),
                 ),
             ],
           ),
@@ -665,7 +870,7 @@ class _RegenerateWorkoutSheetState
               ..._equipmentOptions.map((equipment) {
                 final isSelected = _selectedEquipment.contains(equipment);
                 return GestureDetector(
-                  onTap: _isRegenerating
+                  onTap: _isUpdating
                       ? null
                       : () {
                           setState(() {
@@ -679,10 +884,10 @@ class _RegenerateWorkoutSheetState
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? colors.success.withOpacity(0.2) : colors.glassSurface,
+                      color: isSelected ? colors.cyan.withOpacity(0.2) : colors.glassSurface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? colors.success : colors.cardBorder.withOpacity(0.3),
+                        color: isSelected ? colors.cyan : colors.cardBorder.withOpacity(0.3),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -690,13 +895,13 @@ class _RegenerateWorkoutSheetState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isSelected) ...[
-                          Icon(Icons.check, size: 14, color: colors.success),
+                          Icon(Icons.check, size: 14, color: colors.cyan),
                           const SizedBox(width: 4),
                         ],
                         Text(
                           equipment,
                           style: TextStyle(
-                            color: isSelected ? colors.success : colors.textSecondary,
+                            color: isSelected ? colors.cyan : colors.textSecondary,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                             fontSize: 13,
                           ),
@@ -708,19 +913,19 @@ class _RegenerateWorkoutSheetState
               }),
               // "Other" chip
               GestureDetector(
-                onTap: _isRegenerating
+                onTap: _isUpdating
                     ? null
                     : () => setState(() => _showEquipmentInput = !_showEquipmentInput),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: _customEquipment.isNotEmpty
-                        ? colors.success.withOpacity(0.2)
+                        ? colors.cyan.withOpacity(0.2)
                         : colors.glassSurface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _customEquipment.isNotEmpty
-                          ? colors.success
+                          ? colors.cyan
                           : colors.cardBorder.withOpacity(0.3),
                       width: _customEquipment.isNotEmpty ? 2 : 1,
                     ),
@@ -731,13 +936,13 @@ class _RegenerateWorkoutSheetState
                       Icon(
                         _showEquipmentInput ? Icons.close : Icons.add,
                         size: 14,
-                        color: _customEquipment.isNotEmpty ? colors.success : colors.textSecondary,
+                        color: _customEquipment.isNotEmpty ? colors.cyan : colors.textSecondary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _customEquipment.isNotEmpty ? _customEquipment : 'Other',
                         style: TextStyle(
-                          color: _customEquipment.isNotEmpty ? colors.success : colors.textSecondary,
+                          color: _customEquipment.isNotEmpty ? colors.cyan : colors.textSecondary,
                           fontWeight: _customEquipment.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 13,
                         ),
@@ -754,7 +959,7 @@ class _RegenerateWorkoutSheetState
             TextField(
               controller: _equipmentController,
               decoration: InputDecoration(
-                hintText: 'Enter custom equipment (e.g., "TRX Bands")',
+                hintText: 'Enter custom equipment',
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,
@@ -768,11 +973,11 @@ class _RegenerateWorkoutSheetState
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colors.success),
+                  borderSide: BorderSide(color: colors.cyan),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.check, color: colors.success),
+                  icon: Icon(Icons.check, color: colors.cyan),
                   onPressed: () {
                     setState(() {
                       _customEquipment = _equipmentController.text.trim();
@@ -828,7 +1033,7 @@ class _RegenerateWorkoutSheetState
               ..._focusAreas.map((area) {
                 final isSelected = _selectedFocusAreas.contains(area);
                 return GestureDetector(
-                  onTap: _isRegenerating
+                  onTap: _isUpdating
                       ? null
                       : () {
                           setState(() {
@@ -871,7 +1076,7 @@ class _RegenerateWorkoutSheetState
               }),
               // "Other" chip
               GestureDetector(
-                onTap: _isRegenerating
+                onTap: _isUpdating
                     ? null
                     : () => setState(() => _showFocusAreaInput = !_showFocusAreaInput),
                 child: Container(
@@ -917,7 +1122,7 @@ class _RegenerateWorkoutSheetState
             TextField(
               controller: _focusAreaController,
               decoration: InputDecoration(
-                hintText: 'Enter custom focus area (e.g., "Rotator cuff")',
+                hintText: 'Enter custom focus area',
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,
@@ -996,7 +1201,7 @@ class _RegenerateWorkoutSheetState
               ..._injuries.map((injury) {
                 final isSelected = _selectedInjuries.contains(injury);
                 return GestureDetector(
-                  onTap: _isRegenerating
+                  onTap: _isUpdating
                       ? null
                       : () {
                           setState(() {
@@ -1039,7 +1244,7 @@ class _RegenerateWorkoutSheetState
               }),
               // "Other" chip
               GestureDetector(
-                onTap: _isRegenerating
+                onTap: _isUpdating
                     ? null
                     : () => setState(() => _showInjuryInput = !_showInjuryInput),
                 child: Container(
@@ -1085,7 +1290,7 @@ class _RegenerateWorkoutSheetState
             TextField(
               controller: _injuryController,
               decoration: InputDecoration(
-                hintText: 'Enter custom injury (e.g., "Tennis elbow")',
+                hintText: 'Enter custom injury',
                 hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: colors.glassSurface,
@@ -1126,22 +1331,22 @@ class _RegenerateWorkoutSheetState
     );
   }
 
-  Widget _buildRegenerateButton(_SheetColors colors) {
+  Widget _buildUpdateButton(_SheetColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _isRegenerating ? null : _regenerate,
+          onPressed: _isUpdating ? null : _updateProgram,
           style: ElevatedButton.styleFrom(
-            backgroundColor: colors.purple,
+            backgroundColor: colors.cyan,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: _isRegenerating
+          child: _isUpdating
               ? const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1155,7 +1360,7 @@ class _RegenerateWorkoutSheetState
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'Generating...',
+                      'Updating Program...',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],
@@ -1163,10 +1368,10 @@ class _RegenerateWorkoutSheetState
               : const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.auto_awesome, size: 20),
+                    Icon(Icons.check, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Regenerate Workout',
+                      'Update & Regenerate',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],

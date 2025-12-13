@@ -6,6 +6,7 @@ ENDPOINTS:
 - POST /api/v1/users/ - Create a new user
 - GET  /api/v1/users/ - Get all users
 - GET  /api/v1/users/{id} - Get user by ID
+- GET  /api/v1/users/{id}/program-preferences - Get user's program preferences
 - PUT  /api/v1/users/{id} - Update user
 - DELETE /api/v1/users/{id} - Delete user
 - DELETE /api/v1/users/{id}/reset - Full reset (delete all user data)
@@ -24,6 +25,18 @@ from models.schemas import User, UserCreate, UserUpdate
 class GoogleAuthRequest(BaseModel):
     """Request body for Google OAuth authentication."""
     access_token: str
+
+
+class ProgramPreferences(BaseModel):
+    """User's current program preferences for customization."""
+    difficulty: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    workout_type: Optional[str] = None
+    workout_days: List[str] = []
+    equipment: List[str] = []
+    focus_areas: List[str] = []
+    injuries: List[str] = []
+    last_updated: Optional[str] = None
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -240,6 +253,110 @@ async def get_user(user_id: str):
     except Exception as e:
         logger.error(f"Failed to get user: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/program-preferences", response_model=ProgramPreferences)
+async def get_program_preferences(user_id: str):
+    """
+    Get user's current program preferences for the customize program sheet.
+
+    Merges preferences from:
+    1. users.preferences JSONB (base preferences)
+    2. Most recent workout_regenerations entry (latest selections)
+
+    Returns unified preferences for pre-populating the edit form.
+    """
+    logger.info(f"Fetching program preferences for user: id={user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get user data
+        user_row = db.get_user(user_id)
+        if not user_row:
+            logger.warning(f"User not found: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get base preferences from user record
+        base_prefs = user_row.get("preferences", {})
+        if isinstance(base_prefs, str):
+            try:
+                base_prefs = json.loads(base_prefs)
+            except json.JSONDecodeError:
+                base_prefs = {}
+
+        # Get user's equipment from user record
+        user_equipment = user_row.get("equipment", [])
+        if isinstance(user_equipment, str):
+            try:
+                user_equipment = json.loads(user_equipment)
+            except json.JSONDecodeError:
+                user_equipment = []
+
+        # Get user's active injuries
+        user_injuries = user_row.get("active_injuries", [])
+        if isinstance(user_injuries, str):
+            try:
+                user_injuries = json.loads(user_injuries)
+            except json.JSONDecodeError:
+                user_injuries = []
+
+        # Get most recent regeneration for latest selections
+        latest_regen = db.get_latest_user_regeneration(user_id)
+
+        # Build response - latest regeneration takes precedence
+        result = ProgramPreferences(
+            difficulty=latest_regen.get("selected_difficulty") if latest_regen else base_prefs.get("intensity_preference"),
+            duration_minutes=latest_regen.get("selected_duration_minutes") if latest_regen else base_prefs.get("workout_duration"),
+            workout_type=latest_regen.get("selected_workout_type") if latest_regen else base_prefs.get("training_split"),
+            workout_days=_get_workout_days(base_prefs, latest_regen),
+            equipment=latest_regen.get("selected_equipment", []) if latest_regen else user_equipment,
+            focus_areas=latest_regen.get("selected_focus_areas", []) if latest_regen else [],
+            injuries=latest_regen.get("selected_injuries", []) if latest_regen else user_injuries,
+            last_updated=latest_regen.get("created_at") if latest_regen else user_row.get("updated_at"),
+        )
+
+        logger.info(f"Program preferences fetched for user {user_id}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get program preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[str]:
+    """Extract workout days from preferences or regeneration data."""
+    # Check latest regeneration first
+    if latest_regen:
+        # Check if we stored workout days in focus_areas or workout_type
+        # The regeneration table stores days_per_week info indirectly
+        pass
+
+    # Fall back to base preferences
+    days_per_week = base_prefs.get("days_per_week", 3)
+    selected_days = base_prefs.get("selected_days", [])
+
+    # If we have selected days stored, convert indices to day names
+    if selected_days:
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        return [day_names[i] for i in selected_days if 0 <= i < 7]
+
+    # Default: spread days evenly across the week
+    if days_per_week == 3:
+        return ["Mon", "Wed", "Fri"]
+    elif days_per_week == 4:
+        return ["Mon", "Tue", "Thu", "Fri"]
+    elif days_per_week == 5:
+        return ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    elif days_per_week == 6:
+        return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    elif days_per_week == 7:
+        return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    elif days_per_week == 2:
+        return ["Mon", "Thu"]
+    else:
+        return ["Mon", "Wed", "Fri"]
 
 
 @router.put("/{user_id}", response_model=User)

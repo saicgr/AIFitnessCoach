@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Day picker component for selecting workout days
 /// Shows M T W T F S S buttons with multi-select capability
@@ -61,22 +61,23 @@ class _DayPickerState extends State<DayPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(left: 52, top: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: colors.glassSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: colors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Select ${widget.daysPerWeek} days (${_selectedDays.length}/${widget.daysPerWeek} selected)',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: 12),
@@ -96,24 +97,24 @@ class _DayPickerState extends State<DayPicker> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    gradient: isSelected ? AppColors.cyanGradient : null,
+                    gradient: isSelected ? colors.cyanGradient : null,
                     color: isSelected
                         ? null
                         : isDisabled
-                            ? AppColors.glassSurface.withOpacity(0.3)
-                            : AppColors.glassSurface,
+                            ? colors.glassSurface.withOpacity(0.3)
+                            : colors.glassSurface,
                     borderRadius: BorderRadius.circular(12),
                     border: isSelected
                         ? null
                         : Border.all(
                             color: isDisabled
-                                ? AppColors.cardBorder.withOpacity(0.3)
-                                : AppColors.cardBorder,
+                                ? colors.cardBorder.withOpacity(0.3)
+                                : colors.cardBorder,
                           ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.cyan.withOpacity(0.5),
+                              color: colors.cyan.withOpacity(0.5),
                               blurRadius: 20,
                               spreadRadius: 0,
                             ),
@@ -129,8 +130,8 @@ class _DayPickerState extends State<DayPicker> {
                         color: isSelected
                             ? Colors.white
                             : isDisabled
-                                ? AppColors.textMuted.withOpacity(0.5)
-                                : AppColors.textPrimary,
+                                ? colors.textMuted.withOpacity(0.5)
+                                : colors.textPrimary,
                       ),
                     ),
                   ),
@@ -144,9 +145,9 @@ class _DayPickerState extends State<DayPicker> {
           if (_selectedDays.isNotEmpty)
             Text(
               'Selected: ${_selectedDays.toList()..sort()..map((d) => _days[d].full).join(', ')}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted,
+                color: colors.textMuted,
               ),
             ),
 
@@ -159,13 +160,13 @@ class _DayPickerState extends State<DayPicker> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                gradient: _canConfirm ? AppColors.cyanGradient : null,
-                color: _canConfirm ? null : AppColors.glassSurface,
+                gradient: _canConfirm ? colors.cyanGradient : null,
+                color: _canConfirm ? null : colors.glassSurface,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: _canConfirm
                     ? [
                         BoxShadow(
-                          color: AppColors.cyan.withOpacity(0.5),
+                          color: colors.cyan.withOpacity(0.5),
                           blurRadius: 20,
                           spreadRadius: 0,
                         ),
@@ -180,7 +181,7 @@ class _DayPickerState extends State<DayPicker> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: _canConfirm ? Colors.white : AppColors.textMuted,
+                    color: _canConfirm ? Colors.white : colors.textMuted,
                   ),
                 ),
               ),

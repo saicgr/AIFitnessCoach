@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Health checklist modal shown at end of onboarding
 /// Collects injuries and health conditions (optional)
@@ -107,6 +107,7 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Material(
       color: Colors.black.withOpacity(0.6),
       child: Center(
@@ -116,9 +117,9 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
             margin: const EdgeInsets.all(24),
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
             decoration: BoxDecoration(
-              color: AppColors.elevated,
+              color: colors.elevated,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: colors.cardBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.5),
@@ -133,31 +134,31 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
-                  const Text(
+                  Text(
                     'Health & Safety Check',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Help us keep your workouts safe. This is optional - skip if you prefer.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // Injuries section
-                  const Text(
+                  Text(
                     'Current Injuries or Pain',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -170,20 +171,21 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                       return _buildChip(
                         injury,
                         isSelected,
-                        isNone ? AppColors.success : AppColors.error,
+                        isNone ? colors.success : colors.error,
                         () => _toggleItem(injury, _selectedInjuries, isNone),
+                        colors,
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
 
                   // Health conditions section
-                  const Text(
+                  Text(
                     'Health Conditions',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -196,8 +198,9 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                       return _buildChip(
                         condition,
                         isSelected,
-                        isNone ? AppColors.success : AppColors.orange,
+                        isNone ? colors.success : colors.orange,
                         () => _toggleItem(condition, _selectedConditions, isNone),
+                        colors,
                       );
                     }).toList(),
                   ),
@@ -215,17 +218,17 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
-                              color: AppColors.glassSurface,
+                              color: colors.glassSurface,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.cardBorder),
+                              border: Border.all(color: colors.cardBorder),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
                                 'Skip for now',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
+                                  color: colors.textSecondary,
                                 ),
                               ),
                             ),
@@ -239,11 +242,11 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             decoration: BoxDecoration(
-                              gradient: AppColors.cyanGradient,
+                              gradient: colors.cyanGradient,
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.cyan.withOpacity(0.5),
+                                  color: colors.cyan.withOpacity(0.5),
                                   blurRadius: 20,
                                   spreadRadius: 0,
                                 ),
@@ -278,6 +281,7 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
     bool isSelected,
     Color accentColor,
     VoidCallback onTap,
+    ThemeColors colors,
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -287,7 +291,7 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withOpacity(0.3)
-              : AppColors.glassSurface,
+              : colors.glassSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? accentColor : accentColor.withOpacity(0.5),
@@ -299,7 +303,7 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? accentColor : AppColors.textSecondary,
+            color: isSelected ? accentColor : colors.textSecondary,
           ),
         ),
       ),

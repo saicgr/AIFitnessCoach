@@ -261,7 +261,9 @@ IMPORTANT:
         duration_minutes: int = 45,
         focus_areas: Optional[List[str]] = None,
         avoid_name_words: Optional[List[str]] = None,
-        workout_date: Optional[str] = None
+        workout_date: Optional[str] = None,
+        age: Optional[int] = None,
+        activity_level: Optional[str] = None
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -274,6 +276,8 @@ IMPORTANT:
             focus_areas: Optional specific areas to focus on
             avoid_name_words: Optional list of words to avoid in the workout name (for variety)
             workout_date: Optional date for the workout (ISO format) to enable holiday theming
+            age: Optional user's age for age-appropriate exercise selection
+            activity_level: Optional activity level (sedentary, lightly_active, moderately_active, very_active)
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -290,11 +294,33 @@ IMPORTANT:
         holiday_theme = self._get_holiday_theme(workout_date)
         holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
 
+        # Build age and activity level context
+        age_activity_context = ""
+        if age:
+            if age < 25:
+                age_activity_context += f"\n- Age: {age} (young adult - can handle higher intensity and explosive movements)"
+            elif age < 40:
+                age_activity_context += f"\n- Age: {age} (adult - balanced approach to intensity)"
+            elif age < 55:
+                age_activity_context += f"\n- Age: {age} (middle-aged - focus on joint-friendly exercises, longer warm-ups)"
+            else:
+                age_activity_context += f"\n- Age: {age} (senior - prioritize low-impact, balance exercises, avoid high-impact jumping)"
+
+        if activity_level:
+            activity_descriptions = {
+                'sedentary': 'sedentary (new to exercise - start slow, more rest periods)',
+                'lightly_active': 'lightly active (exercises 1-3 days/week - moderate intensity)',
+                'moderately_active': 'moderately active (exercises 3-5 days/week - can handle challenging workouts)',
+                'very_active': 'very active (exercises 6-7 days/week - high intensity appropriate)'
+            }
+            activity_desc = activity_descriptions.get(activity_level, activity_level)
+            age_activity_context += f"\n- Activity Level: {activity_desc}"
+
         prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
+- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}
 
 Return ONLY a valid JSON object with this exact structure (no markdown, no explanation):
 {{
@@ -416,7 +442,9 @@ Requirements:
         duration_minutes: int = 45,
         focus_areas: Optional[List[str]] = None,
         avoid_name_words: Optional[List[str]] = None,
-        workout_date: Optional[str] = None
+        workout_date: Optional[str] = None,
+        age: Optional[int] = None,
+        activity_level: Optional[str] = None
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -433,6 +461,8 @@ Requirements:
             focus_areas: Optional specific areas to focus on
             avoid_name_words: Words to avoid in workout name
             workout_date: Optional date for holiday theming
+            age: Optional user's age for age-appropriate adjustments
+            activity_level: Optional activity level
 
         Returns:
             Dict with workout structure

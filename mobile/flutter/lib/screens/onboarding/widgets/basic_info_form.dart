@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Basic info form for quick onboarding data collection
-/// Collects: Name, Age, Gender, Height, Weight
+/// Collects: Name, Date of Birth, Gender, Height, Weight, Activity Level
 class BasicInfoForm extends StatefulWidget {
   final void Function({
     required String name,
+    required DateTime dateOfBirth,
     required int age,
     required String gender,
     required int heightCm,
     required double weightKg,
+    required String activityLevel,
   }) onSubmit;
   final bool disabled;
 
@@ -26,20 +29,20 @@ class BasicInfoForm extends StatefulWidget {
 
 class _BasicInfoFormState extends State<BasicInfoForm> {
   final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _feetController = TextEditingController();
   final _inchesController = TextEditingController();
   final _weightController = TextEditingController();
 
   String _gender = '';
+  String _activityLevel = '';
   bool _useCm = true;
   bool _useKg = true;
+  DateTime? _dateOfBirth;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
     _heightController.dispose();
     _feetController.dispose();
     _inchesController.dispose();
@@ -47,10 +50,24 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
     super.dispose();
   }
 
+  int get _calculatedAge {
+    if (_dateOfBirth == null) return 0;
+    final now = DateTime.now();
+    int age = now.year - _dateOfBirth!.year;
+    if (now.month < _dateOfBirth!.month ||
+        (now.month == _dateOfBirth!.month && now.day < _dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
+
   bool get _isValid {
     if (_nameController.text.trim().isEmpty) return false;
-    if (_ageController.text.isEmpty) return false;
+    if (_dateOfBirth == null) return false;
+    final age = _calculatedAge;
+    if (age < 13 || age > 100) return false;
     if (_gender.isEmpty) return false;
+    if (_activityLevel.isEmpty) return false;
     if (_useCm) {
       if (_heightController.text.isEmpty) return false;
     } else {
@@ -62,12 +79,52 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
     return true;
   }
 
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final initialDate = _dateOfBirth ?? DateTime(now.year - 25, now.month, now.day);
+    final firstDate = DateTime(now.year - 100);
+    final lastDate = DateTime(now.year - 13);
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate.isAfter(lastDate) ? lastDate : initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Select your date of birth',
+      builder: (context, child) {
+        final colors = context.colors;
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: context.isDarkMode
+                ? ColorScheme.dark(
+                    primary: colors.cyan,
+                    onPrimary: Colors.white,
+                    surface: colors.elevated,
+                    onSurface: colors.textPrimary,
+                  )
+                : ColorScheme.light(
+                    primary: colors.cyan,
+                    onPrimary: Colors.white,
+                    surface: colors.elevated,
+                    onSurface: colors.textPrimary,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() => _dateOfBirth = picked);
+    }
+  }
+
   void _handleSubmit() {
     if (!_isValid || widget.disabled) return;
 
     HapticFeedback.mediumImpact();
 
-    final age = int.tryParse(_ageController.text) ?? 0;
+    final age = _calculatedAge;
     if (age < 13 || age > 100) return;
 
     // Convert height to cm
@@ -95,32 +152,33 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
 
     widget.onSubmit(
       name: _nameController.text.trim(),
+      dateOfBirth: _dateOfBirth!,
       age: age,
       gender: _gender,
       heightCm: heightCm,
       weightKg: (weightKg * 10).round() / 10,
+      activityLevel: _activityLevel,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Container(
       margin: const EdgeInsets.only(left: 52, top: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: colors.glassSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: colors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Quick info to get started',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textMuted,
-            ),
+            style: TextStyle(fontSize: 12, color: colors.textMuted),
           ),
           const SizedBox(height: 12),
 
@@ -133,19 +191,15 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
           ),
           const SizedBox(height: 12),
 
-          // Age + Gender row
+          // Date of Birth + Gender row
           Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Age'),
-                    _buildTextField(
-                      controller: _ageController,
-                      hint: 'e.g., 25',
-                      keyboardType: TextInputType.number,
-                    ),
+                    _buildLabel('Date of Birth'),
+                    _buildDateOfBirthPicker(),
                   ],
                 ),
               ),
@@ -198,9 +252,9 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
                               keyboardType: TextInputType.number,
                             ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4),
-                            child: Text("'", style: TextStyle(color: AppColors.textMuted)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text("'", style: TextStyle(color: colors.textMuted)),
                           ),
                           Expanded(
                             child: _buildTextField(
@@ -209,9 +263,9 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
                               keyboardType: TextInputType.number,
                             ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.only(left: 4),
-                            child: Text('"', style: TextStyle(color: AppColors.textMuted)),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text('"', style: TextStyle(color: colors.textMuted)),
                           ),
                         ],
                       ),
@@ -245,47 +299,24 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Submit button
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: _isValid && !widget.disabled ? _handleSubmit : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: _isValid && !widget.disabled
-                      ? AppColors.cyanGradient
-                      : null,
-                  color: _isValid && !widget.disabled
-                      ? null
-                      : AppColors.glassSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: _isValid && !widget.disabled
-                      ? [
-                          BoxShadow(
-                            color: AppColors.cyan.withOpacity(0.3),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: _isValid && !widget.disabled
-                          ? Colors.white
-                          : AppColors.textMuted,
-                    ),
-                  ),
+          // Activity Level + Continue button row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel('Activity Level'),
+                    _buildActivityLevelDropdown(),
+                  ],
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              _buildCompactSubmitButton(),
+            ],
           ),
         ],
       ),
@@ -293,14 +324,12 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
   }
 
   Widget _buildLabel(String text) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 12,
-          color: AppColors.textSecondary,
-        ),
+        style: TextStyle(fontSize: 12, color: colors.textSecondary),
       ),
     );
   }
@@ -310,61 +339,120 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
     required String hint,
     TextInputType? keyboardType,
   }) {
+    final colors = context.colors;
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       enabled: !widget.disabled,
-      style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+      style: TextStyle(fontSize: 14, color: colors.textPrimary),
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+        hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
         filled: true,
-        fillColor: AppColors.elevated,
+        fillColor: colors.elevated,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(color: colors.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.cyan),
+          borderSide: BorderSide(color: colors.cyan),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateOfBirthPicker() {
+    final colors = context.colors;
+    final formattedDate = _dateOfBirth != null
+        ? '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
+        : null;
+    final ageText = _dateOfBirth != null ? ' (${_calculatedAge}y)' : '';
+
+    return GestureDetector(
+      onTap: widget.disabled ? null : _pickDateOfBirth,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: colors.elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                formattedDate != null ? '$formattedDate$ageText' : 'Select',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: formattedDate != null ? colors.textPrimary : colors.textMuted,
+                ),
+              ),
+            ),
+            Icon(Icons.calendar_today, size: 16, color: colors.textMuted),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildGenderDropdown() {
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: colors.elevated,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: colors.cardBorder),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _gender.isEmpty ? null : _gender,
-          hint: const Text(
-            'Select',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-          ),
+          hint: Text('Select', style: TextStyle(color: colors.textMuted, fontSize: 14)),
           isExpanded: true,
-          dropdownColor: AppColors.elevated,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          dropdownColor: colors.elevated,
+          style: TextStyle(fontSize: 14, color: colors.textPrimary),
           items: const [
             DropdownMenuItem(value: 'male', child: Text('Male')),
             DropdownMenuItem(value: 'female', child: Text('Female')),
             DropdownMenuItem(value: 'other', child: Text('Other')),
           ],
-          onChanged: widget.disabled
-              ? null
-              : (v) => setState(() => _gender = v ?? ''),
+          onChanged: widget.disabled ? null : (v) => setState(() => _gender = v ?? ''),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityLevelDropdown() {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: colors.elevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _activityLevel.isEmpty ? null : _activityLevel,
+          hint: Text('How active are you?', style: TextStyle(color: colors.textMuted, fontSize: 14)),
+          isExpanded: true,
+          dropdownColor: colors.elevated,
+          style: TextStyle(fontSize: 14, color: colors.textPrimary),
+          items: const [
+            DropdownMenuItem(value: 'sedentary', child: Text('Sedentary (little or no exercise)')),
+            DropdownMenuItem(value: 'lightly_active', child: Text('Lightly Active (1-3 days/week)')),
+            DropdownMenuItem(value: 'moderately_active', child: Text('Moderately Active (3-5 days/week)')),
+            DropdownMenuItem(value: 'very_active', child: Text('Very Active (6-7 days/week)')),
+          ],
+          onChanged: widget.disabled ? null : (v) => setState(() => _activityLevel = v ?? ''),
         ),
       ),
     );
@@ -376,47 +464,88 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
     required String labelFalse,
     required ValueChanged<bool> onChanged,
   }) {
+    final colors = context.colors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
+        _buildToggleButton(
+          label: labelTrue,
+          isSelected: value,
           onTap: () => onChanged(true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: value ? AppColors.cyan : AppColors.glassSurface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              labelTrue,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: value ? Colors.white : AppColors.textMuted,
-              ),
-            ),
-          ),
+          colors: colors,
         ),
         const SizedBox(width: 2),
-        GestureDetector(
+        _buildToggleButton(
+          label: labelFalse,
+          isSelected: !value,
           onTap: () => onChanged(false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: !value ? AppColors.cyan : AppColors.glassSurface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              labelFalse,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: !value ? Colors.white : AppColors.textMuted,
-              ),
-            ),
-          ),
+          colors: colors,
         ),
       ],
+    );
+  }
+
+  Widget _buildToggleButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required ThemeColors colors,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.cyan : colors.glassSurface,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : colors.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactSubmitButton() {
+    final colors = context.colors;
+    final isEnabled = _isValid && !widget.disabled;
+
+    return GestureDetector(
+      onTap: isEnabled ? _handleSubmit : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isEnabled ? AppColors.cyanGradient : null,
+          color: isEnabled ? null : colors.glassSurface,
+          borderRadius: BorderRadius.circular(10),
+          border: isEnabled ? null : Border.all(color: colors.cardBorder),
+          boxShadow: isEnabled
+              ? [BoxShadow(color: colors.cyan.withOpacity(0.3), blurRadius: 12)]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Continue',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isEnabled ? Colors.white : colors.textMuted,
+              ),
+            ),
+            if (isEnabled) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.arrow_forward, size: 14, color: Colors.white),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

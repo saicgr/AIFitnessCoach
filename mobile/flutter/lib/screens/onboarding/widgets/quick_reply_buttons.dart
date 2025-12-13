@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/onboarding_repository.dart';
 
 /// Quick reply buttons for conversational onboarding
@@ -57,6 +57,7 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.only(left: 52, top: 8),
       child: Wrap(
@@ -72,17 +73,17 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.cyan.withOpacity(0.3)
-                      : AppColors.glassSurface,
+                      ? colors.cyan.withOpacity(0.3)
+                      : colors.glassSurface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.cyan : AppColors.cyan.withOpacity(0.5),
+                    color: isSelected ? colors.cyan : colors.cyan.withOpacity(0.5),
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.cyan.withOpacity(0.4),
+                            color: colors.cyan.withOpacity(0.4),
                             blurRadius: 15,
                             spreadRadius: 0,
                           ),
@@ -104,7 +105,7 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                        color: isSelected ? colors.cyan : colors.textSecondary,
                       ),
                     ),
                   ],
@@ -120,11 +121,11 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  gradient: colors.cyanGradient,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.5),
+                      color: colors.cyan.withOpacity(0.5),
                       blurRadius: 20,
                       spreadRadius: 0,
                     ),

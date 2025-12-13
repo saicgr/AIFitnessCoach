@@ -824,135 +824,189 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Show AI insights in a draggable popup modal with formatted sections
   void _showAIInsightsPopup(String summaryJson) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Use Riverpod theme provider for consistent theme detection
+    final isDark = ref.read(themeModeProvider) == ThemeMode.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final surfaceColor = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    // Parse JSON insights
-    final insights = _parseInsightsJson(summaryJson);
-    final headline = insights?['headline'] as String? ?? 'Workout Insights';
-    final sections = (insights?['sections'] as List<dynamic>?) ?? [];
+    // Parse JSON insights - use mutable state that persists across rebuilds
+    var currentSummary = summaryJson;
+    var insights = _parseInsightsJson(currentSummary);
+    var headline = insights?['headline'] as String? ?? 'Workout Insights';
+    var sections = (insights?['sections'] as List<dynamic>?) ?? [];
+    var isRegenerating = false;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.4,
-        minChildSize: 0.25,
-        maxChildSize: 0.7,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Draggable handle bar
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textMuted.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(2),
+      builder: (modalContext) => StatefulBuilder(
+        builder: (context, setModalState) {
+          Future<void> regenerateInsights() async {
+            setModalState(() => isRegenerating = true);
+            try {
+              final workoutRepo = ref.read(workoutRepositoryProvider);
+              final newSummary = await workoutRepo.regenerateWorkoutSummary(widget.workoutId);
+              if (newSummary != null) {
+                currentSummary = newSummary;
+                insights = _parseInsightsJson(newSummary);
+                headline = insights?['headline'] as String? ?? 'Workout Insights';
+                sections = (insights?['sections'] as List<dynamic>?) ?? [];
+                // Also update the parent state
+                setState(() {
+                  _workoutSummary = newSummary;
+                });
+              }
+            } catch (e) {
+              debugPrint('❌ Error regenerating insights: $e');
+            }
+            setModalState(() => isRegenerating = false);
+          }
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.45,
+            minChildSize: 0.25,
+            maxChildSize: 0.75,
+            builder: (context, scrollController) => Container(
+              decoration: BoxDecoration(
+                color: elevatedColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Draggable handle bar
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: textMuted.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              // Header with headline
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.purple.withOpacity(0.3),
-                            AppColors.cyan.withOpacity(0.2),
-                          ],
+                  // Header with headline
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.purple.withOpacity(0.3),
+                                AppColors.cyan.withOpacity(0.2),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: AppColors.purple,
+                            size: 22,
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        color: AppColors.purple,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        headline,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            headline,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                          ),
                         ),
-                      ),
+                        // Regenerate button
+                        IconButton(
+                          onPressed: isRegenerating ? null : regenerateInsights,
+                          tooltip: 'Regenerate insights',
+                          icon: isRegenerating
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.cyan,
+                                  ),
+                                )
+                              : Icon(Icons.refresh, color: AppColors.cyan),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: textMuted),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: textMuted),
-                    ),
-                  ],
-                ),
-              ),
-              // Divider
-              Divider(
-                color: cardBorder.withOpacity(0.3),
-                height: 1,
-              ),
-              // Content - structured sections
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    if (sections.isNotEmpty)
-                      ...sections.map((section) {
-                        final icon = section['icon'] as String? ?? '💡';
-                        final title = section['title'] as String? ?? 'Tip';
-                        final content = section['content'] as String? ?? '';
-                        final colorName = section['color'] as String? ?? 'cyan';
-                        final color = _getColorFromName(colorName);
+                  ),
+                  // Divider
+                  Divider(
+                    color: cardBorder.withOpacity(0.3),
+                    height: 1,
+                  ),
+                  // Content - structured sections
+                  Expanded(
+                    child: isRegenerating
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(color: AppColors.cyan),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Generating new insights...',
+                                  style: TextStyle(color: textMuted),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.all(20),
+                            children: [
+                              if (sections.isNotEmpty)
+                                ...sections.map((section) {
+                                  final icon = section['icon'] as String? ?? '💡';
+                                  final title = section['title'] as String? ?? 'Tip';
+                                  final content = section['content'] as String? ?? '';
+                                  final colorName = section['color'] as String? ?? 'cyan';
+                                  final color = _getColorFromName(colorName);
 
-                        return _buildInsightSection(icon, title, content, color);
-                      })
-                    else
-                      // Fallback for non-JSON or parse error
-                      Text(
-                        _stripMarkdown(summaryJson),
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: textPrimary,
-                          height: 1.6,
-                        ),
-                      ),
-                    // Extra padding at bottom
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-                  ],
-                ),
+                                  return _buildInsightSection(icon, title, content, color, textPrimary);
+                                })
+                              else
+                                // Fallback for non-JSON or parse error
+                                Text(
+                                  _stripMarkdown(currentSummary),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: textPrimary,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              // Extra padding at bottom
+                              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                            ],
+                          ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   /// Build a single insight section with icon, colored title, and content
-  Widget _buildInsightSection(String icon, String title, String content, Color color) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
+  Widget _buildInsightSection(String icon, String title, String content, Color color, Color textPrimary) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),

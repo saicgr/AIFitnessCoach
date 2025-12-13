@@ -105,8 +105,8 @@ class AppColorsLight {
   static const Color pureWhite = Color(0xFFFFFFFF);
   static const Color nearWhite = Color(0xFFFAFAFA);
   static const Color elevated = Color(0xFFF4F4F5);
-  static const Color glassSurface = Color(0xFFE4E4E7);
-  static const Color cardBorder = Color(0xFFD4D4D8);
+  static const Color glassSurface = Color(0xFFF8F8FA);  // Lighter for better contrast on white
+  static const Color cardBorder = Color(0xFFE4E4E7);
   static const Color surface = Color(0xFFF9FAFB);
 
   // Text Colors

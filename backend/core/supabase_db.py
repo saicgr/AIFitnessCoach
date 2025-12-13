@@ -919,6 +919,18 @@ class SupabaseDB:
         )
         return result.data or []
 
+    def get_latest_user_regeneration(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get the most recent regeneration entry for a user."""
+        result = (
+            self.client.table("workout_regenerations")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
     def get_popular_custom_inputs(self, input_type: str, limit: int = 20) -> List[Dict[str, Any]]:
         """Get popular custom inputs across all users for suggestions."""
         result = (

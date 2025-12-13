@@ -181,6 +181,26 @@ class RegenerateWorkoutRequest(BaseModel):
     workout_type: Optional[str] = None  # Workout style: "Strength", "HIIT", "Cardio", "Flexibility", etc.
 
 
+class UpdateProgramRequest(BaseModel):
+    """Request to update program preferences and regenerate future workouts."""
+    user_id: str
+    difficulty: Optional[str] = None
+    duration_minutes: Optional[int] = 45
+    workout_type: Optional[str] = None
+    workout_days: Optional[List[str]] = None  # ["Mon", "Wed", "Fri"]
+    equipment: Optional[List[str]] = None
+    focus_areas: Optional[List[str]] = None
+    injuries: Optional[List[str]] = None
+
+
+class UpdateProgramResponse(BaseModel):
+    """Response from update program endpoint."""
+    success: bool
+    message: str
+    workouts_deleted: int
+    preferences_updated: bool
+
+
 class RevertWorkoutRequest(BaseModel):
     workout_id: str
     target_version: int

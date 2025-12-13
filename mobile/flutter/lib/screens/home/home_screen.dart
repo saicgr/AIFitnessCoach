@@ -13,6 +13,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import 'widgets/regenerate_workout_sheet.dart';
+import 'widgets/edit_program_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -399,23 +400,45 @@ class _ProgramMenuButton extends ConsumerWidget {
       ),
       offset: const Offset(0, 40),
       onSelected: (value) {
-        if (value == 'reset_program') {
+        if (value == 'edit_program') {
+          _showEditProgramSheet(context, ref);
+        } else if (value == 'reset_program') {
           _showResetProgramDialog(context, ref);
         }
       },
       itemBuilder: (context) => [
         PopupMenuItem<String>(
+          value: 'edit_program',
+          child: Row(
+            children: [
+              Icon(
+                Icons.tune,
+                size: 20,
+                color: AppColors.cyan,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Customize Program',
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
           value: 'reset_program',
           child: Row(
             children: [
               Icon(
-                Icons.restart_alt,
+                Icons.refresh,
                 size: 20,
                 color: AppColors.orange,
               ),
               const SizedBox(width: 12),
               Text(
-                'Reset Program',
+                'Start Over',
                 style: TextStyle(
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   fontWeight: FontWeight.w500,
@@ -428,13 +451,28 @@ class _ProgramMenuButton extends ConsumerWidget {
     );
   }
 
+  Future<void> _showEditProgramSheet(BuildContext context, WidgetRef ref) async {
+    final result = await showEditProgramSheet(context, ref);
+
+    if (result == true && context.mounted) {
+      // Refresh workouts after program update
+      ref.read(workoutsProvider.notifier).refresh();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Program updated! Generating new workouts...'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
   void _showResetProgramDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Text(
-          'Reset Program?',
+          'Start Over?',
           style: TextStyle(
             color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
           ),
@@ -461,7 +499,7 @@ class _ProgramMenuButton extends ConsumerWidget {
               _resetProgram(context, ref);
             },
             child: const Text(
-              'Reset',
+              'Start Over',
               style: TextStyle(color: AppColors.orange),
             ),
           ),

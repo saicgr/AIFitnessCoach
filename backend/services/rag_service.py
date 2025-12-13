@@ -458,6 +458,97 @@ class WorkoutRAGService:
 
         return "\n".join(context_parts)
 
+    async def index_program_preferences(
+        self,
+        user_id: str,
+        difficulty: Optional[str] = None,
+        duration_minutes: Optional[int] = None,
+        workout_type: Optional[str] = None,
+        workout_days: Optional[List[str]] = None,
+        equipment: Optional[List[str]] = None,
+        focus_areas: Optional[List[str]] = None,
+        injuries: Optional[List[str]] = None,
+        change_reason: str = "user_customization",
+    ) -> str:
+        """
+        Index program preference changes for AI context retrieval.
+
+        This allows the AI coach to reference the user's preference history:
+        - "I see you recently changed your focus to upper body..."
+        - "Since you added that lower back injury, I'll avoid..."
+        - "You've been doing 4-day splits lately..."
+
+        Args:
+            user_id: User ID
+            difficulty: Selected difficulty (easy/medium/hard)
+            duration_minutes: Workout duration preference
+            workout_type: Workout style (Strength, HIIT, etc.)
+            workout_days: Selected workout days
+            equipment: Available equipment
+            focus_areas: Target muscle groups
+            injuries: Areas to avoid
+            change_reason: Why preferences were changed
+
+        Returns:
+            Document ID
+        """
+        from datetime import datetime
+
+        timestamp = datetime.now().isoformat()
+        doc_id = f"prefs_{user_id}_{timestamp}"
+
+        # Build preference summary text
+        pref_parts = [f"Program Preferences Update for user {user_id}"]
+        pref_parts.append(f"Updated: {timestamp}")
+        pref_parts.append(f"Reason: {change_reason}")
+
+        if difficulty:
+            pref_parts.append(f"Difficulty: {difficulty}")
+        if duration_minutes:
+            pref_parts.append(f"Duration: {duration_minutes} minutes")
+        if workout_type:
+            pref_parts.append(f"Workout Type: {workout_type}")
+        if workout_days:
+            pref_parts.append(f"Workout Days: {', '.join(workout_days)}")
+        if equipment:
+            pref_parts.append(f"Equipment: {', '.join(equipment)}")
+        if focus_areas:
+            pref_parts.append(f"Focus Areas: {', '.join(focus_areas)}")
+        if injuries:
+            pref_parts.append(f"Injuries to Avoid: {', '.join(injuries)}")
+
+        pref_text = "\n".join(pref_parts)
+
+        # Get embedding
+        try:
+            embedding = await self.openai_service.get_embedding(pref_text)
+
+            # Add to changes collection (reusing existing collection for preference changes)
+            self.changes_collection.add(
+                ids=[doc_id],
+                embeddings=[embedding],
+                documents=[pref_text],
+                metadatas=[{
+                    "user_id": user_id,
+                    "change_type": "program_preferences",
+                    "difficulty": difficulty or "",
+                    "duration_minutes": duration_minutes or 0,
+                    "workout_type": workout_type or "",
+                    "workout_days": ",".join(workout_days) if workout_days else "",
+                    "equipment": ",".join(equipment) if equipment else "",
+                    "focus_areas": ",".join(focus_areas) if focus_areas else "",
+                    "injuries": ",".join(injuries) if injuries else "",
+                    "change_reason": change_reason,
+                    "timestamp": timestamp,
+                }],
+            )
+
+            print(f"📝 Indexed program preferences for user {user_id}: {change_reason}")
+            return doc_id
+        except Exception as e:
+            print(f"❌ Failed to index program preferences: {e}")
+            return ""
+
     def get_stats(self) -> Dict[str, Any]:
         """Get workout RAG statistics."""
         return {

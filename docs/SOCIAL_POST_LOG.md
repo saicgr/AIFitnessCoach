@@ -18,7 +18,7 @@ Track all social media posts to avoid repetition and maintain consistency.
 
 | Date | Platform | Content Type | Post Summary | Link | Engagement |
 |------|----------|--------------|--------------|------|------------|
-| | | | | | |
+| Dec 11, 2025 | Twitter | Day 1 Intro | "I wanted a fitness coach but couldn't justify the price. So I'm building my own AI version. One that actually: remembers my bad knee, adjusts when I'm tired, checks in on me. Day 1." | | TBD |
 
 ---
 
@@ -28,7 +28,7 @@ Ideas to post (move to Post History after posting):
 
 | Idea | Platform | Priority | Notes |
 |------|----------|----------|-------|
-| "Day 1 of building in public" intro | Twitter | High | First post - introduce the project |
+| ~~"Day 1 of building in public" intro~~ | Twitter | ~~High~~ | POSTED Dec 11 |
 | POV: Debugging AI workout generation | TikTok/IG | High | Screen recording of code |
 | "Why fitness apps fail most people" | Twitter | Medium | Problem you're solving |
 | Home screen sneak peek | TikTok/IG | Medium | App demo |

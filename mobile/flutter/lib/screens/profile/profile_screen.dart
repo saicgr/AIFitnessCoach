@@ -94,8 +94,8 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   _ProfileInfoItem(
                     icon: Icons.calendar_today,
-                    label: 'Workouts/Week',
-                    value: '${user?.workoutsPerWeek ?? 3} days',
+                    label: 'Workout Days',
+                    value: user?.workoutDaysFormatted ?? '${user?.workoutsPerWeek ?? 3} days/week',
                   ),
                 ],
               ).animate().fadeIn(delay: 150.ms),
