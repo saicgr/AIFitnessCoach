@@ -810,9 +810,14 @@ class _ExerciseFilterSheet extends ConsumerWidget {
               ),
             ),
 
-            // Apply button
+            // Apply button - extra bottom padding for floating nav bar
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(context).padding.bottom + 88, // 88 = nav bar (56) + margins (32)
+              ),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

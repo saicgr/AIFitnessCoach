@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
@@ -492,11 +493,25 @@ class _EmptyChatState extends StatelessWidget {
   }
 }
 
-/// Message bubble
+/// Message bubble with long-press to copy
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
 
   const _MessageBubble({required this.message});
+
+  void _copyMessage(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: message.content));
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Message copied'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -504,25 +519,28 @@ class _MessageBubble extends StatelessWidget {
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan : AppColors.elevated,
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: isUser ? const Radius.circular(4) : null,
-            bottomLeft: !isUser ? const Radius.circular(4) : null,
+      child: GestureDetector(
+        onLongPress: () => _copyMessage(context),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
-        ),
-        child: Text(
-          message.content,
-          style: TextStyle(
-            color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
-            fontSize: 14,
-            height: 1.4,
+          decoration: BoxDecoration(
+            color: isUser ? AppColors.cyan : AppColors.elevated,
+            borderRadius: BorderRadius.circular(16).copyWith(
+              bottomRight: isUser ? const Radius.circular(4) : null,
+              bottomLeft: !isUser ? const Radius.circular(4) : null,
+            ),
+          ),
+          child: Text(
+            message.content,
+            style: TextStyle(
+              color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+              fontSize: 14,
+              height: 1.4,
+            ),
           ),
         ),
       ),
