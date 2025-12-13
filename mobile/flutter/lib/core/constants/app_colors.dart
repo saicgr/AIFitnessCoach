@@ -96,3 +96,45 @@ class AppColors {
     }
   }
 }
+
+/// Light theme colors
+class AppColorsLight {
+  AppColorsLight._();
+
+  // Brand Colors (same as dark)
+  static const Color cyan = Color(0xFF0891B2);
+  static const Color cyanDark = Color(0xFF0E7490);
+  static const Color electricBlue = Color(0xFF2563EB);
+  static const Color teal = Color(0xFF0D9488);
+
+  // Light Theme Colors
+  static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color nearWhite = Color(0xFFFAFAFA);
+  static const Color elevated = Color(0xFFF4F4F5);
+  static const Color glassSurface = Color(0xFFF8F8FA);
+  static const Color cardBorder = Color(0xFFE4E4E7);
+  static const Color surface = Color(0xFFF9FAFB);
+
+  // Text Colors
+  static const Color textPrimary = Color(0xFF18181B);
+  static const Color textSecondary = Color(0xFF52525B);
+  static const Color textMuted = Color(0xFF71717A);
+
+  // Workout Type Colors (same as dark)
+  static const Color strength = Color(0xFF6366F1);
+  static const Color cardio = Color(0xFFEF4444);
+  static const Color flexibility = Color(0xFF14B8A6);
+  static const Color hiit = Color(0xFFEC4899);
+
+  // Accent Colors (same as dark)
+  static const Color orange = Color(0xFFF97316);
+  static const Color purple = Color(0xFF8B5CF6);
+  static const Color coral = Color(0xFFF43F5E);
+  static const Color magenta = Color(0xFFEC4899);
+
+  // Semantic Colors
+  static const Color success = Color(0xFF16A34A);
+  static const Color warning = Color(0xFFD97706);
+  static const Color error = Color(0xFFDC2626);
+  static const Color info = Color(0xFF2563EB);
+}

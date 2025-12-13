@@ -98,6 +98,76 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ).animate().fadeIn(delay: 100.ms),
 
+              const SizedBox(height: 24),
+
+              // Quick Access section - at top for easy access
+              _SectionHeader(title: 'QUICK ACCESS'),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.emoji_events,
+                      title: 'Achievements',
+                      color: AppColors.orange,
+                      onTap: () => context.push('/achievements'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.water_drop,
+                      title: 'Hydration',
+                      color: AppColors.electricBlue,
+                      onTap: () => context.push('/hydration'),
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 120.ms),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.restaurant,
+                      title: 'Nutrition',
+                      color: AppColors.success,
+                      onTap: () => context.push('/nutrition'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.summarize,
+                      title: 'Weekly Summary',
+                      color: AppColors.purple,
+                      onTap: () => context.push('/summaries'),
+                    ),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 140.ms),
+
+              const SizedBox(height: 12),
+
+              // AI Settings row
+              Row(
+                children: [
+                  Expanded(
+                    child: _QuickAccessCard(
+                      icon: Icons.smart_toy,
+                      title: 'AI Settings',
+                      color: AppColors.cyan,
+                      onTap: () => context.push('/ai-settings'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(child: SizedBox()), // Placeholder for balance
+                ],
+              ).animate().fadeIn(delay: 160.ms),
+
               const SizedBox(height: 32),
 
               // Profile details
@@ -122,7 +192,7 @@ class ProfileScreen extends ConsumerWidget {
                     value: user?.workoutDaysFormatted ?? '${user?.workoutsPerWeek ?? 3} days/week',
                   ),
                 ],
-              ).animate().fadeIn(delay: 150.ms),
+              ).animate().fadeIn(delay: 160.ms),
 
               const SizedBox(height: 24),
 
@@ -181,59 +251,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   );
                 },
-              ).animate().fadeIn(delay: 200.ms),
-
-              const SizedBox(height: 32),
-
-              // Quick Access section
-              _SectionHeader(title: 'QUICK ACCESS'),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAccessCard(
-                      icon: Icons.emoji_events,
-                      title: 'Achievements',
-                      color: AppColors.orange,
-                      onTap: () => context.push('/achievements'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickAccessCard(
-                      icon: Icons.water_drop,
-                      title: 'Hydration',
-                      color: AppColors.electricBlue,
-                      onTap: () => context.push('/hydration'),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(delay: 200.ms),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAccessCard(
-                      icon: Icons.restaurant,
-                      title: 'Nutrition',
-                      color: AppColors.success,
-                      onTap: () => context.push('/nutrition'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickAccessCard(
-                      icon: Icons.summarize,
-                      title: 'Weekly Summary',
-                      color: AppColors.purple,
-                      onTap: () => context.push('/summaries'),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(delay: 220.ms),
+              ).animate().fadeIn(delay: 180.ms),
 
               const SizedBox(height: 32),
 
@@ -454,7 +472,7 @@ class _ProfileInfoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: items.asMap().entries.map((entry) {
@@ -463,23 +481,23 @@ class _ProfileInfoCard extends StatelessWidget {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         color: cyan.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         item.icon,
                         color: cyan,
-                        size: 20,
+                        size: 16,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,15 +505,14 @@ class _ProfileInfoCard extends StatelessWidget {
                           Text(
                             item.label,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: textMuted,
                             ),
                           ),
-                          const SizedBox(height: 2),
                           Text(
                             item.value,
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -509,7 +526,7 @@ class _ProfileInfoCard extends StatelessWidget {
                 Divider(
                   height: 1,
                   color: cardBorder,
-                  indent: 68,
+                  indent: 56,
                 ),
             ],
           );
@@ -572,31 +589,32 @@ class _QuickAccessCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: elevated,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
                 color: color,
-                size: 24,
+                size: 18,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(width: 8),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -710,9 +728,11 @@ class _EditProfileSheet extends ConsumerStatefulWidget {
 class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   String _selectedLevel = 'Intermediate';
   String _selectedGoal = 'Build Muscle';
-  int _workoutsPerWeek = 4;
+  List<int> _selectedDays = []; // 0=Mon, 1=Tue, ..., 6=Sun
   bool _isSaving = false;
   bool _isLoading = true;
+
+  static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   void initState() {
@@ -728,7 +748,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       setState(() {
         _selectedLevel = user.fitnessLevel ?? 'Intermediate';
         _selectedGoal = user.fitnessGoal ?? 'Build Muscle';
-        _workoutsPerWeek = user.workoutsPerWeek ?? 4;
+        _selectedDays = List<int>.from(user.workoutDays);
         _isLoading = false;
       });
     } else {
@@ -753,7 +773,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
         data: {
           'fitness_level': _selectedLevel,
           'goals': _selectedGoal,
-          'days_per_week': _workoutsPerWeek,
+          'days_per_week': _selectedDays.length,
+          'workout_days': _selectedDays,
         },
       );
 
@@ -956,9 +977,9 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
 
                       const SizedBox(height: 24),
 
-                      // Workouts per week
+                      // Workout days selection
                       Text(
-                        'WORKOUTS PER WEEK',
+                        'WORKOUT DAYS',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -968,46 +989,57 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                       ),
                       const SizedBox(height: 12),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            onPressed: (_workoutsPerWeek > 1 && !_isSaving)
-                                ? () => setState(() => _workoutsPerWeek--)
-                                : null,
-                            icon: const Icon(Icons.remove_circle_outline),
-                            color: cyan,
-                          ),
-                          Container(
-                            width: 60,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: elevatedColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '$_workoutsPerWeek',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: cyan,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(7, (index) {
+                          final isSelected = _selectedDays.contains(index);
+                          return GestureDetector(
+                            onTap: _isSaving
+                                ? null
+                                : () {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedDays.remove(index);
+                                      } else {
+                                        _selectedDays.add(index);
+                                        _selectedDays.sort();
+                                      }
+                                    });
+                                  },
+                            child: Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? cyan.withOpacity(0.2)
+                                    : elevatedColor,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isSelected ? cyan : cardBorder,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _dayNames[index],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    color: isSelected ? cyan : textSecondary,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: (_workoutsPerWeek < 7 && !_isSaving)
-                                ? () => setState(() => _workoutsPerWeek++)
-                                : null,
-                            icon: const Icon(Icons.add_circle_outline),
-                            color: cyan,
-                          ),
-                        ],
+                          );
+                        }),
                       ),
+                      const SizedBox(height: 8),
                       Center(
                         child: Text(
-                          'days per week',
+                          _selectedDays.isEmpty
+                              ? 'Select at least one day'
+                              : '${_selectedDays.length} day${_selectedDays.length == 1 ? '' : 's'} selected',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: textMuted,
+                                color: _selectedDays.isEmpty ? AppColors.error : textMuted,
                               ),
                         ),
                       ),

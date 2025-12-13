@@ -23,6 +23,7 @@ import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
+import '../screens/ai_settings/ai_settings_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 
@@ -298,6 +299,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // AI Settings
+      GoRoute(
+        path: '/ai-settings',
+        builder: (context, state) => const AISettingsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
