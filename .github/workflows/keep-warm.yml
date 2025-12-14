@@ -12,10 +12,21 @@ jobs:
     steps:
       - name: Ping Render backend
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 120 "https://aifitnesscoach-zqi3.onrender.com/api/v1/health/")
+          # First request wakes up cold server (may timeout, that's OK)
+          echo "Sending wake-up ping..."
+          curl -s -o /dev/null --max-time 180 "https://aifitnesscoach-zqi3.onrender.com/api/v1/health/" || true
+
+          # Wait a bit for server to fully start
+          sleep 5
+
+          # Second request should succeed if server is awake
+          echo "Checking health..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "https://aifitnesscoach-zqi3.onrender.com/api/v1/health/")
           echo "Health check response: $response"
-          if [ "$response" != "200" ]; then
-            echo "Warning: Backend returned $response"
-            exit 1
+
+          if [ "$response" = "200" ]; then
+            echo "Backend is warm and healthy"
+          else
+            echo "Warning: Backend returned $response (may still be starting)"
+            # Don't fail - the ping still served its purpose of waking the server
           fi
-          echo "Backend is warm and healthy"
