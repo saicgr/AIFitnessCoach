@@ -314,7 +314,16 @@ class ExerciseRAGService:
                 continue
 
             # Filter by equipment compatibility
-            ex_equipment = (meta.get("equipment", "") or "").lower()
+            # First, get the raw equipment from metadata
+            raw_ex_equipment = (meta.get("equipment", "") or "").lower().strip()
+
+            # If equipment is empty/null, infer from exercise name
+            exercise_name_for_inference = meta.get("name", "")
+            if not raw_ex_equipment or raw_ex_equipment in ["bodyweight", "body weight", "none"]:
+                inferred_equipment = _infer_equipment_from_name(exercise_name_for_inference)
+                ex_equipment = inferred_equipment.lower()
+            else:
+                ex_equipment = raw_ex_equipment
 
             # Expand "Full Gym" and similar general options to include all gym equipment
             FULL_GYM_EQUIPMENT = [
@@ -341,7 +350,7 @@ class ExerciseRAGService:
                 equipment_lower = HOME_GYM_EQUIPMENT
             elif "bodyweight only" in equipment_lower:
                 # User wants ONLY bodyweight exercises
-                equipment_lower = ["body weight", "bodyweight", "none", ""]
+                equipment_lower = ["body weight", "bodyweight", "none"]
             else:
                 # Always include bodyweight as an option in addition to selected equipment
                 equipment_lower = equipment_lower + ["body weight", "bodyweight", "none"]
@@ -350,7 +359,8 @@ class ExerciseRAGService:
             # Use partial matching for flexibility (e.g., "Dumbbells" matches "dumbbell")
             equipment_match = False
             for eq in equipment_lower:
-                if eq and (eq in ex_equipment or ex_equipment in eq):
+                # Both strings must be non-empty for a valid match
+                if eq and ex_equipment and (eq in ex_equipment or ex_equipment in eq):
                     equipment_match = True
                     break
 
