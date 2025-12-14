@@ -321,7 +321,19 @@ class NotificationService {
   }
 
   /// Request notification permission
+  /// Only shows the system dialog if permission hasn't been granted yet
   Future<bool> _requestPermission() async {
+    // First, check current permission status
+    final currentSettings = await _messaging.getNotificationSettings();
+
+    // If already authorized, don't show the dialog again
+    if (currentSettings.authorizationStatus == AuthorizationStatus.authorized ||
+        currentSettings.authorizationStatus == AuthorizationStatus.provisional) {
+      debugPrint('🔔 [FCM] Permission already granted: ${currentSettings.authorizationStatus}');
+      return true;
+    }
+
+    // Only request if not authorized yet
     final settings = await _messaging.requestPermission(
       alert: true,
       announcement: false,

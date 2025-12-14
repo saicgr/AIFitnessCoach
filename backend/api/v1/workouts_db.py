@@ -1378,6 +1378,183 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== AI WORKOUT SUGGESTIONS ====================
+
+from pydantic import BaseModel
+
+class WorkoutSuggestionRequest(BaseModel):
+    """Request for AI workout suggestions."""
+    workout_id: str
+    user_id: str
+    current_workout_type: Optional[str] = None
+    prompt: Optional[str] = None
+
+
+class WorkoutSuggestion(BaseModel):
+    """A single workout suggestion."""
+    name: str
+    type: str
+    difficulty: str
+    duration_minutes: int
+    description: str
+    focus_areas: List[str]
+
+
+class WorkoutSuggestionsResponse(BaseModel):
+    """Response with workout suggestions."""
+    suggestions: List[WorkoutSuggestion]
+
+
+@router.post("/suggest", response_model=WorkoutSuggestionsResponse)
+async def get_workout_suggestions(request: WorkoutSuggestionRequest):
+    """
+    Get AI-powered workout suggestions for regeneration.
+
+    Returns 3-5 workout suggestions based on:
+    - Current workout context
+    - User's fitness profile
+    - Optional natural language prompt from user
+    """
+    logger.info(f"Getting workout suggestions for workout {request.workout_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get existing workout
+        existing = db.get_workout(request.workout_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Get user data
+        user = db.get_user(request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Get user context
+        fitness_level = user.get("fitness_level") or "intermediate"
+        goals = parse_json_field(user.get("goals"), [])
+        equipment = parse_json_field(user.get("equipment"), [])
+        injuries = parse_json_field(user.get("active_injuries"), [])
+
+        # Get current workout info
+        current_type = request.current_workout_type or existing.get("type") or "Strength"
+        current_duration = existing.get("duration_minutes") or 45
+
+        # Build prompt for AI
+        system_prompt = f"""You are a fitness expert helping a user find alternative workout ideas.
+
+USER PROFILE:
+- Fitness Level: {fitness_level}
+- Goals: {', '.join(goals) if goals else 'General fitness'}
+- Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
+- Injuries/Limitations: {', '.join(injuries) if injuries else 'None'}
+
+CURRENT WORKOUT:
+- Type: {current_type}
+- Duration: {current_duration} minutes
+
+Generate 4 different workout suggestions that:
+1. Vary in workout type (e.g., if current is Strength, suggest HIIT, Cardio, Flexibility options too)
+2. Consider the user's available equipment
+3. Respect any injuries or limitations
+4. Match the user's fitness level
+
+Return a JSON array with exactly 4 suggestions, each containing:
+- name: Creative workout name (e.g., "Power Legs Day", "Core Crusher")
+- type: One of [Strength, HIIT, Cardio, Flexibility, Full Body, Upper Body, Lower Body, Core]
+- difficulty: One of [easy, medium, hard]
+- duration_minutes: Integer between 15-90
+- description: 1-2 sentence description of the workout
+- focus_areas: Array of 1-3 body areas targeted (e.g., ["Chest", "Shoulders"])
+
+IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
+
+        user_prompt = request.prompt if request.prompt else "Give me some workout alternatives"
+
+        openai_service = OpenAIService()
+        response = await openai_service.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500,
+        )
+
+        content = response.choices[0].message.content.strip()
+
+        # Parse JSON response
+        if "```" in content:
+            # Extract from code block
+            parts = content.split("```")
+            for part in parts:
+                part = part.strip()
+                if part.startswith("json"):
+                    part = part[4:].strip()
+                if part.startswith("["):
+                    content = part
+                    break
+
+        # Find JSON array
+        start_idx = content.find("[")
+        end_idx = content.rfind("]") + 1
+        if start_idx != -1 and end_idx > start_idx:
+            content = content[start_idx:end_idx]
+
+        suggestions_data = json.loads(content)
+
+        # Validate and convert to response format
+        suggestions = []
+        for s in suggestions_data[:5]:  # Limit to 5
+            suggestions.append(WorkoutSuggestion(
+                name=s.get("name", "Custom Workout"),
+                type=s.get("type", "Strength"),
+                difficulty=s.get("difficulty", "medium").lower(),
+                duration_minutes=min(max(int(s.get("duration_minutes", 45)), 15), 90),
+                description=s.get("description", ""),
+                focus_areas=s.get("focus_areas", [])[:3],
+            ))
+
+        logger.info(f"Generated {len(suggestions)} workout suggestions")
+        return WorkoutSuggestionsResponse(suggestions=suggestions)
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse AI response: {e}")
+        # Return default suggestions on parse error
+        return WorkoutSuggestionsResponse(suggestions=[
+            WorkoutSuggestion(
+                name="Power Strength",
+                type="Strength",
+                difficulty="medium",
+                duration_minutes=45,
+                description="A balanced strength workout targeting major muscle groups.",
+                focus_areas=["Full Body"]
+            ),
+            WorkoutSuggestion(
+                name="Quick HIIT Blast",
+                type="HIIT",
+                difficulty="hard",
+                duration_minutes=30,
+                description="High-intensity interval training for maximum calorie burn.",
+                focus_areas=["Full Body", "Cardio"]
+            ),
+            WorkoutSuggestion(
+                name="Mobility Flow",
+                type="Flexibility",
+                difficulty="easy",
+                duration_minutes=30,
+                description="Gentle stretching and mobility work for recovery.",
+                focus_areas=["Full Body"]
+            ),
+        ])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get workout suggestions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{workout_id}/versions", response_model=List[WorkoutVersionInfo])
 async def get_workout_versions(workout_id: str):
     """

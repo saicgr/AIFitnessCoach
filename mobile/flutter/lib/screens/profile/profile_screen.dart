@@ -170,28 +170,12 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 32),
 
-              // Profile details
+              // Editable Fitness Profile
               _SectionHeader(title: 'FITNESS PROFILE'),
               const SizedBox(height: 12),
 
-              _ProfileInfoCard(
-                items: [
-                  _ProfileInfoItem(
-                    icon: Icons.flag,
-                    label: 'Goal',
-                    value: user?.fitnessGoal ?? 'Not set',
-                  ),
-                  _ProfileInfoItem(
-                    icon: Icons.signal_cellular_alt,
-                    label: 'Level',
-                    value: user?.fitnessLevel ?? 'Beginner',
-                  ),
-                  _ProfileInfoItem(
-                    icon: Icons.calendar_today,
-                    label: 'Workout Days',
-                    value: user?.workoutDaysFormatted ?? '${user?.workoutsPerWeek ?? 3} days/week',
-                  ),
-                ],
+              _EditableFitnessCard(
+                user: user,
               ).animate().fadeIn(delay: 160.ms),
 
               const SizedBox(height: 24),
@@ -265,7 +249,7 @@ class ProfileScreen extends ConsumerWidget {
                   _SettingItem(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
-                    onTap: () => _showEditProfileSheet(context, ref),
+                    onTap: () => _showEditPersonalInfoSheet(context, ref),
                   ),
                 ],
               ).animate().fadeIn(delay: 250.ms),
@@ -278,12 +262,13 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditProfileSheet(BuildContext context, WidgetRef ref) {
+  void _showEditPersonalInfoSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _EditProfileSheet(),
+      useRootNavigator: true, // Ensures sheet appears above bottom nav bar
+      builder: (context) => _EditPersonalInfoSheet(),
     );
   }
 
@@ -548,6 +533,373 @@ class _ProfileInfoItem {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Editable Fitness Card (inline editing)
+// ─────────────────────────────────────────────────────────────────
+
+class _EditableFitnessCard extends ConsumerStatefulWidget {
+  final dynamic user;
+
+  const _EditableFitnessCard({required this.user});
+
+  @override
+  ConsumerState<_EditableFitnessCard> createState() => _EditableFitnessCardState();
+}
+
+class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  String _selectedLevel = 'Intermediate';
+  String _selectedGoal = 'Build Muscle';
+  List<int> _selectedDays = [];
+
+  static const _dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  static const _goalOptions = ['Build Muscle', 'Lose Weight', 'Increase Endurance', 'Stay Active'];
+  static const _levelOptions = ['Beginner', 'Intermediate', 'Advanced'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadValues();
+  }
+
+  void _loadValues() {
+    if (widget.user != null) {
+      _selectedLevel = widget.user.fitnessLevel ?? 'Intermediate';
+      _selectedGoal = widget.user.fitnessGoal ?? 'Build Muscle';
+      _selectedDays = List<int>.from(widget.user.workoutDays ?? []);
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    setState(() => _isSaving = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) throw Exception('User not found');
+
+      await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: {
+          'fitness_level': _selectedLevel,
+          'goals': _selectedGoal,
+          'days_per_week': _selectedDays.length,
+          'workout_days': _selectedDays,
+        },
+      );
+
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Fitness settings updated'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          // Header with Edit button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                const Spacer(),
+                if (_isEditing)
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: _isSaving ? null : () {
+                          _loadValues();
+                          setState(() => _isEditing = false);
+                        },
+                        child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 13)),
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        onPressed: _isSaving ? null : _saveChanges,
+                        child: _isSaving
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
+                              )
+                            : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600, fontSize: 13)),
+                      ),
+                    ],
+                  )
+                else
+                  TextButton.icon(
+                    onPressed: () => setState(() => _isEditing = true),
+                    icon: Icon(Icons.edit, size: 14, color: cyan),
+                    label: Text('Edit', style: TextStyle(color: cyan, fontSize: 13)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: cardBorder),
+
+          // Goal
+          _buildEditableRow(
+            icon: Icons.flag,
+            iconColor: purple,
+            label: 'Goal',
+            value: _selectedGoal,
+            isEditing: _isEditing,
+            editWidget: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _goalOptions.map((goal) {
+                final isSelected = _selectedGoal == goal;
+                return GestureDetector(
+                  onTap: _isSaving ? null : () => setState(() => _selectedGoal = goal),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? purple.withOpacity(0.2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isSelected ? purple : cardBorder),
+                    ),
+                    child: Text(
+                      goal,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? purple : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Level
+          _buildEditableRow(
+            icon: Icons.signal_cellular_alt,
+            iconColor: cyan,
+            label: 'Level',
+            value: _selectedLevel,
+            isEditing: _isEditing,
+            editWidget: Row(
+              children: _levelOptions.map((level) {
+                final isSelected = _selectedLevel == level;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: GestureDetector(
+                    onTap: _isSaving ? null : () => setState(() => _selectedLevel = level),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? cyan.withOpacity(0.2) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isSelected ? cyan : cardBorder),
+                      ),
+                      child: Text(
+                        level,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected ? cyan : textSecondary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Workout Days
+          _buildEditableRow(
+            icon: Icons.calendar_today,
+            iconColor: AppColors.orange,
+            label: 'Workout Days',
+            value: _selectedDays.isEmpty
+                ? 'Not set'
+                : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
+            isEditing: _isEditing,
+            editWidget: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (index) {
+                final isSelected = _selectedDays.contains(index);
+                return GestureDetector(
+                  onTap: _isSaving
+                      ? null
+                      : () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedDays.remove(index);
+                            } else {
+                              _selectedDays.add(index);
+                              _selectedDays.sort();
+                            }
+                          });
+                        },
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isSelected ? cyan.withOpacity(0.2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected ? cyan : cardBorder,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _dayNames[index],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          color: isSelected ? cyan : textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+
+          // Warning when editing
+          if (_isEditing)
+            Container(
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.orange, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Changes affect your workout program',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? AppColors.textSecondary : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditableRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    required bool isEditing,
+    required Widget editWidget,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                    if (!isEditing)
+                      Text(
+                        value,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (isEditing) ...[
+            const SizedBox(height: 10),
+            editWidget,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _SettingItem {
   final IconData icon;
   final String title;
@@ -717,27 +1069,54 @@ class _SettingsCardWithRef extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit Profile Sheet
+// Edit Personal Info Sheet
 // ─────────────────────────────────────────────────────────────────
 
-class _EditProfileSheet extends ConsumerStatefulWidget {
+class _EditPersonalInfoSheet extends ConsumerStatefulWidget {
   @override
-  ConsumerState<_EditProfileSheet> createState() => _EditProfileSheetState();
+  ConsumerState<_EditPersonalInfoSheet> createState() => _EditPersonalInfoSheetState();
 }
 
-class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
-  String _selectedLevel = 'Intermediate';
-  String _selectedGoal = 'Build Muscle';
-  List<int> _selectedDays = []; // 0=Mon, 1=Tue, ..., 6=Sun
+class _EditPersonalInfoSheetState extends ConsumerState<_EditPersonalInfoSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _ageController;
+  String _selectedGender = 'male';
+  String _selectedActivityLevel = 'moderately_active';
   bool _isSaving = false;
   bool _isLoading = true;
 
-  static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Height/weight stored in metric (cm/kg)
+  double? _heightCm;
+  double? _weightKg;
+  double? _targetWeightKg;
+
+  // Unit preferences
+  bool _isHeightMetric = true;
+  bool _isWeightMetric = true;
+
+  static const _genderOptions = ['male', 'female', 'other'];
+  static const _activityLevels = [
+    ('sedentary', 'Sedentary', 'Little or no exercise'),
+    ('lightly_active', 'Lightly Active', '1-3 days/week'),
+    ('moderately_active', 'Moderately Active', '3-5 days/week'),
+    ('very_active', 'Very Active', '6-7 days/week'),
+    ('extremely_active', 'Extremely Active', 'Athlete level'),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController();
+    _ageController = TextEditingController();
     _loadCurrentProfile();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    super.dispose();
   }
 
   void _loadCurrentProfile() {
@@ -746,9 +1125,13 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
 
     if (user != null) {
       setState(() {
-        _selectedLevel = user.fitnessLevel ?? 'Intermediate';
-        _selectedGoal = user.fitnessGoal ?? 'Build Muscle';
-        _selectedDays = List<int>.from(user.workoutDays);
+        _nameController.text = user.displayName;
+        _ageController.text = user.age?.toString() ?? '';
+        _selectedGender = user.gender ?? 'male';
+        _selectedActivityLevel = user.activityLevel ?? 'moderately_active';
+        _heightCm = user.heightCm;
+        _weightKg = user.weightKg;
+        _targetWeightKg = user.targetWeightKg;
         _isLoading = false;
       });
     } else {
@@ -757,6 +1140,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
   }
 
   Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isSaving = true);
 
     try {
@@ -767,18 +1152,30 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
         throw Exception('User not found');
       }
 
-      // Call API to update user profile
+      final data = <String, dynamic>{
+        'name': _nameController.text.trim(),
+        'gender': _selectedGender,
+        'activity_level': _selectedActivityLevel,
+      };
+
+      if (_heightCm != null) {
+        data['height_cm'] = _heightCm;
+      }
+      if (_weightKg != null) {
+        data['weight_kg'] = _weightKg;
+      }
+      if (_targetWeightKg != null) {
+        data['target_weight_kg'] = _targetWeightKg;
+      }
+      if (_ageController.text.isNotEmpty) {
+        data['age'] = int.tryParse(_ageController.text);
+      }
+
       await apiClient.put(
         '${ApiConstants.users}/$userId',
-        data: {
-          'fitness_level': _selectedLevel,
-          'goals': _selectedGoal,
-          'days_per_week': _selectedDays.length,
-          'workout_days': _selectedDays,
-        },
+        data: data,
       );
 
-      // Refresh user data in the auth state
       await ref.read(authStateProvider.notifier).refreshUser();
 
       if (mounted) {
@@ -812,12 +1209,11 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
+      initialChildSize: 0.85,
       minChildSize: 0.5,
-      maxChildSize: 0.9,
+      maxChildSize: 0.95,
       builder: (context, scrollController) => Container(
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -843,6 +1239,8 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
+                  Icon(Icons.person_outline, color: cyan),
+                  const SizedBox(width: 12),
                   Text(
                     'Edit Profile',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -861,7 +1259,7 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
                               color: cyan,
                             ),
                           )
-                        : Text('Save', style: TextStyle(color: cyan)),
+                        : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -875,175 +1273,233 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
               )
             else
               Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Fitness level
-                      Text(
-                        'FITNESS LEVEL',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        children: ['Beginner', 'Intermediate', 'Advanced'].map((level) {
-                          final isSelected = _selectedLevel == level;
-                          return GestureDetector(
-                            onTap: _isSaving ? null : () => setState(() => _selectedLevel = level),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? cyan.withOpacity(0.2)
-                                    : elevatedColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? cyan : cardBorder,
-                                ),
-                              ),
-                              child: Text(
-                                level,
-                                style: TextStyle(
-                                  color: isSelected ? cyan : textSecondary,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Goals
-                      Text(
-                        'FITNESS GOAL',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          'Build Muscle',
-                          'Lose Weight',
-                          'Increase Endurance',
-                          'Stay Active',
-                        ].map((goal) {
-                          final isSelected = _selectedGoal == goal;
-                          return GestureDetector(
-                            onTap: _isSaving ? null : () => setState(() => _selectedGoal = goal),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? purple.withOpacity(0.2)
-                                    : elevatedColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? purple : cardBorder,
-                                ),
-                              ),
-                              child: Text(
-                                goal,
-                                style: TextStyle(
-                                  color: isSelected ? purple : textSecondary,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Workout days selection
-                      Text(
-                        'WORKOUT DAYS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(7, (index) {
-                          final isSelected = _selectedDays.contains(index);
-                          return GestureDetector(
-                            onTap: _isSaving
-                                ? null
-                                : () {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedDays.remove(index);
-                                      } else {
-                                        _selectedDays.add(index);
-                                        _selectedDays.sort();
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Row 1: Name and Age side by side
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionTitle('NAME', textMuted),
+                                  const SizedBox(height: 6),
+                                  _buildCompactTextField(
+                                    controller: _nameController,
+                                    hint: 'Your name',
+                                    isDark: isDark,
+                                    elevatedColor: elevatedColor,
+                                    cardBorder: cardBorder,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
                                       }
-                                    });
-                                  },
-                            child: Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? cyan.withOpacity(0.2)
-                                    : elevatedColor,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: isSelected ? cyan : cardBorder,
-                                  width: isSelected ? 2 : 1,
-                                ),
+                                      return null;
+                                    },
+                                  ),
+                                ],
                               ),
-                              child: Center(
-                                child: Text(
-                                  _dayNames[index],
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                    color: isSelected ? cyan : textSecondary,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionTitle('AGE', textMuted),
+                                  const SizedBox(height: 6),
+                                  _buildCompactTextField(
+                                    controller: _ageController,
+                                    hint: '25',
+                                    isDark: isDark,
+                                    elevatedColor: elevatedColor,
+                                    cardBorder: cardBorder,
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Gender as compact chips
+                        _buildSectionTitle('GENDER', textMuted),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: _genderOptions.map((gender) {
+                            final isSelected = _selectedGender == gender;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: GestureDetector(
+                                onTap: _isSaving ? null : () => setState(() => _selectedGender = gender),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? cyan.withOpacity(0.2) : elevatedColor,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: isSelected ? cyan : cardBorder),
+                                  ),
+                                  child: Text(
+                                    gender[0].toUpperCase() + gender.substring(1),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: isSelected ? cyan : textSecondary,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Text(
-                          _selectedDays.isEmpty
-                              ? 'Select at least one day'
-                              : '${_selectedDays.length} day${_selectedDays.length == 1 ? '' : 's'} selected',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: _selectedDays.isEmpty ? AppColors.error : textMuted,
-                              ),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 14),
+
+                        // Height and Weight side by side
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCompactUnitInput(
+                                label: 'HEIGHT',
+                                value: _heightCm,
+                                isMetric: _isHeightMetric,
+                                onMetricChanged: (isMetric) => setState(() => _isHeightMetric = isMetric),
+                                onValueChanged: (value) => setState(() => _heightCm = value),
+                                metricUnit: 'cm',
+                                imperialUnit: 'ft',
+                                isHeight: true,
+                                isDark: isDark,
+                                elevatedColor: elevatedColor,
+                                cardBorder: cardBorder,
+                                textMuted: textMuted,
+                                cyan: cyan,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildCompactUnitInput(
+                                label: 'WEIGHT',
+                                value: _weightKg,
+                                isMetric: _isWeightMetric,
+                                onMetricChanged: (isMetric) => setState(() => _isWeightMetric = isMetric),
+                                onValueChanged: (value) => setState(() => _weightKg = value),
+                                metricUnit: 'kg',
+                                imperialUnit: 'lbs',
+                                isHeight: false,
+                                isDark: isDark,
+                                elevatedColor: elevatedColor,
+                                cardBorder: cardBorder,
+                                textMuted: textMuted,
+                                cyan: cyan,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Target Weight
+                        _buildCompactUnitInput(
+                          label: 'TARGET WEIGHT',
+                          value: _targetWeightKg,
+                          isMetric: _isWeightMetric,
+                          onMetricChanged: (isMetric) => setState(() => _isWeightMetric = isMetric),
+                          onValueChanged: (value) => setState(() => _targetWeightKg = value),
+                          metricUnit: 'kg',
+                          imperialUnit: 'lbs',
+                          isHeight: false,
+                          isDark: isDark,
+                          elevatedColor: elevatedColor,
+                          cardBorder: cardBorder,
+                          textMuted: textMuted,
+                          cyan: cyan,
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Activity Level - compact dropdown style
+                        _buildSectionTitle('ACTIVITY LEVEL', textMuted),
+                        const SizedBox(height: 6),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: elevatedColor,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: cardBorder),
+                          ),
+                          child: Column(
+                            children: _activityLevels.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final (value, title, subtitle) = entry.value;
+                              final isSelected = _selectedActivityLevel == value;
+                              return Column(
+                                children: [
+                                  InkWell(
+                                    onTap: _isSaving ? null : () => setState(() => _selectedActivityLevel = value),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 18,
+                                            height: 18,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isSelected ? cyan : textMuted,
+                                                width: 2,
+                                              ),
+                                              color: isSelected ? cyan : Colors.transparent,
+                                            ),
+                                            child: isSelected
+                                                ? Icon(Icons.check, size: 12, color: Colors.white)
+                                                : null,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  title,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                                    color: isSelected ? cyan : null,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  '($subtitle)',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: textMuted,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  if (index < _activityLevels.length - 1)
+                                    Divider(height: 1, color: cardBorder, indent: 40),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1052,5 +1508,445 @@ class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
       ),
     );
   }
+
+  Widget _buildSectionTitle(String title, Color textMuted) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: textMuted,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildCompactTextField({
+    required TextEditingController controller,
+    required String hint,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color cardBorder,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      enabled: !_isSaving,
+      validator: validator,
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: elevatedColor,
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: cardBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+    );
+  }
+
+  Widget _buildCompactUnitInput({
+    required String label,
+    required double? value,
+    required bool isMetric,
+    required ValueChanged<bool> onMetricChanged,
+    required ValueChanged<double?> onValueChanged,
+    required String metricUnit,
+    required String imperialUnit,
+    required bool isHeight,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color cardBorder,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    // Convert value for display
+    String displayValue = '';
+    if (value != null) {
+      if (isMetric) {
+        displayValue = isHeight ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
+      } else if (isHeight) {
+        // Show as feet with decimal
+        final totalInches = value / 2.54;
+        final feet = totalInches / 12;
+        displayValue = feet.toStringAsFixed(1);
+      } else {
+        // kg to lbs
+        final imperial = value * 2.20462;
+        displayValue = imperial.toStringAsFixed(1);
+      }
+    }
+
+    final suffix = isMetric ? metricUnit : imperialUnit;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle(label, textMuted),
+            // Compact unit toggle
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: _isSaving ? null : () => onMetricChanged(true),
+                  child: Text(
+                    metricUnit,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isMetric ? FontWeight.w700 : FontWeight.normal,
+                      color: isMetric ? cyan : textMuted,
+                    ),
+                  ),
+                ),
+                Text(' / ', style: TextStyle(fontSize: 11, color: textMuted)),
+                GestureDetector(
+                  onTap: _isSaving ? null : () => onMetricChanged(false),
+                  child: Text(
+                    imperialUnit,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: !isMetric ? FontWeight.w700 : FontWeight.normal,
+                      color: !isMetric ? cyan : textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: elevatedColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: cardBorder),
+          ),
+          child: TextField(
+            controller: TextEditingController(text: displayValue),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            enabled: !_isSaving,
+            style: const TextStyle(fontSize: 14),
+            onChanged: (text) {
+              if (text.isEmpty) {
+                onValueChanged(null);
+                return;
+              }
+              final parsed = double.tryParse(text);
+              if (parsed == null) return;
+
+              if (isMetric) {
+                onValueChanged(parsed);
+              } else if (isHeight) {
+                // Convert feet to cm
+                onValueChanged(parsed * 12 * 2.54);
+              } else {
+                // Convert lbs to kg
+                onValueChanged(parsed / 2.20462);
+              }
+            },
+            decoration: InputDecoration(
+              hintText: '0',
+              hintStyle: TextStyle(color: textMuted, fontSize: 14),
+              suffixText: suffix,
+              suffixStyle: TextStyle(
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                fontSize: 12,
+              ),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnitToggleInput({
+    required String label,
+    required double? value,
+    required bool isMetric,
+    required ValueChanged<bool> onMetricChanged,
+    required ValueChanged<double?> onValueChanged,
+    required String metricUnit,
+    required String imperialUnit,
+    required bool isHeight,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color cardBorder,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildSectionTitle(label, textMuted),
+            // Unit toggle
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: elevatedColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cardBorder),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _UnitToggleButton(
+                    label: metricUnit,
+                    isSelected: isMetric,
+                    onTap: _isSaving ? null : () => onMetricChanged(true),
+                    cyan: cyan,
+                    textMuted: textMuted,
+                  ),
+                  _UnitToggleButton(
+                    label: imperialUnit,
+                    isSelected: !isMetric,
+                    onTap: _isSaving ? null : () => onMetricChanged(false),
+                    cyan: cyan,
+                    textMuted: textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (isHeight && !isMetric)
+          _buildHeightImperialInput(value, onValueChanged, isDark, elevatedColor, cardBorder, textMuted)
+        else
+          _buildSingleUnitInput(
+            value: value,
+            isMetric: isMetric,
+            isHeight: isHeight,
+            onValueChanged: onValueChanged,
+            isDark: isDark,
+            elevatedColor: elevatedColor,
+            cardBorder: cardBorder,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSingleUnitInput({
+    required double? value,
+    required bool isMetric,
+    required bool isHeight,
+    required ValueChanged<double?> onValueChanged,
+    required bool isDark,
+    required Color elevatedColor,
+    required Color cardBorder,
+  }) {
+    // Convert value for display
+    String displayValue = '';
+    if (value != null) {
+      if (isMetric) {
+        displayValue = isHeight ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
+      } else {
+        // Convert to imperial
+        final imperial = value * 2.20462; // kg to lbs
+        displayValue = imperial.toStringAsFixed(1);
+      }
+    }
+
+    final suffix = isMetric ? (isHeight ? 'cm' : 'kg') : 'lbs';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevatedColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: TextField(
+        controller: TextEditingController(text: displayValue),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        enabled: !_isSaving,
+        onChanged: (text) {
+          if (text.isEmpty) {
+            onValueChanged(null);
+            return;
+          }
+          final parsed = double.tryParse(text);
+          if (parsed == null) return;
+
+          if (isMetric) {
+            onValueChanged(parsed);
+          } else {
+            // Convert from lbs to kg
+            onValueChanged(parsed / 2.20462);
+          }
+        },
+        style: TextStyle(
+          fontSize: 16,
+          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Enter value',
+          hintStyle: TextStyle(color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+          suffixText: suffix,
+          suffixStyle: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            fontSize: 14,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeightImperialInput(
+    double? valueCm,
+    ValueChanged<double?> onValueChanged,
+    bool isDark,
+    Color elevatedColor,
+    Color cardBorder,
+    Color textMuted,
+  ) {
+    // Convert cm to feet and inches
+    int feet = 0;
+    int inches = 0;
+    if (valueCm != null) {
+      final totalInches = valueCm / 2.54;
+      feet = (totalInches / 12).floor();
+      inches = (totalInches % 12).round();
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cardBorder),
+            ),
+            child: TextField(
+              controller: TextEditingController(text: feet > 0 ? feet.toString() : ''),
+              keyboardType: TextInputType.number,
+              enabled: !_isSaving,
+              onChanged: (text) {
+                final ft = int.tryParse(text) ?? 0;
+                final totalInches = ft * 12 + inches;
+                final cm = totalInches * 2.54;
+                onValueChanged(cm > 0 ? cm : null);
+              },
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: '0',
+                hintStyle: TextStyle(color: textMuted),
+                suffixText: 'ft',
+                suffixStyle: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: elevatedColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cardBorder),
+            ),
+            child: TextField(
+              controller: TextEditingController(text: inches > 0 ? inches.toString() : ''),
+              keyboardType: TextInputType.number,
+              enabled: !_isSaving,
+              onChanged: (text) {
+                final inch = int.tryParse(text) ?? 0;
+                final totalInches = feet * 12 + inch;
+                final cm = totalInches * 2.54;
+                onValueChanged(cm > 0 ? cm : null);
+              },
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: '0',
+                hintStyle: TextStyle(color: textMuted),
+                suffixText: 'in',
+                suffixStyle: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  fontSize: 14,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
+
+/// Unit toggle button widget
+class _UnitToggleButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final Color cyan;
+  final Color textMuted;
+
+  const _UnitToggleButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.cyan,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? cyan : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 

@@ -21,10 +21,14 @@ class User extends Equatable {
   final double? heightCm;
   @JsonKey(name: 'weight_kg')
   final double? weightKg;
+  @JsonKey(name: 'target_weight_kg')
+  final double? targetWeightKg;
   final int? age;
   @JsonKey(name: 'date_of_birth')
   final String? dateOfBirth;
   final String? gender;
+  @JsonKey(name: 'activity_level')
+  final String? activityLevel;
   @JsonKey(name: 'onboarding_completed')
   final bool? onboardingCompleted;
   @JsonKey(name: 'created_at')
@@ -44,9 +48,11 @@ class User extends Equatable {
     this.activeInjuries,
     this.heightCm,
     this.weightKg,
+    this.targetWeightKg,
     this.age,
     this.dateOfBirth,
     this.gender,
+    this.activityLevel,
     this.onboardingCompleted,
     this.createdAt,
     this.updatedAt,
@@ -187,9 +193,11 @@ class User extends Equatable {
     String? activeInjuries,
     double? heightCm,
     double? weightKg,
+    double? targetWeightKg,
     int? age,
     String? dateOfBirth,
     String? gender,
+    String? activityLevel,
     bool? onboardingCompleted,
     String? createdAt,
     String? updatedAt,
@@ -206,9 +214,11 @@ class User extends Equatable {
       activeInjuries: activeInjuries ?? this.activeInjuries,
       heightCm: heightCm ?? this.heightCm,
       weightKg: weightKg ?? this.weightKg,
+      targetWeightKg: targetWeightKg ?? this.targetWeightKg,
       age: age ?? this.age,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
+      activityLevel: activityLevel ?? this.activityLevel,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

@@ -136,6 +136,7 @@ class WorkoutRepository {
     List<String>? injuries,
     List<String>? equipment,
     String? workoutType,
+    String? aiPrompt,
   }) async {
     try {
       debugPrint('🔍 [Workout] Regenerating workout $workoutId with:');
@@ -145,6 +146,7 @@ class WorkoutRepository {
       debugPrint('  - injuries: $injuries');
       debugPrint('  - equipment: $equipment');
       debugPrint('  - workoutType: $workoutType');
+      debugPrint('  - aiPrompt: $aiPrompt');
 
       // Use longer timeout for regeneration (AI generation can take time + server cold start)
       final response = await _apiClient.post(
@@ -158,6 +160,7 @@ class WorkoutRepository {
           if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
           if (workoutType != null) 'workout_type': workoutType,
+          if (aiPrompt != null && aiPrompt.isNotEmpty) 'ai_prompt': aiPrompt,
         },
         options: Options(
           sendTimeout: const Duration(seconds: 30),
@@ -172,6 +175,44 @@ class WorkoutRepository {
     } catch (e) {
       debugPrint('❌ [Workout] Error regenerating workout: $e');
       rethrow;
+    }
+  }
+
+  /// Get AI-powered workout suggestions for regeneration
+  Future<List<Map<String, dynamic>>> getWorkoutSuggestions({
+    required String workoutId,
+    required String userId,
+    String? currentWorkoutType,
+    String? prompt,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Getting AI workout suggestions...');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/suggest',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          if (currentWorkoutType != null) 'current_workout_type': currentWorkoutType,
+          if (prompt != null && prompt.isNotEmpty) 'prompt': prompt,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final suggestions = (data['suggestions'] as List? ?? [])
+            .map((s) => s as Map<String, dynamic>)
+            .toList();
+        debugPrint('✅ [Workout] Got ${suggestions.length} AI suggestions');
+        return suggestions;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting workout suggestions: $e');
+      return [];
     }
   }
 

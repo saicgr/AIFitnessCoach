@@ -47,6 +47,10 @@ class SettingsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              // Goal Banner at the top - always visible
+              _GoalBanner().animate().fadeIn(),
+              const SizedBox(height: 24),
+
               // Preferences section
               _SectionHeader(title: 'PREFERENCES'),
               const SizedBox(height: 12),
@@ -697,12 +701,14 @@ class SettingsScreen extends ConsumerWidget {
     String? endDate,
   }) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     // Show loading dialog with message
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -728,6 +734,15 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
 
+    bool dialogDismissed = false;
+
+    void dismissDialog() {
+      if (!dialogDismissed) {
+        dialogDismissed = true;
+        navigator.pop();
+      }
+    }
+
     try {
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
@@ -751,20 +766,32 @@ class SettingsScreen extends ConsumerWidget {
         '${ApiConstants.users}/$userId/export$queryString',
         options: Options(
           responseType: ResponseType.bytes,
-          receiveTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 120),
           sendTimeout: const Duration(seconds: 30),
           validateStatus: (status) => status != null && status < 500, // Don't throw on 4xx
         ),
       );
 
-      // Close loading dialog
-      if (context.mounted) Navigator.pop(context);
+      // Close loading dialog FIRST
+      dismissDialog();
 
       // Handle error responses
       if (response.statusCode == 404) {
-        throw Exception('User data not found. Please try logging out and back in.');
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('User data not found. Please try logging out and back in.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
       } else if (response.statusCode != 200) {
-        throw Exception('Server error: ${response.statusCode}');
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Server error: ${response.statusCode}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
       }
 
       if (response.data != null) {
@@ -776,26 +803,29 @@ class SettingsScreen extends ConsumerWidget {
         await file.writeAsBytes(response.data as List<int>);
 
         // Share the file
-        if (context.mounted) {
-          await Share.shareXFiles(
-            [XFile(filePath)],
-            subject: 'AI Fitness Coach Data Export',
-            text: 'My fitness data exported on $timestamp',
-          );
+        await Share.shareXFiles(
+          [XFile(filePath)],
+          subject: 'AI Fitness Coach Data Export',
+          text: 'My fitness data exported on $timestamp',
+        );
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Data exported successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Data exported successfully!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
       } else {
-        throw Exception('No data received from server');
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('No data received from server'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } on DioException catch (e) {
       // Close loading dialog if still showing
-      if (context.mounted) Navigator.pop(context);
+      dismissDialog();
 
       String errorMessage = 'Export failed';
       if (e.type == DioExceptionType.receiveTimeout ||
@@ -807,27 +837,23 @@ class SettingsScreen extends ConsumerWidget {
         errorMessage = 'User data not found';
       }
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: AppColors.error,
+        ),
+      );
     } catch (e) {
       // Close loading dialog if still showing
-      if (context.mounted) Navigator.pop(context);
+      dismissDialog();
 
       // Show error
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Export failed: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Export failed: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -1043,6 +1069,244 @@ class SettingsScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Import failed: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Goal Banner (Editable)
+// ─────────────────────────────────────────────────────────────────
+
+class _GoalBanner extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_GoalBanner> createState() => _GoalBannerState();
+}
+
+class _GoalBannerState extends ConsumerState<_GoalBanner> {
+  bool _isEditing = false;
+  String? _selectedGoal;
+  bool _isSaving = false;
+
+  static const _goalOptions = [
+    ('Build Muscle', Icons.fitness_center, AppColors.cyan),
+    ('Lose Weight', Icons.monitor_weight, AppColors.orange),
+    ('Increase Endurance', Icons.directions_run, AppColors.purple),
+    ('Stay Active', Icons.self_improvement, AppColors.success),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final authState = ref.watch(authStateProvider);
+    final currentGoal = authState.user?.fitnessGoal ?? 'Not set';
+    _selectedGoal ??= currentGoal;
+
+    // Find goal info
+    final goalInfo = _goalOptions.firstWhere(
+      (g) => g.$1 == currentGoal,
+      orElse: () => ('Not set', Icons.flag, AppColors.textMuted),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            goalInfo.$3.withOpacity(0.15),
+            goalInfo.$3.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: goalInfo.$3.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: goalInfo.$3.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(goalInfo.$2, color: goalInfo.$3, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'YOUR GOAL',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      currentGoal,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: _isSaving ? null : () => setState(() => _isEditing = !_isEditing),
+                child: Text(
+                  _isEditing ? 'Cancel' : 'Edit',
+                  style: TextStyle(
+                    color: goalInfo.$3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Expandable edit section
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              children: [
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _goalOptions.map((goal) {
+                    final isSelected = _selectedGoal == goal.$1;
+                    return GestureDetector(
+                      onTap: _isSaving ? null : () => setState(() => _selectedGoal = goal.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? goal.$3.withOpacity(0.2) : backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? goal.$3 : cardBorder,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(goal.$2, color: isSelected ? goal.$3 : textSecondary, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              goal.$1,
+                              style: TextStyle(
+                                color: isSelected ? goal.$3 : textSecondary,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving || _selectedGoal == currentGoal ? null : _saveGoal,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: goalInfo.$3,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: goalInfo.$3.withOpacity(0.5),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Save Goal', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Changing your goal affects AI recommendations',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            crossFadeState: _isEditing ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveGoal() async {
+    if (_selectedGoal == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: {'goals': _selectedGoal},
+      );
+
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Goal updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update goal: $e'),
             backgroundColor: AppColors.error,
           ),
         );

@@ -44,7 +44,11 @@ These are the core features that replace a human coach - not trash talk. -->
 
 <!-- startups that can combine tech innovation with strong fundamentals -->
 
-<!-- Startups need to implement strong encryption, secure cloud infrastructure, and transparent privacy policies. Ensuring data privacy and security isn’t just a best practice – it’s often a deal-breaker issue for investors. As one developer guide notes, handling sensitive health metrics requires stringent protection and regulatory compliance from day one -->
+<!-- Startups need to implement strong encryption, secure cloud infrastructure, and transparent privacy policies. Ensuring data privacy and security isn’t just a best practice – it’s often a deal-breaker issue for investors. As one developer guide notes, handling sensitive health metrics requires stringent protection and regulatory compliance from day one 
+Also have to add saying 
+"the app use AI, mistakes may occuer, T&C Apply"
+"Have to ask user for user consent"? Have to decide on it
+-->
 
 <!-- Investors may ask if an app anonymizes user data, how it stores or shares data with third parties, and whether it has obtained necessary user consents. -->
 

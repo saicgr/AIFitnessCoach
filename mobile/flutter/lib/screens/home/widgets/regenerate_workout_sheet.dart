@@ -19,6 +19,7 @@ Future<Workout?> showRegenerateWorkoutSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true, // Ensures sheet renders above floating overlays
     builder: (sheetContext) => Theme(
       data: parentTheme,
       child: _RegenerateWorkoutSheet(workout: workout),
@@ -37,7 +38,9 @@ class _RegenerateWorkoutSheet extends ConsumerStatefulWidget {
 }
 
 class _RegenerateWorkoutSheetState
-    extends ConsumerState<_RegenerateWorkoutSheet> {
+    extends ConsumerState<_RegenerateWorkoutSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   bool _isRegenerating = false;
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
@@ -60,6 +63,13 @@ class _RegenerateWorkoutSheetState
   final TextEditingController _injuryController = TextEditingController();
   final TextEditingController _equipmentController = TextEditingController();
   final TextEditingController _workoutTypeController = TextEditingController();
+
+  // AI Suggestions tab state
+  final TextEditingController _aiPromptController = TextEditingController();
+  final FocusNode _aiPromptFocusNode = FocusNode();
+  List<Map<String, dynamic>> _aiSuggestions = [];
+  bool _isLoadingSuggestions = false;
+  int? _selectedSuggestionIndex;
 
   final List<String> _difficulties = ['easy', 'medium', 'hard'];
   final List<String> _workoutTypes = [
@@ -106,6 +116,8 @@ class _RegenerateWorkoutSheetState
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
     // Initialize with current workout values
     _selectedDifficulty = widget.workout.difficulty?.toLowerCase() ?? 'medium';
     _selectedDuration = (widget.workout.durationMinutes ?? 45).toDouble();
@@ -131,15 +143,58 @@ class _RegenerateWorkoutSheetState
         }
       }
     }
+
+    // Load AI suggestions when switching to AI tab
+    _tabController.addListener(() {
+      if (_tabController.index == 1 && _aiSuggestions.isEmpty && !_isLoadingSuggestions) {
+        _loadAISuggestions();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _focusAreaController.dispose();
     _injuryController.dispose();
     _equipmentController.dispose();
     _workoutTypeController.dispose();
+    _aiPromptController.dispose();
+    _aiPromptFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAISuggestions() async {
+    setState(() => _isLoadingSuggestions = true);
+
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) {
+        setState(() => _isLoadingSuggestions = false);
+        return;
+      }
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final suggestions = await repo.getWorkoutSuggestions(
+        workoutId: widget.workout.id!,
+        userId: userId,
+        currentWorkoutType: widget.workout.type,
+        prompt: _aiPromptController.text.trim().isEmpty ? null : _aiPromptController.text.trim(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _aiSuggestions = suggestions;
+          _isLoadingSuggestions = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading AI suggestions: $e');
+      if (mounted) {
+        setState(() => _isLoadingSuggestions = false);
+      }
+    }
   }
 
   Future<void> _regenerate() async {
@@ -198,6 +253,52 @@ class _RegenerateWorkoutSheetState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to regenerate: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _applyAISuggestion() async {
+    if (_selectedSuggestionIndex == null || _selectedSuggestionIndex! >= _aiSuggestions.length) {
+      return;
+    }
+
+    setState(() => _isRegenerating = true);
+
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      setState(() => _isRegenerating = false);
+      return;
+    }
+
+    try {
+      final suggestion = _aiSuggestions[_selectedSuggestionIndex!];
+      final repo = ref.read(workoutRepositoryProvider);
+
+      // Regenerate with the AI suggestion parameters
+      final newWorkout = await repo.regenerateWorkout(
+        workoutId: widget.workout.id!,
+        userId: userId,
+        difficulty: suggestion['difficulty'] ?? _selectedDifficulty,
+        durationMinutes: suggestion['duration_minutes'] ?? _selectedDuration.round(),
+        focusAreas: (suggestion['focus_areas'] as List?)?.cast<String>() ?? [],
+        workoutType: suggestion['type'],
+        aiPrompt: _aiPromptController.text.trim().isEmpty ? null : _aiPromptController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pop(context, newWorkout);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRegenerating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to apply suggestion: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -268,7 +369,7 @@ class _RegenerateWorkoutSheetState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Customize your new workout',
+                          'Customize or let AI suggest',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: colors.textMuted,
@@ -286,56 +387,436 @@ class _RegenerateWorkoutSheetState
               ),
             ),
 
+            // Tab bar
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: colors.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: colors.purple,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: Colors.white,
+                unselectedLabelColor: colors.textSecondary,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                dividerColor: Colors.transparent,
+                padding: const EdgeInsets.all(4),
+                tabs: const [
+                  Tab(text: 'Customize'),
+                  Tab(text: 'AI Suggestions'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
             Divider(height: 1, color: colors.cardBorder),
 
-            // Scrollable content
+            // Tab content
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Workout Type Selection
-                    _buildWorkoutTypeSection(colors),
-
-                    // Difficulty Selection
-                    _buildDifficultySection(colors),
-
-                    // Duration Selection (Slider)
-                    _buildDurationSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Equipment Selection
-                    _buildEquipmentSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Focus Areas Selection
-                    _buildFocusAreasSection(colors),
-
-                    const SizedBox(height: 20),
-
-                    // Injuries Section (Optional)
-                    _buildInjuriesSection(colors),
-
-                    const SizedBox(height: 24),
-
-                    // Regenerate Button
-                    _buildRegenerateButton(colors),
-
-                    // Extra padding to account for FAB overlap
-                    const SizedBox(height: 80),
-                  ],
-                ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildCustomizeTab(colors),
+                  _buildAISuggestionsTab(colors),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildCustomizeTab(_SheetColors colors) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Workout Type Selection
+          _buildWorkoutTypeSection(colors),
+
+          // Difficulty Selection
+          _buildDifficultySection(colors),
+
+          // Duration Selection (Slider)
+          _buildDurationSection(colors),
+
+          const SizedBox(height: 20),
+
+          // Equipment Selection
+          _buildEquipmentSection(colors),
+
+          const SizedBox(height: 20),
+
+          // Focus Areas Selection
+          _buildFocusAreasSection(colors),
+
+          const SizedBox(height: 20),
+
+          // Injuries Section (Optional)
+          _buildInjuriesSection(colors),
+
+          const SizedBox(height: 24),
+
+          // Regenerate Button
+          _buildRegenerateButton(colors),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAISuggestionsTab(_SheetColors colors) {
+    return Column(
+      children: [
+        // Prompt input at the top
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline, size: 18, color: colors.cyan),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Describe your ideal workout',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _aiPromptController,
+                focusNode: _aiPromptFocusNode,
+                maxLines: 2,
+                enabled: !_isRegenerating,
+                autofocus: false,
+                textInputAction: TextInputAction.send,
+                keyboardType: TextInputType.text,
+                style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'e.g., "A quick upper body workout with no equipment"',
+                  hintStyle: TextStyle(color: colors.textMuted, fontSize: 13),
+                  filled: true,
+                  fillColor: colors.glassSurface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cardBorder.withOpacity(0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cyan, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      Icons.send_rounded,
+                      color: _aiPromptController.text.isEmpty ? colors.textMuted : colors.cyan,
+                    ),
+                    onPressed: _isLoadingSuggestions ? null : _loadAISuggestions,
+                  ),
+                ),
+                onChanged: (_) => setState(() {}),
+                onSubmitted: (_) => _loadAISuggestions(),
+              ),
+            ],
+          ),
+        ),
+
+        Divider(height: 1, color: colors.cardBorder),
+
+        // Suggestions list
+        Expanded(
+          child: _isLoadingSuggestions
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(color: AppColors.cyan),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Generating suggestions...',
+                        style: TextStyle(color: colors.textMuted),
+                      ),
+                    ],
+                  ),
+                )
+              : _aiSuggestions.isEmpty
+                  ? _buildEmptySuggestionsState(colors)
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _aiSuggestions.length,
+                      itemBuilder: (context, index) {
+                        return _buildSuggestionCard(colors, index);
+                      },
+                    ),
+        ),
+
+        // Apply button at bottom
+        if (_selectedSuggestionIndex != null)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.elevated,
+              border: Border(top: BorderSide(color: colors.cardBorder)),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isRegenerating ? null : _applyAISuggestion,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colors.cyan,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: _isRegenerating
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Applying...',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Apply This Workout',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptySuggestionsState(_SheetColors colors) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              size: 64,
+              color: colors.textMuted.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No suggestions yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: colors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter a prompt above or tap refresh to get AI-powered workout suggestions',
+              style: TextStyle(
+                fontSize: 14,
+                color: colors.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: _isLoadingSuggestions ? null : _loadAISuggestions,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Get Suggestions'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.cyan,
+                side: BorderSide(color: colors.cyan),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionCard(_SheetColors colors, int index) {
+    final suggestion = _aiSuggestions[index];
+    final isSelected = _selectedSuggestionIndex == index;
+    final name = suggestion['name'] as String? ?? 'Workout ${index + 1}';
+    final type = suggestion['type'] as String? ?? 'Strength';
+    final difficulty = suggestion['difficulty'] as String? ?? 'medium';
+    final duration = suggestion['duration_minutes'] as int? ?? 45;
+    final description = suggestion['description'] as String? ?? '';
+    final focusAreas = (suggestion['focus_areas'] as List?)?.cast<String>() ?? [];
+
+    final difficultyColor = _getDifficultyColor(difficulty);
+    final typeColor = _getTypeColor(type);
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSuggestionIndex = isSelected ? null : index;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.cyan.withOpacity(0.1) : colors.glassSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? colors.cyan : colors.cardBorder.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with name and selection indicator
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: colors.cyan,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check, size: 16, color: Colors.white),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Tags row
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTag(type, typeColor),
+                _buildTag(difficulty.capitalize(), difficultyColor),
+                _buildTag('$duration min', colors.orange),
+              ],
+            ),
+
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.textSecondary,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+
+            if (focusAreas.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: focusAreas.map((area) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.purple.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    area,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.purple,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                )).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Color _getTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'hiit':
+        return AppColors.error;
+      case 'cardio':
+        return AppColors.orange;
+      case 'flexibility':
+        return AppColors.purple;
+      case 'strength':
+      default:
+        return AppColors.cyan;
+    }
   }
 
   Widget _buildWorkoutTypeSection(_SheetColors colors) {
@@ -1233,4 +1714,12 @@ class _LightColors implements _SheetColors {
   @override Color get orange => AppColors.orange;
   @override Color get success => AppColorsLight.success;
   @override Color get error => AppColorsLight.error;
+}
+
+/// String extension for capitalize
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
+  }
 }
