@@ -9,6 +9,7 @@ import io
 import json
 import time
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -49,11 +50,57 @@ def export_user_data(
     if not user:
         raise ValueError(f"User {user_id} not found")
 
+    # Run all queries in parallel using ThreadPoolExecutor
+    t = time.time()
+    results = {}
+
+    def fetch_metrics():
+        return _get_filtered_metrics(db, user_id, start_date, end_date)
+
+    def fetch_workouts():
+        return _get_filtered_workouts(db, user_id, start_date, end_date)
+
+    def fetch_workout_logs():
+        return _get_filtered_workout_logs(db, user_id, start_date, end_date)
+
+    def fetch_performance_logs():
+        return _get_filtered_performance_logs(db, user_id, start_date, end_date)
+
+    def fetch_strength_records():
+        return _get_filtered_strength_records(db, user_id, start_date, end_date)
+
+    def fetch_achievements():
+        return _get_filtered_achievements(db, user_id, start_date, end_date)
+
+    def fetch_streaks():
+        return _get_user_streaks(db, user_id)
+
+    # Execute all queries in parallel
+    with ThreadPoolExecutor(max_workers=7) as executor:
+        futures = {
+            executor.submit(fetch_metrics): "metrics",
+            executor.submit(fetch_workouts): "workouts",
+            executor.submit(fetch_workout_logs): "workout_logs",
+            executor.submit(fetch_performance_logs): "performance_logs",
+            executor.submit(fetch_strength_records): "strength_records",
+            executor.submit(fetch_achievements): "achievements",
+            executor.submit(fetch_streaks): "streaks",
+        }
+
+        for future in as_completed(futures):
+            key = futures[future]
+            try:
+                results[key] = future.result()
+            except Exception as e:
+                logger.error(f"Error fetching {key}: {e}")
+                results[key] = []
+
+    logger.info(f"⏱️ All parallel queries completed in {time.time() - t:.2f}s")
+
     # Create in-memory ZIP file
     zip_buffer = io.BytesIO()
 
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        # Export each data type
         export_counts = {}
 
         # 1. Profile data (always included, no date filter)
@@ -61,61 +108,40 @@ def export_user_data(
         zip_file.writestr("profile.csv", profile_csv)
         export_counts["profile"] = 1
 
-        # 2. Body metrics - filter by recorded_at
-        t = time.time()
-        metrics = _get_filtered_metrics(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ body_metrics query: {time.time() - t:.2f}s ({len(metrics)} rows)")
-        metrics_csv = _export_body_metrics(metrics)
+        # 2. Body metrics
+        metrics_csv = _export_body_metrics(results["metrics"])
         zip_file.writestr("body_metrics.csv", metrics_csv)
-        export_counts["body_metrics"] = len(metrics)
+        export_counts["body_metrics"] = len(results["metrics"])
 
-        # 3. Workouts - filter by scheduled_date
-        t = time.time()
-        workouts = _get_filtered_workouts(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ workouts query: {time.time() - t:.2f}s ({len(workouts)} rows)")
-        workouts_csv = _export_workouts(workouts)
+        # 3. Workouts
+        workouts_csv = _export_workouts(results["workouts"])
         zip_file.writestr("workouts.csv", workouts_csv)
-        export_counts["workouts"] = len(workouts)
+        export_counts["workouts"] = len(results["workouts"])
 
-        # 4. Workout logs - filter by completed_at
-        t = time.time()
-        workout_logs = _get_filtered_workout_logs(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ workout_logs query: {time.time() - t:.2f}s ({len(workout_logs)} rows)")
-        logs_csv = _export_workout_logs(workout_logs)
+        # 4. Workout logs
+        logs_csv = _export_workout_logs(results["workout_logs"])
         zip_file.writestr("workout_logs.csv", logs_csv)
-        export_counts["workout_logs"] = len(workout_logs)
+        export_counts["workout_logs"] = len(results["workout_logs"])
 
-        # 5. Performance logs - filter by recorded_at
-        t = time.time()
-        performance_logs = _get_filtered_performance_logs(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ performance_logs query: {time.time() - t:.2f}s ({len(performance_logs)} rows)")
-        sets_csv = _export_exercise_sets(performance_logs)
+        # 5. Performance logs (exercise sets)
+        sets_csv = _export_exercise_sets(results["performance_logs"])
         zip_file.writestr("exercise_sets.csv", sets_csv)
-        export_counts["exercise_sets"] = len(performance_logs)
+        export_counts["exercise_sets"] = len(results["performance_logs"])
 
-        # 6. Strength records - filter by achieved_at
-        t = time.time()
-        strength_records = _get_filtered_strength_records(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ strength_records query: {time.time() - t:.2f}s ({len(strength_records)} rows)")
-        strength_csv = _export_strength_records(strength_records)
+        # 6. Strength records
+        strength_csv = _export_strength_records(results["strength_records"])
         zip_file.writestr("strength_records.csv", strength_csv)
-        export_counts["strength_records"] = len(strength_records)
+        export_counts["strength_records"] = len(results["strength_records"])
 
-        # 7. User achievements - filter by earned_at
-        t = time.time()
-        achievements = _get_filtered_achievements(db, user_id, start_date, end_date)
-        logger.info(f"⏱️ achievements query: {time.time() - t:.2f}s ({len(achievements)} rows)")
-        achievements_csv = _export_achievements(achievements)
+        # 7. Achievements
+        achievements_csv = _export_achievements(results["achievements"])
         zip_file.writestr("achievements.csv", achievements_csv)
-        export_counts["achievements"] = len(achievements)
+        export_counts["achievements"] = len(results["achievements"])
 
-        # 8. User streaks (always included, no date filter - current state)
-        t = time.time()
-        streaks = _get_user_streaks(db, user_id)
-        logger.info(f"⏱️ streaks query: {time.time() - t:.2f}s ({len(streaks)} rows)")
-        streaks_csv = _export_streaks(streaks)
+        # 8. Streaks
+        streaks_csv = _export_streaks(results["streaks"])
         zip_file.writestr("streaks.csv", streaks_csv)
-        export_counts["streaks"] = len(streaks)
+        export_counts["streaks"] = len(results["streaks"])
 
         # 9. Metadata file (for import validation)
         metadata_csv = _export_metadata(user_id, export_counts, start_date, end_date)
