@@ -688,6 +688,28 @@ class _RegenerateWorkoutSheetState
     final difficultyColor = _getDifficultyColor(difficulty);
     final typeColor = _getTypeColor(type);
 
+    // Ranking label based on position
+    String rankLabel;
+    Color rankColor;
+    IconData rankIcon;
+    if (index == 0) {
+      rankLabel = 'Best Match';
+      rankColor = colors.success;
+      rankIcon = Icons.star;
+    } else if (index == 1) {
+      rankLabel = '2nd Choice';
+      rankColor = colors.cyan;
+      rankIcon = Icons.thumb_up_outlined;
+    } else if (index == 2) {
+      rankLabel = '3rd Choice';
+      rankColor = colors.orange;
+      rankIcon = Icons.recommend_outlined;
+    } else {
+      rankLabel = '#${index + 1}';
+      rankColor = colors.textMuted;
+      rankIcon = Icons.tag;
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -708,19 +730,33 @@ class _RegenerateWorkoutSheetState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with name and selection indicator
+            // Ranking badge at the top
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: colors.textPrimary,
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: rankColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: index == 0 ? Border.all(color: rankColor.withOpacity(0.5), width: 1) : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(rankIcon, size: 14, color: rankColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        rankLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: rankColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const Spacer(),
                 if (isSelected)
                   Container(
                     padding: const EdgeInsets.all(4),
@@ -731,6 +767,16 @@ class _RegenerateWorkoutSheetState
                     child: const Icon(Icons.check, size: 16, color: Colors.white),
                   ),
               ],
+            ),
+            const SizedBox(height: 10),
+            // Header with name
+            Text(
+              name,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
             ),
             const SizedBox(height: 8),
 

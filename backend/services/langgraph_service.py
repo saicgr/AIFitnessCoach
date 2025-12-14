@@ -1,14 +1,27 @@
 """
-LangGraph Coach Service - FastAPI integration wrapper.
+LangGraph Coach Service - FastAPI integration wrapper with dedicated domain agents.
 
-This service wraps the LangGraph agent and provides the same interface
-as the original CoachService for easy integration.
+This service routes messages to specialized domain agents:
+- Nutrition Agent: Food analysis, dietary advice
+- Workout Agent: Exercise modifications, workout guidance
+- Injury Agent: Injury tracking, recovery advice
+- Hydration Agent: Water intake tracking, hydration tips
+- Coach Agent: General fitness coaching, app navigation
 """
 import re
 from typing import Optional, Dict, Any, Tuple
+
 from models.chat import ChatRequest, ChatResponse, CoachIntent, AgentType
-from services.langgraph_agents.graph import build_fitness_coach_graph
-from services.langgraph_agents.state import FitnessCoachState
+from services.openai_service import OpenAIService
+from services.rag_service import RAGService
+
+# Import all domain agents
+from services.langgraph_agents.nutrition_agent import build_nutrition_agent_graph
+from services.langgraph_agents.workout_agent import build_workout_agent_graph
+from services.langgraph_agents.injury_agent import build_injury_agent_graph
+from services.langgraph_agents.hydration_agent import build_hydration_agent_graph
+from services.langgraph_agents.coach_agent import build_coach_agent_graph
+
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -22,19 +35,85 @@ AGENT_MENTION_PATTERNS = {
     r"@coach\b": AgentType.COACH,
 }
 
+# Intent to agent mapping
+INTENT_TO_AGENT = {
+    # Nutrition agent
+    CoachIntent.ANALYZE_FOOD: AgentType.NUTRITION,
+    CoachIntent.NUTRITION_SUMMARY: AgentType.NUTRITION,
+    CoachIntent.RECENT_MEALS: AgentType.NUTRITION,
+
+    # Workout agent
+    CoachIntent.ADD_EXERCISE: AgentType.WORKOUT,
+    CoachIntent.REMOVE_EXERCISE: AgentType.WORKOUT,
+    CoachIntent.SWAP_WORKOUT: AgentType.WORKOUT,
+    CoachIntent.MODIFY_INTENSITY: AgentType.WORKOUT,
+    CoachIntent.RESCHEDULE: AgentType.WORKOUT,
+    CoachIntent.DELETE_WORKOUT: AgentType.WORKOUT,
+    CoachIntent.START_WORKOUT: AgentType.WORKOUT,
+    CoachIntent.COMPLETE_WORKOUT: AgentType.WORKOUT,
+
+    # Injury agent
+    CoachIntent.REPORT_INJURY: AgentType.INJURY,
+
+    # Hydration agent
+    CoachIntent.LOG_HYDRATION: AgentType.HYDRATION,
+
+    # Coach agent (default for these)
+    CoachIntent.QUESTION: AgentType.COACH,
+    CoachIntent.CHANGE_SETTING: AgentType.COACH,
+    CoachIntent.NAVIGATE: AgentType.COACH,
+}
+
+# Keyword-based routing for message analysis
+DOMAIN_KEYWORDS = {
+    AgentType.NUTRITION: [
+        "food", "eat", "ate", "meal", "calories", "protein", "carbs", "fat",
+        "nutrition", "diet", "macros", "breakfast", "lunch", "dinner", "snack",
+        "hungry", "recipe", "cooking", "what should i eat"
+    ],
+    AgentType.WORKOUT: [
+        "exercise", "workout", "training", "gym", "lift", "squat", "bench",
+        "deadlift", "muscle", "strength", "cardio", "hiit", "sets", "reps",
+        "form", "technique", "how do i do"
+    ],
+    AgentType.INJURY: [
+        "hurt", "pain", "injury", "injured", "sore", "strain", "sprain",
+        "recovery", "rehab", "heal", "prevent", "ice", "rest"
+    ],
+    AgentType.HYDRATION: [
+        "water", "hydration", "hydrate", "drink", "thirsty", "dehydrated",
+        "glasses", "cups", "fluid"
+    ],
+}
+
 
 class LangGraphCoachService:
     """
-    LangGraph-based coach service.
+    LangGraph-based coach service with dedicated domain agents.
 
-    Replaces the original CoachService with graph-based orchestration.
+    Routes messages to specialized agents based on:
+    1. @mentions (explicit routing)
+    2. Intent detection (from message analysis)
+    3. Keyword matching (fallback)
     """
 
     def __init__(self):
-        """Initialize the LangGraph coach service."""
-        logger.info("Initializing LangGraph coach service...")
-        self.graph = build_fitness_coach_graph()
-        logger.info("LangGraph coach service initialized")
+        """Initialize all domain agents."""
+        logger.info("Initializing LangGraph coach service with dedicated agents...")
+
+        # Build all agent graphs
+        self.agents = {
+            AgentType.NUTRITION: build_nutrition_agent_graph(),
+            AgentType.WORKOUT: build_workout_agent_graph(),
+            AgentType.INJURY: build_injury_agent_graph(),
+            AgentType.HYDRATION: build_hydration_agent_graph(),
+            AgentType.COACH: build_coach_agent_graph(),
+        }
+
+        # Initialize services for intent extraction
+        self.openai_service = OpenAIService()
+
+        logger.info("All domain agents initialized successfully")
 
     def _detect_agent_mention(self, message: str) -> Tuple[Optional[AgentType], str]:
         """
@@ -45,152 +124,255 @@ class LangGraphCoachService:
 
         Returns:
             Tuple of (agent_type, cleaned_message)
-            - agent_type: The detected agent type, or None for default routing
-            - cleaned_message: Message with @mention removed
         """
         for pattern, agent_type in AGENT_MENTION_PATTERNS.items():
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                # Remove the @mention from the message
                 cleaned = re.sub(pattern, "", message, flags=re.IGNORECASE).strip()
                 logger.info(f"Detected @mention: {agent_type.value}, cleaned message: {cleaned[:50]}...")
                 return agent_type, cleaned
         return None, message
 
     def _infer_agent_from_intent(self, intent: CoachIntent) -> AgentType:
-        """
-        Infer which agent should respond based on the detected intent.
+        """Infer which agent should handle based on intent."""
+        return INTENT_TO_AGENT.get(intent, AgentType.COACH)
 
-        Args:
-            intent: The detected intent
+    def _infer_agent_from_keywords(self, message: str) -> Optional[AgentType]:
+        """
+        Fallback: Infer agent from keywords in message.
+
+        Returns None if no clear match (will default to coach).
+        """
+        message_lower = message.lower()
+
+        keyword_counts = {}
+        for agent_type, keywords in DOMAIN_KEYWORDS.items():
+            count = sum(1 for kw in keywords if kw in message_lower)
+            if count > 0:
+                keyword_counts[agent_type] = count
+
+        if keyword_counts:
+            best_match = max(keyword_counts, key=keyword_counts.get)
+            logger.info(f"Keyword match: {best_match.value} (score: {keyword_counts[best_match]})")
+            return best_match
+
+        return None
+
+    async def _extract_intent(self, message: str) -> Tuple[CoachIntent, Dict[str, Any]]:
+        """
+        Extract intent and entities from user message.
 
         Returns:
-            The appropriate agent type
+            Tuple of (intent, extraction_data)
         """
-        # Map intents to agents
-        intent_to_agent = {
-            # Nutrition agent
-            CoachIntent.ANALYZE_FOOD: AgentType.NUTRITION,
-            CoachIntent.NUTRITION_SUMMARY: AgentType.NUTRITION,
-            CoachIntent.RECENT_MEALS: AgentType.NUTRITION,
-
-            # Workout agent
-            CoachIntent.ADD_EXERCISE: AgentType.WORKOUT,
-            CoachIntent.REMOVE_EXERCISE: AgentType.WORKOUT,
-            CoachIntent.SWAP_WORKOUT: AgentType.WORKOUT,
-            CoachIntent.MODIFY_INTENSITY: AgentType.WORKOUT,
-            CoachIntent.RESCHEDULE: AgentType.WORKOUT,
-            CoachIntent.DELETE_WORKOUT: AgentType.WORKOUT,
-            CoachIntent.START_WORKOUT: AgentType.WORKOUT,
-            CoachIntent.COMPLETE_WORKOUT: AgentType.WORKOUT,
-
-            # Injury agent
-            CoachIntent.REPORT_INJURY: AgentType.INJURY,
-
-            # Hydration agent
-            CoachIntent.LOG_HYDRATION: AgentType.HYDRATION,
+        extraction = await self.openai_service.extract_intent(message)
+        return extraction.intent, {
+            "exercises": extraction.exercises,
+            "muscle_groups": extraction.muscle_groups,
+            "modification": extraction.modification,
+            "body_part": extraction.body_part,
+            "setting_name": extraction.setting_name,
+            "setting_value": extraction.setting_value,
+            "destination": extraction.destination,
+            "hydration_amount": extraction.hydration_amount,
         }
 
-        return intent_to_agent.get(intent, AgentType.COACH)
+    async def _get_rag_context(self, message: str, user_id: str) -> Tuple[str, bool, list]:
+        """Get RAG context for the message."""
+        try:
+            rag_service = RAGService(openai_service=self.openai_service)
+            similar_docs = await rag_service.find_similar(
+                query=message,
+                user_id=user_id,
+                n_results=3
+            )
+            formatted = rag_service.format_context(similar_docs)
+            similar_questions = [
+                doc.get("metadata", {}).get("question", "")
+                for doc in similar_docs[:3]
+            ]
+            return formatted, len(similar_docs) > 0, similar_questions
+        except Exception as e:
+            logger.warning(f"RAG context retrieval failed: {e}")
+            return "", False, []
 
-    async def process_message(self, request: ChatRequest) -> ChatResponse:
+    def _select_agent(
+        self,
+        mentioned_agent: Optional[AgentType],
+        intent: CoachIntent,
+        message: str,
+        has_image: bool
+    ) -> AgentType:
         """
-        Process a user message using the LangGraph agent.
+        Select the appropriate agent based on all available signals.
 
-        Args:
-            request: ChatRequest from the API
-
-        Returns:
-            ChatResponse with AI response and action data
+        Priority:
+        1. Explicit @mention
+        2. Image present -> Nutrition (for food analysis)
+        3. Intent-based routing
+        4. Keyword-based routing
+        5. Default to Coach
         """
-        logger.info(f"Processing message with LangGraph: {request.message[:50]}...")
+        # 1. Explicit @mention takes priority
+        if mentioned_agent:
+            logger.info(f"Agent selection: @mention -> {mentioned_agent.value}")
+            return mentioned_agent
 
-        # Detect @mention for direct agent routing
-        mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
+        # 2. Image present -> Nutrition agent
+        if has_image:
+            logger.info("Agent selection: image present -> nutrition")
+            return AgentType.NUTRITION
 
-        # Build initial state from request
-        initial_state: FitnessCoachState = {
-            # Input - use cleaned message (without @mention)
+        # 3. Intent-based routing
+        agent_from_intent = self._infer_agent_from_intent(intent)
+        if agent_from_intent != AgentType.COACH:
+            logger.info(f"Agent selection: intent {intent.value} -> {agent_from_intent.value}")
+            return agent_from_intent
+
+        # 4. Keyword-based routing
+        agent_from_keywords = self._infer_agent_from_keywords(message)
+        if agent_from_keywords:
+            logger.info(f"Agent selection: keywords -> {agent_from_keywords.value}")
+            return agent_from_keywords
+
+        # 5. Default to Coach
+        logger.info("Agent selection: default -> coach")
+        return AgentType.COACH
+
+    def _build_agent_state(
+        self,
+        agent_type: AgentType,
+        request: ChatRequest,
+        cleaned_message: str,
+        intent: CoachIntent,
+        extraction_data: Dict[str, Any],
+        rag_context: str,
+        rag_used: bool,
+        similar_questions: list
+    ) -> Dict[str, Any]:
+        """Build the state dictionary for the selected agent."""
+        base_state = {
             "user_message": cleaned_message,
             "user_id": request.user_id,
             "user_profile": request.user_profile.model_dump() if request.user_profile else None,
-            "current_workout": request.current_workout.model_dump() if request.current_workout else None,
-            "workout_schedule": request.workout_schedule.model_dump() if request.workout_schedule else None,
             "conversation_history": request.conversation_history,
-            "image_base64": request.image_base64,  # Pass image for food analysis
-
-            # Intent extraction (will be filled by nodes)
-            "intent": None,
-            "extracted_exercises": [],
-            "extracted_muscle_groups": [],
-            "modification": None,
-            "body_part": None,
-            "setting_name": None,
-            "setting_value": None,
-            "destination": None,
-            "hydration_amount": None,
-
-            # RAG context (will be filled by nodes)
+            "intent": intent,
             "rag_documents": [],
-            "rag_context_formatted": "",
-
-            # Tool execution (will be filled by nodes)
-            "tools_to_call": [],
-            "tool_results": [],
-
-            # Response generation (will be filled by nodes)
+            "rag_context_formatted": rag_context,
             "ai_response": "",
             "final_response": "",
-
-            # Output (will be filled by nodes)
             "action_data": None,
-            "rag_context_used": False,
-            "similar_questions": [],
-
-            # Error handling
+            "rag_context_used": rag_used,
+            "similar_questions": similar_questions,
             "error": None,
-
-            # Routing
-            "next_node": None,
-
-            # Agent routing - pass the mentioned agent for context
-            "mentioned_agent": mentioned_agent.value if mentioned_agent else None,
         }
 
+        # Add agent-specific fields
+        if agent_type == AgentType.NUTRITION:
+            base_state["image_base64"] = request.image_base64
+            base_state["tool_calls"] = []
+            base_state["tool_results"] = []
+            base_state["tool_messages"] = []
+            base_state["messages"] = []
+
+        elif agent_type == AgentType.WORKOUT:
+            base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
+            base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
+            base_state["extracted_exercises"] = extraction_data.get("exercises", [])
+            base_state["extracted_muscle_groups"] = extraction_data.get("muscle_groups", [])
+            base_state["modification"] = extraction_data.get("modification")
+            base_state["tool_calls"] = []
+            base_state["tool_results"] = []
+            base_state["tool_messages"] = []
+            base_state["messages"] = []
+
+        elif agent_type == AgentType.INJURY:
+            base_state["body_part"] = extraction_data.get("body_part")
+            base_state["tool_calls"] = []
+            base_state["tool_results"] = []
+            base_state["tool_messages"] = []
+            base_state["messages"] = []
+
+        elif agent_type == AgentType.HYDRATION:
+            base_state["hydration_amount"] = extraction_data.get("hydration_amount")
+
+        elif agent_type == AgentType.COACH:
+            base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
+            base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
+            base_state["setting_name"] = extraction_data.get("setting_name")
+            base_state["setting_value"] = extraction_data.get("setting_value")
+            base_state["destination"] = extraction_data.get("destination")
+
+        return base_state
+
+    async def process_message(self, request: ChatRequest) -> ChatResponse:
+        """
+        Process a user message using dedicated domain agents.
+
+        Flow:
+        1. Detect @mention
+        2. Extract intent
+        3. Get RAG context
+        4. Select appropriate agent
+        5. Build agent state
+        6. Execute agent
+        7. Return response
+        """
+        logger.info(f"Processing message: {request.message[:50]}...")
+
         try:
-            # Execute the graph
-            final_state = await self.graph.ainvoke(initial_state)
+            # 1. Detect @mention
+            mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
 
-            # Extract results
-            intent = final_state.get("intent", CoachIntent.QUESTION)
-            if isinstance(intent, str):
-                intent = CoachIntent(intent)
+            # 2. Extract intent
+            intent, extraction_data = await self._extract_intent(cleaned_message)
+            logger.info(f"Extracted intent: {intent.value}")
 
-            # Determine agent type:
-            # 1. If user explicitly @mentioned an agent, use that
-            # 2. Otherwise, infer from the detected intent
-            if mentioned_agent:
-                agent_type = mentioned_agent
-            else:
-                agent_type = self._infer_agent_from_intent(intent)
+            # 3. Get RAG context
+            rag_context, rag_used, similar_questions = await self._get_rag_context(
+                cleaned_message, request.user_id
+            )
 
+            # 4. Select agent
+            has_image = request.image_base64 is not None
+            selected_agent = self._select_agent(
+                mentioned_agent, intent, cleaned_message, has_image
+            )
+            logger.info(f"Selected agent: {selected_agent.value}")
+
+            # 5. Build agent state
+            agent_state = self._build_agent_state(
+                selected_agent,
+                request,
+                cleaned_message,
+                intent,
+                extraction_data,
+                rag_context,
+                rag_used,
+                similar_questions
+            )
+
+            # 6. Execute agent
+            agent_graph = self.agents[selected_agent]
+            final_state = await agent_graph.ainvoke(agent_state)
+
+            # 7. Build response
             response = ChatResponse(
                 message=final_state.get("final_response", "I'm sorry, I couldn't process your request."),
                 intent=intent,
-                agent_type=agent_type,
+                agent_type=selected_agent,
                 action_data=final_state.get("action_data"),
-                rag_context_used=final_state.get("rag_context_used", False),
-                similar_questions=final_state.get("similar_questions", []),
+                rag_context_used=final_state.get("rag_context_used", rag_used),
+                similar_questions=final_state.get("similar_questions", similar_questions),
             )
 
-            logger.info(f"LangGraph response: intent={response.intent.value}, agent={response.agent_type.value}, rag_used={response.rag_context_used}")
+            logger.info(f"Response: intent={intent.value}, agent={selected_agent.value}")
             return response
 
         except Exception as e:
-            logger.error(f"LangGraph execution failed: {e}")
-            # Return a graceful error response
+            logger.error(f"Agent execution failed: {e}", exc_info=True)
             return ChatResponse(
-                message=f"I'm sorry, I encountered an error processing your request. Please try again.",
+                message="I'm sorry, I encountered an error processing your request. Please try again.",
                 intent=CoachIntent.QUESTION,
                 agent_type=mentioned_agent or AgentType.COACH,
                 action_data=None,

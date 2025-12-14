@@ -61,7 +61,7 @@ class User extends Equatable {
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
   Map<String, dynamic> toJson() => _$UserToJson(this);
 
-  /// Parse goals from JSON string
+  /// Parse goals from JSON string or plain string
   List<String> get goalsList {
     if (goals == null || goals!.isEmpty) return [];
     try {
@@ -69,9 +69,14 @@ class User extends Equatable {
       if (decoded is List) {
         return decoded.map((e) => e.toString()).toList();
       }
+      // If decoded is a string, return it as a single-item list
+      if (decoded is String) {
+        return [decoded];
+      }
       return [];
     } catch (_) {
-      return [];
+      // If JSON parsing fails, treat goals as a plain string
+      return [goals!];
     }
   }
 

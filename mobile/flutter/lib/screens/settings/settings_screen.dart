@@ -47,10 +47,6 @@ class SettingsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Goal Banner at the top - always visible
-              _GoalBanner().animate().fadeIn(),
-              const SizedBox(height: 24),
-
               // Preferences section
               _SectionHeader(title: 'PREFERENCES'),
               const SizedBox(height: 12),

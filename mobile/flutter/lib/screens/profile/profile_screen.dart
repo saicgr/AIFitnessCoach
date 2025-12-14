@@ -38,13 +38,66 @@ class ProfileScreen extends ConsumerWidget {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(
-              Icons.settings_outlined,
-              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          // AI Settings floating button
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => context.push('/ai-settings'),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.purple.withOpacity(0.9),
+                      AppColors.cyan.withOpacity(0.9),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cyan.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.psychology,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
             ),
-            onPressed: () => context.push('/settings'),
-            tooltip: 'Settings',
+          ),
+          // Settings floating button
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => context.push('/settings'),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDark ? Colors.black : Colors.grey).withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.settings_outlined,
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  size: 20,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -100,6 +153,11 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
+              // Goal Banner - editable goal display
+              _GoalBanner().animate().fadeIn(delay: 120.ms),
+
+              const SizedBox(height: 24),
+
               // Quick Access section - at top for easy access
               _SectionHeader(title: 'QUICK ACCESS'),
               const SizedBox(height: 12),
@@ -152,15 +210,15 @@ class ProfileScreen extends ConsumerWidget {
 
               const SizedBox(height: 12),
 
-              // AI Settings row
+              // Measurements row
               Row(
                 children: [
                   Expanded(
                     child: _QuickAccessCard(
-                      icon: Icons.smart_toy,
-                      title: 'AI Settings',
+                      icon: Icons.straighten,
+                      title: 'Measurements',
                       color: AppColors.cyan,
-                      onTap: () => context.push('/ai-settings'),
+                      onTap: () => context.push('/measurements'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -553,10 +611,21 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
   String _selectedLevel = 'Intermediate';
   String _selectedGoal = 'Build Muscle';
   List<int> _selectedDays = [];
+  List<String> _selectedInjuries = [];
 
   static const _dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _goalOptions = ['Build Muscle', 'Lose Weight', 'Increase Endurance', 'Stay Active'];
   static const _levelOptions = ['Beginner', 'Intermediate', 'Advanced'];
+  static const _injuryOptions = [
+    'Lower Back',
+    'Shoulder',
+    'Knee',
+    'Neck',
+    'Wrist',
+    'Ankle',
+    'Hip',
+    'Elbow',
+  ];
 
   @override
   void initState() {
@@ -569,6 +638,7 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
       _selectedLevel = widget.user.fitnessLevel ?? 'Intermediate';
       _selectedGoal = widget.user.fitnessGoal ?? 'Build Muscle';
       _selectedDays = List<int>.from(widget.user.workoutDays ?? []);
+      _selectedInjuries = List<String>.from(widget.user.injuriesList ?? []);
     }
   }
 
@@ -588,6 +658,7 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
           'goals': _selectedGoal,
           'days_per_week': _selectedDays.length,
           'workout_days': _selectedDays,
+          'active_injuries': _selectedInjuries,
         },
       );
 
@@ -807,6 +878,52 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
                   ),
                 );
               }),
+            ),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Injuries
+          _buildEditableRow(
+            icon: Icons.healing,
+            iconColor: AppColors.error,
+            label: 'Injuries',
+            value: _selectedInjuries.isEmpty ? 'None' : _selectedInjuries.join(', '),
+            isEditing: _isEditing,
+            editWidget: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _injuryOptions.map((injury) {
+                final isSelected = _selectedInjuries.contains(injury);
+                return GestureDetector(
+                  onTap: _isSaving ? null : () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedInjuries.remove(injury);
+                      } else {
+                        _selectedInjuries.add(injury);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.error.withOpacity(0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isSelected ? AppColors.error : cardBorder),
+                    ),
+                    child: Text(
+                      injury,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isSelected ? AppColors.error : textSecondary,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             isDark: isDark,
             textMuted: textMuted,
@@ -1949,4 +2066,357 @@ class _UnitToggleButton extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Goal Banner (Editable)
+// ─────────────────────────────────────────────────────────────────
+
+class _GoalBanner extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_GoalBanner> createState() => _GoalBannerState();
+}
+
+class _GoalBannerState extends ConsumerState<_GoalBanner> {
+  bool _isEditing = false;
+  String? _selectedGoal;
+  bool _isSaving = false;
+  bool _isOtherSelected = false;
+  final TextEditingController _customGoalController = TextEditingController();
+
+  static const _goalOptions = [
+    ('Build Muscle', Icons.fitness_center, AppColors.cyan),
+    ('Lose Weight', Icons.monitor_weight, AppColors.orange),
+    ('Increase Endurance', Icons.directions_run, AppColors.purple),
+    ('Stay Active', Icons.self_improvement, AppColors.success),
+  ];
+
+  static const _predefinedGoals = ['Build Muscle', 'Lose Weight', 'Increase Endurance', 'Stay Active'];
+
+  @override
+  void dispose() {
+    _customGoalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final authState = ref.watch(authStateProvider);
+    final currentGoal = authState.user?.fitnessGoal ?? 'Not set';
+
+    // Check if current goal is a custom one (not in predefined list)
+    final isCurrentGoalCustom = currentGoal != 'Not set' && !_predefinedGoals.contains(currentGoal);
+
+    // Initialize selected goal and custom controller
+    if (_selectedGoal == null) {
+      _selectedGoal = currentGoal;
+      if (isCurrentGoalCustom) {
+        _isOtherSelected = true;
+        _customGoalController.text = currentGoal;
+      }
+    }
+
+    // Find goal info - for custom goals, use a special color
+    final goalInfo = _goalOptions.firstWhere(
+      (g) => g.$1 == currentGoal,
+      orElse: () => (currentGoal, Icons.star, AppColors.purple), // Custom goals get star icon and purple color
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            goalInfo.$3.withOpacity(0.15),
+            goalInfo.$3.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: goalInfo.$3.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: goalInfo.$3.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: goalInfo.$3.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(goalInfo.$2, color: goalInfo.$3, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'YOUR GOAL',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      currentGoal,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: _isSaving ? null : () => setState(() => _isEditing = !_isEditing),
+                child: Text(
+                  _isEditing ? 'Cancel' : 'Edit',
+                  style: TextStyle(
+                    color: goalInfo.$3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Expandable edit section
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              children: [
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    // Predefined goal options
+                    ..._goalOptions.map((goal) {
+                      final isSelected = !_isOtherSelected && _selectedGoal == goal.$1;
+                      return GestureDetector(
+                        onTap: _isSaving ? null : () => setState(() {
+                          _selectedGoal = goal.$1;
+                          _isOtherSelected = false;
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? goal.$3.withOpacity(0.2) : backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? goal.$3 : cardBorder,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(goal.$2, color: isSelected ? goal.$3 : textSecondary, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                goal.$1,
+                                style: TextStyle(
+                                  color: isSelected ? goal.$3 : textSecondary,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    // "Other" option
+                    GestureDetector(
+                      onTap: _isSaving ? null : () => setState(() {
+                        _isOtherSelected = true;
+                        _selectedGoal = _customGoalController.text.isNotEmpty
+                            ? _customGoalController.text
+                            : 'Custom Goal';
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _isOtherSelected ? AppColors.purple.withOpacity(0.2) : backgroundColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _isOtherSelected ? AppColors.purple : cardBorder,
+                            width: _isOtherSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, color: _isOtherSelected ? AppColors.purple : textSecondary, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Other',
+                              style: TextStyle(
+                                color: _isOtherSelected ? AppColors.purple : textSecondary,
+                                fontWeight: _isOtherSelected ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Custom goal text input (shown when "Other" is selected)
+                if (_isOtherSelected) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.purple),
+                    ),
+                    child: TextField(
+                      controller: _customGoalController,
+                      enabled: !_isSaving,
+                      onChanged: (value) => setState(() {
+                        _selectedGoal = value.isNotEmpty ? value : 'Custom Goal';
+                      }),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Enter your custom goal...',
+                        hintStyle: TextStyle(color: textMuted),
+                        prefixIcon: Icon(Icons.edit, color: AppColors.purple, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _canSave(currentGoal) ? _saveGoal : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: goalInfo.$3,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: goalInfo.$3.withOpacity(0.5),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Save Goal', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Changing your goal affects AI recommendations',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            crossFadeState: _isEditing ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _canSave(String currentGoal) {
+    if (_isSaving) return false;
+
+    // Get the actual goal to save
+    final goalToSave = _isOtherSelected ? _customGoalController.text.trim() : _selectedGoal;
+
+    // Can't save if no goal or empty custom goal
+    if (goalToSave == null || goalToSave.isEmpty) return false;
+
+    // Can't save if same as current
+    if (goalToSave == currentGoal) return false;
+
+    return true;
+  }
+
+  Future<void> _saveGoal() async {
+    // Get the actual goal to save
+    final goalToSave = _isOtherSelected ? _customGoalController.text.trim() : _selectedGoal;
+
+    if (goalToSave == null || goalToSave.isEmpty) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not found');
+      }
+
+      await apiClient.put(
+        '${ApiConstants.users}/$userId',
+        data: {'goals': goalToSave},
+      );
+
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+          _isSaving = false;
+          _selectedGoal = goalToSave; // Update to the saved goal
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Goal updated to "$goalToSave"'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update goal: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+}
 
