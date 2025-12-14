@@ -1441,31 +1441,38 @@ async def get_workout_suggestions(request: WorkoutSuggestionRequest):
         current_duration = existing.get("duration_minutes") or 45
 
         # Build prompt for AI
+        # Note: User's explicit prompt takes priority over profile equipment
         system_prompt = f"""You are a fitness expert helping a user find alternative workout ideas.
 
-USER PROFILE:
+USER PROFILE (for context only):
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
-- Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
+- Default Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Injuries/Limitations: {', '.join(injuries) if injuries else 'None'}
 
 CURRENT WORKOUT:
 - Type: {current_type}
 - Duration: {current_duration} minutes
 
+IMPORTANT RULES:
+1. If the user mentions specific equipment in their request (e.g., "dumbbells", "barbell", "kettlebell"), use ONLY that equipment - ignore the default equipment from their profile
+2. If the user mentions a duration (e.g., "30 minutes", "1 hour"), use that duration
+3. If the user mentions a sport or activity (e.g., "boxing", "cricket", "swimming"), create workouts that train for that sport
+4. Always respect injuries/limitations
+5. Match the user's fitness level
+
 Generate 4 different workout suggestions that:
-1. Vary in workout type (e.g., if current is Strength, suggest HIIT, Cardio, Flexibility options too)
-2. Consider the user's available equipment
-3. Respect any injuries or limitations
-4. Match the user's fitness level
+1. Vary in workout type (e.g., Strength, HIIT, Cardio, Flexibility)
+2. Follow the user's specific requests if any
+3. Consider injuries and fitness level
 
 Return a JSON array with exactly 4 suggestions, each containing:
-- name: Creative workout name (e.g., "Power Legs Day", "Core Crusher")
+- name: Creative workout name that reflects the equipment/sport if specified (e.g., "Dumbbell Power Circuit", "Cricket Athlete Conditioning")
 - type: One of [Strength, HIIT, Cardio, Flexibility, Full Body, Upper Body, Lower Body, Core]
 - difficulty: One of [easy, medium, hard]
-- duration_minutes: Integer between 15-90
-- description: 1-2 sentence description of the workout
-- focus_areas: Array of 1-3 body areas targeted (e.g., ["Chest", "Shoulders"])
+- duration_minutes: Integer between 15-90 (use user's requested duration if specified)
+- description: 1-2 sentence description mentioning the specific equipment/focus
+- focus_areas: Array of 1-3 body areas targeted
 
 IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
 
