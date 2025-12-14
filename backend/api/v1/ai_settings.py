@@ -9,7 +9,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from core.database import get_supabase_client
+from core.supabase_client import get_supabase
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -96,7 +96,7 @@ async def get_ai_settings(user_id: str):
     Creates default settings if none exist.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Try to get existing settings
         result = supabase.table("user_ai_settings").select("*").eq("user_id", user_id).execute()
@@ -145,7 +145,7 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate):
     Tracks all changes in history for analytics.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get current settings for comparison
         current = supabase.table("user_ai_settings").select("*").eq("user_id", user_id).execute()
@@ -239,7 +239,7 @@ async def get_ai_settings_history(
     Useful for analyzing user behavior and preferences over time.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         query = supabase.table("ai_settings_history").select("*", count="exact").eq("user_id", user_id)
 
@@ -267,7 +267,7 @@ async def reset_ai_settings(user_id: str):
     Records the reset in history.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get current settings before reset
         current = supabase.table("user_ai_settings").select("*").eq("user_id", user_id).execute()
@@ -305,7 +305,7 @@ async def get_popular_settings():
     For admin/analytics dashboard.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Use the view we created
         result = supabase.table("ai_settings_popularity").select("*").execute()
@@ -324,7 +324,7 @@ async def get_settings_trends(days: int = Query(30, ge=1, le=365, description="N
     For admin/analytics dashboard.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Query the trends view
         result = supabase.table("ai_settings_change_trends").select("*").execute()
@@ -343,7 +343,7 @@ async def get_engagement_by_style():
     For admin/analytics dashboard.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         result = supabase.table("user_engagement_by_ai_style").select("*").execute()
 

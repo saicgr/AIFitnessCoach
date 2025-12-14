@@ -18,7 +18,7 @@ from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
-from core.database import get_supabase_client
+from core.supabase_client import get_supabase
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -95,7 +95,7 @@ async def send_message(
 
         # Record chat interaction analytics with AI settings snapshot
         try:
-            supabase = get_supabase_client()
+            supabase = get_supabase().client
             ai_settings = request.ai_settings
 
             analytics_data = {
