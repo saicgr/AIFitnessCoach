@@ -41,6 +41,30 @@ class UserCreate(BaseModel):
     activity_level: Optional[str] = None
 
 
+class NotificationPreferences(BaseModel):
+    """User's notification preferences and schedule times."""
+    # Toggle settings
+    workout_reminders: bool = True
+    nutrition_reminders: bool = True
+    hydration_reminders: bool = True
+    ai_coach_messages: bool = True
+    streak_alerts: bool = True
+    weekly_summary: bool = True
+    quiet_hours_start: str = "22:00"
+    quiet_hours_end: str = "08:00"
+    # Time preferences for scheduled notifications
+    workout_reminder_time: str = "08:00"
+    nutrition_breakfast_time: str = "08:00"
+    nutrition_lunch_time: str = "12:00"
+    nutrition_dinner_time: str = "18:00"
+    hydration_start_time: str = "08:00"
+    hydration_end_time: str = "20:00"
+    hydration_interval_minutes: int = 120
+    streak_alert_time: str = "18:00"
+    weekly_summary_day: int = 0  # 0=Sunday, 6=Saturday
+    weekly_summary_time: str = "09:00"
+
+
 class UserUpdate(BaseModel):
     fitness_level: Optional[str] = None
     goals: Optional[str] = None
@@ -67,8 +91,10 @@ class UserUpdate(BaseModel):
     workout_variety: Optional[str] = None
     health_conditions: Optional[str] = None  # JSON array
     activity_level: Optional[str] = None
-    # Push notification token
+    # Push notification fields
     fcm_token: Optional[str] = None  # Firebase Cloud Messaging token
+    device_platform: Optional[str] = None  # 'android' or 'ios'
+    notification_preferences: Optional[dict] = None  # NotificationPreferences as dict
 
 
 class User(BaseModel):

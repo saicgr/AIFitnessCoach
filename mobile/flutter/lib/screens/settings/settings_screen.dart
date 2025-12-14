@@ -1369,6 +1369,8 @@ class _NotificationsCard extends ConsumerStatefulWidget {
 
 class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
   bool _isSendingTest = false;
+  // Track which sections are expanded
+  String? _expandedSection;
 
   @override
   Widget build(BuildContext context) {
@@ -1388,8 +1390,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
       child: Column(
         children: [
           // Workout Reminders
-          _buildNotificationToggle(
+          _buildNotificationToggleWithTime(
+            sectionKey: 'workout',
             icon: Icons.fitness_center,
+            iconColor: AppColors.cyan,
             title: 'Workout Reminders',
             subtitle: 'Get reminded on workout days',
             value: notifPrefs.workoutReminders,
@@ -1398,12 +1402,24 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             },
             textSecondary: textSecondary,
             textMuted: textMuted,
+            isDark: isDark,
+            timeWidget: _buildSingleTimePicker(
+              label: 'Reminder time',
+              time: notifPrefs.workoutReminderTime,
+              onTimeChanged: (time) {
+                ref.read(notificationPreferencesProvider.notifier).setWorkoutReminderTime(time);
+              },
+              isDark: isDark,
+              textMuted: textMuted,
+            ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
           // Nutrition Reminders
-          _buildNotificationToggle(
+          _buildNotificationToggleWithTime(
+            sectionKey: 'nutrition',
             icon: Icons.restaurant,
+            iconColor: AppColors.success,
             title: 'Nutrition Reminders',
             subtitle: 'Log your meals',
             value: notifPrefs.nutritionReminders,
@@ -1412,12 +1428,48 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             },
             textSecondary: textSecondary,
             textMuted: textMuted,
+            isDark: isDark,
+            timeWidget: Column(
+              children: [
+                _buildSingleTimePicker(
+                  label: 'Breakfast',
+                  time: notifPrefs.nutritionBreakfastTime,
+                  onTimeChanged: (time) {
+                    ref.read(notificationPreferencesProvider.notifier).setNutritionBreakfastTime(time);
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildSingleTimePicker(
+                  label: 'Lunch',
+                  time: notifPrefs.nutritionLunchTime,
+                  onTimeChanged: (time) {
+                    ref.read(notificationPreferencesProvider.notifier).setNutritionLunchTime(time);
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildSingleTimePicker(
+                  label: 'Dinner',
+                  time: notifPrefs.nutritionDinnerTime,
+                  onTimeChanged: (time) {
+                    ref.read(notificationPreferencesProvider.notifier).setNutritionDinnerTime(time);
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
           // Hydration Reminders
-          _buildNotificationToggle(
+          _buildNotificationToggleWithTime(
+            sectionKey: 'hydration',
             icon: Icons.water_drop,
+            iconColor: Colors.blue,
             title: 'Hydration Reminders',
             subtitle: 'Stay hydrated',
             value: notifPrefs.hydrationReminders,
@@ -1426,14 +1478,68 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             },
             textSecondary: textSecondary,
             textMuted: textMuted,
+            isDark: isDark,
+            timeWidget: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSingleTimePicker(
+                        label: 'Start',
+                        time: notifPrefs.hydrationStartTime,
+                        onTimeChanged: (time) {
+                          ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
+                            time,
+                            notifPrefs.hydrationEndTime,
+                            notifPrefs.hydrationIntervalMinutes,
+                          );
+                        },
+                        isDark: isDark,
+                        textMuted: textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSingleTimePicker(
+                        label: 'End',
+                        time: notifPrefs.hydrationEndTime,
+                        onTimeChanged: (time) {
+                          ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
+                            notifPrefs.hydrationStartTime,
+                            time,
+                            notifPrefs.hydrationIntervalMinutes,
+                          );
+                        },
+                        isDark: isDark,
+                        textMuted: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildIntervalPicker(
+                  label: 'Remind every',
+                  minutes: notifPrefs.hydrationIntervalMinutes,
+                  onChanged: (minutes) {
+                    ref.read(notificationPreferencesProvider.notifier).setHydrationTimes(
+                      notifPrefs.hydrationStartTime,
+                      notifPrefs.hydrationEndTime,
+                      minutes,
+                    );
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // AI Coach Messages
+          // AI Coach Messages (no time picker - automatic)
           _buildNotificationToggle(
             icon: Icons.smart_toy,
             title: 'AI Coach Messages',
-            subtitle: 'Motivation & tips from your coach',
+            subtitle: 'Motivation & tips (automatic)',
             value: notifPrefs.aiCoachMessages,
             onChanged: (value) {
               ref.read(notificationPreferencesProvider.notifier).setAiCoachMessages(value);
@@ -1444,8 +1550,10 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           Divider(height: 1, color: cardBorder, indent: 50),
 
           // Streak Alerts
-          _buildNotificationToggle(
+          _buildNotificationToggleWithTime(
+            sectionKey: 'streak',
             icon: Icons.local_fire_department,
+            iconColor: AppColors.orange,
             title: 'Streak Alerts',
             subtitle: 'Keep your workout streak alive',
             value: notifPrefs.streakAlerts,
@@ -1454,12 +1562,24 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             },
             textSecondary: textSecondary,
             textMuted: textMuted,
+            isDark: isDark,
+            timeWidget: _buildSingleTimePicker(
+              label: 'Alert time',
+              time: notifPrefs.streakAlertTime,
+              onTimeChanged: (time) {
+                ref.read(notificationPreferencesProvider.notifier).setStreakAlertTime(time);
+              },
+              isDark: isDark,
+              textMuted: textMuted,
+            ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
           // Weekly Summary
-          _buildNotificationToggle(
+          _buildNotificationToggleWithTime(
+            sectionKey: 'weekly',
             icon: Icons.bar_chart,
+            iconColor: AppColors.purple,
             title: 'Weekly Summary',
             subtitle: 'Your progress report',
             value: notifPrefs.weeklySummary,
@@ -1468,6 +1588,36 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             },
             textSecondary: textSecondary,
             textMuted: textMuted,
+            isDark: isDark,
+            timeWidget: Column(
+              children: [
+                _buildDayPicker(
+                  label: 'Day',
+                  day: notifPrefs.weeklySummaryDay,
+                  onChanged: (day) {
+                    ref.read(notificationPreferencesProvider.notifier).setWeeklySummarySchedule(
+                      day,
+                      notifPrefs.weeklySummaryTime,
+                    );
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildSingleTimePicker(
+                  label: 'Time',
+                  time: notifPrefs.weeklySummaryTime,
+                  onTimeChanged: (time) {
+                    ref.read(notificationPreferencesProvider.notifier).setWeeklySummarySchedule(
+                      notifPrefs.weeklySummaryDay,
+                      time,
+                    );
+                  },
+                  isDark: isDark,
+                  textMuted: textMuted,
+                ),
+              ],
+            ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
@@ -1626,6 +1776,327 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
         ],
       ),
     );
+  }
+
+  Widget _buildNotificationToggleWithTime({
+    required String sectionKey,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color textSecondary,
+    required Color textMuted,
+    required bool isDark,
+    required Widget timeWidget,
+  }) {
+    final isExpanded = _expandedSection == sectionKey;
+    final cardBackground = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: value ? () {
+            setState(() {
+              _expandedSection = isExpanded ? null : sectionKey;
+            });
+          } : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: value ? iconColor : textMuted,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                          if (value) ...[
+                            const SizedBox(width: 4),
+                            Icon(
+                              isExpanded ? Icons.expand_less : Icons.expand_more,
+                              size: 16,
+                              color: textMuted,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: value,
+                  onChanged: (newValue) {
+                    onChanged(newValue);
+                    if (!newValue && isExpanded) {
+                      setState(() => _expandedSection = null);
+                    }
+                  },
+                  activeColor: AppColors.cyan,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Expandable time picker section
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Container(
+            margin: const EdgeInsets.only(left: 50, right: 16, bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cardBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: timeWidget,
+          ),
+          crossFadeState: isExpanded && value
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleTimePicker({
+    required String label,
+    required String time,
+    required ValueChanged<String> onTimeChanged,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    return InkWell(
+      onTap: () => _showTimePicker(context, time, onTimeChanged, isDark),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: textMuted,
+              ),
+            ),
+            Row(
+              children: [
+                Text(
+                  _formatTimeDisplay(time),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: AppColors.cyan,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntervalPicker({
+    required String label,
+    required int minutes,
+    required ValueChanged<int> onChanged,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    final intervals = [30, 60, 90, 120, 180, 240];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: textMuted,
+            ),
+          ),
+          DropdownButton<int>(
+            value: minutes,
+            underline: const SizedBox(),
+            isDense: true,
+            icon: Icon(Icons.arrow_drop_down, color: AppColors.cyan),
+            dropdownColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+            items: intervals.map((m) {
+              final hours = m ~/ 60;
+              final mins = m % 60;
+              final label = hours > 0
+                  ? (mins > 0 ? '${hours}h ${mins}m' : '${hours}h')
+                  : '${mins}m';
+              return DropdownMenuItem(
+                value: m,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) onChanged(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayPicker({
+    required String label,
+    required int day,
+    required ValueChanged<int> onChanged,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    final days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: textMuted,
+            ),
+          ),
+          DropdownButton<int>(
+            value: day,
+            underline: const SizedBox(),
+            isDense: true,
+            icon: Icon(Icons.arrow_drop_down, color: AppColors.cyan),
+            dropdownColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+            items: List.generate(7, (i) {
+              return DropdownMenuItem(
+                value: i,
+                child: Text(
+                  days[i],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                  ),
+                ),
+              );
+            }),
+            onChanged: (value) {
+              if (value != null) onChanged(value);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimeDisplay(String time) {
+    final parts = time.split(':');
+    if (parts.length != 2) return time;
+
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+
+    return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
+  }
+
+  Future<void> _showTimePicker(
+    BuildContext context,
+    String currentTime,
+    ValueChanged<String> onTimeChanged,
+    bool isDark,
+  ) async {
+    final parts = currentTime.split(':');
+    final initialHour = int.tryParse(parts[0]) ?? 8;
+    final initialMinute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: initialHour, minute: initialMinute),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.cyan,
+              onPrimary: Colors.white,
+              surface: isDark ? AppColors.elevated : AppColorsLight.elevated,
+              onSurface: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final newTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      onTimeChanged(newTime);
+    }
   }
 
   Future<void> _sendTestNotification() async {

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/services/api_client.dart';
 
@@ -159,6 +158,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final restSeconds = exercise.restSeconds ?? 120;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -168,20 +173,20 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
-            backgroundColor: AppColors.pureBlack,
+            backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: isDark ? Colors.black54 : Colors.white70,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back, size: 20),
+                child: Icon(Icons.arrow_back, size: 20, color: isDark ? Colors.white : Colors.black87),
               ),
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildVideoSection(),
+              background: _buildVideoSection(elevated, textMuted),
             ),
           ),
 
@@ -232,14 +237,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.glassSurface,
+                              color: glassSurface,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               exercise.equipment!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: textSecondary,
                               ),
                             ),
                           ),
@@ -250,26 +255,26 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   // Instructions
                   if (exercise.instructions != null &&
                       exercise.instructions!.isNotEmpty)
-                    _buildInstructionsSection(exercise.instructions!),
+                    _buildInstructionsSection(exercise.instructions!, elevated, textSecondary),
 
                   // Rest Timer Card
-                  _buildRestTimerCard(restSeconds),
+                  _buildRestTimerCard(restSeconds, elevated, textMuted, textPrimary),
                   const SizedBox(height: 24),
 
                   // Set table header
-                  const Text(
+                  Text(
                     'SETS',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
+                      color: textMuted,
                       letterSpacing: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   // Set table
-                  _buildSetTable(warmupSets, totalSets, repRange, exercise.weight),
+                  _buildSetTable(warmupSets, totalSets, repRange, exercise.weight, elevated, glassSurface, cardBorder, textPrimary, textMuted, textSecondary),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -280,11 +285,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildVideoSection() {
+  Widget _buildVideoSection(Color elevated, Color textMuted) {
     return GestureDetector(
       onTap: _toggleVideo,
       child: Container(
-        color: AppColors.elevated,
+        color: elevated,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -308,10 +313,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 placeholder: (_, __) => const Center(
                   child: CircularProgressIndicator(color: AppColors.cyan),
                 ),
-                errorWidget: (_, __, ___) => _buildPlaceholder(),
+                errorWidget: (_, __, ___) => _buildPlaceholder(elevated, textMuted),
               )
             else
-              _buildPlaceholder(),
+              _buildPlaceholder(elevated, textMuted),
 
             // Play/Pause overlay
             if (_videoInitialized && _videoController != null)
@@ -386,25 +391,25 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(Color elevated, Color textMuted) {
     return Container(
-      color: AppColors.elevated,
-      child: const Center(
+      color: elevated,
+      child: Center(
         child: Icon(
           Icons.fitness_center,
           size: 64,
-          color: AppColors.textMuted,
+          color: textMuted,
         ),
       ),
     );
   }
 
-  Widget _buildInstructionsSection(String instructions) {
+  Widget _buildInstructionsSection(String instructions, Color elevated, Color textSecondary) {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -431,7 +436,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           Text(
             instructions,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                   height: 1.5,
                 ),
           ),
@@ -440,7 +445,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildRestTimerCard(int defaultSeconds) {
+  Widget _buildRestTimerCard(int defaultSeconds, Color elevated, Color textMuted, Color textPrimary) {
     final mins = defaultSeconds ~/ 60;
     final secs = defaultSeconds % 60;
 
@@ -459,7 +464,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: _isResting ? null : AppColors.elevated,
+          color: _isResting ? null : elevated,
           borderRadius: BorderRadius.circular(12),
           border: _isResting
               ? Border.all(color: AppColors.purple.withOpacity(0.5))
@@ -469,7 +474,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           children: [
             Icon(
               Icons.timer_outlined,
-              color: _isResting ? AppColors.purple : AppColors.textMuted,
+              color: _isResting ? AppColors.purple : textMuted,
               size: 28,
             ),
             const SizedBox(width: 12),
@@ -481,7 +486,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     'Rest Timer',
                     style: TextStyle(
                       fontSize: 12,
-                      color: _isResting ? AppColors.purple : AppColors.textMuted,
+                      color: _isResting ? AppColors.purple : textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -493,7 +498,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: _isResting ? AppColors.purple : AppColors.textPrimary,
+                      color: _isResting ? AppColors.purple : textPrimary,
                       fontFamily: 'monospace',
                     ),
                   ),
@@ -523,10 +528,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
-  Widget _buildSetTable(int warmupSets, int workingSets, String repRange, double? weight) {
+  Widget _buildSetTable(int warmupSets, int workingSets, String repRange, double? weight, Color elevated, Color glassSurface, Color cardBorder, Color textPrimary, Color textMuted, Color textSecondary) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -535,14 +540,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.glassSurface,
+              color: glassSurface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                SizedBox(width: 50, child: Text('SET', style: _headerStyle)),
-                Expanded(child: Center(child: Text('LBS', style: _headerStyle))),
-                SizedBox(width: 80, child: Center(child: Text('REP RANGE', style: _headerStyle))),
+                SizedBox(width: 50, child: Text('SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5))),
+                Expanded(child: Center(child: Text('LBS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
+                SizedBox(width: 80, child: Center(child: Text('REP RANGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
               ],
             ),
           ),
@@ -554,6 +559,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             weight: null,
             repRange: repRange,
             isLast: false,
+            glassSurface: glassSurface,
+            cardBorder: cardBorder,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            textSecondary: textSecondary,
           )),
 
           // Working set rows
@@ -563,6 +573,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             weight: weight,
             repRange: repRange,
             isLast: i == workingSets - 1,
+            glassSurface: glassSurface,
+            cardBorder: cardBorder,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            textSecondary: textSecondary,
           )),
         ],
       ),
@@ -575,6 +590,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     double? weight,
     required String repRange,
     required bool isLast,
+    required Color glassSurface,
+    required Color cardBorder,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color textSecondary,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -583,7 +603,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             ? null
             : Border(
                 bottom: BorderSide(
-                  color: AppColors.cardBorder.withOpacity(0.2),
+                  color: cardBorder.withOpacity(0.2),
                 ),
               ),
         borderRadius: isLast
@@ -623,7 +643,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.glassSurface,
+                  color: glassSurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -631,7 +651,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: weight != null ? AppColors.textPrimary : AppColors.textMuted,
+                    color: weight != null ? textPrimary : textMuted,
                   ),
                 ),
               ),
@@ -644,9 +664,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             child: Center(
               child: Text(
                 repRange,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                 ),
               ),
             ),
@@ -655,11 +675,4 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
       ),
     );
   }
-
-  static const _headerStyle = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
-    color: AppColors.textMuted,
-    letterSpacing: 0.5,
-  );
 }

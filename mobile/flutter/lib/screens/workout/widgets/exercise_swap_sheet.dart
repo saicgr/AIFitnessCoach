@@ -143,13 +143,22 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
   @override
   Widget build(BuildContext context) {
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
+    final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.nearBlack,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -160,7 +169,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.3),
+              color: textMuted.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -180,12 +189,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         'Swap Exercise',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: textPrimary,
                             ),
                       ),
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
+                      icon: Icon(Icons.close, color: textMuted),
                     ),
                   ],
                 ),
@@ -196,7 +206,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.elevated,
+                    color: cardBackground,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -205,7 +215,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppColors.glassSurface,
+                          color: glassSurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         clipBehavior: Clip.hardEdge,
@@ -214,28 +224,28 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                 imageUrl: widget.exercise.gifUrl!,
                                 fit: BoxFit.cover,
                               )
-                            : const Icon(Icons.fitness_center,
-                                color: AppColors.textMuted),
+                            : Icon(Icons.fitness_center, color: textMuted),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'REPLACING',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textMuted,
+                                color: textMuted,
                                 letterSpacing: 1,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.exercise.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
+                                color: textPrimary,
                               ),
                             ),
                           ],
@@ -251,11 +261,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      const Text(
+                      Text(
                         'Reason: ',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                         ),
                       ),
                       ..._reasons.map((reason) => Padding(
@@ -266,13 +276,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: _selectedReason == reason
-                                      ? AppColors.pureBlack
-                                      : AppColors.textSecondary,
+                                      ? Colors.white
+                                      : textSecondary,
                                 ),
                               ),
                               selected: _selectedReason == reason,
                               selectedColor: AppColors.cyan,
-                              backgroundColor: AppColors.elevated,
+                              backgroundColor: cardBackground,
                               onSelected: (selected) {
                                 setState(() {
                                   _selectedReason = selected ? reason : null;
@@ -293,7 +303,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             controller: _tabController,
             indicatorColor: AppColors.cyan,
             labelColor: AppColors.cyan,
-            unselectedLabelColor: AppColors.textMuted,
+            unselectedLabelColor: textMuted,
             tabs: const [
               Tab(text: 'AI Suggestions'),
               Tab(text: 'Search Library'),
@@ -306,10 +316,10 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
               controller: _tabController,
               children: [
                 // AI Suggestions tab
-                _buildSuggestionsTab(),
+                _buildSuggestionsTab(textMuted, textPrimary),
 
                 // Library search tab
-                _buildLibraryTab(),
+                _buildLibraryTab(cardBackground, textMuted, textPrimary),
               ],
             ),
           ),
@@ -327,17 +337,17 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     );
   }
 
-  Widget _buildSuggestionsTab() {
+  Widget _buildSuggestionsTab(Color textMuted, Color textPrimary) {
     if (_isLoadingSuggestions) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: AppColors.cyan),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: AppColors.cyan),
+            const SizedBox(height: 16),
             Text(
               'Getting AI suggestions...',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: textMuted),
             ),
           ],
         ),
@@ -349,11 +359,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lightbulb_outline, size: 48, color: AppColors.textMuted),
+            Icon(Icons.lightbulb_outline, size: 48, color: textMuted),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No suggestions available',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: textMuted),
             ),
             const SizedBox(height: 8),
             TextButton(
@@ -382,12 +392,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           badge: '${(similarity * 100).toInt()}% match',
           badgeColor: AppColors.success,
           onTap: () => _swapExercise(name),
+          textPrimary: textPrimary,
+          textMuted: textMuted,
         );
       },
     );
   }
 
-  Widget _buildLibraryTab() {
+  Widget _buildLibraryTab(Color cardBackground, Color textMuted, Color textPrimary) {
     return Column(
       children: [
         // Search bar
@@ -396,9 +408,10 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search exercises...',
-              prefixIcon: const Icon(Icons.search),
+              hintStyle: TextStyle(color: textMuted),
+              prefixIcon: Icon(Icons.search, color: textMuted),
               filled: true,
-              fillColor: AppColors.elevated,
+              fillColor: cardBackground,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -422,7 +435,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         _searchQuery.isEmpty
                             ? 'Search for exercises'
                             : 'No exercises found',
-                        style: const TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: textMuted),
                       ),
                     )
                   : ListView.builder(
@@ -437,6 +450,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                           badge: exercise.equipment ?? 'Bodyweight',
                           badgeColor: AppColors.purple,
                           onTap: () => _swapExercise(exercise.name),
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
                         );
                       },
                     ),
@@ -453,6 +468,8 @@ class _ExerciseOptionCard extends StatelessWidget {
   final String badge;
   final Color badgeColor;
   final VoidCallback onTap;
+  final Color textPrimary;
+  final Color textMuted;
 
   const _ExerciseOptionCard({
     required this.name,
@@ -461,14 +478,20 @@ class _ExerciseOptionCard extends StatelessWidget {
     required this.badge,
     required this.badgeColor,
     required this.onTap,
+    required this.textPrimary,
+    required this.textMuted,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: AppColors.elevated,
+        color: cardBackground,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -482,7 +505,7 @@ class _ExerciseOptionCard extends StatelessWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: AppColors.glassSurface,
+                    color: glassSurface,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.hardEdge,
@@ -493,14 +516,14 @@ class _ExerciseOptionCard extends StatelessWidget {
                           placeholder: (_, __) => const Center(
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          errorWidget: (_, __, ___) => const Icon(
+                          errorWidget: (_, __, ___) => Icon(
                             Icons.fitness_center,
-                            color: AppColors.textMuted,
+                            color: textMuted,
                           ),
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.fitness_center,
-                          color: AppColors.textMuted,
+                          color: textMuted,
                         ),
                 ),
                 const SizedBox(width: 12),
@@ -512,8 +535,9 @@ class _ExerciseOptionCard extends StatelessWidget {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
+                          color: textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -522,9 +546,9 @@ class _ExerciseOptionCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textMuted,
+                            color: textMuted,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

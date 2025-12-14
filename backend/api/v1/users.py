@@ -447,10 +447,29 @@ async def update_user(user_id: str, user: UserUpdate):
         if user.activity_level is not None:
             update_data["activity_level"] = user.activity_level
 
-        # Handle FCM token for push notifications
+        # Handle FCM token and device platform for push notifications
         if user.fcm_token is not None:
             update_data["fcm_token"] = user.fcm_token
             logger.info(f"Updating FCM token for user {user_id}")
+
+        if user.device_platform is not None:
+            update_data["device_platform"] = user.device_platform
+            logger.info(f"Updating device platform for user {user_id}: {user.device_platform}")
+
+        # Handle notification preferences
+        if user.notification_preferences is not None:
+            # Merge with existing notification preferences if any
+            existing_notif_prefs = existing.get("notification_preferences", {})
+            if isinstance(existing_notif_prefs, str):
+                try:
+                    existing_notif_prefs = json.loads(existing_notif_prefs)
+                except json.JSONDecodeError:
+                    existing_notif_prefs = {}
+
+            # Merge the new preferences with existing
+            merged_prefs = {**existing_notif_prefs, **user.notification_preferences}
+            update_data["notification_preferences"] = merged_prefs
+            logger.info(f"Updating notification preferences for user {user_id}")
 
         if update_data:
             updated = db.update_user(user_id, update_data)

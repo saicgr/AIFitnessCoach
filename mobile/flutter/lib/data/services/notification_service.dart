@@ -26,6 +26,17 @@ class NotificationPrefsKeys {
   static const weeklySummary = 'notif_weekly_summary';
   static const quietHoursStart = 'notif_quiet_hours_start';
   static const quietHoursEnd = 'notif_quiet_hours_end';
+  // Time preferences for scheduled notifications
+  static const workoutReminderTime = 'notif_workout_reminder_time';
+  static const nutritionBreakfastTime = 'notif_nutrition_breakfast_time';
+  static const nutritionLunchTime = 'notif_nutrition_lunch_time';
+  static const nutritionDinnerTime = 'notif_nutrition_dinner_time';
+  static const hydrationStartTime = 'notif_hydration_start_time';
+  static const hydrationEndTime = 'notif_hydration_end_time';
+  static const hydrationIntervalMinutes = 'notif_hydration_interval_minutes';
+  static const streakAlertTime = 'notif_streak_alert_time';
+  static const weeklySummaryDay = 'notif_weekly_summary_day'; // 0=Sunday, 6=Saturday
+  static const weeklySummaryTime = 'notif_weekly_summary_time';
 }
 
 /// Notification preferences state
@@ -38,6 +49,17 @@ class NotificationPreferences {
   final bool weeklySummary;
   final String quietHoursStart;
   final String quietHoursEnd;
+  // Time preferences for scheduled notifications
+  final String workoutReminderTime; // e.g. "08:00"
+  final String nutritionBreakfastTime;
+  final String nutritionLunchTime;
+  final String nutritionDinnerTime;
+  final String hydrationStartTime;
+  final String hydrationEndTime;
+  final int hydrationIntervalMinutes;
+  final String streakAlertTime;
+  final int weeklySummaryDay; // 0=Sunday, 6=Saturday
+  final String weeklySummaryTime;
 
   const NotificationPreferences({
     this.workoutReminders = true,
@@ -48,6 +70,17 @@ class NotificationPreferences {
     this.weeklySummary = true,
     this.quietHoursStart = '22:00',
     this.quietHoursEnd = '08:00',
+    // Default times
+    this.workoutReminderTime = '08:00',
+    this.nutritionBreakfastTime = '08:00',
+    this.nutritionLunchTime = '12:00',
+    this.nutritionDinnerTime = '18:00',
+    this.hydrationStartTime = '08:00',
+    this.hydrationEndTime = '20:00',
+    this.hydrationIntervalMinutes = 120, // Every 2 hours
+    this.streakAlertTime = '18:00',
+    this.weeklySummaryDay = 0, // Sunday
+    this.weeklySummaryTime = '09:00',
   });
 
   NotificationPreferences copyWith({
@@ -59,6 +92,16 @@ class NotificationPreferences {
     bool? weeklySummary,
     String? quietHoursStart,
     String? quietHoursEnd,
+    String? workoutReminderTime,
+    String? nutritionBreakfastTime,
+    String? nutritionLunchTime,
+    String? nutritionDinnerTime,
+    String? hydrationStartTime,
+    String? hydrationEndTime,
+    int? hydrationIntervalMinutes,
+    String? streakAlertTime,
+    int? weeklySummaryDay,
+    String? weeklySummaryTime,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -69,6 +112,16 @@ class NotificationPreferences {
       weeklySummary: weeklySummary ?? this.weeklySummary,
       quietHoursStart: quietHoursStart ?? this.quietHoursStart,
       quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
+      workoutReminderTime: workoutReminderTime ?? this.workoutReminderTime,
+      nutritionBreakfastTime: nutritionBreakfastTime ?? this.nutritionBreakfastTime,
+      nutritionLunchTime: nutritionLunchTime ?? this.nutritionLunchTime,
+      nutritionDinnerTime: nutritionDinnerTime ?? this.nutritionDinnerTime,
+      hydrationStartTime: hydrationStartTime ?? this.hydrationStartTime,
+      hydrationEndTime: hydrationEndTime ?? this.hydrationEndTime,
+      hydrationIntervalMinutes: hydrationIntervalMinutes ?? this.hydrationIntervalMinutes,
+      streakAlertTime: streakAlertTime ?? this.streakAlertTime,
+      weeklySummaryDay: weeklySummaryDay ?? this.weeklySummaryDay,
+      weeklySummaryTime: weeklySummaryTime ?? this.weeklySummaryTime,
     );
   }
 
@@ -81,6 +134,16 @@ class NotificationPreferences {
         'weekly_summary': weeklySummary,
         'quiet_hours_start': quietHoursStart,
         'quiet_hours_end': quietHoursEnd,
+        'workout_reminder_time': workoutReminderTime,
+        'nutrition_breakfast_time': nutritionBreakfastTime,
+        'nutrition_lunch_time': nutritionLunchTime,
+        'nutrition_dinner_time': nutritionDinnerTime,
+        'hydration_start_time': hydrationStartTime,
+        'hydration_end_time': hydrationEndTime,
+        'hydration_interval_minutes': hydrationIntervalMinutes,
+        'streak_alert_time': streakAlertTime,
+        'weekly_summary_day': weeklySummaryDay,
+        'weekly_summary_time': weeklySummaryTime,
       };
 }
 
@@ -455,6 +518,17 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       weeklySummary: _prefs.getBool(NotificationPrefsKeys.weeklySummary) ?? true,
       quietHoursStart: _prefs.getString(NotificationPrefsKeys.quietHoursStart) ?? '22:00',
       quietHoursEnd: _prefs.getString(NotificationPrefsKeys.quietHoursEnd) ?? '08:00',
+      // Time preferences
+      workoutReminderTime: _prefs.getString(NotificationPrefsKeys.workoutReminderTime) ?? '08:00',
+      nutritionBreakfastTime: _prefs.getString(NotificationPrefsKeys.nutritionBreakfastTime) ?? '08:00',
+      nutritionLunchTime: _prefs.getString(NotificationPrefsKeys.nutritionLunchTime) ?? '12:00',
+      nutritionDinnerTime: _prefs.getString(NotificationPrefsKeys.nutritionDinnerTime) ?? '18:00',
+      hydrationStartTime: _prefs.getString(NotificationPrefsKeys.hydrationStartTime) ?? '08:00',
+      hydrationEndTime: _prefs.getString(NotificationPrefsKeys.hydrationEndTime) ?? '20:00',
+      hydrationIntervalMinutes: _prefs.getInt(NotificationPrefsKeys.hydrationIntervalMinutes) ?? 120,
+      streakAlertTime: _prefs.getString(NotificationPrefsKeys.streakAlertTime) ?? '18:00',
+      weeklySummaryDay: _prefs.getInt(NotificationPrefsKeys.weeklySummaryDay) ?? 0,
+      weeklySummaryTime: _prefs.getString(NotificationPrefsKeys.weeklySummaryTime) ?? '09:00',
     );
   }
 
@@ -492,6 +566,49 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     await _prefs.setString(NotificationPrefsKeys.quietHoursStart, start);
     await _prefs.setString(NotificationPrefsKeys.quietHoursEnd, end);
     state = state.copyWith(quietHoursStart: start, quietHoursEnd: end);
+  }
+
+  // Time preference setters
+  Future<void> setWorkoutReminderTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.workoutReminderTime, time);
+    state = state.copyWith(workoutReminderTime: time);
+  }
+
+  Future<void> setNutritionBreakfastTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.nutritionBreakfastTime, time);
+    state = state.copyWith(nutritionBreakfastTime: time);
+  }
+
+  Future<void> setNutritionLunchTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.nutritionLunchTime, time);
+    state = state.copyWith(nutritionLunchTime: time);
+  }
+
+  Future<void> setNutritionDinnerTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.nutritionDinnerTime, time);
+    state = state.copyWith(nutritionDinnerTime: time);
+  }
+
+  Future<void> setHydrationTimes(String startTime, String endTime, int intervalMinutes) async {
+    await _prefs.setString(NotificationPrefsKeys.hydrationStartTime, startTime);
+    await _prefs.setString(NotificationPrefsKeys.hydrationEndTime, endTime);
+    await _prefs.setInt(NotificationPrefsKeys.hydrationIntervalMinutes, intervalMinutes);
+    state = state.copyWith(
+      hydrationStartTime: startTime,
+      hydrationEndTime: endTime,
+      hydrationIntervalMinutes: intervalMinutes,
+    );
+  }
+
+  Future<void> setStreakAlertTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.streakAlertTime, time);
+    state = state.copyWith(streakAlertTime: time);
+  }
+
+  Future<void> setWeeklySummarySchedule(int day, String time) async {
+    await _prefs.setInt(NotificationPrefsKeys.weeklySummaryDay, day);
+    await _prefs.setString(NotificationPrefsKeys.weeklySummaryTime, time);
+    state = state.copyWith(weeklySummaryDay: day, weeklySummaryTime: time);
   }
 }
 
