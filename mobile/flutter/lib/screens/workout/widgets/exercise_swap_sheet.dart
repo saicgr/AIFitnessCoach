@@ -74,21 +74,31 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   Future<void> _loadSuggestions() async {
     setState(() => _isLoadingSuggestions = true);
 
-    final userId = await ref.read(apiClientProvider).getUserId();
-    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      final repo = ref.read(workoutRepositoryProvider);
 
-    final suggestions = await repo.getExerciseSuggestions(
-      workoutId: widget.workoutId,
-      exerciseName: widget.exercise.name,
-      userId: userId!,
-      reason: _selectedReason,
-    );
+      final suggestions = await repo.getExerciseSuggestions(
+        workoutId: widget.workoutId,
+        exercise: widget.exercise,
+        userId: userId!,
+        reason: _selectedReason,
+      );
 
-    if (mounted) {
-      setState(() {
-        _suggestions = suggestions;
-        _isLoadingSuggestions = false;
-      });
+      if (mounted) {
+        setState(() {
+          _suggestions = suggestions;
+          _isLoadingSuggestions = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading suggestions: $e');
+      if (mounted) {
+        setState(() {
+          _suggestions = [];
+          _isLoadingSuggestions = false;
+        });
+      }
     }
   }
 
@@ -219,10 +229,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         clipBehavior: Clip.hardEdge,
-                        child: widget.exercise.gifUrl != null
+                        child: widget.exercise.gifUrl != null && widget.exercise.gifUrl!.isNotEmpty
                             ? CachedNetworkImage(
                                 imageUrl: widget.exercise.gifUrl!,
                                 fit: BoxFit.cover,
+                                placeholder: (_, __) => Icon(Icons.fitness_center, color: textMuted),
+                                errorWidget: (_, __, ___) => Icon(Icons.fitness_center, color: textMuted),
                               )
                             : Icon(Icons.fitness_center, color: textMuted),
                       ),
@@ -382,15 +394,36 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         final suggestion = _suggestions[index];
         final name = suggestion['name'] ?? 'Exercise';
         final reason = suggestion['reason'] ?? '';
-        final similarity = suggestion['similarity_score'] ?? 0.0;
-        final gifUrl = suggestion['gif_url'];
+        final rank = suggestion['rank'] ?? (index + 1);
+        final equipment = suggestion['equipment'] ?? '';
+        final targetMuscle = suggestion['target_muscle'] ?? suggestion['body_part'] ?? '';
+        final gifUrl = suggestion['gif_url'] as String?;
+
+        // Create subtitle from reason or equipment/muscle info
+        final subtitle = reason.isNotEmpty
+            ? reason
+            : [targetMuscle, equipment].where((s) => s.isNotEmpty).join(' • ');
+
+        // Badge text based on rank
+        String badge;
+        Color badgeColor;
+        if (rank == 1) {
+          badge = 'Best Match';
+          badgeColor = AppColors.success;
+        } else if (rank <= 3) {
+          badge = 'Top Pick';
+          badgeColor = AppColors.cyan;
+        } else {
+          badge = equipment.isNotEmpty ? equipment : 'Alternative';
+          badgeColor = AppColors.purple;
+        }
 
         return _ExerciseOptionCard(
           name: name,
-          subtitle: reason,
+          subtitle: subtitle,
           gifUrl: gifUrl,
-          badge: '${(similarity * 100).toInt()}% match',
-          badgeColor: AppColors.success,
+          badge: badge,
+          badgeColor: badgeColor,
           onTap: () => _swapExercise(name),
           textPrimary: textPrimary,
           textMuted: textMuted,

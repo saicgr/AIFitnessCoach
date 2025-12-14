@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/workout.dart';
+import '../models/exercise.dart';
 import '../services/api_client.dart';
 
 /// Workout repository provider
@@ -379,23 +380,54 @@ class WorkoutRepository {
   /// Get AI exercise swap suggestions
   Future<List<Map<String, dynamic>>> getExerciseSuggestions({
     required String workoutId,
-    required String exerciseName,
+    required WorkoutExercise exercise,
     required String userId,
     String? reason,
   }) async {
     try {
+      // Build message based on reason
+      String message;
+      switch (reason) {
+        case 'Too difficult':
+          message = 'I need an easier alternative';
+          break;
+        case 'Too easy':
+          message = 'I want something more challenging';
+          break;
+        case 'Equipment unavailable':
+          message = "I don't have the equipment for this exercise";
+          break;
+        case 'Injury concern':
+          message = 'I have an injury and need a safer alternative';
+          break;
+        case 'Personal preference':
+          message = 'I want a different exercise for variety';
+          break;
+        default:
+          message = 'I want an alternative exercise';
+      }
+
+      debugPrint('🔍 [Workout] Getting suggestions for ${exercise.name} - reason: $reason');
+
       final response = await _apiClient.post(
         '/exercise-suggestions/suggest',
         data: {
-          'workout_id': workoutId,
-          'exercise_name': exerciseName,
           'user_id': userId,
-          if (reason != null) 'reason': reason,
+          'message': message,
+          'current_exercise': {
+            'name': exercise.name,
+            'sets': exercise.sets ?? 3,
+            'reps': exercise.reps ?? 10,
+            'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle ?? exercise.bodyPart,
+            'equipment': exercise.equipment,
+          },
         },
       );
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
-        return List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+        final suggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+        debugPrint('✅ [Workout] Got ${suggestions.length} suggestions');
+        return suggestions;
       }
       return [];
     } catch (e) {

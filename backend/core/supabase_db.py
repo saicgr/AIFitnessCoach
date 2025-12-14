@@ -391,13 +391,16 @@ class SupabaseDB:
     # ==================== PERFORMANCE LOGS ====================
 
     def list_performance_logs(
-        self, user_id: str, exercise_id: Optional[str] = None, limit: int = 50
+        self, user_id: str, exercise_id: Optional[str] = None, exercise_name: Optional[str] = None, limit: int = 50
     ) -> List[Dict[str, Any]]:
         """List performance logs for a user."""
         query = self.client.table("performance_logs").select("*").eq("user_id", user_id)
 
         if exercise_id:
             query = query.eq("exercise_id", exercise_id)
+
+        if exercise_name:
+            query = query.ilike("exercise_name", exercise_name)
 
         result = query.order("recorded_at", desc=True).limit(limit).execute()
         return result.data or []

@@ -383,6 +383,21 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
                     })
                     break
 
+        # Lookup gif_urls from Supabase for the suggestions
+        try:
+            db = get_supabase_db()
+            suggestion_names = [s.get("name") for s in enriched_suggestions if s.get("name")]
+            if suggestion_names:
+                # Query the exercise library for gif_urls
+                result = db.client.table("exercise_library_cleaned").select("name, gif_url").in_("name", suggestion_names).execute()
+                if result.data:
+                    gif_map = {row["name"].lower(): row.get("gif_url") for row in result.data}
+                    for s in enriched_suggestions:
+                        s["gif_url"] = gif_map.get(s.get("name", "").lower())
+                    logger.info(f"[Generate Node] Added gif_urls for {len(gif_map)} exercises")
+        except Exception as e:
+            logger.warning(f"[Generate Node] Could not fetch gif_urls: {e}")
+
         logger.info(f"[Generate Node] Generated {len(enriched_suggestions)} suggestions")
 
         return {

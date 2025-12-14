@@ -162,6 +162,84 @@ async def list_performance_logs(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class ExerciseLastPerformance(BaseModel):
+    """Last performance data for an exercise."""
+    exercise_name: str
+    sets: List[dict]  # List of {set_number, weight_kg, reps_completed, set_type}
+    recorded_at: Optional[str] = None
+    workout_log_id: Optional[str] = None
+
+
+@router.get("/exercise-last-performance/{exercise_name}", response_model=Optional[ExerciseLastPerformance])
+async def get_exercise_last_performance(
+    exercise_name: str,
+    user_id: str,
+):
+    """
+    Get the last performance data for a specific exercise.
+    Returns the sets from the most recent workout that included this exercise.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Get performance logs for this exercise, sorted by recorded_at desc
+        rows = db.list_performance_logs(
+            user_id=user_id,
+            exercise_name=exercise_name,
+            limit=50,  # Get enough to find all sets from last workout
+        )
+
+        if not rows:
+            logger.info(f"No performance history for exercise '{exercise_name}' for user {user_id}")
+            return None
+
+        # Group by workout_log_id to find the most recent workout
+        from collections import defaultdict
+        by_workout = defaultdict(list)
+        for row in rows:
+            workout_id = row.get("workout_log_id")
+            by_workout[workout_id].append(row)
+
+        # Get the most recent workout's sets (first key from sorted by date)
+        sorted_workouts = sorted(
+            by_workout.items(),
+            key=lambda x: x[1][0].get("recorded_at", ""),
+            reverse=True
+        )
+
+        if not sorted_workouts:
+            return None
+
+        workout_log_id, sets_data = sorted_workouts[0]
+
+        # Sort sets by set_number
+        sets_data.sort(key=lambda x: x.get("set_number", 0))
+
+        sets = []
+        for s in sets_data:
+            sets.append({
+                "set_number": s.get("set_number"),
+                "weight_kg": s.get("weight_kg"),
+                "reps_completed": s.get("reps_completed"),
+                "set_type": s.get("set_type", "working"),
+            })
+
+        recorded_at = sets_data[0].get("recorded_at") if sets_data else None
+
+        logger.info(f"Found {len(sets)} previous sets for exercise '{exercise_name}' for user {user_id}")
+
+        return ExerciseLastPerformance(
+            exercise_name=exercise_name,
+            sets=sets,
+            recorded_at=recorded_at,
+            workout_log_id=workout_log_id,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting last performance for exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============ Workout Logs ============
 
 @router.post("/workout-logs", response_model=WorkoutLog)

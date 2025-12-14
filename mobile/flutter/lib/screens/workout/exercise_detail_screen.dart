@@ -22,6 +22,21 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
 }
 
+/// Model for previous set performance
+class PreviousSetData {
+  final int setNumber;
+  final double? weightKg;
+  final int? reps;
+  final String setType;
+
+  PreviousSetData({
+    required this.setNumber,
+    this.weightKg,
+    this.reps,
+    required this.setType,
+  });
+}
+
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   VideoPlayerController? _videoController;
   String? _imageUrl;
@@ -35,10 +50,51 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   int _restSeconds = 0;
   bool _isResting = false;
 
+  // Previous performance
+  List<PreviousSetData> _previousSets = [];
+  bool _isLoadingPrevious = true;
+
   @override
   void initState() {
     super.initState();
     _loadMediaAndAutoplay();
+    _loadPreviousPerformance();
+  }
+
+  Future<void> _loadPreviousPerformance() async {
+    final exerciseName = widget.exercise.name;
+    if (exerciseName.isEmpty || exerciseName == 'Exercise') {
+      setState(() => _isLoadingPrevious = false);
+      return;
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      final response = await apiClient.get(
+        '/performance-db/exercise-last-performance/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final sets = response.data['sets'] as List?;
+        if (sets != null && sets.isNotEmpty) {
+          _previousSets = sets.map((s) => PreviousSetData(
+            setNumber: s['set_number'] ?? 0,
+            weightKg: (s['weight_kg'] as num?)?.toDouble(),
+            reps: s['reps_completed'] as int?,
+            setType: s['set_type'] ?? 'working',
+          )).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading previous performance: $e');
+    }
+
+    if (mounted) {
+      setState(() => _isLoadingPrevious = false);
+    }
   }
 
   @override
@@ -528,7 +584,37 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
+  /// Get previous performance for a specific set
+  PreviousSetData? _getPreviousSet(int setNumber, bool isWarmup) {
+    final setType = isWarmup ? 'warmup' : 'working';
+    try {
+      return _previousSets.firstWhere(
+        (s) => s.setNumber == setNumber && s.setType == setType,
+      );
+    } catch (_) {
+      // Try to find any set with same number regardless of type
+      try {
+        return _previousSets.firstWhere((s) => s.setNumber == setNumber);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  /// Format previous set display (e.g., "40kg × 7")
+  String _formatPreviousSet(PreviousSetData? previous) {
+    if (previous == null) return '-';
+    final weight = previous.weightKg;
+    final reps = previous.reps;
+    if (weight == null && reps == null) return '-';
+    if (weight == null) return '× $reps';
+    if (reps == null) return '${weight.toInt()}kg';
+    return '${weight.toInt()}kg × $reps';
+  }
+
   Widget _buildSetTable(int warmupSets, int workingSets, String repRange, double? weight, Color elevated, Color glassSurface, Color cardBorder, Color textPrimary, Color textMuted, Color textSecondary) {
+    final hasPrevious = _previousSets.isNotEmpty;
+
     return Container(
       decoration: BoxDecoration(
         color: elevated,
@@ -538,47 +624,61 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: glassSurface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
-                SizedBox(width: 50, child: Text('SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5))),
-                Expanded(child: Center(child: Text('LBS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
-                SizedBox(width: 80, child: Center(child: Text('REP RANGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
+                SizedBox(width: 40, child: Text('SET', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5))),
+                if (hasPrevious)
+                  SizedBox(width: 80, child: Center(child: Text('PREVIOUS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
+                Expanded(child: Center(child: Text('LBS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
+                SizedBox(width: 70, child: Center(child: Text('REPS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textMuted, letterSpacing: 0.5)))),
               ],
             ),
           ),
 
           // Warmup rows
-          ...List.generate(warmupSets, (i) => _buildTableRow(
-            setLabel: 'W',
-            isWarmup: true,
-            weight: null,
-            repRange: repRange,
-            isLast: false,
-            glassSurface: glassSurface,
-            cardBorder: cardBorder,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-            textSecondary: textSecondary,
-          )),
+          ...List.generate(warmupSets, (i) {
+            final previous = _getPreviousSet(i + 1, true);
+            return _buildTableRow(
+              setLabel: 'W',
+              setIndex: i + 1,
+              isWarmup: true,
+              weight: null,
+              repRange: repRange,
+              previousDisplay: _formatPreviousSet(previous),
+              hasPrevious: hasPrevious,
+              isLast: false,
+              glassSurface: glassSurface,
+              cardBorder: cardBorder,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              textSecondary: textSecondary,
+            );
+          }),
 
           // Working set rows
-          ...List.generate(workingSets, (i) => _buildTableRow(
-            setLabel: '${i + 1}',
-            isWarmup: false,
-            weight: weight,
-            repRange: repRange,
-            isLast: i == workingSets - 1,
-            glassSurface: glassSurface,
-            cardBorder: cardBorder,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-            textSecondary: textSecondary,
-          )),
+          ...List.generate(workingSets, (i) {
+            final previous = _getPreviousSet(i + 1, false);
+            return _buildTableRow(
+              setLabel: '${i + 1}',
+              setIndex: i + 1,
+              isWarmup: false,
+              weight: weight,
+              repRange: repRange,
+              previousDisplay: _formatPreviousSet(previous),
+              hasPrevious: hasPrevious,
+              isLast: i == workingSets - 1,
+              glassSurface: glassSurface,
+              cardBorder: cardBorder,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              textSecondary: textSecondary,
+            );
+          }),
         ],
       ),
     );
@@ -586,9 +686,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   Widget _buildTableRow({
     required String setLabel,
+    required int setIndex,
     required bool isWarmup,
     double? weight,
     required String repRange,
+    required String previousDisplay,
+    required bool hasPrevious,
     required bool isLast,
     required Color glassSurface,
     required Color cardBorder,
@@ -597,7 +700,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     required Color textSecondary,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         border: isLast
             ? null
@@ -614,21 +717,21 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         children: [
           // Set badge
           SizedBox(
-            width: 50,
+            width: 40,
             child: Container(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: isWarmup
                     ? AppColors.orange.withOpacity(0.2)
                     : AppColors.cyan.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   setLabel,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: isWarmup ? AppColors.orange : AppColors.cyan,
                   ),
@@ -637,11 +740,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             ),
           ),
 
+          // Previous performance (only show if we have previous data)
+          if (hasPrevious)
+            SizedBox(
+              width: 80,
+              child: Center(
+                child: Text(
+                  previousDisplay,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: previousDisplay == '-' ? textMuted : textSecondary,
+                    fontWeight: previousDisplay != '-' ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+
           // Weight
           Expanded(
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
                   color: glassSurface,
                   borderRadius: BorderRadius.circular(8),
@@ -649,7 +768,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 child: Text(
                   weight != null ? '${weight.toInt()}' : '-',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: weight != null ? textPrimary : textMuted,
                   ),
@@ -660,12 +779,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
           // Rep range
           SizedBox(
-            width: 80,
+            width: 70,
             child: Center(
               child: Text(
                 repRange,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   color: textSecondary,
                 ),
               ),
