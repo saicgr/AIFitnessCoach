@@ -9,7 +9,6 @@ import io
 import json
 import time
 import zipfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -50,52 +49,68 @@ def export_user_data(
     if not user:
         raise ValueError(f"User {user_id} not found")
 
-    # Run all queries in parallel using ThreadPoolExecutor
+    # Run queries sequentially (ThreadPoolExecutor has issues with Supabase on cold starts)
+    # Sequential is actually fast enough (~1-2s total) and more reliable
     t = time.time()
     results = {}
 
-    def fetch_metrics():
-        return _get_filtered_metrics(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching metrics...")
+        results["metrics"] = _get_filtered_metrics(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ metrics: {len(results['metrics'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching metrics: {e}")
+        results["metrics"] = []
 
-    def fetch_workouts():
-        return _get_filtered_workouts(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching workouts...")
+        results["workouts"] = _get_filtered_workouts(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ workouts: {len(results['workouts'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching workouts: {e}")
+        results["workouts"] = []
 
-    def fetch_workout_logs():
-        return _get_filtered_workout_logs(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching workout_logs...")
+        results["workout_logs"] = _get_filtered_workout_logs(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ workout_logs: {len(results['workout_logs'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching workout_logs: {e}")
+        results["workout_logs"] = []
 
-    def fetch_performance_logs():
-        return _get_filtered_performance_logs(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching performance_logs...")
+        results["performance_logs"] = _get_filtered_performance_logs(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ performance_logs: {len(results['performance_logs'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching performance_logs: {e}")
+        results["performance_logs"] = []
 
-    def fetch_strength_records():
-        return _get_filtered_strength_records(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching strength_records...")
+        results["strength_records"] = _get_filtered_strength_records(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ strength_records: {len(results['strength_records'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching strength_records: {e}")
+        results["strength_records"] = []
 
-    def fetch_achievements():
-        return _get_filtered_achievements(db, user_id, start_date, end_date)
+    try:
+        logger.info("📊 Fetching achievements...")
+        results["achievements"] = _get_filtered_achievements(db, user_id, start_date, end_date)
+        logger.info(f"  ✓ achievements: {len(results['achievements'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching achievements: {e}")
+        results["achievements"] = []
 
-    def fetch_streaks():
-        return _get_user_streaks(db, user_id)
+    try:
+        logger.info("📊 Fetching streaks...")
+        results["streaks"] = _get_user_streaks(db, user_id)
+        logger.info(f"  ✓ streaks: {len(results['streaks'])} rows")
+    except Exception as e:
+        logger.error(f"Error fetching streaks: {e}")
+        results["streaks"] = []
 
-    # Execute all queries in parallel
-    with ThreadPoolExecutor(max_workers=7) as executor:
-        futures = {
-            executor.submit(fetch_metrics): "metrics",
-            executor.submit(fetch_workouts): "workouts",
-            executor.submit(fetch_workout_logs): "workout_logs",
-            executor.submit(fetch_performance_logs): "performance_logs",
-            executor.submit(fetch_strength_records): "strength_records",
-            executor.submit(fetch_achievements): "achievements",
-            executor.submit(fetch_streaks): "streaks",
-        }
-
-        for future in as_completed(futures):
-            key = futures[future]
-            try:
-                results[key] = future.result()
-            except Exception as e:
-                logger.error(f"Error fetching {key}: {e}")
-                results[key] = []
-
-    logger.info(f"⏱️ All parallel queries completed in {time.time() - t:.2f}s")
+    logger.info(f"⏱️ All queries completed in {time.time() - t:.2f}s")
 
     # Create in-memory ZIP file
     zip_buffer = io.BytesIO()
