@@ -265,6 +265,8 @@ class LangGraphCoachService:
             "rag_context_used": rag_used,
             "similar_questions": similar_questions,
             "error": None,
+            # AI personality settings
+            "ai_settings": request.ai_settings.model_dump() if request.ai_settings else None,
         }
 
         # Add agent-specific fields

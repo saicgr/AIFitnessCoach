@@ -8,6 +8,7 @@ ENDPOINTS:
 - POST /api/v1/chat/rag/search - Search similar past conversations
 """
 import json
+import time
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
+from core.database import get_supabase_client
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -54,7 +56,8 @@ async def send_message(
     2. Retrieves similar past conversations (RAG)
     3. Generates an AI response with context
     4. Stores the Q&A for future RAG
-    5. Returns action data for workout modifications
+    5. Records analytics with AI settings snapshot
+    6. Returns action data for workout modifications
     """
     logger.info(f"Chat request from user {request.user_id}: {request.message[:50]}...")
     if request.current_workout:
@@ -62,9 +65,13 @@ async def send_message(
     if request.workout_schedule:
         logger.debug(f"Workout schedule: yesterday={request.workout_schedule.yesterday is not None}, today={request.workout_schedule.today is not None}, tomorrow={request.workout_schedule.tomorrow is not None}, thisWeek={len(request.workout_schedule.thisWeek)}")
 
+    # Track response time for analytics
+    start_time = time.time()
+
     try:
         response = await coach.process_message(request)
-        logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}")
+        response_time_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
 
         # Save chat message to database for persistence
         # The chat_history table stores user_message + ai_response per row
@@ -85,6 +92,31 @@ async def send_message(
         except Exception as db_error:
             # Log but don't fail the request if DB save fails
             logger.warning(f"Failed to save chat to database: {db_error}")
+
+        # Record chat interaction analytics with AI settings snapshot
+        try:
+            supabase = get_supabase_client()
+            ai_settings = request.ai_settings
+
+            analytics_data = {
+                "user_id": request.user_id,
+                "user_message_length": len(request.message),
+                "ai_response_length": len(response.message),
+                "coaching_style": ai_settings.coaching_style if ai_settings else "motivational",
+                "communication_tone": ai_settings.communication_tone if ai_settings else "encouraging",
+                "encouragement_level": ai_settings.encouragement_level if ai_settings else 0.7,
+                "response_length": ai_settings.response_length if ai_settings else "balanced",
+                "use_emojis": ai_settings.use_emojis if ai_settings else True,
+                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
+                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                "rag_context_used": response.rag_context_used or False,
+                "response_time_ms": response_time_ms,
+            }
+            supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
+            logger.debug(f"Chat analytics recorded for user {request.user_id}")
+        except Exception as analytics_error:
+            # Log but don't fail the request if analytics save fails
+            logger.warning(f"Failed to save chat analytics: {analytics_error}")
 
         return response
     except Exception as e:

@@ -14,6 +14,8 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, get_nutrition_summary, get_recent_meals
+from ..personality import build_personality_prompt
+from models.chat import AISettings
 from services.openai_service import OpenAIService
 from core.config import get_settings
 from core.logger import get_logger
@@ -28,19 +30,13 @@ NUTRITION_TOOLS = [
     get_recent_meals,
 ]
 
-# Nutrition expertise system prompt
-NUTRITION_SYSTEM_PROMPT = """You are Nutri, an expert AI nutritionist and dietary coach. You specialize in:
+# Nutrition expertise base prompt (personality is added dynamically)
+NUTRITION_BASE_PROMPT = """You are Nutri, an expert AI nutritionist and dietary coach. You specialize in:
 - Analyzing food and estimating calories/macros
 - Providing personalized dietary advice based on fitness goals
 - Explaining nutrition concepts (macros, micros, meal timing)
 - Suggesting healthy meal alternatives
 - Helping users make better food choices
-
-PERSONALITY:
-- Warm and supportive, never judgmental about food choices
-- Scientific but accessible - explain nutrition concepts simply
-- Practical - give actionable advice that fits real life
-- Encouraging about progress, understanding about setbacks
 
 CAPABILITIES:
 1. **With Tools**: Analyze food images, log meals, get nutrition summaries
@@ -57,6 +53,18 @@ When you DO need tools:
 - User asks about their logged meals
 - User wants a nutrition summary
 """
+
+
+def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
+    """Build the full system prompt with personality customization."""
+    # Convert dict to AISettings if provided
+    settings_obj = AISettings(**ai_settings) if ai_settings else None
+    personality = build_personality_prompt(
+        ai_settings=settings_obj,
+        agent_name="Nutri",
+        agent_specialty="nutrition and dietary coaching"
+    )
+    return f"{NUTRITION_BASE_PROMPT}\n\n{personality}"
 
 
 def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
@@ -104,6 +112,10 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     """
     logger.info("[Nutrition Agent] Processing with tools...")
 
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+
     # Build context
     context_parts = []
 
@@ -128,7 +140,7 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     llm_with_tools = llm.bind_tools(NUTRITION_TOOLS)
 
     # Build system message
-    tool_prompt = f"""{NUTRITION_SYSTEM_PROMPT}
+    tool_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -141,9 +153,7 @@ AVAILABLE TOOLS:
 {f'HAS_IMAGE: true - User sent a food image. Call analyze_food_image.' if state.get('image_base64') else 'HAS_IMAGE: false'}
 {f'IMAGE_BASE64: {state["image_base64"][:100]}...' if state.get('image_base64') else ''}
 
-USER_ID: {state['user_id']}
-
-Be warm, encouraging, and provide helpful nutritional guidance!"""
+USER_ID: {state['user_id']}"""
 
     system_message = SystemMessage(content=tool_prompt)
 
@@ -240,6 +250,10 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
     """Generate final response after tools have been executed."""
     logger.info("[Nutrition Response] Generating final response...")
 
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+
     # Build context from tool results
     context_parts = []
 
@@ -256,15 +270,14 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{NUTRITION_SYSTEM_PROMPT}
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
 
 IMPORTANT:
 - The nutrition actions have been completed successfully
-- Respond naturally as a supportive nutritionist
-- Provide encouragement and helpful tips
+- Respond naturally based on your personality settings
 - NEVER mention tool names or technical details"""
 
     messages = state.get("messages", [])
@@ -297,6 +310,10 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
 
     openai_service = OpenAIService()
 
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_nutrition_system_prompt(ai_settings)
+
     # Build context
     context_parts = []
 
@@ -312,12 +329,12 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{NUTRITION_SYSTEM_PROMPT}
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
 
-You are responding to a general nutrition question. Provide helpful, personalized advice based on the user's goals and fitness level. Be warm and supportive!"""
+You are responding to a general nutrition question. Provide helpful, personalized advice based on the user's goals and fitness level."""
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

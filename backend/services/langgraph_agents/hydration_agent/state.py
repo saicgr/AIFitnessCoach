@@ -16,6 +16,9 @@ class HydrationAgentState(TypedDict):
     user_profile: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
 
+    # AI personality settings
+    ai_settings: Optional[Dict[str, Any]]
+
     # Intent extraction results
     intent: Optional[CoachIntent]
     hydration_amount: Optional[int]

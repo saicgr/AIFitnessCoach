@@ -44,4 +44,5 @@ class ApiConstants {
   static const String hydration = '/hydration';
   static const String nutrition = '/nutrition';
   static const String summaries = '/summaries';
+  static const String aiSettings = '/ai-settings';
 }

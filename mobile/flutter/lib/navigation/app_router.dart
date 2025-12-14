@@ -5,6 +5,7 @@ import '../data/models/workout.dart';
 import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/welcome_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
@@ -24,13 +25,18 @@ import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
+import '../screens/auth/language_selection_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
+import '../core/providers/language_provider.dart';
 
-/// Listenable for auth state changes to trigger router refresh
+/// Listenable for auth and language state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
   _AuthStateNotifier(this._ref) {
     _ref.listen<AuthState>(authStateProvider, (_, __) {
+      notifyListeners();
+    });
+    _ref.listen<LanguageState>(languageProvider, (_, __) {
       notifyListeners();
     });
   }
@@ -53,15 +59,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       // Read auth state fresh each time redirect is called
       final authState = ref.read(authStateProvider);
+      final languageState = ref.read(languageProvider);
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isOnSplash = state.matchedLocation == '/splash';
+      final isOnWelcome = state.matchedLocation == '/welcome';
       final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
+      final isOnLanguageSelect = state.matchedLocation == '/language-select';
 
-      // Still loading - stay on splash (or go to splash if starting)
+      // Still loading auth or language - stay on splash (or go to splash if starting)
       if (authState.status == AuthStatus.initial ||
-          authState.status == AuthStatus.loading) {
+          authState.status == AuthStatus.loading ||
+          languageState.isLoading) {
         // If we're on splash, stay there
         if (isOnSplash) return null;
         // Otherwise redirect to splash
@@ -77,17 +87,34 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           return '/home';
         } else {
-          return '/login';
+          // Check if language has been selected
+          if (!languageState.hasSelectedLanguage) {
+            return '/language-select';
+          }
+          // New users go to welcome after language selection
+          return '/welcome';
         }
       }
 
-      // Not logged in and not on login page -> go to login
-      if (!isLoggedIn && !isLoggingIn && !isOnSplash) {
-        return '/login';
+      // On language select - allow it if not logged in
+      if (isOnLanguageSelect) {
+        if (isLoggedIn) {
+          return '/home';
+        }
+        return null; // Stay on language select
       }
 
-      // Logged in and on login page -> check onboarding
-      if (isLoggedIn && isLoggingIn) {
+      // Not logged in - allow welcome, login, and language-select pages
+      if (!isLoggedIn && !isLoggingIn && !isOnWelcome && !isOnSplash && !isOnLanguageSelect) {
+        // If language not selected, go to language select first
+        if (!languageState.hasSelectedLanguage) {
+          return '/language-select';
+        }
+        return '/welcome';
+      }
+
+      // Logged in and on login or welcome page -> check onboarding
+      if (isLoggedIn && (isLoggingIn || isOnWelcome || isOnLanguageSelect)) {
         final user = authState.user;
         if (user != null && !user.isOnboardingComplete && !isOnboarding) {
           return '/onboarding';
@@ -104,7 +131,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Login
+      // Language selection - shown before welcome for new users
+      GoRoute(
+        path: '/language-select',
+        builder: (context, state) => const LanguageSelectionScreen(),
+      ),
+
+      // Welcome - intro slides for new users
+      GoRoute(
+        path: '/welcome',
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+
+      // Login - for returning users or after welcome slides
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),

@@ -44,6 +44,7 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
   conversationHistory: (json['conversation_history'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
+  aiSettings: json['ai_settings'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -54,6 +55,7 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
       'current_workout': instance.currentWorkout,
       'workout_schedule': instance.workoutSchedule,
       'conversation_history': instance.conversationHistory,
+      'ai_settings': instance.aiSettings,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

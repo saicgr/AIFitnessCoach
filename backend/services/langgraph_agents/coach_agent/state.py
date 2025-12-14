@@ -18,6 +18,9 @@ class CoachAgentState(TypedDict):
     workout_schedule: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
 
+    # AI personality settings
+    ai_settings: Optional[Dict[str, Any]]
+
     # Intent extraction results
     intent: Optional[CoachIntent]
     setting_name: Optional[str]

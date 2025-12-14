@@ -41,6 +41,25 @@ class CoachIntent(str, Enum):
     LOG_HYDRATION = "log_hydration"
 
 
+class AISettings(BaseModel):
+    """AI personality and behavior settings."""
+    # Personality & Tone
+    coaching_style: str = "motivational"  # "motivational", "professional", "friendly", "tough-love"
+    communication_tone: str = "encouraging"  # "casual", "encouraging", "formal"
+    encouragement_level: float = 0.7  # 0.0 - 1.0
+
+    # Response Preferences
+    response_length: str = "balanced"  # "concise", "balanced", "detailed"
+    use_emojis: bool = True
+    include_tips: bool = True
+
+    # Fitness Coaching Specifics
+    form_reminders: bool = True
+    rest_day_suggestions: bool = True
+    nutrition_mentions: bool = True
+    injury_sensitivity: bool = True
+
+
 class UserProfile(BaseModel):
     """User profile for context in chat."""
     id: str  # UUID from Supabase
@@ -48,6 +67,7 @@ class UserProfile(BaseModel):
     goals: List[str] = []
     equipment: List[str] = []
     active_injuries: List[str] = []
+    name: Optional[str] = None
 
 
 class WorkoutContext(BaseModel):
@@ -82,7 +102,8 @@ class ChatRequest(BaseModel):
             "current_workout": {...},
             "workout_schedule": {...},
             "conversation_history": [...],
-            "image_base64": null
+            "image_base64": null,
+            "ai_settings": {...}
         }
     """
     message: str = Field(..., min_length=1, description="User's message")
@@ -100,6 +121,10 @@ class ChatRequest(BaseModel):
     image_base64: Optional[str] = Field(
         default=None,
         description="Base64 encoded image for food analysis (without data:image prefix)"
+    )
+    ai_settings: Optional[AISettings] = Field(
+        default=None,
+        description="AI personality and behavior settings"
     )
 
 

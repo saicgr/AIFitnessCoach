@@ -17,6 +17,9 @@ class NutritionAgentState(TypedDict):
     conversation_history: List[Dict[str, str]]
     image_base64: Optional[str]  # Base64 encoded image for food analysis
 
+    # AI personality settings
+    ai_settings: Optional[Dict[str, Any]]
+
     # Intent extraction results
     intent: Optional[CoachIntent]
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../navigation/app_router.dart';
+import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../models/chat_message.dart';
 import '../models/workout.dart';
 import '../models/user.dart';
@@ -19,7 +20,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(apiClient);
 });
 
-/// Chat messages provider - now includes workout context, settings control, navigation, and hydration
+/// Chat messages provider - now includes workout context, settings control, navigation, hydration, and AI settings
 final chatMessagesProvider =
     StateNotifierProvider<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>>(
         (ref) {
@@ -31,7 +32,8 @@ final chatMessagesProvider =
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier);
+  final aiSettings = ref.watch(aiSettingsProvider);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, aiSettings);
 });
 
 /// Chat repository for API calls
@@ -73,9 +75,13 @@ class ChatRepository {
     Map<String, dynamic>? currentWorkout,
     Map<String, dynamic>? workoutSchedule,
     List<Map<String, dynamic>>? conversationHistory,
+    Map<String, dynamic>? aiSettings,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
+      if (aiSettings != null) {
+        debugPrint('🤖 [Chat] AI settings: ${aiSettings['coaching_style']}, ${aiSettings['communication_tone']}');
+      }
 
       final response = await _apiClient.post(
         '${ApiConstants.chat}/send',
@@ -86,6 +92,7 @@ class ChatRepository {
           currentWorkout: currentWorkout,
           workoutSchedule: workoutSchedule,
           conversationHistory: conversationHistory,
+          aiSettings: aiSettings,
         ).toJson(),
       );
 
@@ -115,9 +122,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
+  final AISettings _aiSettings;
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._aiSettings)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -242,6 +250,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         currentWorkout: currentWorkout,
         workoutSchedule: workoutSchedule,
         conversationHistory: history,
+        aiSettings: _aiSettings.toJson(),
       );
 
       // Process action_data if present

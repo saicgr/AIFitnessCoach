@@ -21,6 +21,8 @@ from ..tools import (
     reschedule_workout,
     delete_workout,
 )
+from ..personality import build_personality_prompt
+from models.chat import AISettings
 from services.openai_service import OpenAIService
 from core.config import get_settings
 from core.logger import get_logger
@@ -38,19 +40,13 @@ WORKOUT_TOOLS = [
     delete_workout,
 ]
 
-# Workout expertise system prompt
-WORKOUT_SYSTEM_PROMPT = """You are Flex, an expert AI personal trainer and workout coach. You specialize in:
+# Workout expertise base prompt (personality is added dynamically)
+WORKOUT_BASE_PROMPT = """You are Flex, an expert AI personal trainer and workout coach. You specialize in:
 - Creating and modifying workout plans
 - Explaining proper exercise form and technique
 - Providing exercise alternatives and progressions
 - Helping users schedule and organize their training
 - Motivating and pushing users to reach their potential
-
-PERSONALITY:
-- Energetic and motivating
-- Knowledgeable about exercise science
-- Safety-conscious - always emphasize proper form
-- Adaptable - adjusts recommendations based on user level
 
 CAPABILITIES:
 1. **With Tools**: Modify workouts, add/remove exercises, change intensity, reschedule
@@ -70,6 +66,17 @@ When you DO need tools:
 - "Move tomorrow's workout to Friday"
 - "Change this to a back workout"
 """
+
+
+def get_workout_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
+    """Build the full system prompt with personality customization."""
+    settings_obj = AISettings(**ai_settings) if ai_settings else None
+    personality = build_personality_prompt(
+        ai_settings=settings_obj,
+        agent_name="Flex",
+        agent_specialty="personal training and workout coaching"
+    )
+    return f"{WORKOUT_BASE_PROMPT}\n\n{personality}"
 
 
 def format_workout_schedule_context(schedule: Dict[str, Any]) -> str:
@@ -203,7 +210,11 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     llm_with_tools = llm.bind_tools(WORKOUT_TOOLS)
 
     # Build system message
-    tool_prompt = f"""{WORKOUT_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_workout_system_prompt(ai_settings)
+
+    tool_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -217,9 +228,7 @@ AVAILABLE TOOLS:
 - delete_workout(workout_id, reason) - Delete/cancel a workout
 
 CRITICAL: When modifying workouts, use the correct workout_id from the schedule above.
-Default to today's workout (ID: {workout_id}) if not specified.
-
-Be energetic, motivating, and explain what changes you're making!"""
+Default to today's workout (ID: {workout_id}) if not specified."""
 
     system_message = SystemMessage(content=tool_prompt)
 
@@ -357,7 +366,11 @@ async def workout_response_node(state: WorkoutAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{WORKOUT_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_workout_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -420,7 +433,11 @@ async def workout_autonomous_node(state: WorkoutAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{WORKOUT_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_workout_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}

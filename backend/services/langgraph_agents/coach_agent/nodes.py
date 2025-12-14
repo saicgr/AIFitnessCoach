@@ -11,14 +11,15 @@ from datetime import datetime
 import pytz
 
 from .state import CoachAgentState
+from ..personality import build_personality_prompt
+from models.chat import AISettings, CoachIntent
 from services.openai_service import OpenAIService
-from models.chat import CoachIntent
 from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Coach expertise system prompt
-COACH_SYSTEM_PROMPT = """You are Coach, a friendly and knowledgeable AI fitness coach. You are the main point of contact for users and handle:
+# Coach expertise base prompt (personality is added dynamically)
+COACH_BASE_PROMPT = """You are Coach, a friendly and knowledgeable AI fitness coach. You are the main point of contact for users and handle:
 - General fitness questions and advice
 - Motivation and encouragement
 - App navigation guidance
@@ -45,6 +46,17 @@ If a question is very specific to a domain, you might suggest the user ask:
 
 But YOU can still answer general questions in these areas!
 """
+
+
+def get_coach_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
+    """Build the full system prompt with personality customization."""
+    settings_obj = AISettings(**ai_settings) if ai_settings else None
+    personality = build_personality_prompt(
+        ai_settings=settings_obj,
+        agent_name="Coach",
+        agent_specialty="fitness coaching and wellness guidance"
+    )
+    return f"{COACH_BASE_PROMPT}\n\n{personality}"
 
 
 def format_workout_context(schedule: Dict[str, Any]) -> str:
@@ -181,7 +193,11 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{COACH_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_coach_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -240,7 +256,11 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{COACH_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_coach_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}

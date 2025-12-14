@@ -16,6 +16,9 @@ class InjuryAgentState(TypedDict):
     user_profile: Optional[Dict[str, Any]]
     conversation_history: List[Dict[str, str]]
 
+    # AI personality settings
+    ai_settings: Optional[Dict[str, Any]]
+
     # Intent extraction results
     intent: Optional[CoachIntent]
     body_part: Optional[str]

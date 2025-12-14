@@ -18,6 +18,8 @@ from ..tools import (
     get_active_injuries,
     update_injury_status,
 )
+from ..personality import build_personality_prompt
+from models.chat import AISettings
 from services.openai_service import OpenAIService
 from core.config import get_settings
 from core.logger import get_logger
@@ -33,8 +35,8 @@ INJURY_TOOLS = [
     update_injury_status,
 ]
 
-# Injury expertise system prompt
-INJURY_SYSTEM_PROMPT = """You are Recovery, an expert AI sports medicine specialist and injury recovery coach. You specialize in:
+# Injury expertise base prompt (personality is added dynamically)
+INJURY_BASE_PROMPT = """You are Recovery, an expert AI sports medicine specialist and injury recovery coach. You specialize in:
 - Helping users report and track injuries
 - Providing evidence-based recovery guidance
 - Suggesting appropriate rehab exercises
@@ -77,6 +79,17 @@ RECOVERY PHASES:
 
 IMPORTANT: Always encourage users to see a medical professional for serious injuries.
 """
+
+
+def get_injury_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
+    """Build the full system prompt with personality customization."""
+    settings_obj = AISettings(**ai_settings) if ai_settings else None
+    personality = build_personality_prompt(
+        ai_settings=settings_obj,
+        agent_name="Recovery",
+        agent_specialty="sports medicine and injury recovery coaching"
+    )
+    return f"{INJURY_BASE_PROMPT}\n\n{personality}"
 
 
 def should_use_tools(state: InjuryAgentState) -> Literal["agent", "respond"]:
@@ -163,8 +176,12 @@ async def injury_agent_node(state: InjuryAgentState) -> Dict[str, Any]:
     )
     llm_with_tools = llm.bind_tools(INJURY_TOOLS)
 
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_injury_system_prompt(ai_settings)
+
     # Build system message
-    tool_prompt = f"""{INJURY_SYSTEM_PROMPT}
+    tool_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -290,7 +307,11 @@ async def injury_response_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{INJURY_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_injury_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -346,7 +367,11 @@ async def injury_autonomous_node(state: InjuryAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{INJURY_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_injury_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}

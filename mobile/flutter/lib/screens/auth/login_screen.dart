@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -86,7 +86,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               if (authState.status == AuthStatus.error)
                 _buildErrorMessage(authState.errorMessage),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // New user? Get started link
+              _buildNewUserLink(),
+
+              const SizedBox(height: 24),
 
               // Terms
               _buildTerms(),
@@ -97,6 +102,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildNewUserLink() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'New here? ',
+          style: TextStyle(
+            color: textMuted,
+            fontSize: 14,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => context.go('/welcome'),
+          child: Text(
+            'See what we offer',
+            style: TextStyle(
+              color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 900.ms);
   }
 
   Widget _buildBranding() {

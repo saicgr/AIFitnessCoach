@@ -170,6 +170,8 @@ class ChatRequest {
   final Map<String, dynamic>? workoutSchedule;
   @JsonKey(name: 'conversation_history')
   final List<Map<String, dynamic>>? conversationHistory;
+  @JsonKey(name: 'ai_settings')
+  final Map<String, dynamic>? aiSettings;
 
   const ChatRequest({
     required this.message,
@@ -178,6 +180,7 @@ class ChatRequest {
     this.currentWorkout,
     this.workoutSchedule,
     this.conversationHistory,
+    this.aiSettings,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>

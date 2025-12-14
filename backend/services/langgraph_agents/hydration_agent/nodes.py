@@ -8,14 +8,15 @@ import re
 from typing import Dict, Any, Literal
 
 from .state import HydrationAgentState
+from ..personality import build_personality_prompt
+from models.chat import AISettings, CoachIntent
 from services.openai_service import OpenAIService
-from models.chat import CoachIntent
 from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Hydration expertise system prompt
-HYDRATION_SYSTEM_PROMPT = """You are Aqua, an expert AI hydration coach. You specialize in:
+# Hydration expertise base prompt (personality is added dynamically)
+HYDRATION_BASE_PROMPT = """You are Aqua, an expert AI hydration coach. You specialize in:
 - Helping users track their water intake
 - Providing personalized hydration recommendations
 - Explaining the importance of hydration for fitness
@@ -54,6 +55,17 @@ CAPABILITIES:
 2. **Provide Advice**: Answer questions about hydration
 3. **Encourage**: Motivate users to stay hydrated
 """
+
+
+def get_hydration_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
+    """Build the full system prompt with personality customization."""
+    settings_obj = AISettings(**ai_settings) if ai_settings else None
+    personality = build_personality_prompt(
+        ai_settings=settings_obj,
+        agent_name="Aqua",
+        agent_specialty="hydration coaching and wellness"
+    )
+    return f"{HYDRATION_BASE_PROMPT}\n\n{personality}"
 
 
 def extract_hydration_amount(message: str) -> int:
@@ -151,7 +163,11 @@ async def hydration_log_node(state: HydrationAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{HYDRATION_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_hydration_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -212,7 +228,11 @@ async def hydration_advice_node(state: HydrationAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
-    system_prompt = f"""{HYDRATION_SYSTEM_PROMPT}
+    # Get personalized system prompt
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_hydration_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
