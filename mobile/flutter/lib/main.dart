@@ -12,12 +12,21 @@ import 'data/services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase (with error handling for simulators/missing config)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('⚠️ Firebase initialization failed: $e');
+    // Continue without Firebase on simulator or if config is missing
+  }
 
   // Initialize notification service
   final notificationService = NotificationService();
-  await notificationService.initialize();
+  try {
+    await notificationService.initialize();
+  } catch (e) {
+    debugPrint('⚠️ Notification service initialization failed: $e');
+  }
 
   // Initialize SharedPreferences for notification prefs
   final sharedPreferences = await SharedPreferences.getInstance();

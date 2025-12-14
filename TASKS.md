@@ -1,3 +1,35 @@
+ASAP:
+0. Make the floating bar and AI Coach button smaller
+1. The notifications do not work on scheduled time for any of them
+2. AI Coach tone and theme doesn't change
+3. Regenerating workout doesn't work
+4. User asked for a quick workout but it only gave them big message but did't generate a workout
+5. When generating working from onbaording or regenerating alwayus take workouts having videos and images
+6. All library exercises should have images and videos
+7. Measurements page is not implemented
+8. Login details bug not getting saved and not shown in settings
+8.1 profile details not getting saved, 
+8.2 video play button bug,  pause button on the top right and video pause button of the video don't have relation. Video pause button is only pausing the video, the workout time still runs.
+9. Challenges when workout generates or during test
+10. Align images to exercise texts
+11. Kettlebells or dumbbell what if they only have one?
+12. Swap exercise and regenrate broken
+13. Reflect the mode that system is using like dark/light mode 
+14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
+15. Chat prompt text doesn't work as expected
+16. When typing the can you make it so that the text input is above keyboard?
+17. Add directly from library
+18. on the workout screen before beginning give an overview of the workouts for the day and the a let's go button.
+19. Need to start with warm up before each workout with the option to skip for liability reasons.
+20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
+21. AI coach option called college level coach that scolds you like they do
+22. End workout button is not responsive
+23. Health connect
+24. Accessibility simple workout home and onboarding
+25. Demo of the whole app
+26. Small game between sets (optional)
+27. Dance session or something between sets that will help burn more calories
+
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
 Replacing Human Fitness Coaches with AI
@@ -101,6 +133,7 @@ The final response must include the detailed image prompt, the generated image, 
 20. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
 21. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
 22. can the dimensions be dynamic? height , padding, size etc?
+23. MASCOT?
 
 
 FUTURE

@@ -88,10 +88,10 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     final shadowColor = isDark ? Colors.black.withValues(alpha: 0.5) : Colors.black.withValues(alpha: 0.1);
 
     // Dynamic sizing based on nav bar dimensions
-    const navBarHeight = 56.0;
-    const navBarRadius = navBarHeight / 2; // Fully rounded ends = 28
-    const itemPadding = 4.0; // Even padding on all sides
-    final itemHeight = navBarHeight - (itemPadding * 2); // 48
+    const navBarHeight = 46.0;
+    const navBarRadius = navBarHeight / 2; // Fully rounded ends = 23
+    const itemPadding = 3.0; // Even padding on all sides
+    final itemHeight = navBarHeight - (itemPadding * 2); // 40
 
     return Padding(
       padding: EdgeInsets.only(
@@ -105,7 +105,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           // Nav bar
           Container(
             height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 280),
+            constraints: const BoxConstraints(maxWidth: 240),
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -170,7 +170,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           ),
 
           // Spacing between nav bar and AI button
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
           // AI Coach Button - fixed position
           _AICoachButton(
@@ -196,21 +196,21 @@ class _AICoachButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 56,
-        height: 56,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [AppColors.purple, AppColors.cyan],
           ),
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: AppColors.cyan.withOpacity(0.5),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-              spreadRadius: 2,
+              color: AppColors.cyan.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+              spreadRadius: 1,
             ),
           ],
         ),
@@ -218,7 +218,7 @@ class _AICoachButton extends StatelessWidget {
           child: Icon(
             Icons.auto_awesome,
             color: Colors.white,
-            size: 26,
+            size: 22,
           ),
         ),
       ),
@@ -271,7 +271,7 @@ class _NavItem extends StatelessWidget {
           child: Icon(
             isSelected ? selectedIcon : icon,
             color: isSelected ? selectedColor : textMuted,
-            size: 24,
+            size: 22,
           ),
         ),
       ),
