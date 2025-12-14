@@ -27,7 +27,7 @@ class ApiConstants {
 
   /// Google OAuth Web Client ID
   static const String googleWebClientId =
-      '763543360320-hjregsh5hn0lvp610sjr36m34f9fh2bj.apps.googleusercontent.com';
+      '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com';
 
   // Endpoint paths
   static const String auth = '/users/auth/google';

@@ -7,6 +7,7 @@ Supports export for data portability and re-import after account deletion.
 import csv
 import io
 import json
+import time
 import zipfile
 from datetime import datetime
 from typing import Dict, List, Any, Optional
@@ -36,12 +37,15 @@ def export_user_data(
 
     Returns the ZIP file as bytes.
     """
-    logger.info(f"Starting data export for user: {user_id}, date_range: {start_date} to {end_date}")
+    total_start = time.time()
+    logger.info(f"🔄 Starting data export for user: {user_id}, date_range: {start_date} to {end_date}")
 
     db = get_supabase_db()
 
     # Verify user exists
+    t = time.time()
     user = db.get_user(user_id)
+    logger.info(f"⏱️ get_user: {time.time() - t:.2f}s")
     if not user:
         raise ValueError(f"User {user_id} not found")
 
@@ -58,48 +62,57 @@ def export_user_data(
         export_counts["profile"] = 1
 
         # 2. Body metrics - filter by recorded_at
+        t = time.time()
         metrics = _get_filtered_metrics(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ body_metrics query: {time.time() - t:.2f}s ({len(metrics)} rows)")
         metrics_csv = _export_body_metrics(metrics)
         zip_file.writestr("body_metrics.csv", metrics_csv)
         export_counts["body_metrics"] = len(metrics)
-        logger.debug(f"Exported {len(metrics)} body metrics")
 
         # 3. Workouts - filter by scheduled_date
+        t = time.time()
         workouts = _get_filtered_workouts(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ workouts query: {time.time() - t:.2f}s ({len(workouts)} rows)")
         workouts_csv = _export_workouts(workouts)
         zip_file.writestr("workouts.csv", workouts_csv)
         export_counts["workouts"] = len(workouts)
-        logger.debug(f"Exported {len(workouts)} workouts")
 
         # 4. Workout logs - filter by completed_at
+        t = time.time()
         workout_logs = _get_filtered_workout_logs(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ workout_logs query: {time.time() - t:.2f}s ({len(workout_logs)} rows)")
         logs_csv = _export_workout_logs(workout_logs)
         zip_file.writestr("workout_logs.csv", logs_csv)
         export_counts["workout_logs"] = len(workout_logs)
-        logger.debug(f"Exported {len(workout_logs)} workout logs")
 
         # 5. Performance logs - filter by recorded_at
+        t = time.time()
         performance_logs = _get_filtered_performance_logs(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ performance_logs query: {time.time() - t:.2f}s ({len(performance_logs)} rows)")
         sets_csv = _export_exercise_sets(performance_logs)
         zip_file.writestr("exercise_sets.csv", sets_csv)
         export_counts["exercise_sets"] = len(performance_logs)
-        logger.debug(f"Exported {len(performance_logs)} exercise sets")
 
         # 6. Strength records - filter by achieved_at
+        t = time.time()
         strength_records = _get_filtered_strength_records(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ strength_records query: {time.time() - t:.2f}s ({len(strength_records)} rows)")
         strength_csv = _export_strength_records(strength_records)
         zip_file.writestr("strength_records.csv", strength_csv)
         export_counts["strength_records"] = len(strength_records)
-        logger.debug(f"Exported {len(strength_records)} strength records")
 
         # 7. User achievements - filter by earned_at
+        t = time.time()
         achievements = _get_filtered_achievements(db, user_id, start_date, end_date)
+        logger.info(f"⏱️ achievements query: {time.time() - t:.2f}s ({len(achievements)} rows)")
         achievements_csv = _export_achievements(achievements)
         zip_file.writestr("achievements.csv", achievements_csv)
         export_counts["achievements"] = len(achievements)
 
         # 8. User streaks (always included, no date filter - current state)
+        t = time.time()
         streaks = _get_user_streaks(db, user_id)
+        logger.info(f"⏱️ streaks query: {time.time() - t:.2f}s ({len(streaks)} rows)")
         streaks_csv = _export_streaks(streaks)
         zip_file.writestr("streaks.csv", streaks_csv)
         export_counts["streaks"] = len(streaks)
@@ -108,7 +121,7 @@ def export_user_data(
         metadata_csv = _export_metadata(user_id, export_counts, start_date, end_date)
         zip_file.writestr("_metadata.csv", metadata_csv)
 
-    logger.info(f"Data export complete for user {user_id}: {export_counts}")
+    logger.info(f"✅ Data export complete for user {user_id} in {time.time() - total_start:.2f}s: {export_counts}")
 
     # Get the ZIP file bytes
     zip_buffer.seek(0)

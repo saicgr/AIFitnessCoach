@@ -753,13 +753,21 @@ class SettingsScreen extends ConsumerWidget {
           responseType: ResponseType.bytes,
           receiveTimeout: const Duration(seconds: 60),
           sendTimeout: const Duration(seconds: 30),
+          validateStatus: (status) => status != null && status < 500, // Don't throw on 4xx
         ),
       );
 
       // Close loading dialog
       if (context.mounted) Navigator.pop(context);
 
-      if (response.statusCode == 200 && response.data != null) {
+      // Handle error responses
+      if (response.statusCode == 404) {
+        throw Exception('User data not found. Please try logging out and back in.');
+      } else if (response.statusCode != 200) {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+
+      if (response.data != null) {
         // Save to temporary file
         final tempDir = await getTemporaryDirectory();
         final timestamp = DateTime.now().toIso8601String().split('T')[0];
@@ -783,7 +791,7 @@ class SettingsScreen extends ConsumerWidget {
           );
         }
       } else {
-        throw Exception('Failed to export data');
+        throw Exception('No data received from server');
       }
     } on DioException catch (e) {
       // Close loading dialog if still showing
@@ -795,6 +803,8 @@ class SettingsScreen extends ConsumerWidget {
         errorMessage = 'Export timed out. Please try again.';
       } else if (e.type == DioExceptionType.connectionError) {
         errorMessage = 'No internet connection';
+      } else if (e.response?.statusCode == 404) {
+        errorMessage = 'User data not found';
       }
 
       if (context.mounted) {

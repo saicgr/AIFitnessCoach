@@ -12,7 +12,16 @@
           "package_name": "com.aifitnesscoach.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "843677137160-b03sje92ntcfgj35q1fam2j9bsfu26j3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aifitnesscoach.app",
+            "certificate_hash": "edcc2973fe25a2b160004eae3bead094f9860b79"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDpfxf5mJW5no_vCouRhZXSz4hJwj9uJBQ"
