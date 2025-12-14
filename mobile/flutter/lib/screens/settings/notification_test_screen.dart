@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/notification_service.dart';
 
 /// Screen for testing all notification types via Firebase
 class NotificationTestScreen extends ConsumerStatefulWidget {
@@ -23,11 +24,19 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
 
     try {
       final apiClient = ref.read(apiClientProvider);
+      final notificationService = ref.read(notificationServiceProvider);
       final userId = await apiClient.getUserId();
 
       if (userId == null) {
         throw Exception('User not logged in');
       }
+
+      // Ensure FCM token is registered with backend first
+      final fcmToken = notificationService.fcmToken;
+      if (fcmToken == null) {
+        throw Exception('No FCM token available. Please enable notifications.');
+      }
+      await notificationService.registerTokenWithBackend(apiClient, userId);
 
       String url = '/notifications/$endpoint/$userId';
       if (queryParams != null && queryParams.isNotEmpty) {
@@ -323,18 +332,28 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
 
     try {
       final apiClient = ref.read(apiClientProvider);
+      final notificationService = ref.read(notificationServiceProvider);
       final userId = await apiClient.getUserId();
 
       if (userId == null) {
         throw Exception('User not logged in');
       }
 
-      // Get FCM token from notification service
+      // Get actual FCM token
+      final fcmToken = notificationService.fcmToken;
+      if (fcmToken == null) {
+        throw Exception('No FCM token available. Please enable notifications.');
+      }
+
+      // First register the token with backend
+      await notificationService.registerTokenWithBackend(apiClient, userId);
+
+      // Then send the test notification
       await apiClient.post(
         '/notifications/test',
         data: {
           'user_id': userId,
-          'fcm_token': 'will_use_stored_token', // Backend will use stored token
+          'fcm_token': fcmToken,
         },
       );
 

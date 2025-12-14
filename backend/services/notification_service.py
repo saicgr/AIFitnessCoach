@@ -65,9 +65,27 @@ class NotificationService:
     TYPE_WEEKLY_SUMMARY = "weekly_summary"
     TYPE_TEST = "test"
 
+    # Android notification channel IDs (must match Flutter side)
+    CHANNEL_IDS = {
+        TYPE_WORKOUT_REMINDER: "workout_coach",
+        TYPE_NUTRITION_REMINDER: "nutrition_coach",
+        TYPE_HYDRATION_REMINDER: "hydration_coach",
+        TYPE_STREAK_ALERT: "streak_coach",
+        TYPE_WEEKLY_SUMMARY: "progress_coach",
+        TYPE_AI_COACH: "ai_coach",
+        TYPE_TEST: "test_notifications",
+    }
+
+    # Default channel
+    DEFAULT_CHANNEL_ID = "ai_fitness_coach_notifications"
+
     def __init__(self):
         """Initialize the notification service"""
         initialize_firebase()
+
+    def _get_channel_id(self, notification_type: str) -> str:
+        """Get the Android notification channel ID for a notification type"""
+        return self.CHANNEL_IDS.get(notification_type, self.DEFAULT_CHANNEL_ID)
 
     async def send_notification(
         self,
@@ -108,14 +126,15 @@ class NotificationService:
             if data:
                 payload.update(data)
 
-            # Build Android-specific config
+            # Build Android-specific config with type-specific channel
+            channel_id = self._get_channel_id(notification_type)
             android_config = messaging.AndroidConfig(
                 priority="high",
                 notification=messaging.AndroidNotification(
                     icon="ic_notification",
                     color="#00D9FF",  # Cyan color
                     sound="default",
-                    channel_id="ai_fitness_coach_notifications",
+                    channel_id=channel_id,
                 ),
             )
 
@@ -181,13 +200,14 @@ class NotificationService:
             if data:
                 payload.update(data)
 
+            channel_id = self._get_channel_id(notification_type)
             android_config = messaging.AndroidConfig(
                 priority="high",
                 notification=messaging.AndroidNotification(
                     icon="ic_notification",
                     color="#00D9FF",
                     sound="default",
-                    channel_id="ai_fitness_coach_notifications",
+                    channel_id=channel_id,
                 ),
             )
 

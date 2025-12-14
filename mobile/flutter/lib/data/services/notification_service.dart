@@ -84,6 +84,21 @@ class NotificationPreferences {
       };
 }
 
+/// Channel configuration for notifications
+class _ChannelConfig {
+  final String id;
+  final String name;
+  final String description;
+  final Color color;
+
+  const _ChannelConfig({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.color,
+  });
+}
+
 /// Notification service for FCM + Local Notifications
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -93,13 +108,58 @@ class NotificationService {
 
   String? get fcmToken => _fcmToken;
 
-  /// Android notification channel
-  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
-    'ai_fitness_coach_notifications',
-    'AI Fitness Coach',
+  /// Notification channel configurations for different coaches
+  static const Map<String, _ChannelConfig> _channelConfigs = {
+    'workout_reminder': _ChannelConfig(
+      id: 'workout_coach',
+      name: 'Workout Coach',
+      description: 'Workout reminders and motivation from your Workout Coach',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'nutrition_reminder': _ChannelConfig(
+      id: 'nutrition_coach',
+      name: 'Nutrition Coach',
+      description: 'Meal logging reminders from your Nutrition Coach',
+      color: Color(0xFF4ADE80), // Green
+    ),
+    'hydration_reminder': _ChannelConfig(
+      id: 'hydration_coach',
+      name: 'Hydration Coach',
+      description: 'Water intake reminders from your Hydration Coach',
+      color: Color(0xFF3B82F6), // Blue
+    ),
+    'streak_alert': _ChannelConfig(
+      id: 'streak_coach',
+      name: 'Streak Coach',
+      description: 'Streak celebrations and alerts',
+      color: Color(0xFFF97316), // Orange
+    ),
+    'weekly_summary': _ChannelConfig(
+      id: 'progress_coach',
+      name: 'Progress Coach',
+      description: 'Weekly summaries and progress updates',
+      color: Color(0xFFA855F7), // Purple
+    ),
+    'ai_coach': _ChannelConfig(
+      id: 'ai_coach',
+      name: 'AI Coach',
+      description: 'General messages from your AI Fitness Coach',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'test': _ChannelConfig(
+      id: 'test_notifications',
+      name: 'Test Notifications',
+      description: 'Test notifications',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+  };
+
+  /// Default channel for unknown types
+  static const _defaultChannel = _ChannelConfig(
+    id: 'ai_fitness_coach_notifications',
+    name: 'AI Fitness Coach',
     description: 'Notifications from your AI Fitness Coach',
-    importance: Importance.high,
-    playSound: true,
+    color: Color(0xFF00D9FF),
   );
 
   /// Initialize Firebase Messaging and Local Notifications
@@ -163,13 +223,38 @@ class NotificationService {
       },
     );
 
-    // Create Android notification channel
-    await _localNotifications
+    // Create all notification channels for different coaches
+    final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+            AndroidFlutterLocalNotificationsPlugin>();
 
-    debugPrint('🔔 [Local] Local notifications initialized');
+    if (androidPlugin != null) {
+      // Create default channel
+      await androidPlugin.createNotificationChannel(
+        AndroidNotificationChannel(
+          _defaultChannel.id,
+          _defaultChannel.name,
+          description: _defaultChannel.description,
+          importance: Importance.high,
+          playSound: true,
+        ),
+      );
+
+      // Create channels for each notification type
+      for (final config in _channelConfigs.values) {
+        await androidPlugin.createNotificationChannel(
+          AndroidNotificationChannel(
+            config.id,
+            config.name,
+            description: config.description,
+            importance: Importance.high,
+            playSound: true,
+          ),
+        );
+      }
+    }
+
+    debugPrint('🔔 [Local] Local notifications initialized with ${_channelConfigs.length + 1} channels');
   }
 
   /// Request notification permission
@@ -212,15 +297,25 @@ class NotificationService {
     debugPrint('   Body: ${message.notification?.body}');
     debugPrint('   Data: ${message.data}');
 
-    // Show local notification
+    // Get notification type from data payload
+    final notificationType = message.data['type'] as String?;
+
+    // Show local notification with appropriate channel
     final notification = message.notification;
     if (notification != null) {
       _showLocalNotification(
         title: notification.title ?? 'AI Fitness Coach',
         body: notification.body ?? '',
         payload: message.data['action'],
+        notificationType: notificationType,
       );
     }
+  }
+
+  /// Get channel config for a notification type
+  _ChannelConfig _getChannelConfig(String? notificationType) {
+    if (notificationType == null) return _defaultChannel;
+    return _channelConfigs[notificationType] ?? _defaultChannel;
   }
 
   /// Show a local notification
@@ -228,15 +323,18 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    String? notificationType,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
-      'ai_fitness_coach_notifications',
-      'AI Fitness Coach',
-      channelDescription: 'Notifications from your AI Fitness Coach',
+    final channelConfig = _getChannelConfig(notificationType);
+
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
-      color: Color(0xFF00D9FF), // Cyan color
+      color: channelConfig.color,
       playSound: true,
     );
 
@@ -246,7 +344,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
