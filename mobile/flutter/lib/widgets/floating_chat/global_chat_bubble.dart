@@ -19,53 +19,9 @@ class GlobalChatBubble extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chatState = ref.watch(floatingChatProvider);
-    final notifier = ref.read(floatingChatProvider.notifier);
-
-    // Simple Stack - only show modal overlay when expanded
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Main app content
-        child,
-
-        // Expanded chat modal with backdrop
-        if (chatState.isExpanded) ...[
-          // Semi-transparent backdrop
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                notifier.collapse();
-              },
-              child: Container(
-                color: Colors.black.withOpacity(0.6),
-              ).animate()
-                .fadeIn(duration: AppAnimations.micro, curve: AppAnimations.linearOut),
-            ),
-          ),
-          // Chat modal
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _ChatModal(
-              onClose: () {
-                HapticFeedback.lightImpact();
-                notifier.collapse();
-              },
-            ).animate()
-              .slideY(
-                begin: 0.15,
-                end: 0,
-                duration: AppAnimations.quick,
-                curve: AppAnimations.overshoot,
-              )
-              .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut),
-          ),
-        ],
-      ],
-    );
+    // No longer showing overlay - AI button navigates to /chat screen
+    // Just pass through the child widget
+    return child;
   }
 }
 

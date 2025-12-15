@@ -613,7 +613,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         GestureDetector(
           onTap: () {
             HapticFeedback.mediumImpact();
-            ref.read(floatingChatProvider.notifier).expand();
+            // Navigate to full chat screen for proper keyboard handling
+            context.push('/chat');
           },
           child: Container(
             width: 48,

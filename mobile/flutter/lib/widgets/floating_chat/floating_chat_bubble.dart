@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
@@ -20,46 +21,16 @@ class FloatingChatBubble extends ConsumerWidget {
     final screenSize = MediaQuery.of(context).size;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    // When expanded, show full-screen modal using a Stack
-    // This needs to be in a Positioned.fill to work properly in parent Stack
-    if (chatState.isExpanded) {
-      return Positioned.fill(
-        child: Stack(
-          children: [
-            // Semi-transparent backdrop
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => notifier.collapse(),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.5),
-                ),
-              ).animate().fadeIn(duration: 200.ms),
-            ),
-
-            // Chat modal
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _ChatModal(
-                onClose: () => notifier.collapse(),
-              ).animate().slideY(begin: 1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // When collapsed, just show the bubble as a Positioned widget
-    // This doesn't block any other touch events in the parent Stack
+    // Show the bubble as a Positioned widget - tap navigates to full chat screen
     return Positioned(
       right: chatState.bubbleRight,
       bottom: chatState.bubbleBottom + bottomPadding,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          debugPrint('FloatingChatBubble: Tapped!');
-          notifier.expand();
+          debugPrint('FloatingChatBubble: Tapped - navigating to /chat');
+          // Navigate to full chat screen for proper keyboard handling
+          context.push('/chat');
         },
         onPanStart: (_) => notifier.setDragging(true),
         onPanUpdate: (details) {

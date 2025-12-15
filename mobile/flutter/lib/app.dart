@@ -6,7 +6,7 @@ import 'data/repositories/auth_repository.dart';
 import 'data/services/notification_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/notifications/notifications_screen.dart';
-import 'widgets/floating_chat/global_chat_bubble.dart';
+import 'widgets/floating_chat/floating_chat_overlay.dart';
 
 class AiFitnessCoachApp extends ConsumerStatefulWidget {
   const AiFitnessCoachApp({super.key});
@@ -50,10 +50,10 @@ class _AiFitnessCoachAppState extends ConsumerState<AiFitnessCoachApp> {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
-        // Wrap the entire app with GlobalChatBubble for Messenger-style chat
-        // This ensures the bubble appears on ALL screens
-        return GlobalChatBubble(
-          key: const ValueKey('global_chat_bubble'),
+        // Wrap the entire app with FloatingChatOverlay for Messenger-style chat
+        // This ensures the bubble appears on ALL screens with keyboard-aware popup
+        return FloatingChatOverlay(
+          key: const ValueKey('floating_chat_overlay'),
           child: child ?? const SizedBox.shrink(),
         );
       },

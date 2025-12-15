@@ -27,6 +27,7 @@ import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/auth/language_selection_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
+import '../screens/measurements/measurements_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
@@ -351,6 +352,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // Body Measurements
+      GoRoute(
+        path: '/measurements',
+        builder: (context, state) => const MeasurementsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

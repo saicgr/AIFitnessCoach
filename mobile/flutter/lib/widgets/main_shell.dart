@@ -176,6 +176,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           _AICoachButton(
             onTap: () {
               HapticFeedback.mediumImpact();
+              // Expand the floating chat overlay (keyboard-aware)
               ref.read(floatingChatProvider.notifier).expand();
             },
           ),
