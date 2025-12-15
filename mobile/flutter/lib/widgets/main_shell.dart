@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_provider.dart';
 import 'floating_chat/floating_chat_provider.dart';
+import 'floating_chat/floating_chat_overlay.dart';
 
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
@@ -176,8 +177,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           _AICoachButton(
             onTap: () {
               HapticFeedback.mediumImpact();
-              // Expand the floating chat overlay (keyboard-aware)
-              ref.read(floatingChatProvider.notifier).expand();
+              // Show the chat bottom sheet directly (we have Navigator access here)
+              showChatBottomSheet(context, ref);
             },
           ),
         ],

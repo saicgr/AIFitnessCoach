@@ -10,51 +10,38 @@ import 'floating_chat_provider.dart';
 
 /// Floating chat overlay - Facebook Messenger style
 ///
-/// This widget wraps the entire app and listens for expand requests
-/// to show a proper modal bottom sheet (which has correct IME handling)
-class FloatingChatOverlay extends ConsumerStatefulWidget {
+/// This widget is a pass-through that just returns the child.
+/// The actual chat sheet is now shown from MainShell which has proper Navigator access.
+/// This widget exists for backwards compatibility and may be removed.
+class FloatingChatOverlay extends StatelessWidget {
   final Widget child;
 
   const FloatingChatOverlay({super.key, required this.child});
 
   @override
-  ConsumerState<FloatingChatOverlay> createState() => _FloatingChatOverlayState();
+  Widget build(BuildContext context) {
+    // Just pass through - the chat sheet is now handled by MainShell
+    return child;
+  }
 }
 
-class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
-  bool _isSheetOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // Listen for expand state changes
-    ref.listen<FloatingChatState>(floatingChatProvider, (previous, next) {
-      if (next.isExpanded && !_isSheetOpen) {
-        _showChatSheet(context);
-      }
-    });
-
-    return widget.child;
-  }
-
-  void _showChatSheet(BuildContext context) {
-    _isSheetOpen = true;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // Allows the sheet to take full height
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.6),
-      builder: (sheetContext) => _ChatBottomSheet(
-        onClose: () {
-          Navigator.of(sheetContext).pop();
-        },
-      ),
-    ).whenComplete(() {
-      _isSheetOpen = false;
-      // Collapse the state when sheet is dismissed
-      ref.read(floatingChatProvider.notifier).collapse();
-    });
-  }
+/// Shows the chat bottom sheet using the given context.
+/// This should be called from a widget that has Navigator access (like MainShell).
+void showChatBottomSheet(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // Allows the sheet to take full height
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.6),
+    builder: (sheetContext) => _ChatBottomSheet(
+      onClose: () {
+        Navigator.of(sheetContext).pop();
+      },
+    ),
+  ).whenComplete(() {
+    // Collapse the state when sheet is dismissed
+    ref.read(floatingChatProvider.notifier).collapse();
+  });
 }
 
 /// Chat bottom sheet content - uses proper Scaffold for IME handling

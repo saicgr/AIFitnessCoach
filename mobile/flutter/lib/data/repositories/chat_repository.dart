@@ -34,7 +34,9 @@ final chatMessagesProvider =
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
   // Pass a callback to get fresh AI settings on each message instead of caching stale settings
   AISettings getAISettings() => ref.read(aiSettingsProvider);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings);
+  // Pass a callback to set AI generating state (triggers home screen rebuild)
+  void setAIGenerating(bool value) => ref.read(aiGeneratingWorkoutProvider.notifier).state = value;
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating);
 });
 
 /// Chat repository for API calls
@@ -124,9 +126,39 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
   final AISettings Function() _getAISettings; // Callback to get fresh settings
+  final void Function(bool) _setAIGenerating; // Callback to set AI generating state
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings)
+  /// Keywords that indicate user wants a quick workout (mirrors backend)
+  static const _quickWorkoutKeywords = [
+    'quick workout', 'short workout', 'fast workout',
+    'quick exercise', 'something quick', 'something fast',
+    '15 minute', '10 minute', '20 minute', '5 minute', '30 minute',
+    'give me a quick', 'create a quick', 'need a quick', 'want a quick',
+    'no time', 'short on time', 'in a hurry',
+    'generate a workout', 'create a workout', 'make me a workout',
+    'new workout', 'different workout',
+    'cardio workout', 'hiit workout', 'bodyweight workout',
+    'upper body workout', 'lower body workout', 'core workout',
+    'leg workout', 'arm workout', 'chest workout', 'back workout',
+    // Sport-specific workout types
+    'boxing workout', 'boxing training', 'boxer workout',
+    'hyrox workout', 'hyrox training', 'train for hyrox',
+    'crossfit workout', 'crossfit wod', 'wod',
+    'mma workout', 'mma training', 'martial arts workout', 'fighter workout',
+    'tabata workout', 'interval workout', 'circuit workout',
+    'strength workout', 'strength training',
+    'endurance workout', 'endurance training',
+    'flexibility workout', 'stretching workout', 'yoga workout',
+    'mobility workout', 'mobility training',
+    // Sport mentions
+    'want to box', 'want to be a boxer', 'train like a boxer',
+    'want to do hyrox', 'hyrox athlete',
+    'want to do crossfit', 'train like crossfit',
+    'train like a fighter', 'want to fight',
+  ];
+
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -171,6 +203,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     state = AsyncValue.data([...currentMessages, userMessage]);
 
     _isLoading = true;
+
+    // Check if this looks like a quick workout request
+    final messageLower = message.toLowerCase();
+    final isQuickWorkoutRequest = _quickWorkoutKeywords.any((kw) => messageLower.contains(kw));
+    if (isQuickWorkoutRequest) {
+      _setAIGenerating(true);
+      debugPrint('🏋️ [Chat] Quick workout request detected - setting loading state');
+    }
 
     try {
       // Build conversation history for context
@@ -258,8 +298,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         aiSettings: currentAISettings.toJson(),
       );
 
-      // Process action_data if present
-      _processActionData(response.actionData);
+      // Process action_data if present (await to ensure refresh completes)
+      await _processActionData(response.actionData);
 
       // Add assistant response with agent type
       final assistantMessage = ChatMessage(
@@ -283,6 +323,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       state = AsyncValue.data([...updatedMessages, errorMessage]);
     } finally {
       _isLoading = false;
+      // Reset AI generating state if it was set for quick workout request
+      if (isQuickWorkoutRequest) {
+        _setAIGenerating(false);
+      }
     }
   }
 
@@ -297,7 +341,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   }
 
   /// Process action_data from AI response
-  void _processActionData(Map<String, dynamic>? actionData) {
+  Future<void> _processActionData(Map<String, dynamic>? actionData) async {
     if (actionData == null) return;
 
     final action = actionData['action'] as String?;
@@ -318,6 +362,17 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         break;
       case 'log_hydration':
         _handleLogHydration(actionData);
+        break;
+      case 'generate_quick_workout':
+        await _handleQuickWorkoutGenerated(actionData);
+        break;
+      case 'add_exercise':
+      case 'remove_exercise':
+      case 'replace_all_exercises':
+      case 'modify_intensity':
+      case 'reschedule':
+      case 'delete_workout':
+        await _handleWorkoutModified(actionData);
         break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
@@ -434,5 +489,27 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     } else {
       debugPrint('❌ [Chat] Failed to log hydration');
     }
+  }
+
+  /// Handle quick workout generation from AI
+  Future<void> _handleQuickWorkoutGenerated(Map<String, dynamic> actionData) async {
+    final workoutName = actionData['workout_name'] as String?;
+    final exerciseCount = actionData['exercise_count'] as int?;
+    debugPrint('🏋️ [Chat] Quick workout generated: $workoutName with $exerciseCount exercises');
+
+    // Refresh workouts to show the new quick workout
+    await _workoutsNotifier.refresh();
+    debugPrint('🏋️ [Chat] Workouts refreshed after quick workout generation');
+  }
+
+  /// Handle general workout modifications from AI
+  Future<void> _handleWorkoutModified(Map<String, dynamic> actionData) async {
+    final action = actionData['action'] as String?;
+    final workoutId = actionData['workout_id'];
+    debugPrint('🏋️ [Chat] Workout modified: $action on workout $workoutId');
+
+    // Refresh workouts to show the changes
+    await _workoutsNotifier.refresh();
+    debugPrint('🏋️ [Chat] Workouts refreshed after modification');
   }
 }

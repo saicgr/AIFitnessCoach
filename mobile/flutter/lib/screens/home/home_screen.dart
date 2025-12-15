@@ -75,6 +75,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final workoutsState = ref.watch(workoutsProvider);
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final user = authState.user;
+    // Watch AI generating state to trigger rebuilds when it changes
+    final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
 
     final nextWorkout = workoutsNotifier.nextWorkout;
     final upcomingWorkouts = workoutsNotifier.upcomingWorkouts;
@@ -159,14 +161,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     message: 'Failed to load workouts',
                     onRetry: () => workoutsNotifier.refresh(),
                   ),
-                  data: (_) => nextWorkout != null
-                      ? _NextWorkoutCard(
-                          workout: nextWorkout,
-                          onStart: () => context.push('/workout/${nextWorkout.id}'),
-                        )
-                      : _isCheckingWorkouts
-                          ? _GeneratingWorkoutsCard()
-                          : _EmptyWorkoutCard(
+                  data: (_) => (isAIGenerating && nextWorkout == null)
+                      // Show generating card when AI is creating a quick workout
+                      ? _GeneratingWorkoutsCard(message: 'AI is generating your workout...')
+                      : nextWorkout != null
+                          ? _NextWorkoutCard(
+                              workout: nextWorkout,
+                              onStart: () => context.push('/workout/${nextWorkout.id}'),
+                            )
+                          : _isCheckingWorkouts
+                              ? _GeneratingWorkoutsCard()
+                              : _EmptyWorkoutCard(
                               onGenerate: () async {
                                 // Try to auto-generate first
                                 setState(() => _isCheckingWorkouts = true);
@@ -997,7 +1002,10 @@ class _EmptyWorkoutCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────
 
 class _GeneratingWorkoutsCard extends StatelessWidget {
-  const _GeneratingWorkoutsCard();
+  final String? message;
+  final String? subtitle;
+
+  const _GeneratingWorkoutsCard({this.message, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -1025,12 +1033,12 @@ class _GeneratingWorkoutsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Generating your workouts...',
+              message ?? 'Generating your workouts...',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Your personalized workout plan is being created',
+              subtitle ?? 'Your personalized workout plan is being created',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

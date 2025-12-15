@@ -20,6 +20,7 @@ from ..tools import (
     modify_workout_intensity,
     reschedule_workout,
     delete_workout,
+    generate_quick_workout,
 )
 from ..personality import build_personality_prompt
 from models.chat import AISettings
@@ -38,6 +39,7 @@ WORKOUT_TOOLS = [
     modify_workout_intensity,
     reschedule_workout,
     delete_workout,
+    generate_quick_workout,
 ]
 
 # Workout expertise base prompt (personality is added dynamically)
@@ -133,6 +135,7 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     Routes to tools if:
     - There's a workout context AND user wants modifications
     - User explicitly asks to change/add/remove something
+    - User asks for a quick/short workout (generates and replaces today's workout)
 
     Routes to autonomous response for:
     - Exercise questions
@@ -143,11 +146,53 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     intent = state.get("intent")
     message = state.get("user_message", "").lower()
 
+    # Quick workout keywords - should trigger tool to generate and replace workout
+    quick_workout_keywords = [
+        "quick workout", "short workout", "fast workout", "quick exercise",
+        "something quick", "something fast", "something short",
+        "15 minute", "10 minute", "20 minute", "5 minute", "30 minute",
+        "i want a quick", "give me a quick", "create a quick",
+        "need a quick", "want a quick", "do a quick",
+        "no time", "short on time", "in a hurry", "don't have time",
+        "generate a workout", "create a workout", "make me a workout",
+        "new workout", "different workout", "another workout",
+        "cardio workout", "hiit workout", "bodyweight workout",
+        "upper body workout", "lower body workout", "core workout", "ab workout",
+        "leg workout", "arm workout", "chest workout", "back workout",
+        "intense workout", "easy workout", "light workout",
+        "home workout", "no equipment",
+        # Sport-specific workout types
+        "boxing workout", "boxing training", "boxer workout", "punching workout",
+        "hyrox workout", "hyrox training", "hyrox prep",
+        "crossfit workout", "crossfit wod", "wod",
+        "martial arts workout", "mma workout", "mma training", "fighter workout",
+        "tabata workout", "interval workout", "circuit workout",
+        "strength workout", "strength training",
+        "endurance workout", "endurance training", "stamina workout",
+        "flexibility workout", "stretching workout", "yoga workout",
+        "mobility workout", "mobility training",
+        # Sport mentions with "want" or "train"
+        "want to box", "want to be a boxer", "train like a boxer",
+        "want to do hyrox", "train for hyrox", "hyrox athlete",
+        "want to do crossfit", "train like crossfit",
+        "train like a fighter", "want to fight", "mma training",
+    ]
+
+    for keyword in quick_workout_keywords:
+        if keyword in message:
+            # Always route to agent for quick workout - tool can create new workout if none exists
+            logger.info(f"[Workout Router] Quick workout keyword: {keyword} -> agent (will generate{'/ create new' if not has_workout else ''})")
+            return "agent"
+
     # Modification keywords that require tools
     modification_keywords = [
         "add ", "remove ", "delete ", "change ", "make it ", "swap ",
         "replace ", "move ", "reschedule", "skip ", "cancel",
-        "easier", "harder", "shorter", "longer", "to a ", "into a "
+        "easier", "harder", "shorter", "longer", "to a ", "into a ",
+        "more reps", "less reps", "fewer reps", "more sets", "less sets", "fewer sets",
+        "without ", "drop ", "include ", "switch ",
+        "too hard", "too easy", "too long", "too short",
+        "can't do", "don't like", "hate ", "instead of",
     ]
 
     for keyword in modification_keywords:
@@ -182,16 +227,23 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
     # Build context
     context_parts = []
 
+    # Get user_id from profile or state
+    user_id = None
     if state.get("user_profile"):
         profile = state["user_profile"]
+        user_id = profile.get("id")
+        context_parts.append(f"User ID: {user_id}")
         context_parts.append(f"User fitness level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"User goals: {', '.join(profile.get('goals', []))}")
         if profile.get("active_injuries"):
             context_parts.append(f"User injuries: {', '.join(profile['active_injuries'])}")
 
-    context_parts.append(f"\nCurrent workout ID: {workout_id}")
-    context_parts.append(f"Current workout name: {workout.get('name', 'Unknown')}")
-    context_parts.append(f"Current exercises: {', '.join(exercise_names)}")
+    if workout_id:
+        context_parts.append(f"\nCurrent workout ID: {workout_id}")
+        context_parts.append(f"Current workout name: {workout.get('name', 'Unknown')}")
+        context_parts.append(f"Current exercises: {', '.join(exercise_names)}")
+    else:
+        context_parts.append("\nNo workout scheduled for today - a new one can be created.")
 
     if state.get("workout_schedule"):
         context_parts.append(format_workout_schedule_context(state["workout_schedule"]))
@@ -226,9 +278,14 @@ AVAILABLE TOOLS:
 - modify_workout_intensity(workout_id, modification) - Change intensity (easier/harder/shorter/longer)
 - reschedule_workout(workout_id, new_date, reason) - Move workout to a different date
 - delete_workout(workout_id, reason) - Delete/cancel a workout
+- generate_quick_workout(user_id, workout_id, duration_minutes, workout_type, intensity) - Generate a quick workout. ALWAYS pass user_id. If no workout exists, omit workout_id to create a new one.
+  workout_type options: "full_body", "upper", "lower", "cardio", "core", "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility"
 
-CRITICAL: When modifying workouts, use the correct workout_id from the schedule above.
-Default to today's workout (ID: {workout_id}) if not specified."""
+CRITICAL INSTRUCTIONS:
+- User ID is: {user_id}
+- For generate_quick_workout: ALWAYS pass user_id="{user_id}". Pass workout_id only if a workout exists.
+- For sport-specific workouts (boxing, hyrox, crossfit, mma, etc.): Use the appropriate workout_type parameter.
+- For other tools: use workout_id from context. Default to today's workout (ID: {workout_id}) if available."""
 
     system_message = SystemMessage(content=tool_prompt)
 
@@ -413,6 +470,7 @@ async def workout_autonomous_node(state: WorkoutAgentState) -> Dict[str, Any]:
     openai_service = OpenAIService()
 
     context_parts = []
+    has_workout_today = False
 
     if state.get("user_profile"):
         profile = state["user_profile"]
@@ -427,6 +485,10 @@ async def workout_autonomous_node(state: WorkoutAgentState) -> Dict[str, Any]:
         exercise_names = [e.get("name", "Unknown") for e in exercises]
         context_parts.append(f"\nCurrent workout: {workout.get('name', 'Unknown')}")
         context_parts.append(f"Exercises: {', '.join(exercise_names)}")
+        has_workout_today = True
+    else:
+        context_parts.append("\nNo workout scheduled for today - this is a REST DAY.")
+        context_parts.append("The user can ask for a quick workout if they want to train anyway.")
 
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
@@ -437,11 +499,22 @@ async def workout_autonomous_node(state: WorkoutAgentState) -> Dict[str, Any]:
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_workout_system_prompt(ai_settings)
 
+    # Add rest day guidance if no workout
+    rest_day_guidance = ""
+    if not has_workout_today:
+        rest_day_guidance = """
+IMPORTANT: Today is a REST DAY for this user (no workout scheduled).
+- If they ask about today's workout: Kindly let them know it's a rest day
+- Mention that rest is important for recovery and muscle growth
+- Offer to create a quick workout if they really want to train
+- Suggest light activities like stretching, walking, or foam rolling
+"""
+
     system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
-
+{rest_day_guidance}
 You are responding to a general workout/exercise question. Provide expert advice about:
 - Exercise form and technique
 - Training principles
@@ -518,6 +591,17 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
                 "workout_id": workout_id,
                 "workout_name": result.get("workout_name"),
                 "scheduled_date": result.get("scheduled_date"),
+            }
+        elif action == "generate_quick_workout":
+            action_data = {
+                "action": "generate_quick_workout",
+                "workout_id": workout_id,
+                "workout_name": result.get("workout_name"),
+                "duration_minutes": result.get("duration_minutes"),
+                "workout_type": result.get("workout_type"),
+                "intensity": result.get("intensity"),
+                "exercises_added": result.get("exercises_added", []),
+                "exercise_count": result.get("exercise_count"),
             }
 
     return {"action_data": action_data}

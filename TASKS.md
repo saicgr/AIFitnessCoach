@@ -18,7 +18,6 @@ ASAP:
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
 21. AI coach option called college level coach that scolds you like they do
 22. End workout button is not responsive
-23. Health connect - have to test on real phone
 23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
 24. Accessibility simple workout home and onboarding
 25. Demo of the whole app
@@ -35,7 +34,7 @@ Backend endpoint: POST /notifications/scheduler/send-workout-reminders
 Should be called by a cron job at 8am daily
 Reminds you about scheduled workouts
 To make these automatic, you'd need to set up cron jobs on your hosting platform (Render cron, AWS CloudWatch Events, etc.) to call these endpoints daily. Would you like me to help you set up the cron jobs, or do you want to test the AI Coach notification button first?
-29.
+29. 
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
@@ -117,7 +116,7 @@ The prompt must fulfill the following strategic criteria:
 
 
 NEED
-0. AI Onboarding Review Screen. 
+0. AI Onboarding Review on injuries popup screen. 
 0.05. Achievement Badges, achievement unlocks after workout completion
 0.1. Suggest workouts based on Age as well
 1. Send email to the signed up email from AI coach to workout and current workout

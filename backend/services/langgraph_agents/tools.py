@@ -37,7 +37,7 @@ def add_exercise_to_workout(
     muscle_groups: List[str] = None
 ) -> Dict[str, Any]:
     """
-    Add exercises to the user's current workout.
+    Add exercises to the user's current workout using the Exercise Library from ChromaDB.
 
     Args:
         workout_id: The ID of the workout to modify
@@ -47,20 +47,134 @@ def add_exercise_to_workout(
     Returns:
         Result dict with success status and message
     """
-    logger.info(f"Tool: Adding exercises {exercise_names} to workout {workout_id}")
-    modifier = WorkoutModifier()
-    success = modifier.add_exercises_to_workout(
-        workout_id=workout_id,
-        exercise_names=exercise_names,
-        muscle_groups=muscle_groups or []
-    )
-    return {
-        "success": success,
-        "action": "add_exercise",
-        "workout_id": workout_id,
-        "exercises_added": exercise_names,
-        "message": f"Added {len(exercise_names)} exercises: {', '.join(exercise_names)}" if success else "Failed to add exercises"
-    }
+    logger.info(f"Tool: Adding exercises {exercise_names} to workout {workout_id} using RAG")
+
+    try:
+        db = get_supabase_db()
+
+        # Get current workout
+        workout = db.get_workout(workout_id)
+        if not workout:
+            return {
+                "success": False,
+                "action": "add_exercise",
+                "workout_id": workout_id,
+                "message": f"Workout with ID {workout_id} not found"
+            }
+
+        # Get current exercises
+        exercises_data = workout.get("exercises")
+        if isinstance(exercises_data, str):
+            exercises = json.loads(exercises_data) if exercises_data else []
+        else:
+            exercises = exercises_data or []
+
+        # Get user profile for personalized exercise selection
+        user_id = workout.get("user_id")
+        user = db.get_user_by_id(user_id) if user_id else None
+        user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
+        user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
+
+        # Use Exercise RAG to find exercises from the library
+        from services.exercise_rag_service import get_exercise_rag_service
+        exercise_rag = get_exercise_rag_service()
+
+        added_exercises = []
+        for exercise_name in exercise_names:
+            # Check if exercise already exists in workout
+            if any(ex.get("name", "").lower() == exercise_name.lower() for ex in exercises):
+                logger.info(f"Exercise already exists: {exercise_name}")
+                continue
+
+            # Search for exercise in ChromaDB
+            try:
+                # Run async search in sync context
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(
+                            asyncio.run,
+                            exercise_rag.select_exercises_for_workout(
+                                focus_area=exercise_name,  # Use exercise name as search query
+                                equipment=user_equipment if user_equipment else ["Bodyweight"],
+                                fitness_level=user_fitness_level,
+                                goals=["General Fitness"],
+                                count=1,
+                                avoid_exercises=[ex.get("name", "") for ex in exercises],
+                                injuries=None,
+                            )
+                        )
+                        rag_results = future.result(timeout=15)
+                else:
+                    rag_results = asyncio.run(
+                        exercise_rag.select_exercises_for_workout(
+                            focus_area=exercise_name,
+                            equipment=user_equipment if user_equipment else ["Bodyweight"],
+                            fitness_level=user_fitness_level,
+                            goals=["General Fitness"],
+                            count=1,
+                            avoid_exercises=[ex.get("name", "") for ex in exercises],
+                            injuries=None,
+                        )
+                    )
+
+                if rag_results:
+                    # Use the exercise from the library
+                    ex = rag_results[0]
+                    new_exercise = {
+                        "name": ex.get("name", exercise_name),
+                        "sets": ex.get("sets", 3),
+                        "reps": ex.get("reps", 12),
+                        "rest_seconds": ex.get("rest_seconds", 60),
+                        "equipment": ex.get("equipment", "Bodyweight"),
+                        "muscle_group": ex.get("muscle_group", ex.get("body_part", "")),
+                        "notes": ex.get("notes", ""),
+                        "gif_url": ex.get("gif_url", ""),
+                    }
+                    exercises.append(new_exercise)
+                    added_exercises.append(new_exercise["name"])
+                    logger.info(f"✅ Added exercise from library: {new_exercise['name']}")
+                else:
+                    # Exercise not found in library - return error
+                    logger.warning(f"Exercise not found in library: {exercise_name}")
+
+            except Exception as search_error:
+                logger.warning(f"Failed to search for exercise {exercise_name}: {search_error}")
+
+        if not added_exercises:
+            return {
+                "success": False,
+                "action": "add_exercise",
+                "workout_id": workout_id,
+                "message": f"Could not find exercises in the Exercise Library. Try different exercise names."
+            }
+
+        # Update workout in database
+        update_data = {
+            "exercises": exercises,
+            "last_modified_method": "ai_coach",
+        }
+        db.update_workout(workout_id, update_data)
+
+        logger.info(f"Successfully added {len(added_exercises)} exercises to workout {workout_id}")
+
+        return {
+            "success": True,
+            "action": "add_exercise",
+            "workout_id": workout_id,
+            "exercises_added": added_exercises,
+            "message": f"Added {len(added_exercises)} exercises: {', '.join(added_exercises)}"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to add exercises: {e}")
+        return {
+            "success": False,
+            "action": "add_exercise",
+            "workout_id": workout_id,
+            "message": f"Failed to add exercises: {str(e)}"
+        }
 
 
 @tool
@@ -101,6 +215,7 @@ def replace_all_exercises(
 ) -> Dict[str, Any]:
     """
     Replace ALL exercises in a workout with new exercises targeting a specific muscle group.
+    Uses the Exercise Library from ChromaDB for personalized exercise selection.
     Use this when the user wants to completely change their workout to focus on a different muscle group.
 
     Args:
@@ -111,11 +226,10 @@ def replace_all_exercises(
     Returns:
         Result dict with success status, removed exercises, and new exercises
     """
-    logger.info(f"Tool: Replacing all exercises in workout {workout_id} with {muscle_group} exercises")
+    logger.info(f"Tool: Replacing all exercises in workout {workout_id} with {muscle_group} exercises using RAG")
 
     try:
         db = get_supabase_db()
-        modifier = WorkoutModifier()
 
         # Get current workout
         workout = db.get_workout(workout_id)
@@ -131,47 +245,105 @@ def replace_all_exercises(
         current_exercises = workout.get("exercises", [])
         old_exercise_names = [e.get("name", "Unknown") for e in current_exercises]
 
-        # Get new exercises for the target muscle group
-        from services.exercise_library_service import ExerciseLibraryService
-        exercise_service = ExerciseLibraryService(db)
-
-        # Get user's equipment
+        # Get user profile for personalized exercise selection
         user_id = workout.get("user_id")
         user = db.get_user_by_id(user_id) if user_id else None
-        user_equipment = user.get("equipment", []) if user else []
+        user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
+        user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
+        user_goals = user.get("goals", []) if user else []
+        user_injuries = user.get("active_injuries", []) if user else []
 
-        # Find exercises for the muscle group
-        new_exercises_data = exercise_service.get_exercises_for_muscle_group(
-            muscle_group=muscle_group,
-            equipment=user_equipment,
-            limit=num_exercises
-        )
+        # Parse injuries if stored as JSON string
+        if isinstance(user_injuries, str):
+            try:
+                user_injuries = json.loads(user_injuries)
+            except json.JSONDecodeError:
+                user_injuries = []
 
-        if not new_exercises_data:
-            # Fallback: generate generic exercises for the muscle group
-            muscle_exercises = {
-                "back": ["Pull-ups", "Bent Over Rows", "Lat Pulldowns", "Seated Cable Rows", "Face Pulls"],
-                "chest": ["Push-ups", "Bench Press", "Incline Dumbbell Press", "Cable Flyes", "Dips"],
-                "legs": ["Squats", "Lunges", "Romanian Deadlifts", "Leg Press", "Calf Raises"],
-                "shoulders": ["Overhead Press", "Lateral Raises", "Front Raises", "Face Pulls", "Shrugs"],
-                "arms": ["Bicep Curls", "Tricep Dips", "Hammer Curls", "Skull Crushers", "Chin-ups"],
-                "core": ["Planks", "Crunches", "Russian Twists", "Leg Raises", "Mountain Climbers"],
-            }
-            exercise_names = muscle_exercises.get(muscle_group.lower(), muscle_exercises["back"])[:num_exercises]
-            new_exercises_data = [{"name": name, "sets": 3, "reps": 12} for name in exercise_names]
+        # Extract injury body parts for filtering
+        injury_body_parts = []
+        if user_injuries:
+            for inj in user_injuries:
+                if isinstance(inj, dict):
+                    injury_body_parts.append(inj.get("body_part", ""))
+                elif isinstance(inj, str):
+                    injury_body_parts.append(inj)
 
-        # Build new exercises list with proper structure
+        # Map muscle group to focus area for RAG search
+        focus_area_map = {
+            "back": "back",
+            "chest": "chest",
+            "legs": "legs",
+            "shoulders": "shoulders",
+            "arms": "arms",
+            "core": "core",
+            "glutes": "legs",
+            "biceps": "arms",
+            "triceps": "arms",
+            "quads": "legs",
+            "hamstrings": "legs",
+            "calves": "legs",
+            "abs": "core",
+        }
+        focus_area = focus_area_map.get(muscle_group.lower(), muscle_group.lower())
+
+        # Use Exercise RAG to select personalized exercises
         new_exercises = []
-        for i, ex in enumerate(new_exercises_data[:num_exercises]):
-            new_exercises.append({
-                "name": ex.get("name", f"{muscle_group.title()} Exercise {i+1}"),
-                "sets": ex.get("sets", 3),
-                "reps": ex.get("reps", 12),
-                "duration_seconds": ex.get("duration_seconds"),
-                "muscle_group": muscle_group.lower(),
-                "equipment": ex.get("equipment", "bodyweight"),
-                "notes": ex.get("notes", ""),
-            })
+        from services.exercise_rag_service import get_exercise_rag_service
+        exercise_rag = get_exercise_rag_service()
+
+        # Run async function in sync context
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    asyncio.run,
+                    exercise_rag.select_exercises_for_workout(
+                        focus_area=focus_area,
+                        equipment=user_equipment if user_equipment else ["Bodyweight"],
+                        fitness_level=user_fitness_level,
+                        goals=user_goals if user_goals else ["General Fitness"],
+                        count=num_exercises,
+                        avoid_exercises=old_exercise_names,
+                        injuries=injury_body_parts if injury_body_parts else None,
+                    )
+                )
+                rag_exercises = future.result(timeout=30)
+        else:
+            rag_exercises = asyncio.run(
+                exercise_rag.select_exercises_for_workout(
+                    focus_area=focus_area,
+                    equipment=user_equipment if user_equipment else ["Bodyweight"],
+                    fitness_level=user_fitness_level,
+                    goals=user_goals if user_goals else ["General Fitness"],
+                    count=num_exercises,
+                    avoid_exercises=old_exercise_names,
+                    injuries=injury_body_parts if injury_body_parts else None,
+                )
+            )
+
+        if rag_exercises:
+            logger.info(f"✅ RAG selected {len(rag_exercises)} {muscle_group} exercises from ChromaDB")
+            for ex in rag_exercises:
+                new_exercises.append({
+                    "name": ex.get("name", "Exercise"),
+                    "sets": ex.get("sets", 3),
+                    "reps": ex.get("reps", 12),
+                    "duration_seconds": ex.get("duration_seconds"),
+                    "muscle_group": muscle_group.lower(),
+                    "equipment": ex.get("equipment", "Bodyweight"),
+                    "notes": ex.get("notes", ""),
+                    "gif_url": ex.get("gif_url", ""),
+                })
+
+        if not new_exercises:
+            return {
+                "success": False,
+                "action": "replace_all_exercises",
+                "workout_id": workout_id,
+                "message": f"Could not find exercises for {muscle_group}. Please try a different muscle group."
+            }
 
         # Update workout with new exercises
         update_data = {
@@ -184,7 +356,7 @@ def replace_all_exercises(
 
         new_exercise_names = [e["name"] for e in new_exercises]
 
-        logger.info(f"Replaced {len(old_exercise_names)} exercises with {len(new_exercises)} {muscle_group} exercises")
+        logger.info(f"Replaced {len(old_exercise_names)} exercises with {len(new_exercises)} {muscle_group} exercises from Exercise Library")
 
         return {
             "success": True,
@@ -858,6 +1030,330 @@ def update_injury_status(
 
 
 @tool
+def generate_quick_workout(
+    user_id: str,
+    workout_id: str = None,
+    duration_minutes: int = 15,
+    workout_type: str = "full_body",
+    intensity: str = "moderate"
+) -> Dict[str, Any]:
+    """
+    Generate a quick workout for the user using the Exercise Library from ChromaDB.
+    If workout_id is provided, replaces that workout. Otherwise, creates a new workout for today.
+    Use this when the user asks for a "quick workout", "short workout", "something fast",
+    or wants a new workout.
+
+    Args:
+        user_id: The user's ID (required)
+        workout_id: Optional ID of workout to replace. If not provided, creates a new workout for today.
+        duration_minutes: Target duration in minutes (default 15, max 30 for quick workouts)
+        workout_type: Type of workout. Standard types: "full_body", "upper", "lower", "cardio", "core".
+                     Sport-specific types: "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility"
+        intensity: Workout intensity - "light", "moderate", "intense" (default moderate)
+
+    Returns:
+        Result dict with the new quick workout details
+    """
+    logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        old_exercise_names = []
+        workout = None
+        is_new_workout = False
+
+        # Try to get existing workout if workout_id provided
+        if workout_id:
+            workout = db.get_workout(workout_id)
+            if workout:
+                old_exercises = workout.get("exercises", [])
+                old_exercise_names = [e.get("name", "Unknown") for e in old_exercises]
+
+        # If no workout found, we'll create a new one
+        if not workout:
+            is_new_workout = True
+            logger.info(f"No existing workout found, will create new workout for user {user_id}")
+
+        # Get user profile for personalized exercise selection
+        user = db.get_user_by_id(user_id) if user_id else None
+        user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
+        user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
+        user_goals = user.get("goals", []) if user else []
+        user_injuries = user.get("active_injuries", []) if user else []
+
+        # Parse injuries if stored as JSON string
+        if isinstance(user_injuries, str):
+            try:
+                user_injuries = json.loads(user_injuries)
+            except json.JSONDecodeError:
+                user_injuries = []
+
+        # Extract injury body parts for filtering
+        injury_body_parts = []
+        if user_injuries:
+            for inj in user_injuries:
+                if isinstance(inj, dict):
+                    injury_body_parts.append(inj.get("body_part", ""))
+                elif isinstance(inj, str):
+                    injury_body_parts.append(inj)
+
+        # Map workout type to focus area for RAG search
+        # Standard workout types
+        focus_area_map = {
+            "full_body": "full_body",
+            "upper": "chest",  # Will also get shoulders, back, arms
+            "lower": "legs",
+            "cardio": "full_body_power",  # Explosive movements
+            "core": "core",
+            # Sport-specific workout types
+            "boxing": "boxing",  # Boxing-specific exercises (punches, footwork, conditioning)
+            "hyrox": "hyrox",  # HYROX competition training (functional fitness, rowing, running)
+            "crossfit": "crossfit",  # CrossFit-style WODs
+            "martial_arts": "martial_arts",  # General martial arts conditioning
+            "hiit": "hiit",  # High-intensity interval training
+            "strength": "strength",  # Pure strength training
+            "endurance": "endurance",  # Endurance/stamina focused
+            "flexibility": "flexibility",  # Stretching and flexibility
+            "mobility": "mobility",  # Joint mobility work
+            # Body part aliases
+            "chest": "chest",
+            "back": "back",
+            "shoulders": "shoulders",
+            "arms": "arms",
+            "legs": "legs",
+            "glutes": "legs",
+        }
+
+        workout_type_key = workout_type.lower().replace(" ", "_").replace("-", "_")
+
+        # Check for sport-specific keywords in workout_type
+        sport_keywords = {
+            "box": "boxing",
+            "punch": "boxing",
+            "fighter": "boxing",
+            "mma": "martial_arts",
+            "hyrox": "hyrox",
+            "crossfit": "crossfit",
+            "wod": "crossfit",
+            "hiit": "hiit",
+            "interval": "hiit",
+            "tabata": "hiit",
+            "stretch": "flexibility",
+            "yoga": "flexibility",
+            "mobil": "mobility",
+        }
+
+        for keyword, sport_type in sport_keywords.items():
+            if keyword in workout_type_key:
+                workout_type_key = sport_type
+                break
+
+        if workout_type_key not in focus_area_map:
+            workout_type_key = "full_body"
+
+        focus_area = focus_area_map[workout_type_key]
+
+        # Determine exercise count based on duration
+        if duration_minutes <= 10:
+            exercise_count = 3
+        elif duration_minutes <= 15:
+            exercise_count = 4
+        elif duration_minutes <= 20:
+            exercise_count = 5
+        else:
+            exercise_count = 6
+
+        intensity_key = intensity.lower()
+        if intensity_key not in ["light", "moderate", "intense"]:
+            intensity_key = "moderate"
+
+        # Map intensity to fitness level for RAG
+        intensity_to_fitness = {
+            "light": "beginner",
+            "moderate": "intermediate",
+            "intense": "advanced",
+        }
+        rag_fitness_level = intensity_to_fitness.get(intensity_key, user_fitness_level)
+
+        # Use Exercise RAG to select personalized exercises
+        new_exercises = []
+        try:
+            from services.exercise_rag_service import get_exercise_rag_service
+            exercise_rag = get_exercise_rag_service()
+
+            # Run async function in sync context
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(
+                        asyncio.run,
+                        exercise_rag.select_exercises_for_workout(
+                            focus_area=focus_area,
+                            equipment=user_equipment if user_equipment else ["Bodyweight"],
+                            fitness_level=rag_fitness_level,
+                            goals=user_goals if user_goals else ["General Fitness"],
+                            count=exercise_count,
+                            avoid_exercises=old_exercise_names,  # Avoid exercises from current workout
+                            injuries=injury_body_parts if injury_body_parts else None,
+                        )
+                    )
+                    rag_exercises = future.result(timeout=30)
+            else:
+                rag_exercises = asyncio.run(
+                    exercise_rag.select_exercises_for_workout(
+                        focus_area=focus_area,
+                        equipment=user_equipment if user_equipment else ["Bodyweight"],
+                        fitness_level=rag_fitness_level,
+                        goals=user_goals if user_goals else ["General Fitness"],
+                        count=exercise_count,
+                        avoid_exercises=old_exercise_names,
+                        injuries=injury_body_parts if injury_body_parts else None,
+                    )
+                )
+
+            if rag_exercises:
+                logger.info(f"✅ RAG selected {len(rag_exercises)} exercises from ChromaDB")
+
+                # Adjust sets/reps based on intensity
+                sets_reps_config = {
+                    "light": {"sets": 2, "reps": 10},
+                    "moderate": {"sets": 3, "reps": 12},
+                    "intense": {"sets": 4, "reps": 12},
+                }
+                config = sets_reps_config.get(intensity_key, {"sets": 3, "reps": 12})
+
+                for ex in rag_exercises:
+                    new_exercises.append({
+                        "name": ex.get("name", "Exercise"),
+                        "sets": config["sets"],
+                        "reps": ex.get("reps", config["reps"]),
+                        "duration_seconds": ex.get("duration_seconds"),
+                        "muscle_group": ex.get("muscle_group", ex.get("body_part", workout_type_key)),
+                        "equipment": ex.get("equipment", "Bodyweight"),
+                        "notes": ex.get("notes", ""),
+                        "gif_url": ex.get("gif_url", ""),
+                    })
+
+        except Exception as rag_error:
+            logger.error(f"Exercise RAG failed: {rag_error}")
+            return {
+                "success": False,
+                "action": "generate_quick_workout",
+                "workout_id": workout_id,
+                "message": f"Could not generate workout from Exercise Library: {str(rag_error)}"
+            }
+
+        if not new_exercises:
+            return {
+                "success": False,
+                "action": "generate_quick_workout",
+                "workout_id": workout_id,
+                "message": f"Could not find exercises for {workout_type} workout. Please try a different workout type."
+            }
+
+        # Generate workout name
+        intensity_names = {"light": "Easy", "moderate": "Power", "intense": "Intense"}
+        type_names = {
+            # Standard types
+            "full_body": "Full Body",
+            "upper": "Upper Body",
+            "lower": "Lower Body",
+            "cardio": "Cardio",
+            "core": "Core",
+            # Sport-specific types
+            "boxing": "Boxing",
+            "hyrox": "HYROX",
+            "crossfit": "CrossFit",
+            "martial_arts": "Martial Arts",
+            "hiit": "HIIT",
+            "strength": "Strength",
+            "endurance": "Endurance",
+            "flexibility": "Flexibility",
+            "mobility": "Mobility",
+            # Body parts
+            "chest": "Chest",
+            "back": "Back",
+            "shoulders": "Shoulders",
+            "arms": "Arms",
+            "legs": "Legs",
+            "glutes": "Glutes",
+        }
+        workout_name = f"Quick {intensity_names.get(intensity_key, 'Power')} {type_names.get(workout_type_key, workout_type_key.replace('_', ' ').title())}"
+
+        new_exercise_names = [e["name"] for e in new_exercises]
+        final_workout_id = workout_id
+
+        if is_new_workout:
+            # Create a new workout for today
+            from datetime import date
+            today = date.today().isoformat()
+
+            new_workout_data = {
+                "user_id": user_id,
+                "name": workout_name,
+                "type": workout_type_key.replace("_", " "),
+                "difficulty": intensity_key,
+                "scheduled_date": today,
+                "exercises_json": new_exercises,
+                "duration_minutes": min(duration_minutes, 30),
+                "is_completed": False,
+                "generation_method": "ai_quick_workout",
+                "generation_source": "chat",
+            }
+
+            created_workout = db.create_workout(new_workout_data)
+            if created_workout:
+                final_workout_id = created_workout.get("id")
+                logger.info(f"Created new quick workout {final_workout_id}: {workout_name}")
+            else:
+                return {
+                    "success": False,
+                    "action": "generate_quick_workout",
+                    "message": "Failed to create new workout in database"
+                }
+        else:
+            # Update existing workout
+            update_data = {
+                "exercises": new_exercises,
+                "name": workout_name,
+                "duration_minutes": min(duration_minutes, 30),  # Cap at 30 for quick workouts
+                "difficulty": intensity_key,
+                "type": workout_type_key.replace("_", " "),
+                "last_modified_method": "ai_quick_workout"
+            }
+            db.update_workout(workout_id, update_data)
+            logger.info(f"Updated workout {workout_id}: {workout_name}")
+
+        logger.info(f"Generated quick workout: {workout_name} with {len(new_exercises)} exercises from Exercise Library")
+
+        return {
+            "success": True,
+            "action": "generate_quick_workout",
+            "workout_id": final_workout_id,
+            "workout_name": workout_name,
+            "duration_minutes": min(duration_minutes, 30),
+            "workout_type": workout_type_key,
+            "intensity": intensity_key,
+            "exercises_removed": old_exercise_names,
+            "exercises_added": new_exercise_names,
+            "exercise_count": len(new_exercises),
+            "is_new_workout": is_new_workout,
+            "message": f"{'Created' if is_new_workout else 'Updated'} '{workout_name}' - {len(new_exercises)} exercises, ~{min(duration_minutes, 30)} minutes"
+        }
+
+    except Exception as e:
+        logger.error(f"Generate quick workout failed: {e}")
+        return {
+            "success": False,
+            "action": "generate_quick_workout",
+            "workout_id": workout_id,
+            "message": f"Failed to generate quick workout: {str(e)}"
+        }
+
+
+@tool
 def delete_workout(
     workout_id: int,
     reason: str = None
@@ -1301,6 +1797,7 @@ ALL_TOOLS = [
     modify_workout_intensity,
     reschedule_workout,
     delete_workout,
+    generate_quick_workout,  # New quick workout generator
     report_injury,
     clear_injury,
     get_active_injuries,

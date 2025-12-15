@@ -12,6 +12,10 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
   return WorkoutRepository(apiClient);
 });
 
+/// Provider to track if AI is generating a workout via chat
+/// This allows the home screen to show a loading indicator
+final aiGeneratingWorkoutProvider = StateProvider<bool>((ref) => false);
+
 /// Workouts state provider
 final workoutsProvider =
     StateNotifierProvider<WorkoutsNotifier, AsyncValue<List<Workout>>>((ref) {
