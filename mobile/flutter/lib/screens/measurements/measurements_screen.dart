@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:health/health.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
+import '../../data/services/health_service.dart';
 
 class MeasurementsScreen extends ConsumerStatefulWidget {
   const MeasurementsScreen({super.key});
@@ -169,6 +172,13 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                     }).toList(),
                   ),
                 ).animate().fadeIn(delay: 100.ms),
+              ),
+
+              // Health Connect sync card
+              SliverToBoxAdapter(
+                child: _HealthConnectCard(
+                  onSyncComplete: _loadMeasurements,
+                ).animate().fadeIn(delay: 120.ms),
               ),
 
               // Selected measurement chart
@@ -1336,5 +1346,435 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
     if (mounted) {
       setState(() => _isSubmitting = false);
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Health Connect Sync Card
+// ─────────────────────────────────────────────────────────────────
+
+class _HealthConnectCard extends ConsumerStatefulWidget {
+  final VoidCallback? onSyncComplete;
+
+  const _HealthConnectCard({this.onSyncComplete});
+
+  @override
+  ConsumerState<_HealthConnectCard> createState() => _HealthConnectCardState();
+}
+
+class _HealthConnectCardState extends ConsumerState<_HealthConnectCard> {
+  bool _isExpanded = false;
+  bool _isAvailable = false;
+  bool _checkingAvailability = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAvailability();
+  }
+
+  Future<void> _checkAvailability() async {
+    final healthService = ref.read(healthServiceProvider);
+    final available = await healthService.isHealthConnectAvailable();
+    if (mounted) {
+      setState(() {
+        _isAvailable = available;
+        _checkingAvailability = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final healthSyncState = ref.watch(healthSyncProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Use different colors for Samsung Health (green) vs Apple Health (red)
+    final healthColor = Platform.isAndroid ? AppColors.success : AppColors.error;
+    final healthName = Platform.isAndroid ? 'Samsung Health' : 'Apple Health';
+    final healthIcon = Platform.isAndroid ? Icons.watch : Icons.favorite;
+
+    if (_checkingAvailability) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: SizedBox(height: 60),
+      );
+    }
+
+    if (!_isAvailable) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Row(
+            children: [
+              Icon(healthIcon, color: textMuted, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  Platform.isAndroid
+                      ? 'Health Connect not available. Install from Play Store.'
+                      : 'HealthKit not available on this device.',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              healthColor.withValues(alpha: 0.15),
+              healthColor.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: healthColor.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            // Header (always visible)
+            InkWell(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: healthColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(healthIcon, color: healthColor, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            healthName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          Text(
+                            healthSyncState.isConnected
+                                ? healthSyncState.lastSyncTime != null
+                                    ? 'Last sync: ${_formatSyncTime(healthSyncState.lastSyncTime!)}'
+                                    : 'Connected'
+                                : 'Tap to connect',
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (healthSyncState.isSyncing)
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: healthColor,
+                        ),
+                      )
+                    else if (healthSyncState.isConnected)
+                      Icon(Icons.check_circle, color: healthColor, size: 20)
+                    else
+                      Icon(Icons.add_circle_outline, color: healthColor, size: 20),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: textMuted,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Expanded content
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Container(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(color: healthColor.withValues(alpha: 0.2)),
+                    const SizedBox(height: 8),
+
+                    // Info text
+                    Text(
+                      Platform.isAndroid
+                          ? 'Sync weight, body fat, and heart rate from your Samsung watch via Health Connect.'
+                          : 'Sync weight, body fat, and heart rate from Apple Health.',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Supported data types
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _DataTypeChip(label: 'Weight', color: healthColor),
+                        _DataTypeChip(label: 'Body Fat', color: healthColor),
+                        _DataTypeChip(label: 'Heart Rate', color: healthColor),
+                        _DataTypeChip(label: 'Steps', color: healthColor),
+                        _DataTypeChip(label: 'BMI', color: healthColor),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Sync buttons
+                    if (healthSyncState.isConnected) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: healthSyncState.isSyncing ? null : () => _sync(30),
+                              icon: const Icon(Icons.sync, size: 18),
+                              label: const Text('Sync 30 Days'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: healthColor,
+                                side: BorderSide(color: healthColor),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: healthSyncState.isSyncing ? null : () => _sync(90),
+                              icon: const Icon(Icons.history, size: 18),
+                              label: const Text('Sync 90 Days'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: healthColor,
+                                side: BorderSide(color: healthColor),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => _disconnect(),
+                          child: Text(
+                            'Disconnect',
+                            style: TextStyle(color: textMuted, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ] else
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: healthSyncState.isSyncing ? null : () => _connect(),
+                          icon: const Icon(Icons.link, size: 18),
+                          label: Text('Connect to $healthName'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: healthColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Error message
+                    if (healthSyncState.error != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                healthSyncState.error!,
+                                style: const TextStyle(fontSize: 11, color: AppColors.error),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Sync result
+                    if (healthSyncState.syncedCount != null && healthSyncState.syncedCount! > 0) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Synced ${healthSyncState.syncedCount} measurements',
+                                style: const TextStyle(fontSize: 11, color: AppColors.success),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatSyncTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return DateFormat('MMM d').format(time);
+  }
+
+  Future<void> _connect() async {
+    final connected = await ref.read(healthSyncProvider.notifier).connect();
+    if (connected && mounted) {
+      // Auto-sync after connecting
+      await _sync(30);
+    }
+  }
+
+  Future<void> _disconnect() async {
+    await ref.read(healthSyncProvider.notifier).disconnect();
+  }
+
+  Future<void> _sync(int days) async {
+    final data = await ref.read(healthSyncProvider.notifier).syncMeasurements(days: days);
+
+    if (data.isNotEmpty && mounted) {
+      // Import the data to our app's measurements
+      await _importHealthData(data);
+      widget.onSyncComplete?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Synced ${data.length} measurements from Health Connect'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  Future<void> _importHealthData(List<HealthDataPoint> data) async {
+    final auth = ref.read(authStateProvider);
+    if (auth.user == null) return;
+
+    final measurementsNotifier = ref.read(measurementsProvider.notifier);
+
+    for (final point in data) {
+      // Map Health Connect type to our measurement type
+      MeasurementType? measurementType;
+      double value = (point.value as NumericHealthValue).numericValue.toDouble();
+      String unit = 'kg';
+
+      switch (point.type) {
+        case HealthDataType.WEIGHT:
+          measurementType = MeasurementType.weight;
+          unit = 'kg';
+          break;
+        case HealthDataType.BODY_FAT_PERCENTAGE:
+          measurementType = MeasurementType.bodyFat;
+          unit = '%';
+          break;
+        case HealthDataType.HEIGHT:
+          // Height comes in meters, we store in cm
+          value = value * 100;
+          unit = 'cm';
+          break;
+        default:
+          // Skip unsupported types
+          continue;
+      }
+
+      if (measurementType != null) {
+        await measurementsNotifier.recordMeasurement(
+          userId: auth.user!.id,
+          type: measurementType,
+          value: value,
+          unit: unit,
+          notes: 'Synced from ${Platform.isAndroid ? "Samsung Health" : "Apple Health"}',
+        );
+      }
+    }
+  }
+}
+
+class _DataTypeChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _DataTypeChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500),
+      ),
+    );
   }
 }

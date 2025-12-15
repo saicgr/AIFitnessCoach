@@ -10,10 +10,8 @@ import 'floating_chat_provider.dart';
 
 /// Floating chat overlay - Facebook Messenger style
 ///
-/// This widget wraps the entire app and provides:
-/// 1. A floating chat bubble that can be tapped to expand
-/// 2. An expandable chat modal that's keyboard-aware
-/// 3. Draggable bubble position
+/// This widget wraps the entire app and listens for expand requests
+/// to show a proper modal bottom sheet (which has correct IME handling)
 class FloatingChatOverlay extends ConsumerStatefulWidget {
   final Widget child;
 
@@ -23,100 +21,53 @@ class FloatingChatOverlay extends ConsumerStatefulWidget {
   ConsumerState<FloatingChatOverlay> createState() => _FloatingChatOverlayState();
 }
 
-class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay>
-    with WidgetsBindingObserver {
-  // Keyboard height tracking
-  double _keyboardHeight = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    // This is called when keyboard appears/disappears
-    final bottomInset = WidgetsBinding.instance.platformDispatcher.views.first.viewInsets.bottom /
-        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
-
-    if (mounted) {
-      setState(() {
-        _keyboardHeight = bottomInset;
-      });
-    }
-  }
+class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
+  bool _isSheetOpen = false;
 
   @override
   Widget build(BuildContext context) {
-    final chatState = ref.watch(floatingChatProvider);
+    // Listen for expand state changes
+    ref.listen<FloatingChatState>(floatingChatProvider, (previous, next) {
+      if (next.isExpanded && !_isSheetOpen) {
+        _showChatSheet(context);
+      }
+    });
 
-    return Stack(
-      children: [
-        // Main app content
-        widget.child,
+    return widget.child;
+  }
 
-        // Show chat modal when expanded (triggered by nav bar AI button)
-        if (chatState.isExpanded) ...[
-          // Semi-transparent backdrop
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                ref.read(floatingChatProvider.notifier).collapse();
-              },
-              child: Container(
-                color: Colors.black.withOpacity(0.6),
-              ).animate().fadeIn(duration: 200.ms),
-            ),
-          ),
+  void _showChatSheet(BuildContext context) {
+    _isSheetOpen = true;
 
-          // Chat modal - keyboard aware positioning
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: _keyboardHeight, // Moves up when keyboard appears
-            child: _KeyboardAwareChatModal(
-              keyboardHeight: _keyboardHeight,
-              onClose: () {
-                HapticFeedback.lightImpact();
-                ref.read(floatingChatProvider.notifier).collapse();
-              },
-            ).animate().slideY(
-              begin: 0.3,
-              end: 0,
-              duration: 300.ms,
-              curve: Curves.easeOutCubic,
-            ),
-          ),
-        ],
-      ],
-    );
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows the sheet to take full height
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (sheetContext) => _ChatBottomSheet(
+        onClose: () {
+          Navigator.of(sheetContext).pop();
+        },
+      ),
+    ).whenComplete(() {
+      _isSheetOpen = false;
+      // Collapse the state when sheet is dismissed
+      ref.read(floatingChatProvider.notifier).collapse();
+    });
   }
 }
 
-/// Keyboard-aware chat modal
-class _KeyboardAwareChatModal extends ConsumerStatefulWidget {
-  final double keyboardHeight;
+/// Chat bottom sheet content - uses proper Scaffold for IME handling
+class _ChatBottomSheet extends ConsumerStatefulWidget {
   final VoidCallback onClose;
 
-  const _KeyboardAwareChatModal({
-    required this.keyboardHeight,
-    required this.onClose,
-  });
+  const _ChatBottomSheet({required this.onClose});
 
   @override
-  ConsumerState<_KeyboardAwareChatModal> createState() => _KeyboardAwareChatModalState();
+  ConsumerState<_ChatBottomSheet> createState() => _ChatBottomSheetState();
 }
 
-class _KeyboardAwareChatModalState extends ConsumerState<_KeyboardAwareChatModal> {
+class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
@@ -177,7 +128,7 @@ class _KeyboardAwareChatModalState extends ConsumerState<_KeyboardAwareChatModal
     final messagesState = ref.watch(chatMessagesProvider);
     final screenHeight = MediaQuery.of(context).size.height;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final keyboardVisible = widget.keyboardHeight > 0;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -190,17 +141,11 @@ class _KeyboardAwareChatModalState extends ConsumerState<_KeyboardAwareChatModal
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
-    // Calculate modal height - shrink when keyboard is visible
-    final baseHeight = screenHeight * 0.7;
-    final maxAvailableHeight = screenHeight - widget.keyboardHeight - 40; // 40 for top margin
-    final modalHeight = keyboardVisible
-        ? maxAvailableHeight.clamp(300.0, baseHeight)
-        : baseHeight;
-
-    return Material(
-      type: MaterialType.transparency,
+    // Use Padding to handle keyboard - this is the Flutter-recommended way
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
       child: Container(
-        height: modalHeight,
+        height: screenHeight * 0.7,
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: backgroundColor,
@@ -214,200 +159,193 @@ class _KeyboardAwareChatModalState extends ConsumerState<_KeyboardAwareChatModal
           ],
         ),
         child: Column(
-        children: [
-          // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: textMuted,
-              borderRadius: BorderRadius.circular(2),
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [cyan, purple],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.smart_toy, size: 20, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'AI Coach',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [cyan, purple],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      Text(
-                        _isLoading ? 'Typing...' : 'Online',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _isLoading
-                              ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                              : (isDark ? AppColors.success : AppColorsLight.success),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.smart_toy, size: 20, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Coach',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
                         ),
+                        Text(
+                          _isLoading ? 'Typing...' : 'Online',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _isLoading
+                                ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                                : (isDark ? AppColors.success : AppColorsLight.success),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onClose,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(Icons.close, color: textMuted),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Divider(color: cardBorder, height: 1),
+
+            // Messages
+            Expanded(
+              child: messagesState.when(
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: cyan),
+                ),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          color: isDark ? AppColors.error : AppColorsLight.error,
+                          size: 40),
+                      const SizedBox(height: 12),
+                      Text('Error loading messages', style: TextStyle(color: textMuted)),
+                      TextButton(
+                        onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
+                        child: const Text('Retry'),
                       ),
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(Icons.close, color: textMuted),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                data: (messages) {
+                  if (messages.isEmpty) {
+                    return _buildEmptyState(context, cyan, purple, textPrimary, textMuted, cardBorder);
+                  }
 
-          Divider(color: cardBorder, height: 1),
+                  // Scroll to bottom when messages change
+                  if (messages.length != _lastMessageCount) {
+                    _lastMessageCount = messages.length;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollToBottom(animate: false);
+                    });
+                  }
 
-          // Messages
-          Expanded(
-            child: messagesState.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: cyan),
-              ),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline,
-                        color: isDark ? AppColors.error : AppColorsLight.error,
-                        size: 40),
-                    const SizedBox(height: 12),
-                    Text('Error loading messages', style: TextStyle(color: textMuted)),
-                    TextButton(
-                      onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-              data: (messages) {
-                if (messages.isEmpty) {
-                  return _buildEmptyState(context, cyan, purple, textPrimary, textMuted, cardBorder);
-                }
-
-                // Scroll to bottom when messages change
-                if (messages.length != _lastMessageCount) {
-                  _lastMessageCount = messages.length;
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _scrollToBottom(animate: false);
-                  });
-                }
-
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: messages.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == messages.length && _isLoading) {
-                      return _buildTypingIndicator(context);
-                    }
-                    return _buildMessageBubble(context, messages[index]);
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Input bar - no extra bottom padding when keyboard is visible
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              12,
-              10,
-              12,
-              keyboardVisible ? 12 : (bottomPadding + 12),
-            ),
-            decoration: BoxDecoration(
-              color: nearBackgroundColor,
-              border: Border(
-                top: BorderSide(color: cardBorder.withOpacity(0.5)),
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: messages.length + (_isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == messages.length && _isLoading) {
+                        return _buildTypingIndicator(context);
+                      }
+                      return _buildMessageBubble(context, messages[index]);
+                    },
+                  );
+                },
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    focusNode: _focusNode,
-                    enabled: !_isLoading,
-                    autofocus: false,
-                    textInputAction: TextInputAction.send,
-                    keyboardType: TextInputType.text,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: 3,
-                    minLines: 1,
-                    style: TextStyle(fontSize: 14, color: textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Ask your AI coach...',
-                      hintStyle: TextStyle(color: textMuted, fontSize: 14),
-                      filled: true,
-                      fillColor: glassSurface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(color: cardBorder.withOpacity(0.5)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: BorderSide(color: cyan),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+
+            // Input bar - directly in the sheet, no separate widget
+            Container(
+              padding: EdgeInsets.fromLTRB(12, 10, 12, bottomPadding + 12),
+              decoration: BoxDecoration(
+                color: nearBackgroundColor,
+                border: Border(
+                  top: BorderSide(color: cardBorder.withOpacity(0.5)),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _isLoading
-                          ? [textMuted, textMuted]
-                          : [cyan, purple],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      focusNode: _focusNode,
+                      enabled: !_isLoading,
+                      textInputAction: TextInputAction.send,
+                      textCapitalization: TextCapitalization.sentences,
+                      maxLines: 3,
+                      minLines: 1,
+                      style: TextStyle(fontSize: 14, color: textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'Ask your AI coach...',
+                        hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                        filled: true,
+                        fillColor: glassSurface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: cardBorder.withOpacity(0.5)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: cyan),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
-                    shape: BoxShape.circle,
                   ),
-                  child: IconButton(
-                    onPressed: _isLoading ? null : _sendMessage,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: _isLoading
+                            ? [textMuted, textMuted]
+                            : [cyan, purple],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      onPressed: _isLoading ? null : _sendMessage,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

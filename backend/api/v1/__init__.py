@@ -7,6 +7,7 @@ from api.v1 import exercise_suggestions
 from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
+from api.v1 import activity
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -62,3 +63,6 @@ router.include_router(notifications.router, prefix="/notifications", tags=["Noti
 
 # AI settings and personality preferences
 router.include_router(ai_settings.router, tags=["AI Settings"])
+
+# Daily activity from Health Connect / Apple Health
+router.include_router(activity.router, tags=["Activity"])

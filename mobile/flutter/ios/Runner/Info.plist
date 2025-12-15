@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>AI Fitness Coach needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>AI Fitness Coach needs access to save your workout data and body measurements to Apple Health.</string>
 </dict>
 </plist>

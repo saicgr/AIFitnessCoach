@@ -46,6 +46,10 @@ dependencies:
   uuid: ^4.4.2
   shared_preferences: ^2.2.3
 
+  # Health Connect / HealthKit
+  health: ^11.1.0
+  permission_handler: ^11.3.1
+
   # Firebase / Notifications
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6

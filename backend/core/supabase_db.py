@@ -1137,6 +1137,109 @@ class SupabaseDB:
 
         return True
 
+    # ==================== DAILY ACTIVITY ====================
+
+    def upsert_daily_activity(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Upsert daily activity data (from Health Connect / Apple Health).
+        Uses activity_date + user_id as unique key.
+        """
+        # Ensure activity_date is a string
+        if isinstance(data.get("activity_date"), datetime):
+            data["activity_date"] = data["activity_date"].strftime("%Y-%m-%d")
+
+        result = self.client.table("daily_activity").upsert(
+            data,
+            on_conflict="user_id,activity_date"
+        ).execute()
+        return result.data[0] if result.data else None
+
+    def get_daily_activity(self, user_id: str, activity_date: str) -> Optional[Dict[str, Any]]:
+        """Get daily activity for a specific date."""
+        result = (
+            self.client.table("daily_activity")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("activity_date", activity_date)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def list_daily_activity(
+        self,
+        user_id: str,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        limit: int = 30
+    ) -> List[Dict[str, Any]]:
+        """List daily activity for a user within a date range."""
+        query = self.client.table("daily_activity").select("*").eq("user_id", user_id)
+
+        if from_date:
+            query = query.gte("activity_date", from_date)
+        if to_date:
+            query = query.lte("activity_date", to_date)
+
+        result = query.order("activity_date", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def get_activity_summary(
+        self,
+        user_id: str,
+        days: int = 7
+    ) -> Dict[str, Any]:
+        """Get activity summary (totals and averages) for the last N days."""
+        from datetime import timedelta
+        end_date = datetime.utcnow().strftime("%Y-%m-%d")
+        start_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        activities = self.list_daily_activity(
+            user_id=user_id,
+            from_date=start_date,
+            to_date=end_date,
+            limit=days
+        )
+
+        if not activities:
+            return {
+                "total_steps": 0,
+                "total_calories": 0,
+                "total_distance_meters": 0,
+                "avg_steps": 0,
+                "avg_calories": 0,
+                "avg_resting_hr": None,
+                "days_with_data": 0,
+            }
+
+        total_steps = sum(a.get("steps", 0) or 0 for a in activities)
+        total_calories = sum(a.get("calories_burned", 0) or 0 for a in activities)
+        total_distance = sum(a.get("distance_meters", 0) or 0 for a in activities)
+        days_with_data = len(activities)
+
+        # Calculate average resting HR (only from days with data)
+        hr_values = [a.get("resting_heart_rate") for a in activities if a.get("resting_heart_rate")]
+        avg_resting_hr = round(sum(hr_values) / len(hr_values)) if hr_values else None
+
+        return {
+            "total_steps": total_steps,
+            "total_calories": round(total_calories, 1),
+            "total_distance_meters": round(total_distance, 1),
+            "avg_steps": round(total_steps / days_with_data) if days_with_data > 0 else 0,
+            "avg_calories": round(total_calories / days_with_data, 1) if days_with_data > 0 else 0,
+            "avg_resting_hr": avg_resting_hr,
+            "days_with_data": days_with_data,
+        }
+
+    def delete_daily_activity(self, user_id: str, activity_date: str) -> bool:
+        """Delete a specific daily activity entry."""
+        self.client.table("daily_activity").delete().eq("user_id", user_id).eq("activity_date", activity_date).execute()
+        return True
+
+    def delete_daily_activity_by_user(self, user_id: str) -> bool:
+        """Delete all daily activity for a user."""
+        self.client.table("daily_activity").delete().eq("user_id", user_id).execute()
+        return True
+
 
 # Singleton instance
 _supabase_db: Optional[SupabaseDB] = None

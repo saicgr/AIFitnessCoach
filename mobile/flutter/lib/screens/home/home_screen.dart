@@ -16,6 +16,7 @@ import '../../widgets/empty_state.dart';
 import '../notifications/notifications_screen.dart';
 import 'widgets/regenerate_workout_sheet.dart';
 import 'widgets/edit_program_sheet.dart';
+import 'widgets/daily_activity_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -143,6 +144,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // Section: TODAY
               const SliverToBoxAdapter(
                 child: _SectionHeader(title: 'TODAY'),
+              ),
+
+              // Daily Activity Card (Steps, Calories from Health Connect)
+              const SliverToBoxAdapter(
+                child: DailyActivityCard(),
               ),
 
               // Next Workout Card
