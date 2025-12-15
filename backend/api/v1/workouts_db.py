@@ -1155,6 +1155,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         if workout_type_override:
             logger.info(f"🏋️ Regenerating with workout type override: {workout_type_override}")
 
+        # Determine focus area from existing workout or request
+        focus_areas = request.focus_areas or []
+
         logger.info(f"🎯 Regenerating workout with: fitness_level={fitness_level}")
         logger.info(f"  - equipment={equipment} (from request: {request.equipment})")
         logger.info(f"  - difficulty={user_difficulty}")
@@ -1165,9 +1168,6 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         openai_service = OpenAIService()
         exercise_rag = get_exercise_rag_service()
-
-        # Determine focus area from existing workout or request
-        focus_areas = request.focus_areas or []
         if not focus_areas:
             # Try to determine focus from existing workout's target muscles
             existing_exercises = parse_json_field(existing.get("exercises_json") or existing.get("exercises"), [])
