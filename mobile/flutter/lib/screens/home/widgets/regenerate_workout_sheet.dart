@@ -279,7 +279,7 @@ class _RegenerateWorkoutSheetState
       final suggestion = _aiSuggestions[_selectedSuggestionIndex!];
       final repo = ref.read(workoutRepositoryProvider);
 
-      // Regenerate with the AI suggestion parameters
+      // Regenerate with the AI suggestion parameters, including the workout name
       final newWorkout = await repo.regenerateWorkout(
         workoutId: widget.workout.id!,
         userId: userId,
@@ -288,6 +288,7 @@ class _RegenerateWorkoutSheetState
         focusAreas: (suggestion['focus_areas'] as List?)?.cast<String>() ?? [],
         workoutType: suggestion['type'],
         aiPrompt: _aiPromptController.text.trim().isEmpty ? null : _aiPromptController.text.trim(),
+        workoutName: suggestion['name'] as String?,  // Pass the suggestion name
       );
 
       if (mounted) {
@@ -308,8 +309,8 @@ class _RegenerateWorkoutSheetState
 
   @override
   Widget build(BuildContext context) {
-    // Use Riverpod theme provider for consistent theme detection
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    // Use actual brightness to support ThemeMode.system
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final _SheetColors colors = isDark ? _DarkColors() : _LightColors();
 
     return Container(
@@ -684,6 +685,7 @@ class _RegenerateWorkoutSheetState
     final duration = suggestion['duration_minutes'] as int? ?? 45;
     final description = suggestion['description'] as String? ?? '';
     final focusAreas = (suggestion['focus_areas'] as List?)?.cast<String>() ?? [];
+    final sampleExercises = (suggestion['sample_exercises'] as List?)?.cast<String>() ?? [];
 
     final difficultyColor = _getDifficultyColor(difficulty);
     final typeColor = _getTypeColor(type);
@@ -825,6 +827,50 @@ class _RegenerateWorkoutSheetState
                     ),
                   ),
                 )).toList(),
+              ),
+            ],
+
+            // Sample exercises preview
+            if (sampleExercises.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colors.glassSurface.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colors.cardBorder.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Exercises Preview',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: sampleExercises.map((exercise) => Text(
+                        '• $exercise',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textSecondary,
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],

@@ -1231,7 +1231,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 )
 
             exercises = workout_data.get("exercises", [])
-            workout_name = workout_data.get("name", "Regenerated Workout")
+            # Use provided workout_name if specified (e.g., from AI suggestion), otherwise use AI-generated name
+            workout_name = request.workout_name or workout_data.get("name", "Regenerated Workout")
             # Use user-selected workout type if provided, otherwise use AI-generated or existing
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             # Use user-selected difficulty if provided, otherwise use AI-generated or default
@@ -1398,6 +1399,7 @@ class WorkoutSuggestion(BaseModel):
     duration_minutes: int
     description: str
     focus_areas: List[str]
+    sample_exercises: List[str] = []  # Preview of exercises included
 
 
 class WorkoutSuggestionsResponse(BaseModel):
@@ -1473,6 +1475,7 @@ Return a JSON array with exactly 4 suggestions, each containing:
 - duration_minutes: Integer between 15-90 (use user's requested duration if specified)
 - description: 1-2 sentence description mentioning the specific equipment/focus
 - focus_areas: Array of 1-3 body areas targeted
+- sample_exercises: Array of 4-5 exercise names that would be included (e.g., ["Bench Press", "Rows", "Squats"])
 
 IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
 
@@ -1521,6 +1524,7 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
                 duration_minutes=min(max(int(s.get("duration_minutes", 45)), 15), 90),
                 description=s.get("description", ""),
                 focus_areas=s.get("focus_areas", [])[:3],
+                sample_exercises=s.get("sample_exercises", [])[:5],  # Limit to 5 exercises
             ))
 
         logger.info(f"Generated {len(suggestions)} workout suggestions")
@@ -1536,7 +1540,8 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
                 difficulty="medium",
                 duration_minutes=45,
                 description="A balanced strength workout targeting major muscle groups.",
-                focus_areas=["Full Body"]
+                focus_areas=["Full Body"],
+                sample_exercises=["Squats", "Bench Press", "Rows", "Shoulder Press", "Lunges"]
             ),
             WorkoutSuggestion(
                 name="Quick HIIT Blast",
@@ -1544,7 +1549,8 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
                 difficulty="hard",
                 duration_minutes=30,
                 description="High-intensity interval training for maximum calorie burn.",
-                focus_areas=["Full Body", "Cardio"]
+                focus_areas=["Full Body", "Cardio"],
+                sample_exercises=["Burpees", "Mountain Climbers", "Jump Squats", "High Knees"]
             ),
             WorkoutSuggestion(
                 name="Mobility Flow",
@@ -1552,7 +1558,8 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
                 difficulty="easy",
                 duration_minutes=30,
                 description="Gentle stretching and mobility work for recovery.",
-                focus_areas=["Full Body"]
+                focus_areas=["Full Body"],
+                sample_exercises=["Cat-Cow", "Hip Flexor Stretch", "Thread the Needle", "Pigeon Pose"]
             ),
         ])
     except HTTPException:

@@ -179,6 +179,8 @@ class RegenerateWorkoutRequest(BaseModel):
     focus_areas: Optional[List[str]] = None
     injuries: Optional[List[str]] = None  # List of injury areas to avoid (e.g., "Shoulder", "Knee")
     workout_type: Optional[str] = None  # Workout style: "Strength", "HIIT", "Cardio", "Flexibility", etc.
+    workout_name: Optional[str] = None  # Optional workout name to use (from AI suggestion)
+    ai_prompt: Optional[str] = None  # Optional AI prompt for workout generation context
 
 
 class UpdateProgramRequest(BaseModel):
