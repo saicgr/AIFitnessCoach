@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'api_client.dart';
 import '../../core/constants/api_constants.dart';
 
@@ -162,12 +164,29 @@ class _ChannelConfig {
   });
 }
 
+/// Callback type for storing received notifications
+typedef OnNotificationReceivedCallback = void Function({
+  required String title,
+  required String body,
+  String? type,
+  Map<String, dynamic>? data,
+});
+
+/// Callback type for handling notification taps
+typedef OnNotificationTappedCallback = void Function(String? notificationType);
+
 /// Notification service for FCM + Local Notifications
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   String? _fcmToken;
+
+  /// Callback to store received notifications in the app's notification inbox
+  OnNotificationReceivedCallback? onNotificationReceived;
+
+  /// Callback to handle notification taps (for navigation)
+  OnNotificationTappedCallback? onNotificationTapped;
 
   String? get fcmToken => _fcmToken;
 
@@ -225,8 +244,49 @@ class NotificationService {
     color: Color(0xFF00D9FF),
   );
 
+  /// Initialize local timezone based on device timezone offset
+  void _initializeLocalTimezone() {
+    final now = DateTime.now();
+    final localOffset = now.timeZoneOffset;
+
+    // Find a timezone that matches the device's current offset
+    // Common US timezones
+    final timezoneMap = {
+      const Duration(hours: -5): 'America/New_York', // EST
+      const Duration(hours: -6): 'America/Chicago', // CST
+      const Duration(hours: -7): 'America/Denver', // MST
+      const Duration(hours: -8): 'America/Los_Angeles', // PST
+      const Duration(hours: -4): 'America/New_York', // EDT (summer)
+      const Duration(hours: 0): 'UTC',
+      const Duration(hours: 1): 'Europe/London',
+      const Duration(hours: 5, minutes: 30): 'Asia/Kolkata',
+    };
+
+    String tzName = 'America/Chicago'; // Default to CST
+    for (final entry in timezoneMap.entries) {
+      if (entry.key == localOffset) {
+        tzName = entry.value;
+        break;
+      }
+    }
+
+    try {
+      tz.setLocalLocation(tz.getLocation(tzName));
+      debugPrint('🔔 [Timezone] Set to $tzName (offset: $localOffset)');
+    } catch (e) {
+      // Fallback to UTC
+      tz.setLocalLocation(tz.UTC);
+      debugPrint('⚠️ [Timezone] Fallback to UTC: $e');
+    }
+  }
+
   /// Initialize Firebase Messaging and Local Notifications
   Future<void> initialize() async {
+    // Initialize timezone for scheduled notifications
+    tz_data.initializeTimeZones();
+    // Set local timezone based on device's current offset
+    _initializeLocalTimezone();
+
     // Set up background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -235,6 +295,9 @@ class NotificationService {
 
     // Request permission (required for iOS and Android 13+)
     await _requestPermission();
+
+    // Check exact alarm permission for Android 12+
+    await checkAndRequestExactAlarmPermission();
 
     // Get FCM token
     await _getToken();
@@ -282,7 +345,8 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: (response) {
         debugPrint('🔔 [Local] Notification tapped: ${response.payload}');
-        // TODO: Handle notification tap
+        // Call the tap callback for navigation
+        onNotificationTapped?.call(response.payload);
       },
     );
 
@@ -378,11 +442,22 @@ class NotificationService {
     // Show local notification with appropriate channel
     final notification = message.notification;
     if (notification != null) {
+      final title = notification.title ?? 'AI Fitness Coach';
+      final body = notification.body ?? '';
+
       _showLocalNotification(
-        title: notification.title ?? 'AI Fitness Coach',
-        body: notification.body ?? '',
+        title: title,
+        body: body,
         payload: message.data['action'],
         notificationType: notificationType,
+      );
+
+      // Store notification in app's notification inbox
+      onNotificationReceived?.call(
+        title: title,
+        body: body,
+        type: notificationType,
+        data: message.data,
       );
     }
   }
@@ -399,6 +474,7 @@ class NotificationService {
     required String body,
     String? payload,
     String? notificationType,
+    bool storeInInbox = false,
   }) async {
     final channelConfig = _getChannelConfig(notificationType);
 
@@ -424,15 +500,28 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    // Include notification type in payload for navigation
+    final notificationPayload = notificationType ?? payload ?? 'default';
+
     await _localNotifications.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
       details,
-      payload: payload,
+      payload: notificationPayload,
     );
 
-    debugPrint('🔔 [Local] Notification shown: $title');
+    debugPrint('🔔 [Local] Notification shown: $title (type: $notificationPayload)');
+
+    // Store in notification inbox if requested
+    if (storeInInbox) {
+      onNotificationReceived?.call(
+        title: title,
+        body: body,
+        type: notificationType,
+        data: {'type': notificationType},
+      );
+    }
   }
 
   /// Handle when app is opened from notification
@@ -442,6 +531,44 @@ class NotificationService {
     debugPrint('   Data: ${message.data}');
 
     // TODO: Navigate to relevant screen based on message data
+  }
+
+  /// Show an immediate local notification (for testing)
+  Future<void> showImmediateNotification({
+    required String title,
+    required String body,
+    String? notificationType,
+  }) async {
+    await _showLocalNotification(
+      title: title,
+      body: body,
+      notificationType: notificationType,
+    );
+  }
+
+  /// Check and request exact alarm permission (Android 12+)
+  Future<bool> checkAndRequestExactAlarmPermission() async {
+    if (!Platform.isAndroid) return true;
+
+    final androidPlugin = _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin == null) return false;
+
+    // Check if exact alarms are permitted
+    final canScheduleExact = await androidPlugin.canScheduleExactNotifications();
+    debugPrint('🔔 [Permission] Can schedule exact notifications: $canScheduleExact');
+
+    if (canScheduleExact != true) {
+      // Request permission - this opens system settings
+      await androidPlugin.requestExactAlarmsPermission();
+      final afterRequest = await androidPlugin.canScheduleExactNotifications();
+      debugPrint('🔔 [Permission] After request: $afterRequest');
+      return afterRequest ?? false;
+    }
+
+    return canScheduleExact ?? false;
   }
 
   /// Register FCM token with backend
@@ -510,14 +637,418 @@ class NotificationService {
       return false;
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Local Scheduled Notifications
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Notification ID ranges for different types
+  static const int _workoutNotificationId = 1000;
+  static const int _nutritionBreakfastId = 2000;
+  static const int _nutritionLunchId = 2001;
+  static const int _nutritionDinnerId = 2002;
+  static const int _hydrationBaseId = 3000;
+  static const int _streakAlertId = 4000;
+  static const int _weeklySummaryId = 5000;
+
+  /// Parse time string (e.g. "08:00") to hour and minute
+  (int hour, int minute) _parseTime(String time) {
+    final parts = time.split(':');
+    return (int.parse(parts[0]), int.parse(parts[1]));
+  }
+
+  /// Get next occurrence of a specific time
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  /// Get next occurrence of a specific day and time
+  tz.TZDateTime _nextInstanceOfDayAndTime(int day, int hour, int minute) {
+    var scheduledDate = _nextInstanceOfTime(hour, minute);
+    while (scheduledDate.weekday != day) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
+  }
+
+  /// Schedule all notifications based on preferences
+  Future<void> scheduleAllNotifications(NotificationPreferences prefs) async {
+    debugPrint('🔔 [Schedule] Scheduling all notifications...');
+
+    // Cancel all existing scheduled notifications first
+    await cancelAllScheduledNotifications();
+
+    // Schedule each type if enabled
+    if (prefs.workoutReminders) {
+      await scheduleWorkoutReminder(prefs.workoutReminderTime);
+    }
+
+    if (prefs.nutritionReminders) {
+      await scheduleNutritionReminders(
+        prefs.nutritionBreakfastTime,
+        prefs.nutritionLunchTime,
+        prefs.nutritionDinnerTime,
+      );
+    }
+
+    if (prefs.hydrationReminders) {
+      await scheduleHydrationReminders(
+        prefs.hydrationStartTime,
+        prefs.hydrationEndTime,
+        prefs.hydrationIntervalMinutes,
+      );
+    }
+
+    if (prefs.streakAlerts) {
+      await scheduleStreakAlert(prefs.streakAlertTime);
+    }
+
+    if (prefs.weeklySummary) {
+      await scheduleWeeklySummary(prefs.weeklySummaryDay, prefs.weeklySummaryTime);
+    }
+
+    debugPrint('✅ [Schedule] All notifications scheduled');
+  }
+
+  /// Cancel all scheduled notifications
+  Future<void> cancelAllScheduledNotifications() async {
+    await _localNotifications.cancelAll();
+    debugPrint('🔔 [Schedule] All scheduled notifications cancelled');
+  }
+
+  /// Schedule daily workout reminder
+  Future<void> scheduleWorkoutReminder(String time) async {
+    final (hour, minute) = _parseTime(time);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final channelConfig = _channelConfigs['workout_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    await _localNotifications.zonedSchedule(
+      _workoutNotificationId,
+      '💪 Time to Work Out!',
+      'Your workout is waiting. Let\'s crush those goals today!',
+      scheduledDate,
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    debugPrint('🔔 [Schedule] Workout reminder scheduled for $time daily');
+  }
+
+  /// Schedule nutrition reminders (breakfast, lunch, dinner)
+  Future<void> scheduleNutritionReminders(
+    String breakfastTime,
+    String lunchTime,
+    String dinnerTime,
+  ) async {
+    final channelConfig = _channelConfigs['nutrition_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    // Breakfast
+    final (bHour, bMinute) = _parseTime(breakfastTime);
+    await _localNotifications.zonedSchedule(
+      _nutritionBreakfastId,
+      '🍳 Breakfast Time!',
+      'Don\'t forget to log your breakfast and start the day right!',
+      _nextInstanceOfTime(bHour, bMinute),
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    // Lunch
+    final (lHour, lMinute) = _parseTime(lunchTime);
+    await _localNotifications.zonedSchedule(
+      _nutritionLunchId,
+      '🥗 Lunch Time!',
+      'Time for lunch! Remember to log your meal.',
+      _nextInstanceOfTime(lHour, lMinute),
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    // Dinner
+    final (dHour, dMinute) = _parseTime(dinnerTime);
+    await _localNotifications.zonedSchedule(
+      _nutritionDinnerId,
+      '🍽️ Dinner Time!',
+      'Enjoy your dinner! Don\'t forget to log it.',
+      _nextInstanceOfTime(dHour, dMinute),
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    debugPrint('🔔 [Schedule] Nutrition reminders scheduled: Breakfast=$breakfastTime, Lunch=$lunchTime, Dinner=$dinnerTime');
+  }
+
+  /// Schedule hydration reminders at intervals
+  Future<void> scheduleHydrationReminders(
+    String startTime,
+    String endTime,
+    int intervalMinutes,
+  ) async {
+    final channelConfig = _channelConfigs['hydration_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    final (startHour, startMinute) = _parseTime(startTime);
+    final (endHour, endMinute) = _parseTime(endTime);
+
+    // Calculate all reminder times within the day
+    final startMinutes = startHour * 60 + startMinute;
+    final endMinutes = endHour * 60 + endMinute;
+
+    int notificationIndex = 0;
+    final hydrationMessages = [
+      '💧 Hydration Check!',
+      '🚰 Water Break Time!',
+      '💦 Stay Hydrated!',
+      '🥤 Drink Up!',
+    ];
+    final hydrationBodies = [
+      'Time to drink some water. Your body will thank you!',
+      'A quick water break keeps you energized.',
+      'Staying hydrated helps your workout performance!',
+      'Don\'t forget to hydrate! It\'s essential for recovery.',
+    ];
+
+    for (int minutes = startMinutes; minutes <= endMinutes; minutes += intervalMinutes) {
+      final hour = minutes ~/ 60;
+      final minute = minutes % 60;
+
+      await _localNotifications.zonedSchedule(
+        _hydrationBaseId + notificationIndex,
+        hydrationMessages[notificationIndex % hydrationMessages.length],
+        hydrationBodies[notificationIndex % hydrationBodies.length],
+        _nextInstanceOfTime(hour, minute),
+        NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      );
+      notificationIndex++;
+    }
+
+    debugPrint('🔔 [Schedule] $notificationIndex hydration reminders scheduled from $startTime to $endTime every $intervalMinutes minutes');
+  }
+
+  /// Schedule daily streak alert
+  Future<void> scheduleStreakAlert(String time) async {
+    final (hour, minute) = _parseTime(time);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final channelConfig = _channelConfigs['streak_alert']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    await _localNotifications.zonedSchedule(
+      _streakAlertId,
+      '🔥 Keep Your Streak Alive!',
+      'Don\'t break your streak! Complete a workout today.',
+      scheduledDate,
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    debugPrint('🔔 [Schedule] Streak alert scheduled for $time daily');
+  }
+
+  /// Schedule weekly summary notification
+  Future<void> scheduleWeeklySummary(int day, String time) async {
+    final (hour, minute) = _parseTime(time);
+    // Convert day (0=Sunday) to DateTime weekday (1=Monday, 7=Sunday)
+    final weekday = day == 0 ? DateTime.sunday : day;
+    final scheduledDate = _nextInstanceOfDayAndTime(weekday, hour, minute);
+
+    final channelConfig = _channelConfigs['weekly_summary']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    await _localNotifications.zonedSchedule(
+      _weeklySummaryId,
+      '📊 Your Weekly Summary is Ready!',
+      'Check out your progress from the past week.',
+      scheduledDate,
+      NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+
+    final dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    debugPrint('🔔 [Schedule] Weekly summary scheduled for ${dayNames[day]} at $time');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Debug & Testing Methods
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Show an immediate local notification (for testing local notification delivery)
+  Future<void> showTestLocalNotification() async {
+    const title = '🧪 Test Notification';
+    const body = 'This is a local notification test. If you see this, local notifications work!';
+    const type = 'test';
+
+    await _showLocalNotification(
+      title: title,
+      body: body,
+      notificationType: type,
+      storeInInbox: true,
+    );
+
+    debugPrint('🔔 [Test] Immediate local notification sent');
+  }
+
+  /// Schedule a test notification for a specific number of seconds from now
+  Future<void> scheduleTestNotification(int secondsFromNow) async {
+    final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: secondsFromNow));
+
+    final channelConfig = _channelConfigs['test']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+      playSound: true,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    // Use a unique ID for test notifications
+    final testId = 9000 + (DateTime.now().millisecondsSinceEpoch % 1000);
+
+    const title = '⏰ Scheduled Test';
+    final body = 'This notification was scheduled $secondsFromNow seconds ago!';
+
+    await _localNotifications.zonedSchedule(
+      testId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(android: androidDetails, iOS: iosDetails),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'test',
+    );
+
+    // Store in inbox when scheduled notification fires
+    // Note: For scheduled notifications, we store immediately but mark as from schedule
+    onNotificationReceived?.call(
+      title: title,
+      body: body,
+      type: 'test',
+      data: {'type': 'test', 'scheduled': true},
+    );
+
+    debugPrint('🔔 [Test] Notification scheduled for $scheduledDate (ID: $testId)');
+    debugPrint('🔔 [Test] Current time: ${tz.TZDateTime.now(tz.local)}');
+  }
+
+  /// Get list of all pending notifications (for debugging)
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    final pending = await _localNotifications.pendingNotificationRequests();
+    debugPrint('🔔 [Debug] ${pending.length} pending notifications:');
+    for (final notif in pending) {
+      debugPrint('   - ID: ${notif.id}, Title: ${notif.title}');
+    }
+    return pending;
+  }
+
+  /// Get current timezone info (for debugging)
+  Map<String, dynamic> getTimezoneInfo() {
+    final now = DateTime.now();
+    final tzNow = tz.TZDateTime.now(tz.local);
+    return {
+      'deviceTime': now.toString(),
+      'deviceOffset': now.timeZoneOffset.toString(),
+      'tzLibraryTime': tzNow.toString(),
+      'tzLocation': tz.local.name,
+      'tzOffset': tzNow.timeZoneOffset.toString(),
+    };
+  }
 }
+
+/// Callback type for syncing preferences to backend
+typedef PreferencesSyncCallback = Future<void> Function(NotificationPreferences prefs);
 
 /// Notification preferences notifier
 class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferences> {
   final SharedPreferences _prefs;
+  final NotificationService _notificationService;
+  PreferencesSyncCallback? _onPreferencesChanged;
 
-  NotificationPreferencesNotifier(this._prefs) : super(const NotificationPreferences()) {
+  NotificationPreferencesNotifier(
+    this._prefs,
+    this._notificationService,
+  ) : super(const NotificationPreferences()) {
     _loadPreferences();
+  }
+
+  /// Set the callback to sync preferences to backend
+  /// This should be called after the API client is available (e.g., after login)
+  void setSyncCallback(PreferencesSyncCallback callback) {
+    _onPreferencesChanged = callback;
+    // Sync immediately when callback is set
+    _syncPreferencesToBackend();
   }
 
   void _loadPreferences() {
@@ -542,63 +1073,94 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       weeklySummaryDay: _prefs.getInt(NotificationPrefsKeys.weeklySummaryDay) ?? 0,
       weeklySummaryTime: _prefs.getString(NotificationPrefsKeys.weeklySummaryTime) ?? '09:00',
     );
+    // Schedule notifications on load
+    _rescheduleNotifications();
+  }
+
+  /// Reschedule all notifications based on current state
+  Future<void> _rescheduleNotifications() async {
+    await _notificationService.scheduleAllNotifications(state);
+  }
+
+  /// Sync notification preferences to backend
+  Future<void> _syncPreferencesToBackend() async {
+    if (_onPreferencesChanged != null) {
+      await _onPreferencesChanged!(state);
+    }
   }
 
   Future<void> setWorkoutReminders(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.workoutReminders, value);
     state = state.copyWith(workoutReminders: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setNutritionReminders(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.nutritionReminders, value);
     state = state.copyWith(nutritionReminders: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setHydrationReminders(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.hydrationReminders, value);
     state = state.copyWith(hydrationReminders: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setAiCoachMessages(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.aiCoachMessages, value);
     state = state.copyWith(aiCoachMessages: value);
+    // AI Coach messages are server-side, so sync is important
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setStreakAlerts(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.streakAlerts, value);
     state = state.copyWith(streakAlerts: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setWeeklySummary(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.weeklySummary, value);
     state = state.copyWith(weeklySummary: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 
   Future<void> setQuietHours(String start, String end) async {
     await _prefs.setString(NotificationPrefsKeys.quietHoursStart, start);
     await _prefs.setString(NotificationPrefsKeys.quietHoursEnd, end);
     state = state.copyWith(quietHoursStart: start, quietHoursEnd: end);
+    await _syncPreferencesToBackend();
   }
 
   // Time preference setters
   Future<void> setWorkoutReminderTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.workoutReminderTime, time);
     state = state.copyWith(workoutReminderTime: time);
+    await _rescheduleNotifications();
   }
 
   Future<void> setNutritionBreakfastTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.nutritionBreakfastTime, time);
     state = state.copyWith(nutritionBreakfastTime: time);
+    await _rescheduleNotifications();
   }
 
   Future<void> setNutritionLunchTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.nutritionLunchTime, time);
     state = state.copyWith(nutritionLunchTime: time);
+    await _rescheduleNotifications();
   }
 
   Future<void> setNutritionDinnerTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.nutritionDinnerTime, time);
     state = state.copyWith(nutritionDinnerTime: time);
+    await _rescheduleNotifications();
   }
 
   Future<void> setHydrationTimes(String startTime, String endTime, int intervalMinutes) async {
@@ -610,17 +1172,21 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       hydrationEndTime: endTime,
       hydrationIntervalMinutes: intervalMinutes,
     );
+    await _rescheduleNotifications();
   }
 
   Future<void> setStreakAlertTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.streakAlertTime, time);
     state = state.copyWith(streakAlertTime: time);
+    await _rescheduleNotifications();
   }
 
   Future<void> setWeeklySummarySchedule(int day, String time) async {
     await _prefs.setInt(NotificationPrefsKeys.weeklySummaryDay, day);
     await _prefs.setString(NotificationPrefsKeys.weeklySummaryTime, time);
     state = state.copyWith(weeklySummaryDay: day, weeklySummaryTime: time);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
   }
 }
 
@@ -633,3 +1199,58 @@ final notificationPreferencesProvider =
     StateNotifierProvider<NotificationPreferencesNotifier, NotificationPreferences>((ref) {
   throw UnimplementedError('Must be overridden with SharedPreferences');
 });
+
+/// Provider for syncing notification preferences to backend
+/// This should be called when user logs in or preferences change
+final notificationPrefsSyncProvider = Provider<NotificationPrefsSync>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return NotificationPrefsSync(apiClient);
+});
+
+/// Helper class to sync notification preferences to the backend
+class NotificationPrefsSync {
+  final ApiClient _apiClient;
+
+  NotificationPrefsSync(this._apiClient);
+
+  /// Sync current preferences to backend
+  Future<void> syncPreferences(NotificationPreferences prefs) async {
+    try {
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('🔔 [Sync] Skipping backend sync - no user ID');
+        return;
+      }
+
+      // Convert preferences to backend format
+      final backendPrefs = {
+        'push_notifications_enabled': true,
+        'push_workout_reminders': prefs.workoutReminders,
+        'push_achievement_alerts': prefs.streakAlerts,
+        'push_weekly_summary': prefs.weeklySummary,
+        'push_hydration_reminders': prefs.hydrationReminders,
+        'push_ai_coach_messages': prefs.aiCoachMessages,
+        'push_nutrition_reminders': prefs.nutritionReminders,
+        'weekly_summary_enabled': prefs.weeklySummary,
+        'weekly_summary_day': _dayIntToString(prefs.weeklySummaryDay),
+        'weekly_summary_time': prefs.weeklySummaryTime,
+        'quiet_hours_start': prefs.quietHoursStart,
+        'quiet_hours_end': prefs.quietHoursEnd,
+        'timezone': tz.local.name,
+      };
+
+      await _apiClient.put(
+        '/summaries/preferences/$userId',
+        data: backendPrefs,
+      );
+      debugPrint('🔔 [Sync] Preferences synced to backend successfully');
+    } catch (e) {
+      debugPrint('🔔 [Sync] Failed to sync preferences to backend: $e');
+    }
+  }
+
+  String _dayIntToString(int day) {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[day % 7];
+  }
+}

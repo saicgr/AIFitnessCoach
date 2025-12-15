@@ -58,7 +58,7 @@ void main() async {
       overrides: [
         notificationServiceProvider.overrideWithValue(notificationService),
         notificationPreferencesProvider.overrideWith(
-          (ref) => NotificationPreferencesNotifier(sharedPreferences),
+          (ref) => NotificationPreferencesNotifier(sharedPreferences, notificationService),
         ),
       ],
       child: const AiFitnessCoachApp(),

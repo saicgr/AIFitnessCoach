@@ -13,6 +13,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/image_url_cache.dart';
 import '../../widgets/empty_state.dart';
+import '../notifications/notifications_screen.dart';
 import 'widgets/regenerate_workout_sheet.dart';
 import 'widgets/edit_program_sheet.dart';
 
@@ -79,7 +80,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final completedCount = workoutsNotifier.completedCount;
     final weeklyProgress = workoutsNotifier.weeklyProgress;
 
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    // Use actual brightness to support ThemeMode.system
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
@@ -129,6 +131,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         color: AppColors.orange,
                         tooltip: 'Workouts this week',
                       ),
+                      const SizedBox(width: 4),
+                      _NotificationBellButton(isDark: isDark),
                       const SizedBox(width: 4),
                       _ProgramMenuButton(isDark: isDark),
                     ],
@@ -397,6 +401,67 @@ class _StatBadge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Notification Bell Button with Badge
+// ─────────────────────────────────────────────────────────────────
+
+class _NotificationBellButton extends ConsumerWidget {
+  final bool isDark;
+
+  const _NotificationBellButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(
+            unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
+            color: unreadCount > 0 ? AppColors.cyan : textMuted,
+            size: 24,
+          ),
+          tooltip: 'Notifications',
+          onPressed: () => context.push('/notifications'),
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                  width: 2,
+                ),
+              ),
+              child: Text(
+                unreadCount > 99 ? '99+' : '$unreadCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  height: 1,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Program Menu Button (3-dot menu)
 // ─────────────────────────────────────────────────────────────────
 
@@ -427,6 +492,8 @@ class _ProgramMenuButton extends ConsumerWidget {
       onSelected: (value) {
         if (value == 'edit_program') {
           _showEditProgramSheet(context, ref);
+        } else if (value == 'settings') {
+          context.push('/settings');
         }
       },
       itemBuilder: (context) => [
@@ -442,6 +509,26 @@ class _ProgramMenuButton extends ConsumerWidget {
               const SizedBox(width: 12),
               Text(
                 'Customize Program',
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(
+                Icons.settings_outlined,
+                size: 20,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Settings',
                 style: TextStyle(
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   fontWeight: FontWeight.w500,

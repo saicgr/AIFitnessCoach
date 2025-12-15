@@ -54,6 +54,12 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsCard(
                 items: [
                   _SettingItem(
+                    icon: Icons.smartphone_outlined,
+                    title: 'Follow System',
+                    subtitle: 'Match device theme',
+                    isFollowSystemToggle: true,
+                  ),
+                  _SettingItem(
                     icon: Icons.dark_mode_outlined,
                     title: 'Dark Mode',
                     isThemeToggle: true,
@@ -1351,6 +1357,7 @@ class _SettingItem {
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool isThemeToggle;
+  final bool isFollowSystemToggle;
 
   const _SettingItem({
     required this.icon,
@@ -1359,6 +1366,7 @@ class _SettingItem {
     this.onTap,
     this.trailing,
     this.isThemeToggle = false,
+    this.isFollowSystemToggle = false,
   });
 }
 
@@ -1373,7 +1381,14 @@ class _SettingsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final themeMode = ref.watch(themeModeProvider);
+    // Use actual brightness for styling (respects system theme)
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // For the toggle, show ON if dark mode is active (either explicit or via system)
+    final isDarkModeActive = themeMode == ThemeMode.dark ||
+        (themeMode == ThemeMode.system && MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    // Follow system is ON when themeMode is system
+    final isFollowingSystem = themeMode == ThemeMode.system;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -1427,11 +1442,32 @@ class _SettingsCard extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      if (item.isThemeToggle)
+                      if (item.isFollowSystemToggle)
                         Switch(
-                          value: isDark,
+                          value: isFollowingSystem,
                           onChanged: (value) {
-                            ref.read(themeModeProvider.notifier).toggle();
+                            debugPrint('🎨 [Settings] Follow System changed to: $value');
+                            if (value) {
+                              // Turn ON follow system
+                              ref.read(themeModeProvider.notifier).setTheme(ThemeMode.system);
+                            } else {
+                              // Turn OFF follow system - use current actual theme as explicit
+                              ref.read(themeModeProvider.notifier).setTheme(
+                                isDark ? ThemeMode.dark : ThemeMode.light,
+                              );
+                            }
+                          },
+                          activeColor: AppColors.cyan,
+                        )
+                      else if (item.isThemeToggle)
+                        Switch(
+                          value: isDarkModeActive,
+                          onChanged: isFollowingSystem ? null : (value) {
+                            debugPrint('🎨 [Settings] Dark Mode changed to: $value');
+                            // Set explicit light/dark (only when not following system)
+                            ref.read(themeModeProvider.notifier).setTheme(
+                              value ? ThemeMode.dark : ThemeMode.light,
+                            );
                           },
                           activeColor: AppColors.cyan,
                         )

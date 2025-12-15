@@ -211,7 +211,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
+    // Use actual brightness to support ThemeMode.system
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? _DarkColors() : _LightColors();
 
     return Container(

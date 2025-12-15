@@ -75,6 +75,7 @@ class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
             ),
 
             // Floating chat window - centered with margins
+            // Using Listener to absorb pointer events without blocking TextField gestures
             Center(
               child: Padding(
                 padding: EdgeInsets.only(
@@ -83,11 +84,14 @@ class _FloatingChatOverlayState extends ConsumerState<FloatingChatOverlay> {
                   top: 80,
                   bottom: bottomPadding + 120,
                 ),
-                child: _ChatModal(
-                  onClose: () => ref.read(floatingChatProvider.notifier).collapse(),
-                  onMinimize: () => ref.read(floatingChatProvider.notifier).collapse(),
-                ).animate().scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 250.ms, curve: Curves.easeOutBack)
-                 .fadeIn(duration: 200.ms),
+                child: Listener(
+                  onPointerDown: (_) {}, // Absorb pointer events to prevent backdrop tap
+                  child: _ChatModal(
+                    onClose: () => ref.read(floatingChatProvider.notifier).collapse(),
+                    onMinimize: () => ref.read(floatingChatProvider.notifier).collapse(),
+                  ).animate().scale(begin: const Offset(0.9, 0.9), end: const Offset(1, 1), duration: 250.ms, curve: Curves.easeOutBack)
+                   .fadeIn(duration: 200.ms),
+                ),
               ),
             ),
           ],
@@ -745,8 +749,8 @@ class _TypingIndicator extends StatelessWidget {
   }
 }
 
-/// Input bar - Stateful to properly manage TextField and agent picker
-class _InputBar extends StatefulWidget {
+/// Input bar - Simple stateless widget matching regeneration sheet pattern
+class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isLoading;
@@ -761,93 +765,16 @@ class _InputBar extends StatefulWidget {
     required this.bottomPadding,
   });
 
-  @override
-  State<_InputBar> createState() => _InputBarState();
-}
-
-class _InputBarState extends State<_InputBar> {
-  bool _showAgentPicker = false;
-  OverlayEntry? _overlayEntry;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_onTextChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onTextChanged);
-    _hideAgentPicker();
-    super.dispose();
-  }
-
-  void _onTextChanged() {
-    final text = widget.controller.text;
-    final cursorPos = widget.controller.selection.baseOffset;
-
-    // Check if user just typed '@' at the start or after a space
-    if (cursorPos > 0 && cursorPos <= text.length) {
-      final charBefore = cursorPos > 1 ? text[cursorPos - 2] : ' ';
-      final currentChar = text[cursorPos - 1];
-
-      if (currentChar == '@' && (charBefore == ' ' || cursorPos == 1)) {
-        _showAgentPickerOverlay();
-        return;
-      }
+  void _handleSend() {
+    if (controller.text.trim().isNotEmpty) {
+      onSend();
     }
-
-    // Hide picker if text changed without @
-    if (_showAgentPicker && !text.contains('@')) {
-      _hideAgentPicker();
-    }
-  }
-
-  void _showAgentPickerOverlay() {
-    if (_showAgentPicker) return;
-
-    setState(() => _showAgentPicker = true);
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => _AgentPickerOverlay(
-        onAgentSelected: _onAgentSelected,
-        onDismiss: _hideAgentPicker,
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  void _hideAgentPicker() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    if (_showAgentPicker) {
-      setState(() => _showAgentPicker = false);
-    }
-  }
-
-  void _onAgentSelected(AgentConfig agent) {
-    final text = widget.controller.text;
-    final cursorPos = widget.controller.selection.baseOffset;
-
-    // Find the @ symbol to replace
-    int atIndex = text.lastIndexOf('@', cursorPos - 1);
-    if (atIndex >= 0) {
-      final newText = text.replaceRange(atIndex, cursorPos, '@${agent.name} ');
-      widget.controller.text = newText;
-      widget.controller.selection = TextSelection.fromPosition(
-        TextPosition(offset: atIndex + agent.name.length + 2),
-      );
-    }
-
-    _hideAgentPicker();
-    widget.focusNode.requestFocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 10, 12, widget.bottomPadding + 12),
+      padding: EdgeInsets.fromLTRB(12, 10, 12, bottomPadding + 12),
       decoration: BoxDecoration(
         color: AppColors.nearBlack,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -859,47 +786,53 @@ class _InputBarState extends State<_InputBar> {
         children: [
           Expanded(
             child: TextField(
-              controller: widget.controller,
-              focusNode: widget.focusNode,
-              enabled: !widget.isLoading,
-              textCapitalization: TextCapitalization.sentences,
-              autocorrect: true,
-              enableSuggestions: true,
-              keyboardType: TextInputType.text,
+              controller: controller,
+              focusNode: focusNode,
+              enabled: !isLoading,
+              autofocus: false,
               textInputAction: TextInputAction.send,
-              maxLines: 3,
-              minLines: 1,
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.sentences,
+              maxLines: 1,
               style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Ask your AI coach... (@ to pick agent)',
-                hintStyle: TextStyle(color: AppColors.textMuted),
+                hintText: 'Ask your AI coach...',
+                hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: AppColors.glassSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide: BorderSide.none,
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: AppColors.cardBorder.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: AppColors.cyan),
+                ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,
                 ),
               ),
-              onSubmitted: (_) => widget.onSend(),
+              onSubmitted: (_) => _handleSend(),
             ),
           ),
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: widget.isLoading
+                colors: isLoading
                     ? [AppColors.textMuted, AppColors.textMuted]
                     : [AppColors.cyan, AppColors.purple],
               ),
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              onPressed: widget.isLoading ? null : widget.onSend,
-              icon: widget.isLoading
+              onPressed: isLoading ? null : onSend,
+              icon: isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,

@@ -50,6 +50,7 @@ dependencies:
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
 
   # File operations
   file_picker: ^8.0.0+1

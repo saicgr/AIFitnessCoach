@@ -1109,7 +1109,8 @@ class _SettingsCardWithRef extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
-    final isDark = widgetRef.watch(themeModeProvider) == ThemeMode.dark;
+    // Use actual brightness to support ThemeMode.system
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

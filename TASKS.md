@@ -1,8 +1,4 @@
 ASAP:
-0. Make the floating bar and AI Coach button smaller
-1. The notifications do not work on scheduled time for any of them
-2. AI Coach tone and theme doesn't change
-3. Regenerating workout doesn't work
 4. User asked for a quick workout but it only gave them big message but did't generate a workout
 5. When generating working from onbaording or regenerating alwayus take workouts having videos and images
 6. All library exercises should have images and videos
@@ -14,7 +10,6 @@ ASAP:
 10. Align images to exercise texts
 11. Kettlebells or dumbbell what if they only have one?
 12. Swap exercise and regenrate broken
-13. Reflect the mode that system is using like dark/light mode 
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
 15. Chat prompt text doesn't work as expected
 16. When typing the can you make it so that the text input is above keyboard?
@@ -25,10 +20,23 @@ ASAP:
 21. AI coach option called college level coach that scolds you like they do
 22. End workout button is not responsive
 23. Health connect
+23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
 24. Accessibility simple workout home and onboarding
 25. Demo of the whole app
 26. Small game between sets (optional)
 27. Dance session or something between sets that will help burn more calories
+28. How Real AI Coach Notifications Would Work
+In production, the AI Coach would send notifications automatically via:
+Daily Scheduler (Guilt Notifications)
+Backend endpoint: POST /notifications/scheduler/check-inactive-users
+Should be called by a cron job at 6pm daily
+Sends "guilt" messages if you miss workouts
+Morning Scheduler (Workout Reminders)
+Backend endpoint: POST /notifications/scheduler/send-workout-reminders
+Should be called by a cron job at 8am daily
+Reminds you about scheduled workouts
+To make these automatic, you'd need to set up cron jobs on your hosting platform (Render cron, AWS CloudWatch Events, etc.) to call these endpoints daily. Would you like me to help you set up the cron jobs, or do you want to test the AI Coach notification button first?
+29.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

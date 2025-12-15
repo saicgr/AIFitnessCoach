@@ -824,8 +824,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
 
   /// Show AI insights in a draggable popup modal with formatted sections
   void _showAIInsightsPopup(String summaryJson) {
-    // Use Riverpod theme provider for consistent theme detection
-    final isDark = ref.read(themeModeProvider) == ThemeMode.dark;
+    // Use actual brightness to support ThemeMode.system
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

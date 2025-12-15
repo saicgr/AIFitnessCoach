@@ -13,7 +13,7 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const _themeKey = 'theme_mode';
 
-  ThemeModeNotifier() : super(ThemeMode.light) {
+  ThemeModeNotifier() : super(ThemeMode.system) {
     _loadTheme();
   }
 
@@ -21,8 +21,10 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final themeString = prefs.getString(_themeKey) ?? 'light';
-      state = _themeFromString(themeString);
+      final themeString = prefs.getString(_themeKey);
+      debugPrint('🎨 [Theme] Loaded theme string from prefs: "$themeString"');
+      state = _themeFromString(themeString ?? 'system');
+      debugPrint('🎨 [Theme] Set theme mode to: $state');
       _updateSystemUI();
     } catch (e) {
       debugPrint('Error loading theme: $e');
@@ -37,11 +39,13 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   /// Set specific theme mode
   Future<void> setTheme(ThemeMode mode) async {
+    debugPrint('🎨 [Theme] setTheme called with: $mode (current: $state)');
     state = mode;
     _updateSystemUI();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_themeKey, _themeToString(mode));
+      debugPrint('🎨 [Theme] Saved theme to prefs: ${_themeToString(mode)}');
     } catch (e) {
       debugPrint('Error saving theme: $e');
     }
@@ -49,6 +53,12 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   /// Update system UI overlay style
   void _updateSystemUI() {
+    // For system mode, let Flutter handle it automatically
+    if (state == ThemeMode.system) {
+      // Don't override system UI when following system theme
+      return;
+    }
+
     SystemChrome.setSystemUIOverlayStyle(
       state == ThemeMode.dark
           ? const SystemUiOverlayStyle(
@@ -85,8 +95,10 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
+      case 'system':
+        return ThemeMode.system;
       default:
-        return ThemeMode.light;
+        return ThemeMode.system; // Default to system theme
     }
   }
 }

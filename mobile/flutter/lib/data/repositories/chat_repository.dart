@@ -32,8 +32,9 @@ final chatMessagesProvider =
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
-  final aiSettings = ref.watch(aiSettingsProvider);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, aiSettings);
+  // Pass a callback to get fresh AI settings on each message instead of caching stale settings
+  AISettings getAISettings() => ref.read(aiSettingsProvider);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings);
 });
 
 /// Chat repository for API calls
@@ -122,10 +123,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
-  final AISettings _aiSettings;
+  final AISettings Function() _getAISettings; // Callback to get fresh settings
   bool _isLoading = false;
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._aiSettings)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -243,6 +244,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         };
       }
 
+      // Get fresh AI settings on each message (not stale cached settings)
+      final currentAISettings = _getAISettings();
+      debugPrint('🤖 [Chat] Using fresh AI settings: ${currentAISettings.coachingStyle}, ${currentAISettings.communicationTone}');
+
       final response = await _repository.sendMessage(
         message: message,
         userId: userId,
@@ -250,7 +255,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         currentWorkout: currentWorkout,
         workoutSchedule: workoutSchedule,
         conversationHistory: history,
-        aiSettings: _aiSettings.toJson(),
+        aiSettings: currentAISettings.toJson(),
       );
 
       // Process action_data if present

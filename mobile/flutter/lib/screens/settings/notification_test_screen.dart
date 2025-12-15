@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
@@ -15,6 +16,8 @@ class NotificationTestScreen extends ConsumerStatefulWidget {
 class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen> {
   String? _sendingType;
   String? _lastResult;
+  List<PendingNotificationRequest>? _pendingNotifications;
+  Map<String, dynamic>? _timezoneInfo;
 
   Future<void> _sendNotification(String type, String endpoint, {Map<String, dynamic>? queryParams}) async {
     setState(() {
@@ -305,6 +308,17 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
             child: Column(
               children: [
                 _buildNotificationButton(
+                  icon: Icons.auto_awesome,
+                  title: 'AI Coach Message',
+                  subtitle: '"Hey! Your AI Coach here 💪"',
+                  color: AppColors.purple,
+                  onTap: () => _sendAiCoachNotification(),
+                  isLoading: _sendingType == 'AI Coach Message',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                _buildNotificationButton(
                   icon: Icons.science_outlined,
                   title: 'Basic Test',
                   subtitle: '"Your AI Coach is ready! 💪"',
@@ -318,10 +332,401 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // Local Notification Tests
+          _buildSectionHeader('Local Notification Tests', Icons.phone_android, AppColors.orange, textPrimary),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: AppColors.orange, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'These are LOCAL notifications (not Firebase). Use these to test if scheduled notifications work on your device.',
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: cardBackground,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                _buildNotificationButton(
+                  icon: Icons.bolt,
+                  title: 'Immediate Local Notification',
+                  subtitle: 'Shows a notification RIGHT NOW',
+                  color: AppColors.orange,
+                  onTap: () => _testImmediateLocalNotification(),
+                  isLoading: _sendingType == 'Immediate Local',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                _buildNotificationButton(
+                  icon: Icons.timer,
+                  title: 'Schedule in 10 seconds',
+                  subtitle: 'Tests scheduled notification delivery',
+                  color: AppColors.orange,
+                  onTap: () => _testScheduledLocalNotification(10),
+                  isLoading: _sendingType == 'Scheduled 10s',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                _buildNotificationButton(
+                  icon: Icons.schedule,
+                  title: 'Schedule in 60 seconds',
+                  subtitle: 'Tests scheduled notification delivery',
+                  color: AppColors.orange,
+                  onTap: () => _testScheduledLocalNotification(60),
+                  isLoading: _sendingType == 'Scheduled 60s',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  isLast: true,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Debug Info
+          _buildSectionHeader('Debug Info', Icons.bug_report, AppColors.error, textPrimary),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: cardBackground,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                _buildNotificationButton(
+                  icon: Icons.list,
+                  title: 'View Pending Notifications',
+                  subtitle: 'Shows all scheduled notifications',
+                  color: AppColors.error,
+                  onTap: () => _loadPendingNotifications(),
+                  isLoading: _sendingType == 'Loading Pending',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, indent: 56, color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                _buildNotificationButton(
+                  icon: Icons.access_time,
+                  title: 'View Timezone Info',
+                  subtitle: 'Shows current timezone settings',
+                  color: AppColors.error,
+                  onTap: () => _loadTimezoneInfo(),
+                  isLoading: _sendingType == 'Loading TZ',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  isLast: true,
+                ),
+              ],
+            ),
+          ),
+
+          // Show pending notifications if loaded
+          if (_pendingNotifications != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pending Notifications (${_pendingNotifications!.length})',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, size: 18, color: textMuted),
+                        onPressed: () => setState(() => _pendingNotifications = null),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_pendingNotifications!.isEmpty)
+                    Text(
+                      'No pending notifications scheduled',
+                      style: TextStyle(color: textMuted, fontSize: 13),
+                    )
+                  else
+                    ..._pendingNotifications!.map((notif) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.cyan.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'ID: ${notif.id}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.cyan,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  notif.title ?? 'No title',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                                if (notif.body != null)
+                                  Text(
+                                    notif.body!,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textMuted,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+                ],
+              ),
+            ),
+          ],
+
+          // Show timezone info if loaded
+          if (_timezoneInfo != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Timezone Info',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, size: 18, color: textMuted),
+                        onPressed: () => setState(() => _timezoneInfo = null),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ..._timezoneInfo!.entries.map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          child: Text(
+                            '${e.key}:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${e.value}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textPrimary,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 32),
         ],
       ),
     );
+  }
+
+  Future<void> _testImmediateLocalNotification() async {
+    setState(() {
+      _sendingType = 'Immediate Local';
+      _lastResult = null;
+    });
+
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      await notificationService.showTestLocalNotification();
+      setState(() {
+        _lastResult = '✅ Immediate local notification sent! Check your notification shade.';
+      });
+    } catch (e) {
+      setState(() {
+        _lastResult = '❌ Failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() => _sendingType = null);
+    }
+  }
+
+  Future<void> _testScheduledLocalNotification(int seconds) async {
+    setState(() {
+      _sendingType = 'Scheduled ${seconds}s';
+      _lastResult = null;
+    });
+
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      await notificationService.scheduleTestNotification(seconds);
+      setState(() {
+        _lastResult = '✅ Notification scheduled for $seconds seconds from now. Wait for it!';
+      });
+    } catch (e) {
+      setState(() {
+        _lastResult = '❌ Failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() => _sendingType = null);
+    }
+  }
+
+  Future<void> _loadPendingNotifications() async {
+    setState(() {
+      _sendingType = 'Loading Pending';
+    });
+
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      final pending = await notificationService.getPendingNotifications();
+      setState(() {
+        _pendingNotifications = pending;
+        _lastResult = '✅ Loaded ${pending.length} pending notifications';
+      });
+    } catch (e) {
+      setState(() {
+        _lastResult = '❌ Failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() => _sendingType = null);
+    }
+  }
+
+  Future<void> _loadTimezoneInfo() async {
+    setState(() {
+      _sendingType = 'Loading TZ';
+    });
+
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      final tzInfo = notificationService.getTimezoneInfo();
+      setState(() {
+        _timezoneInfo = tzInfo;
+        _lastResult = '✅ Timezone info loaded';
+      });
+    } catch (e) {
+      setState(() {
+        _lastResult = '❌ Failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() => _sendingType = null);
+    }
+  }
+
+  Future<void> _sendAiCoachNotification() async {
+    setState(() {
+      _sendingType = 'AI Coach Message';
+      _lastResult = null;
+    });
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final notificationService = ref.read(notificationServiceProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Get actual FCM token
+      final fcmToken = notificationService.fcmToken;
+      if (fcmToken == null) {
+        throw Exception('No FCM token available. Please enable notifications.');
+      }
+
+      // First register the token with backend
+      await notificationService.registerTokenWithBackend(apiClient, userId);
+
+      // Send custom AI Coach notification
+      await apiClient.post(
+        '/notifications/send',
+        data: {
+          'user_id': userId,
+          'title': 'Hey! Your AI Coach here 💪',
+          'body': 'Great progress this week! Ready to crush your next workout?',
+          'notification_type': 'ai_coach',
+          'data': {'action': 'open_home'},
+        },
+      );
+
+      setState(() {
+        _lastResult = '✅ AI Coach Message sent! Check your notification shade.';
+      });
+    } catch (e) {
+      setState(() {
+        _lastResult = '❌ Failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _sendingType = null;
+      });
+    }
   }
 
   Future<void> _sendTestNotification() async {
