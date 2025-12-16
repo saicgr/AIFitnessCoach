@@ -1070,10 +1070,31 @@ def generate_quick_workout(
                 old_exercises = workout.get("exercises", [])
                 old_exercise_names = [e.get("name", "Unknown") for e in old_exercises]
 
-        # If no workout found, we'll create a new one
+        # If no workout found, check for an existing incomplete workout for today
         if not workout:
-            is_new_workout = True
-            logger.info(f"No existing workout found, will create new workout for user {user_id}")
+            from datetime import date, datetime, timezone
+            # Use UTC date for consistency with database storage
+            today_utc = datetime.now(timezone.utc).date().isoformat()
+
+            # Try to find an existing incomplete workout for today
+            existing_today = db.client.table("workouts").select("*").eq(
+                "user_id", user_id
+            ).eq("is_completed", False).eq("is_current", True).gte(
+                "scheduled_date", today_utc
+            ).lte("scheduled_date", today_utc + "T23:59:59Z").order(
+                "created_at", desc=True
+            ).limit(1).execute()
+
+            if existing_today.data:
+                # Use the most recent incomplete workout for today
+                workout = existing_today.data[0]
+                workout_id = workout.get("id")
+                old_exercises = workout.get("exercises_json", []) or workout.get("exercises", [])
+                old_exercise_names = [e.get("name", "Unknown") for e in old_exercises] if old_exercises else []
+                logger.info(f"Found existing workout for today: {workout.get('name')} ({workout_id})")
+            else:
+                is_new_workout = True
+                logger.info(f"No existing workout for today, will create new workout for user {user_id}")
 
         # Get user profile for personalized exercise selection
         user = db.get_user(user_id) if user_id else None
@@ -1304,16 +1325,16 @@ def generate_quick_workout(
         final_workout_id = workout_id
 
         if is_new_workout:
-            # Create a new workout for today
-            from datetime import date
-            today = date.today().isoformat()
+            # Create a new workout for today (UTC)
+            from datetime import datetime, timezone
+            today_utc = datetime.now(timezone.utc).date().isoformat()
 
             new_workout_data = {
                 "user_id": user_id,
                 "name": workout_name,
                 "type": workout_type_key.replace("_", " "),
                 "difficulty": intensity_key,
-                "scheduled_date": today,
+                "scheduled_date": today_utc,
                 "exercises_json": new_exercises,
                 "duration_minutes": min(duration_minutes, 30),
                 "is_completed": False,
@@ -1334,14 +1355,15 @@ def generate_quick_workout(
         else:
             # Update existing workout
             update_data = {
-                "exercises": new_exercises,
+                "exercises_json": new_exercises,
                 "name": workout_name,
                 "duration_minutes": min(duration_minutes, 30),  # Cap at 30 for quick workouts
                 "difficulty": intensity_key,
                 "type": workout_type_key.replace("_", " "),
-                "last_modified_method": "ai_quick_workout"
+                "generation_method": "ai_quick_workout"
             }
             db.update_workout(workout_id, update_data)
+            final_workout_id = workout_id
             logger.info(f"Updated workout {workout_id}: {workout_name}")
 
         logger.info(f"Generated quick workout: {workout_name} with {len(new_exercises)} exercises from Exercise Library")

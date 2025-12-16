@@ -142,12 +142,15 @@ class LangGraphCoachService:
         Fallback: Infer agent from keywords in message.
 
         Returns None if no clear match (will default to coach).
+        Uses word boundary matching to avoid false positives like "ate" in "generate".
         """
+        import re
         message_lower = message.lower()
 
         keyword_counts = {}
         for agent_type, keywords in DOMAIN_KEYWORDS.items():
-            count = sum(1 for kw in keywords if kw in message_lower)
+            # Use word boundary matching to avoid partial matches
+            count = sum(1 for kw in keywords if re.search(r'\b' + re.escape(kw) + r'\b', message_lower))
             if count > 0:
                 keyword_counts[agent_type] = count
 

@@ -204,17 +204,20 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
 
     # Detect if this is a workout CREATION request (not just a question)
     message_lower = state["user_message"].lower()
-    is_workout_creation = any([
-        "minute" in message_lower and ("exercise" in message_lower or "workout" in message_lower),
-        "min " in message_lower and ("exercise" in message_lower or "workout" in message_lower),
-        any(phrase in message_lower for phrase in [
-            "give me a", "create a", "generate a", "make me a", "build me a",
-            "i want a", "i need a", "can you make", "can you create",
-        ]) and ("workout" in message_lower or "exercise" in message_lower or "training" in message_lower),
-    ])
 
-    if is_workout_creation:
-        logger.info("[Workout Agent] Detected workout creation request - will force tool use")
+    # Check for duration + exercise/workout/training pattern
+    has_duration = "minute" in message_lower or "min " in message_lower or "min." in message_lower
+    has_workout_word = "exercise" in message_lower or "workout" in message_lower or "training" in message_lower
+
+    # Check for creation phrases
+    creation_phrases = ["give me", "create", "generate", "make me", "build me", "i want", "i need", "can you"]
+    has_creation_phrase = any(phrase in message_lower for phrase in creation_phrases)
+
+    is_workout_creation = (has_duration and has_workout_word) or (has_creation_phrase and has_workout_word)
+
+    logger.info(f"[Workout Agent] Message: {message_lower[:100]}...")
+    logger.info(f"[Workout Agent] has_duration={has_duration}, has_workout_word={has_workout_word}, has_creation_phrase={has_creation_phrase}")
+    logger.info(f"[Workout Agent] is_workout_creation={is_workout_creation}")
 
     # Create LLM with workout tools bound
     llm = ChatOpenAI(

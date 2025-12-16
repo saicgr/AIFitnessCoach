@@ -103,8 +103,9 @@ class ChatRepository {
         final jsonData = response.data as Map<String, dynamic>;
         debugPrint('🔍 [Chat] Raw response JSON: $jsonData');
         debugPrint('🔍 [Chat] agent_type in JSON: ${jsonData['agent_type']}');
+        debugPrint('🔍 [Chat] action_data in JSON: ${jsonData['action_data']}');
         final chatResponse = ChatResponse.fromJson(jsonData);
-        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}');
+        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}, actionData: ${chatResponse.actionData}');
         return chatResponse;
       }
       throw Exception('Failed to send message');
@@ -342,10 +343,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Process action_data from AI response
   Future<void> _processActionData(Map<String, dynamic>? actionData) async {
-    if (actionData == null) return;
+    if (actionData == null) {
+      debugPrint('🤖 [Chat] No action_data to process (null)');
+      return;
+    }
 
     final action = actionData['action'] as String?;
     debugPrint('🤖 [Chat] Processing action_data: $action');
+    debugPrint('🤖 [Chat] Full action_data: $actionData');
 
     switch (action) {
       case 'change_setting':
@@ -493,13 +498,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Handle quick workout generation from AI
   Future<void> _handleQuickWorkoutGenerated(Map<String, dynamic> actionData) async {
+    final workoutId = actionData['workout_id'];
     final workoutName = actionData['workout_name'] as String?;
     final exerciseCount = actionData['exercise_count'] as int?;
-    debugPrint('🏋️ [Chat] Quick workout generated: $workoutName with $exerciseCount exercises');
+    debugPrint('🏋️ [Chat] Quick workout generated! workout_id: $workoutId, name: $workoutName, exercises: $exerciseCount');
 
     // Refresh workouts to show the new quick workout
+    debugPrint('🏋️ [Chat] Calling _workoutsNotifier.refresh()...');
     await _workoutsNotifier.refresh();
-    debugPrint('🏋️ [Chat] Workouts refreshed after quick workout generation');
+    debugPrint('🏋️ [Chat] Workouts refreshed successfully after quick workout generation');
   }
 
   /// Handle general workout modifications from AI

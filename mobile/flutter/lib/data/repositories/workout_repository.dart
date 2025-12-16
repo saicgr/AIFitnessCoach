@@ -898,9 +898,17 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
   /// Refresh workouts
   Future<void> refresh() async {
+    debugPrint('🏋️ [Workouts] refresh() called');
     final userId = await _apiClient.getUserId();
     if (userId != null) {
+      debugPrint('🏋️ [Workouts] Fetching workouts for user: $userId');
       await fetchWorkouts(userId);
+      final currentWorkouts = state.valueOrNull ?? [];
+      debugPrint('🏋️ [Workouts] After refresh: ${currentWorkouts.length} workouts');
+      final nextWorkoutName = nextWorkout?.name;
+      debugPrint('🏋️ [Workouts] Next workout: $nextWorkoutName');
+    } else {
+      debugPrint('🏋️ [Workouts] refresh() - no userId');
     }
   }
 
