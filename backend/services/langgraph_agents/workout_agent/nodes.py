@@ -137,6 +137,23 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     """
     message = state.get("user_message", "").lower()
 
+    # Modification patterns that ALWAYS need tools - even if phrased as questions
+    # These indicate the user wants to change their current workout
+    modification_patterns = [
+        "don't have", "do not have", "i don't have", "i do not have",  # Equipment unavailable
+        "replace", "swap", "substitute", "alternative", "instead of",  # Replacement requests
+        "remove", "take out", "skip", "can't do",  # Removal requests
+        "add", "include", "put in",  # Addition requests
+        "change", "modify", "update",  # Generic modifications
+        "make it", "make the workout",  # Intensity changes
+        "something else", "different exercise",  # Alternative requests
+    ]
+
+    for pattern in modification_patterns:
+        if pattern in message:
+            logger.info(f"[Workout Router] Modification pattern detected: {pattern} -> agent")
+            return "agent"
+
     # Question patterns that don't need tools - pure knowledge questions
     # These are questions about HOW to do exercises, not requests to create workouts
     question_only_patterns = [
@@ -272,7 +289,14 @@ Examples that REQUIRE generate_quick_workout:
 - "Give me a 17 minute cricket workout" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=17, workout_type="cricket")
 - "I want a football training workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="football")
 
-NEVER just describe exercises in text. ALWAYS call the generate_quick_workout tool to save it to the database so it appears on the user's home screen."""
+**EQUIPMENT/EXERCISE MODIFICATIONS:**
+When the user says they don't have equipment or can't do an exercise:
+- "I don't have the agility ladder" -> call remove_exercise_from_workout(workout_id={workout_id}, exercise_names=["Agility Ladder Drills"]) and then add_exercise_to_workout with a bodyweight alternative
+- "I can't do pull-ups" -> call remove_exercise_from_workout and add_exercise_to_workout with an alternative
+- "Replace X with something else" -> call remove_exercise_from_workout then add_exercise_to_workout
+- "Give me something else instead of X" -> same as above
+
+NEVER just describe exercises in text. ALWAYS call the appropriate tool to save changes to the database so they appear on the user's home screen."""
 
     system_message = SystemMessage(content=tool_prompt)
 
