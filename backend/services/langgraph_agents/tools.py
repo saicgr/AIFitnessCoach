@@ -71,7 +71,7 @@ def add_exercise_to_workout(
 
         # Get user profile for personalized exercise selection
         user_id = workout.get("user_id")
-        user = db.get_user_by_id(user_id) if user_id else None
+        user = db.get_user(user_id) if user_id else None
         user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
 
@@ -247,7 +247,7 @@ def replace_all_exercises(
 
         # Get user profile for personalized exercise selection
         user_id = workout.get("user_id")
-        user = db.get_user_by_id(user_id) if user_id else None
+        user = db.get_user(user_id) if user_id else None
         user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
         user_goals = user.get("goals", []) if user else []
@@ -1076,7 +1076,7 @@ def generate_quick_workout(
             logger.info(f"No existing workout found, will create new workout for user {user_id}")
 
         # Get user profile for personalized exercise selection
-        user = db.get_user_by_id(user_id) if user_id else None
+        user = db.get_user(user_id) if user_id else None
         user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
         user_goals = user.get("goals", []) if user else []
