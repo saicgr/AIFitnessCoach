@@ -1,10 +1,6 @@
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-6. All library exercises should have images and videos
-8. Login details bug not getting saved and not shown in settings
-8.1 profile details not getting saved, 
-8.2 video play button bug,  pause button on the top right and video pause button of the video don't have relation. Video pause button is only pausing the video, the workout time still runs.
-9. Challenges when workout generates or during test
+9. Challenges when workout generates or during rest
 10. Align images to exercise texts
 11. Kettlebells or dumbbell what if they only have one?
 12. Swap exercise and regenrate broken

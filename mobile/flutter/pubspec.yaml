@@ -19,6 +19,7 @@ dependencies:
   sprung: ^3.0.1
   fl_chart: ^0.69.0
   confetti: ^0.7.0
+  glassmorphism: ^3.0.0
 
   # State Management
   flutter_riverpod: ^2.5.1

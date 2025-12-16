@@ -79,13 +79,21 @@ def row_to_user(row: dict) -> User:
         active_injuries = "[]"
 
     # Helper to get value from column or fall back to preferences JSON
-    def get_with_fallback(column_name: str, prefs_key: str = None):
-        """Get value from dedicated column, or fall back to preferences JSON."""
+    def get_with_fallback(column_name: str, prefs_key: str = None, default_values: list = None):
+        """Get value from dedicated column, or fall back to preferences JSON.
+
+        Args:
+            column_name: Name of the database column
+            prefs_key: Key in preferences JSON (defaults to column_name)
+            default_values: List of values to treat as "not set" (fall back to prefs)
+        """
         value = row.get(column_name)
-        if value is not None:
-            return value
-        # Fall back to preferences JSON
-        return prefs_dict.get(prefs_key or column_name)
+        # If value is None or a default placeholder, try preferences
+        if value is None or (default_values and value in default_values):
+            pref_value = prefs_dict.get(prefs_key or column_name)
+            if pref_value is not None:
+                return pref_value
+        return value
 
     return User(
         id=row.get("id"),
@@ -105,8 +113,8 @@ def row_to_user(row: dict) -> User:
         target_weight_kg=get_with_fallback("target_weight_kg"),
         age=get_with_fallback("age"),
         date_of_birth=str(get_with_fallback("date_of_birth")) if get_with_fallback("date_of_birth") else None,
-        gender=get_with_fallback("gender"),
-        activity_level=get_with_fallback("activity_level"),
+        gender=get_with_fallback("gender", default_values=["prefer_not_to_say"]),
+        activity_level=get_with_fallback("activity_level", default_values=["lightly_active"]),
     )
 
 

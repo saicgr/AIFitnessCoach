@@ -234,15 +234,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
   /// Handle tap on video/screen background
   /// - If overlay is showing: hide it to show full video
-  /// - If overlay is hidden: toggle video pause/play
+  /// - If overlay is hidden: toggle BOTH video and workout pause
   void _handleScreenTap() {
     if (_showSetOverlay) {
       // First tap: hide overlay to show full video
       setState(() => _showSetOverlay = false);
       HapticFeedback.lightImpact();
     } else {
-      // Overlay is hidden, toggle video pause/play
-      _toggleVideoPlayPause();
+      // Overlay is hidden, toggle both video and workout timer
+      _togglePause();
     }
   }
 
@@ -940,7 +940,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   void _togglePause() {
-    setState(() => _isPaused = !_isPaused);
+    setState(() {
+      _isPaused = !_isPaused;
+      // Sync video playing state with pause state
+      _isVideoPlaying = !_isPaused;
+    });
     // Also pause/play the video
     if (_videoController != null && _videoController!.value.isInitialized) {
       if (_isPaused) {

@@ -23,92 +23,23 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Scaffold(
       key: const ValueKey('profile_scaffold'),
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          // AI Settings floating button
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => context.push('/ai-settings'),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.purple.withOpacity(0.9),
-                      AppColors.cyan.withOpacity(0.9),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.psychology,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-          // Settings floating button
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () => context.push('/settings'),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (isDark ? Colors.black : Colors.grey).withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.settings_outlined,
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-
-              // Profile header
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Scrollable content - NO top padding, content scrolls from top
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 0),
+              child: Column(
+                children: [
+                  // Spacer for the floating header
+                  const SizedBox(height: 88),
+                  // Profile header
               _ProfileHeader(
                 name: user?.displayName ?? 'User',
                 email: user?.email ?? '',
@@ -315,6 +246,109 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 100),
             ],
           ),
+        ),
+            // Floating header pills (matching workout detail screen style)
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  // Profile title pill - solid elevated style
+                  Expanded(
+                    child: Container(
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                        borderRadius: BorderRadius.circular(28),
+                        border: isDark ? null : Border.all(
+                          color: AppColorsLight.cardBorder.withOpacity(0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.4)
+                                : Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Profile',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // AI Settings floating pill button (gradient)
+                  GestureDetector(
+                    onTap: () => context.push('/ai-settings'),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [AppColors.purple, AppColors.cyan],
+                        ),
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cyan.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.psychology,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Settings pill - solid elevated style
+                  GestureDetector(
+                    onTap: () => context.push('/settings'),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated,
+                        borderRadius: BorderRadius.circular(28),
+                        border: isDark ? null : Border.all(
+                          color: AppColorsLight.cardBorder.withOpacity(0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.4)
+                                : Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.settings_outlined,
+                        color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1227,6 +1261,13 @@ class _EditPersonalInfoSheetState extends ConsumerState<_EditPersonalInfoSheet> 
     super.initState();
     _nameController = TextEditingController();
     _ageController = TextEditingController();
+    // Refresh user data from API first, then load into form
+    _refreshAndLoadProfile();
+  }
+
+  Future<void> _refreshAndLoadProfile() async {
+    // Refresh user data from API to get latest values
+    await ref.read(authStateProvider.notifier).refreshUser();
     _loadCurrentProfile();
   }
 
