@@ -132,48 +132,11 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     """
     Determine if we should use tools or respond autonomously.
 
-    SIMPLE RULE: If it looks like a workout creation/modification request, use tools.
-    Only respond without tools for pure knowledge questions.
+    SIMPLE: Always give the LLM access to tools. Let the AI decide.
+    The LLM is smart enough to know when to modify workouts vs just answer questions.
     """
-    message = state.get("user_message", "").lower()
-
-    # Modification patterns that ALWAYS need tools - even if phrased as questions
-    # These indicate the user wants to change their current workout
-    modification_patterns = [
-        "don't have", "do not have", "i don't have", "i do not have",  # Equipment unavailable
-        "replace", "swap", "substitute", "alternative", "instead of",  # Replacement requests
-        "remove", "take out", "skip", "can't do",  # Removal requests
-        "add", "include", "put in",  # Addition requests
-        "change", "modify", "update",  # Generic modifications
-        "make it", "make the workout",  # Intensity changes
-        "something else", "different exercise",  # Alternative requests
-    ]
-
-    for pattern in modification_patterns:
-        if pattern in message:
-            logger.info(f"[Workout Router] Modification pattern detected: {pattern} -> agent")
-            return "agent"
-
-    # Question patterns that don't need tools - pure knowledge questions
-    # These are questions about HOW to do exercises, not requests to create workouts
-    question_only_patterns = [
-        "how do i do", "how to do", "what is a ", "what are ", "what muscles",
-        "is it good to", "why do", "difference between", "explain",
-        "tell me about", "what's the proper form",
-    ]
-
-    for pattern in question_only_patterns:
-        if message.startswith(pattern) or f" {pattern}" in message:
-            # But if they also mention duration/minutes, they want a workout created
-            if "minute" in message or "min " in message:
-                logger.info("[Workout Router] Question but has duration -> agent")
-                return "agent"
-            logger.info(f"[Workout Router] Pure knowledge question: {pattern} -> respond")
-            return "respond"
-
-    # Default: give LLM access to tools for everything else
-    # The LLM will decide whether to use them
-    logger.info("[Workout Router] Default -> agent (LLM decides)")
+    # Always route to agent - let the LLM decide whether to use tools
+    logger.info("[Workout Router] -> agent (LLM decides)")
     return "agent"
 
 
@@ -278,25 +241,20 @@ CRITICAL INSTRUCTIONS:
 - For sport-specific workouts (boxing, hyrox, crossfit, mma, etc.): Use the appropriate workout_type parameter.
 - For other tools: use workout_id from context. Default to today's workout (ID: {workout_id}) if available.
 
-**MANDATORY TOOL USE:**
-When the user asks to "generate", "create", "make", or "give me" a workout, you MUST use the generate_quick_workout tool.
-Do NOT describe a workout in text - you MUST call the tool to actually create it in the database.
-Examples that REQUIRE generate_quick_workout:
-- "Generate me a 20 minute workout for HYROX" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=20, workout_type="hyrox")
-- "Create a quick chest workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="chest")
-- "Give me a boxing workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="boxing")
-- "Make me a 15 min full body workout" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=15, workout_type="full_body")
-- "Give me a 17 minute cricket workout" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=17, workout_type="cricket")
-- "I want a football training workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="football")
+**IMPORTANT - USE TOOLS TO MAKE CHANGES:**
+You are a personal coach with the ability to create and modify workouts in real-time.
 
-**EQUIPMENT/EXERCISE MODIFICATIONS:**
-When the user says they don't have equipment or can't do an exercise:
-- "I don't have the agility ladder" -> call remove_exercise_from_workout(workout_id={workout_id}, exercise_names=["Agility Ladder Drills"]) and then add_exercise_to_workout with a bodyweight alternative
-- "I can't do pull-ups" -> call remove_exercise_from_workout and add_exercise_to_workout with an alternative
-- "Replace X with something else" -> call remove_exercise_from_workout then add_exercise_to_workout
-- "Give me something else instead of X" -> same as above
+When the user wants a workout created or modified:
+- Use generate_quick_workout to create new workouts
+- Use add_exercise_to_workout / remove_exercise_from_workout to modify existing workouts
+- Use replace_all_exercises to completely change a workout's focus
 
-NEVER just describe exercises in text. ALWAYS call the appropriate tool to save changes to the database so they appear on the user's home screen."""
+When the user just has a question (form, technique, advice):
+- Answer naturally without tools
+
+The key principle: If the user wants something DONE to their workout (create it, change it, add/remove exercises),
+use the tools so changes are saved to the database and appear on their home screen.
+If they just want information or advice, respond conversationally."""
 
     system_message = SystemMessage(content=tool_prompt)
 
