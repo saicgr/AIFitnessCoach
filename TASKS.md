@@ -1,6 +1,6 @@
 ASAP:
-4. User asked for a quick workout but it only gave them big message but did't generate a workout
-5. When generating working from onbaording or regenerating alwayus take workouts having videos and images
+4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
+5. When generating working from onbaording or regenerating button alwayus take workouts having videos and images
 6. All library exercises should have images and videos
 7. Measurements page is not implemented
 8. Login details bug not getting saved and not shown in settings

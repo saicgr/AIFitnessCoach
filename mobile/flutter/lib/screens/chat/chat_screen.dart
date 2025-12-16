@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../widgets/floating_chat/floating_chat_overlay.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -74,6 +75,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Minimize - shrink back to floating chat overlay with seamless animation
+  void _minimizeToFloatingChat() {
+    // Pop the full screen with reverse animation
+    Navigator.of(context).pop();
+    // Show floating chat immediately after shrink animation - no delay for seamless feel
+    Future.delayed(const Duration(milliseconds: 280), () {
+      if (context.mounted) {
+        // Use the no-animation version for seamless transition
+        showChatBottomSheetNoAnimation(context, ref);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final messagesState = ref.watch(chatMessagesProvider);
@@ -130,6 +144,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
         actions: [
+          // Minimize button - animate back to floating chat overlay
+          IconButton(
+            icon: const Icon(Icons.close_fullscreen, size: 22),
+            tooltip: 'Minimize',
+            onPressed: () => _minimizeToFloatingChat(),
+          ),
           IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () => _showOptionsMenu(context),
@@ -498,19 +518,19 @@ class _MessageBubble extends StatelessWidget {
                   workoutName: message.workoutName,
                 ),
               ),
-            if (message.timestamp != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  _formatTime(message.timestamp!),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isUser
-                        ? AppColors.pureBlack.withOpacity(0.6)
-                        : AppColors.textMuted,
-                  ),
+            // Always show timestamp - use "now" if not available
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                _formatTime(message.timestamp ?? DateTime.now()),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isUser
+                      ? AppColors.pureBlack.withOpacity(0.6)
+                      : AppColors.textMuted,
                 ),
               ),
+            ),
           ],
         ),
       ),

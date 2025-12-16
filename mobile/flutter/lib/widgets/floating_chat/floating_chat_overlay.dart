@@ -7,7 +7,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../screens/chat/chat_screen.dart';
 import 'floating_chat_provider.dart';
+
+/// Hero tag for chat window animation
+const String chatHeroTag = 'chat-window-hero';
 
 /// Floating chat overlay - Facebook Messenger style
 ///
@@ -41,6 +45,28 @@ void showChatBottomSheet(BuildContext context, WidgetRef ref) {
     ),
   ).whenComplete(() {
     // Collapse the state when sheet is dismissed
+    ref.read(floatingChatProvider.notifier).collapse();
+  });
+}
+
+/// Shows the chat bottom sheet with no entry animation (for seamless minimize transition)
+void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withOpacity(0.6),
+    // Use a very fast animation to appear instantly
+    transitionAnimationController: AnimationController(
+      duration: const Duration(milliseconds: 1),
+      vsync: Navigator.of(context),
+    ),
+    builder: (sheetContext) => _ChatBottomSheet(
+      onClose: () {
+        Navigator.of(sheetContext).pop();
+      },
+    ),
+  ).whenComplete(() {
     ref.read(floatingChatProvider.notifier).collapse();
   });
 }
@@ -200,6 +226,19 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Maximize button - open full screen chat with animation
+                  GestureDetector(
+                    onTap: () {
+                      // Close the bottom sheet first
+                      Navigator.of(context).pop();
+                      // Navigate with custom animated route
+                      Navigator.of(context).push(_createMaximizeRoute(context));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(Icons.open_in_full, color: textMuted, size: 20),
                     ),
                   ),
                   GestureDetector(
@@ -417,6 +456,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
@@ -491,10 +531,42 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                   ),
                 ),
               ),
+            // Timestamp
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                _formatTime(message.timestamp ?? DateTime.now()),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isUser
+                      ? userTextColor.withOpacity(0.6)
+                      : textMuted,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(time.year, time.month, time.day);
+
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    final timeStr = '$hour:$minute';
+
+    if (messageDate == today) {
+      return timeStr;
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday, $timeStr';
+    } else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[time.month - 1]} ${time.day}, $timeStr';
+    }
   }
 
   Widget _buildTypingIndicator(BuildContext context) {
@@ -534,4 +606,68 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
       ),
     );
   }
+}
+
+/// Creates a custom route for maximize animation (window expand effect)
+Route _createMaximizeRoute(BuildContext context) {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => const ChatScreen(),
+    transitionDuration: const Duration(milliseconds: 350),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      // Curved animation for smooth feel
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+
+      // Scale from bottom center (where the floating chat was)
+      final scaleAnimation = Tween<double>(
+        begin: 0.7,
+        end: 1.0,
+      ).animate(curvedAnimation);
+
+      // Fade in
+      final fadeAnimation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(
+        parent: animation,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ));
+
+      // Slide up slightly
+      final slideAnimation = Tween<Offset>(
+        begin: const Offset(0, 0.1),
+        end: Offset.zero,
+      ).animate(curvedAnimation);
+
+      return FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(
+          position: slideAnimation,
+          child: ScaleTransition(
+            scale: scaleAnimation,
+            alignment: Alignment.bottomCenter,
+            child: child,
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Creates a custom route for minimize animation (window shrink effect)
+/// Call this from ChatScreen when minimizing
+Route createMinimizeRoute(BuildContext context, WidgetRef ref) {
+  // This triggers showing the chat bottom sheet after animation
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+    transitionDuration: const Duration(milliseconds: 300),
+    opaque: false,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return const SizedBox.shrink();
+    },
+  );
 }

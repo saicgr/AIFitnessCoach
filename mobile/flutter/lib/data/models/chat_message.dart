@@ -150,14 +150,16 @@ class ChatMessage extends Equatable {
     if (createdAt == null || createdAt!.isEmpty) return null;
     try {
       // Try standard ISO8601 format first
-      return DateTime.parse(createdAt!);
-    } catch (_) {
+      final parsed = DateTime.parse(createdAt!);
+      return parsed;
+    } catch (e) {
       try {
         // Handle PostgreSQL timestamp format: "2025-12-16 00:19:09+00"
         // Replace space with T for ISO8601 compatibility
         final normalized = createdAt!.replaceFirst(' ', 'T');
         return DateTime.parse(normalized);
-      } catch (_) {
+      } catch (e2) {
+        debugPrint('❌ Failed to parse timestamp: $createdAt - $e2');
         return null;
       }
     }
