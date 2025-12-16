@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -37,11 +38,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   bool _isUpdating = false;
   bool _isLoading = true;
+  String _updateStatus = ''; // Status message during update
 
   // Step 1: Schedule
   final Set<int> _selectedDays = {};
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
+  int _programWeeks = 4; // Program duration in weeks (1, 2, 4, 8, 12)
 
   // Step 2: Workout Type & Focus
   String? _selectedWorkoutType;
@@ -53,11 +56,23 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   final TextEditingController _customInjuryController = TextEditingController();
   bool _showCustomInjuryField = false;
 
+  // Custom "Other" inputs
+  String _customWorkoutType = '';
+  String _customFocusArea = '';
+  bool _showWorkoutTypeInput = false;
+  bool _showFocusAreaInput = false;
+  final TextEditingController _workoutTypeController = TextEditingController();
+  final TextEditingController _focusAreaController = TextEditingController();
+
+  // Equipment quantity selectors
+  int _dumbbellCount = 2;
+  int _kettlebellCount = 1;
+
   final List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   final List<String> _difficulties = ['easy', 'medium', 'hard'];
   final List<String> _workoutTypes = ['Strength', 'HIIT', 'Cardio', 'Flexibility', 'Full Body', 'Upper Body', 'Lower Body', 'Core'];
   final List<String> _focusAreas = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Glutes', 'Full Body'];
-  final List<String> _equipmentOptions = ['Dumbbells', 'Barbell', 'Kettlebell', 'Resistance Bands', 'Pull-up Bar', 'Bench', 'Bodyweight Only'];
+  final List<String> _equipmentOptions = ['Full Gym', 'Dumbbells', 'Barbell', 'Kettlebell', 'Resistance Bands', 'Pull-up Bar', 'Bench', 'Cable Machine', 'Bodyweight Only'];
   final List<String> _injuries = ['Shoulder', 'Lower Back', 'Knee', 'Elbow', 'Wrist', 'Ankle', 'Hip', 'Neck'];
 
   @override
@@ -69,6 +84,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   @override
   void dispose() {
     _customInjuryController.dispose();
+    _workoutTypeController.dispose();
+    _focusAreaController.dispose();
     super.dispose();
   }
 
@@ -155,13 +172,19 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       return;
     }
 
-    setState(() => _isUpdating = true);
+    setState(() {
+      _isUpdating = true;
+      _updateStatus = 'Saving preferences...';
+    });
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
 
     if (userId == null) {
-      setState(() => _isUpdating = false);
+      setState(() {
+        _isUpdating = false;
+        _updateStatus = '';
+      });
       return;
     }
 
@@ -169,6 +192,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       final selectedDayNames = _selectedDays.map((i) => _dayNames[i]).toList();
 
       final repo = ref.read(workoutRepositoryProvider);
+
+      // Step 1: Update preferences and delete old workouts
       await repo.updateProgramAndRegenerate(
         userId: userId,
         difficulty: _selectedDifficulty,
@@ -178,14 +203,55 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
         workoutType: _selectedWorkoutType,
         workoutDays: selectedDayNames,
+        dumbbellCount: _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
+        kettlebellCount: _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
       );
+
+      if (mounted) {
+        setState(() => _updateStatus = 'Generating first week...');
+      }
+
+      // Step 2: Generate just 1 week immediately for fast response
+      final today = DateTime.now().toIso8601String().split('T')[0];
+      await repo.generateMonthlyWorkouts(
+        userId: userId,
+        selectedDays: _selectedDays.toList(),
+        durationMinutes: _selectedDuration.round(),
+        weeks: 1, // Only generate 1 week initially
+        monthStartDate: today,
+      );
+
+      // Step 3: If user wants more than 1 week, schedule background generation
+      if (_programWeeks > 1) {
+        // Store remaining weeks to generate in user preferences for background job
+        await repo.scheduleRemainingWorkouts(
+          userId: userId,
+          selectedDays: _selectedDays.toList(),
+          durationMinutes: _selectedDuration.round(),
+          totalWeeks: _programWeeks,
+          weeksGenerated: 1,
+        );
+      }
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        setState(() => _isUpdating = false);
+        setState(() {
+          _isUpdating = false;
+          _updateStatus = '';
+        });
+
+        // Provide user-friendly error messages
+        String errorMessage = 'Failed to update program';
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('timeout') || errorStr.contains('timed out')) {
+          errorMessage = 'Request timed out. The server may be busy. Please try again.';
+        } else if (errorStr.contains('connection') || errorStr.contains('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update program: $e'), backgroundColor: AppColors.error),
+          SnackBar(content: Text(errorMessage), backgroundColor: AppColors.error),
         );
       }
     }
@@ -215,13 +281,25 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = isDark ? _DarkColors() : _LightColors();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+          decoration: BoxDecoration(
+            color: isDark
+                ? colors.elevated.withOpacity(0.85)
+                : colors.elevated.withOpacity(0.92),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05),
+              width: 1,
+            ),
+          ),
+          child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -235,6 +313,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             ),
             _buildNavigationButtons(colors),
           ],
+        ),
+      ),
         ),
       ),
     );
@@ -437,7 +517,58 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               ],
             ),
           ),
+
+          const SizedBox(height: 32),
+
+          // Program Duration
+          _buildSectionTitle(colors, Icons.date_range, 'Program Duration', _getProgramDurationLabel()),
+          const SizedBox(height: 8),
+          Text('How far ahead to schedule workouts', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildDurationOption(colors, 1, '1 Week'),
+              _buildDurationOption(colors, 2, '2 Weeks'),
+              _buildDurationOption(colors, 4, '1 Month'),
+              _buildDurationOption(colors, 8, '2 Months'),
+              _buildDurationOption(colors, 12, '3 Months'),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  String _getProgramDurationLabel() {
+    if (_programWeeks <= 1) return '1 week';
+    if (_programWeeks <= 4) return '$_programWeeks weeks';
+    return '${(_programWeeks / 4).round()} months';
+  }
+
+  Widget _buildDurationOption(_SheetColors colors, int weeks, String label) {
+    final isSelected = _programWeeks == weeks;
+    return GestureDetector(
+      onTap: () => setState(() => _programWeeks = weeks),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.purple.withOpacity(0.2) : colors.glassSurface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? colors.purple : colors.cardBorder.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? colors.purple : colors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 13,
+          ),
+        ),
       ),
     );
   }
@@ -457,13 +588,93 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _workoutTypes.map((type) {
-              final isSelected = _selectedWorkoutType == type;
-              return _buildChip(colors, type, isSelected, colors.purple, () {
-                setState(() => _selectedWorkoutType = isSelected ? null : type);
-              });
-            }).toList(),
+            children: [
+              ..._workoutTypes.map((type) {
+                final isSelected = _selectedWorkoutType == type;
+                return _buildChip(colors, type, isSelected, colors.purple, () {
+                  setState(() => _selectedWorkoutType = isSelected ? null : type);
+                });
+              }),
+              // "Other" chip for workout type
+              GestureDetector(
+                onTap: () => setState(() => _showWorkoutTypeInput = !_showWorkoutTypeInput),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _customWorkoutType.isNotEmpty ? colors.purple.withOpacity(0.2) : colors.glassSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _customWorkoutType.isNotEmpty ? colors.purple : colors.cardBorder.withOpacity(0.3),
+                      width: _customWorkoutType.isNotEmpty ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showWorkoutTypeInput ? Icons.close : Icons.add,
+                        size: 14,
+                        color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _customWorkoutType.isNotEmpty ? _customWorkoutType : 'Other',
+                        style: TextStyle(
+                          color: _customWorkoutType.isNotEmpty ? colors.purple : colors.textSecondary,
+                          fontWeight: _customWorkoutType.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
+          // Custom workout type input field
+          if (_showWorkoutTypeInput) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _workoutTypeController,
+              decoration: InputDecoration(
+                hintText: 'Enter custom workout type (e.g., "Boxing")',
+                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
+                filled: true,
+                fillColor: colors.glassSurface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.purple),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.check, color: colors.purple),
+                  onPressed: () {
+                    setState(() {
+                      _customWorkoutType = _workoutTypeController.text.trim();
+                      _selectedWorkoutType = _customWorkoutType.isNotEmpty ? _customWorkoutType : null;
+                      _showWorkoutTypeInput = false;
+                    });
+                  },
+                ),
+              ),
+              style: TextStyle(color: colors.textPrimary),
+              onSubmitted: (value) {
+                setState(() {
+                  _customWorkoutType = value.trim();
+                  _selectedWorkoutType = _customWorkoutType.isNotEmpty ? _customWorkoutType : null;
+                  _showWorkoutTypeInput = false;
+                });
+              },
+            ),
+          ],
 
           const SizedBox(height: 32),
 
@@ -475,15 +686,81 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             runSpacing: 8,
             children: _equipmentOptions.map((equip) {
               final isSelected = _selectedEquipment.contains(equip);
-              return _buildChip(colors, equip, isSelected, colors.cyan, () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedEquipment.remove(equip);
-                  } else {
-                    _selectedEquipment.add(equip);
-                  }
-                });
-              });
+              final bool hasQuantitySelector = equip == 'Dumbbells' || equip == 'Kettlebell';
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (equip == 'Full Gym') {
+                      // Full Gym selects all equipment except Bodyweight Only
+                      if (isSelected) {
+                        _selectedEquipment.remove('Full Gym');
+                      } else {
+                        _selectedEquipment.add('Full Gym');
+                        _selectedEquipment.addAll(_equipmentOptions.where((e) =>
+                          e != 'Bodyweight Only' && e != 'Full Gym'));
+                      }
+                    } else if (isSelected) {
+                      _selectedEquipment.remove(equip);
+                      // Also remove Full Gym if any equipment is deselected
+                      _selectedEquipment.remove('Full Gym');
+                    } else {
+                      _selectedEquipment.add(equip);
+                      // Check if all equipment selected (except Bodyweight Only and Full Gym)
+                      final allEquipment = _equipmentOptions.where((e) =>
+                        e != 'Bodyweight Only' && e != 'Full Gym');
+                      if (allEquipment.every((e) => _selectedEquipment.contains(e))) {
+                        _selectedEquipment.add('Full Gym');
+                      }
+                    }
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colors.cyan.withOpacity(0.2) : colors.glassSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? colors.cyan : colors.cardBorder.withOpacity(0.3),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSelected) ...[
+                        Icon(Icons.check, size: 14, color: colors.cyan),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        equip,
+                        style: TextStyle(
+                          color: isSelected ? colors.cyan : colors.textSecondary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                      // Quantity selector for Dumbbells and Kettlebell
+                      if (hasQuantitySelector && isSelected) ...[
+                        const SizedBox(width: 8),
+                        _buildQuantitySelector(
+                          equip == 'Dumbbells' ? _dumbbellCount : _kettlebellCount,
+                          (newValue) {
+                            setState(() {
+                              if (equip == 'Dumbbells') {
+                                _dumbbellCount = newValue;
+                              } else {
+                                _kettlebellCount = newValue;
+                              }
+                            });
+                          },
+                          colors,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
             }).toList(),
           ),
 
@@ -495,18 +772,149 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _focusAreas.map((area) {
-              final isSelected = _selectedFocusAreas.contains(area);
-              return _buildChip(colors, area, isSelected, colors.purple, () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedFocusAreas.remove(area);
-                  } else {
-                    _selectedFocusAreas.add(area);
-                  }
+            children: [
+              ..._focusAreas.map((area) {
+                final isSelected = _selectedFocusAreas.contains(area);
+                return _buildChip(colors, area, isSelected, colors.purple, () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedFocusAreas.remove(area);
+                    } else {
+                      _selectedFocusAreas.add(area);
+                    }
+                  });
                 });
-              });
-            }).toList(),
+              }),
+              // "Other" chip for focus areas
+              GestureDetector(
+                onTap: () => setState(() => _showFocusAreaInput = !_showFocusAreaInput),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _customFocusArea.isNotEmpty ? colors.purple.withOpacity(0.2) : colors.glassSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _customFocusArea.isNotEmpty ? colors.purple : colors.cardBorder.withOpacity(0.3),
+                      width: _customFocusArea.isNotEmpty ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showFocusAreaInput ? Icons.close : Icons.add,
+                        size: 14,
+                        color: _customFocusArea.isNotEmpty ? colors.purple : colors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _customFocusArea.isNotEmpty ? _customFocusArea : 'Other',
+                        style: TextStyle(
+                          color: _customFocusArea.isNotEmpty ? colors.purple : colors.textSecondary,
+                          fontWeight: _customFocusArea.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Custom focus area input field
+          if (_showFocusAreaInput) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _focusAreaController,
+              decoration: InputDecoration(
+                hintText: 'Enter custom focus area (e.g., "Rotator cuff")',
+                hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
+                filled: true,
+                fillColor: colors.glassSurface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.purple),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.check, color: colors.purple),
+                  onPressed: () {
+                    setState(() {
+                      _customFocusArea = _focusAreaController.text.trim();
+                      if (_customFocusArea.isNotEmpty) {
+                        _selectedFocusAreas.add(_customFocusArea);
+                      }
+                      _showFocusAreaInput = false;
+                    });
+                  },
+                ),
+              ),
+              style: TextStyle(color: colors.textPrimary),
+              onSubmitted: (value) {
+                setState(() {
+                  _customFocusArea = value.trim();
+                  if (_customFocusArea.isNotEmpty) {
+                    _selectedFocusAreas.add(_customFocusArea);
+                  }
+                  _showFocusAreaInput = false;
+                });
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuantitySelector(int currentValue, Function(int) onChanged, _SheetColors colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.glassSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: currentValue <= 1 ? null : () => onChanged(currentValue - 1),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.remove,
+                size: 14,
+                color: currentValue <= 1 ? colors.textMuted : colors.cyan,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$currentValue',
+              style: TextStyle(
+                color: colors.cyan,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: currentValue >= 2 ? null : () => onChanged(currentValue + 1),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.add,
+                size: 14,
+                color: currentValue >= 2 ? colors.textMuted : colors.cyan,
+              ),
+            ),
           ),
         ],
       ),
@@ -692,7 +1100,21 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isUpdating
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              _updateStatus.isNotEmpty ? _updateStatus : 'Updating...',
+                              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      )
                     : Text(
                         _currentStep < _totalSteps - 1 ? 'Continue' : 'Update & Regenerate',
                         style: const TextStyle(fontWeight: FontWeight.bold),

@@ -11,7 +11,6 @@ ASAP:
 19. Need to start with warm up before each workout with the option to skip for liability reasons.
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
 21. AI coach option called college level coach that scolds you like they do
-22. End workout button is not responsive
 23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
 24. Accessibility simple workout home and onboarding
 25. Demo of the whole app
@@ -28,177 +27,12 @@ Backend endpoint: POST /notifications/scheduler/send-workout-reminders
 Should be called by a cron job at 8am daily
 Reminds you about scheduled workouts
 To make these automatic, you'd need to set up cron jobs on your hosting platform (Render cron, AWS CloudWatch Events, etc.) to call these endpoints daily. Would you like me to help you set up the cron jobs, or do you want to test the AI Coach notification button first?
-29. End workout doesn't end properly
-30. This is a very strong workout execution UI, and it’s clear you are aiming for something on the level of Fitbod + Nike Training + Tonal.
-Let me break down what’s working extremely well and what still needs refinement from a UX, usability, and training-science perspective.
-
-⭐ WHAT YOU NAILED (Huge Wins)
-✔ 1. Muscle Overlay Visualization
-
-The anatomical muscle highlight is one of the most motivating and intuitive cues a user can have.
-It tells the user:
-
-What muscle the exercise targets
-
-Whether they're performing the right movement
-
-How their weekly program is balanced
-
-This is premium-level design and will set your app apart.
-
-✔ 2. Sets / Previous / KG / Reps Table
-
-This is EXACTLY how strength apps like Fitbod, Hevy, and Strong handle logging.
-
-Huge benefits:
-
-Users can quickly compare today vs previous PR
-
-Fast data entry = low friction
-
-Big rep/weight selectors are very clear
-
-✔ 3. Highlighted Active Set Row
-
-Highlighting the active set with a glowing ring is perfect.
-
-It shows:
-
-“This is the set you’re currently doing”
-
-Where to focus attention
-
-This is excellent UX for in-workout flow.
-
-✔ 4. Large Next Exercise Preview
-
-The “Next: Alternate arm leg plank” preview is a powerful retention feature.
-
-Users LOVE knowing:
-
-What’s coming next
-
-How hard the next exercise is
-
-Whether they’ll need equipment
-
-This reduces anxiety and increases flow.
-
-✔ 5. Pausing / Calories / Sets Counter / Hydration
-
-This top bar is beautifully done:
-
-PAUSED indicator
-
-Calories
-
-Set progress
-
-Hydration level
-
-This is clean, readable, and intuitive.
-
-✔ 6. Add Set + Rest Timer
-
-Two of the most important features in strength training:
-
-Auto rest timer
-
-Ability to add sets on the fly
-
-This matches exactly what serious lifters expect.
-
-⭐ WHAT COULD BE REFINED
-
-Even though the UI is excellent, a few things may confuse or slow users.
-
-⚠ 1. The screen feels crowded
-
-Right now, there are six major sections:
-
-Exercise title
-
-Progress indicators
-
-Logging table
-
-Muscle visualization
-
-Next exercise preview
-
-Bottom skip/next buttons
-
-On smaller phones, this will feel tight.
-
-✓ Suggested Fix:
-
-Add collapsible sections:
-
-Collapse muscle anatomy (tap to expand)
-
-Collapse previous set rows
-
-Auto-collapse next exercise until rest time
-
-This reduces cognitive load.
-
-⚠ 2. KG input looks too small
-
-Users doing workouts are sweaty and tired — fine controls are harder to use.
-
-✓ Fix:
-
-Make the KG and REPS inputs larger, or use:
-
-Vertical +/- sliders
-
-A scroll wheel
-
-Big button increments (e.g., +2.5, +5)
-
-⚠ 3. No obvious “Complete Set” button
-
-You have a ✓ but it’s small.
-
-This is one of the most important actions → make it:
-
-Big
-
-Floating
-
-Thumb-friendly
-
-Like Hevy / Fitbod do.
-
-⚠ 4. The muscle highlight wires look slightly distracting
-
-The lines connecting joints look a bit like debugging visuals.
-
-✓ Better approach:
-
-Use:
-
-Glow on active muscle
-
-Dim on secondary muscle
-
-No connectors needed.
-
-⚠ 5. Hydration counter is unclear
-
-Users don’t know if:
-
-They should tap it
-
-It updates automatically
-
-It’s just informative
-
-✓ Fix:
-
-Add a water icon that animates a droplet on tap.
 31. Timezone Consistency across per user
-32. Nake it easy to add supersets
+32. Make it easy to add supersets
+33. Add sign in in first screen directly
+34. Shareable workout completion
+35. Use 4o-mini
+36. For theme have system, light, dark options instead
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

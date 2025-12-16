@@ -33,6 +33,8 @@ class OnboardingData {
   String? intensityLevel;
   List<String> equipment = [];
   String? workoutVariety;
+  int dumbbellCount = 2; // 1 or 2 dumbbells
+  int kettlebellCount = 1; // 1 or 2 kettlebells
 
   // Step 6: Health & Limitations
   List<String> injuries = [];
@@ -99,6 +101,8 @@ class OnboardingData {
       'intensity_preference': intensityLevel,
       'equipment': equipment,
       'workout_variety': workoutVariety,
+      'dumbbell_count': dumbbellCount,
+      'kettlebell_count': kettlebellCount,
       'preferences': {
         'training_split': trainingSplit,
         'intensity_preference': intensityLevel,
@@ -106,6 +110,8 @@ class OnboardingData {
         'days_per_week': workoutDays.length,
         'workout_duration': workoutDuration,
         'preferred_time': preferredTime,
+        'dumbbell_count': dumbbellCount,
+        'kettlebell_count': kettlebellCount,
       },
 
       // Health

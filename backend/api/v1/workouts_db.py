@@ -2618,6 +2618,10 @@ async def update_program(request: UpdateProgramRequest):
             day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
             selected_indices = [day_map.get(d, 0) for d in request.workout_days]
             updated_prefs["selected_days"] = sorted(selected_indices)
+        if request.dumbbell_count is not None:
+            updated_prefs["dumbbell_count"] = request.dumbbell_count
+        if request.kettlebell_count is not None:
+            updated_prefs["kettlebell_count"] = request.kettlebell_count
 
         # Update user preferences and equipment/injuries
         update_data = {"preferences": updated_prefs}

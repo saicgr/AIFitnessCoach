@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
@@ -59,6 +60,10 @@ class _RegenerateWorkoutSheetState
   bool _showEquipmentInput = false;
   bool _showWorkoutTypeInput = false;
 
+  // Equipment quantity selectors (1 or 2)
+  int _dumbbellCount = 2;
+  int _kettlebellCount = 1;
+
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
   final TextEditingController _equipmentController = TextEditingController();
@@ -103,6 +108,7 @@ class _RegenerateWorkoutSheetState
     'Neck',
   ];
   final List<String> _equipmentOptions = [
+    'Full Gym',
     'Dumbbells',
     'Barbell',
     'Kettlebell',
@@ -313,15 +319,27 @@ class _RegenerateWorkoutSheetState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final _SheetColors colors = isDark ? _DarkColors() : _LightColors();
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? colors.elevated.withOpacity(0.85)
+                : colors.elevated.withOpacity(0.92),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05),
+              width: 1,
+            ),
+          ),
+          child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -429,6 +447,8 @@ class _RegenerateWorkoutSheetState
               ),
             ),
           ],
+        ),
+      ),
         ),
       ),
     );
@@ -1237,15 +1257,34 @@ class _RegenerateWorkoutSheetState
             children: [
               ..._equipmentOptions.map((equipment) {
                 final isSelected = _selectedEquipment.contains(equipment);
+                final bool hasQuantitySelector = equipment == 'Dumbbells' || equipment == 'Kettlebell';
+
                 return GestureDetector(
                   onTap: _isRegenerating
                       ? null
                       : () {
                           setState(() {
-                            if (isSelected) {
+                            if (equipment == 'Full Gym') {
+                              // Full Gym selects all equipment except Bodyweight Only
+                              if (isSelected) {
+                                _selectedEquipment.remove('Full Gym');
+                              } else {
+                                _selectedEquipment.add('Full Gym');
+                                _selectedEquipment.addAll(_equipmentOptions.where((e) =>
+                                  e != 'Bodyweight Only' && e != 'Full Gym'));
+                              }
+                            } else if (isSelected) {
                               _selectedEquipment.remove(equipment);
+                              // Also remove Full Gym if any equipment is deselected
+                              _selectedEquipment.remove('Full Gym');
                             } else {
                               _selectedEquipment.add(equipment);
+                              // Check if all equipment selected (except Bodyweight Only and Full Gym)
+                              final allEquipment = _equipmentOptions.where((e) =>
+                                e != 'Bodyweight Only' && e != 'Full Gym');
+                              if (allEquipment.every((e) => _selectedEquipment.contains(e))) {
+                                _selectedEquipment.add('Full Gym');
+                              }
                             }
                           });
                         },
@@ -1274,6 +1313,23 @@ class _RegenerateWorkoutSheetState
                             fontSize: 13,
                           ),
                         ),
+                        // Quantity selector for Dumbbells and Kettlebell
+                        if (hasQuantitySelector && isSelected) ...[
+                          const SizedBox(width: 8),
+                          _buildQuantitySelector(
+                            equipment == 'Dumbbells' ? _dumbbellCount : _kettlebellCount,
+                            (newValue) {
+                              setState(() {
+                                if (equipment == 'Dumbbells') {
+                                  _dumbbellCount = newValue;
+                                } else {
+                                  _kettlebellCount = newValue;
+                                }
+                              });
+                            },
+                            colors,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1363,6 +1419,57 @@ class _RegenerateWorkoutSheetState
               },
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuantitySelector(int currentValue, Function(int) onChanged, _SheetColors colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.glassSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: _isRegenerating || currentValue <= 1
+                ? null
+                : () => onChanged(currentValue - 1),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.remove,
+                size: 14,
+                color: currentValue <= 1 ? colors.textMuted : colors.success,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$currentValue',
+              style: TextStyle(
+                color: colors.success,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: _isRegenerating || currentValue >= 2
+                ? null
+                : () => onChanged(currentValue + 1),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.add,
+                size: 14,
+                color: currentValue >= 2 ? colors.textMuted : colors.success,
+              ),
+            ),
+          ),
         ],
       ),
     );

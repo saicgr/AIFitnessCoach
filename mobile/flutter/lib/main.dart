@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/constants/api_constants.dart';
+import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
 
@@ -39,6 +40,9 @@ void main() async {
 
   // Initialize persistent image URL cache
   await ImageUrlCache.initialize();
+
+  // Initialize haptic service with saved preference
+  await HapticService.initialize();
 
   // Set system UI overlay style for dark theme
   SystemChrome.setSystemUIOverlayStyle(

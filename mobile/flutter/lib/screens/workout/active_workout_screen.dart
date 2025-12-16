@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
@@ -87,6 +88,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   // Drink intake tracking (in ml)
   int _totalDrinkIntakeMl = 0;
 
+  // Expanded active row for bigger input controls (default: expanded for better UX)
+  bool _isActiveRowExpanded = true;
+
   // Rest interval tracking
   final List<Map<String, dynamic>> _restIntervals = [];
   DateTime? _lastSetCompletedAt;
@@ -95,6 +99,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   // Time tracking per exercise (start time -> total seconds)
   final Map<int, int> _exerciseTimeSeconds = {};
   DateTime? _currentExerciseStartTime;
+
+  // Animation state for Done button press
+  bool _isDoneButtonPressed = false;
+  // Track which set just completed for burst animation
+  int? _justCompletedSetIndex;
 
   @override
   void initState() {
@@ -330,14 +339,29 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     }
 
     // Log the set (always stored in kg)
+    final completedSetIndex = _completedSets[_currentExerciseIndex]!.length;
     setState(() {
       _completedSets[_currentExerciseIndex]!.add(SetLog(reps: reps, weight: weight));
+      // Trigger burst animation for this set
+      _justCompletedSetIndex = completedSetIndex;
+    });
+
+    // Clear burst animation after delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _justCompletedSetIndex = null);
     });
 
     // Update last set completed time
     _lastSetCompletedAt = DateTime.now();
 
-    HapticFeedback.mediumImpact();
+    // Strong success haptic pattern - celebration triple-tap
+    HapticFeedback.heavyImpact();
+    Future.delayed(const Duration(milliseconds: 60), () {
+      HapticFeedback.mediumImpact();
+    });
+    Future.delayed(const Duration(milliseconds: 120), () {
+      HapticFeedback.lightImpact();
+    });
 
     if (_currentSet < totalSets) {
       // Move to next set, keep the same weight/reps for convenience
@@ -348,6 +372,199 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       // Exercise complete, move to next
       _moveToNextExercise();
     }
+  }
+
+  /// Delete a completed set (from swipe action)
+  void _deleteCompletedSet(int exerciseIndex, int setIndex) {
+    final sets = _completedSets[exerciseIndex];
+    if (sets == null || setIndex >= sets.length) return;
+
+    setState(() {
+      sets.removeAt(setIndex);
+      // If we deleted a set from the current exercise, adjust current set counter
+      if (exerciseIndex == _currentExerciseIndex) {
+        _currentSet = sets.length + 1;
+      }
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Edit a completed set (from swipe action)
+  void _editCompletedSet(int exerciseIndex, int setIndex) {
+    final sets = _completedSets[exerciseIndex];
+    if (sets == null || setIndex >= sets.length) return;
+
+    final setData = sets[setIndex];
+    final weightController = TextEditingController(
+      text: _useKg
+          ? setData.weight.toStringAsFixed(1)
+          : (setData.weight * 2.20462).toStringAsFixed(1),
+    );
+    final repsController = TextEditingController(text: setData.reps.toString());
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Edit Set ${setIndex + 1}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: AppColors.textMuted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _useKg ? 'Weight (kg)' : 'Weight (lbs)',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.cyan,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: weightController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        autofocus: true,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.pureBlack,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.cyan),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Reps',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.purple,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: repsController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.pureBlack,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.purple),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.purple, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  var newWeight = double.tryParse(weightController.text) ?? setData.weight;
+                  final newReps = int.tryParse(repsController.text) ?? setData.reps;
+
+                  // Convert lbs to kg if needed
+                  if (!_useKg) {
+                    newWeight = newWeight * 0.453592;
+                  }
+
+                  setState(() {
+                    sets[setIndex] = SetLog(
+                      reps: newReps,
+                      weight: newWeight,
+                      completedAt: setData.completedAt,
+                    );
+                  });
+                  Navigator.pop(context);
+                  HapticFeedback.mediumImpact();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Save Changes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Update controllers when switching exercises
@@ -1269,115 +1486,218 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   void _showDrinkIntakeDialog() {
+    int selectedAmount = 250; // Default 250ml
+    bool useOz = false; // false = ml, true = oz
+    final customController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          int selectedAmount = 250; // Default 250ml
-          return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textMuted.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+          // Convert display amounts based on unit
+          String formatAmount(int ml) {
+            if (useOz) {
+              return '${(ml / 29.5735).toStringAsFixed(1)} oz';
+            }
+            return '${ml}ml';
+          }
 
-                // Title
-                Row(
-                  children: [
-                    const Icon(Icons.water_drop, color: Colors.blue, size: 28),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Log Water Intake',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Total: ${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L',
-                          style: TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+          String formatTotal() {
+            if (useOz) {
+              return '${(_totalDrinkIntakeMl / 29.5735).toStringAsFixed(1)} oz';
+            }
+            return '${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L';
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textMuted.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 24),
+                  // Title with unit toggle
+                  Row(
+                    children: [
+                      const Icon(Icons.water_drop, color: Colors.blue, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Log Water Intake',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Total: ${formatTotal()}',
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Unit toggle
+                      GestureDetector(
+                        onTap: () {
+                          setModalState(() => useOz = !useOz);
+                          HapticFeedback.selectionClick();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.blue),
+                          ),
+                          child: Text(
+                            useOz ? 'oz' : 'ml',
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
 
-                // Quick amount buttons
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildDrinkAmountChip(100, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                    _buildDrinkAmountChip(150, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                    _buildDrinkAmountChip(200, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                    _buildDrinkAmountChip(250, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                    _buildDrinkAmountChip(300, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                    _buildDrinkAmountChip(500, selectedAmount, (amount) {
-                      setModalState(() => selectedAmount = amount);
-                    }),
-                  ],
-                ),
+                  const SizedBox(height: 20),
 
-                const SizedBox(height: 24),
+                  // Quick amount buttons - common sizes
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildDrinkAmountChip(250, selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                      _buildDrinkAmountChip(350, selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                      _buildDrinkAmountChip(500, selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                      _buildDrinkAmountChip(750, selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                      _buildDrinkAmountChip(1000, selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                      // 1 gallon = 3785ml
+                      _buildDrinkAmountChipLabeled(3785, '1 gal', selectedAmount, useOz, (amount) {
+                        setModalState(() {
+                          selectedAmount = amount;
+                          customController.clear();
+                        });
+                      }),
+                    ],
+                  ),
 
-                // Log button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _logDrinkIntake(selectedAmount);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+
+                  // Custom input row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: customController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'Custom amount',
+                            hintStyle: TextStyle(color: AppColors.textMuted.withOpacity(0.5)),
+                            filled: true,
+                            fillColor: AppColors.elevated,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            suffixText: useOz ? 'oz' : 'ml',
+                            suffixStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                          ),
+                          onChanged: (val) {
+                            final parsed = double.tryParse(val);
+                            if (parsed != null && parsed > 0) {
+                              setModalState(() {
+                                // Convert to ml if using oz
+                                selectedAmount = useOz ? (parsed * 29.5735).round() : parsed.round();
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Log button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _logDrinkIntake(selectedAmount);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Log ${formatAmount(selectedAmount)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
-                    child: Text(
-                      'Log ${selectedAmount}ml',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
                   ),
-                ),
 
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+                ],
+              ),
             ),
           );
         },
@@ -1385,30 +1705,63 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     );
   }
 
-  Widget _buildDrinkAmountChip(int amount, int selected, Function(int) onTap) {
-    final isSelected = amount == selected;
+  Widget _buildDrinkAmountChip(int amountMl, int selected, bool useOz, Function(int) onTap) {
+    final isSelected = amountMl == selected;
+    String label = useOz ? '${(amountMl / 29.5735).toStringAsFixed(1)}oz' : '${amountMl}ml';
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
-        onTap(amount);
+        onTap(amountMl);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue.withOpacity(0.2) : AppColors.elevated,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.blue : AppColors.cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Text(
-          '${amount}ml',
+          label,
           style: TextStyle(
             color: isSelected ? Colors.blue : AppColors.textSecondary,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 16,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrinkAmountChipLabeled(int amountMl, String label, int selected, bool useOz, Function(int) onTap) {
+    final isSelected = amountMl == selected;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap(amountMl);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.2) : AppColors.elevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.blue : AppColors.cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.blue : AppColors.textSecondary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 15,
           ),
         ),
       ),
@@ -1416,9 +1769,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   void _logDrinkIntake(int amountMl) {
+    debugPrint('💧 _logDrinkIntake called with $amountMl ml');
+    debugPrint('💧 Before: _totalDrinkIntakeMl = $_totalDrinkIntakeMl');
+
     setState(() {
       _totalDrinkIntakeMl += amountMl;
     });
+
+    debugPrint('💧 After: _totalDrinkIntakeMl = $_totalDrinkIntakeMl');
     HapticFeedback.mediumImpact();
 
     // Show brief confirmation
@@ -1428,11 +1786,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           children: [
             const Icon(Icons.water_drop, color: Colors.white, size: 20),
             const SizedBox(width: 8),
-            Text('+${amountMl}ml logged'),
+            Text('+${amountMl}ml logged (Total: ${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L)'),
           ],
         ),
         backgroundColor: Colors.blue,
-        duration: const Duration(seconds: 1),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -1940,37 +2298,40 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
   Widget _buildTopOverlay(WorkoutExercise exercise, double progress) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Column(
         children: [
-          // Top row: Close, title, pause
+          // Top row: Close, title, pause - more compact
           Row(
             children: [
               _GlassButton(
                 icon: Icons.close,
                 onTap: _showQuitDialog,
+                size: 32,
+                isSubdued: true,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       exercise.name,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        shadows: [Shadow(blurRadius: 10, color: Colors.black54)],
+                        shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'Exercise ${_currentExerciseIndex + 1} of ${_exercises.length}',
+                      '${_currentExerciseIndex + 1}/${_exercises.length}',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 11,
+                        color: Colors.white.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -1979,94 +2340,179 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               _GlassButton(
                 icon: Icons.list_alt,
                 onTap: _showExerciseListDrawer,
+                size: 36,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _GlassButton(
                 icon: _showSetOverlay ? Icons.table_chart : Icons.table_chart_outlined,
                 onTap: () => setState(() => _showSetOverlay = !_showSetOverlay),
                 isHighlighted: _showSetOverlay,
+                size: 36,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _GlassButton(
                 icon: _isPaused ? Icons.play_arrow : Icons.pause,
                 onTap: _togglePause,
                 isHighlighted: _isPaused,
+                size: 36,
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Progress bar
+          // Progress bar - thinner
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withOpacity(0.15),
               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
-              minHeight: 4,
+              minHeight: 3,
             ),
           ),
 
-          SizedBox(height: MediaQuery.of(context).size.height * 0.012),
+          const SizedBox(height: 6),
 
-          // Stats row: Timer | Calories | Set | Water (responsive sizing)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              // Scale factor: 1.0 for 400px width, scales proportionally
-              final scaleFactor = (screenWidth / 400).clamp(0.75, 1.3);
-              final spacing = (6 * scaleFactor).clamp(4.0, 10.0);
+          // Stats: 2x2 grid for better readability
+          Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final statsBg = isDark
+                  ? AppColors.pureBlack.withOpacity(0.5)
+                  : AppColorsLight.elevated.withOpacity(0.9);
+              final statsBorder = isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : AppColorsLight.cardBorder.withOpacity(0.3);
+              final dividerColor = isDark
+                  ? Colors.white.withOpacity(0.2)
+                  : AppColorsLight.cardBorder.withOpacity(0.5);
 
               return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Flexible(
-                    child: _StatChip(
-                      icon: Icons.timer_outlined,
-                      value: _formatTime(_workoutSeconds),
-                      color: _isPaused ? AppColors.textMuted : AppColors.cyan,
-                      label: _isPaused ? 'PAUSED' : null,
-                      scaleFactor: scaleFactor,
-                    ),
+            children: [
+              // Left column: Timer + Calories
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statsBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: statsBorder),
                   ),
-                  SizedBox(width: spacing),
-                  Flexible(
-                    child: _StatChip(
-                      icon: Icons.local_fire_department,
-                      value: '$_totalCaloriesBurned',
-                      suffix: 'cal',
-                      color: AppColors.orange,
-                      scaleFactor: scaleFactor,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Flexible(
-                    child: _StatChip(
-                      icon: Icons.repeat,
-                      value: '$_currentSet/${exercise.sets ?? 3}',
-                      suffix: 'set',
-                      color: AppColors.purple,
-                      scaleFactor: scaleFactor,
-                    ),
-                  ),
-                  SizedBox(width: spacing),
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: _showDrinkIntakeDialog,
-                      child: _StatChip(
-                        icon: Icons.water_drop_outlined,
-                        value: '${(_totalDrinkIntakeMl / 1000).toStringAsFixed(1)}',
-                        suffix: 'L',
-                        color: Colors.blue,
-                        scaleFactor: scaleFactor,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Timer
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: _isPaused ? AppColors.textMuted : AppColors.cyan,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _isPaused ? 'PAUSED' : _formatTime(_workoutSeconds),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: _isPaused ? null : 'monospace',
+                              color: _isPaused ? AppColors.orange : AppColors.cyan,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      Container(width: 1, height: 16, color: dividerColor),
+                      // Calories
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.local_fire_department, size: 14, color: AppColors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$_totalCaloriesBurned',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                              color: AppColors.orange,
+                            ),
+                          ),
+                          Text(
+                            'cal',
+                            style: TextStyle(fontSize: 10, color: AppColors.orange.withOpacity(0.7)),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              );
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Right column: Set + Water
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statsBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: statsBorder),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Set counter
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.repeat, size: 14, color: AppColors.purple),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$_currentSet/${exercise.sets ?? 3}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'monospace',
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(width: 1, height: 16, color: dividerColor),
+                      // Water - tappable
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showDrinkIntakeDialog();
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.water_drop_outlined, size: 14, color: Colors.blue),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${(_totalDrinkIntakeMl / 1000).toStringAsFixed(2)}L',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                                color: Colors.blue,
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(Icons.add_circle_outline, size: 12, color: Colors.blue.withOpacity(0.5)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
             },
-          ),
+          ), // Close Builder
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);
@@ -2117,21 +2563,65 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     final previousSetsForExercise = _previousSets[_viewingExerciseIndex] ?? [];
     final isViewingCurrent = _viewingExerciseIndex == _currentExerciseIndex;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.pureBlack.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
-      ),
-      child: Column(
+    // Theme-aware colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final overlayBg = isDark
+        ? AppColors.pureBlack.withOpacity(0.92)
+        : AppColorsLight.elevated.withOpacity(0.98);
+    final overlayBorder = isDark
+        ? AppColors.cardBorder.withOpacity(0.4)
+        : AppColorsLight.cardBorder.withOpacity(0.5);
+    final headerBg = isDark
+        ? AppColors.elevated.withOpacity(0.6)
+        : AppColorsLight.glassSurface.withOpacity(0.8);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final inputBg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final rowBorder = isDark
+        ? AppColors.cardBorder.withOpacity(0.2)
+        : AppColorsLight.cardBorder.withOpacity(0.3);
+
+    // iOS-style blur effect with ClipRRect and BackdropFilter
+    // Reduced blur for better content visibility behind
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: isDark ? 10 : 8,
+          sigmaY: isDark ? 10 : 8,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            // More translucent background to see content behind
+            color: isDark
+                ? AppColors.pureBlack.withOpacity(0.65)
+                : Colors.white.withOpacity(0.75),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : AppColorsLight.cardBorder.withOpacity(0.4),
+            ),
+            // Subtle shadows for visual separation from background
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                blurRadius: 20,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header row with exercise navigation
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.elevated.withOpacity(0.5),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              color: headerBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
@@ -2158,7 +2648,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                       size: 24,
                       color: _viewingExerciseIndex > 0
                           ? AppColors.cyan
-                          : AppColors.textMuted.withOpacity(0.3),
+                          : textMuted.withOpacity(0.3),
                     ),
                   ),
                 ),
@@ -2172,7 +2662,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: isViewingCurrent ? AppColors.cyan : AppColors.textPrimary,
+                          color: isViewingCurrent ? AppColors.cyan : textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -2185,7 +2675,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             '${_viewingExerciseIndex + 1}/${_exercises.length}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: AppColors.textMuted,
+                              color: textMuted,
                             ),
                           ),
                           if (!isViewingCurrent) ...[
@@ -2235,7 +2725,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                       size: 24,
                       color: _viewingExerciseIndex < _exercises.length - 1
                           ? AppColors.cyan
-                          : AppColors.textMuted.withOpacity(0.3),
+                          : textMuted.withOpacity(0.3),
                     ),
                   ),
                 ),
@@ -2286,15 +2776,38 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.elevated.withOpacity(0.3),
+              color: isDark
+                  ? AppColors.elevated.withOpacity(0.3)
+                  : AppColorsLight.glassSurface.withOpacity(0.6),
             ),
             child: Row(
               children: [
-                SizedBox(width: 36, child: Text('SET', style: _overlayHeaderStyle)),
-                Expanded(flex: 2, child: Text('PREVIOUS', style: _overlayHeaderStyle)),
-                Expanded(flex: 2, child: Text(_useKg ? 'KG' : 'LBS', style: _overlayHeaderStyle)),
-                Expanded(flex: 2, child: Text('REPS', style: _overlayHeaderStyle)),
-                SizedBox(width: 44),
+                SizedBox(width: 36, child: Center(child: Text('SET', style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: textMuted,
+                  letterSpacing: 0.5,
+                )))),
+                Expanded(flex: 3, child: Center(child: Text('PREVIOUS', style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: textMuted,
+                  letterSpacing: 0.5,
+                )))),
+                Expanded(flex: 4, child: Center(child: Text(_useKg ? 'KG' : 'LBS', style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.cyan,
+                  letterSpacing: 0.5,
+                )))),
+                const SizedBox(width: 8), // Gap between KG and REPS
+                Expanded(flex: 4, child: Center(child: Text('REPS', style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.purple,
+                  letterSpacing: 0.5,
+                )))),
+                const SizedBox(width: 50), // Match max checkmark button width
               ],
             ),
           ),
@@ -2323,169 +2836,575 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               prevDisplay = '${prevWeight.toStringAsFixed(0)} × ${previousSet['reps']}';
             }
 
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.success.withOpacity(0.1)
-                    : isCurrent
-                        ? AppColors.cyan.withOpacity(0.1)
-                        : Colors.transparent,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.cardBorder.withOpacity(0.2)),
+            // Check if this is the expanded active row
+            final isExpanded = isCurrent && _isActiveRowExpanded;
+
+            // Calculate opacity for non-active rows when expanded
+            final rowOpacity = (isCurrent || !_isActiveRowExpanded) ? 1.0 : 0.5;
+
+            // Active row is much more prominent
+            final rowWidget = GestureDetector(
+              onTap: isCurrent ? () {
+                setState(() => _isActiveRowExpanded = !_isActiveRowExpanded);
+                // More satisfying haptic for expand/collapse
+                HapticFeedback.mediumImpact();
+              } : null,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: rowOpacity,
+                child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                margin: isCurrent
+                    ? EdgeInsets.symmetric(horizontal: 2, vertical: isExpanded ? 6 : 3)
+                    : EdgeInsets.zero,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCurrent ? 8 : 10,
+                  vertical: isExpanded ? 16 : (isCurrent ? 8 : 5),
                 ),
-              ),
-              child: Row(
-                children: [
-                  // Set number
-                  SizedBox(
-                    width: 36,
-                    child: Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: isCompleted
-                            ? AppColors.success
-                            : isCurrent
-                                ? AppColors.cyan
-                                : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-
-                  // Previous session
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      prevDisplay,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMuted.withOpacity(0.7),
-                      ),
-                    ),
-                  ),
-
-                  // Weight - inline editable for current set only when viewing current exercise
-                  Expanded(
-                    flex: 2,
-                    child: isCurrent
-                        ? _buildInlineInput(
-                            controller: _weightController,
-                            isDecimal: true,
-                          )
-                        : Text(
-                            isCompleted
-                                ? (_useKg
-                                    ? completedSetData!.weight.toStringAsFixed(0)
-                                    : (completedSetData!.weight * 2.20462).toStringAsFixed(0))
-                                : '-',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.normal,
-                              color: isCompleted ? AppColors.success : AppColors.textMuted,
-                            ),
+                decoration: BoxDecoration(
+                  // Active row: subtle gradient background (premium feel)
+                  gradient: isCurrent
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.cyan.withOpacity(isExpanded ? 0.18 : 0.12),
+                            AppColors.electricBlue.withOpacity(isExpanded ? 0.12 : 0.08),
+                            AppColors.cyan.withOpacity(isExpanded ? 0.08 : 0.05),
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        )
+                      : null,
+                  color: isCompleted
+                      ? AppColors.success.withOpacity(0.08)
+                      : isCurrent
+                          ? null // Using gradient
+                          : Colors.transparent,
+                  borderRadius: isCurrent ? BorderRadius.circular(isExpanded ? 16 : 12) : null,
+                  border: isCurrent
+                      ? Border.all(
+                          color: AppColors.cyan.withOpacity(isExpanded ? 0.4 : 0.3),
+                          width: isExpanded ? 1.5 : 1,
+                        )
+                      : Border(
+                          bottom: BorderSide(color: rowBorder),
+                        ),
+                  // Soft ambient glow for active row (premium, not gamey)
+                  boxShadow: isCurrent
+                      ? [
+                          // Outer soft glow - large blur, no spread
+                          BoxShadow(
+                            color: AppColors.cyan.withOpacity(isExpanded ? 0.15 : 0.1),
+                            blurRadius: isExpanded ? 16 : 10,
+                            spreadRadius: 0,
                           ),
-                  ),
-
-                  // Reps - inline editable for current set only when viewing current exercise
-                  Expanded(
-                    flex: 2,
-                    child: isCurrent
-                        ? _buildInlineInput(
-                            controller: _repsController,
-                            isDecimal: false,
-                          )
-                        : Text(
-                            isCompleted ? completedSetData!.reps.toString() : '-',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.normal,
-                              color: isCompleted ? AppColors.success : AppColors.textMuted,
-                            ),
+                          // Inner subtle highlight
+                          BoxShadow(
+                            color: AppColors.electricBlue.withOpacity(0.05),
+                            blurRadius: 4,
+                            spreadRadius: 0,
                           ),
-                  ),
-
-                  // Checkmark / Complete button - only active on current exercise
-                  SizedBox(
-                    width: 44,
-                    child: isCompleted
-                        ? Icon(Icons.check_circle, size: 24, color: AppColors.success)
-                        : isCurrent
-                            ? GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.mediumImpact();
-                                  _completeSet();
-                                },
-                                child: Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cyan,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Icon(Icons.check, size: 18, color: Colors.black),
+                        ]
+                      : null,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 260),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: isExpanded
+                    // EXPANDED VIEW - Large, tactile controls with animations
+                    ? Column(
+                        key: const ValueKey('expanded'),
+                        children: [
+                          // Collapse hint - fades in with delay
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.keyboard_arrow_up, size: 16, color: AppColors.cyan.withOpacity(0.6)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Tap to collapse',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.cyan.withOpacity(0.6),
                                 ),
-                              )
-                            : Icon(Icons.circle_outlined, size: 20, color: AppColors.textMuted.withOpacity(0.3)),
-                  ),
-                ],
-              ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 50.ms, duration: 200.ms),
+                          const SizedBox(height: 12),
+                          // Large KG and REPS side by side - fades in with delay
+                          Row(
+                            children: [
+                              // KG section
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      _useKg ? 'WEIGHT (KG)' : 'WEIGHT (LBS)',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.cyan,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildExpandedInput(
+                                      controller: _weightController,
+                                      isDecimal: true,
+                                      accentColor: AppColors.cyan,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // REPS section
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'REPS',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.purple,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildExpandedInput(
+                                      controller: _repsController,
+                                      isDecimal: false,
+                                      accentColor: AppColors.purple,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ).animate().fadeIn(delay: 80.ms, duration: 200.ms),
+                          const SizedBox(height: 16),
+                          // Large complete button - pops in with spring scale
+                          _buildExpandedCompleteButton()
+                            .animate()
+                            .fadeIn(delay: 100.ms, duration: 200.ms)
+                            .scale(
+                              begin: const Offset(0.9, 0.9),
+                              end: const Offset(1.0, 1.0),
+                              delay: 100.ms,
+                              duration: 300.ms,
+                              curve: Curves.elasticOut,
+                            ),
+                        ],
+                      )
+                    // COMPACT VIEW - Normal row
+                    : Row(
+                        key: const ValueKey('compact'),
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Set number - compact, centered
+                          SizedBox(
+                            width: 36,
+                            child: Center(
+                              child: Container(
+                                width: isCurrent ? 28 : 22,
+                                height: isCurrent ? 28 : 22,
+                                decoration: isCurrent
+                                    ? BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.cyan.withOpacity(0.2),
+                                        border: Border.all(color: AppColors.cyan, width: 1.5),
+                                      )
+                                    : null,
+                                child: Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      fontSize: isCurrent ? 14 : 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isCompleted
+                                          ? AppColors.success
+                                          : isCurrent
+                                              ? AppColors.cyan
+                                              : textMuted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Previous session
+                          Expanded(
+                            flex: 3,
+                            child: Center(
+                              child: Text(
+                                prevDisplay,
+                                style: TextStyle(
+                                  fontSize: isCurrent ? 13 : 12,
+                                  color: isCurrent
+                                      ? textSecondary
+                                      : textMuted.withOpacity(0.7),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Weight - inline editable for current set only when viewing current exercise
+                          Expanded(
+                            flex: 4,
+                            child: Center(
+                              child: isCurrent
+                                  ? _buildInlineInput(
+                                      controller: _weightController,
+                                      isDecimal: true,
+                                      isActive: true,
+                                      accentColor: AppColors.cyan,
+                                    )
+                                  : Text(
+                                      isCompleted
+                                          ? (_useKg
+                                              ? completedSetData!.weight.toStringAsFixed(0)
+                                              : (completedSetData!.weight * 2.20462).toStringAsFixed(0))
+                                          : '-',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.normal,
+                                        color: isCompleted ? AppColors.success : textMuted,
+                                      ),
+                                    ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 8), // Gap between KG and REPS
+
+                          // Reps - inline editable for current set only when viewing current exercise
+                          Expanded(
+                            flex: 4,
+                            child: Center(
+                              child: isCurrent
+                                  ? _buildInlineInput(
+                                      controller: _repsController,
+                                      isDecimal: false,
+                                      isActive: true,
+                                      accentColor: AppColors.purple,
+                                    )
+                                  : Text(
+                                      isCompleted ? completedSetData!.reps.toString() : '-',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.normal,
+                                        color: isCompleted ? AppColors.success : textMuted,
+                                      ),
+                                    ),
+                            ),
+                          ),
+
+                          // Checkmark / Complete button - CIRCULAR with neon ring
+                          SizedBox(
+                            width: 50, // Consistent width for alignment
+                            child: isCompleted
+                                // Completed state - green checkmark with burst animation
+                                ? Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Burst effect for just-completed set
+                                      if (_justCompletedSetIndex == index)
+                                        Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: AppColors.success, width: 2),
+                                          ),
+                                        ).animate()
+                                          .scale(begin: const Offset(0.5, 0.5), end: const Offset(1.4, 1.4), duration: 400.ms)
+                                          .fadeOut(duration: 400.ms),
+                                      // Second burst ring
+                                      if (_justCompletedSetIndex == index)
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: AppColors.success.withOpacity(0.3),
+                                          ),
+                                        ).animate()
+                                          .scale(begin: const Offset(0.3, 0.3), end: const Offset(1.8, 1.8), duration: 500.ms, delay: 50.ms)
+                                          .fadeOut(duration: 400.ms, delay: 100.ms),
+                                      // Main checkmark
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: AppColors.success.withOpacity(0.15),
+                                          border: Border.all(color: AppColors.success, width: 2),
+                                        ),
+                                        child: const Icon(Icons.check_rounded, size: 20, color: AppColors.success),
+                                      ).animate()
+                                        .scale(begin: const Offset(0.5, 0.5), end: const Offset(1.0, 1.0), duration: 300.ms, curve: Curves.elasticOut),
+                                    ],
+                                  )
+                                : isCurrent
+                                    // Active set - clean circular button with soft glow
+                                    ? GestureDetector(
+                                        onTapDown: (_) => setState(() => _isDoneButtonPressed = true),
+                                        onTapUp: (_) {
+                                          setState(() => _isDoneButtonPressed = false);
+                                          HapticFeedback.heavyImpact();
+                                          _completeSet();
+                                        },
+                                        onTapCancel: () => setState(() => _isDoneButtonPressed = false),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 100),
+                                          width: _isDoneButtonPressed ? 40 : 44,
+                                          height: _isDoneButtonPressed ? 40 : 44,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: _isDoneButtonPressed
+                                                  ? [AppColors.electricBlue, AppColors.cyan]
+                                                  : [AppColors.cyan, AppColors.electricBlue],
+                                            ),
+                                            boxShadow: [
+                                              // Soft ambient glow (premium feel)
+                                              BoxShadow(
+                                                color: AppColors.cyan.withOpacity(_isDoneButtonPressed ? 0.35 : 0.2),
+                                                blurRadius: _isDoneButtonPressed ? 12 : 8,
+                                                spreadRadius: 0,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(Icons.check_rounded, size: 26, color: Colors.white),
+                                        ),
+                                      )
+                                    // Pending set - subtle outline
+                                    : Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: textMuted.withOpacity(0.2),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                          ),
+                        ],
+                      ),
+                ), // Close AnimatedSwitcher
+              ), // Close AnimatedContainer
+              ), // Close AnimatedOpacity
             );
+
+            // Return with animations - reduced opacity for completed sets
+            if (isCompleted) {
+              // Wrap completed sets with Dismissible for swipe actions
+              return Dismissible(
+                key: Key('set_${_viewingExerciseIndex}_$index'),
+                background: Container(
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(left: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit, color: AppColors.cyan, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Edit',
+                        style: TextStyle(
+                          color: AppColors.cyan,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                secondaryBackground: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'Delete',
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.delete, color: AppColors.error, size: 20),
+                    ],
+                  ),
+                ),
+                onUpdate: (details) {
+                  // Haptic feedback when swipe threshold is reached
+                  if (details.reached && details.previousReached == false) {
+                    HapticFeedback.mediumImpact();
+                  }
+                },
+                confirmDismiss: (direction) async {
+                  HapticFeedback.selectionClick();
+                  if (direction == DismissDirection.startToEnd) {
+                    // Swipe right to edit - don't dismiss, just open editor
+                    _editCompletedSet(_viewingExerciseIndex, index);
+                    return false;
+                  } else if (direction == DismissDirection.endToStart) {
+                    // Swipe left to delete - confirm first
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: AppColors.elevated,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text(
+                          'Delete Set?',
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                        content: Text(
+                          'Are you sure you want to delete Set ${index + 1}?',
+                          style: const TextStyle(color: AppColors.textSecondary),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    ) ?? false;
+                  }
+                  return false;
+                },
+                onDismissed: (direction) {
+                  if (direction == DismissDirection.endToStart) {
+                    _deleteCompletedSet(_viewingExerciseIndex, index);
+                  }
+                },
+                child: Opacity(
+                  opacity: 0.6, // Reduce cognitive load on completed sets
+                  child: rowWidget,
+                ),
+              );
+            } else if (isCurrent) {
+              return rowWidget.animate().shimmer(
+                duration: 2000.ms,
+                color: AppColors.cyan.withOpacity(0.1),
+              );
+            } else {
+              return rowWidget;
+            }
           }),
 
-          // Add Set button
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _totalSetsPerExercise[_viewingExerciseIndex] = totalSets + 1;
-              });
-              HapticFeedback.lightImpact();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.cardBorder.withOpacity(0.2)),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add, size: 16, color: AppColors.cyan),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Add Set',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
-                    ),
+          // Add Set button - distinct card
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _totalSetsPerExercise[_viewingExerciseIndex] = totalSets + 1;
+                });
+                // Satisfying haptic for adding a set
+                HapticFeedback.mediumImpact();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.cyan.withOpacity(0.4),
+                    width: 1.5,
                   ),
-                ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.cyan.withOpacity(0.15),
+                        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                      ),
+                      child: const Icon(Icons.add, size: 16, color: AppColors.cyan),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Add Set',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Rest timer info OR "Go to current" button
+          const SizedBox(height: 24),
+
+          // Rest timer info - distinct card with clear separation
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.elevated.withOpacity(0.3),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.purple.withOpacity(0.4),
+                width: 1.5,
+              ),
             ),
             child: isViewingCurrent
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.timer_outlined, size: 14, color: AppColors.purple.withOpacity(0.8)),
-                      const SizedBox(width: 4),
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.purple.withOpacity(0.15),
+                        ),
+                        child: const Icon(Icons.timer_outlined, size: 14, color: AppColors.purple),
+                      ),
+                      const SizedBox(width: 10),
                       Text(
                         'Rest: ${viewingExercise.restSeconds ?? 90}s between sets',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.purple.withOpacity(0.8),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.purple,
                         ),
                       ),
                     ],
@@ -2498,13 +3417,21 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.keyboard_return, size: 14, color: AppColors.cyan),
-                        const SizedBox(width: 4),
-                        Text(
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.cyan.withOpacity(0.15),
+                          ),
+                          child: const Icon(Icons.keyboard_return, size: 14, color: AppColors.cyan),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
                           'Back to Current Exercise',
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.cyan,
                           ),
                         ),
@@ -2514,7 +3441,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.1);
+        ), // Close Container
+      ), // Close BackdropFilter
+    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.1); // Close ClipRRect with animation
   }
 
   static const _overlayHeaderStyle = TextStyle(
@@ -2528,40 +3457,387 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   Widget _buildInlineInput({
     required TextEditingController controller,
     required bool isDecimal,
+    bool isActive = false,
+    Color accentColor = AppColors.cyan,
   }) {
+    final increment = isDecimal ? 2.5 : 1.0;
+    // Larger tap targets for easier use during workouts (10-15% bigger)
+    final buttonWidth = isActive ? 32.0 : 28.0;
+    final height = isActive ? 40.0 : 36.0;
+    final iconSize = isActive ? 18.0 : 16.0;
+    final fontSize = isActive ? 15.0 : 13.0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputBg = isActive
+        ? (isDark ? AppColors.pureBlack : AppColorsLight.pureWhite)
+        : (isDark ? AppColors.elevated : AppColorsLight.glassSurface);
+    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
+
     return Container(
-      height: 32,
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: height,
       decoration: BoxDecoration(
-        color: AppColors.elevated,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.5)),
+        color: inputBg,
+        borderRadius: BorderRadius.circular(isActive ? 10 : 8),
+        border: Border.all(
+          color: isActive ? accentColor : accentColor.withOpacity(0.5),
+          width: isActive ? 1.5 : 1,
+        ),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: accentColor.withOpacity(isDark ? 0.2 : 0.1),
+                  blurRadius: 6,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
-      child: TextField(
-        controller: controller,
-        textAlign: TextAlign.center,
-        keyboardType: isDecimal
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : TextInputType.number,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: AppColors.cyan,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // Minus button - compact but tappable
+          GestureDetector(
+            onTap: () {
+              if (isDecimal) {
+                final current = double.tryParse(controller.text) ?? 0;
+                final newVal = (current - increment).clamp(0.0, 999.0);
+                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+              } else {
+                final current = int.tryParse(controller.text) ?? 0;
+                final newVal = (current - 1).clamp(0, 999);
+                controller.text = newVal.toString();
+              }
+              setState(() {});
+              HapticFeedback.mediumImpact();
+            },
+            child: Container(
+              width: buttonWidth,
+              height: height,
+              decoration: BoxDecoration(
+                gradient: isActive
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          accentColor.withOpacity(0.3),
+                          accentColor.withOpacity(0.15),
+                        ],
+                      )
+                    : null,
+                color: isActive ? null : accentColor.withOpacity(0.15),
+                borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(isActive ? 8 : 7),
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.remove,
+                  size: iconSize,
+                  color: isActive ? Colors.white : accentColor,
+                ),
+              ),
+            ),
+          ),
+          // Text display - tappable to edit via dialog
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _showNumberInputDialog(controller, isDecimal);
+              },
+              child: Container(
+                height: height,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    controller.text.isEmpty ? '0' : controller.text,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.bold,
+                      color: isActive ? textColor : accentColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Plus button - compact but tappable
+          GestureDetector(
+            onTap: () {
+              if (isDecimal) {
+                final current = double.tryParse(controller.text) ?? 0;
+                final newVal = current + increment;
+                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+              } else {
+                final current = int.tryParse(controller.text) ?? 0;
+                final newVal = current + 1;
+                controller.text = newVal.toString();
+              }
+              setState(() {});
+              HapticFeedback.mediumImpact();
+            },
+            child: Container(
+              width: buttonWidth,
+              height: height,
+              decoration: BoxDecoration(
+                gradient: isActive
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          accentColor.withOpacity(0.3),
+                          accentColor.withOpacity(0.15),
+                        ],
+                      )
+                    : null,
+                color: isActive ? null : accentColor.withOpacity(0.15),
+                borderRadius: BorderRadius.horizontal(
+                  right: Radius.circular(isActive ? 8 : 7),
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.add,
+                  size: iconSize,
+                  color: isActive ? Colors.white : accentColor,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build expanded input for the Set Tracker (larger, more tactile)
+  Widget _buildExpandedInput({
+    required TextEditingController controller,
+    required bool isDecimal,
+    required Color accentColor,
+  }) {
+    final increment = isDecimal ? 2.5 : 1.0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputBg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
+
+    return Container(
+      height: 64,
+      decoration: BoxDecoration(
+        color: inputBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(isDark ? 0.3 : 0.15),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Large minus button with glow effect
+          _GlowingIncrementButton(
+            icon: Icons.remove,
+            accentColor: accentColor,
+            isLeft: true,
+            onTap: () {
+              if (isDecimal) {
+                final current = double.tryParse(controller.text) ?? 0;
+                final newVal = (current - increment).clamp(0.0, 999.0);
+                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+              } else {
+                final current = int.tryParse(controller.text) ?? 0;
+                final newVal = (current - 1).clamp(0, 999);
+                controller.text = newVal.toString();
+              }
+              setState(() {});
+            },
+          ),
+          // Large text display - tappable to edit
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                _showNumberInputDialog(controller, isDecimal);
+              },
+              child: Container(
+                height: 64,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    controller.text.isEmpty ? '0' : controller.text,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Large plus button with glow effect
+          _GlowingIncrementButton(
+            icon: Icons.add,
+            accentColor: accentColor,
+            isLeft: false,
+            onTap: () {
+              if (isDecimal) {
+                final current = double.tryParse(controller.text) ?? 0;
+                final newVal = current + increment;
+                controller.text = newVal.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+              } else {
+                final current = int.tryParse(controller.text) ?? 0;
+                final newVal = current + 1;
+                controller.text = newVal.toString();
+              }
+              setState(() {});
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build expanded complete button for the Set Tracker
+  Widget _buildExpandedCompleteButton() {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isDoneButtonPressed = true),
+      onTapUp: (_) {
+        setState(() {
+          _isDoneButtonPressed = false;
+          // Keep expanded state for next set - better UX
+        });
+        HapticFeedback.heavyImpact();
+        _completeSet();
+      },
+      onTapCancel: () => setState(() => _isDoneButtonPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        width: double.infinity,
+        height: _isDoneButtonPressed ? 52 : 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: _isDoneButtonPressed
+                ? [AppColors.electricBlue, AppColors.cyan]
+                : [AppColors.cyan, AppColors.electricBlue],
+          ),
+          boxShadow: [
+            // Soft ambient glow (premium, not gamey)
+            BoxShadow(
+              color: AppColors.cyan.withOpacity(_isDoneButtonPressed ? 0.3 : 0.18),
+              blurRadius: _isDoneButtonPressed ? 14 : 10,
+              spreadRadius: 0,
+            ),
+          ],
         ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_rounded, size: 28, color: Colors.white),
+            const SizedBox(width: 8),
+            const Text(
+              'COMPLETE SET',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
         ),
-        onChanged: (val) {
-          setState(() {}); // Trigger rebuild to update display
-        },
+      ),
+    );
+  }
+
+  /// Show a dialog to edit the number value
+  void _showNumberInputDialog(TextEditingController controller, bool isDecimal) {
+    final editController = TextEditingController(text: controller.text);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isDecimal ? 'Enter Weight (${_useKg ? 'kg' : 'lbs'})' : 'Enter Reps',
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
+        content: TextField(
+          controller: editController,
+          autofocus: true,
+          keyboardType: isDecimal
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : TextInputType.number,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.cyan,
+          ),
+          textAlign: TextAlign.center,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.pureBlack,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cyan),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+            ),
+          ),
+          onSubmitted: (value) {
+            // For reps, convert to integer
+            if (!isDecimal) {
+              final intVal = int.tryParse(value.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+              controller.text = intVal.toString();
+            } else {
+              controller.text = value;
+            }
+            setState(() {});
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          TextButton(
+            onPressed: () {
+              // For reps, convert to integer
+              if (!isDecimal) {
+                final intVal = int.tryParse(editController.text.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+                controller.text = intVal.toString();
+              } else {
+                controller.text = editController.text;
+              }
+              setState(() {});
+              Navigator.pop(context);
+            },
+            child: const Text('OK', style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildBottomSection(WorkoutExercise currentExercise, WorkoutExercise? nextExercise) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SafeArea(
       top: false,
       child: Column(
@@ -2577,9 +3853,20 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.elevated.withOpacity(0.95),
+                      color: isDark
+                          ? AppColors.elevated.withOpacity(0.95)
+                          : AppColorsLight.elevated.withOpacity(0.98),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(
+                        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                      ),
+                      boxShadow: isDark ? null : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2642,8 +3929,20 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             decoration: BoxDecoration(
-              color: AppColors.nearBlack.withOpacity(0.95),
+              color: isDark
+                  ? AppColors.nearBlack.withOpacity(0.95)
+                  : AppColorsLight.elevated.withOpacity(0.98),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: isDark ? null : Border(
+                top: BorderSide(color: AppColorsLight.cardBorder.withOpacity(0.3)),
+              ),
+              boxShadow: isDark ? null : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -2656,19 +3955,39 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
                 const SizedBox(width: 12),
 
-                // Next exercise indicator (expanded)
+                // Next exercise indicator - MORE PROMINENT sticky drawer style
                 Expanded(
                   child: nextExercise != null
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.glassSurface,
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                AppColors.cyan.withOpacity(0.15),
+                                AppColors.electricBlue.withOpacity(0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.cyan.withOpacity(0.3),
+                              width: 1.5,
+                            ),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.arrow_forward, size: 16, color: AppColors.cyan),
-                              const SizedBox(width: 8),
+                              // Arrow icon with animation hint
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.cyan.withOpacity(0.2),
+                                ),
+                                child: const Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.cyan),
+                              ),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2677,15 +3996,18 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                       'Next',
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: AppColors.textMuted,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                        color: AppColors.cyan.withOpacity(0.8),
                                       ),
                                     ),
+                                    const SizedBox(height: 2),
                                     Text(
                                       nextExercise.name,
-                                      style: const TextStyle(
-                                        fontSize: 13,
+                                      style: TextStyle(
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
+                                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -2696,22 +4018,41 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             ],
                           ),
                         )
+                      // Last exercise - celebration style
                       : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                AppColors.success.withOpacity(0.15),
+                                AppColors.success.withOpacity(0.08),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: AppColors.success.withOpacity(0.4),
+                              width: 1.5,
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.flag, size: 16, color: AppColors.success),
-                              const SizedBox(width: 8),
-                              Text(
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.success.withOpacity(0.2),
+                                ),
+                                child: const Icon(Icons.flag_rounded, size: 16, color: AppColors.success),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
                                 'Last Exercise!',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.success,
                                 ),
@@ -2728,8 +4069,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                   onPressed: _skipExercise,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    side: const BorderSide(color: AppColors.cardBorder),
-                    foregroundColor: AppColors.textSecondary,
+                    side: BorderSide(
+                      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                    ),
+                    foregroundColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -2753,36 +4096,204 @@ class _GlassButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool isHighlighted;
+  final bool isSubdued; // For de-emphasized buttons like close
   final double size;
 
   const _GlassButton({
     required this.icon,
     required this.onTap,
     this.isHighlighted = false,
+    this.isSubdued = false,
     this.size = 44,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Theme-aware colors
+    final bgColor = isHighlighted
+        ? AppColors.cyan.withOpacity(0.3)
+        : isSubdued
+            ? (isDark ? AppColors.pureBlack.withOpacity(0.3) : AppColorsLight.elevated.withOpacity(0.8))
+            : (isDark ? AppColors.pureBlack.withOpacity(0.5) : AppColorsLight.elevated.withOpacity(0.9));
+
+    final borderColor = isHighlighted
+        ? AppColors.cyan.withOpacity(0.5)
+        : isSubdued
+            ? (isDark ? Colors.white.withOpacity(0.1) : AppColorsLight.cardBorder.withOpacity(0.3))
+            : (isDark ? Colors.white.withOpacity(0.2) : AppColorsLight.cardBorder.withOpacity(0.5));
+
+    final iconColor = isHighlighted
+        ? AppColors.cyan
+        : isSubdued
+            ? (isDark ? Colors.white.withOpacity(0.5) : AppColorsLight.textMuted)
+            : (isDark ? Colors.white : AppColorsLight.textPrimary);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: isHighlighted
-              ? AppColors.cyan.withOpacity(0.3)
-              : AppColors.pureBlack.withOpacity(0.5),
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isHighlighted ? AppColors.cyan.withOpacity(0.5) : Colors.white.withOpacity(0.2),
-          ),
+          border: Border.all(color: borderColor),
+          boxShadow: isDark ? null : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Icon(
           icon,
-          color: isHighlighted ? AppColors.cyan : Colors.white,
+          color: iconColor,
           size: size * 0.5,
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Glowing Increment Button (for +/- in expanded input)
+// ─────────────────────────────────────────────────────────────────
+
+class _GlowingIncrementButton extends StatefulWidget {
+  final IconData icon;
+  final Color accentColor;
+  final bool isLeft;
+  final VoidCallback onTap;
+
+  const _GlowingIncrementButton({
+    required this.icon,
+    required this.accentColor,
+    required this.isLeft,
+    required this.onTap,
+  });
+
+  @override
+  State<_GlowingIncrementButton> createState() => _GlowingIncrementButtonState();
+}
+
+class _GlowingIncrementButtonState extends State<_GlowingIncrementButton>
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 80),
+    );
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    setState(() => _isPressed = true);
+    _glowController.forward();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    setState(() => _isPressed = false);
+    _glowController.reverse();
+    widget.onTap();
+    HapticFeedback.mediumImpact();
+  }
+
+  void _handleTapCancel() {
+    setState(() => _isPressed = false);
+    _glowController.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedBuilder(
+        animation: _glowAnimation,
+        builder: (context, child) {
+          final glowIntensity = _glowAnimation.value;
+          // 30% brightness increase when pressed
+          final baseOpacity = 0.4;
+          final pressedOpacity = baseOpacity + (0.3 * glowIntensity);
+          final baseOpacity2 = 0.2;
+          final pressedOpacity2 = baseOpacity2 + (0.15 * glowIntensity);
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 80),
+            width: 56,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  widget.accentColor.withOpacity(pressedOpacity),
+                  widget.accentColor.withOpacity(pressedOpacity2),
+                ],
+              ),
+              borderRadius: BorderRadius.horizontal(
+                left: widget.isLeft ? const Radius.circular(14) : Radius.zero,
+                right: widget.isLeft ? Radius.zero : const Radius.circular(14),
+              ),
+              // Subtle glow when pressed
+              boxShadow: _isPressed
+                  ? [
+                      BoxShadow(
+                        color: widget.accentColor.withOpacity(0.4 * glowIntensity),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Soft ripple effect
+                if (_isPressed)
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 80),
+                    opacity: glowIntensity * 0.3,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                // Icon
+                AnimatedScale(
+                  duration: const Duration(milliseconds: 80),
+                  scale: _isPressed ? 0.9 : 1.0,
+                  child: Icon(
+                    widget.icon,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -2799,6 +4310,7 @@ class _StatChip extends StatelessWidget {
   final String? label;
   final Color color;
   final double scaleFactor;
+  final bool isTappable;
 
   const _StatChip({
     required this.icon,
@@ -2807,6 +4319,7 @@ class _StatChip extends StatelessWidget {
     this.suffix,
     this.label,
     this.scaleFactor = 1.0,
+    this.isTappable = false,
   });
 
   @override
@@ -2829,34 +4342,49 @@ class _StatChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.pureBlack.withOpacity(0.5),
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: isTappable ? color.withOpacity(0.5) : color.withOpacity(0.3),
+          width: isTappable ? 1.5 : 1.0,
+        ),
+        // Add subtle glow for tappable items
+        boxShadow: isTappable
+            ? [
+                BoxShadow(
+                  color: color.withOpacity(0.2),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: iconSize, color: color),
           SizedBox(width: innerSpacing),
-          Flexible(
-            child: Text(
-              // If paused, just show the label instead of time + PAUSED to save space
-              label != null ? label! : value,
-              style: TextStyle(
-                fontSize: label != null ? labelFontSize : valueFontSize,
-                fontWeight: FontWeight.bold,
-                fontFamily: label != null ? null : 'monospace',
-                color: label != null ? AppColors.orange : color,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Text(
+            // If paused, just show the label instead of time + PAUSED to save space
+            label != null ? label! : value,
+            style: TextStyle(
+              fontSize: label != null ? labelFontSize : valueFontSize,
+              fontWeight: FontWeight.bold,
+              fontFamily: label != null ? null : 'monospace',
+              color: label != null ? AppColors.orange : color,
             ),
           ),
           if (suffix != null && label == null)
             Text(
-              ' $suffix',
+              suffix!,
               style: TextStyle(
                 fontSize: suffixFontSize,
                 color: color.withOpacity(0.7),
               ),
             ),
+          // Add tap indicator for tappable chips
+          if (isTappable) ...[
+            SizedBox(width: innerSpacing * 0.5),
+            Icon(Icons.add_circle_outline, size: iconSize * 0.7, color: color.withOpacity(0.5)),
+          ],
         ],
       ),
     );

@@ -193,6 +193,8 @@ class UpdateProgramRequest(BaseModel):
     equipment: Optional[List[str]] = None
     focus_areas: Optional[List[str]] = None
     injuries: Optional[List[str]] = None
+    dumbbell_count: Optional[int] = 2  # 1 or 2 dumbbells
+    kettlebell_count: Optional[int] = 1  # 1 or 2 kettlebells
 
 
 class UpdateProgramResponse(BaseModel):

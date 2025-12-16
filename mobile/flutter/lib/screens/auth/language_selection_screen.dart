@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/language_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 
 /// Language selection screen shown before welcome slides
 class LanguageSelectionScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,16 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isDropdownOpen = false;
+
+  // Sign-in state
+  bool _isLoading = false;
+  String? _loadingMessage;
+  final List<String> _loadingMessages = [
+    'Connecting to server...',
+    'Waking up backend (cold start)...',
+    'Almost there...',
+    'Verifying credentials...',
+  ];
 
   List<Language> get _filteredLanguages {
     if (_searchQuery.isEmpty) {
@@ -64,6 +76,39 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    // Save language preference first
+    await ref.read(languageProvider.notifier).setLanguage(_selectedLanguage);
+
+    setState(() {
+      _isLoading = true;
+      _loadingMessage = _loadingMessages[0];
+    });
+
+    // Cycle through loading messages for long waits (Render cold start)
+    int messageIndex = 0;
+    final messageTimer = Stream.periodic(
+      const Duration(seconds: 3),
+      (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
+    ).listen((message) {
+      if (mounted && _isLoading) {
+        setState(() => _loadingMessage = message);
+      }
+    });
+
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+    } finally {
+      messageTimer.cancel();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loadingMessage = null;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -93,10 +138,15 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
               // Language selection
               _buildLanguageSection(isDark, textSecondary),
 
-              const Spacer(flex: 2),
+              const Spacer(flex: 1),
 
-              // Continue button
-              _buildContinueButton(isDark),
+              // Sign in section
+              _buildSignInSection(isDark, textSecondary),
+
+              const SizedBox(height: 16),
+
+              // Or continue to learn more
+              _buildContinueSection(isDark, textSecondary),
 
               const SizedBox(height: 24),
             ],
@@ -415,47 +465,167 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
     );
   }
 
-  Widget _buildContinueButton(bool isDark) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _continue,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          elevation: 4,
-          shadowColor: AppColors.cyan.withOpacity(0.4),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Continue',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+  Widget _buildSignInSection(bool isDark, Color textSecondary) {
+    final authState = ref.watch(authStateProvider);
+    final buttonColor = isDark ? Colors.white : AppColorsLight.elevated;
+    final buttonTextColor = isDark ? Colors.black87 : AppColorsLight.textPrimary;
+
+    return Column(
+      children: [
+        // Google Sign In button
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _signInWithGoogle,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: buttonTextColor,
+              disabledBackgroundColor: buttonColor.withOpacity(0.5),
+              elevation: isDark ? 0 : 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: isDark
+                    ? BorderSide.none
+                    : BorderSide(color: AppColorsLight.cardBorder, width: 1),
               ),
             ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, size: 20),
+            child: _isLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            isDark ? Colors.black54 : AppColorsLight.textMuted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _loadingMessage ?? 'Signing in...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.black54 : AppColorsLight.textMuted,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.network(
+                        'https://www.google.com/favicon.ico',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.g_mobiledata,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Continue with Google',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: buttonTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
+
+        // Error message
+        if (authState.status == AuthStatus.error && authState.errorMessage != null)
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.error.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    authState.errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.error,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().shake(),
+      ],
+    );
+  }
+
+  Widget _buildContinueSection(bool isDark, Color textSecondary) {
+    return Column(
+      children: [
+        // Divider with "or"
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 1,
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'or',
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                height: 1,
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              ),
+            ),
           ],
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(delay: 700.ms)
-        .slideY(begin: 0.2, delay: 700.ms)
-        .animate(
-          onPlay: (c) => c.repeat(reverse: true),
-        )
-        .shimmer(
-          delay: 1500.ms,
-          duration: 2000.ms,
-          color: Colors.white.withOpacity(0.2),
-        );
+        ).animate().fadeIn(delay: 700.ms),
+
+        const SizedBox(height: 16),
+
+        // Learn more button
+        GestureDetector(
+          onTap: _continue,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Learn more about AI Fitness Coach',
+                style: TextStyle(
+                  color: AppColors.cyan,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.cyan,
+                size: 18,
+              ),
+            ],
+          ),
+        ).animate().fadeIn(delay: 800.ms),
+      ],
+    );
   }
 }

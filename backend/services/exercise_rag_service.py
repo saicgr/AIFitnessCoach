@@ -183,6 +183,8 @@ class ExerciseRAGService:
                     "image_url": str(ex.get("image_url") or ""),  # Include image URL
                     "instructions": str(ex.get("instructions") or "")[:500],
                     "has_video": "true",  # All indexed exercises have videos
+                    "single_dumbbell_friendly": "true" if ex.get("single_dumbbell_friendly") else "false",
+                    "single_kettlebell_friendly": "true" if ex.get("single_kettlebell_friendly") else "false",
                 })
 
             # Get ALL embeddings in ONE API call
@@ -227,6 +229,8 @@ class ExerciseRAGService:
         category = exercise.get("category", "")
         difficulty = exercise.get("difficulty_level", "")
         instructions = exercise.get("instructions", "")
+        single_dumbbell = exercise.get("single_dumbbell_friendly", False)
+        single_kettlebell = exercise.get("single_kettlebell_friendly", False)
 
         text_parts = [
             f"Exercise: {name}",
@@ -234,6 +238,12 @@ class ExerciseRAGService:
             f"Target Muscle: {target}",
             f"Equipment: {equipment}",
         ]
+
+        # Add single equipment compatibility info
+        if single_dumbbell:
+            text_parts.append("Can be done with single dumbbell")
+        if single_kettlebell:
+            text_parts.append("Can be done with single kettlebell")
 
         if secondary:
             if isinstance(secondary, list):
@@ -262,6 +272,8 @@ class ExerciseRAGService:
         count: int = 6,
         avoid_exercises: Optional[List[str]] = None,
         injuries: Optional[List[str]] = None,
+        dumbbell_count: int = 2,
+        kettlebell_count: int = 1,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -274,11 +286,14 @@ class ExerciseRAGService:
             count: Number of exercises to select
             avoid_exercises: Exercises to avoid (for variety)
             injuries: User's active injuries to avoid aggravating
+            dumbbell_count: Number of dumbbells user has (1 or 2)
+            kettlebell_count: Number of kettlebells user has (1 or 2)
 
         Returns:
             List of selected exercises with full details
         """
         logger.info(f"🎯 Selecting {count} exercises for {focus_area} workout")
+        logger.info(f"🏋️ Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
         if injuries:
             logger.info(f"⚠️ User has injuries/conditions: {injuries} - AI will filter unsafe exercises")
 
@@ -378,6 +393,21 @@ class ExerciseRAGService:
                 logger.debug(f"Filtered out '{meta.get('name')}' - equipment '{ex_equipment}' not in {equipment_lower}")
                 continue
 
+            # Filter by single equipment compatibility if user has only 1 dumbbell or kettlebell
+            if dumbbell_count == 1 and "dumbbell" in ex_equipment:
+                # User has only 1 dumbbell - check if exercise is single-dumbbell friendly
+                single_db_friendly = meta.get("single_dumbbell_friendly", "false") == "true"
+                if not single_db_friendly:
+                    logger.debug(f"Filtered out '{meta.get('name')}' - requires 2 dumbbells but user has 1")
+                    continue
+
+            if kettlebell_count == 1 and "kettlebell" in ex_equipment:
+                # User has only 1 kettlebell - check if exercise is single-kettlebell friendly
+                single_kb_friendly = meta.get("single_kettlebell_friendly", "false") == "true"
+                if not single_kb_friendly:
+                    logger.debug(f"Filtered out '{meta.get('name')}' - requires 2 kettlebells but user has 1")
+                    continue
+
             # Get exercise name
             exercise_name = meta.get("name", "Unknown")
 
@@ -413,6 +443,8 @@ class ExerciseRAGService:
                 "image_url": meta.get("image_url", ""),  # Include image URL
                 "instructions": meta.get("instructions", ""),
                 "similarity": similarity,
+                "single_dumbbell_friendly": meta.get("single_dumbbell_friendly", "false") == "true",
+                "single_kettlebell_friendly": meta.get("single_kettlebell_friendly", "false") == "true",
             })
 
         if not candidates:

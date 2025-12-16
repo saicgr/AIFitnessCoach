@@ -3,7 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../onboarding_data.dart';
 import '../widgets/selection_chip.dart';
 
-class PreferencesStep extends StatelessWidget {
+class PreferencesStep extends StatefulWidget {
   final OnboardingData data;
   final VoidCallback onDataChanged;
 
@@ -13,6 +13,11 @@ class PreferencesStep extends StatelessWidget {
     required this.onDataChanged,
   });
 
+  @override
+  State<PreferencesStep> createState() => _PreferencesStepState();
+}
+
+class _PreferencesStepState extends State<PreferencesStep> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -69,10 +74,10 @@ class PreferencesStep extends StatelessWidget {
                 icon: Icons.filter_frames,
               ),
             ],
-            selectedValue: data.trainingSplit,
+            selectedValue: widget.data.trainingSplit,
             onChanged: (value) {
-              data.trainingSplit = value;
-              onDataChanged();
+              widget.data.trainingSplit = value;
+              widget.onDataChanged();
             },
             showDescriptions: true,
           ),
@@ -102,10 +107,10 @@ class PreferencesStep extends StatelessWidget {
                 icon: Icons.brightness_high,
               ),
             ],
-            selectedValue: data.intensityLevel,
+            selectedValue: widget.data.intensityLevel,
             onChanged: (value) {
-              data.intensityLevel = value;
-              onDataChanged();
+              widget.data.intensityLevel = value;
+              widget.onDataChanged();
             },
             showDescriptions: true,
           ),
@@ -121,20 +126,7 @@ class PreferencesStep extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          MultiSelectGroup(
-            options: EquipmentOptions.all
-                .map((e) => SelectionOption(
-                      label: e['label']!,
-                      value: e['value']!,
-                    ))
-                .toList(),
-            selectedValues: data.equipment,
-            onChanged: (values) {
-              data.equipment = values;
-              onDataChanged();
-            },
-            crossAxisCount: 2,
-          ),
+          _buildEquipmentSection(),
           const SizedBox(height: 32),
 
           // Workout Variety
@@ -155,16 +147,174 @@ class PreferencesStep extends StatelessWidget {
                 icon: Icons.shuffle,
               ),
             ],
-            selectedValue: data.workoutVariety,
+            selectedValue: widget.data.workoutVariety,
             onChanged: (value) {
-              data.workoutVariety = value;
-              onDataChanged();
+              widget.data.workoutVariety = value;
+              widget.onDataChanged();
             },
             showDescriptions: true,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildEquipmentSection() {
+    final equipmentOptions = EquipmentOptions.all;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: equipmentOptions.map((e) {
+        final value = e['value']!;
+        final label = e['label']!;
+        final isSelected = widget.data.equipment.contains(value);
+        final showQuantity = (value == 'dumbbells' || value == 'kettlebell') && isSelected;
+
+        return _buildEquipmentChip(
+          label: label,
+          value: value,
+          isSelected: isSelected,
+          showQuantity: showQuantity,
+          quantity: value == 'dumbbells' ? widget.data.dumbbellCount : widget.data.kettlebellCount,
+          onQuantityChanged: (newQty) {
+            setState(() {
+              if (value == 'dumbbells') {
+                widget.data.dumbbellCount = newQty;
+              } else {
+                widget.data.kettlebellCount = newQty;
+              }
+            });
+            widget.onDataChanged();
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildEquipmentChip({
+    required String label,
+    required String value,
+    required bool isSelected,
+    required bool showQuantity,
+    int quantity = 1,
+    Function(int)? onQuantityChanged,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        _handleEquipmentTap(value);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: showQuantity ? 10 : 14,
+          vertical: 10,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.cyan.withOpacity(0.15)
+              : AppColors.glassSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.cyan : AppColors.textPrimary,
+              ),
+            ),
+            if (showQuantity) ...[
+              const SizedBox(width: 8),
+              _buildQuantitySelector(quantity, onQuantityChanged!),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantitySelector(int currentValue, Function(int) onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.glassSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: currentValue <= 1 ? null : () => onChanged(currentValue - 1),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.remove,
+                size: 14,
+                color: currentValue <= 1 ? AppColors.textMuted : AppColors.cyan,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$currentValue',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.cyan,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: currentValue >= 2 ? null : () => onChanged(currentValue + 1),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.add,
+                size: 14,
+                color: currentValue >= 2 ? AppColors.textMuted : AppColors.cyan,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleEquipmentTap(String value) {
+    setState(() {
+      List<String> newValues = List.from(widget.data.equipment);
+
+      // Handle Full Gym auto-select
+      if (value == 'full_gym') {
+        if (newValues.contains('full_gym')) {
+          newValues.remove('full_gym');
+        } else {
+          // Auto-select all gym equipment
+          newValues = ['full_gym', 'dumbbells', 'barbell', 'kettlebell', 'resistance_bands', 'pull_up_bar', 'cable_machine'];
+        }
+      } else {
+        if (newValues.contains(value)) {
+          newValues.remove(value);
+          // Remove full_gym if any item is deselected
+          newValues.remove('full_gym');
+        } else {
+          newValues.add(value);
+        }
+      }
+
+      widget.data.equipment = newValues;
+    });
+    widget.onDataChanged();
   }
 
   Widget _buildLabel(String text, {bool isRequired = false}) {

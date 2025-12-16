@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../../screens/chat/chat_screen.dart';
 import 'floating_chat_provider.dart';
 
@@ -121,6 +122,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final message = _textController.text.trim();
     if (message.isEmpty || _isLoading) return;
 
+    HapticService.medium();
     _textController.clear();
     setState(() => _isLoading = true);
 
@@ -231,6 +233,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                   // Maximize button - open full screen chat with animation
                   GestureDetector(
                     onTap: () {
+                      HapticService.light();
                       // Close the bottom sheet first
                       Navigator.of(context).pop();
                       // Navigate with custom animated route
@@ -242,7 +245,10 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: widget.onClose,
+                    onTap: () {
+                      HapticService.light();
+                      widget.onClose();
+                    },
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Icon(Icons.close, color: textMuted),
@@ -421,6 +427,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
             padding: const EdgeInsets.only(bottom: 8),
             child: InkWell(
               onTap: () {
+                HapticService.selection();
                 _textController.text = suggestion;
                 _sendMessage();
               },
@@ -493,6 +500,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                 padding: const EdgeInsets.only(top: 10),
                 child: InkWell(
                   onTap: () {
+                    HapticService.selection();
                     // Close the chat drawer first, then navigate
                     Navigator.of(context).pop();
                     context.push('/workout/${message.workoutId}');

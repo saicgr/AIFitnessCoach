@@ -100,8 +100,12 @@ class WorkoutRepository {
     String? monthStartDate,
   }) async {
     try {
-      debugPrint('🔍 [Workout] Generating monthly workouts...');
+      debugPrint('🔍 [Workout] Generating monthly workouts for $weeks weeks...');
       final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
+
+      // Use longer timeout for workout generation (AI generation + server cold start can take time)
+      // Scale timeout based on number of weeks being generated
+      final timeoutMinutes = weeks <= 2 ? 3 : (weeks <= 4 ? 5 : 8);
 
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/generate-monthly',
@@ -112,6 +116,10 @@ class WorkoutRepository {
           'duration_minutes': durationMinutes,
           'weeks': weeks,
         },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: Duration(minutes: timeoutMinutes),
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -233,6 +241,8 @@ class WorkoutRepository {
     List<String>? equipment,
     String? workoutType,
     List<String>? workoutDays,
+    int? dumbbellCount,
+    int? kettlebellCount,
   }) async {
     try {
       debugPrint('🔍 [Workout] Updating program and regenerating all workouts');
@@ -243,6 +253,8 @@ class WorkoutRepository {
       debugPrint('  - equipment: $equipment');
       debugPrint('  - workoutType: $workoutType');
       debugPrint('  - workoutDays: $workoutDays');
+      debugPrint('  - dumbbellCount: $dumbbellCount');
+      debugPrint('  - kettlebellCount: $kettlebellCount');
 
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/update-program',
@@ -255,6 +267,8 @@ class WorkoutRepository {
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
           if (workoutType != null) 'workout_type': workoutType,
           if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
+          if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
+          if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
         },
         options: Options(
           sendTimeout: const Duration(seconds: 30),
@@ -269,6 +283,107 @@ class WorkoutRepository {
       }
     } catch (e) {
       debugPrint('❌ [Workout] Error updating program: $e');
+      rethrow;
+    }
+  }
+
+  /// Schedule remaining workouts for background generation
+  /// This is called after generating the first week, to queue up the rest
+  Future<void> scheduleRemainingWorkouts({
+    required String userId,
+    required List<int> selectedDays,
+    required int durationMinutes,
+    required int totalWeeks,
+    required int weeksGenerated,
+  }) async {
+    try {
+      final remainingWeeks = totalWeeks - weeksGenerated;
+      debugPrint('🔍 [Workout] Scheduling $remainingWeeks more weeks for background generation');
+
+      // Calculate start date for remaining workouts (after first week)
+      final startDate = DateTime.now().add(Duration(days: 7 * weeksGenerated));
+      final startDateStr = startDate.toIso8601String().split('T')[0];
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/schedule-background-generation',
+        data: {
+          'user_id': userId,
+          'selected_days': selectedDays,
+          'duration_minutes': durationMinutes,
+          'weeks': remainingWeeks,
+          'month_start_date': startDateStr,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Background generation scheduled: ${data['message']}');
+      }
+    } catch (e) {
+      // Don't throw - this is a background operation
+      debugPrint('⚠️ [Workout] Failed to schedule remaining workouts: $e');
+    }
+  }
+
+  /// Get generation status for a user
+  Future<Map<String, dynamic>> getGenerationStatus(String userId) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/generation-status/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      }
+      return {'status': 'none'};
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting generation status: $e');
+      return {'status': 'error', 'error': e.toString()};
+    }
+  }
+
+  /// Generate more workouts (called when user clicks "View All" or needs more)
+  Future<List<Workout>> generateMoreWorkouts({
+    required String userId,
+    int weeks = 2,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Generating $weeks more weeks of workouts...');
+
+      // Use generate-remaining which picks up after existing workouts
+      final today = DateTime.now();
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/generate-remaining',
+        data: {
+          'user_id': userId,
+          'month_start_date': today.toIso8601String().split('T')[0],
+          'selected_days': [0, 1, 2, 3, 4, 5, 6], // Will be filtered by existing prefs
+          'duration_minutes': 45,
+          'weeks': weeks,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: Duration(minutes: weeks <= 2 ? 3 : 5),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final List<dynamic> workoutsData = data['workouts'] as List? ?? [];
+        final workouts = workoutsData
+            .map((json) => Workout.fromJson(json as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [Workout] Generated ${workouts.length} more workouts');
+        return workouts;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error generating more workouts: $e');
       rethrow;
     }
   }

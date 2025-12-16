@@ -8,6 +8,7 @@ import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/haptic_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -289,7 +290,10 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   // AI Settings floating pill button (gradient)
                   GestureDetector(
-                    onTap: () => context.push('/ai-settings'),
+                    onTap: () {
+                      HapticService.selection();
+                      context.push('/ai-settings');
+                    },
                     child: Container(
                       width: 56,
                       height: 56,
@@ -318,7 +322,10 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   // Settings pill - solid elevated style
                   GestureDetector(
-                    onTap: () => context.push('/settings'),
+                    onTap: () {
+                      HapticService.selection();
+                      context.push('/settings');
+                    },
                     child: Container(
                       width: 56,
                       height: 56,
@@ -1090,7 +1097,10 @@ class _QuickAccessCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticService.selection();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
@@ -1163,7 +1173,10 @@ class _SettingsCardWithRef extends ConsumerWidget {
           return Column(
             children: [
               InkWell(
-                onTap: item.onTap,
+                onTap: item.onTap != null ? () {
+                  HapticService.selection();
+                  item.onTap!();
+                } : null,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1

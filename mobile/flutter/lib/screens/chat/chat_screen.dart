@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
+import '../../data/services/haptic_service.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -54,6 +55,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final message = _textController.text.trim();
     if (message.isEmpty || _isLoading) return;
 
+    HapticService.medium();
     _textController.clear();
     setState(() => _isLoading = true);
 
@@ -77,6 +79,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// Minimize - shrink back to floating chat overlay with seamless animation
   void _minimizeToFloatingChat() {
+    HapticService.light();
     // Pop the full screen with reverse animation
     Navigator.of(context).pop();
     // Show floating chat immediately after shrink animation - no delay for seamless feel
@@ -100,7 +103,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         backgroundColor: AppColors.pureBlack,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            HapticService.light();
+            context.pop();
+          },
         ),
         title: Row(
           children: [
@@ -152,7 +158,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.more_vert),
-            onPressed: () => _showOptionsMenu(context),
+            onPressed: () {
+              HapticService.light();
+              _showOptionsMenu(context);
+            },
           ),
         ],
       ),
@@ -177,7 +186,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     Text('Failed to load messages: $e'),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => ref.read(chatMessagesProvider.notifier).loadHistory(),
+                      onPressed: () {
+                        HapticService.medium();
+                        ref.read(chatMessagesProvider.notifier).loadHistory();
+                      },
                       child: const Text('Retry'),
                     ),
                   ],
@@ -394,7 +406,10 @@ class _EmptyChat extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
-                onTap: () => onSuggestionTap(suggestion),
+                onTap: () {
+                  HapticService.selection();
+                  onSuggestionTap(suggestion);
+                },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   width: double.infinity,
@@ -709,7 +724,10 @@ class _GoToWorkoutButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.push('/workout/$workoutId'),
+      onTap: () {
+        HapticService.selection();
+        context.push('/workout/$workoutId');
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

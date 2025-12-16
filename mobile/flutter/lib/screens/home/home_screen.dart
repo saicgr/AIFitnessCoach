@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/services/haptic_service.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
@@ -311,7 +312,10 @@ class _SectionHeader extends StatelessWidget {
           const Spacer(),
           if (actionText != null && onAction != null)
             GestureDetector(
-              onTap: onAction,
+              onTap: () {
+                HapticService.light();
+                onAction!();
+              },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -435,7 +439,10 @@ class _NotificationBellButton extends ConsumerWidget {
             size: 24,
           ),
           tooltip: 'Notifications',
-          onPressed: () => context.push('/notifications'),
+          onPressed: () {
+            HapticService.light();
+            context.push('/notifications');
+          },
         ),
         if (unreadCount > 0)
           Positioned(
@@ -716,7 +723,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
             // Exercise preview strip at top - tappable to navigate
             if (exercises.isNotEmpty)
               GestureDetector(
-                onTap: widget.onStart,
+                onTap: () {
+                  HapticService.selection();
+                  widget.onStart();
+                },
                 child: Container(
                   height: 60,
                   decoration: BoxDecoration(
@@ -749,7 +759,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                 children: [
                   // Header badges - tappable to navigate
                   GestureDetector(
-                    onTap: widget.onStart,
+                    onTap: () {
+                      HapticService.selection();
+                      widget.onStart();
+                    },
                     child: Row(
                       children: [
                         // Scheduled date badge
@@ -816,7 +829,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
 
                   // Title - tappable to navigate
                   GestureDetector(
-                    onTap: widget.onStart,
+                    onTap: () {
+                      HapticService.selection();
+                      widget.onStart();
+                    },
                     child: Text(
                       workout.name ?? 'Workout',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -828,7 +844,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
 
                   // Stats row - simplified to 2 key stats
                   GestureDetector(
-                    onTap: widget.onStart,
+                    onTap: () {
+                      HapticService.selection();
+                      widget.onStart();
+                    },
                     child: Row(
                       children: [
                         _StatPill(
@@ -852,7 +871,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                       Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
-                          onPressed: () => context.push('/active-workout', extra: workout),
+                          onPressed: () {
+                            HapticService.medium();
+                            context.push('/active-workout', extra: workout);
+                          },
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('Start'),
                           style: ElevatedButton.styleFrom(
@@ -868,7 +890,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          onPressed: _regenerateWorkout,
+                          onPressed: () {
+                            HapticService.light();
+                            _regenerateWorkout();
+                          },
                           icon: const Icon(Icons.auto_awesome, size: 20),
                           color: AppColors.purple,
                           tooltip: 'Customize',
@@ -882,7 +907,10 @@ class _NextWorkoutCardState extends ConsumerState<_NextWorkoutCard> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
-                          onPressed: _isSkipping ? null : _skipWorkout,
+                          onPressed: _isSkipping ? null : () {
+                            HapticService.light();
+                            _skipWorkout();
+                          },
                           icon: _isSkipping
                               ? const SizedBox(
                                   width: 18,
@@ -1182,6 +1210,7 @@ class _UpcomingWorkoutCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () {
+            HapticService.selection();
             print('🎯 [UpcomingCard] Tapped: ${workout.name}');
             onTap();
           },

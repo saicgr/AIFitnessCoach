@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/haptic_service.dart';
 import 'onboarding_data.dart';
 import 'steps/personal_info_step.dart';
 import 'steps/body_metrics_step.dart';
@@ -53,6 +54,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   void _goToStep(int step) {
     if (step < 0 || step > 5) return;
+    HapticService.selection();
     setState(() => _currentStep = step);
     _pageController.animateToPage(
       step,
@@ -62,6 +64,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _nextStep() {
+    HapticService.medium();
     if (_currentStep < 5) {
       _goToStep(_currentStep + 1);
     } else {
@@ -70,6 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _previousStep() {
+    HapticService.light();
     if (_currentStep > 0) {
       _goToStep(_currentStep - 1);
     }
@@ -93,6 +97,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
       if (response.statusCode == 200) {
         debugPrint('✅ [Onboarding] Profile updated successfully');
+        HapticService.success();
 
         // Refresh user data
         await ref.read(authStateProvider.notifier).refreshUser();
@@ -114,6 +119,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     } catch (e) {
       debugPrint('❌ [Onboarding] Error: $e');
+      HapticService.error();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
