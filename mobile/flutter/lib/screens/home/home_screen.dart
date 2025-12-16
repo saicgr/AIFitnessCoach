@@ -563,14 +563,17 @@ class _ProgramMenuButton extends ConsumerWidget {
     final result = await showEditProgramSheet(context, ref);
 
     if (result == true && context.mounted) {
-      // Refresh workouts after program update
-      ref.read(workoutsProvider.notifier).refresh();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Program updated! Generating new workouts...'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      // Refresh workouts after program update - new workouts should be ready
+      await ref.read(workoutsProvider.notifier).refresh();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Program updated! Your new workouts are ready.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
     }
   }
 }

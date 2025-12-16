@@ -393,6 +393,16 @@ class ExerciseRAGService:
                 logger.debug(f"Filtered out '{meta.get('name')}' - equipment '{ex_equipment}' not in {equipment_lower}")
                 continue
 
+            # Filter out exercises without video or image (required for good UX)
+            has_video = meta.get("has_video", "false") == "true"
+            gif_url = meta.get("gif_url", "")
+            video_url = meta.get("video_url", "")
+            image_url = meta.get("image_url", "")
+            has_media = has_video or bool(gif_url) or bool(video_url) or bool(image_url)
+            if not has_media:
+                logger.debug(f"Filtered out '{meta.get('name')}' - no video/image available")
+                continue
+
             # Filter by single equipment compatibility if user has only 1 dumbbell or kettlebell
             if dumbbell_count == 1 and "dumbbell" in ex_equipment:
                 # User has only 1 dumbbell - check if exercise is single-dumbbell friendly

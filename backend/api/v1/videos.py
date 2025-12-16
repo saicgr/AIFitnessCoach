@@ -78,12 +78,22 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None):
         search_names.append(exercise_name)  # Original name as fallback
         search_names.append(base_name)      # Base name as last resort
 
-        # Try each name variant
+        # Try each name variant - use wildcard pattern for partial matches
         found_result = None
         for name in search_names:
+            # First try exact match (case-insensitive)
             result = db.client.table("exercise_library").select(
                 "video_s3_path, exercise_name"
             ).ilike("exercise_name", name).limit(1).execute()
+
+            if result.data and result.data[0].get("video_s3_path"):
+                found_result = result.data[0]
+                break
+
+            # Try partial match with wildcards (handles gender suffixes like _female, _male)
+            result = db.client.table("exercise_library").select(
+                "video_s3_path, exercise_name"
+            ).ilike("exercise_name", f"{name}%").limit(1).execute()
 
             if result.data and result.data[0].get("video_s3_path"):
                 found_result = result.data[0]
@@ -161,12 +171,22 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None):
         search_names.append(exercise_name)  # Original name as fallback
         search_names.append(base_name)      # Base name as last resort
 
-        # Try each name variant
+        # Try each name variant - use wildcard pattern for partial matches
         found_result = None
         for name in search_names:
+            # First try exact match (case-insensitive)
             result = db.client.table("exercise_library").select(
                 "image_s3_path, exercise_name"
             ).ilike("exercise_name", name).limit(1).execute()
+
+            if result.data and result.data[0].get("image_s3_path"):
+                found_result = result.data[0]
+                break
+
+            # Try partial match with wildcards (handles gender suffixes like _female, _male)
+            result = db.client.table("exercise_library").select(
+                "image_s3_path, exercise_name"
+            ).ilike("exercise_name", f"{name}%").limit(1).execute()
 
             if result.data and result.data[0].get("image_s3_path"):
                 found_result = result.data[0]
