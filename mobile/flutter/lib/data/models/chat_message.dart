@@ -118,6 +118,8 @@ class ChatMessage extends Equatable {
   final AgentType? agentType;
   @JsonKey(name: 'created_at')
   final String? createdAt;
+  @JsonKey(name: 'action_data')
+  final Map<String, dynamic>? actionData;
 
   const ChatMessage({
     this.id,
@@ -127,6 +129,7 @@ class ChatMessage extends Equatable {
     this.intent,
     this.agentType,
     this.createdAt,
+    this.actionData,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -153,7 +156,19 @@ class ChatMessage extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData];
+
+  /// Check if this message has a generated workout
+  bool get hasGeneratedWorkout =>
+      actionData != null &&
+      actionData!['action'] == 'generate_quick_workout' &&
+      actionData!['workout_id'] != null;
+
+  /// Get the workout ID if available
+  String? get workoutId => actionData?['workout_id'] as String?;
+
+  /// Get the workout name if available
+  String? get workoutName => actionData?['workout_name'] as String?;
 }
 
 /// Chat request model
@@ -248,5 +263,6 @@ class ChatHistoryItem {
         content: content,
         agentType: agentType,
         createdAt: timestamp,
+        actionData: actionData,
       );
 }

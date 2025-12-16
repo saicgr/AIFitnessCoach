@@ -132,83 +132,32 @@ def should_use_tools(state: WorkoutAgentState) -> Literal["agent", "respond"]:
     """
     Determine if we should use tools or respond autonomously.
 
-    Routes to tools if:
-    - There's a workout context AND user wants modifications
-    - User explicitly asks to change/add/remove something
-    - User asks for a quick/short workout (generates and replaces today's workout)
-
-    Routes to autonomous response for:
-    - Exercise questions
-    - Form advice
-    - General workout guidance
+    SIMPLE RULE: If it looks like a workout creation/modification request, use tools.
+    Only respond without tools for pure knowledge questions.
     """
-    has_workout = state.get("current_workout") is not None
-    intent = state.get("intent")
     message = state.get("user_message", "").lower()
 
-    # Quick workout keywords - should trigger tool to generate and replace workout
-    quick_workout_keywords = [
-        "quick workout", "short workout", "fast workout", "quick exercise",
-        "something quick", "something fast", "something short",
-        "15 minute", "10 minute", "20 minute", "5 minute", "30 minute",
-        "i want a quick", "give me a quick", "create a quick",
-        "need a quick", "want a quick", "do a quick",
-        "no time", "short on time", "in a hurry", "don't have time",
-        "generate a workout", "create a workout", "make me a workout",
-        "new workout", "different workout", "another workout",
-        "cardio workout", "hiit workout", "bodyweight workout",
-        "upper body workout", "lower body workout", "core workout", "ab workout",
-        "leg workout", "arm workout", "chest workout", "back workout",
-        "intense workout", "easy workout", "light workout",
-        "home workout", "no equipment",
-        # Sport-specific workout types
-        "boxing workout", "boxing training", "boxer workout", "punching workout",
-        "hyrox workout", "hyrox training", "hyrox prep",
-        "crossfit workout", "crossfit wod", "wod",
-        "martial arts workout", "mma workout", "mma training", "fighter workout",
-        "tabata workout", "interval workout", "circuit workout",
-        "strength workout", "strength training",
-        "endurance workout", "endurance training", "stamina workout",
-        "flexibility workout", "stretching workout", "yoga workout",
-        "mobility workout", "mobility training",
-        # Sport mentions with "want" or "train"
-        "want to box", "want to be a boxer", "train like a boxer",
-        "want to do hyrox", "train for hyrox", "hyrox athlete",
-        "want to do crossfit", "train like crossfit",
-        "train like a fighter", "want to fight", "mma training",
+    # Question patterns that don't need tools - pure knowledge questions
+    # These are questions about HOW to do exercises, not requests to create workouts
+    question_only_patterns = [
+        "how do i do", "how to do", "what is a ", "what are ", "what muscles",
+        "is it good to", "why do", "difference between", "explain",
+        "tell me about", "what's the proper form",
     ]
 
-    for keyword in quick_workout_keywords:
-        if keyword in message:
-            # Always route to agent for quick workout - tool can create new workout if none exists
-            logger.info(f"[Workout Router] Quick workout keyword: {keyword} -> agent (will generate{'/ create new' if not has_workout else ''})")
-            return "agent"
-
-    # Modification keywords that require tools
-    modification_keywords = [
-        "add ", "remove ", "delete ", "change ", "make it ", "swap ",
-        "replace ", "move ", "reschedule", "skip ", "cancel",
-        "easier", "harder", "shorter", "longer", "to a ", "into a ",
-        "more reps", "less reps", "fewer reps", "more sets", "less sets", "fewer sets",
-        "without ", "drop ", "include ", "switch ",
-        "too hard", "too easy", "too long", "too short",
-        "can't do", "don't like", "hate ", "instead of",
-    ]
-
-    for keyword in modification_keywords:
-        if keyword in message:
-            if has_workout or "workout" in message:
-                logger.info(f"[Workout Router] Modification keyword: {keyword} -> agent")
+    for pattern in question_only_patterns:
+        if message.startswith(pattern) or f" {pattern}" in message:
+            # But if they also mention duration/minutes, they want a workout created
+            if "minute" in message or "min " in message:
+                logger.info("[Workout Router] Question but has duration -> agent")
                 return "agent"
+            logger.info(f"[Workout Router] Pure knowledge question: {pattern} -> respond")
+            return "respond"
 
-    # If there's no workout context, we likely can't modify anything
-    if not has_workout and any(kw in message for kw in modification_keywords):
-        logger.info("[Workout Router] Modification requested but no workout -> respond (explain)")
-        return "respond"
-
-    # Default: autonomous response for questions/advice
-    logger.info("[Workout Router] General workout query -> respond (no tools)")
-    return "respond"
+    # Default: give LLM access to tools for everything else
+    # The LLM will decide whether to use them
+    logger.info("[Workout Router] Default -> agent (LLM decides)")
+    return "agent"
 
 
 async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
@@ -253,13 +202,35 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
 
     context = "\n".join(context_parts)
 
+    # Detect if this is a workout CREATION request (not just a question)
+    message_lower = state["user_message"].lower()
+    is_workout_creation = any([
+        "minute" in message_lower and ("exercise" in message_lower or "workout" in message_lower),
+        "min " in message_lower and ("exercise" in message_lower or "workout" in message_lower),
+        any(phrase in message_lower for phrase in [
+            "give me a", "create a", "generate a", "make me a", "build me a",
+            "i want a", "i need a", "can you make", "can you create",
+        ]) and ("workout" in message_lower or "exercise" in message_lower or "training" in message_lower),
+    ])
+
+    if is_workout_creation:
+        logger.info("[Workout Agent] Detected workout creation request - will force tool use")
+
     # Create LLM with workout tools bound
     llm = ChatOpenAI(
         model=settings.openai_model,
         api_key=settings.openai_api_key,
         temperature=0.7,
     )
-    llm_with_tools = llm.bind_tools(WORKOUT_TOOLS)
+
+    # If it's a workout creation request, force the LLM to use generate_quick_workout
+    if is_workout_creation:
+        llm_with_tools = llm.bind_tools(
+            WORKOUT_TOOLS,
+            tool_choice={"type": "function", "function": {"name": "generate_quick_workout"}}
+        )
+    else:
+        llm_with_tools = llm.bind_tools(WORKOUT_TOOLS)
 
     # Build system message
     # Get personalized system prompt
@@ -279,13 +250,26 @@ AVAILABLE TOOLS:
 - reschedule_workout(workout_id, new_date, reason) - Move workout to a different date
 - delete_workout(workout_id, reason) - Delete/cancel a workout
 - generate_quick_workout(user_id, workout_id, duration_minutes, workout_type, intensity) - Generate a quick workout. ALWAYS pass user_id. If no workout exists, omit workout_id to create a new one.
-  workout_type options: "full_body", "upper", "lower", "cardio", "core", "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility"
+  workout_type options: "full_body", "upper", "lower", "cardio", "core", "boxing", "hyrox", "crossfit", "martial_arts", "hiit", "strength", "endurance", "flexibility", "mobility", "cricket", "football", "basketball", "tennis"
 
 CRITICAL INSTRUCTIONS:
 - User ID is: {user_id}
 - For generate_quick_workout: ALWAYS pass user_id="{user_id}". Pass workout_id only if a workout exists.
 - For sport-specific workouts (boxing, hyrox, crossfit, mma, etc.): Use the appropriate workout_type parameter.
-- For other tools: use workout_id from context. Default to today's workout (ID: {workout_id}) if available."""
+- For other tools: use workout_id from context. Default to today's workout (ID: {workout_id}) if available.
+
+**MANDATORY TOOL USE:**
+When the user asks to "generate", "create", "make", or "give me" a workout, you MUST use the generate_quick_workout tool.
+Do NOT describe a workout in text - you MUST call the tool to actually create it in the database.
+Examples that REQUIRE generate_quick_workout:
+- "Generate me a 20 minute workout for HYROX" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=20, workout_type="hyrox")
+- "Create a quick chest workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="chest")
+- "Give me a boxing workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="boxing")
+- "Make me a 15 min full body workout" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=15, workout_type="full_body")
+- "Give me a 17 minute cricket workout" -> call generate_quick_workout(user_id="{user_id}", duration_minutes=17, workout_type="cricket")
+- "I want a football training workout" -> call generate_quick_workout(user_id="{user_id}", workout_type="football")
+
+NEVER just describe exercises in text. ALWAYS call the generate_quick_workout tool to save it to the database so it appears on the user's home screen."""
 
     system_message = SystemMessage(content=tool_prompt)
 

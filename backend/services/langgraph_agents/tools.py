@@ -1116,6 +1116,12 @@ def generate_quick_workout(
             "endurance": "endurance",  # Endurance/stamina focused
             "flexibility": "flexibility",  # Stretching and flexibility
             "mobility": "mobility",  # Joint mobility work
+            "cricket": "cricket",  # Cricket-specific training (agility, power, endurance)
+            "football": "football",  # Football/soccer training
+            "basketball": "basketball",  # Basketball training
+            "tennis": "tennis",  # Tennis training
+            "running": "endurance",  # Running maps to endurance
+            "swimming": "endurance",  # Swimming maps to endurance
             # Body part aliases
             "chest": "chest",
             "back": "back",
@@ -1142,6 +1148,13 @@ def generate_quick_workout(
             "stretch": "flexibility",
             "yoga": "flexibility",
             "mobil": "mobility",
+            "cricket": "cricket",
+            "football": "football",
+            "soccer": "football",
+            "basketball": "basketball",
+            "tennis": "tennis",
+            "run": "endurance",
+            "swim": "endurance",
         }
 
         for keyword, sport_type in sport_keywords.items():
@@ -1272,6 +1285,11 @@ def generate_quick_workout(
             "endurance": "Endurance",
             "flexibility": "Flexibility",
             "mobility": "Mobility",
+            # Ball sports
+            "cricket": "Cricket",
+            "football": "Football",
+            "basketball": "Basketball",
+            "tennis": "Tennis",
             # Body parts
             "chest": "Chest",
             "back": "Back",

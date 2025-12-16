@@ -14,6 +14,7 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   intent: json['intent'] as String?,
   agentType: $enumDecodeNullable(_$AgentTypeEnumMap, json['agent_type']),
   createdAt: json['created_at'] as String?,
+  actionData: json['action_data'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -25,6 +26,7 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'intent': instance.intent,
       'agent_type': _$AgentTypeEnumMap[instance.agentType],
       'created_at': instance.createdAt,
+      'action_data': instance.actionData,
     };
 
 const _$AgentTypeEnumMap = {

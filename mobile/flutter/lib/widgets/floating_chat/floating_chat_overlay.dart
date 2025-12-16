@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
@@ -417,6 +418,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     return Align(
@@ -434,13 +436,62 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
             bottomLeft: !isUser ? const Radius.circular(4) : null,
           ),
         ),
-        child: Text(
-          message.content,
-          style: TextStyle(
-            color: isUser ? userTextColor : textPrimary,
-            fontSize: 14,
-            height: 1.4,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.content,
+              style: TextStyle(
+                color: isUser ? userTextColor : textPrimary,
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+            // Show "Go to workout" button if AI generated a workout
+            if (!isUser && message.hasGeneratedWorkout)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: InkWell(
+                  onTap: () {
+                    // Close the chat drawer first, then navigate
+                    Navigator.of(context).pop();
+                    context.push('/workout/${message.workoutId}');
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [cyan, purple],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.fitness_center, size: 16, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            message.workoutName != null ? 'Go to ${message.workoutName}' : 'Go to Workout',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward, size: 14, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

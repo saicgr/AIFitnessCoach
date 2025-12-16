@@ -489,6 +489,15 @@ class _MessageBubble extends StatelessWidget {
                 height: 1.4,
               ),
             ),
+            // Show "Go to workout" button if AI generated a workout
+            if (!isUser && message.hasGeneratedWorkout)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _GoToWorkoutButton(
+                  workoutId: message.workoutId!,
+                  workoutName: message.workoutName,
+                ),
+              ),
             if (message.timestamp != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -646,6 +655,67 @@ class _InputBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Go to Workout Button
+// ─────────────────────────────────────────────────────────────────
+
+class _GoToWorkoutButton extends StatelessWidget {
+  final String workoutId;
+  final String? workoutName;
+
+  const _GoToWorkoutButton({
+    required this.workoutId,
+    this.workoutName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/workout/$workoutId'),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.cyan, AppColors.purple],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.fitness_center,
+              size: 18,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                workoutName != null ? 'Go to $workoutName' : 'Go to Workout',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_forward,
+              size: 16,
+              color: Colors.white,
+            ),
+          ],
+        ),
       ),
     );
   }
