@@ -302,13 +302,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // Process action_data if present (await to ensure refresh completes)
       await _processActionData(response.actionData);
 
-      // Add assistant response with agent type
+      // Add assistant response with agent type AND action_data (for "Go to Workout" button)
       final assistantMessage = ChatMessage(
         role: 'assistant',
         content: response.message,
         intent: response.intent,
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
+        actionData: response.actionData, // Include action_data for UI buttons
       );
 
       final updatedMessages = state.valueOrNull ?? [];
