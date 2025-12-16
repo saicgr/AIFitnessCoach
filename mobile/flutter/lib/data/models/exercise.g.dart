@@ -70,6 +70,7 @@ LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>
       category: json['category'] as String?,
       gifUrl: json['gif_url'] as String?,
       videoUrl: json['video_url'] as String?,
+      imageUrl: json['image_url'] as String?,
       goals: (json['goals'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
@@ -95,6 +96,7 @@ Map<String, dynamic> _$LibraryExerciseToJson(LibraryExercise instance) =>
       'category': instance.category,
       'gif_url': instance.gifUrl,
       'video_url': instance.videoUrl,
+      'image_url': instance.imageUrl,
       'goals': instance.goals,
       'suitable_for': instance.suitableFor,
       'avoid_if': instance.avoidIf,

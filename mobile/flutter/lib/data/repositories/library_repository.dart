@@ -53,6 +53,8 @@ class LibraryExerciseItem {
   final String? equipment;
   final String? targetMuscle;
   final String? gifUrl;
+  final String? videoUrl;
+  final String? imageUrl;
   final String? difficulty;
   final String? instructions;
 
@@ -63,6 +65,8 @@ class LibraryExerciseItem {
     this.equipment,
     this.targetMuscle,
     this.gifUrl,
+    this.videoUrl,
+    this.imageUrl,
     this.difficulty,
     this.instructions,
   });
@@ -75,6 +79,8 @@ class LibraryExerciseItem {
       equipment: json['equipment'],
       targetMuscle: json['target_muscle'],
       gifUrl: json['gif_url'],
+      videoUrl: json['video_url'],
+      imageUrl: json['image_url'],
       difficulty: json['difficulty_level'] ?? json['difficulty'],
       instructions: json['instructions'],
     );

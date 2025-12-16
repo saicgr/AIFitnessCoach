@@ -62,7 +62,11 @@ def row_to_user(row: dict) -> User:
     elif equipment is None:
         equipment = "[]"
 
-    preferences = row.get("preferences")
+    # Get preferences as dict for fallback lookups
+    prefs_raw = row.get("preferences")
+    prefs_dict = prefs_raw if isinstance(prefs_raw, dict) else {}
+
+    preferences = prefs_raw
     if isinstance(preferences, dict):
         preferences = json.dumps(preferences)
     elif preferences is None:
@@ -74,10 +78,20 @@ def row_to_user(row: dict) -> User:
     elif active_injuries is None:
         active_injuries = "[]"
 
+    # Helper to get value from column or fall back to preferences JSON
+    def get_with_fallback(column_name: str, prefs_key: str = None):
+        """Get value from dedicated column, or fall back to preferences JSON."""
+        value = row.get(column_name)
+        if value is not None:
+            return value
+        # Fall back to preferences JSON
+        return prefs_dict.get(prefs_key or column_name)
+
     return User(
         id=row.get("id"),
         username=row.get("email"),  # Use email as username
-        name=row.get("name"),
+        name=row.get("name") or prefs_dict.get("name"),
+        email=row.get("email"),  # Include email in response
         onboarding_completed=row.get("onboarding_completed", False),
         fitness_level=row.get("fitness_level", "beginner"),
         goals=goals,
@@ -85,6 +99,14 @@ def row_to_user(row: dict) -> User:
         preferences=preferences,
         active_injuries=active_injuries,
         created_at=row.get("created_at"),
+        # Personal info fields - fall back to preferences JSON if column is empty
+        height_cm=get_with_fallback("height_cm"),
+        weight_kg=get_with_fallback("weight_kg"),
+        target_weight_kg=get_with_fallback("target_weight_kg"),
+        age=get_with_fallback("age"),
+        date_of_birth=str(get_with_fallback("date_of_birth")) if get_with_fallback("date_of_birth") else None,
+        gender=get_with_fallback("gender"),
+        activity_level=get_with_fallback("activity_level"),
     )
 
 

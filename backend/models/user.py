@@ -101,6 +101,7 @@ class User(BaseModel):
     id: str  # UUID from Supabase
     username: Optional[str] = None
     name: Optional[str] = None
+    email: Optional[str] = None  # User's email address
     onboarding_completed: bool = False
     fitness_level: str
     goals: str
@@ -108,3 +109,11 @@ class User(BaseModel):
     preferences: str
     active_injuries: str
     created_at: datetime
+    # Personal info fields
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    target_weight_kg: Optional[float] = None
+    age: Optional[int] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    activity_level: Optional[str] = None

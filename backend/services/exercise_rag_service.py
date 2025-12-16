@@ -179,6 +179,8 @@ class ExerciseRAGService:
                     "difficulty": str(ex.get("difficulty_level") or "intermediate"),
                     "category": str(ex.get("category") or ""),
                     "gif_url": str(ex.get("gif_url") or ""),
+                    "video_url": str(ex.get("video_url") or ""),  # Include video URL
+                    "image_url": str(ex.get("image_url") or ""),  # Include image URL
                     "instructions": str(ex.get("instructions") or "")[:500],
                     "has_video": "true",  # All indexed exercises have videos
                 })
@@ -407,6 +409,8 @@ class ExerciseRAGService:
                 "target_muscle": meta.get("target_muscle", ""),
                 "difficulty": meta.get("difficulty", "intermediate"),
                 "gif_url": meta.get("gif_url", ""),
+                "video_url": meta.get("video_url", ""),  # Include video URL
+                "image_url": meta.get("image_url", ""),  # Include image URL
                 "instructions": meta.get("instructions", ""),
                 "similarity": similarity,
             })
@@ -836,6 +840,8 @@ Select exactly {count} exercises that are SAFE for this user."""
             "body_part": exercise.get("body_part", ""),
             "notes": exercise.get("instructions", "Focus on proper form"),
             "gif_url": exercise.get("gif_url", ""),
+            "video_url": exercise.get("video_url", ""),  # Include video URL for playback
+            "image_url": exercise.get("image_url", ""),  # Include image URL for thumbnails
             "library_id": exercise.get("id", ""),
         }
 
@@ -896,6 +902,8 @@ Select exactly {count} exercises that are SAFE for this user."""
                     "body_part": ex.get("body_part", ""),
                     "equipment": ex.get("equipment", "bodyweight"),
                     "gif_url": ex.get("gif_url", ""),
+                    "video_url": ex.get("video_url", ""),  # Include video URL
+                    "image_url": ex.get("image_url", ""),  # Include image URL
                     "instructions": ex.get("instructions", ""),
                     "id": ex.get("id", ""),
                 })

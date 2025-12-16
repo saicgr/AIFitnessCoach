@@ -200,6 +200,8 @@ class LibraryExercise extends Equatable {
   final String? gifUrl;
   @JsonKey(name: 'video_url')
   final String? videoUrl;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
   final List<String>? goals;
   @JsonKey(name: 'suitable_for')
   final List<String>? suitableFor;
@@ -219,6 +221,7 @@ class LibraryExercise extends Equatable {
     this.category,
     this.gifUrl,
     this.videoUrl,
+    this.imageUrl,
     this.goals,
     this.suitableFor,
     this.avoidIf,

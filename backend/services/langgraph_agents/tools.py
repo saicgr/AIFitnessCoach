@@ -131,6 +131,9 @@ def add_exercise_to_workout(
                         "muscle_group": ex.get("muscle_group", ex.get("body_part", "")),
                         "notes": ex.get("notes", ""),
                         "gif_url": ex.get("gif_url", ""),
+                        "video_url": ex.get("video_url", ""),
+                        "image_url": ex.get("image_url", ""),
+                        "library_id": ex.get("library_id", ""),
                     }
                     exercises.append(new_exercise)
                     added_exercises.append(new_exercise["name"])
@@ -335,6 +338,9 @@ def replace_all_exercises(
                     "equipment": ex.get("equipment", "Bodyweight"),
                     "notes": ex.get("notes", ""),
                     "gif_url": ex.get("gif_url", ""),
+                    "video_url": ex.get("video_url", ""),
+                    "image_url": ex.get("image_url", ""),
+                    "library_id": ex.get("library_id", ""),
                 })
 
         if not new_exercises:
@@ -1268,6 +1274,9 @@ def generate_quick_workout(
                         "equipment": ex.get("equipment", "Bodyweight"),
                         "notes": ex.get("notes", ""),
                         "gif_url": ex.get("gif_url", ""),
+                        "video_url": ex.get("video_url", ""),
+                        "image_url": ex.get("image_url", ""),
+                        "library_id": ex.get("library_id", ""),
                     })
 
         except Exception as rag_error:

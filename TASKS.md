@@ -1,8 +1,6 @@
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-5. When generating working from onbaording or regenerating button alwayus take workouts having videos and images
 6. All library exercises should have images and videos
-7. Measurements page is not implemented
 8. Login details bug not getting saved and not shown in settings
 8.1 profile details not getting saved, 
 8.2 video play button bug,  pause button on the top right and video pause button of the video don't have relation. Video pause button is only pausing the video, the workout time still runs.
@@ -204,6 +202,7 @@ It’s just informative
 
 Add a water icon that animates a droplet on tap.
 31. Timezone Consistency across per user
+32. Nake it easy to add supersets
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
