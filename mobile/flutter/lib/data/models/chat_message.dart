@@ -147,11 +147,19 @@ class ChatMessage extends Equatable {
 
   /// Get timestamp as DateTime
   DateTime? get timestamp {
-    if (createdAt == null) return null;
+    if (createdAt == null || createdAt!.isEmpty) return null;
     try {
+      // Try standard ISO8601 format first
       return DateTime.parse(createdAt!);
     } catch (_) {
-      return null;
+      try {
+        // Handle PostgreSQL timestamp format: "2025-12-16 00:19:09+00"
+        // Replace space with T for ISO8601 compatibility
+        final normalized = createdAt!.replaceFirst(' ', 'T');
+        return DateTime.parse(normalized);
+      } catch (_) {
+        return null;
+      }
     }
   }
 

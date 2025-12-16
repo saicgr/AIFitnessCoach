@@ -518,9 +518,22 @@ class _MessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(time.year, time.month, time.day);
+
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    final timeStr = '$hour:$minute';
+
+    if (messageDate == today) {
+      return timeStr;
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday, $timeStr';
+    } else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[time.month - 1]} ${time.day}, $timeStr';
+    }
   }
 }
 
