@@ -203,7 +203,7 @@ It’s just informative
 ✓ Fix:
 
 Add a water icon that animates a droplet on tap.
-31. 
+31. Timezone Consistency across per user
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
