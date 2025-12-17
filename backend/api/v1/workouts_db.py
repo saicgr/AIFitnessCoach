@@ -2623,14 +2623,30 @@ async def check_and_regenerate_workouts(
         # Need to generate more workouts
         logger.info(f"⚠️ User {user_id} needs workout generation: only {upcoming_count} days available")
 
-        # Find the last workout date to start generation from
+        # Find the appropriate start date for generation
+        # Cap at 4 weeks from today to prevent runaway generation into the far future
+        max_horizon = today + timedelta(days=28)
+
         if upcoming_workouts:
-            # Get the latest scheduled date and start from the day after
+            # Get the latest scheduled date
             latest_date = max(
-                datetime.fromisoformat(str(w.get("scheduled_date"))[:10])
+                datetime.fromisoformat(str(w.get("scheduled_date"))[:10]).date()
                 for w in upcoming_workouts
             )
-            start_date = (latest_date + timedelta(days=1)).strftime("%Y-%m-%d")
+
+            # If latest workout is already beyond our 4-week horizon, don't generate more
+            if latest_date >= max_horizon:
+                logger.info(f"User {user_id} has workouts scheduled until {latest_date}, beyond 4-week horizon. Skipping generation.")
+                return {
+                    "success": True,
+                    "needs_generation": False,
+                    "upcoming_workout_days": upcoming_count,
+                    "message": f"Workouts already scheduled through {latest_date}"
+                }
+
+            # Start from the day after the latest workout, but not before today
+            next_day = latest_date + timedelta(days=1)
+            start_date = str(max(next_day, today))
         else:
             # No upcoming workouts, start from today
             start_date = str(today)
