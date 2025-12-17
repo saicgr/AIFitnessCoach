@@ -28,6 +28,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isCheckingWorkouts = false;
+  String? _generationStartDate;
+  int _generationWeeks = 0;
+  int _totalExpected = 0;
+  int _totalGenerated = 0;
 
   @override
   void initState() {
@@ -44,6 +48,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // First refresh to get current workouts
     await notifier.refresh();
 
+    // Only check regeneration once per session to avoid expensive API calls on tab switches
+    final hasChecked = ref.read(hasCheckedRegenerationProvider);
+    if (hasChecked) {
+      debugPrint('🔍 [HomeScreen] Skipping regeneration check - already done this session');
+      return;
+    }
+
     // Then check if we need to generate more (runs in background)
     if (!_isCheckingWorkouts) {
       setState(() => _isCheckingWorkouts = true);
@@ -51,8 +62,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final result = await notifier.checkAndRegenerateIfNeeded();
         debugPrint('🔍 [HomeScreen] Workout check result: ${result['message']}');
 
-        // If generation was triggered, show a subtle indicator
+        // Mark as checked for this session (whether or not generation was triggered)
+        ref.read(hasCheckedRegenerationProvider.notifier).state = true;
+
+        // If generation was triggered, store details for display
         if (result['needs_generation'] == true && mounted) {
+          setState(() {
+            _generationStartDate = result['start_date'] as String?;
+            _generationWeeks = (result['weeks'] as int?) ?? 4;
+            _totalExpected = (result['total_expected'] as int?) ?? 0;
+            _totalGenerated = (result['total_generated'] as int?) ?? 0;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Generating your upcoming workouts...'),
@@ -143,6 +163,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
+
+              // Banner: Only show when we have specific generation info
+              if (_generationStartDate != null && _generationWeeks > 0)
+                SliverToBoxAdapter(
+                  child: _MoreWorkoutsLoadingBanner(
+                    isDark: isDark,
+                    startDate: _generationStartDate!,
+                    weeks: _generationWeeks,
+                    totalExpected: _totalExpected,
+                    totalGenerated: _totalGenerated,
+                  ),
+                ),
 
               // Section: TODAY
               const SliverToBoxAdapter(
@@ -1072,6 +1104,92 @@ class _GeneratingWorkoutsCard extends StatelessWidget {
               subtitle ?? 'Your personalized workout plan is being created',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// More Workouts Loading Banner (shown when generating workouts)
+// ─────────────────────────────────────────────────────────────────
+class _MoreWorkoutsLoadingBanner extends StatelessWidget {
+  final bool isDark;
+  final String startDate;
+  final int weeks;
+  final int totalExpected;
+  final int totalGenerated;
+
+  const _MoreWorkoutsLoadingBanner({
+    required this.isDark,
+    required this.startDate,
+    required this.weeks,
+    this.totalExpected = 0,
+    this.totalGenerated = 0,
+  });
+
+  String _formatDateRange() {
+    final start = DateTime.parse(startDate);
+    final end = start.add(Duration(days: weeks * 7));
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final startMonth = months[start.month - 1];
+    final endMonth = months[end.month - 1];
+
+    if (start.month == end.month) {
+      return '$startMonth ${start.day}-${end.day}';
+    } else {
+      return '$startMonth ${start.day} - $endMonth ${end.day}';
+    }
+  }
+
+  String _formatMessage() {
+    final dateRange = _formatDateRange();
+
+    // If we have progress info, show it
+    if (totalExpected > 0) {
+      return 'Generating $totalGenerated of $totalExpected workouts ($dateRange)';
+    }
+
+    // Show week range
+    return 'Generating $weeks weeks of workouts ($dateRange)';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isDark
+        ? AppColors.cyan.withOpacity(0.1)
+        : AppColors.cyan.withOpacity(0.08);
+    final borderColor = AppColors.cyan.withOpacity(0.3);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _formatMessage(),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    ),
+              ),
             ),
           ],
         ),

@@ -241,8 +241,30 @@ class ProfileScreen extends ConsumerWidget {
                     title: 'Edit Profile',
                     onTap: () => _showEditPersonalInfoSheet(context, ref),
                   ),
+                  _SettingItem(
+                    icon: Icons.card_membership,
+                    title: 'Manage Membership',
+                    onTap: () => context.push('/paywall-pricing'),
+                  ),
                 ],
               ).animate().fadeIn(delay: 250.ms),
+
+              const SizedBox(height: 32),
+
+              // References section
+              _SectionHeader(title: 'REFERENCES'),
+              const SizedBox(height: 12),
+
+              _SettingsCardWithRef(
+                ref: ref,
+                items: [
+                  _SettingItem(
+                    icon: Icons.menu_book,
+                    title: 'Glossary',
+                    onTap: () => context.push('/glossary'),
+                  ),
+                ],
+              ).animate().fadeIn(delay: 270.ms),
 
               const SizedBox(height: 100),
             ],
@@ -513,25 +535,29 @@ class _StatCard extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
+  final Widget? action;
 
-  const _SectionHeader({required this.title});
+  const _SectionHeader({required this.title, this.action});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textMuted,
-          letterSpacing: 1.5,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+            letterSpacing: 1.5,
+          ),
         ),
-      ),
+        if (action != null) action!,
+      ],
     );
   }
 }
@@ -740,59 +766,16 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          // Header with Edit button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                const Spacer(),
-                if (_isEditing)
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: _isSaving ? null : () {
-                          _loadValues();
-                          setState(() => _isEditing = false);
-                        },
-                        child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 13)),
-                      ),
-                      const SizedBox(width: 4),
-                      TextButton(
-                        onPressed: _isSaving ? null : _saveChanges,
-                        child: _isSaving
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
-                              )
-                            : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600, fontSize: 13)),
-                      ),
-                    ],
-                  )
-                else
-                  TextButton.icon(
-                    onPressed: () => setState(() => _isEditing = true),
-                    icon: Icon(Icons.edit, size: 14, color: cyan),
-                    label: Text('Edit', style: TextStyle(color: cyan, fontSize: 13)),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-              ],
-            ),
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(12),
           ),
-          Divider(height: 1, color: cardBorder),
-
-          // Goal
+          child: Column(
+            children: [
+              // Goal
           _buildEditableRow(
             icon: Icons.flag,
             iconColor: purple,
@@ -998,6 +981,56 @@ class _EditableFitnessCardState extends ConsumerState<_EditableFitnessCard> {
             ),
         ],
       ),
+        ),
+        // Edit button positioned in top-right corner
+        Positioned(
+          top: 8,
+          right: 8,
+          child: _isEditing
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: _isSaving ? null : () {
+                        _loadValues();
+                        setState(() => _isEditing = false);
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text('Cancel', style: TextStyle(color: textMuted, fontSize: 12)),
+                    ),
+                    TextButton(
+                      onPressed: _isSaving ? null : _saveChanges,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _isSaving
+                          ? SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: cyan),
+                            )
+                          : Text('Save', style: TextStyle(color: cyan, fontWeight: FontWeight.w600, fontSize: 12)),
+                    ),
+                  ],
+                )
+              : TextButton.icon(
+                  onPressed: () => setState(() => _isEditing = true),
+                  icon: Icon(Icons.edit, size: 12, color: cyan),
+                  label: Text('Edit', style: TextStyle(color: cyan, fontSize: 12)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+        ),
+      ],
     );
   }
 

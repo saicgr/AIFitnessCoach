@@ -52,14 +52,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   final List<_SlideData> _slides = [
     // Slide 1: Exercise Library with animated counter
     _SlideData(
-      title: '1,792\nExercises',
+      title: '1,722\nExercises',
       subtitle: 'Every move, every muscle, every goal—with HD video demos',
       primaryColor: AppColors.cyan,
       secondaryColor: AppColors.purple,
       icon: Icons.fitness_center,
       features: ['HD video demos', 'Beginner to Advanced', 'Filter by equipment'],
       animationType: SlideAnimationType.counter,
-      counterTarget: 1792,
+      counterTarget: 1722,
     ),
     // Slide 2: AI Agents
     _SlideData(

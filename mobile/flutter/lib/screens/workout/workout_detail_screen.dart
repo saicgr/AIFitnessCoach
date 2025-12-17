@@ -645,14 +645,21 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        // Play Button (smaller)
-        FloatingActionButton(
+        // Let's Go Button (extended FAB style)
+        FloatingActionButton.extended(
           heroTag: 'start_workout',
           onPressed: () => context.push('/active-workout', extra: workout),
           backgroundColor: AppColors.cyan,
           foregroundColor: AppColors.pureBlack,
           elevation: 8,
-          child: const Icon(Icons.play_arrow_rounded, size: 28),
+          icon: const Icon(Icons.bolt_rounded, size: 22),
+          label: const Text(
+            "Let's Go",
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
         ),
       ],
     );

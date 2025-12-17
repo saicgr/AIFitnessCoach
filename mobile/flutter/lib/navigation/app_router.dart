@@ -30,10 +30,15 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/auth/language_selection_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
+import '../screens/glossary/glossary_screen.dart';
+import '../screens/paywall/paywall_features_screen.dart';
+import '../screens/paywall/paywall_timeline_screen.dart';
+import '../screens/paywall/paywall_pricing_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
+import '../core/providers/subscription_provider.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -206,6 +211,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/senior-onboarding',
         builder: (context, state) => const SeniorOnboardingScreen(),
+      ),
+
+      // Paywall Screen 1: Feature highlights
+      GoRoute(
+        path: '/paywall-features',
+        builder: (context, state) => const PaywallFeaturesScreen(),
+      ),
+
+      // Paywall Screen 2: Trial timeline
+      GoRoute(
+        path: '/paywall-timeline',
+        builder: (context, state) => const PaywallTimelineScreen(),
+      ),
+
+      // Paywall Screen 3: Pricing selection
+      GoRoute(
+        path: '/paywall-pricing',
+        builder: (context, state) => const PaywallPricingScreen(),
       ),
 
       // Senior Home (has its own SeniorScaffold with 3-tab nav)
@@ -415,6 +438,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/measurements',
         builder: (context, state) => const MeasurementsScreen(),
+      ),
+
+      // Glossary
+      GoRoute(
+        path: '/glossary',
+        builder: (context, state) => const GlossaryScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

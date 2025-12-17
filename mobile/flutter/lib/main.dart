@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/constants/api_constants.dart';
 import 'core/accessibility/accessibility_provider.dart';
+import 'core/providers/subscription_provider.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
@@ -44,6 +45,13 @@ void main() async {
 
   // Initialize haptic service with saved preference
   await HapticService.initialize();
+
+  // Initialize RevenueCat for in-app purchases
+  try {
+    await SubscriptionNotifier.configureRevenueCat();
+  } catch (e) {
+    debugPrint('⚠️ RevenueCat initialization failed: $e');
+  }
 
   // Set system UI overlay style for dark theme
   SystemChrome.setSystemUIOverlayStyle(

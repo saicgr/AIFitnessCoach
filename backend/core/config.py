@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     gcp_oauth_client_id: Optional[str] = None
     gcp_oauth_client_secret: Optional[str] = None
 
+    # RevenueCat Configuration
+    revcat_api_key: Optional[str] = None
+    revenuecat_webhook_secret: Optional[str] = None
+
     # CORS (for Flutter app)
     cors_origins: list[str] = ["*"]
 

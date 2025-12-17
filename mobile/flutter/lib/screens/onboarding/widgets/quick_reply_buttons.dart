@@ -26,6 +26,10 @@ class QuickReplyButtons extends StatefulWidget {
 class _QuickReplyButtonsState extends State<QuickReplyButtons> {
   final Set<dynamic> _selected = {};
 
+  // Quantity tracking for equipment that supports counts
+  int _dumbbellCount = 2;
+  int _kettlebellCount = 1;
+
   void _handleTap(QuickReply reply) {
     HapticFeedback.lightImpact();
 
@@ -51,8 +55,25 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
 
   void _handleConfirm() {
     if (_selected.isNotEmpty) {
-      widget.onSelect(_selected.toList());
+      // Build result with quantities for equipment
+      final result = <String, dynamic>{
+        'selected': _selected.toList(),
+      };
+
+      // Include quantities if relevant equipment is selected
+      if (_selected.contains('Dumbbells')) {
+        result['dumbbell_count'] = _dumbbellCount;
+      }
+      if (_selected.contains('Kettlebell')) {
+        result['kettlebell_count'] = _kettlebellCount;
+      }
+
+      widget.onSelect(result);
     }
+  }
+
+  bool _isEquipmentWithQuantity(String? value) {
+    return value == 'Dumbbells' || value == 'Kettlebell';
   }
 
   @override
@@ -66,11 +87,18 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
         children: [
           ...widget.replies.map((reply) {
             final isSelected = _selected.contains(reply.value);
+            final showQuantity = widget.multiSelect &&
+                isSelected &&
+                _isEquipmentWithQuantity(reply.value?.toString());
+
             return GestureDetector(
               onTap: () => _handleTap(reply),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(
+                  horizontal: showQuantity ? 8 : 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? colors.cyan.withOpacity(0.3)
@@ -108,6 +136,24 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
                         color: isSelected ? colors.cyan : colors.textSecondary,
                       ),
                     ),
+                    // Quantity selector for Dumbbells/Kettlebell
+                    if (showQuantity) ...[
+                      const SizedBox(width: 8),
+                      _QuantitySelector(
+                        value: reply.value == 'Dumbbells' ? _dumbbellCount : _kettlebellCount,
+                        onChanged: (newValue) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            if (reply.value == 'Dumbbells') {
+                              _dumbbellCount = newValue;
+                            } else {
+                              _kettlebellCount = newValue;
+                            }
+                          });
+                        },
+                        colors: colors,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -141,6 +187,80 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact quantity selector with +/- buttons
+class _QuantitySelector extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+  final ThemeColors colors;
+
+  const _QuantitySelector({
+    required this.value,
+    required this.onChanged,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.background.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Minus button
+          GestureDetector(
+            onTap: value > 1 ? () => onChanged(value - 1) : null,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: value > 1 ? colors.cyan.withOpacity(0.3) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.remove,
+                size: 14,
+                color: value > 1 ? colors.cyan : colors.textMuted,
+              ),
+            ),
+          ),
+          // Value
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '$value',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: colors.cyan,
+              ),
+            ),
+          ),
+          // Plus button
+          GestureDetector(
+            onTap: value < 2 ? () => onChanged(value + 1) : null,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: value < 2 ? colors.cyan.withOpacity(0.3) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.add,
+                size: 14,
+                color: value < 2 ? colors.cyan : colors.textMuted,
+              ),
+            ),
+          ),
         ],
       ),
     );

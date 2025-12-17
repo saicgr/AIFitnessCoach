@@ -233,8 +233,8 @@ class _SeniorOnboardingScreenState
         ref.read(onboardingStateProvider.notifier).reset();
 
         if (mounted) {
-          // Navigate to senior home
-          context.go('/home');
+          // Navigate to paywall after onboarding
+          context.go('/paywall-features');
         }
       }
     } catch (e) {

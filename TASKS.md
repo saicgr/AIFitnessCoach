@@ -8,7 +8,6 @@ ASAP:
 19. Need to start with warm up before each workout with the option to skip for liability reasons.
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
 23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
-24. Accessibility simple workout home and onboarding
 25. Demo of the whole app
 28. How Real AI Coach Notifications Would Work
 In production, the AI Coach would send notifications automatically via:
@@ -25,7 +24,7 @@ To make these automatic, you'd need to set up cron jobs on your hosting platform
 32. Make it easy to add supersets
 33. Add sign in in first screen directly
 34. Shareable workout completion - Workout recap for Instagram	
-35. Use 4o-mini
+35. Use 5-mini
 36. For theme have system, light, dark options instead
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
@@ -108,7 +107,6 @@ The prompt must fulfill the following strategic criteria:
 
 
 NEED
-0. AI Onboarding Review on injuries popup screen. 
 0.05. Achievement Badges, achievement unlocks after workout completion
 0.1. Suggest workouts based on Age as well
 1. Send email to the signed up email from AI coach to workout and current workout

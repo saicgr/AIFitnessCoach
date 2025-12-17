@@ -7,8 +7,10 @@ import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/program.dart';
+import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/log_1rm_sheet.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // EXERCISE FILTER OPTIONS MODEL
@@ -272,7 +274,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -347,6 +349,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 tabs: const [
                   Tab(text: 'Exercises'),
                   Tab(text: 'Programs'),
+                  Tab(text: 'My Stats'),
                 ],
               ),
             ),
@@ -360,6 +363,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 children: const [
                   _ExercisesTab(),
                   _ProgramsTab(),
+                  _MyStatsTab(),
                 ],
               ),
             ),
@@ -1670,6 +1674,590 @@ class _ProgramsTab extends ConsumerWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// MY STATS TAB - Exercise History & Performance
+// ═══════════════════════════════════════════════════════════════════
+
+/// Provider for exercise history
+final exerciseHistoryProvider = FutureProvider<List<ExerciseHistoryItem>>((ref) async {
+  final apiClient = ref.watch(apiClientProvider);
+  final userId = await apiClient.getUserId();
+  if (userId == null) return [];
+
+  final repository = ref.read(workoutRepositoryProvider);
+  return repository.getExerciseHistory(userId: userId, limit: 50);
+});
+
+class _MyStatsTab extends ConsumerWidget {
+  const _MyStatsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyAsync = ref.watch(exerciseHistoryProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+
+    return historyAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: textMuted),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load stats',
+              style: TextStyle(color: textMuted),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => ref.invalidate(exerciseHistoryProvider),
+              child: Text('Retry', style: TextStyle(color: cyan)),
+            ),
+          ],
+        ),
+      ),
+      data: (history) {
+        if (history.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.fitness_center_outlined, size: 64, color: textMuted.withOpacity(0.5)),
+                const SizedBox(height: 16),
+                Text(
+                  'No exercise history yet',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Complete workouts to see your stats',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: textMuted.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(exerciseHistoryProvider);
+          },
+          color: cyan,
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: history.length + 1, // +1 for header
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                // Summary header
+                final totalSets = history.fold<int>(0, (sum, item) => sum + item.totalSets);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exercise Performance',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${history.length} exercises tracked  •  $totalSets total sets',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Divider(color: elevated),
+                    const SizedBox(height: 8),
+                  ],
+                );
+              }
+
+              final item = history[index - 1];
+              return _ExerciseHistoryCard(item: item)
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: (index - 1) * 30));
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ExerciseHistoryCard extends StatelessWidget {
+  final ExerciseHistoryItem item;
+
+  const _ExerciseHistoryCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final error = isDark ? AppColors.error : AppColorsLight.error;
+
+    // Get progression icon and color
+    IconData progressIcon = Icons.remove;
+    Color progressColor = textMuted;
+    String progressText = 'No trend data';
+
+    if (item.progression != null) {
+      if (item.progression!.isIncreasing) {
+        progressIcon = Icons.trending_up;
+        progressColor = success;
+        progressText = '+${item.progression!.changePercent?.toStringAsFixed(1) ?? ''}%';
+      } else if (item.progression!.isDecreasing) {
+        progressIcon = Icons.trending_down;
+        progressColor = error;
+        progressText = '${item.progression!.changePercent?.toStringAsFixed(1) ?? ''}%';
+      } else if (item.progression!.isStable) {
+        progressIcon = Icons.trending_flat;
+        progressColor = cyan;
+        progressText = 'Stable';
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: elevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isDark ? BorderSide.none : BorderSide(color: AppColorsLight.cardBorder),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          // Show detailed stats sheet
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => _ExerciseStatsSheet(exerciseName: item.exerciseName, item: item),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Exercise name and progress indicator
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.exerciseName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: progressColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(progressIcon, size: 16, color: progressColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          progressText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: progressColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Stats row
+              Row(
+                children: [
+                  _StatBadge(
+                    icon: Icons.fitness_center,
+                    value: '${item.totalSets}',
+                    label: 'sets',
+                    color: cyan,
+                  ),
+                  const SizedBox(width: 16),
+                  if (item.maxWeight != null && item.maxWeight! > 0)
+                    _StatBadge(
+                      icon: Icons.monitor_weight_outlined,
+                      value: '${item.maxWeight!.toStringAsFixed(1)}',
+                      label: 'kg max',
+                      color: cyan,
+                    ),
+                  if (item.maxWeight != null && item.maxWeight! > 0)
+                    const SizedBox(width: 16),
+                  if (item.estimated1rm != null && item.estimated1rm! > 0)
+                    _StatBadge(
+                      icon: Icons.emoji_events_outlined,
+                      value: '${item.estimated1rm!.toStringAsFixed(1)}',
+                      label: '1RM',
+                      color: success,
+                    ),
+                ],
+              ),
+
+              if (item.lastWorkoutDate != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Last performed: ${_formatDate(item.lastWorkoutDate!)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+
+      if (diff.inDays == 0) return 'Today';
+      if (diff.inDays == 1) return 'Yesterday';
+      if (diff.inDays < 7) return '${diff.inDays} days ago';
+      if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
+      return '${(diff.inDays / 30).floor()} months ago';
+    } catch (e) {
+      return isoDate;
+    }
+  }
+}
+
+class _StatBadge extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  const _StatBadge({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExerciseStatsSheet extends StatelessWidget {
+  final String exerciseName;
+  final ExerciseHistoryItem item;
+
+  const _ExerciseStatsSheet({
+    required this.exerciseName,
+    required this.item,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final error = isDark ? AppColors.error : AppColorsLight.error;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        exerciseName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Stats grid
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StatTile(
+                              title: 'Total Sets',
+                              value: '${item.totalSets}',
+                              icon: Icons.fitness_center,
+                              color: cyan,
+                            ),
+                          ),
+                          Expanded(
+                            child: _StatTile(
+                              title: 'Max Weight',
+                              value: item.maxWeight != null ? '${item.maxWeight!.toStringAsFixed(1)} kg' : '-',
+                              icon: Icons.monitor_weight_outlined,
+                              color: cyan,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _StatTile(
+                              title: 'Est. 1RM',
+                              value: item.estimated1rm != null ? '${item.estimated1rm!.toStringAsFixed(1)} kg' : '-',
+                              icon: Icons.emoji_events_outlined,
+                              color: success,
+                            ),
+                          ),
+                          Expanded(
+                            child: _StatTile(
+                              title: 'Max Reps',
+                              value: item.maxReps != null ? '${item.maxReps}' : '-',
+                              icon: Icons.repeat,
+                              color: cyan,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (item.avgRpe != null) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatTile(
+                                title: 'Avg RPE',
+                                value: item.avgRpe!.toStringAsFixed(1),
+                                icon: Icons.speed,
+                                color: cyan,
+                              ),
+                            ),
+                            Expanded(
+                              child: _StatTile(
+                                title: 'Volume',
+                                value: item.totalVolume != null
+                                    ? '${(item.totalVolume! / 1000).toStringAsFixed(1)}k kg'
+                                    : '-',
+                                icon: Icons.bar_chart,
+                                color: cyan,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // Progression info
+                if (item.progression != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: item.progression!.isIncreasing
+                          ? success.withOpacity(0.1)
+                          : item.progression!.isDecreasing
+                              ? error.withOpacity(0.1)
+                              : elevated,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: item.progression!.isIncreasing
+                            ? success.withOpacity(0.3)
+                            : item.progression!.isDecreasing
+                                ? error.withOpacity(0.3)
+                                : elevated,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          item.progression!.isIncreasing
+                              ? Icons.trending_up
+                              : item.progression!.isDecreasing
+                                  ? Icons.trending_down
+                                  : Icons.trending_flat,
+                          color: item.progression!.isIncreasing
+                              ? success
+                              : item.progression!.isDecreasing
+                                  ? error
+                                  : cyan,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Progression',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                item.progression!.message,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatTile({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 12,
+                color: textMuted,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // SHARED WIDGETS
 // ═══════════════════════════════════════════════════════════════════
 
@@ -2418,6 +3006,16 @@ class _ExerciseDetailSheetState extends ConsumerState<_ExerciseDetailSheet> {
                 ),
               ],
 
+              // Log 1RM Button
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _Log1RMButton(
+                  exerciseName: exercise.name,
+                  exerciseId: exercise.id ?? exercise.name.toLowerCase().replaceAll(' ', '_'),
+                ),
+              ),
+
               const SizedBox(height: 40),
             ],
           ),
@@ -2915,6 +3513,187 @@ class _DetailBadge extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LOG 1RM BUTTON
+// ═══════════════════════════════════════════════════════════════════
+
+class _Log1RMButton extends ConsumerStatefulWidget {
+  final String exerciseName;
+  final String exerciseId;
+
+  const _Log1RMButton({
+    required this.exerciseName,
+    required this.exerciseId,
+  });
+
+  @override
+  ConsumerState<_Log1RMButton> createState() => _Log1RMButtonState();
+}
+
+class _Log1RMButtonState extends ConsumerState<_Log1RMButton> {
+  double? _current1rm;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrent1rm();
+  }
+
+  Future<void> _loadCurrent1rm() async {
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final repository = ref.read(workoutRepositoryProvider);
+      final current1rm = await repository.getExercise1rm(
+        userId: userId,
+        exerciseName: widget.exerciseName,
+      );
+
+      if (mounted) {
+        setState(() {
+          _current1rm = current1rm;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _showLog1RMSheet() async {
+    final result = await showLog1RMSheet(
+      context,
+      ref,
+      exerciseName: widget.exerciseName,
+      exerciseId: widget.exerciseId,
+      current1rm: _current1rm,
+    );
+
+    if (result != null && mounted) {
+      // Refresh the current 1RM display
+      _loadCurrent1rm();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('1RM logged: ${(result['estimated_1rm'] as num?)?.toStringAsFixed(1) ?? 'N/A'} kg'),
+            ],
+          ),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showLog1RMSheet,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.fitness_center,
+                    color: AppColors.orange,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Log 1RM',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (_isLoading)
+                        Text(
+                          'Loading...',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textSecondary,
+                          ),
+                        )
+                      else if (_current1rm != null)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events,
+                              size: 14,
+                              color: AppColors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Current: ${_current1rm!.toStringAsFixed(1)} kg',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.orange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          'Track your max strength',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -174,7 +174,11 @@ class ExerciseLibraryService:
                 sets, reps = 3, 12
 
             # Get equipment - infer from name if missing
-            exercise_name = ex.get('exercise_name', 'Unknown Exercise')
+            raw_exercise_name = ex.get('exercise_name', 'Unknown Exercise')
+            # Clean exercise name for display (remove _female, version suffixes etc)
+            from services.exercise_rag_service import _clean_exercise_name_for_display
+            exercise_name = _clean_exercise_name_for_display(raw_exercise_name)
+
             raw_eq = ex.get('equipment', '')
             if not raw_eq or raw_eq.lower() in ['bodyweight', 'body weight', 'none', '']:
                 equipment = _infer_equipment_from_name(exercise_name)

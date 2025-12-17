@@ -111,8 +111,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           );
 
-          // Navigate to home
-          context.go('/home');
+          // Navigate to paywall after onboarding
+          context.go('/paywall-features');
         }
       } else {
         throw Exception('Failed to update profile: ${response.statusCode}');

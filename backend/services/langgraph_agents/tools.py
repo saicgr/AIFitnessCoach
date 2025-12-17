@@ -1256,19 +1256,66 @@ def generate_quick_workout(
             if rag_exercises:
                 logger.info(f"✅ RAG selected {len(rag_exercises)} exercises from ChromaDB")
 
-                # Adjust sets/reps based on intensity
-                sets_reps_config = {
-                    "light": {"sets": 2, "reps": 10},
-                    "moderate": {"sets": 3, "reps": 12},
-                    "intense": {"sets": 4, "reps": 12},
-                }
-                config = sets_reps_config.get(intensity_key, {"sets": 3, "reps": 12})
+                # Get adaptive parameters based on user history and workout type
+                from services.adaptive_workout_service import get_adaptive_workout_service
+                adaptive_service = get_adaptive_workout_service(db.client)
 
+                # Map intensity to workout focus
+                intensity_to_focus = {
+                    "light": "endurance",
+                    "moderate": "hypertrophy",
+                    "intense": "strength",
+                }
+                workout_focus = intensity_to_focus.get(intensity_key, "hypertrophy")
+
+                # Get adaptive parameters (this runs async in a sync context)
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(
+                                asyncio.run,
+                                adaptive_service.get_adaptive_parameters(
+                                    user_id=user_id,
+                                    workout_type=workout_focus,
+                                    user_goals=user_goals,
+                                )
+                            )
+                            adaptive_params = future.result(timeout=5)
+                    else:
+                        adaptive_params = asyncio.run(
+                            adaptive_service.get_adaptive_parameters(
+                                user_id=user_id,
+                                workout_type=workout_focus,
+                                user_goals=user_goals,
+                            )
+                        )
+                    logger.info(f"🎯 Adaptive params: sets={adaptive_params['sets']}, reps={adaptive_params['reps']}, rest={adaptive_params['rest_seconds']}s")
+                except Exception as adaptive_err:
+                    logger.warning(f"Adaptive params failed, using defaults: {adaptive_err}")
+                    adaptive_params = {
+                        "sets": 3,
+                        "reps": 12,
+                        "rest_seconds": 60,
+                        "allow_supersets": False,
+                        "allow_amrap": False,
+                    }
+
+                # Build exercises with adaptive parameters
                 for ex in rag_exercises:
+                    # Vary rest time based on exercise type (compound vs isolation)
+                    exercise_type = "compound" if any(
+                        compound in ex.get("name", "").lower()
+                        for compound in ["squat", "deadlift", "bench", "press", "row", "pull-up", "push-up"]
+                    ) else "isolation"
+                    rest_time = adaptive_service.get_varied_rest_time(exercise_type, workout_focus)
+
                     new_exercises.append({
                         "name": ex.get("name", "Exercise"),
-                        "sets": config["sets"],
-                        "reps": ex.get("reps", config["reps"]),
+                        "sets": adaptive_params["sets"],
+                        "reps": ex.get("reps", adaptive_params["reps"]),
+                        "rest_seconds": rest_time,
                         "duration_seconds": ex.get("duration_seconds"),
                         "muscle_group": ex.get("muscle_group", ex.get("body_part", workout_type_key)),
                         "equipment": ex.get("equipment", "Bodyweight"),
@@ -1278,6 +1325,17 @@ def generate_quick_workout(
                         "image_url": ex.get("image_url", ""),
                         "library_id": ex.get("library_id", ""),
                     })
+
+                # Apply supersets if appropriate
+                if adaptive_service.should_use_supersets(workout_focus, duration_minutes, len(new_exercises)):
+                    new_exercises = adaptive_service.create_superset_pairs(new_exercises)
+                    logger.info("💪 Applied supersets to workout")
+
+                # Add AMRAP finisher if appropriate
+                if adaptive_service.should_include_amrap(workout_focus, rag_fitness_level):
+                    amrap_exercise = adaptive_service.create_amrap_finisher(new_exercises, workout_focus)
+                    new_exercises.append(amrap_exercise)
+                    logger.info(f"🔥 Added AMRAP finisher: {amrap_exercise['name']}")
 
         except Exception as rag_error:
             logger.error(f"Exercise RAG failed: {rag_error}")

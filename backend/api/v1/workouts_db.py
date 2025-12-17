@@ -39,6 +39,57 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
+    """
+    Get list of exercise names used by user in recent workouts.
+
+    This ensures variety by avoiding exercises the user has done recently.
+
+    Args:
+        user_id: The user's ID
+        days: Number of days to look back (default 7)
+
+    Returns:
+        List of exercise names to avoid
+    """
+    try:
+        db = get_supabase_db()
+        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+
+        # Get recent workouts for this user
+        response = db.client.table("workouts").select(
+            "exercises_json"
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", cutoff_date
+        ).execute()
+
+        if not response.data:
+            return []
+
+        # Extract all exercise names from recent workouts
+        recent_exercises = set()
+        for workout in response.data:
+            exercises_json = workout.get("exercises_json", [])
+            if isinstance(exercises_json, str):
+                try:
+                    exercises_json = json.loads(exercises_json)
+                except json.JSONDecodeError:
+                    continue
+
+            for exercise in exercises_json:
+                if isinstance(exercise, dict):
+                    name = exercise.get("name") or exercise.get("exercise_name")
+                    if name:
+                        recent_exercises.add(name)
+
+        logger.info(f"🔄 Found {len(recent_exercises)} recently used exercises for user {user_id} (last {days} days)")
+        return list(recent_exercises)
+
+    except Exception as e:
+        logger.error(f"Error getting recently used exercises: {e}")
+        return []
+
+
 def parse_json_field(value, default):
     """Parse a field that could be a JSON string or already parsed."""
     if value is None:
@@ -560,14 +611,32 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         generated_workouts = []
         openai_service = OpenAIService()
         exercise_rag = get_exercise_rag_service()
-        used_exercises: List[str] = []
+
+        # Start with exercises from recent days to ensure cross-week variety
+        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
+        logger.info(f"🔄 Starting weekly generation with {len(used_exercises)} recently used exercises")
+
+        # Get adaptive workout service for varied parameters
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        adaptive_service = get_adaptive_workout_service(db.client)
 
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
 
+            # Get adaptive parameters for this workout
             try:
-                # Use RAG to intelligently select exercises
+                adaptive_params = await adaptive_service.get_adaptive_parameters(
+                    user_id=request.user_id,
+                    workout_type=focus,
+                    user_goals=goals if isinstance(goals, list) else [],
+                )
+            except Exception as adapt_err:
+                logger.warning(f"Adaptive params failed for weekly: {adapt_err}, using defaults")
+                adaptive_params = None
+
+            try:
+                # Use RAG to intelligently select exercises with adaptive params
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -575,10 +644,30 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
                     avoid_exercises=used_exercises,
+                    workout_params=adaptive_params,
                 )
 
                 if rag_exercises:
                     used_exercises.extend([ex.get("name", "") for ex in rag_exercises])
+
+                    # Get the effective workout focus from adaptive params (maps focus->workout type)
+                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
+
+                    # Apply supersets if appropriate (only for hypertrophy/endurance/hiit)
+                    if adaptive_params and adaptive_service.should_use_supersets(
+                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
+                    ):
+                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
+                        logger.info(f"💪 Applied supersets to weekly {focus} ({effective_focus}) workout")
+
+                    # Add AMRAP finisher if appropriate
+                    if adaptive_params and adaptive_service.should_include_amrap(
+                        effective_focus, fitness_level or "intermediate"
+                    ):
+                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
+                        rag_exercises.append(amrap_exercise)
+                        logger.info(f"🔥 Added AMRAP finisher: {amrap_exercise['name']}")
+
                     workout_data = await openai_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
@@ -715,9 +804,15 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         # Get exercise RAG service for intelligent selection
         exercise_rag = get_exercise_rag_service()
 
+        # Get adaptive workout service for varied parameters
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        adaptive_service = get_adaptive_workout_service(db.client)
+
         # Track used exercises for variety - use a thread-safe approach
         # by passing a copy of the list and collecting results
-        used_exercises: List[str] = []
+        # Start with exercises from recent days to ensure cross-week variety
+        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
+        logger.info(f"🔄 Starting with {len(used_exercises)} recently used exercises to ensure variety")
 
         async def generate_single_workout(
             workout_date: datetime,
@@ -728,8 +823,20 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
+            # Get adaptive parameters for this workout based on focus and user history
             try:
-                # Use RAG to intelligently select exercises
+                adaptive_params = await adaptive_service.get_adaptive_parameters(
+                    user_id=request.user_id,
+                    workout_type=focus,
+                    user_goals=goals if isinstance(goals, list) else [],
+                )
+                logger.info(f"🎯 Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+            except Exception as adapt_err:
+                logger.warning(f"Adaptive params failed: {adapt_err}, using defaults")
+                adaptive_params = None
+
+            try:
+                # Use RAG to intelligently select exercises with adaptive params
                 # Pass injuries to filter out contraindicated exercises
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
@@ -739,12 +846,31 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     count=6,
                     avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
+                    workout_params=adaptive_params,  # Pass adaptive parameters
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
                 exercises_used = []
                 if rag_exercises:
                     exercises_used = [ex.get("name", "") for ex in rag_exercises]
+
+                    # Get the effective workout focus from adaptive params (maps focus->workout type)
+                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
+
+                    # Apply supersets if appropriate (only for hypertrophy/endurance/hiit)
+                    if adaptive_params and adaptive_service.should_use_supersets(
+                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
+                    ):
+                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
+                        logger.info(f"💪 Applied supersets to {focus} ({effective_focus}) workout")
+
+                    # Add AMRAP finisher if appropriate
+                    if adaptive_params and adaptive_service.should_include_amrap(
+                        effective_focus, fitness_level or "intermediate"
+                    ):
+                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
+                        rag_exercises.append(amrap_exercise)
+                        logger.info(f"🔥 Added AMRAP finisher: {amrap_exercise['name']}")
 
                     # Use AI to create a creative workout name
                     workout_data = await openai_service.generate_workout_from_library(
@@ -847,25 +973,27 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 await index_workout_to_rag(workout)
                 generated_workouts.append(workout)
 
-                # Generate warmup and stretches alongside workout (with injury awareness)
+                # Generate warmup and stretches alongside workout (with injury awareness and variety)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
                     exercises = result["exercises"]
 
-                    # Generate and save warmup (create_warmup_for_workout generates + saves)
+                    # Generate and save warmup (with variety tracking via user_id)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=5,
-                        injuries=active_injuries if active_injuries else None
+                        injuries=active_injuries if active_injuries else None,
+                        user_id=request.user_id
                     )
 
-                    # Generate and save stretches (create_stretches_for_workout generates + saves)
+                    # Generate and save stretches (with variety tracking via user_id)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=5,
-                        injuries=active_injuries if active_injuries else None
+                        injuries=active_injuries if active_injuries else None,
+                        user_id=request.user_id
                     )
                     logger.info(f"✅ Generated warmup and stretches for workout {workout.id}")
                 except Exception as ws_error:
@@ -944,7 +1072,14 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         generated_workouts = []
         openai_service = OpenAIService()
         exercise_rag = get_exercise_rag_service()
-        used_exercises: List[str] = []
+
+        # Start with exercises from recent days to ensure cross-week variety
+        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
+        logger.info(f"🔄 Starting remaining generation with {len(used_exercises)} recently used exercises")
+
+        # Get adaptive workout service for varied parameters
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        adaptive_service = get_adaptive_workout_service(db.client)
 
         BATCH_SIZE = 4
 
@@ -956,8 +1091,20 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             weekday = workout_date.weekday()
             focus = workout_focus_map.get(weekday, "full_body")
 
+            # Get adaptive parameters for this workout based on focus and user history
             try:
-                # Use RAG to intelligently select exercises (with injury awareness)
+                adaptive_params = await adaptive_service.get_adaptive_parameters(
+                    user_id=request.user_id,
+                    workout_type=focus,
+                    user_goals=goals if isinstance(goals, list) else [],
+                )
+                logger.info(f"🎯 Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+            except Exception as adapt_err:
+                logger.warning(f"Adaptive params failed for regeneration: {adapt_err}, using defaults")
+                adaptive_params = None
+
+            try:
+                # Use RAG to intelligently select exercises (with injury awareness and adaptive params)
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
                     equipment=equipment if isinstance(equipment, list) else [],
@@ -966,11 +1113,31 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     count=6,
                     avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
+                    workout_params=adaptive_params,  # Pass adaptive parameters
                 )
 
                 exercises_used = []
                 if rag_exercises:
                     exercises_used = [ex.get("name", "") for ex in rag_exercises]
+
+                    # Get the effective workout focus from adaptive params (maps focus->workout type)
+                    effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
+
+                    # Apply supersets if appropriate (only for hypertrophy/endurance/hiit)
+                    if adaptive_params and adaptive_service.should_use_supersets(
+                        effective_focus, request.duration_minutes or 45, len(rag_exercises)
+                    ):
+                        rag_exercises = adaptive_service.create_superset_pairs(rag_exercises)
+                        logger.info(f"💪 Applied supersets to regenerated {focus} ({effective_focus}) workout")
+
+                    # Add AMRAP finisher if appropriate
+                    if adaptive_params and adaptive_service.should_include_amrap(
+                        effective_focus, fitness_level or "intermediate"
+                    ):
+                        amrap_exercise = adaptive_service.create_amrap_finisher(rag_exercises, effective_focus)
+                        rag_exercises.append(amrap_exercise)
+                        logger.info(f"🔥 Added AMRAP finisher to regenerated workout: {amrap_exercise['name']}")
+
                     workout_data = await openai_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
@@ -1060,25 +1227,27 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 workout = row_to_workout(created)
                 await index_workout_to_rag(workout)
 
-                # Generate warmup and stretches alongside workout (with injury awareness)
+                # Generate warmup and stretches alongside workout (with injury awareness and variety)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
                     exercises = result["exercises"]
 
-                    # Generate and save warmup (create_warmup_for_workout generates + saves)
+                    # Generate and save warmup (with variety tracking via user_id)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=5,
-                        injuries=active_injuries if active_injuries else None
+                        injuries=active_injuries if active_injuries else None,
+                        user_id=request.user_id
                     )
 
-                    # Generate and save stretches (create_stretches_for_workout generates + saves)
+                    # Generate and save stretches (with variety tracking via user_id)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
                         duration_minutes=5,
-                        injuries=active_injuries if active_injuries else None
+                        injuries=active_injuries if active_injuries else None,
+                        user_id=request.user_id
                     )
                     logger.info(f"✅ Generated warmup and stretches for remaining workout {workout.id}")
                 except Exception as ws_error:
@@ -1809,20 +1978,23 @@ async def get_workout_stretches(workout_id: str):
 
 @router.post("/{workout_id}/warmup")
 async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
-    """Generate and create warmup exercises for an existing workout."""
+    """Generate and create warmup exercises for an existing workout with variety tracking."""
     logger.info(f"Creating warmup for workout {workout_id}")
     try:
         db = get_supabase_db()
 
-        # Get the workout to extract exercises
+        # Get the workout to extract exercises and user_id
         workout = db.get_workout(workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+        user_id = workout.get("user_id")
 
         service = get_warmup_stretch_service()
-        warmup = await service.create_warmup_for_workout(workout_id, exercises, duration_minutes)
+        warmup = await service.create_warmup_for_workout(
+            workout_id, exercises, duration_minutes, user_id=user_id
+        )
 
         if not warmup:
             raise HTTPException(status_code=500, detail="Failed to create warmup")
@@ -1838,20 +2010,23 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
 
 @router.post("/{workout_id}/stretches")
 async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
-    """Generate and create cool-down stretches for an existing workout."""
+    """Generate and create cool-down stretches for an existing workout with variety tracking."""
     logger.info(f"Creating stretches for workout {workout_id}")
     try:
         db = get_supabase_db()
 
-        # Get the workout to extract exercises
+        # Get the workout to extract exercises and user_id
         workout = db.get_workout(workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+        user_id = workout.get("user_id")
 
         service = get_warmup_stretch_service()
-        stretches = await service.create_stretches_for_workout(workout_id, exercises, duration_minutes)
+        stretches = await service.create_stretches_for_workout(
+            workout_id, exercises, duration_minutes, user_id=user_id
+        )
 
         if not stretches:
             raise HTTPException(status_code=500, detail="Failed to create stretches")
@@ -1871,21 +2046,22 @@ async def create_workout_warmup_and_stretches(
     warmup_duration: int = 5,
     stretch_duration: int = 5
 ):
-    """Generate and create both warmup and stretches for an existing workout."""
+    """Generate and create both warmup and stretches for an existing workout with variety tracking."""
     logger.info(f"Creating warmup and stretches for workout {workout_id}")
     try:
         db = get_supabase_db()
 
-        # Get the workout to extract exercises
+        # Get the workout to extract exercises and user_id
         workout = db.get_workout(workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
+        user_id = workout.get("user_id")
 
         service = get_warmup_stretch_service()
         result = await service.generate_warmup_and_stretches_for_workout(
-            workout_id, exercises, warmup_duration, stretch_duration
+            workout_id, exercises, warmup_duration, stretch_duration, user_id=user_id
         )
 
         return result
@@ -2463,7 +2639,11 @@ async def check_and_regenerate_workouts(
                 "upcoming_workout_days": upcoming_count,
                 "message": "Generation already in progress",
                 "status": existing_job.get("status"),
-                "job_id": existing_job.get("id")
+                "job_id": existing_job.get("id"),
+                "start_date": str(existing_job.get("month_start_date", ""))[:10] if existing_job.get("month_start_date") else None,
+                "weeks": existing_job.get("weeks", 4),
+                "total_expected": existing_job.get("total_expected", 0),
+                "total_generated": existing_job.get("total_generated", 0),
             }
 
         # Need to generate more workouts
@@ -2482,12 +2662,14 @@ async def check_and_regenerate_workouts(
             start_date = str(today)
 
         # Create a new job in the database
+        # Generate 2 weeks at a time for more adaptive workout planning
+        generation_weeks = 2
         job_id = job_queue.create_job(
             user_id=user_id,
             month_start_date=start_date,
             duration_minutes=duration_minutes,
             selected_days=selected_days,
-            weeks=4  # Generate 4 weeks (monthly)
+            weeks=generation_weeks
         )
 
         # Schedule the background task
@@ -2498,10 +2680,10 @@ async def check_and_regenerate_workouts(
             start_date,
             duration_minutes,
             selected_days,
-            4  # 4 weeks (monthly)
+            generation_weeks
         )
 
-        logger.info(f"✅ Scheduled workout generation for user {user_id} starting from {start_date}")
+        logger.info(f"✅ Scheduled workout generation for user {user_id} starting from {start_date} ({generation_weeks} weeks)")
 
         return {
             "success": True,
@@ -2511,7 +2693,7 @@ async def check_and_regenerate_workouts(
             "status": "pending",
             "job_id": job_id,
             "start_date": start_date,
-            "weeks": 4,
+            "weeks": generation_weeks,
             "selected_days": selected_days
         }
 

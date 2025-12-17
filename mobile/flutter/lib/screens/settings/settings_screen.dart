@@ -581,11 +581,16 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    // Store navigator and scaffold messenger before async operations
+    final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
     // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (dialogContext) => const Center(
         child: CircularProgressIndicator(color: AppColors.cyan),
       ),
     );
@@ -598,36 +603,51 @@ class SettingsScreen extends ConsumerWidget {
         throw Exception('User not found');
       }
 
+      debugPrint('🗑️ Deleting account for user: $userId');
+
       // Call backend to fully delete user account
       final response = await apiClient.delete(
         '${ApiConstants.users}/$userId/reset',
       );
 
+      debugPrint('🗑️ Delete response: ${response.statusCode}');
+
       // Close loading dialog
-      if (context.mounted) Navigator.pop(context);
+      navigator.pop();
 
       if (response.statusCode == 200) {
-        // Sign out and navigate to login
+        debugPrint('✅ Account deleted successfully, clearing local data...');
+
+        // Clear all local storage (SharedPreferences)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.clear();
+        debugPrint('✅ Local storage cleared');
+
+        // Sign out
         await ref.read(authStateProvider.notifier).signOut();
-        if (context.mounted) {
-          context.go('/login');
-        }
+        debugPrint('✅ Signed out, navigating to language selection...');
+
+        // Navigate to language selection (first screen for truly new users)
+        router.go('/language-select');
       } else {
-        throw Exception('Failed to delete account');
+        throw Exception('Failed to delete account: ${response.statusCode}');
       }
     } catch (e) {
+      debugPrint('❌ Delete account error: $e');
       // Close loading dialog if still showing
-      if (context.mounted) Navigator.pop(context);
+      try {
+        navigator.pop();
+      } catch (_) {
+        // Dialog may already be closed
+      }
 
       // Show error
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 

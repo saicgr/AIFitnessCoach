@@ -16,6 +16,10 @@ final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
 /// This allows the home screen to show a loading indicator
 final aiGeneratingWorkoutProvider = StateProvider<bool>((ref) => false);
 
+/// Session-level flag to prevent redundant regeneration checks
+/// Resets when app restarts - prevents expensive API calls on every Home tab switch
+final hasCheckedRegenerationProvider = StateProvider<bool>((ref) => false);
+
 /// Workouts state provider
 final workoutsProvider =
     StateNotifierProvider<WorkoutsNotifier, AsyncValue<List<Workout>>>((ref) {
@@ -409,11 +413,13 @@ class WorkoutRepository {
 
   /// Check if user needs more workouts and auto-generate if running low
   /// Returns a map with generation status
-  Future<Map<String, dynamic>> checkAndRegenerateWorkouts(String userId) async {
+  /// [thresholdDays] - Generate more workouts if user has less than this many days of workouts (default: 7)
+  Future<Map<String, dynamic>> checkAndRegenerateWorkouts(String userId, {int thresholdDays = 7}) async {
     try {
-      debugPrint('🔍 [Workout] Checking workout status for user: $userId');
+      debugPrint('🔍 [Workout] Checking workout status for user: $userId (threshold: $thresholdDays days)');
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/check-and-regenerate/$userId',
+        queryParameters: {'threshold_days': thresholdDays},
         options: Options(
           sendTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 30),
@@ -699,9 +705,11 @@ class WorkoutRepository {
     required int setNumber,
     required int repsCompleted,
     required double weightKg,
+    String setType = 'working', // 'working', 'warmup', 'failure', 'amrap'
+    double? rpe,
   }) async {
     try {
-      debugPrint('🔍 [Workout] Logging set $setNumber for $exerciseName');
+      debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
       final response = await _apiClient.post(
         '/performance/logs',
         data: {
@@ -713,6 +721,8 @@ class WorkoutRepository {
           'reps_completed': repsCompleted,
           'weight_kg': weightKg,
           'is_completed': true,
+          'set_type': setType,
+          if (rpe != null) 'rpe': rpe,
         },
       );
       if (response.statusCode == 200) {
@@ -1036,6 +1046,260 @@ class WorkoutRepository {
       return [];
     }
   }
+
+  /// Create a strength record (manual 1RM logging)
+  /// The estimated_1rm will be calculated using Brzycki formula if reps > 1
+  Future<Map<String, dynamic>?> createStrengthRecord({
+    required String userId,
+    required String exerciseId,
+    required String exerciseName,
+    required double weightKg,
+    required int reps,
+    double? rpe,
+    bool isPr = false,
+  }) async {
+    try {
+      debugPrint('🏋️ [Workout] Creating strength record for: $exerciseName');
+      debugPrint('  - weight: ${weightKg}kg, reps: $reps, rpe: $rpe');
+
+      // Calculate estimated 1RM using Brzycki formula
+      // 1RM = weight × (36 / (37 - reps))
+      final estimated1rm = _calculate1rm(weightKg, reps);
+      debugPrint('  - estimated 1RM: ${estimated1rm.toStringAsFixed(1)}kg');
+
+      final response = await _apiClient.post(
+        '/performance/strength-records',
+        data: {
+          'user_id': userId,
+          'exercise_id': exerciseId,
+          'exercise_name': exerciseName,
+          'weight_kg': weightKg,
+          'reps': reps,
+          'estimated_1rm': estimated1rm,
+          'rpe': rpe,
+          'is_pr': isPr,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Strength record created successfully');
+        return response.data as Map<String, dynamic>;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error creating strength record: $e');
+      return null;
+    }
+  }
+
+  /// Calculate estimated 1RM using Brzycki formula
+  /// 1RM = weight × (36 / (37 - reps))
+  double _calculate1rm(double weight, int reps) {
+    if (reps == 1) return weight;
+    if (reps >= 37) return weight; // Formula breaks down at high reps
+    return weight * (36 / (37 - reps));
+  }
+
+  /// Get estimated 1RM for a specific exercise
+  Future<double?> getExercise1rm({
+    required String userId,
+    required String exerciseName,
+  }) async {
+    try {
+      // Get strength records for this exercise, PRs only
+      final records = await getStrengthRecords(
+        userId: userId,
+        prsOnly: true,
+        limit: 10,
+      );
+
+      // Find the record with the highest estimated 1RM for this exercise
+      final exerciseRecords = records.where(
+        (r) => (r['exercise_name'] as String?)?.toLowerCase() == exerciseName.toLowerCase()
+      ).toList();
+
+      if (exerciseRecords.isEmpty) return null;
+
+      double max1rm = 0;
+      for (final record in exerciseRecords) {
+        final est1rm = (record['estimated_1rm'] as num?)?.toDouble() ?? 0;
+        if (est1rm > max1rm) max1rm = est1rm;
+      }
+
+      return max1rm > 0 ? max1rm : null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error getting exercise 1RM: $e');
+      return null;
+    }
+  }
+
+  /// Get exercise history for user (all exercises with stats)
+  /// Returns a list of exercises sorted by most performed
+  Future<List<ExerciseHistoryItem>> getExerciseHistory({
+    required String userId,
+    int limit = 20,
+  }) async {
+    try {
+      debugPrint('📊 [Workout] Fetching exercise history for user: $userId');
+      final response = await _apiClient.get(
+        '/performance/exercise-history/$userId',
+        queryParameters: {'limit': limit},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List;
+        final history = data.map((json) => ExerciseHistoryItem.fromJson(json as Map<String, dynamic>)).toList();
+        debugPrint('✅ [Workout] Fetched history for ${history.length} exercises');
+        return history;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching exercise history: $e');
+      return [];
+    }
+  }
+
+  /// Get stats for a specific exercise
+  Future<ExerciseStats?> getExerciseStats({
+    required String userId,
+    required String exerciseName,
+  }) async {
+    try {
+      debugPrint('📊 [Workout] Fetching stats for exercise: $exerciseName');
+      final encodedName = Uri.encodeComponent(exerciseName);
+      final response = await _apiClient.get(
+        '/performance/exercise-stats/$userId/$encodedName',
+      );
+
+      if (response.statusCode == 200) {
+        final stats = ExerciseStats.fromJson(response.data as Map<String, dynamic>);
+        debugPrint('✅ [Workout] Fetched stats: ${stats.totalSets} sets, max weight: ${stats.maxWeight}kg');
+        return stats;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching exercise stats: $e');
+      return null;
+    }
+  }
+}
+
+/// Exercise history item model
+class ExerciseHistoryItem {
+  final String exerciseName;
+  final int totalSets;
+  final double? totalVolume;
+  final double? maxWeight;
+  final int? maxReps;
+  final double? estimated1rm;
+  final double? avgRpe;
+  final String? lastWorkoutDate;
+  final ExerciseProgressionTrend? progression;
+  final bool hasData;
+
+  ExerciseHistoryItem({
+    required this.exerciseName,
+    required this.totalSets,
+    this.totalVolume,
+    this.maxWeight,
+    this.maxReps,
+    this.estimated1rm,
+    this.avgRpe,
+    this.lastWorkoutDate,
+    this.progression,
+    this.hasData = true,
+  });
+
+  factory ExerciseHistoryItem.fromJson(Map<String, dynamic> json) {
+    return ExerciseHistoryItem(
+      exerciseName: json['exercise_name'] as String? ?? 'Unknown',
+      totalSets: json['total_sets'] as int? ?? 0,
+      totalVolume: (json['total_volume'] as num?)?.toDouble(),
+      maxWeight: (json['max_weight'] as num?)?.toDouble(),
+      maxReps: json['max_reps'] as int?,
+      estimated1rm: (json['estimated_1rm'] as num?)?.toDouble(),
+      avgRpe: (json['avg_rpe'] as num?)?.toDouble(),
+      lastWorkoutDate: json['last_workout_date'] as String?,
+      progression: json['progression'] != null
+          ? ExerciseProgressionTrend.fromJson(json['progression'] as Map<String, dynamic>)
+          : null,
+      hasData: json['has_data'] as bool? ?? true,
+    );
+  }
+}
+
+/// Exercise stats model (detailed)
+class ExerciseStats {
+  final String? exerciseName;
+  final int totalSets;
+  final double? totalVolume;
+  final double? maxWeight;
+  final int? maxReps;
+  final double? estimated1rm;
+  final double? avgRpe;
+  final String? lastWorkoutDate;
+  final ExerciseProgressionTrend? progression;
+  final bool hasData;
+  final String? message;
+
+  ExerciseStats({
+    this.exerciseName,
+    required this.totalSets,
+    this.totalVolume,
+    this.maxWeight,
+    this.maxReps,
+    this.estimated1rm,
+    this.avgRpe,
+    this.lastWorkoutDate,
+    this.progression,
+    this.hasData = false,
+    this.message,
+  });
+
+  factory ExerciseStats.fromJson(Map<String, dynamic> json) {
+    return ExerciseStats(
+      exerciseName: json['exercise_name'] as String?,
+      totalSets: json['total_sets'] as int? ?? 0,
+      totalVolume: (json['total_volume'] as num?)?.toDouble(),
+      maxWeight: (json['max_weight'] as num?)?.toDouble(),
+      maxReps: json['max_reps'] as int?,
+      estimated1rm: (json['estimated_1rm'] as num?)?.toDouble(),
+      avgRpe: (json['avg_rpe'] as num?)?.toDouble(),
+      lastWorkoutDate: json['last_workout_date'] as String?,
+      progression: json['progression'] != null
+          ? ExerciseProgressionTrend.fromJson(json['progression'] as Map<String, dynamic>)
+          : null,
+      hasData: json['has_data'] as bool? ?? false,
+      message: json['message'] as String?,
+    );
+  }
+}
+
+/// Progression trend model
+class ExerciseProgressionTrend {
+  final String trend; // "increasing", "stable", "decreasing", "insufficient_data", "unknown"
+  final double? changePercent;
+  final String message;
+
+  ExerciseProgressionTrend({
+    required this.trend,
+    this.changePercent,
+    required this.message,
+  });
+
+  factory ExerciseProgressionTrend.fromJson(Map<String, dynamic> json) {
+    return ExerciseProgressionTrend(
+      trend: json['trend'] as String? ?? 'unknown',
+      changePercent: (json['change_percent'] as num?)?.toDouble(),
+      message: json['message'] as String? ?? '',
+    );
+  }
+
+  bool get isIncreasing => trend == 'increasing';
+  bool get isDecreasing => trend == 'decreasing';
+  bool get isStable => trend == 'stable';
 }
 
 /// Workouts state notifier
@@ -1092,13 +1356,16 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
 
   /// Check if user needs more workouts and trigger generation if needed
   /// This should be called on home screen load to ensure continuous workout availability
+  /// Uses a 10-day threshold - will generate if user has less than 10 days of workouts
   Future<Map<String, dynamic>> checkAndRegenerateIfNeeded() async {
     final userId = await _apiClient.getUserId();
     if (userId == null) {
       return {'success': false, 'message': 'No user ID'};
     }
 
-    final result = await _repository.checkAndRegenerateWorkouts(userId);
+    // Use 10-day threshold so we proactively generate more workouts
+    // This ensures users who onboard with 1 week get more workouts generated
+    final result = await _repository.checkAndRegenerateWorkouts(userId, thresholdDays: 10);
 
     // If generation was triggered, set up a delayed refresh to fetch new workouts
     if (result['needs_generation'] == true && result['success'] == true) {

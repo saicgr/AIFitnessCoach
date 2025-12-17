@@ -8,6 +8,7 @@ from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
+from api.v1 import subscriptions, analytics
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -66,3 +67,9 @@ router.include_router(ai_settings.router, tags=["AI Settings"])
 
 # Daily activity from Health Connect / Apple Health
 router.include_router(activity.router, tags=["Activity"])
+
+# Subscription management and RevenueCat webhooks
+router.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subscriptions"])
+
+# Analytics and screen time tracking
+router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])

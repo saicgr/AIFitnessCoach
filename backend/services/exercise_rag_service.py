@@ -21,6 +21,32 @@ settings = get_settings()
 logger = get_logger(__name__)
 
 
+def _clean_exercise_name_for_display(exercise_name: str) -> str:
+    """
+    Clean exercise name for display by removing gender suffixes and version markers.
+
+    Examples:
+    - "Band Hammer Grip Incline Bench Two Arm Row_female" -> "Band Hammer Grip Incline Bench Two Arm Row"
+    - "Air Bike_Female" -> "Air Bike"
+    - "Push-up (version 2)" -> "Push-up"
+    """
+    if not exercise_name:
+        return "Unknown Exercise"
+
+    import re
+
+    # Remove _female or _male suffix (case insensitive)
+    cleaned = re.sub(r'[_\s](female|male)$', '', exercise_name, flags=re.IGNORECASE)
+
+    # Remove (version X) suffix
+    cleaned = re.sub(r'\s*\(version\s*\d+\)\s*$', '', cleaned, flags=re.IGNORECASE)
+
+    # Remove trailing underscores or spaces
+    cleaned = cleaned.strip().rstrip('_')
+
+    return cleaned
+
+
 def _infer_equipment_from_name(exercise_name: str) -> str:
     """
     Infer equipment type from exercise name when equipment data is missing.
@@ -164,7 +190,9 @@ class ExerciseRAGService:
                 exercise_text = self._build_exercise_text(ex)
 
                 # Get cleaned name - view uses 'name' column (fallback for compatibility)
-                exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "Unknown")))
+                # Also clean for display (remove _female, version suffixes etc)
+                raw_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "Unknown")))
+                exercise_name = _clean_exercise_name_for_display(raw_name)
 
                 ids.append(doc_id)
                 documents.append(exercise_text)
@@ -274,6 +302,7 @@ class ExerciseRAGService:
         injuries: Optional[List[str]] = None,
         dumbbell_count: int = 2,
         kettlebell_count: int = 1,
+        workout_params: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -288,6 +317,7 @@ class ExerciseRAGService:
             injuries: User's active injuries to avoid aggravating
             dumbbell_count: Number of dumbbells user has (1 or 2)
             kettlebell_count: Number of kettlebells user has (1 or 2)
+            workout_params: Optional adaptive parameters (sets, reps, rest_seconds)
 
         Returns:
             List of selected exercises with full details
@@ -314,7 +344,7 @@ class ExerciseRAGService:
 
         if not results["ids"][0]:
             logger.warning("No exercises found in RAG, falling back to random selection")
-            return await self._fallback_selection(focus_area, equipment, count)
+            return await self._fallback_selection(focus_area, equipment, count, workout_params)
 
         # Format candidates for AI selection
         candidates = []
@@ -418,8 +448,9 @@ class ExerciseRAGService:
                     logger.debug(f"Filtered out '{meta.get('name')}' - requires 2 kettlebells but user has 1")
                     continue
 
-            # Get exercise name
-            exercise_name = meta.get("name", "Unknown")
+            # Get exercise name and clean it for display
+            raw_name = meta.get("name", "Unknown")
+            exercise_name = _clean_exercise_name_for_display(raw_name)
 
             # Skip if we already have a similar exercise (avoid duplicates and variations)
             is_duplicate = False
@@ -459,7 +490,7 @@ class ExerciseRAGService:
 
         if not candidates:
             logger.warning("No compatible exercises found after filtering")
-            return await self._fallback_selection(focus_area, equipment, count)
+            return await self._fallback_selection(focus_area, equipment, count, workout_params)
 
         # Pre-filter candidates based on injuries (safety net before AI)
         if injuries and len(injuries) > 0:
@@ -478,6 +509,7 @@ class ExerciseRAGService:
             goals=goals,
             count=count,
             injuries=injuries,
+            workout_params=workout_params,
         )
 
         return selected
@@ -727,6 +759,7 @@ class ExerciseRAGService:
         goals: List[str],
         count: int,
         injuries: Optional[List[str]] = None,
+        workout_params: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates, considering injuries."""
 
@@ -839,8 +872,8 @@ Select exactly {count} exercises that are SAFE for this user."""
             for idx in selected_indices:
                 if 1 <= idx <= len(candidates):
                     ex = candidates[idx - 1]
-                    # Format for workout
-                    selected.append(self._format_exercise_for_workout(ex, fitness_level))
+                    # Format for workout with adaptive params if provided
+                    selected.append(self._format_exercise_for_workout(ex, fitness_level, workout_params))
 
             logger.info(f"✅ AI selected {len(selected)} exercises: {[e['name'] for e in selected]}")
             return selected
@@ -849,14 +882,32 @@ Select exactly {count} exercises that are SAFE for this user."""
             logger.error(f"AI selection failed: {e}, using top candidates")
             # Fallback to top candidates by similarity
             return [
-                self._format_exercise_for_workout(c, fitness_level)
+                self._format_exercise_for_workout(c, fitness_level, workout_params)
                 for c in candidates[:count]
             ]
 
-    def _format_exercise_for_workout(self, exercise: Dict, fitness_level: str) -> Dict:
-        """Format an exercise for inclusion in a workout."""
-        # Determine sets/reps based on fitness level
-        if fitness_level == "beginner":
+    def _format_exercise_for_workout(
+        self,
+        exercise: Dict,
+        fitness_level: str,
+        workout_params: Optional[Dict] = None
+    ) -> Dict:
+        """Format an exercise for inclusion in a workout.
+
+        Args:
+            exercise: Raw exercise data from RAG/database
+            fitness_level: User's fitness level
+            workout_params: Optional adaptive parameters with keys:
+                - sets: Number of sets
+                - reps: Number of reps
+                - rest_seconds: Rest time between sets
+        """
+        # Use adaptive params if provided, otherwise fall back to fitness level defaults
+        if workout_params:
+            sets = workout_params.get("sets", 3)
+            reps = workout_params.get("reps", 12)
+            rest = workout_params.get("rest_seconds", 60)
+        elif fitness_level == "beginner":
             sets, reps, rest = 2, 10, 90
         elif fitness_level == "advanced":
             sets, reps, rest = 4, 12, 45
@@ -892,6 +943,7 @@ Select exactly {count} exercises that are SAFE for this user."""
         focus_area: str,
         equipment: List[str],
         count: int,
+        workout_params: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
         """Fallback to direct database query if RAG fails. Uses cleaned view."""
         logger.warning("Using fallback selection from database (cleaned view)")
@@ -951,7 +1003,7 @@ Select exactly {count} exercises that are SAFE for this user."""
                 })
 
         return [
-            self._format_exercise_for_workout(ex, "intermediate")
+            self._format_exercise_for_workout(ex, "intermediate", workout_params)
             for ex in filtered[:count]
         ]
 

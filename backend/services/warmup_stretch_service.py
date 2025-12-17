@@ -1,7 +1,8 @@
 """Service for generating warm-up and cool-down exercises with SCD2 versioning."""
 
 import json
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from openai import AsyncOpenAI
 from core.config import get_settings
@@ -10,6 +11,24 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Muscle group keywords for matching exercises from library
+MUSCLE_KEYWORDS = {
+    "chest": ["chest", "pectoral", "pec"],
+    "back": ["back", "lat", "rhomboid", "trap", "erector"],
+    "shoulders": ["shoulder", "deltoid", "delt"],
+    "legs": ["leg", "quad", "hamstring", "glute", "calf", "hip"],
+    "quadriceps": ["quad", "quadriceps"],
+    "hamstrings": ["hamstring"],
+    "calves": ["calf", "calves", "gastrocnemius", "soleus"],
+    "arms": ["arm", "bicep", "tricep", "forearm"],
+    "biceps": ["bicep"],
+    "triceps": ["tricep"],
+    "core": ["core", "abdominal", "oblique", "abs"],
+    "abs": ["abdominal", "abs", "rectus"],
+    "glutes": ["glute", "gluteus", "hip"],
+    "full body": [""],  # Match all
+}
 
 # Muscle group to warm-up mapping (fallback)
 WARMUP_BY_MUSCLE = {
@@ -53,6 +72,246 @@ class WarmupStretchService:
         self.client = AsyncOpenAI(api_key=settings.openai_api_key)
         self.supabase = get_supabase().client  # Get the actual Supabase client
 
+    async def get_recently_used_warmups(self, user_id: str, days: int = 7) -> List[str]:
+        """Get list of warmup exercise names used by user in recent workouts."""
+        try:
+            cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+
+            # First get workout IDs for this user in the date range
+            workouts_response = self.supabase.table("workouts").select(
+                "id"
+            ).eq("user_id", user_id).gte("scheduled_date", cutoff_date[:10]).execute()
+
+            if not workouts_response.data:
+                logger.info(f"🔍 No recent workouts found for user {user_id}")
+                return []
+
+            workout_ids = [w["id"] for w in workouts_response.data]
+
+            # Get warmups for these workouts
+            warmups_response = self.supabase.table("warmups").select(
+                "exercises_json"
+            ).in_("workout_id", workout_ids).eq("is_current", True).execute()
+
+            if not warmups_response.data:
+                return []
+
+            # Extract unique exercise names from warmups
+            exercise_names = set()
+            for warmup in warmups_response.data:
+                exercises_json = warmup.get("exercises_json", [])
+                if isinstance(exercises_json, list):
+                    for ex in exercises_json:
+                        if isinstance(ex, dict) and ex.get("name"):
+                            exercise_names.add(ex["name"].lower())
+
+            logger.info(f"🔍 Found {len(exercise_names)} recently used warmup exercises for user {user_id}")
+            return list(exercise_names)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to get recent warmups: {e}")
+            return []
+
+    async def get_recently_used_stretches(self, user_id: str, days: int = 7) -> List[str]:
+        """Get list of stretch exercise names used by user in recent workouts."""
+        try:
+            cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+
+            # First get workout IDs for this user in the date range
+            workouts_response = self.supabase.table("workouts").select(
+                "id"
+            ).eq("user_id", user_id).gte("scheduled_date", cutoff_date[:10]).execute()
+
+            if not workouts_response.data:
+                logger.info(f"🔍 No recent workouts found for user {user_id}")
+                return []
+
+            workout_ids = [w["id"] for w in workouts_response.data]
+
+            # Get stretches for these workouts
+            stretches_response = self.supabase.table("stretches").select(
+                "exercises_json"
+            ).in_("workout_id", workout_ids).eq("is_current", True).execute()
+
+            if not stretches_response.data:
+                return []
+
+            # Extract unique exercise names from stretches
+            exercise_names = set()
+            for stretch in stretches_response.data:
+                exercises_json = stretch.get("exercises_json", [])
+                if isinstance(exercises_json, list):
+                    for ex in exercises_json:
+                        if isinstance(ex, dict) and ex.get("name"):
+                            exercise_names.add(ex["name"].lower())
+
+            logger.info(f"🔍 Found {len(exercise_names)} recently used stretch exercises for user {user_id}")
+            return list(exercise_names)
+
+        except Exception as e:
+            logger.error(f"❌ Failed to get recent stretches: {e}")
+            return []
+
+    async def get_warmup_exercises_from_library(
+        self,
+        target_muscles: List[str],
+        avoid_exercises: Optional[List[str]] = None,
+        limit: int = 4
+    ) -> List[Dict[str, Any]]:
+        """
+        Get warmup exercises from the warmup_exercises_cleaned view.
+        Returns exercises with videos that target the specified muscle groups.
+        """
+        try:
+            # Fetch all warmup exercises from the view
+            response = self.supabase.table("warmup_exercises_cleaned").select(
+                "id, name, body_part, target_muscle, equipment, instructions, video_url, gif_url, image_url"
+            ).execute()
+
+            if not response.data:
+                logger.warning("⚠️ No warmup exercises found in library")
+                return []
+
+            exercises = response.data
+            avoid_lower = [ex.lower() for ex in (avoid_exercises or [])]
+
+            # Filter by target muscles
+            matched = []
+            for ex in exercises:
+                # Skip if recently used
+                if ex.get("name", "").lower() in avoid_lower:
+                    continue
+
+                # Check if exercise targets any of our muscles
+                target = (ex.get("target_muscle") or "").lower()
+                name = (ex.get("name") or "").lower()
+
+                for muscle in target_muscles:
+                    keywords = MUSCLE_KEYWORDS.get(muscle.lower(), [muscle.lower()])
+                    for keyword in keywords:
+                        if keyword and (keyword in target or keyword in name):
+                            matched.append(ex)
+                            break
+                    else:
+                        continue
+                    break
+
+            # If not enough matches, add some general full-body warmups
+            if len(matched) < limit:
+                remaining = [ex for ex in exercises
+                            if ex not in matched
+                            and ex.get("name", "").lower() not in avoid_lower]
+                random.shuffle(remaining)
+                matched.extend(remaining[:limit - len(matched)])
+
+            # Shuffle and limit
+            random.shuffle(matched)
+            selected = matched[:limit]
+
+            # Format for storage
+            result = []
+            for ex in selected:
+                result.append({
+                    "name": ex.get("name"),
+                    "sets": 1,
+                    "reps": 15,
+                    "duration_seconds": 30,
+                    "rest_seconds": 10,
+                    "equipment": ex.get("equipment") or "none",
+                    "muscle_group": ex.get("target_muscle") or "full body",
+                    "notes": (ex.get("instructions") or "Perform controlled movements")[:100],
+                    "video_url": ex.get("video_url"),
+                    "image_url": ex.get("image_url"),
+                    "exercise_id": ex.get("id"),
+                })
+
+            logger.info(f"✅ Selected {len(result)} warmup exercises from library")
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ Failed to get warmup exercises from library: {e}")
+            return []
+
+    async def get_stretch_exercises_from_library(
+        self,
+        target_muscles: List[str],
+        avoid_exercises: Optional[List[str]] = None,
+        limit: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Get stretch exercises from the stretch_exercises_cleaned view.
+        Returns exercises with videos that target the specified muscle groups.
+        """
+        try:
+            # Fetch all stretch exercises from the view
+            response = self.supabase.table("stretch_exercises_cleaned").select(
+                "id, name, body_part, target_muscle, equipment, instructions, video_url, gif_url, image_url"
+            ).execute()
+
+            if not response.data:
+                logger.warning("⚠️ No stretch exercises found in library")
+                return []
+
+            exercises = response.data
+            avoid_lower = [ex.lower() for ex in (avoid_exercises or [])]
+
+            # Filter by target muscles
+            matched = []
+            for ex in exercises:
+                # Skip if recently used
+                if ex.get("name", "").lower() in avoid_lower:
+                    continue
+
+                # Check if exercise targets any of our muscles
+                target = (ex.get("target_muscle") or "").lower()
+                name = (ex.get("name") or "").lower()
+
+                for muscle in target_muscles:
+                    keywords = MUSCLE_KEYWORDS.get(muscle.lower(), [muscle.lower()])
+                    for keyword in keywords:
+                        if keyword and (keyword in target or keyword in name):
+                            matched.append(ex)
+                            break
+                    else:
+                        continue
+                    break
+
+            # If not enough matches, add some general stretches
+            if len(matched) < limit:
+                remaining = [ex for ex in exercises
+                            if ex not in matched
+                            and ex.get("name", "").lower() not in avoid_lower]
+                random.shuffle(remaining)
+                matched.extend(remaining[:limit - len(matched)])
+
+            # Shuffle and limit
+            random.shuffle(matched)
+            selected = matched[:limit]
+
+            # Format for storage
+            result = []
+            for ex in selected:
+                result.append({
+                    "name": ex.get("name"),
+                    "sets": 1,
+                    "reps": 1,
+                    "duration_seconds": 30,
+                    "rest_seconds": 0,
+                    "equipment": ex.get("equipment") or "none",
+                    "muscle_group": ex.get("target_muscle") or "full body",
+                    "notes": (ex.get("instructions") or "Hold and breathe deeply")[:100],
+                    "video_url": ex.get("video_url"),
+                    "image_url": ex.get("image_url"),
+                    "exercise_id": ex.get("id"),
+                })
+
+            logger.info(f"✅ Selected {len(result)} stretch exercises from library")
+            return result
+
+        except Exception as e:
+            logger.error(f"❌ Failed to get stretch exercises from library: {e}")
+            return []
+
     def get_target_muscles(self, exercises: List[Dict]) -> List[str]:
         """Extract unique muscle groups from exercises."""
         muscles = set()
@@ -72,14 +331,40 @@ class WarmupStretchService:
         self,
         exercises: List[Dict],
         duration_minutes: int = 5,
-        injuries: Optional[List[str]] = None
+        injuries: Optional[List[str]] = None,
+        avoid_exercises: Optional[List[str]] = None,
+        use_library: bool = True
     ) -> List[Dict[str, Any]]:
-        """Generate dynamic warm-up based on workout exercises, considering injuries."""
+        """Generate dynamic warm-up based on workout exercises, considering injuries and variety.
+
+        Args:
+            exercises: List of workout exercises to warmup for
+            duration_minutes: Target duration for warmup
+            injuries: List of user injuries to avoid aggravating
+            avoid_exercises: List of exercise names to avoid for variety
+            use_library: If True, try to use exercises from library with videos first
+        """
         muscles = self.get_target_muscles(exercises)
         logger.info(f"🔥 Generating warmup for muscles: {muscles}")
         if injuries:
             logger.info(f"⚠️ User has injuries: {injuries} - generating safe warmup")
+        if avoid_exercises:
+            logger.info(f"🔄 Avoiding {len(avoid_exercises)} recently used warmup exercises for variety")
 
+        # Try to get warmups from library first (with videos!)
+        if use_library:
+            library_warmups = await self.get_warmup_exercises_from_library(
+                target_muscles=muscles,
+                avoid_exercises=avoid_exercises,
+                limit=4
+            )
+            if library_warmups and len(library_warmups) >= 3:
+                logger.info(f"📹 Using {len(library_warmups)} warmup exercises from library with videos")
+                return library_warmups
+            else:
+                logger.info("⚠️ Not enough warmup exercises from library, falling back to AI generation")
+
+        # Fall back to AI generation if library doesn't have enough
         # Build injury awareness section
         injury_section = ""
         if injuries and len(injuries) > 0:
@@ -95,8 +380,17 @@ You MUST avoid warmup exercises that could aggravate these conditions:
 Only include gentle, safe warmup movements appropriate for someone with {injury_list}.
 """
 
+        # Build variety section - avoid recently used exercises
+        variety_section = ""
+        if avoid_exercises and len(avoid_exercises) > 0:
+            avoid_list = ", ".join(avoid_exercises[:10])  # Limit to 10 for prompt length
+            variety_section = f"""
+🔄 FOR VARIETY: Try to avoid these recently used warmup exercises: {avoid_list}
+Choose different but equally effective warmup exercises to keep routines fresh.
+"""
+
         prompt = f"""Generate a {duration_minutes}-minute dynamic warm-up routine for a workout targeting: {', '.join(muscles)}.
-{injury_section}
+{injury_section}{variety_section}
 Return JSON with "exercises" array containing 3-4 warm-up exercises:
 {{
   "exercises": [
@@ -119,6 +413,7 @@ Focus on:
 - Activating muscles that will be used in the workout
 - No equipment needed
 {"- SAFETY FIRST: Only include exercises safe for someone with " + ", ".join(injuries) if injuries else ""}
+{"- VARIETY: Choose different exercises from recent workouts" if avoid_exercises else ""}
 
 Return ONLY valid JSON."""
 
@@ -145,14 +440,40 @@ Return ONLY valid JSON."""
         self,
         exercises: List[Dict],
         duration_minutes: int = 5,
-        injuries: Optional[List[str]] = None
+        injuries: Optional[List[str]] = None,
+        avoid_exercises: Optional[List[str]] = None,
+        use_library: bool = True
     ) -> List[Dict[str, Any]]:
-        """Generate cool-down stretches based on workout exercises, considering injuries."""
+        """Generate cool-down stretches based on workout exercises, considering injuries and variety.
+
+        Args:
+            exercises: List of workout exercises to stretch after
+            duration_minutes: Target duration for stretching
+            injuries: List of user injuries to avoid aggravating
+            avoid_exercises: List of exercise names to avoid for variety
+            use_library: If True, try to use exercises from library with videos first
+        """
         muscles = self.get_target_muscles(exercises)
         logger.info(f"❄️ Generating stretches for muscles: {muscles}")
         if injuries:
             logger.info(f"⚠️ User has injuries: {injuries} - generating safe stretches")
+        if avoid_exercises:
+            logger.info(f"🔄 Avoiding {len(avoid_exercises)} recently used stretch exercises for variety")
 
+        # Try to get stretches from library first (with videos!)
+        if use_library:
+            library_stretches = await self.get_stretch_exercises_from_library(
+                target_muscles=muscles,
+                avoid_exercises=avoid_exercises,
+                limit=5
+            )
+            if library_stretches and len(library_stretches) >= 4:
+                logger.info(f"📹 Using {len(library_stretches)} stretch exercises from library with videos")
+                return library_stretches
+            else:
+                logger.info("⚠️ Not enough stretch exercises from library, falling back to AI generation")
+
+        # Fall back to AI generation if library doesn't have enough
         # Build injury awareness section
         injury_section = ""
         if injuries and len(injuries) > 0:
@@ -168,8 +489,17 @@ You MUST avoid stretches that could aggravate these conditions:
 Only include gentle, safe stretches appropriate for someone with {injury_list}.
 """
 
+        # Build variety section - avoid recently used exercises
+        variety_section = ""
+        if avoid_exercises and len(avoid_exercises) > 0:
+            avoid_list = ", ".join(avoid_exercises[:10])  # Limit to 10 for prompt length
+            variety_section = f"""
+🔄 FOR VARIETY: Try to avoid these recently used stretches: {avoid_list}
+Choose different but equally effective stretches to keep routines fresh.
+"""
+
         prompt = f"""Generate a {duration_minutes}-minute cool-down stretching routine for a workout that targeted: {', '.join(muscles)}.
-{injury_section}
+{injury_section}{variety_section}
 Return JSON with "exercises" array containing 4-5 stretches:
 {{
   "exercises": [
@@ -192,6 +522,7 @@ Focus on:
 - Target all muscles used in the workout
 - Promote relaxation and recovery
 {"- SAFETY FIRST: Only include stretches safe for someone with " + ", ".join(injuries) if injuries else ""}
+{"- VARIETY: Choose different stretches from recent workouts" if avoid_exercises else ""}
 
 Return ONLY valid JSON."""
 
@@ -207,7 +538,7 @@ Return ONLY valid JSON."""
             result = json.loads(response.choices[0].message.content)
             stretches = result.get("exercises", [])
 
-            logger.info(f"✅ Generated {len(stretches)} cool-down stretches")
+            logger.info(f"✅ Generated {len(stretches)} cool-down stretches (AI fallback)")
             return stretches
 
         except Exception as e:
@@ -293,10 +624,18 @@ Return ONLY valid JSON."""
         workout_id: str,
         exercises: List[Dict],
         duration_minutes: int = 5,
-        injuries: Optional[List[str]] = None
+        injuries: Optional[List[str]] = None,
+        user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
-        """Generate and store warmup for a workout with SCD2 versioning."""
-        warmup_exercises = await self.generate_warmup(exercises, duration_minutes, injuries)
+        """Generate and store warmup for a workout with SCD2 versioning and variety tracking."""
+        # Get recently used warmups for variety if user_id provided
+        avoid_exercises = None
+        if user_id:
+            avoid_exercises = await self.get_recently_used_warmups(user_id, days=7)
+
+        warmup_exercises = await self.generate_warmup(
+            exercises, duration_minutes, injuries, avoid_exercises
+        )
         now = datetime.utcnow().isoformat()
 
         try:
@@ -323,10 +662,18 @@ Return ONLY valid JSON."""
         workout_id: str,
         exercises: List[Dict],
         duration_minutes: int = 5,
-        injuries: Optional[List[str]] = None
+        injuries: Optional[List[str]] = None,
+        user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
-        """Generate and store stretches for a workout with SCD2 versioning."""
-        stretch_exercises = await self.generate_stretches(exercises, duration_minutes, injuries)
+        """Generate and store stretches for a workout with SCD2 versioning and variety tracking."""
+        # Get recently used stretches for variety if user_id provided
+        avoid_exercises = None
+        if user_id:
+            avoid_exercises = await self.get_recently_used_stretches(user_id, days=7)
+
+        stretch_exercises = await self.generate_stretches(
+            exercises, duration_minutes, injuries, avoid_exercises
+        )
         now = datetime.utcnow().isoformat()
 
         try:
@@ -555,11 +902,17 @@ Return ONLY valid JSON."""
         workout_id: str,
         exercises: List[Dict],
         warmup_duration: int = 5,
-        stretch_duration: int = 5
+        stretch_duration: int = 5,
+        injuries: Optional[List[str]] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate and store both warmup and stretches for a workout."""
-        warmup = await self.create_warmup_for_workout(workout_id, exercises, warmup_duration)
-        stretches = await self.create_stretches_for_workout(workout_id, exercises, stretch_duration)
+        """Generate and store both warmup and stretches for a workout with variety tracking."""
+        warmup = await self.create_warmup_for_workout(
+            workout_id, exercises, warmup_duration, injuries, user_id
+        )
+        stretches = await self.create_stretches_for_workout(
+            workout_id, exercises, stretch_duration, injuries, user_id
+        )
 
         return {
             "warmup": warmup,

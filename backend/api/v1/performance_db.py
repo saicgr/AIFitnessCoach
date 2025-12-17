@@ -738,3 +738,211 @@ async def get_rest_interval_stats(workout_log_id: str):
     except Exception as e:
         logger.error(f"Error getting rest interval stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============ Exercise Stats (Per-Exercise Performance History) ============
+
+class ExerciseProgressionTrend(BaseModel):
+    """Progression trend for an exercise."""
+    trend: str  # "increasing", "stable", "decreasing", "insufficient_data", "unknown"
+    change_percent: Optional[float] = None
+    message: str
+
+
+class ExerciseStats(BaseModel):
+    """Statistics for a single exercise."""
+    exercise_name: Optional[str] = None
+    total_sets: int
+    total_volume: Optional[float] = None  # weight * reps in kg
+    max_weight: Optional[float] = None
+    max_reps: Optional[int] = None
+    estimated_1rm: Optional[float] = None
+    avg_rpe: Optional[float] = None
+    last_workout_date: Optional[str] = None
+    progression: Optional[ExerciseProgressionTrend] = None
+    has_data: bool = False
+    message: Optional[str] = None
+
+
+class AllExerciseStats(BaseModel):
+    """Stats for all exercises a user has performed."""
+    exercises: dict  # exercise_name -> ExerciseStats
+    total_exercises_tracked: int
+    total_sets_all: int
+    has_data: bool
+
+
+class ExerciseHistoryItem(BaseModel):
+    """Single item in exercise history list."""
+    exercise_name: str
+    total_sets: int
+    total_volume: Optional[float] = None
+    max_weight: Optional[float] = None
+    max_reps: Optional[int] = None
+    estimated_1rm: Optional[float] = None
+    avg_rpe: Optional[float] = None
+    last_workout_date: Optional[str] = None
+    progression: Optional[ExerciseProgressionTrend] = None
+    has_data: bool = True
+
+
+@router.get("/exercise-stats/{user_id}", response_model=AllExerciseStats)
+async def get_all_exercise_stats(user_id: str):
+    """
+    Get performance stats for all exercises a user has performed.
+
+    Returns aggregated stats including:
+    - Total sets per exercise
+    - Total volume (weight * reps)
+    - Max weight and reps
+    - Estimated 1RM using Brzycki formula
+    - Average RPE
+    - Progression trend (increasing/stable/decreasing)
+    """
+    try:
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        db = get_supabase_db()
+        adaptive_service = get_adaptive_workout_service(db.client)
+
+        stats = await adaptive_service.get_exercise_stats(user_id)
+
+        if not stats.get("has_data", False):
+            return AllExerciseStats(
+                exercises={},
+                total_exercises_tracked=0,
+                total_sets_all=0,
+                has_data=False,
+            )
+
+        logger.info(f"Retrieved stats for {stats.get('total_exercises_tracked', 0)} exercises for user {user_id}")
+
+        return AllExerciseStats(
+            exercises=stats.get("exercises", {}),
+            total_exercises_tracked=stats.get("total_exercises_tracked", 0),
+            total_sets_all=stats.get("total_sets_all", 0),
+            has_data=True,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting exercise stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/exercise-stats/{user_id}/{exercise_name}", response_model=ExerciseStats)
+async def get_single_exercise_stats(user_id: str, exercise_name: str):
+    """
+    Get detailed stats for a specific exercise.
+
+    Returns:
+    - Total sets logged
+    - Total volume (weight * reps in kg)
+    - Max weight used
+    - Max reps achieved
+    - Estimated 1RM (Brzycki formula)
+    - Average RPE
+    - Last workout date
+    - Progression trend
+    """
+    try:
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        db = get_supabase_db()
+        adaptive_service = get_adaptive_workout_service(db.client)
+
+        # URL-decode the exercise name (handles spaces encoded as %20)
+        from urllib.parse import unquote
+        decoded_name = unquote(exercise_name)
+
+        stats = await adaptive_service.get_exercise_stats(user_id, decoded_name)
+
+        if not stats.get("has_data", False):
+            return ExerciseStats(
+                exercise_name=decoded_name,
+                total_sets=0,
+                has_data=False,
+                message=f"No performance data found for '{decoded_name}'"
+            )
+
+        logger.info(f"Retrieved stats for '{decoded_name}' for user {user_id}: {stats.get('total_sets', 0)} sets")
+
+        # Parse progression if it exists
+        progression_data = stats.get("progression")
+        progression = None
+        if progression_data:
+            progression = ExerciseProgressionTrend(
+                trend=progression_data.get("trend", "unknown"),
+                change_percent=progression_data.get("change_percent"),
+                message=progression_data.get("message", ""),
+            )
+
+        return ExerciseStats(
+            exercise_name=decoded_name,
+            total_sets=stats.get("total_sets", 0),
+            total_volume=stats.get("total_volume"),
+            max_weight=stats.get("max_weight"),
+            max_reps=stats.get("max_reps"),
+            estimated_1rm=stats.get("estimated_1rm"),
+            avg_rpe=stats.get("avg_rpe"),
+            last_workout_date=stats.get("last_workout_date"),
+            progression=progression,
+            has_data=True,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting exercise stats for '{exercise_name}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/exercise-history/{user_id}", response_model=List[ExerciseHistoryItem])
+async def get_exercise_history(
+    user_id: str,
+    limit: int = Query(default=20, ge=1, le=100),
+):
+    """
+    Get user's exercise history with stats for each exercise.
+
+    Returns a list of exercises sorted by total sets (most performed first).
+    Includes stats like max weight, estimated 1RM, and progression trend.
+    """
+    try:
+        from services.adaptive_workout_service import get_adaptive_workout_service
+        db = get_supabase_db()
+        adaptive_service = get_adaptive_workout_service(db.client)
+
+        history = await adaptive_service.get_user_exercise_history(user_id, limit)
+
+        if not history:
+            logger.info(f"No exercise history found for user {user_id}")
+            return []
+
+        logger.info(f"Retrieved exercise history for user {user_id}: {len(history)} exercises")
+
+        # Convert to response model
+        result = []
+        for item in history:
+            progression_data = item.get("progression")
+            progression = None
+            if progression_data and isinstance(progression_data, dict):
+                progression = ExerciseProgressionTrend(
+                    trend=progression_data.get("trend", "unknown"),
+                    change_percent=progression_data.get("change_percent"),
+                    message=progression_data.get("message", ""),
+                )
+
+            result.append(ExerciseHistoryItem(
+                exercise_name=item.get("exercise_name", "Unknown"),
+                total_sets=item.get("total_sets", 0),
+                total_volume=item.get("total_volume"),
+                max_weight=item.get("max_weight"),
+                max_reps=item.get("max_reps"),
+                estimated_1rm=item.get("estimated_1rm"),
+                avg_rpe=item.get("avg_rpe"),
+                last_workout_date=item.get("last_workout_date"),
+                progression=progression,
+                has_data=item.get("has_data", True),
+            ))
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error getting exercise history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

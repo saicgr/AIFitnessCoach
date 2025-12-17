@@ -212,7 +212,24 @@ class _ConversationalOnboardingScreenState
   }
 
   void _handleQuickReply(dynamic value) {
-    if (value is List) {
+    if (value is Map<String, dynamic>) {
+      // Handle equipment selection with quantities
+      final selected = value['selected'] as List?;
+      if (selected != null) {
+        // Store equipment counts in collected data
+        final dumbbellCount = value['dumbbell_count'] as int?;
+        final kettlebellCount = value['kettlebell_count'] as int?;
+
+        if (dumbbellCount != null || kettlebellCount != null) {
+          ref.read(onboardingStateProvider.notifier).updateCollectedData({
+            if (dumbbellCount != null) 'dumbbellCount': dumbbellCount,
+            if (kettlebellCount != null) 'kettlebellCount': kettlebellCount,
+          });
+        }
+
+        _sendMessage(selected.join(', '));
+      }
+    } else if (value is List) {
       _sendMessage(value.join(', '));
     } else {
       _sendMessage(value.toString());
@@ -389,6 +406,9 @@ class _ConversationalOnboardingScreenState
         'workout_variety': finalData['workoutVariety'] ?? 'varied',
         'activity_level': finalData['activityLevel'] ?? 'lightly_active',
         'health_conditions': conditions,
+        // Equipment quantities
+        'dumbbell_count': finalData['dumbbellCount'] ?? 2,
+        'kettlebell_count': finalData['kettlebellCount'] ?? 1,
       });
 
       final userData = {
@@ -412,7 +432,7 @@ class _ConversationalOnboardingScreenState
 
       setState(() {
         _workoutLoadingProgress = 25;
-        _workoutLoadingMessage = 'Generating your first month of workouts...';
+        _workoutLoadingMessage = 'Generating your first week of workouts...';
       });
 
       // Generate workouts
@@ -468,7 +488,7 @@ class _ConversationalOnboardingScreenState
           monthStartDate: monthStart,
           durationMinutes: (finalData['workoutDuration'] as int?) ?? 45,
           selectedDays: dayIndices,
-          weeks: 2,
+          weeks: 1, // Only 1 week for fast onboarding - more generated later
         );
 
         subscription.cancel();
@@ -499,7 +519,8 @@ class _ConversationalOnboardingScreenState
 
       if (mounted) {
         setState(() => _showWorkoutLoading = false);
-        context.go('/home');
+        // Navigate to paywall after onboarding
+        context.go('/paywall-features');
       }
     } catch (e) {
       debugPrint('❌ [Onboarding] Error completing: $e');

@@ -241,6 +241,7 @@ QUICK_REPLIES = {
     "equipment": [
         {"label": "Full gym 🏋️", "value": "Full Gym"},
         {"label": "Dumbbells 🔩", "value": "Dumbbells"},
+        {"label": "Kettlebell 🔔", "value": "Kettlebell"},
         {"label": "Resistance bands 🎗️", "value": "Resistance Bands"},
         {"label": "Bodyweight only 🤸", "value": "Bodyweight Only"},
         {"label": "Barbell 🏋️", "value": "Barbell"},
