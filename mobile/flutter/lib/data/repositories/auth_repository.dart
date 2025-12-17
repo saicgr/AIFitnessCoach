@@ -254,4 +254,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       debugPrint('❌ [Auth] Refresh user error: $e');
     }
   }
+
+  /// Mark onboarding as complete
+  Future<void> markOnboardingComplete() async {
+    if (state.user != null) {
+      // Update the user's onboarding status locally
+      // The actual backend update is done in onboarding completion
+      debugPrint('✅ [Auth] Marking onboarding complete');
+    }
+  }
 }

@@ -11,5 +11,6 @@ One Time:
 Throughout program:
 "Add pelvic exercises to my program"
 "Give me a progression to box jumps"
+"Can you suggest me a new progrom?" -- Needs to have go to workout button
 
 Very irrelevant message from user

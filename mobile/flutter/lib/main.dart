@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/constants/api_constants.dart';
+import 'core/accessibility/accessibility_provider.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
@@ -60,6 +61,8 @@ void main() async {
   runApp(
     ProviderScope(
       overrides: [
+        // Provide SharedPreferences instance for accessibility and notification providers
+        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         notificationServiceProvider.overrideWithValue(notificationService),
         notificationPreferencesProvider.overrideWith(
           (ref) => NotificationPreferencesNotifier(sharedPreferences, notificationService),

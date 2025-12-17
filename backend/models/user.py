@@ -95,6 +95,9 @@ class UserUpdate(BaseModel):
     fcm_token: Optional[str] = None  # Firebase Cloud Messaging token
     device_platform: Optional[str] = None  # 'android' or 'ios'
     notification_preferences: Optional[dict] = None  # NotificationPreferences as dict
+    # Accessibility settings
+    accessibility_mode: Optional[str] = None  # 'normal', 'senior', 'kids'
+    accessibility_settings: Optional[dict] = None  # Detailed settings (font_scale, etc.)
 
 
 class User(BaseModel):
@@ -117,3 +120,6 @@ class User(BaseModel):
     date_of_birth: Optional[str] = None
     gender: Optional[str] = None
     activity_level: Optional[str] = None
+    # Accessibility settings
+    accessibility_mode: Optional[str] = "normal"  # 'normal', 'senior', 'kids'
+    accessibility_settings: Optional[dict] = None  # Detailed settings

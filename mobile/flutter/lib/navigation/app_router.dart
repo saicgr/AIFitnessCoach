@@ -8,16 +8,18 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/welcome_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
+import '../screens/onboarding/senior_onboarding_screen.dart';
+import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
-import '../screens/workout/list_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
@@ -31,14 +33,18 @@ import '../screens/measurements/measurements_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
+import '../core/accessibility/accessibility_provider.dart';
 
-/// Listenable for auth and language state changes to trigger router refresh
+/// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
   _AuthStateNotifier(this._ref) {
     _ref.listen<AuthState>(authStateProvider, (_, __) {
       notifyListeners();
     });
     _ref.listen<LanguageState>(languageProvider, (_, __) {
+      notifyListeners();
+    });
+    _ref.listen<AccessibilitySettings>(accessibilityProvider, (_, __) {
       notifyListeners();
     });
   }
@@ -62,6 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Read auth state fresh each time redirect is called
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);
+      final accessibilitySettings = ref.read(accessibilityProvider);
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isOnSplash = state.matchedLocation == '/splash';
@@ -69,6 +76,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
       final isOnLanguageSelect = state.matchedLocation == '/language-select';
+      final isOnSeniorOnboarding = state.matchedLocation == '/senior-onboarding';
+      final isOnModeSelection = state.matchedLocation == '/mode-selection';
+
+      // Helper to get the appropriate home route based on accessibility mode
+      String getHomeRoute() {
+        if (accessibilitySettings.mode == AccessibilityMode.senior) {
+          return '/senior-home';
+        }
+        return '/home';
+      }
 
       // Still loading auth or language - stay on splash (or go to splash if starting)
       if (authState.status == AuthStatus.initial ||
@@ -87,7 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (user != null && !user.isOnboardingComplete) {
             return '/onboarding';
           }
-          return '/home';
+          return getHomeRoute();
         } else {
           // Check if language has been selected
           if (!languageState.hasSelectedLanguage) {
@@ -101,9 +118,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // On language select - allow it if not logged in
       if (isOnLanguageSelect) {
         if (isLoggedIn) {
-          return '/home';
+          return getHomeRoute();
         }
         return null; // Stay on language select
+      }
+
+      // Allow onboarding-related routes
+      if (isOnboarding || isOnSeniorOnboarding || isOnModeSelection) {
+        return null; // Allow these routes
       }
 
       // Not logged in - allow welcome, login, and language-select pages
@@ -121,6 +143,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (user != null && !user.isOnboardingComplete && !isOnboarding) {
           return '/onboarding';
         }
+        return getHomeRoute();
+      }
+
+      // Redirect /home to /senior-home if in senior mode
+      if (state.matchedLocation == '/home' && accessibilitySettings.mode == AccessibilityMode.senior) {
+        return '/senior-home';
+      }
+
+      // Redirect /senior-home to /home if not in senior mode
+      if (state.matchedLocation == '/senior-home' && accessibilitySettings.mode != AccessibilityMode.senior) {
         return '/home';
       }
 
@@ -155,6 +187,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const ConversationalOnboardingScreen(),
+      ),
+
+      // Mode Selection (shown during onboarding after name/age)
+      GoRoute(
+        path: '/mode-selection',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ModeSelectionScreen(
+            userAge: extra?['userAge'] as int?,
+            onNormalSelected: extra?['onNormalSelected'] as VoidCallback?,
+            onSeniorSelected: extra?['onSeniorSelected'] as VoidCallback?,
+          );
+        },
+      ),
+
+      // Senior Onboarding (Visual, simplified - NOT AI chat)
+      GoRoute(
+        path: '/senior-onboarding',
+        builder: (context, state) => const SeniorOnboardingScreen(),
+      ),
+
+      // Senior Home (has its own SeniorScaffold with 3-tab nav)
+      GoRoute(
+        path: '/senior-home',
+        builder: (context, state) => const SeniorHomeScreen(),
       ),
 
       // Main app shell with bottom nav

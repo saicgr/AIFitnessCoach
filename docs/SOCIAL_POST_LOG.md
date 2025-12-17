@@ -19,6 +19,7 @@ Track all social media posts to avoid repetition and maintain consistency.
 | Date | Platform | Content Type | Post Summary | Link | Engagement |
 |------|----------|--------------|--------------|------|------------|
 | Dec 11, 2025 | Twitter | Day 1 Intro | "I wanted a fitness coach but couldn't justify the price. So I'm building my own AI version. One that actually: remembers my bad knee, adjusts when I'm tired, checks in on me. Day 1." | | TBD |
+| Dec 15, 2025 | Twitter | Value Prop | "Human fitness coaches cost $200/month. They: remember your injuries, adjust when tired, call you out when you slack, celebrate your PRs. I'm building an AI that does all of this. Week 1: PR detection working." | | TBD |
 
 ---
 

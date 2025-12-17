@@ -973,6 +973,69 @@ class WorkoutRepository {
       return {};
     }
   }
+
+  /// Get the last performance data for a specific exercise
+  /// Returns sets from the most recent workout that included this exercise
+  Future<Map<String, dynamic>?> getExerciseLastPerformance({
+    required String userId,
+    required String exerciseName,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching last performance for: $exerciseName');
+      final response = await _apiClient.get(
+        '/performance/exercise-last-performance/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Got last performance for $exerciseName: ${data['sets']?.length ?? 0} sets');
+        return data;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('⚠️ [Workout] No previous performance for $exerciseName: $e');
+      return null;
+    }
+  }
+
+  /// Get strength records (PRs) for a user
+  /// Can filter by exercise_id and only show PRs
+  Future<List<Map<String, dynamic>>> getStrengthRecords({
+    required String userId,
+    String? exerciseId,
+    bool prsOnly = true,
+    int limit = 50,
+  }) async {
+    try {
+      debugPrint('🏆 [Workout] Fetching strength records for user: $userId');
+      final queryParams = <String, dynamic>{
+        'user_id': userId,
+        'prs_only': prsOnly,
+        'limit': limit,
+      };
+      if (exerciseId != null) {
+        queryParams['exercise_id'] = exerciseId;
+      }
+
+      final response = await _apiClient.get(
+        '/performance/strength-records',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        debugPrint('✅ [Workout] Got ${data.length} strength records');
+        return List<Map<String, dynamic>>.from(data);
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching strength records: $e');
+      return [];
+    }
+  }
 }
 
 /// Workouts state notifier

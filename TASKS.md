@@ -1,21 +1,15 @@
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-9. Challenges when workout generates or during rest
-10. Align images to exercise texts
 11. Kettlebells or dumbbell what if they only have one?
 12. Swap exercise and regenrate broken
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
-15. Chat prompt text doesn't work as expected
 17. Add directly from library
 18. on the workout screen before beginning give an overview of the workouts for the day and the a let's go button.
 19. Need to start with warm up before each workout with the option to skip for liability reasons.
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
-21. AI coach option called college level coach that scolds you like they do
 23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
 24. Accessibility simple workout home and onboarding
 25. Demo of the whole app
-26. Small game between sets (optional)
-27. Dance session or something between sets that will help burn more calories
 28. How Real AI Coach Notifications Would Work
 In production, the AI Coach would send notifications automatically via:
 Daily Scheduler (Guilt Notifications)
@@ -30,7 +24,7 @@ To make these automatic, you'd need to set up cron jobs on your hosting platform
 31. Timezone Consistency across per user
 32. Make it easy to add supersets
 33. Add sign in in first screen directly
-34. Shareable workout completion
+34. Shareable workout completion - Workout recap for Instagram	
 35. Use 4o-mini
 36. For theme have system, light, dark options instead
 
@@ -137,7 +131,12 @@ The final response must include the detailed image prompt, the generated image, 
 20. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
 21. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
 22. can the dimensions be dynamic? height , padding, size etc?
-23. MASCOT?
+24. Restaurant menu help is an interesting idea
+25. Add a trial timeline what happens when they start the free trial
+25. 3 day free trial?
+26. Paywall 3 separate screens (display yearly price as monthly as well)
+26.1 Why is costs this much?
+26.2 Terms and Service and Privacy Policy
 
 
 FUTURE
@@ -148,6 +147,30 @@ InjuryAgent - rehab exercises, modifications
 ProgressAgent - analytics, goal tracking
 4. Lifetime subscription discount during holidays, PromoCode offers in reddit etc.
 5. API Public swagger UI  
+6. Future Feature Ideas
+High Value (Low Effort)
+Feature	Description
+Barcode food scanner	Scan packaged food for instant macros
+Voice commands	"Start workout", "Next exercise" hands-free
+Exercise alternatives	"Gym crowded, what else targets same muscle?"
+Plate calculator	"How to load 185lbs on bar" visual guide
+Medium Value
+Feature	Description
+AI form check	Upload video, AI analyzes form
+Workout challenges	30-day abs challenge, etc.
+Superset builder	AI creates supersets
+Travel workouts	"Hotel gym with only dumbbells"
+Energy-based workouts	"I'm tired today" → lighter workout
+Social/Viral
+Feature	Description
+Workout recap video	Auto-generate shareable summary
+Challenge friends	"Beat my 5K time"
+Before/after generator	Side-by-side progress photos
+Revenue Boosters
+Feature	Description
+Affiliate equipment links	Amazon affiliate revenue
+Gym partnerships	B2B discounts
+Personal trainer marketplace	Commission-based
 
 VIRAL:
 1️⃣ AI-Powered “Body Transformation Simulation” (Instant Share Hook)

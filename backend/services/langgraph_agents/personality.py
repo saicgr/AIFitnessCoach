@@ -44,6 +44,7 @@ def build_personality_prompt(
         "scientist": "Be analytical and data-driven. Cite studies and statistics when possible. Focus on the science behind fitness. Use precise language and explain the 'why' behind recommendations.",
         "comedian": "Be funny and use humor to keep things light. Throw in fitness puns and jokes. Make working out feel less like a chore and more like fun. But still give solid advice!",
         "old-school": "Channel classic bodybuilding vibes. Reference Arnold, talk about the golden era, use terms like 'gains', 'swole', and 'pump'. Believe in heavy weights and protein shakes.",
+        "college-coach": "Be an intense college athletics coach! Scold them when they slack off, question their commitment, use phrases like 'Is that all you got?!', 'My grandmother could lift more!', 'You call that a rep?!', 'Did you come here to work or waste my time?!'. Be tough but ultimately care about their success. Push them like they're training for the championship. Demand excellence, accept nothing less.",
     }
     style_prompt = style_descriptions.get(
         settings.coaching_style,

@@ -527,6 +527,7 @@ class _PersonalitySection extends StatelessWidget {
       ('friendly', 'Friendly', Icons.favorite),
       ('tough-love', 'Tough Love', Icons.fitness_center),
       ('drill-sergeant', 'Drill Sergeant', Icons.military_tech),
+      ('college-coach', 'College Coach', Icons.sports_football),
       ('zen-master', 'Zen Master', Icons.spa),
       ('hype-beast', 'Hype Beast', Icons.celebration),
       ('scientist', 'Scientist', Icons.science),

@@ -17,6 +17,8 @@ import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/rest_messages.dart';
+import '../ai_settings/ai_settings_screen.dart';
 
 /// Log for a single set
 class SetLog {
@@ -60,6 +62,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   Timer? _restTimer;
   int _workoutSeconds = 0;
   int _restSecondsRemaining = 0;
+  int _initialRestDuration = 0; // Track initial rest for progress bar
+  String _currentRestMessage = ''; // Current encouragement message
 
   // Tracking - now stores weight/reps per set
   final Map<int, List<SetLog>> _completedSets = {};
@@ -105,6 +109,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   // Track which set just completed for burst animation
   int? _justCompletedSetIndex;
 
+  // Historical data loading state
+  bool _isLoadingHistory = true;
+  // Map of exercise name -> max weight ever lifted (for accurate PR detection)
+  final Map<String, double> _exerciseMaxWeights = {};
+
   @override
   void initState() {
     super.initState();
@@ -115,24 +124,121 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     _repsController = TextEditingController(text: (firstExercise.reps ?? 10).toString());
     _weightController = TextEditingController(text: (firstExercise.weight ?? 0).toString());
     _startWorkoutTimer();
-    // Initialize completed sets tracking and mock previous data
+    // Initialize completed sets tracking
     for (int i = 0; i < _exercises.length; i++) {
       _completedSets[i] = [];
       final exercise = _exercises[i];
       _totalSetsPerExercise[i] = exercise.sets ?? 3;
-      // Mock previous session data - would come from API in real implementation
-      final defaultWeight = exercise.weight ?? 20.0;
-      _previousSets[i] = [
-        {'set': 1, 'weight': defaultWeight * 0.9, 'reps': exercise.reps ?? 10},
-        {'set': 2, 'weight': defaultWeight, 'reps': exercise.reps ?? 10},
-        {'set': 3, 'weight': defaultWeight * 1.1, 'reps': (exercise.reps ?? 10) - 2},
-      ];
+      // Initialize with empty data - will be populated from API
+      _previousSets[i] = [];
     }
+    // Fetch historical data from backend
+    _fetchExerciseHistory();
     // Fetch media for first exercise
     _fetchMediaForExercise(_exercises[0]);
     // Start exercise time tracking for first exercise
     _currentExerciseStartTime = DateTime.now();
     _lastExerciseStartedAt = DateTime.now();
+  }
+
+  /// Fetch historical performance data for all exercises in the workout
+  Future<void> _fetchExerciseHistory() async {
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      setState(() => _isLoadingHistory = false);
+      return;
+    }
+
+    final repository = ref.read(workoutRepositoryProvider);
+
+    // Fetch history for all exercises in parallel
+    final futures = <Future<void>>[];
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      futures.add(_fetchSingleExerciseHistory(repository, userId, exercise, i));
+    }
+
+    // Also fetch strength records (PRs) for more accurate PR detection
+    futures.add(_fetchStrengthRecords(repository, userId));
+
+    await Future.wait(futures);
+
+    if (mounted) {
+      setState(() => _isLoadingHistory = false);
+      debugPrint('✅ [ActiveWorkout] Historical data loaded for ${_exercises.length} exercises');
+    }
+  }
+
+  /// Fetch history for a single exercise
+  Future<void> _fetchSingleExerciseHistory(
+    WorkoutRepository repository,
+    String userId,
+    WorkoutExercise exercise,
+    int exerciseIndex,
+  ) async {
+    try {
+      final lastPerformance = await repository.getExerciseLastPerformance(
+        userId: userId,
+        exerciseName: exercise.name,
+      );
+
+      if (lastPerformance != null && lastPerformance['sets'] != null) {
+        final sets = lastPerformance['sets'] as List;
+        if (mounted) {
+          setState(() {
+            _previousSets[exerciseIndex] = sets.map((s) => {
+              'set': s['set_number'] ?? 1,
+              'weight': (s['weight_kg'] as num?)?.toDouble() ?? 0.0,
+              'reps': s['reps_completed'] ?? 10,
+            }).toList();
+          });
+        }
+
+        // Track max weight for PR detection
+        for (final set in sets) {
+          final weight = (set['weight_kg'] as num?)?.toDouble() ?? 0.0;
+          final currentMax = _exerciseMaxWeights[exercise.name] ?? 0.0;
+          if (weight > currentMax) {
+            _exerciseMaxWeights[exercise.name] = weight;
+          }
+        }
+
+        debugPrint('📊 [ActiveWorkout] Loaded ${sets.length} previous sets for ${exercise.name}');
+      } else {
+        debugPrint('📊 [ActiveWorkout] No previous history for ${exercise.name}');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [ActiveWorkout] Failed to load history for ${exercise.name}: $e');
+    }
+  }
+
+  /// Fetch strength records (PRs) for all exercises
+  Future<void> _fetchStrengthRecords(WorkoutRepository repository, String userId) async {
+    try {
+      final records = await repository.getStrengthRecords(
+        userId: userId,
+        prsOnly: true,
+        limit: 100,
+      );
+
+      for (final record in records) {
+        final exerciseName = record['exercise_name'] as String?;
+        final weight = (record['weight_kg'] as num?)?.toDouble() ?? 0.0;
+
+        if (exerciseName != null && weight > 0) {
+          final currentMax = _exerciseMaxWeights[exerciseName] ?? 0.0;
+          if (weight > currentMax) {
+            _exerciseMaxWeights[exerciseName] = weight;
+          }
+        }
+      }
+
+      debugPrint('🏆 [ActiveWorkout] Loaded ${records.length} PRs, tracking ${_exerciseMaxWeights.length} exercises');
+    } catch (e) {
+      debugPrint('⚠️ [ActiveWorkout] Failed to load strength records: $e');
+    }
   }
 
   @override
@@ -266,10 +372,20 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     });
   }
 
-  void _startRestTimer(int seconds) {
+  void _startRestTimer(int seconds, {RestContext? context}) {
+    // Get AI settings for personalized message
+    final aiSettings = ref.read(aiSettingsProvider);
+    final message = RestMessages.getMessage(
+      aiSettings.coachingStyle,
+      aiSettings.encouragementLevel,
+      context: context,
+    );
+
     setState(() {
       _isResting = true;
       _restSecondsRemaining = seconds;
+      _initialRestDuration = seconds;
+      _currentRestMessage = message;
     });
 
     _restTimer?.cancel();
@@ -344,6 +460,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       _completedSets[_currentExerciseIndex]!.add(SetLog(reps: reps, weight: weight));
       // Trigger burst animation for this set
       _justCompletedSetIndex = completedSetIndex;
+
+      // Update max weight tracker if this is a new PR during this session
+      // This ensures subsequent sets know about the new PR
+      if (weight > 0) {
+        final currentMax = _exerciseMaxWeights[exercise.name] ?? 0.0;
+        if (weight > currentMax) {
+          _exerciseMaxWeights[exercise.name] = weight;
+          debugPrint('🏆 [PR Updated] ${exercise.name}: new max = $weight kg');
+        }
+      }
     });
 
     // Clear burst animation after delay
@@ -367,11 +493,108 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       // Move to next set, keep the same weight/reps for convenience
       setState(() => _currentSet++);
       final restTime = exercise.restSeconds ?? 90;
-      _startRestTimer(restTime);
+
+      // Build context for smart rest messages
+      final context = _buildRestContext(
+        exercise: exercise,
+        weight: weight,
+        reps: reps,
+        setNumber: _currentSet - 1, // The set we just completed
+        totalSets: totalSets,
+        isLastSet: _currentSet >= totalSets,
+      );
+
+      _startRestTimer(restTime, context: context);
     } else {
       // Exercise complete, move to next
       _moveToNextExercise();
     }
+  }
+
+  /// Build context for context-aware rest messages
+  RestContext _buildRestContext({
+    required WorkoutExercise exercise,
+    required double weight,
+    required int reps,
+    required int setNumber,
+    required int totalSets,
+    required bool isLastSet,
+  }) {
+    // Get previous weight from actual historical data (fetched from API)
+    final previousSetsData = _previousSets[_currentExerciseIndex] ?? [];
+    double? previousWeight;
+    if (previousSetsData.isNotEmpty && setNumber <= previousSetsData.length) {
+      final prevSet = previousSetsData[setNumber - 1];
+      previousWeight = (prevSet['weight'] as num?)?.toDouble();
+    }
+
+    // Detect PR using all-time max weight from strength records
+    // This is more accurate than just comparing to last session
+    bool isPR = false;
+    if (weight > 0) {
+      final allTimeMax = _exerciseMaxWeights[exercise.name] ?? 0.0;
+      if (allTimeMax > 0) {
+        // It's a PR if current weight exceeds all-time max
+        isPR = weight > allTimeMax;
+        debugPrint('🏆 [PR Check] ${exercise.name}: current=$weight kg, all-time max=$allTimeMax kg, isPR=$isPR');
+      } else if (previousSetsData.isNotEmpty) {
+        // Fallback: compare to last session if no PR records exist
+        final maxPreviousWeight = previousSetsData
+            .map((s) => (s['weight'] as num?)?.toDouble() ?? 0.0)
+            .fold(0.0, (a, b) => a > b ? a : b);
+        isPR = weight > maxPreviousWeight;
+        debugPrint('🏆 [PR Check] ${exercise.name}: current=$weight kg, last session max=$maxPreviousWeight kg, isPR=$isPR (no all-time data)');
+      }
+    }
+
+    // Detect if set was completed too fast (less than 10 seconds)
+    bool wasFast = false;
+    if (_lastSetCompletedAt != null) {
+      final setDuration = DateTime.now().difference(_lastSetCompletedAt!);
+      // If there was a previous set and this set took less than expected time
+      // (assuming ~3 sec per rep), it might be rushed
+      final expectedMinDuration = Duration(seconds: (reps * 2).clamp(10, 60));
+      wasFast = setDuration < expectedMinDuration;
+    }
+
+    // Normalize muscle group
+    String? muscleGroup = exercise.primaryMuscle?.toLowerCase() ??
+        exercise.muscleGroup?.toLowerCase();
+    // Map to standard groups
+    if (muscleGroup != null) {
+      if (muscleGroup.contains('chest') || muscleGroup.contains('pec')) {
+        muscleGroup = 'chest';
+      } else if (muscleGroup.contains('back') || muscleGroup.contains('lat')) {
+        muscleGroup = 'back';
+      } else if (muscleGroup.contains('leg') ||
+          muscleGroup.contains('quad') ||
+          muscleGroup.contains('hamstring') ||
+          muscleGroup.contains('glute')) {
+        muscleGroup = 'legs';
+      } else if (muscleGroup.contains('bicep') ||
+          muscleGroup.contains('tricep') ||
+          muscleGroup.contains('arm')) {
+        muscleGroup = 'arms';
+      } else if (muscleGroup.contains('shoulder') || muscleGroup.contains('delt')) {
+        muscleGroup = 'shoulders';
+      } else if (muscleGroup.contains('core') ||
+          muscleGroup.contains('ab') ||
+          muscleGroup.contains('oblique')) {
+        muscleGroup = 'core';
+      }
+    }
+
+    return RestContext(
+      exerciseName: exercise.name,
+      muscleGroup: muscleGroup,
+      isPR: isPR,
+      isLastSet: isLastSet,
+      isLastExercise: _currentExerciseIndex >= _exercises.length - 1,
+      weightLifted: weight > 0 ? weight : null,
+      previousWeight: previousWeight,
+      reps: reps,
+      wasFast: wasFast,
+    );
   }
 
   /// Delete a completed set (from swipe action)
@@ -1191,6 +1414,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     String? selectedReason;
     final TextEditingController notesController = TextEditingController();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1199,9 +1424,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         builder: (context, setModalState) {
 
           return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surface : AppColorsLight.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -1215,7 +1440,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.textMuted.withOpacity(0.5),
+                      color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.5),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1224,16 +1449,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 // Title with progress
                 Row(
                   children: [
-                    const Icon(Icons.exit_to_app, color: AppColors.orange, size: 28),
+                    Icon(Icons.exit_to_app, color: isDark ? AppColors.orange : AppColorsLight.orange, size: 28),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'End Workout Early?',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
+                              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
@@ -1241,7 +1466,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                           Text(
                             '$progressPercent% complete • $totalCompletedSets sets done',
                             style: TextStyle(
-                              color: AppColors.textMuted,
+                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
                               fontSize: 14,
                             ),
                           ),
@@ -1257,7 +1482,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 Container(
                   height: 6,
                   decoration: BoxDecoration(
-                    color: AppColors.elevated,
+                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
                     borderRadius: BorderRadius.circular(3),
                   ),
                   child: FractionallySizedBox(
@@ -1265,7 +1490,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     widthFactor: progressPercent / 100,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: progressPercent >= 50 ? AppColors.cyan : AppColors.orange,
+                        color: progressPercent >= 50 ? (isDark ? AppColors.cyan : AppColorsLight.cyan) : (isDark ? AppColors.orange : AppColorsLight.orange),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -1275,10 +1500,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 const SizedBox(height: 24),
 
                 // Question
-                const Text(
+                Text(
                   'Why are you ending early?',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1291,22 +1516,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildReasonChip('too_tired', 'Too tired', Icons.battery_1_bar, selectedReason, (reason) {
+                    _buildReasonChip('too_tired', 'Too tired', Icons.battery_1_bar, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
-                    _buildReasonChip('out_of_time', 'Out of time', Icons.timer_off, selectedReason, (reason) {
+                    _buildReasonChip('out_of_time', 'Out of time', Icons.timer_off, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
-                    _buildReasonChip('not_feeling_well', 'Not feeling well', Icons.sick, selectedReason, (reason) {
+                    _buildReasonChip('not_feeling_well', 'Not feeling well', Icons.sick, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
-                    _buildReasonChip('equipment_unavailable', 'Equipment busy', Icons.fitness_center, selectedReason, (reason) {
+                    _buildReasonChip('equipment_unavailable', 'Equipment busy', Icons.fitness_center, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
-                    _buildReasonChip('injury', 'Pain/Injury', Icons.healing, selectedReason, (reason) {
+                    _buildReasonChip('injury', 'Pain/Injury', Icons.healing, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
-                    _buildReasonChip('other', 'Other reason', Icons.more_horiz, selectedReason, (reason) {
+                    _buildReasonChip('other', 'Other reason', Icons.more_horiz, selectedReason, isDark, (reason) {
                       setModalState(() => selectedReason = reason);
                     }),
                   ],
@@ -1317,13 +1542,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 // Optional notes
                 TextField(
                   controller: notesController,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                  style: TextStyle(color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary, fontSize: 14),
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: 'Add a note (optional)...',
-                    hintStyle: TextStyle(color: AppColors.textMuted.withOpacity(0.6)),
+                    hintStyle: TextStyle(color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted).withOpacity(0.6)),
                     filled: true,
-                    fillColor: AppColors.elevated,
+                    fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -1342,14 +1567,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                         onPressed: () => Navigator.pop(ctx),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: AppColors.cardBorder),
+                          side: BorderSide(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Keep Going',
-                          style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: isDark ? AppColors.cyan : AppColorsLight.cyan, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -1367,7 +1592,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.orange,
+                          backgroundColor: isDark ? AppColors.orange : AppColorsLight.orange,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -1398,9 +1623,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     String label,
     IconData icon,
     String? selectedReason,
+    bool isDark,
     Function(String) onSelected,
   ) {
     final isSelected = selectedReason == value;
+    final orangeColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -1410,10 +1641,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.orange.withOpacity(0.2) : AppColors.elevated,
+          color: isSelected ? orangeColor.withOpacity(0.2) : elevatedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.orange : AppColors.cardBorder,
+            color: isSelected ? orangeColor : borderColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1423,13 +1654,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? AppColors.orange : AppColors.textSecondary,
+              color: isSelected ? orangeColor : textSecondaryColor,
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppColors.orange : AppColors.textSecondary,
+                color: isSelected ? orangeColor : textSecondaryColor,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 14,
               ),
@@ -2519,37 +2750,293 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   Widget _buildRestOverlay() {
+    // Calculate progress (1.0 = full, 0.0 = done)
+    final progress = _initialRestDuration > 0
+        ? _restSecondsRemaining / _initialRestDuration
+        : 0.0;
+
+    // Get next exercise info
+    final hasNextExercise = _currentExerciseIndex < _exercises.length - 1;
+    final nextExercise = hasNextExercise
+        ? _exercises[_currentExerciseIndex + 1]
+        : null;
+
+    // Check if this is a rest between sets (not exercises)
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final completedSetsCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? currentExercise.sets ?? 3;
+    final isRestBetweenSets = completedSetsCount < totalSets;
+
+    // Theme colors
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark
+        ? AppColors.pureBlack.withOpacity(0.92)
+        : Colors.black.withOpacity(0.88);
+    final cardBg = isDark
+        ? AppColors.elevated.withOpacity(0.8)
+        : Colors.grey[900]!.withOpacity(0.9);
+
     return Container(
-      color: AppColors.pureBlack.withOpacity(0.85),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'REST',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.purple,
-                letterSpacing: 4,
+      color: bgColor,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
+
+              // REST label
+              Text(
+                'REST',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple.withOpacity(0.8),
+                  letterSpacing: 6,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${_restSecondsRemaining}s',
-              style: const TextStyle(
-                fontSize: 72,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+
+              const SizedBox(height: 12),
+
+              // Large timer
+              Text(
+                '${_restSecondsRemaining}s',
+                style: const TextStyle(
+                  fontSize: 80,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            TextButton.icon(
-              onPressed: _endRest,
-              icon: const Icon(Icons.skip_next, color: AppColors.purple),
-              label: const Text('Skip Rest', style: TextStyle(color: AppColors.purple)),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Progress bar
+              Container(
+                height: 6,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 6,
+                    width: 200 * progress,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.purple,
+                          AppColors.purple.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // AI Coach encouragement message
+              if (_currentRestMessage.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.purple.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.psychology,
+                          color: AppColors.purple,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _currentRestMessage,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
+
+              const SizedBox(height: 24),
+
+              // Next up section
+              if (isRestBetweenSets)
+                // Rest between sets - show current exercise set info
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.replay,
+                          color: Colors.orange,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'NEXT SET',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange.withOpacity(0.8),
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              currentExercise.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Set ${completedSetsCount + 1} of $totalSets',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0)
+              else if (nextExercise != null)
+                // Rest between exercises - show next exercise
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.skip_next,
+                          color: Colors.green,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'NEXT UP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.withOpacity(0.8),
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              nextExercise.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${nextExercise.sets ?? 3} sets · ${nextExercise.reps ?? 10} reps${nextExercise.weight != null && nextExercise.weight! > 0 ? ' · ${nextExercise.weight}kg' : ''}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0),
+
+              const Spacer(flex: 2),
+
+              // Skip Rest button
+              TextButton.icon(
+                onPressed: _endRest,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.skip_next, color: AppColors.purple, size: 20),
+                label: const Text(
+                  'Skip Rest',
+                  style: TextStyle(
+                    color: AppColors.purple,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     ).animate().fadeIn(duration: 200.ms);
