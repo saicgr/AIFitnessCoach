@@ -17,7 +17,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.coach_service import CoachService
 from models.chat import (
@@ -38,9 +38,9 @@ def event_loop():
 # ============ Mock Services ============
 
 @pytest.fixture
-def mock_openai_service():
-    """Mock OpenAI service that returns predictable responses."""
-    service = MagicMock(spec=OpenAIService)
+def mock_gemini_service():
+    """Mock Gemini service that returns predictable responses."""
+    service = MagicMock(spec=GeminiService)
 
     # Mock chat method
     async def mock_chat(user_message, system_prompt=None, conversation_history=None):
@@ -79,11 +79,10 @@ def mock_openai_service():
         )
     service.extract_intent = AsyncMock(side_effect=mock_extract_intent)
 
-    # Mock embedding
-    async def mock_get_embedding(text):
-        # Return a fake embedding vector (1536 dimensions for ada-002)
-        return [0.1] * 1536
-    service.get_embedding = AsyncMock(side_effect=mock_get_embedding)
+    # Mock embedding (768 dimensions for Gemini text-embedding-004)
+    def mock_get_embedding(text):
+        return [0.1] * 768
+    service.get_embedding = MagicMock(side_effect=mock_get_embedding)
 
     # Mock system prompt
     service.get_coach_system_prompt = MagicMock(return_value="You are a fitness coach.")
@@ -92,7 +91,7 @@ def mock_openai_service():
 
 
 @pytest.fixture
-def mock_rag_service(mock_openai_service):
+def mock_rag_service(mock_gemini_service):
     """Mock RAG service."""
     service = MagicMock(spec=RAGService)
 
@@ -131,9 +130,9 @@ def mock_rag_service(mock_openai_service):
 
 
 @pytest.fixture
-def mock_coach_service(mock_openai_service, mock_rag_service):
+def mock_coach_service(mock_gemini_service, mock_rag_service):
     """Mock coach service using mock dependencies."""
-    return CoachService(mock_openai_service, mock_rag_service)
+    return CoachService(mock_gemini_service, mock_rag_service)
 
 
 # ============ Test Data ============
@@ -199,6 +198,6 @@ async def async_client():
 @pytest.fixture(autouse=True)
 def mock_env(monkeypatch):
     """Mock environment variables for testing."""
-    monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
-    monkeypatch.setenv("OPENAI_MODEL", "gpt-4")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-api-key")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-3-flash-preview")
     monkeypatch.setenv("USE_MOCK_DATA", "true")

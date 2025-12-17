@@ -24,7 +24,6 @@ To make these automatic, you'd need to set up cron jobs on your hosting platform
 32. Make it easy to add supersets
 33. Add sign in in first screen directly
 34. Shareable workout completion - Workout recap for Instagram	
-35. Use 5-mini
 36. For theme have system, light, dark options instead
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach

@@ -12,7 +12,7 @@ import re
 from typing import Optional, Dict, Any, Tuple
 
 from models.chat import ChatRequest, ChatResponse, CoachIntent, AgentType
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 
 # Import all domain agents
@@ -111,7 +111,7 @@ class LangGraphCoachService:
         }
 
         # Initialize services for intent extraction
-        self.openai_service = OpenAIService()
+        self.gemini_service = GeminiService()
 
         logger.info("All domain agents initialized successfully")
 
@@ -168,7 +168,7 @@ class LangGraphCoachService:
         Returns:
             Tuple of (intent, extraction_data)
         """
-        extraction = await self.openai_service.extract_intent(message)
+        extraction = await self.gemini_service.extract_intent(message)
         return extraction.intent, {
             "exercises": extraction.exercises,
             "muscle_groups": extraction.muscle_groups,
@@ -183,7 +183,7 @@ class LangGraphCoachService:
     async def _get_rag_context(self, message: str, user_id: str) -> Tuple[str, bool, list]:
         """Get RAG context for the message."""
         try:
-            rag_service = RAGService(openai_service=self.openai_service)
+            rag_service = RAGService(gemini_service=self.gemini_service)
             similar_docs = await rag_service.find_similar(
                 query=message,
                 user_id=user_id,

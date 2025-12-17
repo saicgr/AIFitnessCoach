@@ -28,7 +28,7 @@ from models.schemas import (
     WorkoutExitCreate, WorkoutExit,
     UpdateProgramRequest, UpdateProgramResponse
 )
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import WorkoutRAGService
 from services.langgraph_agents.workout_insights.graph import generate_workout_insights
 from services.exercise_library_service import get_exercise_library_service
@@ -109,8 +109,8 @@ def get_workout_rag_service() -> WorkoutRAGService:
     """Get or create the workout RAG service instance."""
     global _workout_rag_service
     if _workout_rag_service is None:
-        openai_service = OpenAIService()
-        _workout_rag_service = WorkoutRAGService(openai_service)
+        gemini_service = GeminiService()
+        _workout_rag_service = WorkoutRAGService(gemini_service)
     return _workout_rag_service
 
 
@@ -450,10 +450,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
             goals = request.goals or user.get("goals", [])
             equipment = request.equipment or user.get("equipment", [])
 
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
 
         try:
-            workout_data = await openai_service.generate_workout_plan(
+            workout_data = await gemini_service.generate_workout_plan(
                 fitness_level=fitness_level or "intermediate",
                 goals=goals if isinstance(goals, list) else [],
                 equipment=equipment if isinstance(equipment, list) else [],
@@ -468,14 +468,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
 
         except Exception as ai_error:
             logger.error(f"AI workout generation failed: {ai_error}")
-            exercises = [
-                {"name": "Push-ups", "sets": 3, "reps": 12, "rest_seconds": 60},
-                {"name": "Squats", "sets": 3, "reps": 15, "rest_seconds": 60},
-                {"name": "Plank", "sets": 3, "reps": 30, "rest_seconds": 45},
-            ]
-            workout_name = "Fallback Workout"
-            workout_type = "strength"
-            difficulty = "medium"
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to generate workout: {str(ai_error)}"
+            )
 
         workout_db_data = {
             "user_id": request.user_id,
@@ -486,7 +482,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             "exercises_json": exercises,
             "duration_minutes": request.duration_minutes or 45,
             "generation_method": "ai",
-            "generation_source": "openai_generation",
+            "generation_source": "gemini_generation",
         }
 
         created = db.create_workout(workout_db_data)
@@ -609,7 +605,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
 
         workout_focus_map = get_workout_focus(training_split, request.selected_days)
         generated_workouts = []
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
 
         # Start with exercises from recent days to ensure cross-week variety
@@ -668,7 +664,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         rag_exercises.append(amrap_exercise)
                         logger.info(f"🔥 Added AMRAP finisher: {amrap_exercise['name']}")
 
-                    workout_data = await openai_service.generate_workout_from_library(
+                    workout_data = await gemini_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
                         goals=goals if isinstance(goals, list) else [],
@@ -679,7 +675,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         activity_level=user_activity_level
                     )
                 else:
-                    workout_data = await openai_service.generate_workout_plan(
+                    workout_data = await gemini_service.generate_workout_plan(
                         fitness_level=fitness_level or "intermediate",
                         goals=goals if isinstance(goals, list) else [],
                         equipment=equipment if isinstance(equipment, list) else [],
@@ -797,7 +793,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
         used_name_words: List[str] = []
         generated_workouts = []
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
 
         BATCH_SIZE = 4
 
@@ -873,7 +869,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         logger.info(f"🔥 Added AMRAP finisher: {amrap_exercise['name']}")
 
                     # Use AI to create a creative workout name
-                    workout_data = await openai_service.generate_workout_from_library(
+                    workout_data = await gemini_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
                         goals=goals if isinstance(goals, list) else [],
@@ -885,19 +881,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         activity_level=user_activity_level
                     )
                 else:
-                    # Fallback to direct AI generation if RAG fails
-                    logger.warning(f"RAG returned no exercises for {focus}, falling back to AI generation")
-                    workout_data = await openai_service.generate_workout_plan(
-                        fitness_level=fitness_level or "intermediate",
-                        goals=goals if isinstance(goals, list) else [],
-                        equipment=equipment if isinstance(equipment, list) else [],
-                        duration_minutes=request.duration_minutes or 45,
-                        focus_areas=[focus],
-                        avoid_name_words=avoid_words[:20],
-                        workout_date=workout_date.isoformat(),
-                        age=user_age,
-                        activity_level=user_activity_level
-                    )
+                    # No fallback - RAG must return exercises
+                    logger.error(f"RAG returned no exercises for {focus}")
+                    raise ValueError(f"RAG returned no exercises for focus={focus}")
 
                 return {
                     "success": True,
@@ -912,16 +898,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
             except Exception as e:
                 logger.error(f"Error generating workout for {workout_date}: {e}")
-                return {
-                    "success": False,
-                    "workout_date": workout_date,
-                    "focus": focus,
-                    "name": f"{focus.title()} Workout",
-                    "type": "strength",
-                    "difficulty": "medium",
-                    "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
-                    "exercises_used": ["Push-ups"],
-                }
+                raise  # No fallback - let errors propagate
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
@@ -1070,7 +1047,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             used_name_words.extend(extract_name_words(name))
 
         generated_workouts = []
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
 
         # Start with exercises from recent days to ensure cross-week variety
@@ -1138,7 +1115,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         rag_exercises.append(amrap_exercise)
                         logger.info(f"🔥 Added AMRAP finisher to regenerated workout: {amrap_exercise['name']}")
 
-                    workout_data = await openai_service.generate_workout_from_library(
+                    workout_data = await gemini_service.generate_workout_from_library(
                         exercises=rag_exercises,
                         fitness_level=fitness_level or "intermediate",
                         goals=goals if isinstance(goals, list) else [],
@@ -1150,7 +1127,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         activity_level=user_activity_level
                     )
                 else:
-                    workout_data = await openai_service.generate_workout_plan(
+                    workout_data = await gemini_service.generate_workout_plan(
                         fitness_level=fitness_level or "intermediate",
                         goals=goals if isinstance(goals, list) else [],
                         equipment=equipment if isinstance(equipment, list) else [],
@@ -1335,7 +1312,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         logger.info(f"  - injuries={injuries}")
         logger.info(f"  - focus_areas={focus_areas}")
 
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
         if not focus_areas:
             # Try to determine focus from existing workout's target muscles
@@ -1377,7 +1354,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
             if rag_exercises:
                 # Use RAG-selected exercises with real videos
                 logger.info(f"RAG selected {len(rag_exercises)} exercises for regeneration")
-                workout_data = await openai_service.generate_workout_from_library(
+                workout_data = await gemini_service.generate_workout_from_library(
                     exercises=rag_exercises,
                     fitness_level=fitness_level,
                     goals=goals if isinstance(goals, list) else [],
@@ -1387,17 +1364,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                     activity_level=user_activity_level
                 )
             else:
-                # Fallback to direct generation if RAG fails
-                logger.warning("RAG returned no exercises, falling back to direct generation")
-                workout_data = await openai_service.generate_workout_plan(
-                    fitness_level=fitness_level,
-                    goals=goals if isinstance(goals, list) else [],
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=request.duration_minutes or 45,
-                    focus_areas=focus_areas if focus_areas else None,
-                    age=user_age,
-                    activity_level=user_activity_level
-                )
+                # No fallback - RAG must return exercises
+                logger.error("RAG returned no exercises for regeneration")
+                raise ValueError(f"RAG returned no exercises for focus_area={focus_area}")
 
             exercises = workout_data.get("exercises", [])
             # Use provided workout_name if specified (e.g., from AI suggestion), otherwise use AI-generated name
@@ -1650,18 +1619,23 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
 
         user_prompt = request.prompt if request.prompt else "Give me some workout alternatives"
 
-        openai_service = OpenAIService()
-        response = await openai_service.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=1500,
+        from google import genai
+        from google.genai import types
+        from core.config import get_settings
+        settings = get_settings()
+
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = await client.aio.models.generate_content(
+            model=settings.gemini_model,
+            contents=f"{system_prompt}\n\nUser request: {user_prompt}",
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+                max_output_tokens=4000,  # Increased for thinking models
+            ),
         )
 
-        content = response.choices[0].message.content.strip()
+        content = response.text.strip()
 
         # Parse JSON response
         if "```" in content:

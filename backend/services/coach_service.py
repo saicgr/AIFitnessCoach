@@ -1,7 +1,7 @@
 """
 AI Coach Service - Main orchestration layer.
 
-This service coordinates between OpenAI, RAG, and workout logic.
+This service coordinates between Gemini, RAG, and workout logic.
 
 EASY TO MODIFY:
 - Change how context is built: Modify _build_context()
@@ -14,7 +14,7 @@ from models.chat import (
     ChatRequest, ChatResponse, IntentExtraction, CoachIntent,
     UserProfile, WorkoutContext
 )
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.workout_modifier import WorkoutModifier
 from core.logger import get_logger
@@ -33,8 +33,8 @@ class CoachService:
     4. Q&A storage for future RAG
     """
 
-    def __init__(self, openai_service: OpenAIService, rag_service: RAGService):
-        self.openai = openai_service
+    def __init__(self, gemini_service: GeminiService, rag_service: RAGService):
+        self.gemini = gemini_service
         self.rag = rag_service
         self.workout_modifier = WorkoutModifier()
 
@@ -54,7 +54,7 @@ class CoachService:
             logger.warning("NO WORKOUT CONTEXT: current_workout is None")
 
         # Step 1: Extract intent using AI
-        intent_extraction = await self.openai.extract_intent(request.message)
+        intent_extraction = await self.gemini.extract_intent(request.message)
         logger.info(f"Intent: {intent_extraction.intent.value}")
         if intent_extraction.exercises:
             logger.info(f"Exercises mentioned: {intent_extraction.exercises}")
@@ -80,8 +80,8 @@ class CoachService:
         )
 
         # Step 4: Generate response
-        system_prompt = self.openai.get_coach_system_prompt(full_context)
-        ai_response = await self.openai.chat(
+        system_prompt = self.gemini.get_coach_system_prompt(full_context)
+        ai_response = await self.gemini.chat(
             user_message=request.message,
             system_prompt=system_prompt,
             conversation_history=request.conversation_history,
@@ -91,7 +91,7 @@ class CoachService:
         # Step 4.5: Re-extract exercises from AI response for add/remove intents
         # This ensures we add the exercises the AI ACTUALLY mentioned, not just what was in user's message
         if intent_extraction.intent in [CoachIntent.ADD_EXERCISE, CoachIntent.REMOVE_EXERCISE]:
-            response_extraction = await self.openai.extract_exercises_from_response(ai_response)
+            response_extraction = await self.gemini.extract_exercises_from_response(ai_response)
             if response_extraction:
                 logger.info(f"Exercises extracted from AI response: {response_extraction}")
                 # Merge exercises: use AI response exercises as authoritative source

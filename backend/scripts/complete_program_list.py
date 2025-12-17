@@ -2108,5 +2108,5 @@ with open('/Users/saichetangrandhe/AIFitnessCoach/backend/scripts/all_programs_c
     json.dump(ALL_PROGRAMS, f, indent=2)
 
 print(f"\n✅ COMPLETE! Saved {len(ALL_PROGRAMS)} programs to all_programs_catalog.json")
-print(f"🚀 Ready for parallel generation with OpenAI!")
+print(f"🚀 Ready for parallel generation with Gemini!")
 

@@ -13,7 +13,7 @@ import pytz
 from .state import CoachAgentState
 from ..personality import build_personality_prompt
 from models.chat import AISettings, CoachIntent
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -134,7 +134,7 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
     logger.info("[Coach Action] Processing app action...")
 
     intent = state.get("intent")
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     action_data = None
     action_context = None
@@ -210,7 +210,7 @@ Be friendly and helpful!"""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,
@@ -232,7 +232,7 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     """
     logger.info("[Coach Response] Generating coaching response...")
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     context_parts = []
 
@@ -273,7 +273,7 @@ Be personable, encouraging, and adapt to their fitness level!"""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,

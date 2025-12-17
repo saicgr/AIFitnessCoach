@@ -1,7 +1,7 @@
 """
 Production Script: Generate ALL 4,554 Program Variants (253 × 3 intensities × 6 durations)
-Uses AsyncOpenAI + asyncio for parallel processing with rate limiting
-Expected runtime: Several hours | Expected cost: ~$900
+Uses Gemini + asyncio for parallel processing with rate limiting
+Expected runtime: Several hours
 """
 import asyncio
 import os
@@ -10,12 +10,14 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 import asyncpg
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize Gemini client
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 # Variant configuration
 INTENSITY_LEVELS = ['Easy', 'Medium', 'Hard']
@@ -64,7 +66,7 @@ async def generate_variant_workout(
     semaphore: asyncio.Semaphore
 ) -> dict:
     """
-    Generate a workout variant using GPT-4 with specific intensity and duration
+    Generate a workout variant using Gemini with specific intensity and duration
     """
     async with semaphore:  # Rate limiting
 
@@ -74,7 +76,8 @@ async def generate_variant_workout(
         # Create variant name
         variant_name = f"{base_program['program_name']} ({intensity}, {duration_weeks} weeks)"
 
-        prompt = f"""
+        prompt = f"""You are a professional fitness coach creating a {intensity} intensity, {duration_weeks}-week workout program. Return only valid JSON with no markdown formatting.
+
 Generate a {duration_weeks}-week workout program at {intensity} intensity level:
 
 BASE PROGRAM CONTEXT:
@@ -172,18 +175,17 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 """
 
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": f"You are a professional fitness coach creating a {intensity} intensity, {duration_weeks}-week workout program. Return only valid JSON with no markdown formatting."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=3000,
-                timeout=180.0  # 3 minute timeout
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                    max_output_tokens=3000,
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
             # Extract JSON from markdown code blocks if present
             if "```json" in content:
@@ -198,8 +200,8 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
                 print(f"⚠️  Invalid structure for {variant_name}")
                 return None
 
-            # Calculate cost (rough estimate: $0.20 per variant)
-            tokens_used = response.usage.total_tokens if response.usage else 0
+            # Tokens used (Gemini doesn't provide this directly in same way)
+            tokens_used = 0
 
             return {
                 'workouts': workouts,

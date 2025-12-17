@@ -1,5 +1,5 @@
 """
-Generate 250+ comprehensive workout programs using OpenAI
+Generate 250+ comprehensive workout programs using Gemini
 Includes detailed workout plans for every program
 """
 import asyncio
@@ -7,12 +7,14 @@ import os
 import json
 from dotenv import load_dotenv
 import asyncpg
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize Gemini client
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 
 # Comprehensive program definitions (250+ programs)
@@ -396,9 +398,10 @@ PROGRAM_DEFINITIONS = [
 # This is a template - we'll generate the full list programmatically
 
 async def generate_workout_for_program(program: dict, available_exercises: list) -> dict:
-    """Use OpenAI to generate realistic workout plan for a program"""
+    """Use Gemini to generate realistic workout plan for a program"""
 
-    prompt = f"""
+    prompt = f"""You are a professional fitness coach creating detailed, realistic workout programs. Return only valid JSON.
+
 Generate a complete workout program with the following specifications:
 
 Program: {program['program_name']}
@@ -439,17 +442,17 @@ Return ONLY valid JSON in this exact format:
 """
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a professional fitness coach creating detailed, realistic workout programs. Return only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2000
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+                max_output_tokens=2000,
+            ),
         )
 
-        content = response.choices[0].message.content.strip()
+        content = response.text.strip()
 
         # Extract JSON from markdown code blocks if present
         if "```json" in content:
@@ -493,7 +496,7 @@ async def main():
         for i, program in enumerate(PROGRAM_DEFINITIONS, 1):
             print(f"[{i}/{total_programs}] Generating: {program['program_name']}...")
 
-            # Generate workout plan using OpenAI
+            # Generate workout plan using Gemini
             workouts = await generate_workout_for_program(program, available_exercises)
 
             # Insert into database
@@ -522,7 +525,7 @@ async def main():
 
             print(f"   ✅ Created with {len(workouts.get('workouts', []))} workouts")
 
-            # Rate limit for OpenAI API
+            # Rate limit for Gemini API
             await asyncio.sleep(1)
 
         print(f"\n🎉 Successfully generated {total_programs} programs!")

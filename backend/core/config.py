@@ -17,12 +17,12 @@ class Settings(BaseSettings):
     3. Access via get_settings().your_setting
     """
 
-    # OpenAI Configuration
-    openai_api_key: str
-    openai_model: str = "gpt-4"
-    openai_embedding_model: str = "text-embedding-3-small"
-    openai_max_tokens: int = 2000
-    openai_temperature: float = 0.7
+    # Gemini Configuration
+    gemini_api_key: str
+    gemini_model: str = "gemini-3-flash-preview"
+    gemini_embedding_model: str = "text-embedding-004"
+    gemini_max_tokens: int = 2000
+    gemini_temperature: float = 0.7
 
     # Server Configuration
     host: str = "0.0.0.0"
@@ -80,6 +80,6 @@ def get_settings() -> Settings:
 
     Example:
         settings = get_settings()
-        api_key = settings.openai_api_key
+        api_key = settings.gemini_api_key
     """
     return Settings()

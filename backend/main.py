@@ -19,7 +19,7 @@ from core.config import get_settings
 from core.logger import get_logger
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from services.exercise_rag_service import get_exercise_rag_service
@@ -72,11 +72,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting AI Fitness Coach Backend...")
 
     # Initialize services
-    logger.info("Initializing OpenAI service...")
-    chat_module.openai_service = OpenAIService()
+    logger.info("Initializing Gemini service...")
+    chat_module.gemini_service = GeminiService()
 
     logger.info("Initializing RAG service...")
-    chat_module.rag_service = RAGService(chat_module.openai_service)
+    chat_module.rag_service = RAGService(chat_module.gemini_service)
 
     logger.info("Initializing LangGraph Coach service...")
     chat_module.langgraph_coach_service = LangGraphCoachService()

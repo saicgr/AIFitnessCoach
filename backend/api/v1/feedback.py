@@ -18,7 +18,7 @@ from models.schemas import (
     ExerciseFeedbackCreate, ExerciseFeedback,
     WorkoutFeedbackCreate, WorkoutFeedback, WorkoutFeedbackWithExercises
 )
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.workout_feedback_rag_service import (
     WorkoutFeedbackRAGService,
     generate_workout_feedback
@@ -399,23 +399,23 @@ class AICoachFeedbackResponse(BaseModel):
 
 
 # Singleton services (lazy initialization)
-_openai_service: Optional[OpenAIService] = None
+_gemini_service: Optional[GeminiService] = None
 _feedback_rag_service: Optional[WorkoutFeedbackRAGService] = None
 
 
-def get_openai_service() -> OpenAIService:
-    """Get or create OpenAI service singleton."""
-    global _openai_service
-    if _openai_service is None:
-        _openai_service = OpenAIService()
-    return _openai_service
+def get_gemini_service() -> GeminiService:
+    """Get or create Gemini service singleton."""
+    global _gemini_service
+    if _gemini_service is None:
+        _gemini_service = GeminiService()
+    return _gemini_service
 
 
 def get_feedback_rag_service() -> WorkoutFeedbackRAGService:
     """Get or create Workout Feedback RAG service singleton."""
     global _feedback_rag_service
     if _feedback_rag_service is None:
-        _feedback_rag_service = WorkoutFeedbackRAGService(get_openai_service())
+        _feedback_rag_service = WorkoutFeedbackRAGService(get_gemini_service())
     return _feedback_rag_service
 
 
@@ -438,7 +438,7 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
     logger.info(f"Generating AI Coach feedback for user {request.user_id}, workout {request.workout_name}")
 
     try:
-        openai_service = get_openai_service()
+        gemini_service = get_gemini_service()
         rag_service = get_feedback_rag_service()
 
         # Convert exercises to dict format
@@ -471,7 +471,7 @@ async def generate_ai_coach_feedback(request: AICoachFeedbackRequest):
 
         # Generate AI feedback
         feedback = await generate_workout_feedback(
-            openai_service=openai_service,
+            gemini_service=gemini_service,
             rag_service=rag_service,
             user_id=request.user_id,
             current_session=current_session,

@@ -14,7 +14,7 @@ import hashlib
 from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 
 logger = get_logger(__name__)
 
@@ -29,8 +29,8 @@ class CustomInputsRAGService:
     - AI-powered normalization of custom inputs
     """
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
         self.db = get_supabase_db()
 
         # Get Chroma Cloud client
@@ -66,7 +66,7 @@ class CustomInputsRAGService:
             text = self._build_input_text(input_type, input_value, normalized_value)
 
             # Get embedding
-            embedding = await self.openai_service.get_embedding(text)
+            embedding = await self.gemini_service.get_embedding(text)
 
             # Prepare metadata
             metadata = {
@@ -156,7 +156,7 @@ class CustomInputsRAGService:
 
                 # Get batch embeddings
                 try:
-                    embeddings = await self.openai_service.get_embeddings_batch(documents)
+                    embeddings = await self.gemini_service.get_embeddings_batch(documents)
                 except Exception as e:
                     logger.error(f"Failed to get embeddings for batch: {e}")
                     continue
@@ -234,7 +234,7 @@ class CustomInputsRAGService:
         """
         try:
             # Get embedding for query
-            query_embedding = await self.openai_service.get_embedding(query)
+            query_embedding = await self.gemini_service.get_embedding(query)
 
             # Build where filter if type specified
             where_filter = None
@@ -322,20 +322,22 @@ Standard injury categories:
 Return ONLY the normalized category (lowercase, underscores instead of spaces).
 If it doesn't fit any category, create a simple 1-3 word normalized form."""
 
-            response = await self.openai_service.client.chat.completions.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a fitness terminology normalizer. Return ONLY the normalized term, nothing else."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1,
-                max_tokens=50,
+            from google import genai
+            from google.genai import types
+            from core.config import get_settings
+            settings = get_settings()
+
+            client = genai.Client(api_key=settings.gemini_api_key)
+            response = await client.aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=f"You are a fitness terminology normalizer. Return ONLY the normalized term, nothing else.\n\n{prompt}",
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    max_output_tokens=1000,  # Increased for thinking models
+                ),
             )
 
-            normalized = response.choices[0].message.content.strip().lower()
+            normalized = response.text.strip().lower()
             # Clean up
             normalized = normalized.replace(" ", "_").replace("-", "_")
             return normalized
@@ -388,6 +390,6 @@ def get_custom_inputs_rag_service() -> CustomInputsRAGService:
     """Get the global CustomInputsRAGService instance."""
     global _custom_inputs_rag_service
     if _custom_inputs_rag_service is None:
-        openai_service = OpenAIService()
-        _custom_inputs_rag_service = CustomInputsRAGService(openai_service)
+        gemini_service = GeminiService()
+        _custom_inputs_rag_service = CustomInputsRAGService(gemini_service)
     return _custom_inputs_rag_service

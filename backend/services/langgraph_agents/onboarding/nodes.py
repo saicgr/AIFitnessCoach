@@ -6,7 +6,7 @@ AI-driven onboarding - no hardcoded questions!
 import json
 from typing import Dict, Any, Optional
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from .state import OnboardingState
@@ -190,9 +190,9 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     messages.append(HumanMessage(content=state["user_message"]))
 
     # Call LLM to generate next question
-    llm = ChatOpenAI(
-        model="gpt-4-turbo",  # Use GPT-4 for better conversation quality
-        api_key=settings.openai_api_key,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.8,  # Slightly higher for more natural conversation
     )
 
@@ -762,10 +762,10 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         collected_data=json.dumps(collected_data, indent=2) if collected_data else "{}",
     )
 
-    # Call GPT-4 for extraction
-    llm = ChatOpenAI(
-        model="gpt-4-turbo",
-        api_key=settings.openai_api_key,
+    # Call Gemini for extraction
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.3,  # Lower temperature for more consistent extraction
     )
 

@@ -8,7 +8,7 @@ The injury agent can:
 import json
 from typing import Dict, Any, Literal
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from .state import InjuryAgentState
@@ -20,7 +20,7 @@ from ..tools import (
 )
 from ..personality import build_personality_prompt
 from models.chat import AISettings
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from core.config import get_settings
 from core.logger import get_logger
 
@@ -169,9 +169,9 @@ async def injury_agent_node(state: InjuryAgentState) -> Dict[str, Any]:
     context = "\n".join(context_parts)
 
     # Create LLM with injury tools bound
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.7,
     )
     llm_with_tools = llm.bind_tools(INJURY_TOOLS)
@@ -329,9 +329,9 @@ IMPORTANT:
 
     messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
 
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 
@@ -352,7 +352,7 @@ async def injury_autonomous_node(state: InjuryAgentState) -> Dict[str, Any]:
     """
     logger.info("[Injury Autonomous] Generating response without tools...")
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     context_parts = []
 
@@ -389,7 +389,7 @@ Be empathetic, cautious, and caring!"""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,

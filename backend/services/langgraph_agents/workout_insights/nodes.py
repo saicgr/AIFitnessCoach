@@ -5,7 +5,7 @@ Generates structured, easy-to-read insights with formatting.
 import json
 from typing import Dict, Any, List
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from .state import WorkoutInsightsState
@@ -129,11 +129,11 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     # Get top 3 exercises for context
     exercise_names = [e.get("name", "") for e in exercises[:3]]
 
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
         temperature=0.85,  # Higher for more variety
         max_tokens=400,
-        api_key=settings.openai_api_key,
+        google_api_key=settings.gemini_api_key,
     )
 
     # Get up to 5 exercise names for context
@@ -216,9 +216,7 @@ Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivat
 
         # Ensure we have valid sections
         if not sections or len(sections) < 2:
-            sections = _generate_fallback_sections(
-                workout_focus, target_muscles, exercise_count, duration, exercises
-            )
+            raise ValueError("AI returned invalid workout insights structure (missing sections)")
 
         # Truncate headline if too long (max 7 words)
         if len(headline.split()) > 7:
@@ -243,64 +241,4 @@ Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivat
 
     except Exception as e:
         logger.error(f"[Generate Node] Error: {e}")
-
-        # Fallback to structured fallback
-        sections = _generate_fallback_sections(
-            workout_focus, target_muscles, exercise_count, duration, exercises
-        )
-        headline = f"Time to work your {workout_focus}!"
-
-        return {
-            "headline": headline,
-            "sections": sections,
-            "summary": json.dumps({"headline": headline, "sections": sections}),
-        }
-
-
-def _generate_fallback_sections(
-    workout_focus: str,
-    target_muscles: List[str],
-    exercise_count: int,
-    duration: int,
-    exercises: List[Dict] = None
-) -> List[Dict[str, str]]:
-    """Generate fallback sections if AI fails. More specific content."""
-    muscles_text = ", ".join(target_muscles[:3]) if target_muscles else "multiple muscle groups"
-
-    # Get first exercise name if available
-    first_exercise = ""
-    if exercises and len(exercises) > 0:
-        first_exercise = exercises[0].get("name", "")
-
-    sections = [
-        {
-            "icon": "🎯",
-            "title": "Focus",
-            "content": f"This {workout_focus} session targets {muscles_text} for balanced development",
-            "color": "cyan"
-        },
-        {
-            "icon": "💪",
-            "title": "Structure",
-            "content": f"{exercise_count} exercises across {duration} minutes - work at your own pace",
-            "color": "purple"
-        },
-    ]
-
-    # Add exercise-specific tip if we have an exercise name
-    if first_exercise:
-        sections.append({
-            "icon": "⚡",
-            "title": "Starting Strong",
-            "content": f"Begin with {first_exercise} - focus on controlled movements and proper form",
-            "color": "orange"
-        })
-    else:
-        sections.append({
-            "icon": "⚡",
-            "title": "Technique",
-            "content": "Control each rep through full range of motion for maximum muscle engagement",
-            "color": "orange"
-        })
-
-    return sections
+        raise  # No fallback - let errors propagate

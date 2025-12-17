@@ -46,7 +46,7 @@ from typing import Dict, Any, Literal, TypedDict, List, Optional, Union
 from langgraph.graph import StateGraph, START, END
 
 from models.chat import CoachIntent, AgentType
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from core.logger import get_logger
 
@@ -163,16 +163,16 @@ async def extract_intent_node(state: RouterState) -> Dict[str, Any]:
     # Detect @mention
     mentioned, cleaned_message = detect_mention(message)
 
-    # Extract intent using OpenAI
-    openai_service = OpenAIService()
-    extraction = await openai_service.extract_intent(cleaned_message)
+    # Extract intent using Gemini
+    gemini_service = GeminiService()
+    extraction = await gemini_service.extract_intent(cleaned_message)
 
     # Get RAG context
     rag_context = ""
     rag_used = False
     similar_questions = []
     try:
-        rag_service = RAGService(openai_service=openai_service)
+        rag_service = RAGService(gemini_service=gemini_service)
         similar_docs = await rag_service.find_similar(
             query=cleaned_message,
             user_id=state["user_id"],

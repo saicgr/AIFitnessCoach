@@ -7,13 +7,13 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Literal
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from .state import FitnessCoachState
 from .tools import ALL_TOOLS
 from models.chat import CoachIntent
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from core.config import get_settings
 from core.logger import get_logger
@@ -24,12 +24,12 @@ settings = get_settings()
 
 async def intent_extractor_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
-    Extract intent from user message using OpenAI.
+    Extract intent from user message using Gemini.
     """
     logger.info(f"[Intent Node] Extracting intent from: {state['user_message'][:50]}...")
 
-    openai_service = OpenAIService()
-    extraction = await openai_service.extract_intent(state['user_message'])
+    gemini_service = GeminiService()
+    extraction = await gemini_service.extract_intent(state['user_message'])
 
     logger.info(f"[Intent Node] Detected intent: {extraction.intent.value}")
     if extraction.exercises:
@@ -54,8 +54,8 @@ async def rag_context_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     logger.info("[RAG Node] Retrieving similar conversations...")
 
-    openai_service = OpenAIService()
-    rag_service = RAGService(openai_service=openai_service)
+    gemini_service = GeminiService()
+    rag_service = RAGService(gemini_service=gemini_service)
 
     similar_docs = await rag_service.find_similar(
         query=state['user_message'],
@@ -255,9 +255,9 @@ async def agent_node(state: FitnessCoachState) -> Dict[str, Any]:
     context = "\n".join(context_parts)
 
     # Create LLM with tools bound
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.7,
     )
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
@@ -469,7 +469,7 @@ async def response_after_tools_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     logger.info("[Response After Tools] Generating final response...")
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     # Build context from state for natural response
     context_parts = []
@@ -506,7 +506,7 @@ async def response_after_tools_node(state: FitnessCoachState) -> Dict[str, Any]:
     logger.info(f"[Response After Tools] Using agent personality: {agent_type}")
 
     # Get proper system prompt with instructions for natural response
-    base_prompt = openai_service.get_coach_system_prompt(full_context, agent_type=agent_type)
+    base_prompt = gemini_service.get_coach_system_prompt(full_context, agent_type=agent_type)
     system_prompt = base_prompt + """
 
 CRITICAL RESPONSE INSTRUCTIONS:
@@ -526,9 +526,9 @@ CRITICAL RESPONSE INSTRUCTIONS:
     messages_with_system = [SystemMessage(content=system_prompt)] + messages + tool_messages
 
     # Call LLM to generate natural response
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
+        google_api_key=settings.gemini_api_key,
         temperature=0.7,
     )
 
@@ -548,7 +548,7 @@ async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     logger.info("[Simple Response] Generating response without tools...")
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     # Build context
     context_parts = []
@@ -608,14 +608,14 @@ async def simple_response_node(state: FitnessCoachState) -> Dict[str, Any]:
     agent_type = state.get("mentioned_agent") or "coach"
     logger.info(f"[Simple Response] Using agent personality: {agent_type}")
 
-    system_prompt = openai_service.get_coach_system_prompt(full_context, intent=intent_str, action_context=action_context, agent_type=agent_type)
+    system_prompt = gemini_service.get_coach_system_prompt(full_context, intent=intent_str, action_context=action_context, agent_type=agent_type)
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,
@@ -635,8 +635,8 @@ async def storage_node(state: FitnessCoachState) -> Dict[str, Any]:
     """
     logger.info("[Storage Node] Storing Q&A in RAG...")
 
-    openai_service = OpenAIService()
-    rag_service = RAGService(openai_service=openai_service)
+    gemini_service = GeminiService()
+    rag_service = RAGService(gemini_service=gemini_service)
 
     intent_value = state.get("intent")
     if intent_value and hasattr(intent_value, "value"):

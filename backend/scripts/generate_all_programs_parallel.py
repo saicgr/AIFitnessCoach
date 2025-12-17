@@ -1,6 +1,6 @@
 """
 Production Script: Generate 253 Complete Workout Programs with Parallel Processing
-Uses AsyncOpenAI + asyncio for concurrent generation
+Uses Gemini + asyncio for concurrent generation
 Fault-tolerant: inserts programs without workouts if generation fails
 """
 import asyncio
@@ -9,12 +9,14 @@ import json
 import time
 from dotenv import load_dotenv
 import asyncpg
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Initialize Gemini client
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 # Load all 253 programs from catalog
 with open('/Users/saichetangrandhe/AIFitnessCoach/backend/scripts/all_programs_catalog.json', 'r') as f:
@@ -25,11 +27,12 @@ print(f"📚 Loaded {len(ALL_PROGRAMS)} programs from catalog")
 
 async def generate_workout_for_program(program: dict, available_exercises: list, semaphore: asyncio.Semaphore) -> dict:
     """
-    Use OpenAI GPT-4 to generate realistic workout plan for a program
+    Use Gemini to generate realistic workout plan for a program
     Uses semaphore for rate limiting
     """
     async with semaphore:  # Limit concurrent API calls
-        prompt = f"""
+        prompt = f"""You are a professional fitness coach creating detailed, realistic workout programs. Return only valid JSON with no markdown formatting.
+
 Generate a complete {program['duration_weeks']}-week workout program with the following specifications:
 
 Program: {program['program_name']}
@@ -79,18 +82,17 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 """
 
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": "You are a professional fitness coach creating detailed, realistic workout programs. Return only valid JSON with no markdown formatting."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=2500,
-                timeout=180.0  # 3 minute timeout
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.7,
+                    max_output_tokens=2500,
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
             # Extract JSON from markdown code blocks if present
             if "```json" in content:
@@ -158,7 +160,7 @@ async def generate_and_insert_program(
     total: int
 ):
     """Generate workout and insert program (all-in-one atomic operation)"""
-    # Generate workouts using OpenAI
+    # Generate workouts using Gemini
     workouts = await generate_workout_for_program(program, available_exercises, semaphore)
 
     # Insert to database immediately

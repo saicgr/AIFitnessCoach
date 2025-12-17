@@ -14,7 +14,7 @@ from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_client import get_supabase
 from core.logger import get_logger
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.training_program_service import get_training_program_keywords_sync
 
 settings = get_settings()
@@ -100,8 +100,8 @@ class ExerciseRAGService:
     - Past workout history (avoiding repetition)
     """
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
         self.supabase = get_supabase()
         self.client = self.supabase.client
 
@@ -172,7 +172,7 @@ class ExerciseRAGService:
         logger.info(f"📊 Found {len(exercises)} exercises to index (filtered from {len(all_exercises)}, only with videos, deduplicated)")
         indexed_count = 0
 
-        # Process in batches (OpenAI supports up to 2048 texts per call)
+        # Process in batches
         for i in range(0, len(exercises), batch_size):
             batch = exercises[i:i + batch_size]
             batch_num = i // batch_size + 1
@@ -217,7 +217,7 @@ class ExerciseRAGService:
 
             # Get ALL embeddings in ONE API call
             try:
-                embeddings = await self.openai_service.get_embeddings_batch(documents)
+                embeddings = await self.gemini_service.get_embeddings_batch_async(documents)
                 logger.info(f"   ✅ Got {len(embeddings)} embeddings in 1 API call")
             except Exception as e:
                 logger.error(f"❌ Failed to get batch embeddings: {e}")
@@ -331,7 +331,7 @@ class ExerciseRAGService:
         search_query = self._build_search_query(focus_area, equipment, fitness_level, goals)
 
         # Get embedding for the search query
-        query_embedding = await self.openai_service.get_embedding(search_query)
+        query_embedding = await self.gemini_service.get_embedding(search_query)
 
         # Search for candidate exercises (get more than needed for AI to choose from)
         candidate_count = min(count * 4, 30)
@@ -343,8 +343,8 @@ class ExerciseRAGService:
         )
 
         if not results["ids"][0]:
-            logger.warning("No exercises found in RAG, falling back to random selection")
-            return await self._fallback_selection(focus_area, equipment, count, workout_params)
+            logger.error("No exercises found in RAG")
+            raise ValueError(f"No exercises found in RAG for focus_area={focus_area}")
 
         # Format candidates for AI selection
         candidates = []
@@ -489,8 +489,8 @@ class ExerciseRAGService:
             })
 
         if not candidates:
-            logger.warning("No compatible exercises found after filtering")
-            return await self._fallback_selection(focus_area, equipment, count, workout_params)
+            logger.error("No compatible exercises found after filtering")
+            raise ValueError(f"No compatible exercises found for focus_area={focus_area}, equipment={equipment}")
 
         # Pre-filter candidates based on injuries (safety net before AI)
         if injuries and len(injuries) > 0:
@@ -844,20 +844,23 @@ Select exactly {count} exercises that are SAFE for this user."""
                 system_content += " and certified physical therapist with expertise in injury rehabilitation. SAFETY IS YOUR TOP PRIORITY - never recommend exercises that could aggravate the user's injuries."
             system_content += ". Select exercises wisely. Return ONLY a JSON array of numbers."
 
-            response = await self.openai_service.client.chat.completions.create(
-                model="gpt-4-turbo",  # Better model for safety-critical exercise selection
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_content
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                max_tokens=100
+            from google import genai
+            from google.genai import types
+            from core.config import get_settings
+            settings = get_settings()
+
+            client = genai.Client(api_key=settings.gemini_api_key)
+            response = await client.aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=f"{system_content}\n\n{prompt}",
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.3,
+                    max_output_tokens=2000,  # Increased for thinking models
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
             # Clean markdown
             if content.startswith("```"):
@@ -879,12 +882,8 @@ Select exactly {count} exercises that are SAFE for this user."""
             return selected
 
         except Exception as e:
-            logger.error(f"AI selection failed: {e}, using top candidates")
-            # Fallback to top candidates by similarity
-            return [
-                self._format_exercise_for_workout(c, fitness_level, workout_params)
-                for c in candidates[:count]
-            ]
+            logger.error(f"AI selection failed: {e}")
+            raise  # No fallback - let errors propagate
 
     def _format_exercise_for_workout(
         self,
@@ -938,75 +937,6 @@ Select exactly {count} exercises that are SAFE for this user."""
             "library_id": exercise.get("id", ""),
         }
 
-    async def _fallback_selection(
-        self,
-        focus_area: str,
-        equipment: List[str],
-        count: int,
-        workout_params: Optional[Dict] = None,
-    ) -> List[Dict[str, Any]]:
-        """Fallback to direct database query if RAG fails. Uses cleaned view."""
-        logger.warning("Using fallback selection from database (cleaned view)")
-
-        # Map focus to body parts
-        focus_map = {
-            "chest": "chest",
-            "back": "back",
-            "shoulders": "shoulders",
-            "arms": "upper arms",
-            "legs": "upper legs",
-            "core": "waist",
-            "full_body": "chest",  # Start with chest for full body
-        }
-
-        body_part = focus_map.get(focus_area.lower(), "chest")
-
-        # Use cleaned view instead of raw table
-        result = self.client.table("exercise_library_cleaned").select("*").ilike(
-            "body_part", f"%{body_part}%"
-        ).limit(count * 4).execute()
-
-        exercises = result.data or []
-
-        # Filter by equipment and only include exercises with videos
-        equipment_lower = [eq.lower() for eq in equipment] + ["body weight", "bodyweight"]
-        seen_names: set = set()
-        filtered = []
-
-        for ex in exercises:
-            # Skip exercises without videos - view uses 'video_url' column
-            if not ex.get("video_url") and not ex.get("video_s3_path"):
-                continue
-
-            # Get cleaned name - view uses 'name' column (fallback for compatibility)
-            exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "Unknown")))
-
-            # Case-insensitive deduplication
-            lower_name = exercise_name.lower()
-            if lower_name in seen_names:
-                continue
-            seen_names.add(lower_name)
-
-            # Filter by equipment
-            ex_eq = (ex.get("equipment", "") or "").lower()
-            if any(eq in ex_eq for eq in equipment_lower):
-                filtered.append({
-                    "name": exercise_name,
-                    "target_muscle": ex.get("target_muscle", ""),
-                    "body_part": ex.get("body_part", ""),
-                    "equipment": ex.get("equipment", "bodyweight"),
-                    "gif_url": ex.get("gif_url", ""),
-                    "video_url": ex.get("video_url", ""),  # Include video URL
-                    "image_url": ex.get("image_url", ""),  # Include image URL
-                    "instructions": ex.get("instructions", ""),
-                    "id": ex.get("id", ""),
-                })
-
-        return [
-            self._format_exercise_for_workout(ex, "intermediate", workout_params)
-            for ex in filtered[:count]
-        ]
-
     def get_stats(self) -> Dict[str, Any]:
         """Get exercise RAG statistics."""
         return {
@@ -1023,6 +953,6 @@ def get_exercise_rag_service() -> ExerciseRAGService:
     """Get the global ExerciseRAGService instance."""
     global _exercise_rag_service
     if _exercise_rag_service is None:
-        openai_service = OpenAIService()
-        _exercise_rag_service = ExerciseRAGService(openai_service)
+        gemini_service = GeminiService()
+        _exercise_rag_service = ExerciseRAGService(gemini_service)
     return _exercise_rag_service

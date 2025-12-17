@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])

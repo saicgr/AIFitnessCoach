@@ -3,11 +3,13 @@ import os
 import json
 from dotenv import load_dotenv
 import asyncpg
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
-client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 MISSING_PROGRAMS = [
     "Arthritis-Friendly Movement",
@@ -17,8 +19,9 @@ MISSING_PROGRAMS = [
 ]
 
 async def generate_workout(program: dict) -> dict:
-    """Generate workout using GPT-4"""
-    prompt = f"""
+    """Generate workout using Gemini"""
+    prompt = f"""You are a professional fitness coach. Return only valid JSON.
+
 Generate a complete {program['duration_weeks']}-week workout program with the following specifications:
 
 Program: {program['program_name']}
@@ -52,19 +55,18 @@ Return ONLY valid JSON:
 """
 
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a professional fitness coach. Return only valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2500,
-            timeout=180.0
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+                max_output_tokens=2500,
+            ),
         )
 
-        content = response.choices[0].message.content.strip()
-        
+        content = response.text.strip()
+
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0].strip()
         elif "```" in content:

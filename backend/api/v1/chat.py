@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
 from models.chat import ChatRequest, ChatResponse
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
@@ -24,7 +24,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 # Service instances (will be initialized on startup)
-openai_service: Optional[OpenAIService] = None
+gemini_service: Optional[GeminiService] = None
 rag_service: Optional[RAGService] = None
 langgraph_coach_service: Optional[LangGraphCoachService] = None
 
@@ -207,24 +207,24 @@ class ExtractIntentResponse(BaseModel):
     bodyPart: Optional[str] = None
 
 
-def get_openai_service() -> OpenAIService:
-    """Dependency to get OpenAI service."""
-    if openai_service is None:
-        raise HTTPException(status_code=503, detail="OpenAI service not initialized")
-    return openai_service
+def get_gemini_service_dep() -> GeminiService:
+    """Dependency to get Gemini service."""
+    if gemini_service is None:
+        raise HTTPException(status_code=503, detail="Gemini service not initialized")
+    return gemini_service
 
 
 @router.post("/extract-intent", response_model=ExtractIntentResponse)
 async def extract_intent(
     request: ExtractIntentRequest,
-    openai: OpenAIService = Depends(get_openai_service),
+    gemini: GeminiService = Depends(get_gemini_service_dep),
 ):
     """
     Extract intent and structured data from a user message.
     """
     logger.debug(f"Extracting intent from: {request.message[:50]}...")
     try:
-        extraction = await openai.extract_intent(request.message)
+        extraction = await gemini.extract_intent(request.message)
         logger.debug(f"Intent extracted: {extraction.intent.value}")
         return ExtractIntentResponse(
             intent=extraction.intent.value,

@@ -18,7 +18,7 @@ async def readiness_check():
     return {
         "status": "ready",
         "checks": {
-            "openai": "connected",
+            "gemini": "connected",
             "rag": "initialized",
         }
     }

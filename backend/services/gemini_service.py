@@ -1,12 +1,15 @@
 """
-OpenAI Service - Handles all OpenAI API interactions.
+Gemini Service - Handles all Gemini AI API interactions.
 
 EASY TO MODIFY:
-- Change model: Update OPENAI_MODEL in .env
+- Change model: Update GEMINI_MODEL in .env
 - Adjust prompts: Modify the prompt strings below
 - Add new methods: Follow the pattern of existing methods
+
+Uses the new google-genai SDK (unified SDK for Gemini API).
 """
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from typing import List, Dict, Optional
 import json
 from core.config import get_settings
@@ -14,20 +17,22 @@ from models.chat import IntentExtraction, CoachIntent
 
 settings = get_settings()
 
+# Initialize the Gemini client
+client = genai.Client(api_key=settings.gemini_api_key)
 
-class OpenAIService:
+
+class GeminiService:
     """
-    Wrapper for OpenAI API calls.
+    Wrapper for Gemini API calls using the new google-genai SDK.
 
     Usage:
-        service = OpenAIService()
+        service = GeminiService()
         response = await service.chat("Hello!")
     """
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
-        self.model = settings.openai_model
-        self.embedding_model = settings.openai_embedding_model
+        self.model = settings.gemini_model
+        self.embedding_model = settings.gemini_embedding_model
 
     async def chat(
         self,
@@ -36,7 +41,7 @@ class OpenAIService:
         conversation_history: Optional[List[Dict[str, str]]] = None,
     ) -> str:
         """
-        Send a chat message to OpenAI and get a response.
+        Send a chat message to Gemini and get a response.
 
         Args:
             user_message: The user's message
@@ -46,30 +51,28 @@ class OpenAIService:
         Returns:
             AI response string
         """
-        messages = []
+        contents = []
 
-        # Add system prompt
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-
-        # Add conversation history (only role and content for OpenAI)
+        # Add conversation history
         if conversation_history:
-            messages.extend([
-                {"role": msg["role"], "content": msg["content"]}
-                for msg in conversation_history
-            ])
+            for msg in conversation_history:
+                role = "user" if msg["role"] == "user" else "model"
+                contents.append(types.Content(role=role, parts=[types.Part.from_text(text=msg["content"])]))
 
         # Add current message
-        messages.append({"role": "user", "content": user_message})
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
 
-        response = await self.client.chat.completions.create(
+        response = await client.aio.models.generate_content(
             model=self.model,
-            messages=messages,
-            max_tokens=settings.openai_max_tokens,
-            temperature=settings.openai_temperature,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=settings.gemini_max_tokens,
+                temperature=settings.gemini_temperature,
+            ),
         )
 
-        return response.choices[0].message.content
+        return response.text
 
     async def extract_intent(self, user_message: str) -> IntentExtraction:
         """
@@ -134,19 +137,19 @@ HYDRATION EXTRACTION:
 User message: "''' + user_message + '"'
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are a JSON extraction system. Return ONLY valid JSON."},
-                    {"role": "user", "content": extraction_prompt},
-                ],
-                max_tokens=300,
-                temperature=0.1,  # Low temp for consistent extraction
+                contents=extraction_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=2000,  # Increased for thinking models
+                    temperature=0.1,  # Low temp for consistent extraction
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
-            # Clean markdown if present
+            # Clean markdown if present (shouldn't be needed with response_mime_type)
             if content.startswith("```json"):
                 content = content[7:]
             elif content.startswith("```"):
@@ -192,17 +195,17 @@ IMPORTANT:
 - If no exercises are mentioned, return an empty array: []'''
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are a JSON extraction system. Return ONLY valid JSON arrays."},
-                    {"role": "user", "content": extraction_prompt},
-                ],
-                max_tokens=500,
-                temperature=0.1,
+                contents=extraction_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=2000,  # Increased for thinking models
+                    temperature=0.1,
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
             # Clean markdown if present
             if content.startswith("```json"):
@@ -222,7 +225,7 @@ IMPORTANT:
             print(f"Exercise extraction from response failed: {e}")
             return None
 
-    async def get_embedding(self, text: str) -> List[float]:
+    def get_embedding(self, text: str) -> List[float]:
         """
         Get embedding vector for text (used for RAG).
 
@@ -232,19 +235,39 @@ IMPORTANT:
         Returns:
             Embedding vector as list of floats
         """
-        response = await self.client.embeddings.create(
-            model=self.embedding_model,
-            input=text,
+        result = client.models.embed_content(
+            model=f"models/{self.embedding_model}",
+            contents=text
         )
-        return response.data[0].embedding
+        return result.embeddings[0].values
 
-    async def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
-        """Get embeddings for multiple texts at once."""
-        response = await self.client.embeddings.create(
-            model=self.embedding_model,
-            input=texts,
+    async def get_embedding_async(self, text: str) -> List[float]:
+        """
+        Get embedding vector for text asynchronously.
+
+        Args:
+            text: Text to embed
+
+        Returns:
+            Embedding vector as list of floats
+        """
+        result = await client.aio.models.embed_content(
+            model=f"models/{self.embedding_model}",
+            contents=text
         )
-        return [item.embedding for item in response.data]
+        return result.embeddings[0].values
+
+    def get_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+        """Get embeddings for multiple texts."""
+        return [self.get_embedding(text) for text in texts]
+
+    async def get_embeddings_batch_async(self, texts: List[str]) -> List[List[float]]:
+        """Get embeddings for multiple texts asynchronously."""
+        embeddings = []
+        for text in texts:
+            emb = await self.get_embedding_async(text)
+            embeddings.append(emb)
+        return embeddings
 
     def _get_holiday_theme(self, workout_date: Optional[str] = None) -> Optional[str]:
         """
@@ -274,7 +297,6 @@ IMPORTANT:
             (11, 11): ("Veterans Day", "Warrior, Honor, Hero, Valor"),
             (12, 25): ("Christmas", "Blitzen, Reindeer, Jolly, Frost"),
             (12, 31): ("New Year's Eve", "Countdown, Finale, Midnight, Resolution"),
-            # Thanksgiving (4th Thursday of Nov - approximate with Nov 20-28)
         }
 
         # Check for Thanksgiving week (Nov 20-28)
@@ -360,7 +382,7 @@ IMPORTANT:
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}
 
-Return ONLY a valid JSON object with this exact structure (no markdown, no explanation):
+Return a valid JSON object with this exact structure:
 {{
   "name": "A CREATIVE, UNIQUE workout name ENDING with body part focus (e.g., 'Thunder Legs', 'Phoenix Chest', 'Cobra Back')",
   "type": "strength",
@@ -434,22 +456,19 @@ Requirements:
 - Each exercise should have helpful form notes"""
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert fitness coach and personal trainer. Generate workout plans in valid JSON format only. No markdown, no explanations - just the JSON object."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,  # Higher creativity for unique workout names
-                max_tokens=2000
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.7,  # Higher creativity for unique workout names
+                    max_output_tokens=4000  # Increased for detailed workout plans
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
-            # Clean markdown code blocks if present
+            # Clean markdown code blocks if present (shouldn't be needed with response_mime_type)
             if content.startswith("```json"):
                 content = content[7:]
             elif content.startswith("```"):
@@ -542,7 +561,7 @@ Examples of good names:
 - "Iron Storm Arms"
 {holiday_instruction}{avoid_instruction}
 
-Return ONLY a JSON object with:
+Return a JSON object with:
 {{
   "name": "Your creative workout name here",
   "type": "strength",
@@ -551,20 +570,18 @@ Return ONLY a JSON object with:
 }}"""
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.8,
-                max_tokens=300
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
+                    response_mime_type="application/json",
+                    temperature=0.8,
+                    max_output_tokens=2000  # Increased for thinking models
+                ),
             )
 
-            content = response.choices[0].message.content.strip()
+            content = response.text.strip()
 
             # Clean markdown
             if content.startswith("```json"):
@@ -589,17 +606,7 @@ Return ONLY a JSON object with:
 
         except Exception as e:
             print(f"Error generating workout name: {e}")
-            # Fallback - still return the workout with a generic name
-            focus = focus_areas[0] if focus_areas else "Full Body"
-            return {
-                "name": f"Power {focus.title()} Workout",
-                "type": "strength",
-                "difficulty": difficulty,
-                "duration_minutes": duration_minutes,
-                "target_muscles": list(set([ex.get('muscle_group', '') for ex in exercises if ex.get('muscle_group')])),
-                "exercises": exercises,
-                "notes": "Focus on proper form and controlled movements."
-            }
+            raise  # No fallback - let errors propagate
 
     async def generate_workout_summary(
         self,
@@ -649,39 +656,7 @@ Return ONLY a JSON object with:
 
         except Exception as e:
             print(f"Error generating workout summary with agent: {e}")
-
-            # Fallback: generate simple summary without agent
-            try:
-                exercise_details = "\n".join([
-                    f"- {ex.get('name', 'Unknown')}: {ex.get('sets', 3)} sets x {ex.get('reps', 10)} reps"
-                    for ex in exercises[:5]
-                ])
-
-                response = await self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a fitness coach. Write a SHORT 2-3 sentence workout summary. Plain text only, no markdown."
-                        },
-                        {
-                            "role": "user",
-                            "content": f"Summarize this {workout_name} workout with {len(exercises)} exercises targeting {', '.join(target_muscles) if target_muscles else 'full body'} for {fitness_level} level."
-                        }
-                    ],
-                    temperature=0.7,
-                    max_tokens=100
-                )
-
-                summary = response.choices[0].message.content.strip()
-                # Strip markdown
-                summary = summary.replace('**', '').replace('*', '').replace('# ', '').replace('- ', '')
-                return summary
-
-            except Exception as fallback_error:
-                print(f"Fallback summary generation also failed: {fallback_error}")
-                targets = ', '.join(target_muscles) if target_muscles else 'multiple muscle groups'
-                return f"This {workout_name} targets {targets} with {len(exercises)} exercises designed to help you reach your fitness goals."
+            raise  # No fallback - let errors propagate
 
     def get_agent_personality(self, agent_type: str = "coach") -> dict:
         """
@@ -824,3 +799,7 @@ RESPONSE FORMAT:
 - IMPORTANT: When mentioning workout dates, ALWAYS include the day of the week (e.g., "Friday, November 28th" or "this Friday (Nov 28)"), not just the raw date format
 
 Remember: You're a supportive coach, not a robot. Be human, be helpful, be motivating!'''
+
+
+# Backward compatibility alias
+OpenAIService = GeminiService

@@ -4,13 +4,17 @@ import json
 import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 from core.config import get_settings
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Initialize Gemini client
+client = genai.Client(api_key=settings.gemini_api_key)
 
 # Muscle group keywords for matching exercises from library
 MUSCLE_KEYWORDS = {
@@ -69,7 +73,7 @@ STRETCH_BY_MUSCLE = {
 
 class WarmupStretchService:
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
+        self.model = settings.gemini_model
         self.supabase = get_supabase().client  # Get the actual Supabase client
 
     async def get_recently_used_warmups(self, user_id: str, days: int = 7) -> List[str]:
@@ -418,15 +422,26 @@ Focus on:
 Return ONLY valid JSON."""
 
         try:
-            response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
-                temperature=0.7,
-                response_format={"type": "json_object"}
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=3000,  # Increased for thinking models
+                    temperature=0.7,
+                ),
             )
 
-            result = json.loads(response.choices[0].message.content)
+            content = response.text.strip()
+            # Clean markdown if present
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            result = json.loads(content.strip())
             warmups = result.get("exercises", [])
 
             logger.info(f"✅ Generated {len(warmups)} warm-up exercises")
@@ -434,7 +449,7 @@ Return ONLY valid JSON."""
 
         except Exception as e:
             logger.error(f"❌ Warm-up generation failed: {e}")
-            return self._fallback_warmup(muscles)
+            raise  # No fallback - let errors propagate
 
     async def generate_stretches(
         self,
@@ -527,97 +542,34 @@ Focus on:
 Return ONLY valid JSON."""
 
         try:
-            response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
-                temperature=0.7,
-                response_format={"type": "json_object"}
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=3000,  # Increased for thinking models
+                    temperature=0.7,
+                ),
             )
 
-            result = json.loads(response.choices[0].message.content)
+            content = response.text.strip()
+            # Clean markdown if present
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            result = json.loads(content.strip())
             stretches = result.get("exercises", [])
 
-            logger.info(f"✅ Generated {len(stretches)} cool-down stretches (AI fallback)")
+            logger.info(f"✅ Generated {len(stretches)} cool-down stretches")
             return stretches
 
         except Exception as e:
             logger.error(f"❌ Stretch generation failed: {e}")
-            return self._fallback_stretches(muscles)
-
-    def _fallback_warmup(self, muscles: List[str]) -> List[Dict]:
-        """Static fallback warm-ups if AI fails."""
-        warmups = []
-        added = set()
-
-        for muscle in muscles:
-            exercise_list = WARMUP_BY_MUSCLE.get(muscle, WARMUP_BY_MUSCLE["full body"])
-            for ex in exercise_list:
-                if ex not in added and len(warmups) < 4:
-                    warmups.append({
-                        "name": ex,
-                        "sets": 1,
-                        "reps": 15,
-                        "duration_seconds": 30,
-                        "rest_seconds": 10,
-                        "equipment": "none",
-                        "muscle_group": muscle,
-                        "notes": "Perform controlled movements"
-                    })
-                    added.add(ex)
-
-        # Ensure at least some warmups
-        if not warmups:
-            for ex in WARMUP_BY_MUSCLE["full body"]:
-                warmups.append({
-                    "name": ex,
-                    "sets": 1,
-                    "reps": 15,
-                    "duration_seconds": 30,
-                    "rest_seconds": 10,
-                    "equipment": "none",
-                    "muscle_group": "full body",
-                    "notes": "Perform controlled movements"
-                })
-
-        return warmups
-
-    def _fallback_stretches(self, muscles: List[str]) -> List[Dict]:
-        """Static fallback stretches if AI fails."""
-        stretches = []
-        added = set()
-
-        for muscle in muscles:
-            stretch_list = STRETCH_BY_MUSCLE.get(muscle, STRETCH_BY_MUSCLE["full body"])
-            for stretch in stretch_list:
-                if stretch not in added and len(stretches) < 5:
-                    stretches.append({
-                        "name": stretch,
-                        "sets": 1,
-                        "reps": 1,
-                        "duration_seconds": 30,
-                        "rest_seconds": 0,
-                        "equipment": "none",
-                        "muscle_group": muscle,
-                        "notes": "Hold and breathe deeply"
-                    })
-                    added.add(stretch)
-
-        # Ensure at least some stretches
-        if not stretches:
-            for stretch in STRETCH_BY_MUSCLE["full body"]:
-                stretches.append({
-                    "name": stretch,
-                    "sets": 1,
-                    "reps": 1,
-                    "duration_seconds": 30,
-                    "rest_seconds": 0,
-                    "equipment": "none",
-                    "muscle_group": "full body",
-                    "notes": "Hold and breathe deeply"
-                })
-
-        return stretches
+            raise  # No fallback - let errors propagate
 
     async def create_warmup_for_workout(
         self,

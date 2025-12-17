@@ -18,7 +18,7 @@ import json
 
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 
 settings = get_settings()
 
@@ -37,8 +37,8 @@ class WorkoutFeedbackRAGService:
 
     COLLECTION_NAME = "workout_performance_feedback"
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
 
         # Get Chroma Cloud client
         self.chroma_client = get_chroma_cloud_client()
@@ -116,7 +116,7 @@ class WorkoutFeedbackRAGService:
         )
 
         # Get embedding
-        embedding = await self.openai_service.get_embedding(session_text)
+        embedding = await self.gemini_service.get_embedding(session_text)
 
         # Upsert to collection
         try:
@@ -223,7 +223,7 @@ class WorkoutFeedbackRAGService:
 
         # Search for sessions containing this exercise
         query = f"Exercise: {exercise_name}"
-        query_embedding = await self.openai_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding(query)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -390,7 +390,7 @@ Total Volume: {current_session.get('total_volume_kg', 0):.1f} kg
 
 
 async def generate_workout_feedback(
-    openai_service: OpenAIService,
+    gemini_service: GeminiService,
     rag_service: WorkoutFeedbackRAGService,
     user_id: str,
     current_session: Dict[str, Any],
@@ -399,7 +399,7 @@ async def generate_workout_feedback(
     Generate AI Coach feedback for a completed workout.
 
     Args:
-        openai_service: OpenAI service for LLM
+        gemini_service: Gemini service for LLM
         rag_service: Workout feedback RAG service
         user_id: User ID
         current_session: Current workout session data
@@ -427,7 +427,7 @@ async def generate_workout_feedback(
         current_session, past_sessions, weight_progressions
     )
 
-    # Generate feedback using OpenAI
+    # Generate feedback using Gemini
     system_prompt = """You are a supportive AI Fitness Coach providing short, personalized feedback after a workout.
 
 IMPORTANT RULES:
@@ -455,8 +455,8 @@ DO NOT:
 
 Remember: Be specific, encouraging, and brief!"""
 
-    # Call OpenAI using the chat method
-    feedback = await openai_service.chat(
+    # Call Gemini using the chat method
+    feedback = await gemini_service.chat(
         user_message=user_prompt,
         system_prompt=system_prompt,
     )

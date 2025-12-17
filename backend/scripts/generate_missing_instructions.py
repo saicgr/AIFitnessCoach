@@ -1,7 +1,7 @@
 """
 Script to generate AI instructions for exercises missing them.
 
-Uses GPT-4o-mini for cost efficiency (~$0.02 for 89 exercises).
+Uses Gemini for cost efficiency.
 
 Usage:
     cd backend
@@ -19,7 +19,8 @@ BACKEND_DIR = os.path.dirname(SCRIPT_DIR)
 # Add backend directory to path for imports
 sys.path.insert(0, BACKEND_DIR)
 
-from openai import OpenAI
+from google import genai
+from google.genai import types
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -32,17 +33,18 @@ print(f"Loading .env from: {env_path}")
 # Initialize clients
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not all([SUPABASE_URL, SUPABASE_KEY, OPENAI_API_KEY]):
+if not all([SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY]):
     print("❌ Missing required environment variables")
     print(f"   SUPABASE_URL: {'✓' if SUPABASE_URL else '✗'}")
     print(f"   SUPABASE_KEY: {'✓' if SUPABASE_KEY else '✗'}")
-    print(f"   OPENAI_API_KEY: {'✓' if OPENAI_API_KEY else '✗'}")
+    print(f"   GEMINI_API_KEY: {'✓' if GEMINI_API_KEY else '✗'}")
     sys.exit(1)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
+model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 
 def get_exercises_missing_instructions() -> List[Dict]:
@@ -55,14 +57,16 @@ def get_exercises_missing_instructions() -> List[Dict]:
 
 
 def generate_instructions(exercise: Dict) -> str:
-    """Generate exercise instructions using GPT-4o-mini."""
+    """Generate exercise instructions using Gemini."""
     exercise_name = exercise.get("exercise_name", "Unknown Exercise")
     body_part = exercise.get("body_part", "")
     equipment = exercise.get("equipment", "")
     target_muscle = exercise.get("target_muscle", "")
     secondary_muscles = exercise.get("secondary_muscles", [])
 
-    prompt = f"""Generate clear, step-by-step exercise instructions for: {exercise_name}
+    prompt = f"""You are a certified personal trainer. Provide clear, safe exercise instructions.
+
+Generate clear, step-by-step exercise instructions for: {exercise_name}
 
 Exercise Details:
 - Body Part: {body_part}
@@ -78,20 +82,16 @@ Provide 4-6 numbered steps that are:
 
 Format: Just the numbered steps, no headers or extra text."""
 
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a certified personal trainer. Provide clear, safe exercise instructions."
-            },
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=400,
-        temperature=0.7
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            max_output_tokens=400,
+            temperature=0.7,
+        ),
     )
 
-    return response.choices[0].message.content.strip()
+    return response.text.strip()
 
 
 def update_exercise_instructions(exercise_id: int, instructions: str) -> bool:
@@ -115,7 +115,7 @@ def main():
         return
 
     print(f"📝 Found {len(exercises)} exercises missing instructions")
-    print(f"💰 Estimated cost: ~${len(exercises) * 0.00025:.2f} (GPT-4o-mini)")
+    print(f"💰 Using Gemini for cost-effective generation")
     print()
 
     # Process each exercise

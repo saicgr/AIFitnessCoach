@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 
 settings = get_settings()
 
@@ -28,8 +28,8 @@ class RAGService:
     This makes responses more accurate over time!
     """
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
 
         # Get Chroma Cloud client
         self.chroma_client = get_chroma_cloud_client()
@@ -63,8 +63,8 @@ class RAGService:
         # Create combined text for embedding
         combined_text = f"Q: {question}\nA: {answer}"
 
-        # Get embedding from OpenAI
-        embedding = await self.openai_service.get_embedding(combined_text)
+        # Get embedding from Gemini
+        embedding = await self.gemini_service.get_embedding(combined_text)
 
         # Store in ChromaDB
         self.collection.add(
@@ -108,7 +108,7 @@ class RAGService:
         n_results = n_results or settings.rag_top_k
 
         # Get query embedding
-        query_embedding = await self.openai_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding(query)
 
         # Build where filter
         where_filter = {}
@@ -193,8 +193,8 @@ class WorkoutRAGService:
     3. Provide personalized advice based on workout history
     """
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
 
         # Get Chroma Cloud client
         self.chroma_client = get_chroma_cloud_client()
@@ -257,7 +257,7 @@ class WorkoutRAGService:
         )
 
         # Get embedding
-        embedding = await self.openai_service.get_embedding(workout_text)
+        embedding = await self.gemini_service.get_embedding(workout_text)
 
         # Upsert to collection (update if exists)
         try:
@@ -318,7 +318,7 @@ class WorkoutRAGService:
         change_text += f" via {change_source}"
 
         # Get embedding
-        embedding = await self.openai_service.get_embedding(change_text)
+        embedding = await self.gemini_service.get_embedding(change_text)
 
         self.changes_collection.add(
             ids=[doc_id],
@@ -361,7 +361,7 @@ class WorkoutRAGService:
             return []
 
         # Get query embedding
-        query_embedding = await self.openai_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding(query)
 
         # Build where filter
         where_filter = {}
@@ -521,7 +521,7 @@ class WorkoutRAGService:
 
         # Get embedding
         try:
-            embedding = await self.openai_service.get_embedding(pref_text)
+            embedding = await self.gemini_service.get_embedding(pref_text)
 
             # Add to changes collection (reusing existing collection for preference changes)
             self.changes_collection.add(
@@ -568,8 +568,8 @@ class NutritionRAGService:
     3. Provide personalized nutrition advice based on food history
     """
 
-    def __init__(self, openai_service: OpenAIService):
-        self.openai_service = openai_service
+    def __init__(self, gemini_service: GeminiService):
+        self.gemini_service = gemini_service
 
         # Get Chroma Cloud client
         self.chroma_client = get_chroma_cloud_client()
@@ -634,7 +634,7 @@ class NutritionRAGService:
         )
 
         # Get embedding
-        embedding = await self.openai_service.get_embedding(food_text)
+        embedding = await self.gemini_service.get_embedding(food_text)
 
         # Upsert to collection (update if exists)
         try:
@@ -686,7 +686,7 @@ class NutritionRAGService:
             return []
 
         # Get query embedding
-        query_embedding = await self.openai_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding(query)
 
         # Build where filter
         where_filter = {}

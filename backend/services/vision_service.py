@@ -1,5 +1,5 @@
 """
-Vision Service for analyzing food images using GPT-4o-mini Vision.
+Vision Service for analyzing food images using Gemini Vision.
 
 This service handles:
 - Food image analysis for nutrition estimation
@@ -8,9 +8,11 @@ This service handles:
 """
 
 import json
+import base64
 from datetime import datetime
 from typing import Optional
-from openai import AsyncOpenAI
+from google import genai
+from google.genai import types
 
 from core.config import get_settings
 from core.logger import get_logger
@@ -18,13 +20,15 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 settings = get_settings()
 
+# Initialize Gemini client
+client = genai.Client(api_key=settings.gemini_api_key)
+
 
 class VisionService:
-    """Service for analyzing images using GPT-4o-mini Vision."""
+    """Service for analyzing images using Gemini Vision."""
 
     def __init__(self):
-        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
-        self.model = "gpt-4o-mini"  # Cost-effective vision model
+        self.model = settings.gemini_model
 
     def _get_suggested_meal_type(self) -> str:
         """Determine likely meal type based on current time."""
@@ -97,35 +101,33 @@ Guidelines:
 - Include fiber estimate if vegetables/whole grains are present"""
 
         try:
-            logger.info(f"🍽️ Analyzing food image with {self.model}")
+            logger.info(f"🍽️ Analyzing food image with Gemini")
 
-            response = await self.client.chat.completions.create(
+            # Decode base64 image data
+            image_bytes = base64.b64decode(image_base64)
+
+            # Create image part for Gemini using the new SDK
+            image_part = types.Part.from_bytes(
+                data=image_bytes,
+                mime_type="image/jpeg"
+            )
+
+            # Generate content with image
+            response = await client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{image_base64}",
-                                    "detail": "low",  # Use low detail for faster/cheaper analysis
-                                },
-                            },
-                        ],
-                    }
-                ],
-                max_tokens=1000,
-                temperature=0.3,  # Lower temperature for more consistent nutrition estimates
+                contents=[prompt, image_part],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=3000,  # Increased for thinking models
+                    temperature=0.3,  # Lower temperature for more consistent nutrition estimates
+                ),
             )
 
             # Parse the response
-            content = response.choices[0].message.content
+            content = response.text.strip()
             logger.info(f"✅ Vision API response received")
 
             # Clean up the response (remove markdown code blocks if present)
-            content = content.strip()
             if content.startswith("```json"):
                 content = content[7:]
             if content.startswith("```"):

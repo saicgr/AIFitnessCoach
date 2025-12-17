@@ -10,7 +10,7 @@ from typing import Dict, Any, Literal
 from .state import HydrationAgentState
 from ..personality import build_personality_prompt
 from models.chat import AISettings, CoachIntent
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -152,7 +152,7 @@ async def hydration_log_node(state: HydrationAgentState) -> Dict[str, Any]:
     if amount == 0:
         amount = 1  # Default to 1 glass
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     context_parts = []
 
@@ -184,7 +184,7 @@ Keep it short and refreshing! Don't be too long-winded."""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,
@@ -214,7 +214,7 @@ async def hydration_advice_node(state: HydrationAgentState) -> Dict[str, Any]:
     """
     logger.info("[Hydration Advice] Generating hydration advice...")
 
-    openai_service = OpenAIService()
+    gemini_service = GeminiService()
 
     context_parts = []
 
@@ -245,7 +245,7 @@ Be refreshing, upbeat, and practical!"""
         for msg in state.get("conversation_history", [])
     ]
 
-    response = await openai_service.chat(
+    response = await gemini_service.chat(
         user_message=state["user_message"],
         system_prompt=system_prompt,
         conversation_history=conversation_history,

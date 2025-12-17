@@ -6,7 +6,7 @@ Uses ChromaDB (via ExerciseRAGService) for semantic search of exercises.
 import json
 from typing import Dict, Any, List
 
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from .state import ExerciseSuggestionState
@@ -14,7 +14,7 @@ from core.config import get_settings
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
 from services.exercise_rag_service import get_exercise_rag_service
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -72,10 +72,10 @@ async def analyze_request_node(state: ExerciseSuggestionState) -> Dict[str, Any]
     current_exercise = state.get("current_exercise", {})
     user_message = state.get("user_message", "")
 
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
         temperature=0,
-        api_key=settings.openai_api_key,
+        google_api_key=settings.gemini_api_key,
     )
 
     system_prompt = """You are an exercise analysis assistant. Analyze the user's request to swap an exercise.
@@ -158,7 +158,7 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
     try:
         # Get the RAG service (uses ChromaDB)
         rag_service = get_exercise_rag_service()
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
 
         # Build a semantic search query based on user's request
         search_parts = []
@@ -190,7 +190,7 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         logger.info(f"[Search Node] Semantic search query: {search_query[:100]}...")
 
         # Get embedding for the search query
-        query_embedding = await openai_service.get_embedding(search_query)
+        query_embedding = gemini_service.get_embedding(search_query)
 
         # Search ChromaDB for similar exercises
         results = rag_service.collection.query(
@@ -291,10 +291,10 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
             "response_message": "I couldn't find any suitable alternatives in the exercise library. Try browsing manually or adjusting your preferences.",
         }
 
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGoogleGenerativeAI(
+        model=settings.gemini_model,
         temperature=0.3,
-        api_key=settings.openai_api_key,
+        google_api_key=settings.gemini_api_key,
     )
 
     # Format candidates for AI
@@ -407,12 +407,4 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
 
     except Exception as e:
         logger.error(f"[Generate Node] Error: {e}")
-        # Return candidates without AI ranking
-        fallback_suggestions = [
-            {**c, "reason": "Similar muscle group exercise", "tip": ""}
-            for c in candidates[:5]
-        ]
-        return {
-            "suggestions": fallback_suggestions,
-            "response_message": "Here are some alternatives based on muscle group:",
-        }
+        raise  # No fallback - let errors propagate

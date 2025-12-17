@@ -14,7 +14,7 @@ import json
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-from services.openai_service import OpenAIService
+from services.gemini_service import GeminiService
 from models.schemas import (
     WeeklySummary, WeeklySummaryCreate,
     NotificationPreferences, NotificationPreferencesUpdate
@@ -40,7 +40,7 @@ async def generate_weekly_summary(user_id: str, week_start: Optional[str] = None
 
     try:
         db = get_supabase_db()
-        openai_service = OpenAIService()
+        gemini_service = GeminiService()
 
         # Determine week dates
         if week_start:
@@ -73,7 +73,7 @@ async def generate_weekly_summary(user_id: str, week_start: Optional[str] = None
 
         # Generate AI content
         ai_content = await _generate_ai_summary(
-            openai_service, user_name, stats, start_date, end_date
+            gemini_service, user_name, stats, start_date, end_date
         )
 
         # Create the summary record
@@ -397,7 +397,7 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
 
 
 async def _generate_ai_summary(
-    openai_service, user_name: str, stats: dict, start_date: date, end_date: date
+    gemini_service, user_name: str, stats: dict, start_date: date, end_date: date
 ) -> dict:
     """Generate AI-powered summary content."""
 
@@ -429,13 +429,10 @@ If they missed workouts, be supportive not critical.
 Respond ONLY with valid JSON, no markdown."""
 
     try:
-        response = await openai_service.chat_completion(
-            messages=[{"role": "user", "content": prompt}],
-            model="gpt-4o-mini",
-            temperature=0.7
+        content = await gemini_service.chat(
+            user_message=prompt,
+            system_prompt="You are a supportive AI fitness coach. Respond with valid JSON only.",
         )
-
-        content = response.get("content", "")
 
         # Parse JSON response
         import re

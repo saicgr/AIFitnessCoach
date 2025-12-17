@@ -1,7 +1,7 @@
 """
 Tests for Coach Service.
 
-Tests the main orchestration layer that coordinates OpenAI and RAG.
+Tests the main orchestration layer that coordinates Gemini and RAG.
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
