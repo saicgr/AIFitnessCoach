@@ -330,8 +330,8 @@ class ExerciseRAGService:
         # Build search query based on user profile
         search_query = self._build_search_query(focus_area, equipment, fitness_level, goals)
 
-        # Get embedding for the search query
-        query_embedding = await self.gemini_service.get_embedding(search_query)
+        # Get embedding for the search query (use async version)
+        query_embedding = await self.gemini_service.get_embedding_async(search_query)
 
         # Search for candidate exercises (get more than needed for AI to choose from)
         candidate_count = min(count * 4, 30)

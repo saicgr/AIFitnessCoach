@@ -116,7 +116,7 @@ class WorkoutFeedbackRAGService:
         )
 
         # Get embedding
-        embedding = await self.gemini_service.get_embedding(session_text)
+        embedding = await self.gemini_service.get_embedding_async(session_text)
 
         # Upsert to collection
         try:
@@ -223,7 +223,7 @@ class WorkoutFeedbackRAGService:
 
         # Search for sessions containing this exercise
         query = f"Exercise: {exercise_name}"
-        query_embedding = await self.gemini_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding_async(query)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],

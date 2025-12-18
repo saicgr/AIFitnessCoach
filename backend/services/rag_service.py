@@ -64,7 +64,7 @@ class RAGService:
         combined_text = f"Q: {question}\nA: {answer}"
 
         # Get embedding from Gemini
-        embedding = await self.gemini_service.get_embedding(combined_text)
+        embedding = await self.gemini_service.get_embedding_async(combined_text)
 
         # Store in ChromaDB
         self.collection.add(
@@ -108,7 +108,7 @@ class RAGService:
         n_results = n_results or settings.rag_top_k
 
         # Get query embedding
-        query_embedding = await self.gemini_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding_async(query)
 
         # Build where filter
         where_filter = {}
@@ -257,7 +257,7 @@ class WorkoutRAGService:
         )
 
         # Get embedding
-        embedding = await self.gemini_service.get_embedding(workout_text)
+        embedding = await self.gemini_service.get_embedding_async(workout_text)
 
         # Upsert to collection (update if exists)
         try:
@@ -318,7 +318,7 @@ class WorkoutRAGService:
         change_text += f" via {change_source}"
 
         # Get embedding
-        embedding = await self.gemini_service.get_embedding(change_text)
+        embedding = await self.gemini_service.get_embedding_async(change_text)
 
         self.changes_collection.add(
             ids=[doc_id],
@@ -361,7 +361,7 @@ class WorkoutRAGService:
             return []
 
         # Get query embedding
-        query_embedding = await self.gemini_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding_async(query)
 
         # Build where filter
         where_filter = {}
@@ -521,7 +521,7 @@ class WorkoutRAGService:
 
         # Get embedding
         try:
-            embedding = await self.gemini_service.get_embedding(pref_text)
+            embedding = await self.gemini_service.get_embedding_async(pref_text)
 
             # Add to changes collection (reusing existing collection for preference changes)
             self.changes_collection.add(
@@ -634,7 +634,7 @@ class NutritionRAGService:
         )
 
         # Get embedding
-        embedding = await self.gemini_service.get_embedding(food_text)
+        embedding = await self.gemini_service.get_embedding_async(food_text)
 
         # Upsert to collection (update if exists)
         try:
@@ -686,7 +686,7 @@ class NutritionRAGService:
             return []
 
         # Get query embedding
-        query_embedding = await self.gemini_service.get_embedding(query)
+        query_embedding = await self.gemini_service.get_embedding_async(query)
 
         # Build where filter
         where_filter = {}

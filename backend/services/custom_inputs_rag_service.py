@@ -66,7 +66,7 @@ class CustomInputsRAGService:
             text = self._build_input_text(input_type, input_value, normalized_value)
 
             # Get embedding
-            embedding = await self.gemini_service.get_embedding(text)
+            embedding = await self.gemini_service.get_embedding_async(text)
 
             # Prepare metadata
             metadata = {
@@ -234,7 +234,7 @@ class CustomInputsRAGService:
         """
         try:
             # Get embedding for query
-            query_embedding = await self.gemini_service.get_embedding(query)
+            query_embedding = await self.gemini_service.get_embedding_async(query)
 
             # Build where filter if type specified
             where_filter = None
