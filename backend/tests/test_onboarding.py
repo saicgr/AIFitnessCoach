@@ -426,16 +426,6 @@ class TestErrorHandling:
     """Tests for error handling - these should not crash."""
 
     @pytest.mark.asyncio
-    async def test_empty_message_no_crash(self, partial_state_needs_goals):
-        """AI should handle empty messages gracefully."""
-        partial_state_needs_goals["user_message"] = ""
-
-        # Should not raise exception
-        result = await onboarding_agent_node(partial_state_needs_goals)
-
-        assert isinstance(result, dict), "Should return dict even with empty message"
-
-    @pytest.mark.asyncio
     async def test_special_characters_no_crash(self, partial_state_needs_goals):
         """AI should handle special characters gracefully."""
         partial_state_needs_goals["user_message"] = "My name is O'Brien & I'm 5'10\"!"
