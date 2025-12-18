@@ -13,6 +13,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/health_service.dart';
@@ -557,6 +558,9 @@ class SettingsScreen extends ConsumerWidget {
       if (context.mounted) Navigator.pop(context);
 
       if (response.statusCode == 200) {
+        // Reset onboarding state (clear in-memory conversation)
+        ref.read(onboardingStateProvider.notifier).reset();
+
         // Navigate to onboarding
         if (context.mounted) {
           context.go('/onboarding');
@@ -622,6 +626,10 @@ class SettingsScreen extends ConsumerWidget {
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
         debugPrint('✅ Local storage cleared');
+
+        // Reset onboarding state (clear in-memory conversation)
+        ref.read(onboardingStateProvider.notifier).reset();
+        debugPrint('✅ Onboarding state reset');
 
         // Sign out
         await ref.read(authStateProvider.notifier).signOut();
