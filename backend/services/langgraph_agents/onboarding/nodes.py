@@ -174,16 +174,18 @@ async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
 
 async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     """
-    AI decides what question to ask next (NO HARDCODED QUESTIONS).
+    AI decides what question to ask next.
 
-    The AI generates natural, context-aware questions based on:
-    - What data has been collected
-    - What's still missing
-    - The user's last message
+    OPTIMIZATION: For simple fields with quick replies (like workout_duration,
+    days_per_week), we skip the LLM call and use pre-defined responses.
+    This makes onboarding much faster.
 
-    Can ask clarifying questions if user is vague.
+    We only call the LLM for:
+    - Initial greeting / first message
+    - Complex fields that need natural conversation (name, goals intro)
+    - When we need clarification
     """
-    logger.info("[Onboarding Agent] AI generating next question...")
+    logger.info("[Onboarding Agent] Generating next question...")
 
     collected = state.get("collected_data", {})
     missing = state.get("missing_fields", [])
@@ -191,6 +193,63 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     # Ensure user_message is a string (LangGraph state might accumulate to list)
     user_message = ensure_string(state.get("user_message", ""))
+
+    # Get user's name for personalization
+    user_name = collected.get("name", "")
+
+    # Get next field to collect
+    next_field = None
+    for field in FIELD_ORDER:
+        if field in missing:
+            next_field = field
+            break
+
+    logger.info(f"[Onboarding Agent] Next field: {next_field}, Missing: {missing}")
+
+    # FAST PATH: Use pre-defined responses for simple fields
+    # This skips the LLM call entirely for predictable questions
+    fast_responses = {
+        "goals": f"What are your fitness goals{', ' + user_name if user_name else ''}?",
+        "equipment": f"What equipment do you have access to{', ' + user_name if user_name else ''}?",
+        "fitness_level": f"How would you describe your current fitness level?",
+        "days_per_week": f"How many days per week would you like to work out?",
+        "selected_days": f"Which days of the week work best for you?",
+        "workout_duration": f"How long would you like each workout to be?",
+    }
+
+    # Check if we can use fast path
+    if next_field in fast_responses:
+        logger.info(f"[Onboarding Agent] ⚡ FAST PATH: Using pre-defined response for {next_field}")
+        response_content = fast_responses[next_field]
+
+        # Determine quick replies
+        quick_replies = None
+        component = None
+        multi_select_fields = ["goals", "equipment"]
+        is_multi_select = False
+        free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
+
+        if next_field in free_text_fields:
+            pass  # No quick replies
+        elif next_field == "selected_days":
+            component = "day_picker"
+        elif next_field in QUICK_REPLIES:
+            quick_replies = QUICK_REPLIES[next_field]
+            is_multi_select = next_field in multi_select_fields
+
+        logger.info(f"[Onboarding Agent] ✅ Fast response: {response_content}")
+
+        return {
+            "messages": [],
+            "next_question": response_content,
+            "final_response": response_content,
+            "quick_replies": quick_replies,
+            "multi_select": is_multi_select,
+            "component": component,
+        }
+
+    # SLOW PATH: Call LLM for complex/conversational responses
+    logger.info(f"[Onboarding Agent] 🐌 SLOW PATH: Calling LLM for {next_field}")
 
     # Build system prompt with context
     system_prompt = ONBOARDING_AGENT_SYSTEM_PROMPT.format(

@@ -139,19 +139,7 @@ class _DayPickerState extends State<DayPicker> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 12),
-
-          // Selected days preview
-          if (_selectedDays.isNotEmpty)
-            Text(
-              'Selected: ${_selectedDays.toList()..sort()..map((d) => _days[d].full).join(', ')}',
-              style: TextStyle(
-                fontSize: 11,
-                color: colors.textMuted,
-              ),
-            ),
-
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Confirm button
           GestureDetector(
