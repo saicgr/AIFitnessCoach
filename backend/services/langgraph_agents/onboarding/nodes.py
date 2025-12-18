@@ -24,6 +24,23 @@ from services.training_program_service import get_training_program_map_sync
 logger = get_logger(__name__)
 settings = get_settings()
 
+
+def ensure_string(value: Any) -> str:
+    """
+    Ensure a value is a string.
+
+    LangGraph state can sometimes accumulate values into lists.
+    This helper ensures we always work with a string.
+    """
+    if isinstance(value, list):
+        logger.warning(f"[ensure_string] Value was a list: {value}")
+        return " ".join(str(item) for item in value) if value else ""
+    elif not isinstance(value, str):
+        logger.warning(f"[ensure_string] Value was {type(value)}: {value}")
+        return str(value) if value else ""
+    return value
+
+
 # Non-gym activity patterns - activities that don't require gym workouts
 NON_GYM_ACTIVITIES = {
     # Walking/Steps
@@ -69,11 +86,7 @@ def detect_non_gym_activity(user_message) -> Optional[Dict[str, str]]:
         dict with 'activity' and 'complement' if detected, None otherwise
     """
     # Ensure user_message is a string
-    if isinstance(user_message, list):
-        user_message = " ".join(str(m) for m in user_message) if user_message else ""
-    elif not isinstance(user_message, str):
-        user_message = str(user_message) if user_message else ""
-
+    user_message = ensure_string(user_message)
     user_lower = user_message.lower().strip()
 
     # Check for explicit non-gym phrases
@@ -177,13 +190,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     history = state.get("conversation_history", [])
 
     # Ensure user_message is a string (LangGraph state might accumulate to list)
-    user_message = state["user_message"]
-    if isinstance(user_message, list):
-        logger.warning(f"[Onboarding Agent] user_message was a list: {user_message}")
-        user_message = " ".join(str(m) for m in user_message) if user_message else ""
-    elif not isinstance(user_message, str):
-        logger.warning(f"[Onboarding Agent] user_message was {type(user_message)}: {user_message}")
-        user_message = str(user_message) if user_message else ""
+    user_message = ensure_string(state.get("user_message", ""))
 
     # Build system prompt with context
     system_prompt = ONBOARDING_AGENT_SYSTEM_PROMPT.format(
@@ -431,15 +438,8 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     """
     logger.info("[Extract Data] Extracting data from user message...")
 
-    user_message = state["user_message"]
-
     # Ensure user_message is a string (LangGraph state might accumulate to list)
-    if isinstance(user_message, list):
-        logger.warning(f"[Extract Data] user_message was a list: {user_message}")
-        user_message = " ".join(str(m) for m in user_message) if user_message else ""
-    elif not isinstance(user_message, str):
-        logger.warning(f"[Extract Data] user_message was {type(user_message)}: {user_message}")
-        user_message = str(user_message) if user_message else ""
+    user_message = ensure_string(state.get("user_message", ""))
 
     collected_data = state.get("collected_data", {})
 
