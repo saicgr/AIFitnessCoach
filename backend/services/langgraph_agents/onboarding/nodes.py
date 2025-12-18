@@ -793,8 +793,11 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
         # If we extracted most/all expected data from a multi-info message, skip AI
         # Otherwise, let AI try to extract remaining data
-        if len(extracted) >= 3 or len(remaining_missing) == 0:
-            logger.info(f"[Extract Data] ✅ Pre-processing extracted {len(extracted)} fields, skipping AI")
+        # Also skip AI for simple/short messages (like just a number or single word)
+        is_simple_message = len(user_message.strip().split()) <= 2 or user_message.strip().isdigit()
+
+        if len(extracted) >= 3 or len(remaining_missing) == 0 or (len(extracted) >= 1 and is_simple_message):
+            logger.info(f"[Extract Data] ✅ Pre-processing extracted {len(extracted)} fields, skipping AI (simple_msg={is_simple_message})")
             return {
                 "collected_data": merged,
                 "validation_errors": {},
