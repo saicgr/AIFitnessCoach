@@ -4,7 +4,7 @@ Node implementations for the Onboarding LangGraph agent.
 AI-driven onboarding - no hardcoded questions!
 """
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
