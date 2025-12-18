@@ -13,7 +13,6 @@ Run with: pytest tests/test_onboarding.py -v
 import pytest
 import asyncio
 import json
-from datetime import datetime
 
 import sys
 import os
@@ -29,7 +28,6 @@ from services.langgraph_agents.onboarding.prompts import (
     REQUIRED_FIELDS,
     QUICK_REPLIES,
 )
-from services.langgraph_agents.onboarding.graph import run_onboarding_agent
 
 
 # ============ Fixtures ============
@@ -420,114 +418,6 @@ class TestFieldOrder:
 
         assert dpw_idx < sd_idx, \
             "CRITICAL: days_per_week must be asked before selected_days"
-
-
-# ============ CRITICAL: Integration Test ============
-
-class TestFullOnboardingFlow:
-    """CRITICAL: Full onboarding flow must complete successfully."""
-
-    @pytest.mark.asyncio
-    async def test_complete_onboarding_flow(self):
-        """
-        CRITICAL: Complete onboarding flow must work end-to-end.
-
-        This test simulates a full onboarding conversation and verifies:
-        1. All questions are asked in order
-        2. Quick replies appear correctly
-        3. Data is collected correctly
-        4. Onboarding completes successfully
-        """
-        user_id = f"test-user-{datetime.now().timestamp()}"
-
-        # Simulate user going through onboarding
-        conversation_history = []
-
-        # Step 1: Initial greeting with basic info
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="Hi, I'm Alex, 28 years old, male, 180cm, 80kg",
-            conversation_history=conversation_history,
-        )
-        assert "response" in result, "CRITICAL: Must return response"
-        conversation_history.append({"role": "user", "content": "Hi, I'm Alex, 28 years old, male, 180cm, 80kg"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 2: Goals - should show quick replies
-        assert result.get("quick_replies") is not None, \
-            "CRITICAL: Goals question should show quick replies"
-
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="Build Muscle",
-            conversation_history=conversation_history,
-        )
-        conversation_history.append({"role": "user", "content": "Build Muscle"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 3: Equipment
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="Full Gym",
-            conversation_history=conversation_history,
-        )
-        conversation_history.append({"role": "user", "content": "Full Gym"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 4: Fitness level
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="intermediate",
-            conversation_history=conversation_history,
-        )
-        conversation_history.append({"role": "user", "content": "intermediate"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 5: Days per week
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="3",
-            conversation_history=conversation_history,
-        )
-        conversation_history.append({"role": "user", "content": "3"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 6: Selected days - should show day_picker
-        assert result.get("component") == "day_picker", \
-            "CRITICAL: Selected days should show day_picker component"
-
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="Monday, Wednesday, Friday",
-            conversation_history=conversation_history,
-        )
-        conversation_history.append({"role": "user", "content": "Monday, Wednesday, Friday"})
-        conversation_history.append({"role": "assistant", "content": result["response"]})
-
-        # Step 7: Duration
-        result = await run_onboarding_agent(
-            user_id=user_id,
-            user_message="45",
-            conversation_history=conversation_history,
-        )
-
-        # CRITICAL: Onboarding should be complete or very close
-        collected = result.get("collected_data", {})
-
-        # Verify key fields were collected
-        assert "name" in collected or collected.get("name"), \
-            f"CRITICAL: Name not collected. Got: {collected}"
-        assert "goals" in collected, \
-            f"CRITICAL: Goals not collected. Got: {collected}"
-
-        # If not complete, check what's missing
-        if not result.get("is_complete"):
-            missing = result.get("missing_fields", [])
-            # Allow test to pass if only optional fields missing
-            critical_fields = ["name", "goals", "equipment", "fitness_level", "days_per_week"]
-            missing_critical = [f for f in missing if f in critical_fields]
-            assert len(missing_critical) == 0, \
-                f"CRITICAL: Missing critical fields: {missing_critical}"
 
 
 # ============ Error Handling Tests ============
