@@ -11,3 +11,5 @@ sleep 30
 
 # Check devices
 ~/Library/Android/sdk/platform-tools/adb devices
+
+/opt/homebrew/bin/flutter build apk --debug 2>&1

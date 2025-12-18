@@ -288,9 +288,9 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Note: Be more specific to avoid false positives from acknowledgment phrases like "your goals"
     # Only match if the question is specifically ASKING about goals
     is_asking_goals = any(keyword in question_lower for keyword in [
-        "what are your goals", "your goals?", "fitness goals?", "main goals",
-        "what goals", "which goals", "looking to achieve?", "want to achieve?"
-    ]) or "goals?" in question_lower
+        "what are your goals", "your goals?", "fitness goals", "main goals",
+        "what goals", "which goals", "looking to achieve", "want to achieve"
+    ]) and "?" in question_lower
 
     # Check if AI is asking about fitness level
     # Note: Be specific - "fitness level" is the key phrase, not generic words like "experience"
