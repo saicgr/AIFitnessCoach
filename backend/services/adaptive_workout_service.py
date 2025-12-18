@@ -233,9 +233,10 @@ class AdaptiveWorkoutService:
             # Note: metadata column may not exist in all deployments
             two_weeks_ago = (datetime.now() - timedelta(days=14)).isoformat()
 
+            # Note: workout_logs table uses 'completed_at', not 'created_at'
             logs_response = self.supabase.table("workout_logs").select(
-                "id, total_time_seconds, created_at"
-            ).eq("user_id", user_id).gte("created_at", two_weeks_ago).execute()
+                "id, total_time_seconds, completed_at"
+            ).eq("user_id", user_id).gte("completed_at", two_weeks_ago).execute()
 
             logs = logs_response.data if logs_response.data else []
 

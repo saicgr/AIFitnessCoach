@@ -5,7 +5,8 @@ These tests MUST PASS before deployment. They verify:
 1. Workout generation API works correctly
 2. Exercise selection works
 3. Adaptive parameters are calculated
-4. NO FALLBACKS - tests fail if generation doesn't work
+4. Database queries use correct column names
+5. NO FALLBACKS - tests fail if generation doesn't work
 
 Run with: pytest tests/test_workout_generation.py -v
 """
@@ -13,6 +14,7 @@ import pytest
 import asyncio
 import json
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import sys
 import os
@@ -39,7 +41,7 @@ class TestExerciseRAG:
         service = get_exercise_rag_service()
 
         exercises = await service.select_exercises_for_workout(
-            workout_type="full_body",
+            focus_area="full_body",
             equipment=["Full Gym"],
             fitness_level="intermediate",
             goals=["Build Muscle"],
@@ -56,7 +58,7 @@ class TestExerciseRAG:
         service = get_exercise_rag_service()
 
         exercises = await service.select_exercises_for_workout(
-            workout_type="upper_body",
+            focus_area="upper",
             equipment=["Dumbbells"],
             fitness_level="beginner",
             goals=["Build Muscle"],
@@ -77,7 +79,7 @@ class TestExerciseRAG:
 
         # Select exercises with back injury
         exercises = await service.select_exercises_for_workout(
-            workout_type="full_body",
+            focus_area="full_body",
             equipment=["Full Gym"],
             fitness_level="intermediate",
             goals=["Build Muscle"],
@@ -90,7 +92,6 @@ class TestExerciseRAG:
 
         # Verify potentially dangerous exercises are filtered
         exercise_names = [e.get("name", "").lower() for e in exercises]
-        dangerous_exercises = ["deadlift", "good morning", "bent over row"]
 
         # At least check that the response is valid
         for name in exercise_names:
@@ -104,59 +105,58 @@ class TestAdaptiveWorkout:
 
     def test_adaptive_service_initializes(self):
         """CRITICAL: Adaptive workout service must initialize."""
-        service = AdaptiveWorkoutService(supabase=None)
+        service = AdaptiveWorkoutService(supabase_client=None)
         assert service is not None, "CRITICAL: Adaptive service must initialize"
 
-    def test_get_workout_focus_mapping(self):
-        """CRITICAL: Workout focus mapping must work."""
-        service = AdaptiveWorkoutService(supabase=None)
+    @pytest.mark.asyncio
+    async def test_get_adaptive_parameters_without_db(self):
+        """CRITICAL: Adaptive parameters must work without database."""
+        service = AdaptiveWorkoutService(supabase_client=None)
 
-        # Test full body split
-        focus_map = service.get_workout_focus_mapping("full_body", [0, 2, 4])
-        assert isinstance(focus_map, dict), "CRITICAL: Focus map must be dict"
+        # Should not crash without database connection
+        params = await service.get_adaptive_parameters(
+            user_id="test-user",
+            workout_type="hypertrophy",
+            user_goals=["Build Muscle"],
+        )
 
-        # Should map each day to a focus
-        for day in [0, 2, 4]:
-            assert day in focus_map, f"CRITICAL: Day {day} must have focus"
+        assert isinstance(params, dict), "CRITICAL: Must return dict"
+        assert "sets" in params, "CRITICAL: Must have sets"
+        assert "reps" in params, "CRITICAL: Must have reps"
+        assert "rest_seconds" in params, "CRITICAL: Must have rest_seconds"
+        assert params["sets"] > 0, "CRITICAL: Sets must be > 0"
+        assert params["reps"] > 0, "CRITICAL: Reps must be > 0"
 
-    def test_calculate_sets_reps(self):
-        """CRITICAL: Sets and reps calculation must work."""
-        service = AdaptiveWorkoutService(supabase=None)
+    def test_workout_structures_exist(self):
+        """CRITICAL: Workout structure templates must exist."""
+        service = AdaptiveWorkoutService(supabase_client=None)
 
-        # Test for different fitness levels
-        for level in ["beginner", "intermediate", "advanced"]:
-            params = service.calculate_sets_reps(level, "hypertrophy")
+        expected_types = ["strength", "hypertrophy", "endurance", "power", "hiit"]
+        for workout_type in expected_types:
+            assert workout_type in service.WORKOUT_STRUCTURES, \
+                f"CRITICAL: Missing structure for {workout_type}"
 
-            assert "sets" in params, f"CRITICAL: Must return sets for {level}"
-            assert "reps" in params, f"CRITICAL: Must return reps for {level}"
-            assert isinstance(params["sets"], int), "CRITICAL: Sets must be int"
-            assert isinstance(params["reps"], int), "CRITICAL: Reps must be int"
-            assert params["sets"] > 0, f"CRITICAL: Sets must be > 0 for {level}"
-            assert params["reps"] > 0, f"CRITICAL: Reps must be > 0 for {level}"
+            structure = service.WORKOUT_STRUCTURES[workout_type]
+            assert "sets" in structure, f"CRITICAL: {workout_type} missing sets"
+            assert "reps" in structure, f"CRITICAL: {workout_type} missing reps"
+            assert "rest_seconds" in structure, f"CRITICAL: {workout_type} missing rest_seconds"
 
-    def test_calculate_workout_focus(self):
-        """CRITICAL: Workout focus calculation must work."""
-        service = AdaptiveWorkoutService(supabase=None)
+    def test_map_focus_to_workout_type(self):
+        """CRITICAL: Focus area mapping must work."""
+        service = AdaptiveWorkoutService(supabase_client=None)
 
-        goals_to_focus = {
-            ["Build Muscle"]: "hypertrophy",
-            ["Lose Weight"]: "fat_loss",
-            ["Increase Strength"]: "strength",
-            ["Improve Endurance"]: "endurance",
-        }
+        # Test direct mappings
+        assert service._map_focus_to_workout_type("strength") == "strength"
+        assert service._map_focus_to_workout_type("hypertrophy") == "hypertrophy"
 
-        for goals, expected_focus in goals_to_focus.items():
-            focus = service.calculate_workout_focus(goals, "intermediate")
-
-            assert focus is not None, f"CRITICAL: Must return focus for goals {goals}"
-            # Just verify it returns a string
-            assert isinstance(focus, str), "CRITICAL: Focus must be string"
+        # Test goal-based mapping
+        assert service._map_focus_to_workout_type("full_body", ["Build Muscle"]) == "hypertrophy"
 
 
 # ============ CRITICAL: Database Query Tests ============
 
 class TestDatabaseQueries:
-    """CRITICAL TESTS: Database queries must not fail."""
+    """CRITICAL TESTS: Database queries must use correct column names."""
 
     @pytest.mark.asyncio
     async def test_adaptive_params_no_metadata_error(self):
@@ -166,19 +166,57 @@ class TestDatabaseQueries:
         This was a regression where the code queried for a non-existent
         'metadata' column in workout_logs table.
         """
-        service = AdaptiveWorkoutService(supabase=None)
+        service = AdaptiveWorkoutService(supabase_client=None)
 
-        # Should not crash even without database connection
-        # The service should handle None supabase gracefully
-        try:
-            result = await service.get_performance_context("test-user")
-            # Should return empty dict when no supabase
-            assert result == {} or isinstance(result, dict), \
-                "CRITICAL: Must return dict when no database"
-        except Exception as e:
-            # Should not raise "column does not exist" error
-            assert "metadata does not exist" not in str(e), \
-                f"CRITICAL: Must not query non-existent metadata column: {e}"
+        # Should not crash without database connection
+        result = await service.get_performance_context("test-user")
+        # Should return empty dict when no supabase
+        assert result == {}, "CRITICAL: Must return empty dict when no database"
+
+    @pytest.mark.asyncio
+    async def test_performance_context_uses_completed_at(self):
+        """
+        CRITICAL: Performance context must use 'completed_at' not 'created_at'.
+
+        The workout_logs table has 'completed_at', not 'created_at'.
+        This test ensures we're using the correct column name.
+        """
+        # Create a mock supabase client that tracks query calls
+        mock_supabase = MagicMock()
+        mock_table = MagicMock()
+        mock_select = MagicMock()
+        mock_eq = MagicMock()
+        mock_gte = MagicMock()
+        mock_execute = MagicMock()
+
+        # Chain the mock calls
+        mock_supabase.table.return_value = mock_table
+        mock_table.select.return_value = mock_select
+        mock_select.eq.return_value = mock_eq
+        mock_eq.gte.return_value = mock_gte
+        mock_gte.execute.return_value = MagicMock(data=[])
+
+        service = AdaptiveWorkoutService(supabase_client=mock_supabase)
+
+        # Call the method
+        await service.get_performance_context("test-user")
+
+        # Verify workout_logs query uses 'completed_at'
+        if mock_supabase.table.called:
+            table_calls = mock_supabase.table.call_args_list
+            for call in table_calls:
+                table_name = call[0][0]
+                if table_name == "workout_logs":
+                    # Check the select call for the correct columns
+                    select_call = mock_table.select.call_args
+                    if select_call:
+                        columns = select_call[0][0]
+                        # Should NOT contain 'created_at'
+                        assert "created_at" not in columns, \
+                            "CRITICAL: workout_logs query should use 'completed_at', not 'created_at'"
+                        # Should contain 'completed_at'
+                        assert "completed_at" in columns, \
+                            "CRITICAL: workout_logs query must use 'completed_at' column"
 
 
 # ============ CRITICAL: Workout Structure Tests ============
@@ -192,7 +230,7 @@ class TestWorkoutStructure:
         service = get_exercise_rag_service()
 
         exercises = await service.select_exercises_for_workout(
-            workout_type="full_body",
+            focus_area="full_body",
             equipment=["Full Gym"],
             fitness_level="intermediate",
             goals=["Build Muscle"],
@@ -209,7 +247,7 @@ class TestWorkoutStructure:
 
         for count in [4, 6, 8]:
             exercises = await service.select_exercises_for_workout(
-                workout_type="full_body",
+                focus_area="full_body",
                 equipment=["Full Gym"],
                 fitness_level="intermediate",
                 goals=["Build Muscle"],
@@ -221,6 +259,53 @@ class TestWorkoutStructure:
                 f"CRITICAL: Requested {count} exercises, got only {len(exercises)}"
             assert len(exercises) <= count + 2, \
                 f"CRITICAL: Requested {count} exercises, got too many ({len(exercises)})"
+
+
+# ============ CRITICAL: Return Type Tests ============
+
+class TestReturnTypes:
+    """CRITICAL TESTS: Functions must return correct types (no await errors)."""
+
+    @pytest.mark.asyncio
+    async def test_select_exercises_returns_list(self):
+        """
+        CRITICAL: select_exercises_for_workout must return a list, not a coroutine.
+
+        This prevents 'object list can't be used in await' errors.
+        """
+        service = get_exercise_rag_service()
+
+        result = await service.select_exercises_for_workout(
+            focus_area="full_body",
+            equipment=["Full Gym"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=4,
+        )
+
+        # Must be a list, not a coroutine or awaitable
+        assert isinstance(result, list), \
+            "CRITICAL: select_exercises_for_workout must return a list"
+        assert not asyncio.iscoroutine(result), \
+            "CRITICAL: Result should be resolved, not a coroutine"
+
+    @pytest.mark.asyncio
+    async def test_adaptive_params_returns_dict(self):
+        """
+        CRITICAL: get_adaptive_parameters must return a dict, not a coroutine.
+        """
+        service = AdaptiveWorkoutService(supabase_client=None)
+
+        result = await service.get_adaptive_parameters(
+            user_id="test-user",
+            workout_type="hypertrophy",
+        )
+
+        # Must be a dict, not a coroutine
+        assert isinstance(result, dict), \
+            "CRITICAL: get_adaptive_parameters must return a dict"
+        assert not asyncio.iscoroutine(result), \
+            "CRITICAL: Result should be resolved, not a coroutine"
 
 
 # ============ Edge Case Tests ============
@@ -236,7 +321,7 @@ class TestEdgeCases:
         # Should not crash with empty equipment
         try:
             exercises = await service.select_exercises_for_workout(
-                workout_type="full_body",
+                focus_area="full_body",
                 equipment=[],
                 fitness_level="beginner",
                 goals=["General Fitness"],
@@ -255,7 +340,7 @@ class TestEdgeCases:
 
         try:
             exercises = await service.select_exercises_for_workout(
-                workout_type="full_body",
+                focus_area="full_body",
                 equipment=["Full Gym"],
                 fitness_level="beginner",
                 goals=[],
@@ -273,7 +358,7 @@ class TestEdgeCases:
 
         try:
             exercises = await service.select_exercises_for_workout(
-                workout_type="unknown_type_xyz",
+                focus_area="unknown_type_xyz",
                 equipment=["Full Gym"],
                 fitness_level="intermediate",
                 goals=["Build Muscle"],
@@ -285,15 +370,17 @@ class TestEdgeCases:
             # Acceptable to raise error for unknown type
             pass
 
-    def test_adaptive_params_all_fitness_levels(self):
-        """Should calculate params for all fitness levels."""
-        service = AdaptiveWorkoutService(supabase=None)
+    @pytest.mark.asyncio
+    async def test_all_workout_types_work(self):
+        """Should handle all common workout types."""
+        service = AdaptiveWorkoutService(supabase_client=None)
 
-        for level in ["beginner", "intermediate", "advanced"]:
-            for focus in ["hypertrophy", "strength", "endurance", "fat_loss"]:
-                try:
-                    params = service.calculate_sets_reps(level, focus)
-                    assert "sets" in params
-                    assert "reps" in params
-                except Exception as e:
-                    pytest.fail(f"CRITICAL: Failed for level={level}, focus={focus}: {e}")
+        workout_types = ["strength", "hypertrophy", "endurance", "power", "hiit"]
+        for workout_type in workout_types:
+            params = await service.get_adaptive_parameters(
+                user_id="test-user",
+                workout_type=workout_type,
+            )
+            assert isinstance(params, dict), f"CRITICAL: Failed for {workout_type}"
+            assert params["sets"] > 0, f"CRITICAL: No sets for {workout_type}"
+            assert params["reps"] > 0, f"CRITICAL: No reps for {workout_type}"
