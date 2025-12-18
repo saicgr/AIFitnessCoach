@@ -94,8 +94,19 @@ async def parse_onboarding_response(request: ParseOnboardingRequest):
     """
     logger.info(f"🔍 [LangGraph] Processing onboarding message for user {request.user_id}")
 
+    # Ensure message is a string (handle potential list/dict from malformed request)
+    message = request.message
+    if isinstance(message, list):
+        logger.warning(f"⚠️ [LangGraph] Message was a list, converting: {message}")
+        message = " ".join(str(m) for m in message) if message else ""
+    elif not isinstance(message, str):
+        logger.warning(f"⚠️ [LangGraph] Message was {type(message)}, converting to string")
+        message = str(message) if message else ""
+
+    logger.info(f"🔍 [LangGraph] Message: {message[:100] if message else 'None'}")
+
     # Don't process empty messages - avoids duplicate opening messages
-    if not request.message or not request.message.strip():
+    if not message or not message.strip():
         logger.info("⚠️ [LangGraph] Empty message received, returning empty response")
         return ParseOnboardingResponse(
             extracted_data=request.current_data,
@@ -107,7 +118,7 @@ async def parse_onboarding_response(request: ParseOnboardingRequest):
     try:
         result = await onboarding_service.process_message(
             user_id=request.user_id,
-            message=request.message,
+            message=message,  # Use the cleaned message
             collected_data=request.current_data,
             conversation_history=request.conversation_history,
         )
