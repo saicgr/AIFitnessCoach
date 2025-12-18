@@ -220,14 +220,20 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     response = await llm.ainvoke(messages)
 
-    logger.info(f"[Onboarding Agent] AI question: {response.content[:100]}...")
+    # Handle case where response.content might be a list (Gemini can return multiple parts)
+    response_content = response.content
+    if isinstance(response_content, list):
+        logger.warning(f"[Onboarding Agent] response.content was a list: {response_content}")
+        response_content = " ".join(str(c) for c in response_content) if response_content else ""
+
+    logger.info(f"[Onboarding Agent] AI question: {response_content[:100]}...")
 
     # Determine if we should show quick replies
     quick_replies = None
     component = None
 
     # Smart detection: analyze what the AI is actually asking about
-    question_lower = response.content.lower()
+    question_lower = response_content.lower()
 
     # Check if AI is asking about specific days (not just "how many days")
     is_asking_specific_days = any(keyword in question_lower for keyword in [
@@ -340,15 +346,15 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
             # Override AI response - ask for next missing field
             if "days_per_week" in missing:
-                response.content = "Almost there! How many days per week would you like to work out?"
+                response_content = "Almost there! How many days per week would you like to work out?"
                 quick_replies = QUICK_REPLIES.get("days_per_week")
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for days_per_week")
             elif "selected_days" in missing:
-                response.content = "Great! Which specific days work best for you?"
+                response_content = "Great! Which specific days work best for you?"
                 component = "day_picker"
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: showing day_picker")
             elif "workout_duration" in missing:
-                response.content = "How long would you like each workout to be?"
+                response_content = "How long would you like each workout to be?"
                 quick_replies = QUICK_REPLIES.get("workout_duration")
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for workout_duration")
             elif next_field in QUICK_REPLIES:
@@ -362,7 +368,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
                     "workout_duration": "workout duration",
                 }
                 display_name = field_display_names.get(next_field, next_field.replace('_', ' '))
-                response.content = f"One more thing - please tell me about your {display_name}."
+                response_content = f"One more thing - please tell me about your {display_name}."
                 quick_replies = QUICK_REPLIES[next_field]
                 is_multi_select = next_field in multi_select_fields
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for {next_field}")
@@ -413,8 +419,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     return {
         "messages": messages + [response],
-        "next_question": response.content,
-        "final_response": response.content,
+        "next_question": response_content,
+        "final_response": response_content,
         "quick_replies": quick_replies,
         "multi_select": is_multi_select,
         "component": component,
@@ -801,7 +807,12 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     # Parse JSON from response
     try:
         # Clean response - remove markdown code blocks if present
-        content = response.content.strip()
+        # Handle case where response.content might be a list (Gemini can return multiple parts)
+        content = response.content
+        if isinstance(content, list):
+            logger.warning(f"[Extract Data] response.content was a list: {content}")
+            content = " ".join(str(c) for c in content) if content else ""
+        content = content.strip()
         if content.startswith("```json"):
             content = content[7:]
         if content.startswith("```"):
