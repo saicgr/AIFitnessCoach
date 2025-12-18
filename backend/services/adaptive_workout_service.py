@@ -230,10 +230,11 @@ class AdaptiveWorkoutService:
 
         try:
             # Get recent workout logs (last 2 weeks)
+            # Note: metadata column may not exist in all deployments
             two_weeks_ago = (datetime.now() - timedelta(days=14)).isoformat()
 
             logs_response = self.supabase.table("workout_logs").select(
-                "id, total_time_seconds, metadata, created_at"
+                "id, total_time_seconds, created_at"
             ).eq("user_id", user_id).gte("created_at", two_weeks_ago).execute()
 
             logs = logs_response.data if logs_response.data else []
@@ -241,28 +242,19 @@ class AdaptiveWorkoutService:
             if not logs:
                 return {"workouts_completed": 0}
 
-            # Calculate metrics
+            # Calculate metrics based on available data
+            # Since metadata column may not exist, we use simpler heuristics
             completion_rates = []
             time_ratios = []
             difficulty_ratings = []
 
             for log in logs:
-                metadata = log.get("metadata", {}) or {}
-
-                # Completion rate from metadata
-                if "completion_rate" in metadata:
-                    completion_rates.append(metadata["completion_rate"])
-
-                # Time ratio (actual / expected)
+                # Use total_time_seconds as a basic metric
                 actual_time = log.get("total_time_seconds", 0)
-                expected_time = metadata.get("expected_duration_seconds", actual_time)
-                if expected_time > 0:
+                if actual_time > 0:
+                    # Assume 45 min (2700s) as expected duration if not specified
+                    expected_time = 2700
                     time_ratios.append(actual_time / expected_time)
-
-                # Difficulty from metadata
-                if "difficulty" in metadata:
-                    diff_map = {"too_easy": 1, "just_right": 2, "too_hard": 3}
-                    difficulty_ratings.append(diff_map.get(metadata["difficulty"], 2))
 
             # Get recent PRs
             week_ago = (datetime.now() - timedelta(days=7)).isoformat()
