@@ -61,13 +61,19 @@ NON_GYM_ACTIVITIES = {
 }
 
 
-def detect_non_gym_activity(user_message: str) -> Optional[Dict[str, str]]:
+def detect_non_gym_activity(user_message) -> Optional[Dict[str, str]]:
     """
     Detect if user's goal is a non-gym activity.
 
     Returns:
         dict with 'activity' and 'complement' if detected, None otherwise
     """
+    # Ensure user_message is a string
+    if isinstance(user_message, list):
+        user_message = " ".join(str(m) for m in user_message) if user_message else ""
+    elif not isinstance(user_message, str):
+        user_message = str(user_message) if user_message else ""
+
     user_lower = user_message.lower().strip()
 
     # Check for explicit non-gym phrases
@@ -170,6 +176,15 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     missing = state.get("missing_fields", [])
     history = state.get("conversation_history", [])
 
+    # Ensure user_message is a string (LangGraph state might accumulate to list)
+    user_message = state["user_message"]
+    if isinstance(user_message, list):
+        logger.warning(f"[Onboarding Agent] user_message was a list: {user_message}")
+        user_message = " ".join(str(m) for m in user_message) if user_message else ""
+    elif not isinstance(user_message, str):
+        logger.warning(f"[Onboarding Agent] user_message was {type(user_message)}: {user_message}")
+        user_message = str(user_message) if user_message else ""
+
     # Build system prompt with context
     system_prompt = ONBOARDING_AGENT_SYSTEM_PROMPT.format(
         collected_data=json.dumps(collected, indent=2) if collected else "{}",
@@ -187,7 +202,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
             messages.append(AIMessage(content=msg["content"]))
 
     # Add current user message
-    messages.append(HumanMessage(content=state["user_message"]))
+    messages.append(HumanMessage(content=user_message))
 
     # Call LLM to generate next question
     llm = ChatGoogleGenerativeAI(
@@ -417,6 +432,15 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     logger.info("[Extract Data] Extracting data from user message...")
 
     user_message = state["user_message"]
+
+    # Ensure user_message is a string (LangGraph state might accumulate to list)
+    if isinstance(user_message, list):
+        logger.warning(f"[Extract Data] user_message was a list: {user_message}")
+        user_message = " ".join(str(m) for m in user_message) if user_message else ""
+    elif not isinstance(user_message, str):
+        logger.warning(f"[Extract Data] user_message was {type(user_message)}: {user_message}")
+        user_message = str(user_message) if user_message else ""
+
     collected_data = state.get("collected_data", {})
 
     # Calculate what's missing based on collected_data (missing_fields may not be set yet)
