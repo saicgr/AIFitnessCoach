@@ -1,0 +1,28 @@
+# Render deployment configuration
+# This file configures the deployment pipeline including pre-deploy tests
+
+services:
+  - type: web
+    name: aifitnesscoach-backend
+    env: python
+    region: oregon
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: |
+      pip install -r requirements.txt
+      echo "Running pre-deploy tests..."
+      python -m pytest tests/test_onboarding.py tests/test_workout_generation.py -v --tb=short -x
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
