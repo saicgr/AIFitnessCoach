@@ -220,11 +220,31 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     response = await llm.ainvoke(messages)
 
-    # Handle case where response.content might be a list (Gemini can return multiple parts)
+    # Handle various Gemini response.content formats:
+    # - string: "Hello!" (normal case)
+    # - list of strings: ["Hello", "World"]
+    # - list of dicts: [{"type": "text", "text": "Hello!"}]
+    # - dict: {"type": "text", "text": "Hello!"}
     response_content = response.content
-    if isinstance(response_content, list):
-        logger.warning(f"[Onboarding Agent] response.content was a list: {response_content}")
-        response_content = " ".join(str(c) for c in response_content) if response_content else ""
+    logger.info(f"[Onboarding Agent] Raw response.content type: {type(response_content)}")
+
+    if isinstance(response_content, dict):
+        # Single dict with 'text' field
+        logger.warning(f"[Onboarding Agent] response.content was a dict: {str(response_content)[:200]}")
+        response_content = response_content.get("text", str(response_content))
+    elif isinstance(response_content, list):
+        # List of parts - could be strings or dicts
+        logger.warning(f"[Onboarding Agent] response.content was a list: {str(response_content)[:200]}")
+        parts = []
+        for item in response_content:
+            if isinstance(item, dict):
+                parts.append(item.get("text", str(item)))
+            else:
+                parts.append(str(item))
+        response_content = " ".join(parts) if parts else ""
+    elif not isinstance(response_content, str):
+        logger.warning(f"[Onboarding Agent] response.content was {type(response_content)}: {response_content}")
+        response_content = str(response_content) if response_content else ""
 
     logger.info(f"[Onboarding Agent] AI question: {response_content[:100]}...")
 
@@ -806,12 +826,25 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
     # Parse JSON from response
     try:
-        # Clean response - remove markdown code blocks if present
-        # Handle case where response.content might be a list (Gemini can return multiple parts)
+        # Handle various Gemini response.content formats
         content = response.content
-        if isinstance(content, list):
-            logger.warning(f"[Extract Data] response.content was a list: {content}")
-            content = " ".join(str(c) for c in content) if content else ""
+        logger.info(f"[Extract Data] Raw response.content type: {type(content)}")
+
+        if isinstance(content, dict):
+            logger.warning(f"[Extract Data] response.content was a dict: {str(content)[:200]}")
+            content = content.get("text", str(content))
+        elif isinstance(content, list):
+            logger.warning(f"[Extract Data] response.content was a list: {str(content)[:200]}")
+            parts = []
+            for item in content:
+                if isinstance(item, dict):
+                    parts.append(item.get("text", str(item)))
+                else:
+                    parts.append(str(item))
+            content = " ".join(parts) if parts else ""
+        elif not isinstance(content, str):
+            logger.warning(f"[Extract Data] response.content was {type(content)}: {content}")
+            content = str(content) if content else ""
         content = content.strip()
         if content.startswith("```json"):
             content = content[7:]
