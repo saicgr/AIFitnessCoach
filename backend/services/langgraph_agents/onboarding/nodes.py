@@ -215,7 +215,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
-        temperature=0.8,  # Slightly higher for more natural conversation
+        temperature=0.5,  # Balanced: natural but less hallucination-prone
     )
 
     response = await llm.ainvoke(messages)
@@ -393,20 +393,20 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
                 is_multi_select = next_field in multi_select_fields
                 logger.info(f"[Onboarding Agent] ✅ Overriding AI: asking for {next_field}")
 
-        # PRIORITY 1: If AI is asking about specific days and we have days_per_week, show quick replies for days
+        # PRIORITY 1: If AI is asking about specific days and we have days_per_week, show day picker
         # Note: missing list uses snake_case field names from REQUIRED_FIELDS
         # We check if days_per_week is NOT missing (i.e., already collected)
         elif is_asking_specific_days and "selected_days" in missing and "days_per_week" not in missing:
-            quick_replies = QUICK_REPLIES["selected_days"]
-            is_multi_select = True  # Days is multi-select
-            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: selected_days (multi_select=True)")
+            component = "day_picker"  # Use day picker component
+            quick_replies = None  # Don't use quick replies when day picker is shown
+            logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days")
 
         # PRIORITY 2: If AI is asking about specific days but we don't have days_per_week yet,
-        # show quick replies anyway - user might be skipping ahead
+        # show day picker anyway - user might be skipping ahead
         elif is_asking_specific_days and "selected_days" in missing:
-            quick_replies = QUICK_REPLIES["selected_days"]
-            is_multi_select = True
-            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: selected_days (days_per_week not yet collected, multi_select=True)")
+            component = "day_picker"  # Use day picker component
+            quick_replies = None
+            logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days (days_per_week not yet collected)")
 
         # PRIORITY 3: Match quick replies based on what AI is actually asking about
         elif is_asking_equipment and "equipment" in missing:
