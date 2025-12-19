@@ -11,17 +11,18 @@ pip install -r requirements.txt
 
 echo ""
 echo "============================================"
-echo "Running pre-deploy tests..."
+echo "Running pre-deploy tests (including AI integration tests)..."
 echo "============================================"
 
 # Install test dependencies
 pip install pytest pytest-asyncio
 
-# Run critical tests - deployment fails if any test fails
-python -m pytest tests/test_onboarding.py tests/test_workout_generation.py \
+# Run ALL tests including slow AI/integration tests
+# This ensures end-to-end testing with real Gemini API
+python -m pytest tests/test_onboarding.py tests/test_workout_generation.py tests/test_rag_service.py \
     -v \
     --tb=short \
-    -x  # Stop on first failure
+    -x
 
 echo ""
 echo "============================================"

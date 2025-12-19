@@ -1,14 +1,18 @@
 """
 Tests for the onboarding LangGraph agent.
 
-These tests MUST PASS before deployment. They verify:
+These tests verify:
 1. Data extraction works correctly with various user inputs
 2. Quick replies are shown for the correct fields
 3. The onboarding flow completes successfully
 4. AI responses are appropriate and human-like
-5. NO FALLBACKS - tests fail if AI doesn't work correctly
 
-Run with: pytest tests/test_onboarding.py -v
+Test categories:
+- Fast tests (no @pytest.mark.slow): Run on every deployment, validate config/structure
+- Slow tests (@pytest.mark.slow): Call real AI API, run locally or in CI
+
+Run all tests: pytest tests/test_onboarding.py -v
+Run fast only: pytest tests/test_onboarding.py -v -m "not slow"
 """
 import pytest
 import asyncio
@@ -201,6 +205,7 @@ def complete_state():
 
 # ============ CRITICAL: Quick Reply Tests (MUST PASS) ============
 
+@pytest.mark.slow
 class TestQuickReplies:
     """
     CRITICAL TESTS: Quick replies must appear for the correct fields.
@@ -294,6 +299,7 @@ class TestQuickReplies:
 
 # ============ CRITICAL: AI Response Tests ============
 
+@pytest.mark.slow
 class TestAIResponses:
     """
     CRITICAL TESTS: AI must generate valid responses.
@@ -336,6 +342,7 @@ class TestAIResponses:
 
 # ============ CRITICAL: Completion Check Tests ============
 
+@pytest.mark.slow
 class TestCompletionCheck:
     """CRITICAL TESTS: Completion detection must work correctly."""
 
@@ -362,6 +369,7 @@ class TestCompletionCheck:
 
 # ============ CRITICAL: Data Extraction Tests ============
 
+@pytest.mark.slow
 class TestDataExtraction:
     """CRITICAL TESTS: Data extraction must work correctly."""
 
@@ -422,6 +430,7 @@ class TestFieldOrder:
 
 # ============ Error Handling Tests ============
 
+@pytest.mark.slow
 class TestErrorHandling:
     """Tests for error handling - these should not crash."""
 

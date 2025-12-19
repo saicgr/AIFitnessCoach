@@ -70,6 +70,8 @@ async def lifespan(app: FastAPI):
     Initializes services on startup, cleans up on shutdown.
     """
     logger.info("Starting AI Fitness Coach Backend...")
+    logger.info(f"🤖 Gemini Model: {settings.gemini_model}")
+    logger.info(f"📊 Embedding Model: {settings.gemini_embedding_model}")
 
     # Initialize services
     logger.info("Initializing Gemini service...")

@@ -199,5 +199,55 @@ async def async_client():
 def mock_env(monkeypatch):
     """Mock environment variables for testing."""
     monkeypatch.setenv("GEMINI_API_KEY", "test-api-key")
-    monkeypatch.setenv("GEMINI_MODEL", "gemini-3-flash-preview")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-2.5-flash")
     monkeypatch.setenv("USE_MOCK_DATA", "true")
+
+
+# ============ Async Cleanup ============
+
+@pytest.fixture(autouse=True)
+async def cleanup_pending_tasks():
+    """
+    Cleanup fixture to suppress async task warnings during test teardown.
+
+    This handles the 'Task was destroyed but it is pending' warnings from
+    aiohttp/Google Genai client that occur when tests finish before async
+    cleanup tasks complete.
+    """
+    yield
+
+    # Give pending tasks a moment to complete
+    await asyncio.sleep(0.1)
+
+    # Cancel any remaining pending tasks gracefully
+    try:
+        loop = asyncio.get_running_loop()
+        pending = [t for t in asyncio.all_tasks(loop)
+                   if t is not asyncio.current_task() and not t.done()]
+
+        if pending:
+            # Give tasks a short time to complete
+            for task in pending:
+                task.cancel()
+
+            # Wait for cancellation to complete
+            await asyncio.gather(*pending, return_exceptions=True)
+    except Exception:
+        pass  # Ignore errors during cleanup
+
+
+@pytest.fixture(scope="session", autouse=True)
+def suppress_async_warnings():
+    """
+    Session-scoped fixture to configure warnings filter for async cleanup messages.
+    """
+    import warnings
+
+    # Suppress the specific RuntimeWarning about unawaited coroutines
+    warnings.filterwarnings(
+        "ignore",
+        message="coroutine .* was never awaited",
+        category=RuntimeWarning
+    )
+
+    yield
