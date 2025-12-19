@@ -117,6 +117,7 @@ def get_field_value(collected: Dict[str, Any], field: str) -> Any:
         "days_per_week": "daysPerWeek",
         "selected_days": "selectedDays",
         "workout_duration": "workoutDuration",
+        "workout_variety": "workoutVariety",
         "fitness_level": "fitnessLevel",
         "height_cm": "heightCm",
         "weight_kg": "weightKg",
