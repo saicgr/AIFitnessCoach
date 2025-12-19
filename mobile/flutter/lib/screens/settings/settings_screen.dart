@@ -332,7 +332,7 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.pop(context);
               ref.read(authStateProvider.notifier).signOut();
-              context.go('/login');
+              context.go('/stats-welcome');
             },
             child: const Text(
               'Sign Out',
@@ -633,10 +633,10 @@ class SettingsScreen extends ConsumerWidget {
 
         // Sign out
         await ref.read(authStateProvider.notifier).signOut();
-        debugPrint('✅ Signed out, navigating to language selection...');
+        debugPrint('✅ Signed out, navigating to stats welcome...');
 
-        // Navigate to language selection (first screen for truly new users)
-        router.go('/language-select');
+        // Navigate to stats welcome (primary entry point for new users)
+        router.go('/stats-welcome');
       } else {
         throw Exception('Failed to delete account: ${response.statusCode}');
       }

@@ -62,6 +62,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     {'name': 'Light Cardio', 'duration': 120, 'icon': Icons.favorite},
   ];
 
+  // Stretch phase state (after workout, before completion)
+  bool _isInStretchPhase = false;
+  int _currentStretchIndex = 0;
+  Timer? _stretchTimer;
+  int _stretchSecondsRemaining = 0;
+  bool _isStretchTimerRunning = false;
+
+  // Standard stretch exercises
+  static const List<Map<String, dynamic>> _stretchExercises = [
+    {'name': 'Quad Stretch', 'duration': 30, 'icon': Icons.self_improvement},
+    {'name': 'Hamstring Stretch', 'duration': 30, 'icon': Icons.self_improvement},
+    {'name': 'Shoulder Stretch', 'duration': 30, 'icon': Icons.self_improvement},
+    {'name': 'Chest Opener', 'duration': 30, 'icon': Icons.self_improvement},
+    {'name': 'Cat-Cow Stretch', 'duration': 60, 'icon': Icons.self_improvement},
+  ];
+
   // Workout state
   int _currentExerciseIndex = 0;
   int _currentSet = 1;
@@ -163,6 +179,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     // Start exercise time tracking for first exercise
     _currentExerciseStartTime = DateTime.now();
     _lastExerciseStartedAt = DateTime.now();
+
+    // Auto-start warmup timer for first exercise after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isInWarmupPhase) {
+        _startWarmupTimer();
+      }
+    });
   }
 
   /// Fetch historical performance data for all exercises in the workout
@@ -270,6 +293,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     _workoutTimer?.cancel();
     _restTimer?.cancel();
     _warmupTimer?.cancel();
+    _stretchTimer?.cancel();
     _videoController?.dispose();
     _repsController.dispose();
     _weightController.dispose();
@@ -338,6 +362,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         _currentWarmupIndex++;
         _isWarmupTimerRunning = false;
         _warmupSecondsRemaining = 0;
+      });
+      // Auto-start timer for next exercise
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _isInWarmupPhase) {
+          _startWarmupTimer();
+        }
       });
     } else {
       // Warmup complete - transition to main workout
@@ -660,6 +690,366 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                           _currentWarmupIndex < _warmupExercises.length - 1
                               ? 'Next'
                               : 'Start Workout',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build the stretch screen UI (shown after workout, before completion)
+  Widget _buildStretchScreen(BuildContext context, bool isDark, Color backgroundColor) {
+    final currentStretch = _stretchExercises[_currentStretchIndex];
+    final stretchProgress = (_currentStretchIndex + 1) / _stretchExercises.length;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return WillPopScope(
+      onWillPop: () async {
+        _skipAllStretches();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top bar with timer and skip
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Back button (skip stretches)
+                    IconButton(
+                      icon: Icon(Icons.arrow_back, color: textPrimary),
+                      onPressed: _skipAllStretches,
+                    ),
+                    // Workout timer
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: elevatedColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.timer, size: 16, color: AppColors.cyan),
+                          const SizedBox(width: 6),
+                          Text(
+                            _formatTime(_workoutSeconds),
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Skip stretches button
+                    TextButton(
+                      onPressed: _skipAllStretches,
+                      child: const Text(
+                        'Skip All',
+                        style: TextStyle(
+                          color: AppColors.green,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Stretch header - celebratory message
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.self_improvement,
+                        color: AppColors.green,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'COOL DOWN',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.green,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_currentStretchIndex + 1} of ${_stretchExercises.length}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Workout complete banner
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.cyan.withOpacity(0.2),
+                        AppColors.green.withOpacity(0.2),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.cyan.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.emoji_events,
+                        color: AppColors.cyan,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Great job! Time to stretch and recover.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: textPrimary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: stretchProgress,
+                    backgroundColor: elevatedColor,
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.green),
+                    minHeight: 6,
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Current stretch exercise
+                Center(
+                  child: Column(
+                    children: [
+                      // Exercise icon
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppColors.green.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          currentStretch['icon'] as IconData,
+                          size: 64,
+                          color: AppColors.green,
+                        ),
+                      ).animate()
+                        .fadeIn(duration: 300.ms)
+                        .scale(begin: const Offset(0.8, 0.8)),
+
+                      const SizedBox(height: 32),
+
+                      // Exercise name
+                      Text(
+                        currentStretch['name'] as String,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ).animate()
+                        .fadeIn(duration: 300.ms, delay: 100.ms),
+
+                      const SizedBox(height: 16),
+
+                      // Duration or timer
+                      if (_isStretchTimerRunning || _stretchSecondsRemaining > 0)
+                        Text(
+                          _formatTime(_stretchSecondsRemaining),
+                          style: const TextStyle(
+                            fontSize: 64,
+                            fontWeight: FontWeight.w300,
+                            color: AppColors.green,
+                          ),
+                        ).animate(onPlay: (controller) => controller.repeat())
+                          .shimmer(duration: 2000.ms, color: AppColors.green.withOpacity(0.3))
+                      else
+                        Text(
+                          '${currentStretch['duration']} sec',
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // Upcoming stretch exercises
+                if (_currentStretchIndex < _stretchExercises.length - 1) ...[
+                  Text(
+                    'UP NEXT',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 50,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _stretchExercises.length - _currentStretchIndex - 1,
+                      itemBuilder: (context, index) {
+                        final stretch = _stretchExercises[_currentStretchIndex + 1 + index];
+                        return Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: elevatedColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                stretch['icon'] as IconData,
+                                size: 20,
+                                color: textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                stretch['name'] as String,
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
+                // Action buttons
+                Row(
+                  children: [
+                    // Start/Pause timer button
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          if (_isStretchTimerRunning) {
+                            _stretchTimer?.cancel();
+                            setState(() => _isStretchTimerRunning = false);
+                          } else if (_stretchSecondsRemaining > 0) {
+                            _startStretchTimer();
+                          } else {
+                            _startStretchTimer();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isStretchTimerRunning
+                              ? AppColors.green.withOpacity(0.3)
+                              : AppColors.green,
+                          foregroundColor: _isStretchTimerRunning
+                              ? AppColors.green
+                              : Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: Icon(
+                          _isStretchTimerRunning
+                              ? Icons.pause
+                              : (_stretchSecondsRemaining > 0 ? Icons.play_arrow : Icons.timer),
+                        ),
+                        label: Text(
+                          _isStretchTimerRunning
+                              ? 'Pause'
+                              : (_stretchSecondsRemaining > 0 ? 'Resume' : 'Start Timer'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // Next/Done button
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _currentStretchIndex < _stretchExercises.length - 1
+                            ? _skipStretch
+                            : _finishStretchesAndComplete,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cyan,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        icon: Icon(
+                          _currentStretchIndex < _stretchExercises.length - 1
+                              ? Icons.skip_next
+                              : Icons.check,
+                        ),
+                        label: Text(
+                          _currentStretchIndex < _stretchExercises.length - 1
+                              ? 'Next'
+                              : 'Finish',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -1586,6 +1976,87 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     HapticFeedback.mediumImpact();
   }
 
+  /// Start the stretch phase after workout exercises are complete
+  void _startStretchPhase() {
+    setState(() {
+      _isInStretchPhase = true;
+      _currentStretchIndex = 0;
+    });
+    HapticFeedback.heavyImpact();
+    // Auto-start stretch timer after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted && _isInStretchPhase) {
+        _startStretchTimer();
+      }
+    });
+  }
+
+  void _startStretchTimer() {
+    final duration = _stretchExercises[_currentStretchIndex]['duration'] as int;
+    setState(() {
+      _stretchSecondsRemaining = duration;
+      _isStretchTimerRunning = true;
+    });
+
+    _stretchTimer?.cancel();
+    _stretchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_stretchSecondsRemaining > 0) {
+        setState(() {
+          _stretchSecondsRemaining--;
+        });
+      } else {
+        timer.cancel();
+        setState(() => _isStretchTimerRunning = false);
+        // Auto-advance to next stretch after a brief pause
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && _isInStretchPhase) {
+            _nextStretchExercise();
+          }
+        });
+      }
+    });
+  }
+
+  void _nextStretchExercise() {
+    if (_currentStretchIndex < _stretchExercises.length - 1) {
+      setState(() => _currentStretchIndex++);
+      // Auto-start timer for next stretch
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && _isInStretchPhase) {
+          _startStretchTimer();
+        }
+      });
+      HapticFeedback.mediumImpact();
+    } else {
+      // All stretches done - now complete the workout
+      _finishStretchesAndComplete();
+    }
+  }
+
+  void _skipStretch() {
+    _stretchTimer?.cancel();
+    setState(() {
+      _isStretchTimerRunning = false;
+      _stretchSecondsRemaining = 0;
+    });
+    _nextStretchExercise();
+  }
+
+  void _skipAllStretches() {
+    _stretchTimer?.cancel();
+    setState(() {
+      _isStretchTimerRunning = false;
+      _stretchSecondsRemaining = 0;
+      _isInStretchPhase = false;
+    });
+    _finishStretchesAndComplete();
+  }
+
+  void _finishStretchesAndComplete() {
+    setState(() => _isInStretchPhase = false);
+    _finalizeWorkoutCompletion();
+  }
+
   Future<void> _completeWorkout() async {
     _workoutTimer?.cancel();
     _restTimer?.cancel();
@@ -1597,6 +2068,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           (_exerciseTimeSeconds[_currentExerciseIndex] ?? 0) + elapsed;
     }
 
+    // Start stretch phase instead of immediately completing
+    _startStretchPhase();
+  }
+
+  Future<void> _finalizeWorkoutCompletion() async {
     setState(() => _isComplete = true);
 
     // Variables to pass to workout complete screen for AI Coach feedback
@@ -2811,6 +3287,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       return _buildWarmupScreen(context, isDark, backgroundColor);
     }
 
+    // Show stretch screen if in stretch phase (after workout, before completion)
+    if (_isInStretchPhase) {
+      return _buildStretchScreen(context, isDark, backgroundColor);
+    }
+
     final currentExercise = _exercises[_currentExerciseIndex];
     final nextExercise = _currentExerciseIndex < _exercises.length - 1
         ? _exercises[_currentExerciseIndex + 1]
@@ -3867,7 +4348,16 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             ),
           ),
 
-          // Set rows
+          // Warmup set rows (2 warmup sets displayed with "W" label)
+          ...List.generate(2, (warmupIndex) => _buildWarmupSetRow(
+            setLabel: 'W',
+            repRange: _getRepRange(viewingExercise),
+            rowBorder: rowBorder,
+            textMuted: textMuted,
+            textSecondary: textSecondary,
+          )),
+
+          // Working set rows
           ...List.generate(totalSets, (index) {
             final isCompleted = index < completedSetsForExercise.length;
             // Only show current set indicator if viewing the current exercise
@@ -4662,6 +5152,109 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Get rep range string for an exercise
+  String _getRepRange(WorkoutExercise exercise) {
+    if (exercise.reps != null) {
+      final reps = exercise.reps!;
+      if (reps <= 6) return '${reps - 1}-${reps + 1}';
+      if (reps <= 12) return '${reps - 2}-${reps + 2}';
+      return '${reps - 3}-${reps + 3}';
+    } else if (exercise.durationSeconds != null) {
+      return '${exercise.durationSeconds}s';
+    }
+    return '8-12';
+  }
+
+  /// Build warmup set row for the Set Tracker (display only, not interactive)
+  Widget _buildWarmupSetRow({
+    required String setLabel,
+    required String repRange,
+    required Color rowBorder,
+    required Color textMuted,
+    required Color textSecondary,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withOpacity(0.05),
+        border: Border(
+          bottom: BorderSide(color: rowBorder),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Set label (W for warmup)
+          SizedBox(
+            width: 36,
+            child: Center(
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    setLabel,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.orange,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Previous (dash for warmup)
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: Text(
+                '-',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textMuted.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          // Weight (dash for warmup - user decides warmup weight)
+          Expanded(
+            flex: 4,
+            child: Center(
+              child: Text(
+                '-',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textMuted.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Rep range
+          Expanded(
+            flex: 4,
+            child: Center(
+              child: Text(
+                repRange,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+            ),
+          ),
+          // Empty space for checkmark column alignment
+          const SizedBox(width: 50),
         ],
       ),
     );

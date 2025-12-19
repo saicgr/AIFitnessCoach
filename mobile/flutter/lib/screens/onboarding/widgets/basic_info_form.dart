@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
@@ -165,6 +166,10 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
   Widget build(BuildContext context) {
     final colors = context.colors;
 
+    // Animation delay starts after the message bubble animation completes
+    const baseDelay = Duration(milliseconds: 500);
+    const fieldStagger = Duration(milliseconds: 80);
+
     return Container(
       margin: const EdgeInsets.only(left: 52, top: 8),
       padding: const EdgeInsets.all(16),
@@ -179,16 +184,22 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
           Text(
             'Quick info to get started',
             style: TextStyle(fontSize: 12, color: colors.textMuted),
-          ),
+          ).animate().fadeIn(delay: baseDelay, duration: 300.ms),
           const SizedBox(height: 12),
 
           // Name
-          _buildLabel('Name'),
-          _buildTextField(
-            controller: _nameController,
-            hint: 'Your name',
-            keyboardType: TextInputType.name,
-          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildLabel('Name'),
+              _buildTextField(
+                controller: _nameController,
+                hint: 'Your name',
+                keyboardType: TextInputType.name,
+              ),
+            ],
+          ).animate().fadeIn(delay: baseDelay + fieldStagger, duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 12),
 
           // Date of Birth + Gender row
@@ -214,7 +225,8 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
                 ),
               ),
             ],
-          ),
+          ).animate().fadeIn(delay: baseDelay + fieldStagger * 2, duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 12),
 
           // Height + Weight row
@@ -298,7 +310,8 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
                 ),
               ),
             ],
-          ),
+          ).animate().fadeIn(delay: baseDelay + fieldStagger * 3, duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 12),
 
           // Activity Level + Continue button row
@@ -317,10 +330,14 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
               const SizedBox(width: 12),
               _buildCompactSubmitButton(),
             ],
-          ),
+          ).animate().fadeIn(delay: baseDelay + fieldStagger * 4, duration: 300.ms)
+            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
         ],
       ),
-    );
+    ).animate()
+      .fadeIn(delay: 400.ms, duration: 500.ms)
+      .slideY(begin: 0.08, end: 0, duration: 500.ms, curve: Curves.easeOutBack)
+      .scale(begin: const Offset(0.97, 0.97), end: const Offset(1, 1), duration: 400.ms, curve: Curves.easeOutCubic);
   }
 
   Widget _buildLabel(String text) {

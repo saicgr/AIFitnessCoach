@@ -628,6 +628,111 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
             extracted["fitness_level"] = fitness_level_map[user_lower]
             logger.info(f"[Extract Data] ✅ Pre-processed: fitness_level = {extracted['fitness_level']}")
 
+    # PERSONALIZATION: Training experience - affects exercise complexity
+    if "training_experience" in missing or "training_experience" not in collected_data:
+        experience_map = {
+            'never': 'never',
+            'never lifted': 'never',
+            'first time': 'never',
+            'brand new': 'never',
+            'few weeks': 'less_than_6_months',
+            'few months': 'less_than_6_months',
+            'couple months': 'less_than_6_months',
+            'less than 6 months': 'less_than_6_months',
+            '6 months': '6_months_to_2_years',
+            'a year': '6_months_to_2_years',
+            'about a year': '6_months_to_2_years',
+            '1 year': '6_months_to_2_years',
+            '2 years': '6_months_to_2_years',
+            'couple years': '6_months_to_2_years',
+            '2-5 years': '2_to_5_years',
+            '3 years': '2_to_5_years',
+            '4 years': '2_to_5_years',
+            'few years': '2_to_5_years',
+            'several years': '2_to_5_years',
+            '5+ years': '5_plus_years',
+            '5 years': '5_plus_years',
+            'over 5 years': '5_plus_years',
+            'many years': '5_plus_years',
+            'long time': '5_plus_years',
+            'decade': '5_plus_years',
+            '10 years': '5_plus_years',
+        }
+        user_lower = user_message.strip().lower()
+
+        for key, value in experience_map.items():
+            if key in user_lower:
+                extracted["training_experience"] = value
+                logger.info(f"[Extract Data] ✅ Pre-processed: training_experience = {value}")
+                break
+
+    # PERSONALIZATION: Workout environment - affects equipment assumptions
+    if "workout_environment" in missing or "workout_environment" not in collected_data:
+        environment_map = {
+            'commercial gym': 'commercial_gym',
+            'gym': 'commercial_gym',
+            'fitness center': 'commercial_gym',
+            'la fitness': 'commercial_gym',
+            'planet fitness': 'commercial_gym',
+            'equinox': 'commercial_gym',
+            '24 hour': 'commercial_gym',
+            'home gym': 'home_gym',
+            'garage gym': 'home_gym',
+            'basement gym': 'home_gym',
+            'home': 'home',
+            'apartment': 'home',
+            'living room': 'home',
+            'outdoors': 'outdoors',
+            'outside': 'outdoors',
+            'park': 'outdoors',
+            'backyard': 'outdoors',
+            'hotel': 'hotel',
+            'travel': 'hotel',
+            'on the road': 'hotel',
+        }
+        user_lower = user_message.strip().lower()
+
+        for key, value in environment_map.items():
+            if key in user_lower:
+                extracted["workout_environment"] = value
+                logger.info(f"[Extract Data] ✅ Pre-processed: workout_environment = {value}")
+                break
+
+    # PERSONALIZATION: Focus areas - muscle groups to prioritize
+    if "focus_areas" in missing or "focus_areas" not in collected_data:
+        focus_map = {
+            'chest': 'chest',
+            'pecs': 'chest',
+            'back': 'back',
+            'lats': 'back',
+            'shoulders': 'shoulders',
+            'delts': 'shoulders',
+            'arms': 'arms',
+            'biceps': 'arms',
+            'triceps': 'arms',
+            'core': 'core',
+            'abs': 'core',
+            'legs': 'legs',
+            'quads': 'legs',
+            'hamstrings': 'legs',
+            'glutes': 'glutes',
+            'booty': 'glutes',
+            'butt': 'glutes',
+            'full body': 'full_body',
+            'everything': 'full_body',
+            'balanced': 'full_body',
+        }
+        user_lower = user_message.strip().lower()
+
+        found_areas = []
+        for key, value in focus_map.items():
+            if key in user_lower and value not in found_areas:
+                found_areas.append(value)
+
+        if found_areas:
+            extracted["focus_areas"] = found_areas
+            logger.info(f"[Extract Data] ✅ Pre-processed: focus_areas = {found_areas}")
+
     # If we found data via pre-processing, use it
     if extracted:
         merged = collected_data.copy()

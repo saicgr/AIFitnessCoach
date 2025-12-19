@@ -174,6 +174,155 @@ class User extends Equatable {
     return names.join(', ');
   }
 
+  /// Get training experience from preferences
+  String? get trainingExperience {
+    if (preferences == null || preferences!.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['training_experience'] != null) {
+        return decoded['training_experience'] as String;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get training experience as display text
+  String get trainingExperienceDisplay {
+    final exp = trainingExperience;
+    if (exp == null) return 'Not set';
+    switch (exp) {
+      case 'never':
+        return 'Never lifted';
+      case 'less_than_6_months':
+        return 'Less than 6 months';
+      case '6_months_to_2_years':
+        return '6 months - 2 years';
+      case '2_to_5_years':
+        return '2-5 years';
+      case '5_plus_years':
+        return '5+ years';
+      default:
+        return exp;
+    }
+  }
+
+  /// Get workout environment from preferences
+  String? get workoutEnvironment {
+    if (preferences == null || preferences!.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['workout_environment'] != null) {
+        return decoded['workout_environment'] as String;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get workout environment as display text
+  String get workoutEnvironmentDisplay {
+    final env = workoutEnvironment;
+    if (env == null) return 'Not set';
+    switch (env) {
+      case 'commercial_gym':
+        return 'Commercial Gym';
+      case 'home_gym':
+        return 'Home Gym';
+      case 'home':
+        return 'Home (Minimal)';
+      case 'outdoors':
+        return 'Outdoors';
+      case 'hotel':
+        return 'Hotel/Travel';
+      default:
+        return env;
+    }
+  }
+
+  /// Get focus areas from preferences
+  List<String> get focusAreas {
+    if (preferences == null || preferences!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['focus_areas'] != null) {
+        final areas = decoded['focus_areas'];
+        if (areas is List) {
+          return areas.map((e) => e.toString()).toList();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Get focus areas as display text
+  String get focusAreasDisplay {
+    final areas = focusAreas;
+    if (areas.isEmpty) return 'Full body';
+    return areas.map((a) {
+      switch (a) {
+        case 'chest':
+          return 'Chest';
+        case 'back':
+          return 'Back';
+        case 'shoulders':
+          return 'Shoulders';
+        case 'arms':
+          return 'Arms';
+        case 'core':
+          return 'Core';
+        case 'legs':
+          return 'Legs';
+        case 'glutes':
+          return 'Glutes';
+        case 'full_body':
+          return 'Full Body';
+        default:
+          return a;
+      }
+    }).join(', ');
+  }
+
+  /// Get motivation from preferences
+  String? get motivation {
+    if (preferences == null || preferences!.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(preferences!);
+      if (decoded is Map && decoded['motivation'] != null) {
+        return decoded['motivation'] as String;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get motivation as display text
+  String get motivationDisplay {
+    final mot = motivation;
+    if (mot == null) return 'Not set';
+    switch (mot) {
+      case 'seeing_progress':
+        return 'Seeing progress';
+      case 'feeling_stronger':
+        return 'Feeling stronger';
+      case 'looking_better':
+        return 'Looking better';
+      case 'health_improvements':
+        return 'Health improvements';
+      case 'stress_relief':
+        return 'Stress relief';
+      case 'social':
+        return 'Social/accountability';
+      default:
+        return mot;
+    }
+  }
+
   @override
   List<Object?> get props => [
         id,

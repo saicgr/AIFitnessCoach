@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../data/models/workout.dart';
 import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/welcome_screen.dart';
+import '../screens/auth/stats_welcome_screen.dart';
+import '../screens/auth/sign_in_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
@@ -13,6 +13,8 @@ import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
+import '../screens/onboarding/pre_auth_quiz_screen.dart';
+import '../screens/onboarding/personalized_preview_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -27,7 +29,6 @@ import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
-import '../screens/auth/language_selection_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
 import '../screens/glossary/glossary_screen.dart';
@@ -38,7 +39,6 @@ import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
-import '../core/providers/subscription_provider.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -77,12 +77,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isOnSplash = state.matchedLocation == '/splash';
-      final isOnWelcome = state.matchedLocation == '/welcome';
-      final isLoggingIn = state.matchedLocation == '/login';
       final isOnboarding = state.matchedLocation == '/onboarding';
-      final isOnLanguageSelect = state.matchedLocation == '/language-select';
       final isOnSeniorOnboarding = state.matchedLocation == '/senior-onboarding';
       final isOnModeSelection = state.matchedLocation == '/mode-selection';
+      final isOnStatsWelcome = state.matchedLocation == '/stats-welcome';
 
       // Helper to get the appropriate home route based on accessibility mode
       String getHomeRoute() {
@@ -102,6 +100,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/splash';
       }
 
+      // Check if on new onboarding flow screens
+      final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
+      final isOnPreview = state.matchedLocation == '/preview';
+      final isOnSignIn = state.matchedLocation == '/sign-in';
+
       // Auth is resolved - redirect from splash to appropriate destination
       if (isOnSplash) {
         if (isLoggedIn) {
@@ -111,21 +114,33 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           return getHomeRoute();
         } else {
-          // Check if language has been selected
-          if (!languageState.hasSelectedLanguage) {
-            return '/language-select';
-          }
-          // New users go to welcome after language selection
-          return '/welcome';
+          // New users go directly to stats welcome screen (entry point for new flow)
+          return '/stats-welcome';
         }
       }
 
-      // On language select - allow it if not logged in
-      if (isOnLanguageSelect) {
+      // On stats-welcome - allow it if not logged in, redirect to home if logged in
+      if (isOnStatsWelcome) {
         if (isLoggedIn) {
+          final user = authState.user;
+          if (user != null && !user.isOnboardingComplete) {
+            return '/onboarding';
+          }
           return getHomeRoute();
         }
-        return null; // Stay on language select
+        return null; // Stay on stats welcome
+      }
+
+      // Allow pre-auth quiz, preview, and sign-in screens (new flow before auth)
+      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
+        if (isLoggedIn) {
+          final user = authState.user;
+          if (user != null && !user.isOnboardingComplete) {
+            return '/onboarding';
+          }
+          return getHomeRoute();
+        }
+        return null; // Allow these screens for non-logged-in users
       }
 
       // Allow onboarding-related routes
@@ -133,22 +148,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null; // Allow these routes
       }
 
-      // Not logged in - allow welcome, login, and language-select pages
-      if (!isLoggedIn && !isLoggingIn && !isOnWelcome && !isOnSplash && !isOnLanguageSelect) {
-        // If language not selected, go to language select first
-        if (!languageState.hasSelectedLanguage) {
-          return '/language-select';
-        }
-        return '/welcome';
-      }
-
-      // Logged in and on login or welcome page -> check onboarding
-      if (isLoggedIn && (isLoggingIn || isOnWelcome || isOnLanguageSelect)) {
-        final user = authState.user;
-        if (user != null && !user.isOnboardingComplete && !isOnboarding) {
-          return '/onboarding';
-        }
-        return getHomeRoute();
+      // Not logged in and not on stats-welcome -> redirect to stats-welcome
+      if (!isLoggedIn && !isOnSplash && !isOnStatsWelcome) {
+        return '/stats-welcome';
       }
 
       // Redirect /home to /senior-home if in senior mode
@@ -170,28 +172,121 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
 
-      // Language selection - shown before welcome for new users
+      // Stats welcome - entry point with "Get Started" button
       GoRoute(
-        path: '/language-select',
-        builder: (context, state) => const LanguageSelectionScreen(),
+        path: '/stats-welcome',
+        builder: (context, state) => const StatsWelcomeScreen(),
       ),
 
-      // Welcome - intro slides for new users
+      // Pre-Auth Quiz - 5 questions before sign-in
       GoRoute(
-        path: '/welcome',
-        builder: (context, state) => const WelcomeScreen(),
+        path: '/pre-auth-quiz',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PreAuthQuizScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
 
-      // Login - for returning users or after welcome slides
+      // Personalized Preview - shows value before sign-in
       GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        path: '/preview',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PersonalizedPreviewScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                ),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
 
-      // Onboarding (AI Conversational)
+      // Sign-In Screen - after quiz and preview
+      GoRoute(
+        path: '/sign-in',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SignInScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.05),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Onboarding (AI Conversational) - with playful entrance animation
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const ConversationalOnboardingScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ConversationalOnboardingScreen(),
+          transitionDuration: const Duration(milliseconds: 600),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            // Playful scale + fade + slide up animation
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutBack,
+            );
+
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.15),
+                end: Offset.zero,
+              ).animate(curvedAnimation),
+              child: FadeTransition(
+                opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+                  ),
+                ),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(curvedAnimation),
+                  child: child,
+                ),
+              ),
+            );
+          },
+        ),
       ),
 
       // Mode Selection (shown during onboarding after name/age)

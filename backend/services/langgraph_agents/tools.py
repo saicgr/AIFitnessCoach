@@ -74,6 +74,13 @@ def add_exercise_to_workout(
         user = db.get_user(user_id) if user_id else None
         user_equipment = user.get("equipment", []) if user else ["Bodyweight"]
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        user_prefs = user.get("preferences", {}) if user else {}
+        if isinstance(user_prefs, str):
+            import json as json_module
+            user_prefs = json_module.loads(user_prefs) if user_prefs else {}
+        dumbbell_count = user_prefs.get("dumbbell_count", 2)
+        kettlebell_count = user_prefs.get("kettlebell_count", 1)
 
         # Use Exercise RAG to find exercises from the library
         from services.exercise_rag_service import get_exercise_rag_service
@@ -103,6 +110,8 @@ def add_exercise_to_workout(
                                 count=1,
                                 avoid_exercises=[ex.get("name", "") for ex in exercises],
                                 injuries=None,
+                                dumbbell_count=dumbbell_count,
+                                kettlebell_count=kettlebell_count,
                             )
                         )
                         rag_results = future.result(timeout=15)
@@ -116,6 +125,8 @@ def add_exercise_to_workout(
                             count=1,
                             avoid_exercises=[ex.get("name", "") for ex in exercises],
                             injuries=None,
+                            dumbbell_count=dumbbell_count,
+                            kettlebell_count=kettlebell_count,
                         )
                     )
 
@@ -255,6 +266,15 @@ def replace_all_exercises(
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
         user_goals = user.get("goals", []) if user else []
         user_injuries = user.get("active_injuries", []) if user else []
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        user_prefs = user.get("preferences", {}) if user else {}
+        if isinstance(user_prefs, str):
+            try:
+                user_prefs = json.loads(user_prefs)
+            except json.JSONDecodeError:
+                user_prefs = {}
+        dumbbell_count = user_prefs.get("dumbbell_count", 2)
+        kettlebell_count = user_prefs.get("kettlebell_count", 1)
 
         # Parse injuries if stored as JSON string
         if isinstance(user_injuries, str):
@@ -310,6 +330,8 @@ def replace_all_exercises(
                         count=num_exercises,
                         avoid_exercises=old_exercise_names,
                         injuries=injury_body_parts if injury_body_parts else None,
+                        dumbbell_count=dumbbell_count,
+                        kettlebell_count=kettlebell_count,
                     )
                 )
                 rag_exercises = future.result(timeout=30)
@@ -323,6 +345,8 @@ def replace_all_exercises(
                     count=num_exercises,
                     avoid_exercises=old_exercise_names,
                     injuries=injury_body_parts if injury_body_parts else None,
+                    dumbbell_count=dumbbell_count,
+                    kettlebell_count=kettlebell_count,
                 )
             )
 
@@ -1108,6 +1132,15 @@ def generate_quick_workout(
         user_fitness_level = user.get("fitness_level", "intermediate") if user else "intermediate"
         user_goals = user.get("goals", []) if user else []
         user_injuries = user.get("active_injuries", []) if user else []
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        user_prefs = user.get("preferences", {}) if user else {}
+        if isinstance(user_prefs, str):
+            try:
+                user_prefs = json.loads(user_prefs)
+            except json.JSONDecodeError:
+                user_prefs = {}
+        dumbbell_count = user_prefs.get("dumbbell_count", 2)
+        kettlebell_count = user_prefs.get("kettlebell_count", 1)
 
         # Parse injuries if stored as JSON string
         if isinstance(user_injuries, str):
@@ -1237,6 +1270,8 @@ def generate_quick_workout(
                             count=exercise_count,
                             avoid_exercises=old_exercise_names,  # Avoid exercises from current workout
                             injuries=injury_body_parts if injury_body_parts else None,
+                            dumbbell_count=dumbbell_count,
+                            kettlebell_count=kettlebell_count,
                         )
                     )
                     rag_exercises = future.result(timeout=30)
@@ -1250,6 +1285,8 @@ def generate_quick_workout(
                         count=exercise_count,
                         avoid_exercises=old_exercise_names,
                         injuries=injury_body_parts if injury_body_parts else None,
+                        dumbbell_count=dumbbell_count,
+                        kettlebell_count=kettlebell_count,
                     )
                 )
 

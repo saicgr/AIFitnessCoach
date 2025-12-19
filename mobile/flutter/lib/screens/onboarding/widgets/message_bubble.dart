@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
@@ -8,19 +9,26 @@ class MessageBubble extends StatelessWidget {
   final bool isUser;
   final String content;
   final DateTime? timestamp;
+  final bool animate;
+  final int animationIndex;
 
   const MessageBubble({
     super.key,
     required this.isUser,
     required this.content,
     this.timestamp,
+    this.animate = true,
+    this.animationIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
 
-    return Padding(
+    // Calculate animation delay based on index
+    final baseDelay = Duration(milliseconds: 200 + (animationIndex * 100));
+
+    Widget bubble = Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -89,6 +97,29 @@ class MessageBubble extends StatelessWidget {
         ],
       ),
     );
+
+    // Apply entrance animation if enabled
+    if (animate) {
+      bubble = bubble
+          .animate()
+          .fadeIn(duration: 400.ms, delay: baseDelay)
+          .slideX(
+            begin: isUser ? 0.15 : -0.15,
+            end: 0,
+            duration: 400.ms,
+            delay: baseDelay,
+            curve: Curves.easeOutCubic,
+          )
+          .scale(
+            begin: const Offset(0.95, 0.95),
+            end: const Offset(1, 1),
+            duration: 300.ms,
+            delay: baseDelay,
+            curve: Curves.easeOutCubic,
+          );
+    }
+
+    return bubble;
   }
 
   Widget _buildAiAvatar(ThemeColors colors) {

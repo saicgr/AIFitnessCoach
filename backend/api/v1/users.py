@@ -504,6 +504,50 @@ async def update_user(user_id: str, user: UserUpdate):
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")
+
+            # If onboarding was just completed, index preferences to ChromaDB for AI
+            if user.onboarding_completed and update_data.get("onboarding_completed"):
+                try:
+                    from services.rag_service import WorkoutRAGService
+                    from services.gemini_service import GeminiService
+                    from core.config import get_settings
+
+                    settings = get_settings()
+                    gemini_service = GeminiService(settings)
+                    rag_service = WorkoutRAGService(gemini_service)
+
+                    # Get preferences from the update
+                    prefs = update_data.get("preferences", {})
+                    if isinstance(prefs, str):
+                        import json
+                        prefs = json.loads(prefs)
+
+                    # Parse goals from update_data (stored as JSON string)
+                    goals_data = update_data.get("goals")
+                    if isinstance(goals_data, str):
+                        try:
+                            goals_data = json.loads(goals_data)
+                        except json.JSONDecodeError:
+                            goals_data = [goals_data] if goals_data else []
+
+                    await rag_service.index_program_preferences(
+                        user_id=user_id,
+                        difficulty=prefs.get("intensity_preference"),
+                        duration_minutes=prefs.get("workout_duration"),
+                        workout_type=prefs.get("training_split"),
+                        workout_days=prefs.get("workout_days"),
+                        equipment=update_data.get("equipment", []),
+                        focus_areas=prefs.get("focus_areas"),
+                        injuries=update_data.get("active_injuries", []),
+                        goals=goals_data if isinstance(goals_data, list) else None,
+                        motivations=prefs.get("motivations"),
+                        dumbbell_count=prefs.get("dumbbell_count"),
+                        kettlebell_count=prefs.get("kettlebell_count"),
+                        change_reason="onboarding_completed",
+                    )
+                    logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")
+                except Exception as rag_error:
+                    logger.warning(f"⚠️ Could not index preferences to ChromaDB: {rag_error}")
         else:
             updated = existing
 

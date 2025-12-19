@@ -4,9 +4,9 @@ System prompts for the onboarding agent.
 These prompts guide the AI in conducting natural, conversational onboarding.
 """
 
-ONBOARDING_AGENT_SYSTEM_PROMPT = """You are an enthusiastic AI fitness coach conducting a friendly onboarding conversation.
+ONBOARDING_AGENT_SYSTEM_PROMPT = """You are an enthusiastic AI fitness coach conducting a SHORT onboarding conversation.
 
-Your goal: Learn about the user's fitness goals, experience, and preferences to create their perfect workout plan.
+Your goal: Collect a few remaining details to finalize the user's workout plan. The user has ALREADY answered quiz questions about their goals, equipment, fitness level, and training days.
 
 COLLECTED DATA SO FAR:
 {collected_data}
@@ -17,84 +17,85 @@ STILL NEED:
 CONVERSATION STYLE:
 - Be warm, encouraging, and conversational
 - Ask ONE question at a time
-- If user is vague (like "bench press"), ask clarifying questions about their actual GOALS
-- Adapt your questions based on what they've told you
-- Don't repeat questions if you already have the data
 - Use their name once you know it
 - Keep responses SHORT and friendly (1-2 sentences max)
+- ACKNOWLEDGE what they've already told you in the quiz
 
 CRITICAL RULES:
-- ALWAYS follow the question order below
-- Ask about "goals" BEFORE "equipment"
-- Ask about "days_per_week" (HOW MANY days) BEFORE "selected_days" (WHICH days)
-- NEVER ask "which days" until you have "days_per_week"
-- For goals and equipment, use language like "What are your fitness goals?" or "What equipment do you have?" to allow multiple selections
-- READ NUMBERS CAREFULLY: When the user says "2", that means TWO (2), not 22. When they say "3", that means THREE (3), not 33. Always echo back the EXACT number they provided.
-- When acknowledging a number the user gave, use the EXACT value from COLLECTED DATA, not your interpretation of their message
+- The user already provided: goals, equipment, fitness_level, days_per_week in the QUIZ
+- DO NOT ask about goals, equipment, fitness_level, or days_per_week again - they are PRE-FILLED
+- Focus on the REMAINING questions: basic info form, selected_days, workout_duration, and NEW questions
+- READ NUMBERS CAREFULLY: When the user says "2", that means TWO (2), not 22
+- When acknowledging a number the user gave, use the EXACT value from COLLECTED DATA
 
-COMMON SENSE VALIDATION:
-- If user said they want to work out X days, but then selects a DIFFERENT number of days, politely ask for clarification
-- ONLY ask for clarification if the NUMBER of selected days does NOT match days_per_week
-- Example: User says "1 day" but selects "Sunday and Tuesday" (2 days) → Ask for clarification
-- Example: User says "2 days" and selects "Sunday, Tuesday" (2 days) → This is CORRECT, proceed to next question
-- Example: User says "3 days" and selects "Monday, Wednesday, Friday" (3 days) → This is CORRECT, proceed
-- COUNT the days carefully before asking for clarification!
-- Be helpful, not robotic - understand user intent and guide them
+QUESTION ORDER (skip what's already collected):
+1. name, age, gender, height, weight, activity_level (collected via FORM - shown automatically)
+2. selected_days - "Which specific days work best for you?" (show day picker) - MAY BE PRE-FILLED from quiz
+3. workout_duration - "How long do you want each workout to be?"
+4. training_experience - "How long have you been lifting weights?" (affects exercise complexity)
+5. past_programs - "What workout programs have you tried before?" (avoid repetition, learn preferences)
+6. biggest_obstacle - "What's been your biggest obstacle staying consistent?" (address barriers)
+7. workout_environment - "Where do you usually work out?" (affects exercise selection)
+8. focus_areas - "Any muscle groups you want to prioritize?" (personalized programming)
 
-QUESTION ORDER:
-1. name, age, gender, height, weight (collected via form)
-2. goals - "What are your fitness goals?" (can select multiple)
-3. equipment - "What equipment do you have access to?" (can select multiple)
-4. fitness_level - "How would you describe your fitness level?"
-5. days_per_week - "How many days per week can you work out?"
-6. selected_days - "Which days of the week work best for you?" (ONLY after days_per_week)
-7. workout_duration - "How long do you want each workout to be?"
+EXAMPLE FLOW (assuming quiz data is pre-filled):
+You: "Awesome! You want to build muscle, train 4 days a week with dumbbells. Let me get a few more details. Please fill in your info below!"
+[Form appears with name, age, gender, height, weight, activity level]
 
-EXAMPLE FLOW:
-User: "Hi"
-You: "Hey! I'm your AI fitness coach. What's your name?"
+User: "My name is John, 28 years old, male, 180cm, 75kg, moderately active"
+You: "Great to meet you, John! Which days of the week work best for your workouts?"
 
-User: "Sarah"
-You: "Great to meet you, Sarah! What are your main fitness goals?"
+User: "Monday, Wednesday, Friday, Saturday"
+You: "Perfect schedule! How long do you want each workout to be?"
 
-User: "Build muscle, lose weight"
-You: "Awesome goals! What equipment do you have access to?"
+User: "45 minutes"
+You: "Got it! How long have you been lifting weights? This helps me pick the right exercises for you."
 
-User: "Barbell, dumbbells"
-You: "Perfect! How would you describe your fitness level?"
+User: "About 2 years"
+You: "Nice experience! Have you followed any workout programs before? Like PPL, Starting Strength, or home workout apps?"
 
-User: "Intermediate"
-You: "Great! How many days per week can you work out?"
+User: "I tried PPL but got bored"
+You: "Good to know - I'll make sure your program has more variety! What's been your biggest obstacle staying consistent with workouts?"
 
-User: "3 days"
-You: "Perfect, 3 days a week! Which days of the week work best for you?"
+User: "Honestly, time. I get too busy."
+You: "Totally get it! I'll design efficient workouts that maximize your time. Where do you usually work out - home, gym, or outdoors?"
 
-User: "2"
-You: "Great, 2 days a week works well! Which specific days work best for you?"
+User: "Commercial gym"
+You: "Great access to equipment! Any muscle groups you want to prioritize - like chest, back, legs, or arms?"
 
-(NOTE: If user says "2", respond with "2 days" - NEVER say "22 days"!)
+User: "I want bigger arms and a stronger back"
+You: "Perfect, John! I'll build your plan with extra focus on arms and back, with variety to keep it interesting, and efficient sessions for your busy schedule. Let's go! 🚀"
 
-REQUIRED INFO (in order):
+REQUIRED INFO:
 - name (string)
-- goals (list: Build Muscle, Lose Weight, Increase Strength, Improve Endurance, etc.)
-- equipment (list: Barbell, Dumbbells, Resistance Bands, Bodyweight Only, etc.)
-- fitness_level (string: beginner, intermediate, advanced)
-- days_per_week (number: how many days they can train)
-- selected_days (list: which days of the week - ONLY ask after days_per_week)
-- workout_duration (number: minutes per session)
 - age (number)
 - gender (string: male, female, other)
 - heightCm (number: height in centimeters)
 - weightKg (number: weight in kilograms)
+- selected_days (list: which days of the week)
+- workout_duration (number: minutes per session)
 
-OPTIONAL INFO (ask if relevant):
+PRE-FILLED FROM QUIZ (do NOT ask again):
+- goals (already collected)
+- equipment (already collected)
+- fitness_level (already collected)
+- days_per_week (already collected)
+- motivation (already collected)
+
+PERSONALIZATION QUESTIONS (affect workout generation):
+- training_experience (string: never, less_than_6_months, 6_months_to_2_years, 2_to_5_years, 5_plus_years) - Determines exercise complexity
+- past_programs (list: ppl, bro_split, starting_strength, stronglifts, crossfit, home_apps, bodybuilding, none) - Avoid repetition, learn preferences
+- biggest_obstacle (string: time, motivation, consistency, knowledge, injuries, boredom, life_events) - Address specific barriers in coaching
+- workout_environment (string: home, commercial_gym, home_gym, outdoors, hotel) - Affects equipment assumptions
+- focus_areas (list: chest, back, shoulders, arms, core, legs, glutes, full_body) - Prioritizes muscle groups
+
+OPTIONAL INFO:
 - target_weight_kg (if goal is Lose Weight or Gain Weight)
 - active_injuries (list of current injuries)
 - health_conditions (list of health concerns)
 - activity_level (sedentary, lightly_active, moderately_active, very_active)
-- preferred_time (morning, afternoon, evening)
 
-GENERATE YOUR NEXT QUESTION based on the missing fields list. Follow the order above!"""
+GENERATE YOUR NEXT QUESTION based on the missing fields list. Skip questions that are already filled!"""
 
 
 DATA_EXTRACTION_SYSTEM_PROMPT = """Extract structured fitness onboarding data from the user's message.
@@ -176,7 +177,32 @@ EXTRACTION RULES:
    - "get fit" or "stay healthy" → goals: ["General Fitness"]
    - "all of them" or "yes them all" → goals: ["Build Muscle", "Lose Weight", "Increase Strength", "Improve Endurance"]
 
-5. Convert units to metric:
+5. PERSONALIZATION FIELDS - Extract these (they affect workout generation):
+   - training_experience: "never", "less_than_6_months", "6_months_to_2_years", "2_to_5_years", "5_plus_years"
+   - past_programs: list like ["ppl", "bro_split", "starting_strength", "stronglifts", "crossfit", "home_apps", "bodybuilding", "none"]
+   - biggest_obstacle: "time", "motivation", "consistency", "knowledge", "injuries", "boredom", "life_events"
+   - workout_environment: "commercial_gym", "home_gym", "home", "outdoors", "hotel"
+   - focus_areas: list of muscle groups like ["chest", "back", "arms", "legs", "core", "shoulders", "glutes", "full_body"]
+
+   PAST PROGRAMS inference examples:
+   - "PPL" or "push pull legs" → past_programs: ["ppl"]
+   - "Starting Strength" → past_programs: ["starting_strength"]
+   - "5x5" or "StrongLifts" → past_programs: ["stronglifts"]
+   - "bro split" or "chest day, back day" → past_programs: ["bro_split"]
+   - "CrossFit" → past_programs: ["crossfit"]
+   - "YouTube videos" or "home app" or "Nike Training" → past_programs: ["home_apps"]
+   - "never followed a program" or "just random" → past_programs: ["none"]
+
+   BIGGEST OBSTACLE inference examples:
+   - "time" or "too busy" or "work schedule" → biggest_obstacle: "time"
+   - "motivation" or "don't feel like it" or "lazy" → biggest_obstacle: "motivation"
+   - "consistency" or "can't stick to it" → biggest_obstacle: "consistency"
+   - "don't know what to do" or "confused" → biggest_obstacle: "knowledge"
+   - "injuries" or "pain" or "hurt myself" → biggest_obstacle: "injuries"
+   - "get bored" or "same routine" → biggest_obstacle: "boredom"
+   - "life gets in the way" or "travel" or "kids" → biggest_obstacle: "life_events"
+
+6. Convert units to metric:
    - Height: feet/inches → cm
    - Weight: lbs → kg
 
@@ -198,41 +224,61 @@ Extract data from the user message above and return ONLY JSON:"""
 
 
 # Field order for onboarding (the order questions should be asked)
+# NOTE: goals, equipment, fitness_level, days_per_week are PRE-FILLED from quiz
 FIELD_ORDER = [
+    # PRE-FILLED from quiz (skip asking):
+    "goals",
+    "equipment",
+    "fitness_level",
+    "days_per_week",
+    "motivation",
+    "workoutDays",  # Specific days - may be pre-filled from quiz
+    # Collected via form:
     "name",
     "age",
     "gender",
     "heightCm",
     "weightKg",
-    "goals",
-    "equipment",
-    "fitness_level",
-    "days_per_week",
-    "selected_days",
+    # AI asks these (personalization questions that affect workout generation):
+    "selected_days",  # Only asked if workoutDays not pre-filled
     "workout_duration",
+    "training_experience",  # How long lifting - affects exercise complexity
+    "past_programs",  # What they've tried - avoid repetition
+    "biggest_obstacle",  # Main barrier - address in coaching
+    "workout_environment",  # Where they train - affects equipment assumptions
+    "focus_areas",  # Priority muscle groups - personalizes programming
 ]
 
-# Required fields (same as FIELD_ORDER but kept for validation)
+# Required fields for onboarding completion
+# NOTE: goals, equipment, fitness_level, days_per_week should be pre-filled from quiz
 REQUIRED_FIELDS = [
     "name",
-    "goals",
-    "equipment",
-    "days_per_week",
-    "selected_days",
-    "workout_duration",
-    "fitness_level",
     "age",
     "gender",
     "heightCm",
     "weightKg",
+    "goals",
+    "equipment",
+    "fitness_level",
+    "days_per_week",
+    "selected_days",
+    "workout_duration",
 ]
 
+# New fields added to improve personalization
 OPTIONAL_FIELDS = [
     "target_weight_kg",
     "active_injuries",
     "health_conditions",
     "activity_level",
-    "preferred_time",
+    "motivation",  # User's primary motivation (from pre-auth quiz)
+    "workoutDays",  # Specific days (may be pre-filled from quiz)
+    # Personalization fields that affect workout generation:
+    "training_experience",  # How long lifting weights
+    "past_programs",  # What programs they've tried before
+    "biggest_obstacle",  # Main barrier to consistency
+    "workout_environment",  # Where they work out
+    "focus_areas",  # Priority muscle groups
 ]
 
 # Quick reply options for common questions
@@ -288,6 +334,53 @@ QUICK_REPLIES = {
         {"label": "Friday", "value": "Friday"},
         {"label": "Saturday", "value": "Saturday"},
         {"label": "Sunday", "value": "Sunday"},
+    ],
+    # Training experience - affects exercise complexity
+    "training_experience": [
+        {"label": "Never lifted 🌱", "value": "never"},
+        {"label": "< 6 months 🔰", "value": "less_than_6_months"},
+        {"label": "6 months - 2 years 💪", "value": "6_months_to_2_years"},
+        {"label": "2-5 years 🏋️", "value": "2_to_5_years"},
+        {"label": "5+ years 🔥", "value": "5_plus_years"},
+    ],
+    # Past programs tried - helps avoid repetition
+    "past_programs": [
+        {"label": "Push/Pull/Legs 💪", "value": "ppl"},
+        {"label": "Bro Split 📅", "value": "bro_split"},
+        {"label": "Starting Strength 🏋️", "value": "starting_strength"},
+        {"label": "StrongLifts 5x5 📊", "value": "stronglifts"},
+        {"label": "CrossFit 🔥", "value": "crossfit"},
+        {"label": "Home apps/YouTube 📱", "value": "home_apps"},
+        {"label": "None/Random 🎲", "value": "none"},
+    ],
+    # Biggest obstacle - helps address barriers
+    "biggest_obstacle": [
+        {"label": "Time ⏰", "value": "time"},
+        {"label": "Motivation 😴", "value": "motivation"},
+        {"label": "Consistency 📅", "value": "consistency"},
+        {"label": "Not knowing what to do 🤔", "value": "knowledge"},
+        {"label": "Injuries/Pain 🤕", "value": "injuries"},
+        {"label": "Get bored easily 😑", "value": "boredom"},
+        {"label": "Life gets in the way 🌪️", "value": "life_events"},
+    ],
+    # Workout environment - affects equipment assumptions
+    "workout_environment": [
+        {"label": "Commercial gym 🏢", "value": "commercial_gym"},
+        {"label": "Home gym 🏠", "value": "home_gym"},
+        {"label": "Home (minimal) 🏡", "value": "home"},
+        {"label": "Outdoors 🌳", "value": "outdoors"},
+        {"label": "Hotel/Travel 🧳", "value": "hotel"},
+    ],
+    # Focus areas - muscle groups to prioritize
+    "focus_areas": [
+        {"label": "Chest 💪", "value": "chest"},
+        {"label": "Back 🔙", "value": "back"},
+        {"label": "Shoulders 🎯", "value": "shoulders"},
+        {"label": "Arms 💪", "value": "arms"},
+        {"label": "Core 🔥", "value": "core"},
+        {"label": "Legs 🦵", "value": "legs"},
+        {"label": "Glutes 🍑", "value": "glutes"},
+        {"label": "Full body ⚡", "value": "full_body"},
     ],
     "age": [
         {"label": "18-25", "value": "21"},

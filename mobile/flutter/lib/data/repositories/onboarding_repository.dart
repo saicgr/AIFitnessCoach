@@ -210,9 +210,16 @@ class OnboardingRepository {
           if (conversationHistory != null)
             'conversation_history': conversationHistory,
         },
+      ).timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          debugPrint('⏱️ [Onboarding] Request timed out after 60 seconds');
+          throw Exception('Request timed out. Please try again.');
+        },
       );
 
       debugPrint('✅ [Onboarding] AI response received');
+      debugPrint('📦 [Onboarding] Response data: ${response.data}');
       return ParseOnboardingResult.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       debugPrint('❌ [Onboarding] Error parsing response: $e');

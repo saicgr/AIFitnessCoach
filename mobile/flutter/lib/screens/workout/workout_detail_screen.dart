@@ -645,19 +645,43 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        // Let's Go Button (extended FAB style)
-        FloatingActionButton.extended(
-          heroTag: 'start_workout',
-          onPressed: () => context.push('/active-workout', extra: workout),
-          backgroundColor: AppColors.cyan,
-          foregroundColor: AppColors.pureBlack,
-          elevation: 8,
-          icon: const Icon(Icons.bolt_rounded, size: 22),
-          label: const Text(
-            "Let's Go",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
+        // Let's Go Button - custom styled to ensure full text visibility
+        GestureDetector(
+          onTap: () => context.push('/active-workout', extra: workout),
+          child: Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            decoration: BoxDecoration(
+              color: AppColors.cyan,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cyan.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.bolt_rounded,
+                  size: 24,
+                  color: AppColors.pureBlack,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  "Let's Go",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    letterSpacing: 0.5,
+                    color: AppColors.pureBlack,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

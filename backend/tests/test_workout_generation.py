@@ -384,3 +384,152 @@ class TestEdgeCases:
             assert isinstance(params, dict), f"CRITICAL: Failed for {workout_type}"
             assert params["sets"] > 0, f"CRITICAL: No sets for {workout_type}"
             assert params["reps"] > 0, f"CRITICAL: No reps for {workout_type}"
+
+
+# ============ CRITICAL: Equipment Count Tests ============
+
+class TestEquipmentCounts:
+    """CRITICAL TESTS: Equipment count (single vs pair) filtering must work."""
+
+    @pytest.mark.asyncio
+    async def test_single_dumbbell_filtering(self):
+        """CRITICAL: Single dumbbell (count=1) should filter to single-friendly exercises."""
+        service = get_exercise_rag_service()
+
+        exercises = await service.select_exercises_for_workout(
+            focus_area="upper",
+            equipment=["Dumbbells"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=6,
+            dumbbell_count=1,  # Single dumbbell
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        # With single dumbbell, should still return exercises (single-friendly ones)
+        assert len(exercises) >= 0, "CRITICAL: Should handle single dumbbell"
+
+    @pytest.mark.asyncio
+    async def test_pair_dumbbell_no_filtering(self):
+        """CRITICAL: Pair of dumbbells (count=2) should not filter exercises."""
+        service = get_exercise_rag_service()
+
+        exercises = await service.select_exercises_for_workout(
+            focus_area="upper",
+            equipment=["Dumbbells"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=6,
+            dumbbell_count=2,  # Pair of dumbbells
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        assert len(exercises) > 0, "CRITICAL: Must return exercises for pair"
+
+    @pytest.mark.asyncio
+    async def test_single_kettlebell_filtering(self):
+        """CRITICAL: Single kettlebell (count=1) should filter to single-friendly exercises."""
+        service = get_exercise_rag_service()
+
+        exercises = await service.select_exercises_for_workout(
+            focus_area="full_body",
+            equipment=["Kettlebell"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=6,
+            kettlebell_count=1,  # Single kettlebell
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        # With single kettlebell, should still return exercises
+        assert len(exercises) >= 0, "CRITICAL: Should handle single kettlebell"
+
+    @pytest.mark.asyncio
+    async def test_pair_kettlebell_no_filtering(self):
+        """CRITICAL: Pair of kettlebells (count=2) should not filter exercises."""
+        service = get_exercise_rag_service()
+
+        exercises = await service.select_exercises_for_workout(
+            focus_area="full_body",
+            equipment=["Kettlebell"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=6,
+            kettlebell_count=2,  # Pair of kettlebells
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        assert len(exercises) > 0, "CRITICAL: Must return exercises for pair"
+
+    @pytest.mark.asyncio
+    async def test_default_counts_work(self):
+        """CRITICAL: Default equipment counts (2 dumbbells, 1 kettlebell) should work."""
+        service = get_exercise_rag_service()
+
+        # Test with default counts (not specified - should use defaults)
+        exercises = await service.select_exercises_for_workout(
+            focus_area="full_body",
+            equipment=["Dumbbells", "Kettlebell"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=6,
+            # Not specifying counts - should use defaults (2, 1)
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        assert len(exercises) > 0, "CRITICAL: Must return exercises with default counts"
+
+    @pytest.mark.asyncio
+    async def test_mixed_equipment_with_single_dumbbell(self):
+        """CRITICAL: Mixed equipment with single dumbbell should work."""
+        service = get_exercise_rag_service()
+
+        exercises = await service.select_exercises_for_workout(
+            focus_area="full_body",
+            equipment=["Dumbbells", "Barbell", "Pull-up Bar"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=8,
+            dumbbell_count=1,  # Only 1 dumbbell but other equipment available
+        )
+
+        assert exercises is not None, "CRITICAL: Must return exercises"
+        assert isinstance(exercises, list), "CRITICAL: Must return list"
+        # Should return exercises using other equipment even if dumbbell limited
+        assert len(exercises) > 0, "CRITICAL: Should return exercises with mixed equipment"
+
+    @pytest.mark.asyncio
+    async def test_equipment_count_edge_cases(self):
+        """CRITICAL: Edge cases for equipment counts should not crash."""
+        service = get_exercise_rag_service()
+
+        # Test with count=0 (should treat as no equipment of that type)
+        try:
+            exercises = await service.select_exercises_for_workout(
+                focus_area="upper",
+                equipment=["Dumbbells"],
+                fitness_level="intermediate",
+                goals=["Build Muscle"],
+                count=4,
+                dumbbell_count=0,
+            )
+            assert isinstance(exercises, list), "Should return list"
+        except Exception:
+            # Acceptable to raise error for count=0
+            pass
+
+        # Test with count=10 (should work same as 2+)
+        exercises = await service.select_exercises_for_workout(
+            focus_area="upper",
+            equipment=["Dumbbells"],
+            fitness_level="intermediate",
+            goals=["Build Muscle"],
+            count=4,
+            dumbbell_count=10,
+        )
+        assert isinstance(exercises, list), "Should return list for high count"

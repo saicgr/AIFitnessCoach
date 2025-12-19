@@ -468,6 +468,10 @@ class WorkoutRAGService:
         equipment: Optional[List[str]] = None,
         focus_areas: Optional[List[str]] = None,
         injuries: Optional[List[str]] = None,
+        goals: Optional[List[str]] = None,
+        motivations: Optional[List[str]] = None,
+        dumbbell_count: Optional[int] = None,
+        kettlebell_count: Optional[int] = None,
         change_reason: str = "user_customization",
     ) -> str:
         """
@@ -477,6 +481,7 @@ class WorkoutRAGService:
         - "I see you recently changed your focus to upper body..."
         - "Since you added that lower back injury, I'll avoid..."
         - "You've been doing 4-day splits lately..."
+        - "You have a single dumbbell, so I'll suggest single dumbbell exercises..."
 
         Args:
             user_id: User ID
@@ -487,6 +492,10 @@ class WorkoutRAGService:
             equipment: Available equipment
             focus_areas: Target muscle groups
             injuries: Areas to avoid
+            goals: Fitness goals (multi-select)
+            motivations: What motivates the user (multi-select)
+            dumbbell_count: Number of dumbbells (1=single, 2=pair)
+            kettlebell_count: Number of kettlebells (1=single, 2+=multiple)
             change_reason: Why preferences were changed
 
         Returns:
@@ -502,6 +511,10 @@ class WorkoutRAGService:
         pref_parts.append(f"Updated: {timestamp}")
         pref_parts.append(f"Reason: {change_reason}")
 
+        if goals:
+            pref_parts.append(f"Fitness Goals: {', '.join(goals)}")
+        if motivations:
+            pref_parts.append(f"Motivations: {', '.join(motivations)}")
         if difficulty:
             pref_parts.append(f"Difficulty: {difficulty}")
         if duration_minutes:
@@ -512,6 +525,12 @@ class WorkoutRAGService:
             pref_parts.append(f"Workout Days: {', '.join(workout_days)}")
         if equipment:
             pref_parts.append(f"Equipment: {', '.join(equipment)}")
+        if dumbbell_count is not None:
+            dumbbell_desc = "single dumbbell" if dumbbell_count == 1 else f"pair of dumbbells ({dumbbell_count})"
+            pref_parts.append(f"Dumbbells: {dumbbell_desc}")
+        if kettlebell_count is not None:
+            kettlebell_desc = "single kettlebell" if kettlebell_count == 1 else f"multiple kettlebells ({kettlebell_count})"
+            pref_parts.append(f"Kettlebells: {kettlebell_desc}")
         if focus_areas:
             pref_parts.append(f"Focus Areas: {', '.join(focus_areas)}")
         if injuries:
@@ -531,11 +550,15 @@ class WorkoutRAGService:
                 metadatas=[{
                     "user_id": user_id,
                     "change_type": "program_preferences",
+                    "goals": ",".join(goals) if goals else "",
+                    "motivations": ",".join(motivations) if motivations else "",
                     "difficulty": difficulty or "",
                     "duration_minutes": duration_minutes or 0,
                     "workout_type": workout_type or "",
                     "workout_days": ",".join(workout_days) if workout_days else "",
                     "equipment": ",".join(equipment) if equipment else "",
+                    "dumbbell_count": dumbbell_count or 2,
+                    "kettlebell_count": kettlebell_count or 1,
                     "focus_areas": ",".join(focus_areas) if focus_areas else "",
                     "injuries": ",".join(injuries) if injuries else "",
                     "change_reason": change_reason,

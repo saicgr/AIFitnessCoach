@@ -599,6 +599,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        dumbbell_count = preferences.get("dumbbell_count", 2)
+        kettlebell_count = preferences.get("kettlebell_count", 1)
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
@@ -641,6 +644,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     count=6,
                     avoid_exercises=used_exercises,
                     workout_params=adaptive_params,
+                    dumbbell_count=dumbbell_count,
+                    kettlebell_count=kettlebell_count,
                 )
 
                 if rag_exercises:
@@ -768,6 +773,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        dumbbell_count = preferences.get("dumbbell_count", 2)
+        kettlebell_count = preferences.get("kettlebell_count", 1)
 
         # Get injuries and health conditions for workout safety
         active_injuries = parse_json_field(user.get("active_injuries"), [])
@@ -777,7 +785,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
 
-        logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}")
+        logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}, dumbbell_count: {dumbbell_count}, kettlebell_count: {kettlebell_count}")
         if active_injuries or health_conditions:
             logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
 
@@ -843,6 +851,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
                     workout_params=adaptive_params,  # Pass adaptive parameters
+                    dumbbell_count=dumbbell_count,
+                    kettlebell_count=kettlebell_count,
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
@@ -1004,6 +1014,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        dumbbell_count = preferences.get("dumbbell_count", 2)
+        kettlebell_count = preferences.get("kettlebell_count", 1)
 
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
@@ -1091,6 +1104,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     avoid_exercises=exercises_to_avoid,  # Use passed-in list for variety
                     injuries=active_injuries if active_injuries else None,
                     workout_params=adaptive_params,  # Pass adaptive parameters
+                    dumbbell_count=dumbbell_count,
+                    kettlebell_count=kettlebell_count,
                 )
 
                 exercises_used = []
@@ -1277,6 +1292,10 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         # IMPORTANT: Use explicit None check so empty list [] is respected
         equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
         goals = parse_json_field(user.get("goals"), [])
+        preferences = parse_json_field(user.get("preferences"), {})
+        # Get equipment counts for single dumbbell/kettlebell filtering
+        dumbbell_count = preferences.get("dumbbell_count", 2)
+        kettlebell_count = preferences.get("kettlebell_count", 1)
 
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
@@ -1349,6 +1368,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
                 count=exercise_count,  # Dynamic count based on duration
                 avoid_exercises=[],  # Don't avoid any since we're regenerating
                 injuries=injuries if injuries else None,
+                dumbbell_count=dumbbell_count,
+                kettlebell_count=kettlebell_count,
             )
 
             if rag_exercises:

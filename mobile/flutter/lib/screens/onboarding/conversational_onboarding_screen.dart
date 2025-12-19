@@ -15,6 +15,7 @@ import 'widgets/quick_reply_buttons.dart';
 import 'widgets/basic_info_form.dart';
 import 'widgets/day_picker.dart';
 import 'widgets/health_checklist_modal.dart';
+import 'pre_auth_quiz_screen.dart';
 
 /// Conversational AI onboarding screen
 /// WhatsApp-style chat interface for collecting user data
@@ -43,6 +44,7 @@ class _ConversationalOnboardingScreenState
   double _workoutLoadingProgress = 0;
   String _workoutLoadingMessage = '';
   bool _initialized = false;
+  bool _showInitialTyping = false;
 
   @override
   void initState() {
@@ -70,15 +72,220 @@ class _ConversationalOnboardingScreenState
     _initialized = true;
 
     final state = ref.read(onboardingStateProvider);
+
+    // Load pre-auth quiz data and pre-populate collected data
+    _loadPreAuthData();
+
     if (state.messages.isEmpty) {
       ref.read(onboardingStateProvider.notifier).setActive(true);
-      ref.read(onboardingStateProvider.notifier).addMessage(
+
+      // Show typing indicator first for realistic feel
+      setState(() => _showInitialTyping = true);
+
+      // Build personalized greeting based on quiz answers
+      final preAuthData = ref.read(preAuthQuizProvider);
+      final greeting = _buildPersonalizedGreeting(preAuthData);
+
+      // After a delay, hide typing and show the actual message
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          setState(() => _showInitialTyping = false);
+          ref.read(onboardingStateProvider.notifier).addMessage(
             ChatMessage(
               role: 'assistant',
-              content:
-                  "Hey! I'm your AI fitness coach. Welcome to Aevo! Can you please help me with a few details below?",
+              content: greeting,
             ),
           );
+        }
+      });
+    }
+  }
+
+  /// Build a personalized greeting that acknowledges quiz answers
+  String _buildPersonalizedGreeting(PreAuthQuizData quizData) {
+    final parts = <String>[];
+
+    // Goals acknowledgment (multi-select)
+    if (quizData.goals != null && quizData.goals!.isNotEmpty) {
+      final goalTexts = quizData.goals!
+          .map((g) => _getGoalText(g))
+          .where((t) => t != null)
+          .cast<String>()
+          .toList();
+      if (goalTexts.isNotEmpty) {
+        if (goalTexts.length == 1) {
+          parts.add(goalTexts.first);
+        } else if (goalTexts.length == 2) {
+          parts.add('${goalTexts[0]} and ${goalTexts[1]}');
+        } else {
+          final last = goalTexts.removeLast();
+          parts.add('${goalTexts.join(", ")} and $last');
+        }
+      }
+    }
+
+    // Days per week acknowledgment
+    if (quizData.daysPerWeek != null) {
+      parts.add('${quizData.daysPerWeek} days a week');
+    }
+
+    // Equipment acknowledgment
+    if (quizData.equipment != null && quizData.equipment!.isNotEmpty) {
+      final equipmentText = _getEquipmentText(quizData.equipment!);
+      if (equipmentText != null) {
+        parts.add('with $equipmentText');
+      }
+    }
+
+    // Fitness level
+    if (quizData.fitnessLevel != null) {
+      final levelText = quizData.fitnessLevel == 'beginner'
+          ? "and you're just getting started"
+          : quizData.fitnessLevel == 'advanced'
+              ? "and you're already experienced"
+              : "at an ${quizData.fitnessLevel} level";
+      parts.add(levelText);
+    }
+
+    if (parts.isEmpty) {
+      return "Hey! I'm your AI fitness coach. Welcome to Aevo! Can you please help me with a few details below?";
+    }
+
+    final summary = parts.join(', ');
+    return "Awesome! You want to $summary. Let's finalize your plan - just need a few more details below! 💪";
+  }
+
+  String? _getGoalText(String? goal) {
+    if (goal == null) return null;
+    switch (goal) {
+      case 'build_muscle':
+        return 'build muscle';
+      case 'lose_weight':
+        return 'lose weight';
+      case 'increase_strength':
+        return 'get stronger';
+      case 'improve_endurance':
+        return 'improve endurance';
+      case 'stay_active':
+        return 'stay active';
+      case 'athletic_performance':
+        return 'boost athletic performance';
+      default:
+        return null;
+    }
+  }
+
+  String? _getEquipmentText(List<String> equipment) {
+    if (equipment.isEmpty) return null;
+    if (equipment.length == 1) {
+      return _formatEquipment(equipment.first);
+    }
+    if (equipment.length == 2) {
+      return '${_formatEquipment(equipment[0])} and ${_formatEquipment(equipment[1])}';
+    }
+    // More than 2
+    final last = equipment.last;
+    final rest = equipment.sublist(0, equipment.length - 1);
+    return '${rest.map(_formatEquipment).join(", ")} and ${_formatEquipment(last)}';
+  }
+
+  String _formatEquipment(String equipment) {
+    final map = {
+      'bodyweight': 'bodyweight',
+      'dumbbells': 'dumbbells',
+      'barbell': 'a barbell',
+      'resistance_bands': 'resistance bands',
+      'pull_up_bar': 'a pull-up bar',
+      'kettlebell': 'kettlebells',
+      'cable_machine': 'cable machines',
+      'full_gym': 'full gym access',
+    };
+    return map[equipment] ?? equipment;
+  }
+
+  /// Load pre-auth quiz answers from SharedPreferences and pre-populate onboarding data
+  void _loadPreAuthData() {
+    final preAuthData = ref.read(preAuthQuizProvider);
+
+    if (preAuthData.goals != null || preAuthData.fitnessLevel != null || preAuthData.daysPerWeek != null) {
+      debugPrint('📊 [Onboarding] Loading pre-auth quiz data: ${preAuthData.toJson()}');
+
+      // Convert pre-auth data to onboarding format
+      final prePopulatedData = <String, dynamic>{};
+
+      // Map goal IDs to goal display names (multi-select)
+      if (preAuthData.goals != null && preAuthData.goals!.isNotEmpty) {
+        final goalMap = {
+          'build_muscle': 'Build Muscle',
+          'lose_weight': 'Lose Weight',
+          'increase_strength': 'Increase Strength',
+          'improve_endurance': 'Improve Endurance',
+          'stay_active': 'Stay Active',
+          'athletic_performance': 'Athletic Performance',
+        };
+        prePopulatedData['goals'] = preAuthData.goals!
+            .map((g) => goalMap[g] ?? g)
+            .toList();
+      }
+
+      // Fitness level
+      if (preAuthData.fitnessLevel != null) {
+        prePopulatedData['fitnessLevel'] = preAuthData.fitnessLevel;
+      }
+
+      // Days per week
+      if (preAuthData.daysPerWeek != null) {
+        prePopulatedData['daysPerWeek'] = preAuthData.daysPerWeek;
+      }
+
+      // Specific workout days (0=Mon, 6=Sun)
+      if (preAuthData.workoutDays != null && preAuthData.workoutDays!.isNotEmpty) {
+        prePopulatedData['workoutDays'] = preAuthData.workoutDays;
+        // Also convert to day names for display
+        final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        prePopulatedData['selectedDays'] = preAuthData.workoutDays!
+            .map((i) => dayNames[i])
+            .toList();
+      }
+
+      // Equipment
+      if (preAuthData.equipment != null && preAuthData.equipment!.isNotEmpty) {
+        // Map equipment IDs to display names
+        final equipmentMap = {
+          'bodyweight': 'Bodyweight Only',
+          'dumbbells': 'Dumbbells',
+          'barbell': 'Barbell',
+          'resistance_bands': 'Resistance Bands',
+          'pull_up_bar': 'Pull-up Bar',
+          'kettlebell': 'Kettlebell',
+          'cable_machine': 'Cable Machine',
+          'full_gym': 'Full Gym Access',
+        };
+        prePopulatedData['equipment'] = preAuthData.equipment!
+            .map((e) => equipmentMap[e] ?? e)
+            .toList();
+      }
+
+      // Equipment counts
+      if (preAuthData.dumbbellCount != null) {
+        prePopulatedData['dumbbellCount'] = preAuthData.dumbbellCount;
+      }
+      if (preAuthData.kettlebellCount != null) {
+        prePopulatedData['kettlebellCount'] = preAuthData.kettlebellCount;
+      }
+
+      // Motivations (multi-select, store for later use in coaching)
+      if (preAuthData.motivations != null && preAuthData.motivations!.isNotEmpty) {
+        prePopulatedData['motivations'] = preAuthData.motivations;
+        // Also store first motivation for backwards compatibility
+        prePopulatedData['motivation'] = preAuthData.motivation;
+      }
+
+      // Update collected data with pre-auth answers
+      if (prePopulatedData.isNotEmpty) {
+        ref.read(onboardingStateProvider.notifier).updateCollectedData(prePopulatedData);
+        debugPrint('✅ [Onboarding] Pre-populated data: $prePopulatedData');
+      }
     }
   }
 
@@ -201,6 +408,12 @@ class _ConversationalOnboardingScreenState
       'active_injuries': 'activeInjuries',
       'health_conditions': 'healthConditions',
       'workout_experience': 'workoutExperience',
+      // Personalization fields that affect workout generation
+      'training_experience': 'trainingExperience',
+      'past_programs': 'pastPrograms',
+      'biggest_obstacle': 'biggestObstacle',
+      'workout_environment': 'workoutEnvironment',
+      'focus_areas': 'focusAreas',
     };
 
     final normalized = <String, dynamic>{};
@@ -381,7 +594,7 @@ class _ConversationalOnboardingScreenState
           'Friday': 4, 'Saturday': 5, 'Sunday': 6,
         };
         if (selectedDays.first is String) {
-          workoutDayIndices = (selectedDays as List<dynamic>)
+          workoutDayIndices = selectedDays
               .map((d) => dayNameToIndex[d.toString()] ?? 0)
               .toList();
         } else {
@@ -409,6 +622,14 @@ class _ConversationalOnboardingScreenState
         // Equipment quantities
         'dumbbell_count': finalData['dumbbellCount'] ?? 2,
         'kettlebell_count': finalData['kettlebellCount'] ?? 1,
+        // Personalization fields from updated onboarding
+        'motivations': finalData['motivations'],  // Multi-select motivations from pre-auth quiz
+        'motivation': finalData['motivation'],  // First motivation for backwards compatibility
+        'training_experience': finalData['trainingExperience'],  // How long they've lifted
+        'past_programs': finalData['pastPrograms'],  // What programs they've tried
+        'biggest_obstacle': finalData['biggestObstacle'],  // Main barrier to consistency
+        'workout_environment': finalData['workoutEnvironment'],  // Where they train
+        'focus_areas': finalData['focusAreas'],  // Priority muscle groups
       });
 
       final userData = {
@@ -561,12 +782,20 @@ class _ConversationalOnboardingScreenState
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: state.messages.length +
-                      (_isLoading ? 1 : 0) +
+                      (_isLoading || _showInitialTyping ? 1 : 0) +
                       (_error != null ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index < state.messages.length) {
-                      final message = state.messages[index];
-                      final isLatest = index == state.messages.length - 1;
+                    // Show initial typing indicator before any messages
+                    if (_showInitialTyping && index == 0) {
+                      return _buildLoadingIndicator();
+                    }
+
+                    // Adjust index if showing initial typing
+                    final messageIndex = _showInitialTyping ? index - 1 : index;
+
+                    if (messageIndex >= 0 && messageIndex < state.messages.length) {
+                      final message = state.messages[messageIndex];
+                      final isLatest = messageIndex == state.messages.length - 1;
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,6 +804,7 @@ class _ConversationalOnboardingScreenState
                             isUser: message.role == 'user',
                             content: message.content,
                             timestamp: message.timestamp,
+                            animationIndex: messageIndex,
                           ),
 
                           // Quick replies for latest AI message
@@ -655,8 +885,8 @@ class _ConversationalOnboardingScreenState
                       );
                     }
 
-                    // Loading indicator
-                    if (index == state.messages.length && _isLoading) {
+                    // Loading indicator (for normal AI responses, not initial typing)
+                    if (!_showInitialTyping && messageIndex == state.messages.length && _isLoading) {
                       return _buildLoadingIndicator();
                     }
 
@@ -693,7 +923,7 @@ class _ConversationalOnboardingScreenState
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
-        left: 16,
+        left: 8,
         right: 16,
         bottom: 12,
       ),
@@ -705,6 +935,16 @@ class _ConversationalOnboardingScreenState
       ),
       child: Row(
         children: [
+          // Back button
+          IconButton(
+            onPressed: _handleBack,
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: colors.textSecondary,
+              size: 20,
+            ),
+            tooltip: 'Go back',
+          ),
           Container(
             width: 40,
             height: 40,
@@ -749,6 +989,45 @@ class _ConversationalOnboardingScreenState
         ],
       ),
     );
+  }
+
+  void _handleBack() {
+    HapticFeedback.lightImpact();
+    // Show confirmation dialog if user has started onboarding
+    final state = ref.read(onboardingStateProvider);
+    if (state.messages.length > 1 || state.collectedData.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Leave Onboarding?'),
+          content: const Text('Your progress will be lost. Are you sure you want to go back?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _resetAndGoBack();
+              },
+              style: TextButton.styleFrom(foregroundColor: AppColors.error),
+              child: const Text('Leave'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      _resetAndGoBack();
+    }
+  }
+
+  void _resetAndGoBack() {
+    // Reset onboarding state
+    ref.read(onboardingStateProvider.notifier).reset();
+    // Sign out and go back to welcome screen
+    ref.read(authStateProvider.notifier).signOut();
+    context.go('/stats-welcome');
   }
 
   Widget _buildInputArea(ThemeColors colors) {
