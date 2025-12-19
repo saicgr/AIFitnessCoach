@@ -435,8 +435,21 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final daysPerWeek = quizData.daysPerWeek ?? 3;
 
+    // Get the actual selected workout days (0=Mon, 1=Tue, ..., 6=Sun)
+    final selectedDays = quizData.workoutDays ?? [];
+
     // Sample workout types based on goal
     final workoutTypes = _getSampleWorkouts(quizData.goal ?? 'build_muscle', daysPerWeek);
+
+    // Create a map of day index to workout type for selected days
+    final dayWorkoutMap = <int, Map<String, dynamic>>{};
+    int workoutIndex = 0;
+    for (final dayIndex in selectedDays) {
+      if (workoutIndex < workoutTypes.length) {
+        dayWorkoutMap[dayIndex] = workoutTypes[workoutIndex];
+        workoutIndex++;
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -470,8 +483,9 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
               final dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-              final isWorkoutDay = index < workoutTypes.length;
-              final workout = isWorkoutDay ? workoutTypes[index] : null;
+              // Check if this day is in the user's selected workout days
+              final isWorkoutDay = dayWorkoutMap.containsKey(index);
+              final workout = isWorkoutDay ? dayWorkoutMap[index] : null;
 
               return Column(
                 children: [

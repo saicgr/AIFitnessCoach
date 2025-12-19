@@ -110,6 +110,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
+            // Go to conversational onboarding for logged-in users with incomplete onboarding
             return '/onboarding';
           }
           return getHomeRoute();
@@ -124,6 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
+            // Go to conversational onboarding for logged-in users with incomplete onboarding
             return '/onboarding';
           }
           return getHomeRoute();
@@ -131,11 +133,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null; // Stay on stats welcome
       }
 
-      // Allow pre-auth quiz, preview, and sign-in screens (new flow before auth)
+      // Allow pre-auth quiz, preview, and sign-in screens for logged-in users with incomplete onboarding
       if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
+            // After sign-in, go to conversational onboarding
             return '/onboarding';
           }
           return getHomeRoute();

@@ -68,7 +68,7 @@ class _ConversationalOnboardingScreenState
     super.dispose();
   }
 
-  void _initializeConversation() {
+  void _initializeConversation() async {
     if (_initialized) return;
     _initialized = true;
 
@@ -83,9 +83,11 @@ class _ConversationalOnboardingScreenState
       // Show typing indicator first for realistic feel
       setState(() => _showInitialTyping = true);
 
-      // Build personalized greeting based on quiz answers
-      final preAuthData = ref.read(preAuthQuizProvider);
+      // Wait for quiz data to load from SharedPreferences
+      final preAuthData = await ref.read(preAuthQuizProvider.notifier).ensureLoaded();
       final greeting = _buildPersonalizedGreeting(preAuthData);
+
+      debugPrint('🎯 Quiz data for greeting: goals=${preAuthData.goals}, days=${preAuthData.daysPerWeek}, level=${preAuthData.fitnessLevel}');
 
       // After a delay, hide typing and show the actual message
       Future.delayed(const Duration(milliseconds: 1500), () {
@@ -1022,9 +1024,85 @@ class _ConversationalOnboardingScreenState
               ],
             ),
           ),
+          // Start Over button
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              color: colors.textSecondary,
+            ),
+            onSelected: (value) {
+              if (value == 'start_over') {
+                _showStartOverDialog();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                value: 'start_over',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh, color: colors.textSecondary, size: 20),
+                    const SizedBox(width: 12),
+                    const Text('Start Over'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  void _showStartOverDialog() {
+    final colors = context.colors;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Start Over?'),
+        content: const Text('This will reset all your quiz answers and onboarding progress. You\'ll start fresh from the beginning.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await _startOver();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Start Over'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startOver() async {
+    // Clear all local data
+    await ref.read(preAuthQuizProvider.notifier).clear();
+    ref.read(onboardingStateProvider.notifier).reset();
+
+    // Reset backend if logged in
+    final authState = ref.read(authStateProvider);
+    if (authState.status == AuthStatus.authenticated && authState.user != null) {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        await apiClient.post(
+          '/api/v1/users/${authState.user!.id}/reset-onboarding',
+        );
+      } catch (e) {
+        debugPrint('⚠️ Failed to reset backend: $e');
+      }
+    }
+
+    // Sign out so user goes through full new user flow
+    await ref.read(authStateProvider.notifier).signOut();
+
+    // Navigate to stats welcome for fresh start
+    if (mounted) {
+      context.go('/stats-welcome');
+    }
   }
 
   void _handleBack() {
@@ -1059,11 +1137,10 @@ class _ConversationalOnboardingScreenState
   }
 
   void _resetAndGoBack() {
-    // Reset onboarding state
+    // Reset onboarding conversation state (but keep quiz data)
     ref.read(onboardingStateProvider.notifier).reset();
-    // Sign out and go back to welcome screen
-    ref.read(authStateProvider.notifier).signOut();
-    context.go('/stats-welcome');
+    // Go back to preview screen (don't sign out - user can continue from preview)
+    context.go('/preview');
   }
 
   Widget _buildInputArea(ThemeColors colors) {

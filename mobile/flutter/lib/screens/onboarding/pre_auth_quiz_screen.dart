@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/onboarding_repository.dart';
+import '../../data/services/api_client.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
@@ -90,6 +93,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     _loadFromPrefs();
   }
 
+  bool _isLoaded = false;
+  bool get isLoaded => _isLoaded;
+
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final goals = prefs.getStringList('preAuth_goals');
@@ -116,6 +122,15 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       dumbbellCount: dumbbellCount,
       kettlebellCount: kettlebellCount,
     );
+    _isLoaded = true;
+  }
+
+  /// Ensure data is loaded from SharedPreferences
+  Future<PreAuthQuizData> ensureLoaded() async {
+    if (!_isLoaded) {
+      await _loadFromPrefs();
+    }
+    return state;
   }
 
   Future<void> setGoals(List<String> goals) async {
@@ -325,6 +340,39 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       duration: const Duration(milliseconds: 500),
     );
     _questionController.forward();
+
+    // Check if this is a fresh start (no quiz data) - only reset backend then
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndResetIfNeeded();
+    });
+  }
+
+  /// Only reset backend data if user is logged in and starting fresh
+  /// This prevents resetting when navigating through the normal flow
+  Future<void> _checkAndResetIfNeeded() async {
+    final quizData = ref.read(preAuthQuizProvider);
+    final authState = ref.read(authStateProvider);
+
+    // Only reset if user is logged in AND quiz data is empty (fresh start)
+    if (authState.status == AuthStatus.authenticated &&
+        authState.user != null &&
+        !quizData.isComplete) {
+      debugPrint('🔄 Fresh start detected - resetting backend onboarding data...');
+
+      // Reset onboarding state provider (local)
+      ref.read(onboardingStateProvider.notifier).reset();
+
+      // Reset backend data
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        await apiClient.post(
+          '/api/v1/users/${authState.user!.id}/reset-onboarding',
+        );
+        debugPrint('✅ Backend onboarding data reset');
+      } catch (e) {
+        debugPrint('⚠️ Failed to reset backend onboarding: $e');
+      }
+    }
   }
 
   @override

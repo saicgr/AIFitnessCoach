@@ -270,39 +270,26 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Fields that should NOT show quick replies (free text input)
     free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
 
-    # SMART APPROACH: Detect what the AI is actually asking about from its response
-    # This fixes the issue where the AI moves to the next question but quick replies
-    # are based on the previous field (which hasn't been extracted yet)
-
-    # Keywords that indicate what the AI is asking about
-    question_keywords = {
-        "biggest_obstacle": ["obstacle", "barrier", "challenge", "struggling", "consistent", "consistency", "struggle"],
-        "workout_variety": ["variety", "same exercises", "mix it up", "routine", "fresh", "different exercises"],
-        "focus_areas": ["muscle group", "prioritize", "focus on", "target", "emphasize", "priority"],
-        "past_programs": ["program", "tried before", "followed", "previous", "ppl", "stronglifts", "starting strength"],
-        "workout_duration": ["how long", "duration", "minutes", "session length", "each workout", "per session"],
-        "days_per_week": ["how many days", "days per week", "times per week", "how often"],
-        "selected_days": ["which days", "what days", "specific days"],
-        "fitness_level": ["fitness level", "experience level", "beginner", "intermediate", "advanced"],
-        "goals": ["goals", "achieve", "looking to", "want to"],
-        "equipment": ["equipment", "gym access", "dumbbells", "barbell", "home gym"],
-    }
-
-    # Detect what the AI is asking about from its response
+    # Check if AI response is a completion/summary message (no quick replies needed)
     response_lower = response_content.lower()
-    detected_field = None
+    completion_phrases = [
+        "ready to crush it",
+        "here's what i'm building",
+        "perfect!",
+        "let's do this",
+        "you're all set",
+        "we're ready",
+        "i'm building your",
+        "your plan is ready",
+        "let's get started",
+    ]
+    is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
 
-    for field, keywords in question_keywords.items():
-        for keyword in keywords:
-            if keyword in response_lower:
-                detected_field = field
-                logger.info(f"[Onboarding Agent] 🔍 Detected AI asking about '{field}' (keyword: '{keyword}')")
-                break
-        if detected_field:
-            break
-
-    if missing:
-        # Get next field based on FIELD_ORDER (fallback)
+    if is_completion_message:
+        logger.info(f"[Onboarding Agent] 🎉 Completion message detected - no quick replies")
+    elif missing:
+        # SIMPLE APPROACH: Use the first missing field from FIELD_ORDER
+        # This is reliable because the AI follows the field order in its questions
         next_field = None
         for field in FIELD_ORDER:
             if field in missing:
@@ -312,25 +299,22 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         if not next_field:
             next_field = missing[0]  # Fallback to first missing if not in FIELD_ORDER
 
-        # Use detected field if found and it has quick replies, otherwise use next_field
-        target_field = detected_field if detected_field and detected_field in QUICK_REPLIES else next_field
-
-        logger.info(f"[Onboarding Agent] 🎯 Next field in order: {next_field}, Detected field: {detected_field}, Using: {target_field}")
+        logger.info(f"[Onboarding Agent] 🎯 Next field to collect: {next_field}")
 
         # Skip quick replies for free text fields
-        if target_field in free_text_fields:
-            logger.info(f"[Onboarding Agent] 📝 Free text field ({target_field}), no quick replies")
+        if next_field in free_text_fields:
+            logger.info(f"[Onboarding Agent] 📝 Free text field ({next_field}), no quick replies")
 
         # Show day picker for selected_days
-        elif target_field == "selected_days":
+        elif next_field == "selected_days":
             component = "day_picker"
             logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days")
 
-        # Show quick replies for the target field if available
-        elif target_field in QUICK_REPLIES:
-            quick_replies = QUICK_REPLIES[target_field]
-            is_multi_select = target_field in multi_select_fields
-            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: {target_field} (multi_select={is_multi_select})")
+        # Show quick replies for the next field if available
+        elif next_field in QUICK_REPLIES:
+            quick_replies = QUICK_REPLIES[next_field]
+            is_multi_select = next_field in multi_select_fields
+            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: {next_field} (multi_select={is_multi_select})")
 
     return {
         "messages": messages + [response],
