@@ -14,6 +14,9 @@ echo "============================================"
 echo "Running pre-deploy tests (including AI integration tests)..."
 echo "============================================"
 
+# Log the Gemini model being used
+echo "Gemini Model: ${GEMINI_MODEL:-None}"
+
 # Install test dependencies
 pip install pytest pytest-asyncio
 
