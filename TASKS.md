@@ -25,6 +25,7 @@ To make these automatic, you'd need to set up cron jobs on your hosting platform
 33. Add sign in in first screen directly
 34. Shareable workout completion - Workout recap for Instagram	
 36. For theme have system, light, dark options instead
+37. Gemini 2.5 flash text to speech
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

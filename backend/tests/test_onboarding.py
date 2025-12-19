@@ -195,10 +195,15 @@ def complete_state():
             "days_per_week": 3,
             "selected_days": [0, 2, 4],
             "workout_duration": 45,
-            # Personalization fields (required)
+            # Personalization fields - pre-filled from quiz
             "training_experience": "2_to_5_years",
-            "biggest_obstacle": "time",
             "workout_environment": "commercial_gym",
+            # Personalization fields - asked by AI
+            "past_programs": ["ppl", "bro_split"],
+            "focus_areas": ["chest", "back"],
+            "workout_variety": "mixed",
+            "biggest_obstacle": "time",
+            # NOTE: active_injuries collected via popup AFTER onboarding
         },
         "missing_fields": [],
         "conversation_history": [],

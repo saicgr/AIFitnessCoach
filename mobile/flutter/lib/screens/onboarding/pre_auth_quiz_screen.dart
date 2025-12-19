@@ -10,9 +10,11 @@ import '../../core/constants/app_colors.dart';
 class PreAuthQuizData {
   final List<String>? goals;  // Multi-select goals
   final String? fitnessLevel;
+  final String? trainingExperience;  // How long they've been training
   final int? daysPerWeek;
   final List<int>? workoutDays;  // Specific days (0=Mon, 6=Sun)
   final List<String>? equipment;
+  final String? workoutEnvironment;  // Inferred from equipment (commercial_gym, home_gym, home)
   final List<String>? motivations;  // Multi-select motivations
   final int? dumbbellCount;  // Number of dumbbells (1 = single, 2 = pair)
   final int? kettlebellCount;  // Number of kettlebells (1 = single, 2+ = multiple)
@@ -20,9 +22,11 @@ class PreAuthQuizData {
   PreAuthQuizData({
     this.goals,
     this.fitnessLevel,
+    this.trainingExperience,
     this.daysPerWeek,
     this.workoutDays,
     this.equipment,
+    this.workoutEnvironment,
     this.motivations,
     this.dumbbellCount,
     this.kettlebellCount,
@@ -36,6 +40,7 @@ class PreAuthQuizData {
       goals != null &&
       goals!.isNotEmpty &&
       fitnessLevel != null &&
+      trainingExperience != null &&
       daysPerWeek != null &&
       workoutDays != null &&
       workoutDays!.isNotEmpty &&
@@ -48,9 +53,11 @@ class PreAuthQuizData {
         'goals': goals,
         'goal': goal,  // Keep for backwards compatibility
         'fitnessLevel': fitnessLevel,
+        'trainingExperience': trainingExperience,
         'daysPerWeek': daysPerWeek,
         'workoutDays': workoutDays,
         'equipment': equipment,
+        'workoutEnvironment': workoutEnvironment,
         'motivations': motivations,
         'motivation': motivation,  // Keep for backwards compatibility
         'dumbbellCount': dumbbellCount,
@@ -61,9 +68,11 @@ class PreAuthQuizData {
         goals: (json['goals'] as List<dynamic>?)?.cast<String>() ??
             (json['goal'] != null ? [json['goal'] as String] : null),
         fitnessLevel: json['fitnessLevel'] as String?,
+        trainingExperience: json['trainingExperience'] as String?,
         daysPerWeek: json['daysPerWeek'] as int?,
         workoutDays: (json['workoutDays'] as List<dynamic>?)?.cast<int>(),
         equipment: (json['equipment'] as List<dynamic>?)?.cast<String>(),
+        workoutEnvironment: json['workoutEnvironment'] as String?,
         motivations: (json['motivations'] as List<dynamic>?)?.cast<String>() ??
             (json['motivation'] != null ? [json['motivation'] as String] : null),
         dumbbellCount: json['dumbbellCount'] as int?,
@@ -85,10 +94,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final prefs = await SharedPreferences.getInstance();
     final goals = prefs.getStringList('preAuth_goals');
     final level = prefs.getString('preAuth_fitnessLevel');
+    final trainingExp = prefs.getString('preAuth_trainingExperience');
     final days = prefs.getInt('preAuth_daysPerWeek');
     final workoutDaysStr = prefs.getStringList('preAuth_workoutDays');
     final workoutDays = workoutDaysStr?.map((s) => int.tryParse(s) ?? 0).toList();
     final equipmentStr = prefs.getStringList('preAuth_equipment');
+    final workoutEnv = prefs.getString('preAuth_workoutEnvironment');
     final motivations = prefs.getStringList('preAuth_motivations');
     final dumbbellCount = prefs.getInt('preAuth_dumbbellCount');
     final kettlebellCount = prefs.getInt('preAuth_kettlebellCount');
@@ -96,9 +107,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: goals,
       fitnessLevel: level,
+      trainingExperience: trainingExp,
       daysPerWeek: days,
       workoutDays: workoutDays,
       equipment: equipmentStr,
+      workoutEnvironment: workoutEnv,
       motivations: motivations,
       dumbbellCount: dumbbellCount,
       kettlebellCount: kettlebellCount,
@@ -111,9 +124,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: goals,
       fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -126,9 +141,28 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: level,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+    );
+  }
+
+  Future<void> setTrainingExperience(String experience) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_trainingExperience', experience);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: experience,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -141,9 +175,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: days,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -157,13 +193,30 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: state.daysPerWeek,
       workoutDays: workoutDays,
       equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
     );
+  }
+
+  /// Infer workout environment from equipment selection
+  String _inferWorkoutEnvironment(List<String> equipment) {
+    // If they have full gym or multiple heavy equipment, they're at a commercial gym
+    if (equipment.contains('full_gym') ||
+        (equipment.contains('barbell') && equipment.contains('cable_machine'))) {
+      return 'commercial_gym';
+    }
+    // If they have barbell or cable machine alone, likely home gym
+    if (equipment.contains('barbell') || equipment.contains('cable_machine')) {
+      return 'home_gym';
+    }
+    // Otherwise home with minimal equipment
+    return 'home';
   }
 
   Future<void> setEquipment(List<String> equipment, {int? dumbbellCount, int? kettlebellCount}) async {
@@ -175,12 +228,18 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     if (kettlebellCount != null) {
       await prefs.setInt('preAuth_kettlebellCount', kettlebellCount);
     }
+    // Infer workout environment from equipment
+    final workoutEnv = _inferWorkoutEnvironment(equipment);
+    await prefs.setString('preAuth_workoutEnvironment', workoutEnv);
+
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: equipment,
+      workoutEnvironment: workoutEnv,
       motivations: state.motivations,
       dumbbellCount: dumbbellCount ?? state.dumbbellCount,
       kettlebellCount: kettlebellCount ?? state.kettlebellCount,
@@ -193,9 +252,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = PreAuthQuizData(
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
       motivations: motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -206,9 +267,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('preAuth_goals');
     await prefs.remove('preAuth_fitnessLevel');
+    await prefs.remove('preAuth_trainingExperience');
     await prefs.remove('preAuth_daysPerWeek');
     await prefs.remove('preAuth_workoutDays');
     await prefs.remove('preAuth_equipment');
+    await prefs.remove('preAuth_workoutEnvironment');
     await prefs.remove('preAuth_motivations');
     await prefs.remove('preAuth_dumbbellCount');
     await prefs.remove('preAuth_kettlebellCount');
@@ -231,9 +294,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   // Question 1: Goals (multi-select)
   final Set<String> _selectedGoals = {};
-  // Question 2: Fitness Level
+  // Question 2: Fitness Level + Training Experience (combined)
   String? _selectedLevel;
-  // Question 3: Days per week
+  String? _selectedTrainingExperience;
+  // Question 3: Days per week + which days (combined)
   int? _selectedDays;
   // Question 4: Which specific days (multi-select, 0=Mon, 6=Sun)
   final Set<int> _selectedWorkoutDays = {};
@@ -283,8 +347,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
       case 1:
+        // Combined: fitness level + training experience
         if (_selectedLevel != null) {
           await ref.read(preAuthQuizProvider.notifier).setFitnessLevel(_selectedLevel!);
+        }
+        if (_selectedTrainingExperience != null) {
+          await ref.read(preAuthQuizProvider.notifier).setTrainingExperience(_selectedTrainingExperience!);
         }
         break;
       case 2:
@@ -338,7 +406,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 0:
         return _selectedGoals.isNotEmpty;
       case 1:
-        return _selectedLevel != null;
+        // Combined: must select fitness level AND training experience
+        return _selectedLevel != null && _selectedTrainingExperience != null;
       case 2:
         // Combined: must select days per week AND the specific days
         return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
@@ -553,7 +622,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  // Question 2: What's your current fitness level?
+  // Question 2: Combined - Fitness level + Training experience
   Widget _buildFitnessLevelQuestion(bool isDark, Color textPrimary, Color textSecondary) {
     final levels = [
       {
@@ -579,17 +648,205 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       },
     ];
 
-    return _buildSingleSelectQuestion(
-      key: const ValueKey('level'),
-      question: "What's your current fitness level?",
-      subtitle: "Be honest - we'll adjust as you progress",
-      options: levels,
-      selectedValue: _selectedLevel,
-      onSelect: (value) => setState(() => _selectedLevel = value),
-      isDark: isDark,
-      textPrimary: textPrimary,
-      textSecondary: textSecondary,
-      showDescriptions: true,
+    final experienceOptions = [
+      {'id': 'never', 'label': 'Never', 'description': 'Brand new to lifting'},
+      {'id': 'less_than_6_months', 'label': '< 6 months', 'description': 'Just getting started'},
+      {'id': '6_months_to_2_years', 'label': '6mo - 2yrs', 'description': 'Building consistency'},
+      {'id': '2_to_5_years', 'label': '2 - 5 years', 'description': 'Solid foundation'},
+      {'id': '5_plus_years', 'label': '5+ years', 'description': 'Veteran lifter'},
+    ];
+
+    return Padding(
+      key: const ValueKey('fitness_combined'),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fitness Level Section
+            Text(
+              "What's your current fitness level?",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                height: 1.3,
+              ),
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+
+            const SizedBox(height: 8),
+
+            Text(
+              "Be honest - we'll adjust as you progress",
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+
+            const SizedBox(height: 20),
+
+            // Fitness level cards
+            ...levels.asMap().entries.map((entry) {
+              final index = entry.key;
+              final level = entry.value;
+              final isSelected = _selectedLevel == level['id'];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedLevel = level['id'] as String);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      color: isSelected
+                          ? null
+                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.cyan
+                            : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          level['icon'] as IconData,
+                          color: isSelected ? Colors.white : (level['color'] as Color),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                level['label'] as String,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected ? Colors.white : textPrimary,
+                                ),
+                              ),
+                              Text(
+                                level['description'] as String,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isSelected ? Colors.white70 : textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: isSelected
+                                ? null
+                                : Border.all(
+                                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                                    width: 2,
+                                  ),
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check, color: Colors.white, size: 14)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate(delay: (100 + index * 50).ms).fadeIn().slideX(begin: 0.05),
+              );
+            }),
+
+            // Training Experience Section (only show after level is selected)
+            if (_selectedLevel != null) ...[
+              const SizedBox(height: 24),
+
+              Text(
+                'How long have you been lifting weights?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ).animate().fadeIn(delay: 100.ms),
+
+              const SizedBox(height: 6),
+
+              Text(
+                'This helps us pick the right exercises',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                ),
+              ).animate().fadeIn(delay: 150.ms),
+
+              const SizedBox(height: 16),
+
+              // Experience chips in a horizontal wrap
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: experienceOptions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final option = entry.value;
+                  final isSelected = _selectedTrainingExperience == option['id'];
+
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedTrainingExperience = option['id'] as String);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: isSelected ? AppColors.cyanGradient : null,
+                        color: isSelected
+                            ? null
+                            : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.cyan
+                              : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            option['label'] as String,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? Colors.white : textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+                }).toList(),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
     );
   }
 
