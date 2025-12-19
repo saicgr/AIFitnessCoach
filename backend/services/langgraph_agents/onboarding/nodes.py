@@ -845,7 +845,21 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
         # Merge with collected data
         # For lists (goals, equipment), merge instead of replace
+        # IMPORTANT: Pre-filled quiz data should NOT be overwritten by AI extraction
         merged = collected_data.copy()
+
+        # Fields that come from pre-auth quiz and should NOT be overwritten if already set
+        # These are filled by the user before onboarding starts
+        pre_filled_fields = {
+            "training_experience", "trainingExperience",
+            "workout_environment", "workoutEnvironment",
+            "fitness_level", "fitnessLevel",
+            "days_per_week", "daysPerWeek",
+            "workout_days", "workoutDays",
+            "selected_days", "selectedDays",
+            "motivations",
+        }
+
         for key, value in extracted.items():
             if key in ["goals", "equipment", "active_injuries", "health_conditions"]:
                 # Merge lists
@@ -854,6 +868,13 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
                     merged[key] = list(set(existing + value))  # Remove duplicates
                 else:
                     merged[key] = existing + [value]
+            elif key in pre_filled_fields:
+                # Only set if not already present - preserve pre-filled quiz data
+                existing_value = get_field_value(merged, key)
+                if not existing_value:
+                    merged[key] = value
+                else:
+                    logger.info(f"[Extract Data] Preserving pre-filled {key}='{existing_value}', ignoring AI-extracted value '{value}'")
             else:
                 # Replace value
                 merged[key] = value
