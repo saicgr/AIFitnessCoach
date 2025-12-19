@@ -48,8 +48,13 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
         }
       });
     } else {
-      // Single-select: immediately trigger send
-      widget.onSelect(reply.value);
+      // Single-select: immediately trigger send with both label and value
+      // The label is shown in chat, the value is sent to backend
+      widget.onSelect({
+        'label': reply.label,
+        'value': reply.value,
+        'isSingleSelect': true,
+      });
     }
   }
 

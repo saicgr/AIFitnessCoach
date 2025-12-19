@@ -437,7 +437,16 @@ class _ConversationalOnboardingScreenState
 
   void _handleQuickReply(dynamic value) {
     if (value is Map<String, dynamic>) {
-      // Handle equipment selection with quantities
+      // Check if this is a single-select quick reply (has label+value)
+      if (value['isSingleSelect'] == true) {
+        final label = value['label'] as String;
+        final actualValue = value['value'];
+        // Show the label in chat, but the backend will extract the actual value
+        _sendMessage(label);
+        return;
+      }
+
+      // Handle equipment selection with quantities (multi-select)
       final selected = value['selected'] as List?;
       if (selected != null) {
         // Store equipment counts in collected data
