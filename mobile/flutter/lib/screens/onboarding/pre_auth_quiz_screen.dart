@@ -366,10 +366,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         break;
       case 3:
         if (_selectedEquipment.isNotEmpty) {
+          // If full gym is selected, set counts to 2 (multiple) since gym has plenty
+          final hasFullGym = _selectedEquipment.contains('full_gym');
           await ref.read(preAuthQuizProvider.notifier).setEquipment(
             _selectedEquipment.toList(),
-            dumbbellCount: _selectedEquipment.contains('dumbbells') ? _dumbbellCount : null,
-            kettlebellCount: _selectedEquipment.contains('kettlebell') ? _kettlebellCount : null,
+            dumbbellCount: _selectedEquipment.contains('dumbbells') ? (hasFullGym ? 2 : _dumbbellCount) : null,
+            kettlebellCount: _selectedEquipment.contains('kettlebell') ? (hasFullGym ? 2 : _kettlebellCount) : null,
           );
         }
         break;
@@ -894,100 +896,73 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
             const SizedBox(height: 24),
 
-            // Days per week selector - horizontal scroll
-            SizedBox(
-              height: 90,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 7,
-                itemBuilder: (context, index) {
-                  final day = index + 1;
-                  final isSelected = _selectedDays == day;
-                  final descriptions = [
-                    'Light',
-                    'Easy',
-                    'Balanced',
-                    'Active',
-                    'Dedicated',
-                    'Intense',
-                    'Extreme',
-                  ];
+            // Days per week selector - all 7 visible in a row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(7, (index) {
+                final day = index + 1;
+                final isSelected = _selectedDays == day;
 
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      left: index == 0 ? 0 : 6,
-                      right: index == 6 ? 0 : 6,
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _selectedDays = day;
-                          // Clear selected workout days if they exceed the new limit
-                          if (_selectedWorkoutDays.length > day) {
-                            _selectedWorkoutDays.clear();
-                          }
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 70,
-                        decoration: BoxDecoration(
-                          gradient: isSelected ? AppColors.cyanGradient : null,
-                          color: isSelected
-                              ? null
-                              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.cyan
-                                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                            width: isSelected ? 2 : 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.cyan.withOpacity(0.3),
-                                    blurRadius: 10,
-                                    spreadRadius: 0,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              '$day',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : textPrimary,
-                              ),
-                            ),
-                            Text(
-                              day == 1 ? 'day' : 'days',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isSelected ? Colors.white70 : textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              descriptions[index],
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: isSelected ? Colors.white70 : textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _selectedDays = day;
+                      // Clear selected workout days if they exceed the new limit
+                      if (_selectedWorkoutDays.length > day) {
+                        _selectedWorkoutDays.clear();
+                      }
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 44,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      color: isSelected
+                          ? null
+                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.cyan
+                            : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                        width: isSelected ? 2 : 1,
                       ),
-                    ).animate(delay: (100 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
-                  );
-                },
-              ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.cyan.withOpacity(0.3),
+                                blurRadius: 8,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : textPrimary,
+                          ),
+                        ),
+                        Text(
+                          day == 1 ? 'day' : 'days',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected ? Colors.white70 : textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ).animate(delay: (100 + index * 30).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+              }),
             ),
 
             const SizedBox(height: 28),
@@ -1334,7 +1309,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                             ),
                           ),
                           // Quantity selector for dumbbells and kettlebells (1 = single, 2 = pair/multiple)
-                          if (hasQuantity && isSelected) ...[
+                          // Don't show quantity selector if Full Gym is selected (gym has plenty)
+                          if (hasQuantity && isSelected && !hasFullGym) ...[
                             _buildSingleOrPairSelector(
                               id: id,
                               isSingle: id == 'dumbbells' ? _dumbbellCount == 1 : _kettlebellCount == 1,
@@ -1350,6 +1326,23 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                               },
                               onInfoTap: () => _showEquipmentInfoDialog(context, id, isDark),
                               isDark: isDark,
+                            ),
+                          ] else if (hasQuantity && isSelected && hasFullGym) ...[
+                            // Show "Full Access" indicator instead of quantity selector
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text(
+                                '∞',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ] else ...[
                             // Checkbox indicator

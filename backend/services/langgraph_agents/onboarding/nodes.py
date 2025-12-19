@@ -120,6 +120,13 @@ def get_field_value(collected: Dict[str, Any], field: str) -> Any:
         "fitness_level": "fitnessLevel",
         "height_cm": "heightCm",
         "weight_kg": "weightKg",
+        "training_experience": "trainingExperience",
+        "workout_environment": "workoutEnvironment",
+        "focus_areas": "focusAreas",
+        "biggest_obstacle": "biggestObstacle",
+        "past_programs": "pastPrograms",
+        "target_weight_kg": "targetWeightKg",
+        "activity_level": "activityLevel",
     }
 
     camel_to_snake = {v: k for k, v in snake_to_camel.items()}
@@ -636,7 +643,9 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
             logger.info(f"[Extract Data] ✅ Pre-processed: fitness_level = {extracted['fitness_level']}")
 
     # PERSONALIZATION: Training experience - affects exercise complexity
-    if "training_experience" in missing or "training_experience" not in collected_data:
+    # Use get_field_value to check both snake_case and camelCase (frontend sends camelCase)
+    existing_training_exp = get_field_value(collected_data, "training_experience")
+    if "training_experience" in missing or not existing_training_exp:
         experience_map = {
             'never': 'never',
             'never lifted': 'never',
@@ -674,7 +683,9 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
                 break
 
     # PERSONALIZATION: Workout environment - affects equipment assumptions
-    if "workout_environment" in missing or "workout_environment" not in collected_data:
+    # Use get_field_value to check both snake_case and camelCase
+    existing_workout_env = get_field_value(collected_data, "workout_environment")
+    if "workout_environment" in missing or not existing_workout_env:
         environment_map = {
             'commercial gym': 'commercial_gym',
             'gym': 'commercial_gym',
@@ -706,7 +717,9 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
                 break
 
     # PERSONALIZATION: Focus areas - muscle groups to prioritize
-    if "focus_areas" in missing or "focus_areas" not in collected_data:
+    # Use get_field_value to check both snake_case and camelCase
+    existing_focus_areas = get_field_value(collected_data, "focus_areas")
+    if "focus_areas" in missing or not existing_focus_areas:
         focus_map = {
             'chest': 'chest',
             'pecs': 'chest',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
@@ -228,6 +229,10 @@ class _SeniorOnboardingScreenState
 
         // Mark onboarding as complete in auth state
         await ref.read(authStateProvider.notifier).markOnboardingComplete();
+
+        // Also save locally so notifications can be scheduled
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_completed', true);
 
         // Clear onboarding state
         ref.read(onboardingStateProvider.notifier).reset();

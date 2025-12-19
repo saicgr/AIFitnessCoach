@@ -472,6 +472,8 @@ class WorkoutRAGService:
         motivations: Optional[List[str]] = None,
         dumbbell_count: Optional[int] = None,
         kettlebell_count: Optional[int] = None,
+        training_experience: Optional[str] = None,
+        workout_environment: Optional[str] = None,
         change_reason: str = "user_customization",
     ) -> str:
         """
@@ -515,6 +517,25 @@ class WorkoutRAGService:
             pref_parts.append(f"Fitness Goals: {', '.join(goals)}")
         if motivations:
             pref_parts.append(f"Motivations: {', '.join(motivations)}")
+        if training_experience:
+            # Map to human-readable text for AI context
+            exp_map = {
+                'never': 'No prior lifting experience',
+                'less_than_6_months': 'Less than 6 months lifting experience',
+                '6_months_to_2_years': '6 months to 2 years lifting experience',
+                '2_to_5_years': '2 to 5 years lifting experience',
+                '5_plus_years': 'Over 5 years lifting experience',
+            }
+            pref_parts.append(f"Training Experience: {exp_map.get(training_experience, training_experience)}")
+        if workout_environment:
+            env_map = {
+                'commercial_gym': 'Commercial gym',
+                'home_gym': 'Home gym setup',
+                'home': 'Home without dedicated gym',
+                'outdoors': 'Outdoor workouts',
+                'hotel': 'Hotel/travel workouts',
+            }
+            pref_parts.append(f"Workout Environment: {env_map.get(workout_environment, workout_environment)}")
         if difficulty:
             pref_parts.append(f"Difficulty: {difficulty}")
         if duration_minutes:
@@ -552,6 +573,8 @@ class WorkoutRAGService:
                     "change_type": "program_preferences",
                     "goals": ",".join(goals) if goals else "",
                     "motivations": ",".join(motivations) if motivations else "",
+                    "training_experience": training_experience or "",
+                    "workout_environment": workout_environment or "",
                     "difficulty": difficulty or "",
                     "duration_minutes": duration_minutes or 0,
                     "workout_type": workout_type or "",

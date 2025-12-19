@@ -677,11 +677,20 @@ class NotificationService {
   }
 
   /// Schedule all notifications based on preferences
+  /// Only schedules if user has completed onboarding
   Future<void> scheduleAllNotifications(NotificationPreferences prefs) async {
     debugPrint('🔔 [Schedule] Scheduling all notifications...');
 
     // Cancel all existing scheduled notifications first
     await cancelAllScheduledNotifications();
+
+    // Check if user has completed onboarding - don't schedule notifications until they have
+    final sharedPrefs = await SharedPreferences.getInstance();
+    final onboardingCompleted = sharedPrefs.getBool('onboarding_completed') ?? false;
+    if (!onboardingCompleted) {
+      debugPrint('⏸️ [Schedule] Skipping notification scheduling - onboarding not completed');
+      return;
+    }
 
     // Schedule each type if enabled
     if (prefs.workoutReminders) {

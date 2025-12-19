@@ -119,8 +119,9 @@ class OnboardingData {
       'health_conditions': healthConditions.where((c) => c != 'none').toList(),
       'activity_level': activityLevel,
 
-      // Completion flag
-      'onboarding_completed': true,
+      // Completion flag - NOTE: set to false here, will be set to true
+      // by the onboarding screen AFTER all data is saved and workouts generated
+      'onboarding_completed': false,
     };
   }
 }

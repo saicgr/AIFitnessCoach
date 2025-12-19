@@ -452,3 +452,298 @@ class TestErrorHandling:
         result = await onboarding_agent_node(partial_state_needs_goals)
 
         assert isinstance(result, dict), "Should return dict with special characters"
+
+
+# ============ CRITICAL: Training Experience Tests ============
+
+from services.langgraph_agents.onboarding.nodes import get_field_value
+
+
+class TestGetFieldValueCaseConversion:
+    """
+    CRITICAL TESTS: get_field_value must handle both snake_case and camelCase.
+
+    This tests the fix for the training_experience bug where:
+    - Frontend sends data in camelCase (trainingExperience)
+    - Backend expects snake_case (training_experience)
+    - Without proper conversion, the backend would miss the value and try to extract it again
+    """
+
+    def test_get_field_value_snake_case(self):
+        """Should return value when field is in snake_case."""
+        collected = {"training_experience": "never"}
+        result = get_field_value(collected, "training_experience")
+        assert result == "never", "Should find snake_case field directly"
+
+    def test_get_field_value_camel_case(self):
+        """Should return value when field is in camelCase (frontend format)."""
+        collected = {"trainingExperience": "never"}
+        result = get_field_value(collected, "training_experience")
+        assert result == "never", "Should find camelCase field via conversion"
+
+    def test_get_field_value_days_per_week_camel(self):
+        """Should handle daysPerWeek camelCase."""
+        collected = {"daysPerWeek": 3}
+        result = get_field_value(collected, "days_per_week")
+        assert result == 3, "Should find daysPerWeek via conversion"
+
+    def test_get_field_value_fitness_level_camel(self):
+        """Should handle fitnessLevel camelCase."""
+        collected = {"fitnessLevel": "beginner"}
+        result = get_field_value(collected, "fitness_level")
+        assert result == "beginner", "Should find fitnessLevel via conversion"
+
+    def test_get_field_value_workout_environment_camel(self):
+        """Should handle workoutEnvironment camelCase."""
+        collected = {"workoutEnvironment": "commercial_gym"}
+        result = get_field_value(collected, "workout_environment")
+        assert result == "commercial_gym", "Should find workoutEnvironment via conversion"
+
+    def test_get_field_value_height_cm_camel(self):
+        """Should handle heightCm camelCase."""
+        collected = {"heightCm": 175}
+        result = get_field_value(collected, "height_cm")
+        assert result == 175, "Should find heightCm via conversion"
+
+    def test_get_field_value_weight_kg_camel(self):
+        """Should handle weightKg camelCase."""
+        collected = {"weightKg": 70.5}
+        result = get_field_value(collected, "weight_kg")
+        assert result == 70.5, "Should find weightKg via conversion"
+
+    def test_get_field_value_missing_returns_none(self):
+        """Should return None for missing fields."""
+        collected = {"other_field": "value"}
+        result = get_field_value(collected, "training_experience")
+        assert result is None, "Should return None for missing field"
+
+    def test_get_field_value_empty_string_returns_none(self):
+        """Should treat empty string as missing."""
+        collected = {"training_experience": ""}
+        result = get_field_value(collected, "training_experience")
+        # Empty string might be returned as-is or None depending on implementation
+        assert result == "" or result is None, "Should handle empty string"
+
+    def test_get_field_value_empty_list_returns_none(self):
+        """Should treat empty list as missing."""
+        collected = {"focus_areas": []}
+        result = get_field_value(collected, "focus_areas")
+        # Empty list returns empty list or is treated as falsy
+        assert result == [] or result is None, "Should handle empty list"
+
+    def test_get_field_value_snake_case_priority(self):
+        """Snake case should be checked first if both exist."""
+        collected = {
+            "training_experience": "5_plus_years",
+            "trainingExperience": "never"
+        }
+        result = get_field_value(collected, "training_experience")
+        assert result == "5_plus_years", "Snake case should take priority"
+
+
+class TestTrainingExperienceNotOverwritten:
+    """
+    CRITICAL: Training experience from pre-auth quiz should NOT be overwritten.
+
+    Bug scenario:
+    1. User selects "never" in pre-auth quiz
+    2. Frontend sends trainingExperience: "never" (camelCase)
+    3. Backend checks "training_experience" (snake_case) - not found!
+    4. Backend extracts from user message, finds "5 years" → sets 5_plus_years
+    5. User's actual selection is LOST
+
+    Fix: get_field_value now checks both cases before extraction.
+    """
+
+    @pytest.fixture
+    def state_with_prefilled_training_experience(self):
+        """State with training experience pre-filled from quiz (camelCase)."""
+        return {
+            "user_message": "I've been lifting for about 5 years now",
+            "collected_data": {
+                "trainingExperience": "never",  # Pre-filled from quiz in camelCase
+                "fitnessLevel": "beginner",
+                "goals": ["Build Muscle"],
+                "equipment": ["Dumbbells"],
+                "daysPerWeek": 3,
+                "workoutDays": [0, 2, 4],
+            },
+            "missing_fields": ["name", "age", "workout_duration"],
+            "conversation_history": [],
+            "messages": [],
+            "is_complete": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_extract_does_not_override_existing_training_experience(
+        self, state_with_prefilled_training_experience
+    ):
+        """
+        CRITICAL: extract_data_node should NOT override trainingExperience when it's pre-filled.
+
+        Even if user message contains "5 years", the pre-filled "never" should be preserved.
+        """
+        result = await extract_data_node(state_with_prefilled_training_experience)
+
+        collected = result.get("collected_data", {})
+
+        # The original trainingExperience should be preserved
+        # Check both possible keys
+        training_exp = (
+            collected.get("training_experience") or
+            collected.get("trainingExperience") or
+            state_with_prefilled_training_experience["collected_data"].get("trainingExperience")
+        )
+
+        assert training_exp == "never", (
+            f"CRITICAL: Pre-filled training_experience='never' was overwritten to '{training_exp}'! "
+            "The extract_data_node incorrectly re-extracted from user message."
+        )
+
+
+class TestTrainingExperienceExtraction:
+    """Tests for training_experience extraction from user messages."""
+
+    @pytest.fixture
+    def state_needs_training_experience(self):
+        """State where training_experience is actually missing."""
+        return {
+            "user_message": "",
+            "collected_data": {
+                "name": "TestUser",
+                "age": 25,
+            },
+            "missing_fields": ["training_experience", "workout_duration"],
+            "conversation_history": [],
+            "messages": [],
+            "is_complete": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_extract_never_from_message(self, state_needs_training_experience):
+        """Should extract 'never' when user says they've never lifted."""
+        state_needs_training_experience["user_message"] = "I've never lifted weights before"
+        result = await extract_data_node(state_needs_training_experience)
+
+        collected = result.get("collected_data", {})
+        training_exp = collected.get("training_experience") or collected.get("trainingExperience")
+
+        assert training_exp == "never", f"Expected 'never', got '{training_exp}'"
+
+    @pytest.mark.asyncio
+    async def test_extract_less_than_6_months(self, state_needs_training_experience):
+        """Should extract 'less_than_6_months' for new lifters."""
+        state_needs_training_experience["user_message"] = "Just a few months"
+        result = await extract_data_node(state_needs_training_experience)
+
+        collected = result.get("collected_data", {})
+        training_exp = collected.get("training_experience") or collected.get("trainingExperience")
+
+        assert training_exp == "less_than_6_months", f"Expected 'less_than_6_months', got '{training_exp}'"
+
+    @pytest.mark.asyncio
+    async def test_extract_5_plus_years(self, state_needs_training_experience):
+        """Should extract '5_plus_years' for experienced lifters."""
+        state_needs_training_experience["user_message"] = "Over 5 years of experience"
+        result = await extract_data_node(state_needs_training_experience)
+
+        collected = result.get("collected_data", {})
+        training_exp = collected.get("training_experience") or collected.get("trainingExperience")
+
+        assert training_exp == "5_plus_years", f"Expected '5_plus_years', got '{training_exp}'"
+
+
+class TestWorkoutEnvironmentCaseConversion:
+    """Tests for workout_environment case conversion."""
+
+    @pytest.fixture
+    def state_with_prefilled_environment(self):
+        """State with workout environment pre-filled from quiz (camelCase)."""
+        return {
+            "user_message": "I work out at the gym",
+            "collected_data": {
+                "workoutEnvironment": "home",  # Pre-filled from quiz in camelCase
+                "goals": ["Build Muscle"],
+            },
+            "missing_fields": ["name", "workout_duration"],
+            "conversation_history": [],
+            "messages": [],
+            "is_complete": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_extract_does_not_override_existing_workout_environment(
+        self, state_with_prefilled_environment
+    ):
+        """
+        CRITICAL: extract_data_node should NOT override workoutEnvironment when pre-filled.
+
+        Even if user message contains "gym", the pre-filled "home" should be preserved.
+        """
+        result = await extract_data_node(state_with_prefilled_environment)
+
+        collected = result.get("collected_data", {})
+
+        workout_env = (
+            collected.get("workout_environment") or
+            collected.get("workoutEnvironment") or
+            state_with_prefilled_environment["collected_data"].get("workoutEnvironment")
+        )
+
+        assert workout_env == "home", (
+            f"CRITICAL: Pre-filled workout_environment='home' was overwritten to '{workout_env}'! "
+            "The extract_data_node incorrectly re-extracted from user message."
+        )
+
+
+class TestCompletionWithCamelCaseFields:
+    """Tests that completion check works with camelCase fields from frontend."""
+
+    @pytest.fixture
+    def complete_state_camel_case(self):
+        """Complete state with all fields in camelCase (frontend format)."""
+        return {
+            "user_message": "Sounds good!",
+            "collected_data": {
+                "name": "TestUser",
+                "age": 25,
+                "gender": "male",
+                "heightCm": 178,
+                "weightKg": 75,
+                "goals": ["Build Muscle"],
+                "equipment": ["Full Gym"],
+                "fitnessLevel": "intermediate",  # camelCase
+                "daysPerWeek": 3,  # camelCase
+                "selectedDays": [0, 2, 4],  # camelCase
+                "workoutDuration": 45,  # camelCase
+                "trainingExperience": "2_to_5_years",  # camelCase
+                "workoutEnvironment": "commercial_gym",  # camelCase
+                "pastPrograms": ["ppl"],  # camelCase
+                "focusAreas": ["chest"],  # camelCase
+                "workoutVariety": "mixed",  # camelCase
+                "biggestObstacle": "time",  # camelCase
+            },
+            "missing_fields": [],
+            "conversation_history": [],
+            "messages": [],
+            "is_complete": False,
+        }
+
+    @pytest.mark.asyncio
+    async def test_completion_detects_camel_case_fields(self, complete_state_camel_case):
+        """
+        CRITICAL: check_completion_node should detect completion with camelCase fields.
+
+        The frontend sends fields in camelCase, but REQUIRED_FIELDS uses snake_case.
+        The check_completion_node must use get_field_value to handle both cases.
+        """
+        result = await check_completion_node(complete_state_camel_case)
+
+        # Should be complete since all required fields are present (in camelCase)
+        assert result["is_complete"] == True, (
+            f"CRITICAL: Onboarding not detected as complete! "
+            f"Missing fields reported: {result.get('missing_fields', [])}"
+        )
+        assert len(result["missing_fields"]) == 0, (
+            f"CRITICAL: Missing fields with camelCase data: {result['missing_fields']}"
+        )

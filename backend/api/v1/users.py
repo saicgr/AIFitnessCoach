@@ -543,6 +543,8 @@ async def update_user(user_id: str, user: UserUpdate):
                         motivations=prefs.get("motivations"),
                         dumbbell_count=prefs.get("dumbbell_count"),
                         kettlebell_count=prefs.get("kettlebell_count"),
+                        training_experience=prefs.get("training_experience"),
+                        workout_environment=prefs.get("workout_environment"),
                         change_reason="onboarding_completed",
                     )
                     logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")

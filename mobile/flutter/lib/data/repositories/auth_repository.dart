@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/user.dart' as app_user;
@@ -128,6 +129,11 @@ class AuthRepository {
       await _googleSignIn.signOut();
       await _supabase.auth.signOut();
       await _apiClient.clearAuth();
+
+      // Clear local onboarding flag so notifications stop until re-onboarded
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('onboarding_completed');
+
       debugPrint('✅ [Auth] Sign-out success');
     } catch (e) {
       debugPrint('❌ [Auth] Sign-out error: $e');

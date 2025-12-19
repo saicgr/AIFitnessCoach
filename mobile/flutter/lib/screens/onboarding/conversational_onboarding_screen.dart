@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_colors.dart';
@@ -272,6 +273,16 @@ class _ConversationalOnboardingScreenState
       }
       if (preAuthData.kettlebellCount != null) {
         prePopulatedData['kettlebellCount'] = preAuthData.kettlebellCount;
+      }
+
+      // Training experience (how long they've been training)
+      if (preAuthData.trainingExperience != null) {
+        prePopulatedData['trainingExperience'] = preAuthData.trainingExperience;
+      }
+
+      // Workout environment (inferred from equipment)
+      if (preAuthData.workoutEnvironment != null) {
+        prePopulatedData['workoutEnvironment'] = preAuthData.workoutEnvironment;
       }
 
       // Motivations (multi-select, store for later use in coaching)
@@ -637,7 +648,7 @@ class _ConversationalOnboardingScreenState
         'goals': goalsJson,
         'equipment': equipmentJson,
         'active_injuries': injuriesJson,
-        'onboarding_completed': true,
+        'onboarding_completed': false,  // Don't mark complete until fully done
         'preferences': preferencesJson,
         'date_of_birth': finalData['dateOfBirth'],  // Store at top level for database
         'age': finalData['age'],  // Store calculated age at top level
@@ -649,7 +660,7 @@ class _ConversationalOnboardingScreenState
         data: userData,
       );
 
-      debugPrint('✅ [Onboarding] User profile updated');
+      debugPrint('✅ [Onboarding] User profile updated (onboarding not yet complete)');
 
       setState(() {
         _workoutLoadingProgress = 25;
@@ -727,6 +738,22 @@ class _ConversationalOnboardingScreenState
         });
         await Future.delayed(const Duration(seconds: 2));
       }
+
+      setState(() {
+        _workoutLoadingProgress = 98;
+        _workoutLoadingMessage = 'Finalizing your profile...';
+      });
+
+      // NOW mark onboarding as complete - after all data is saved and workouts generated
+      await apiClient.put(
+        '${ApiConstants.users}/${authState.user?.id}',
+        data: {'onboarding_completed': true},
+      );
+
+      // Also save locally so notifications can be scheduled
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', true);
+      debugPrint('✅ [Onboarding] Marked onboarding as complete (API + local)');
 
       setState(() {
         _workoutLoadingProgress = 100;
