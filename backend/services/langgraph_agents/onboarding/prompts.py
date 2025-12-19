@@ -262,6 +262,10 @@ REQUIRED_FIELDS = [
     "days_per_week",
     "selected_days",
     "workout_duration",
+    # Personalization fields - affect workout generation quality
+    "training_experience",
+    "biggest_obstacle",
+    "workout_environment",
 ]
 
 # New fields added to improve personalization
@@ -272,12 +276,9 @@ OPTIONAL_FIELDS = [
     "activity_level",
     "motivation",  # User's primary motivation (from pre-auth quiz)
     "workoutDays",  # Specific days (may be pre-filled from quiz)
-    # Personalization fields that affect workout generation:
-    "training_experience",  # How long lifting weights
-    "past_programs",  # What programs they've tried before
-    "biggest_obstacle",  # Main barrier to consistency
-    "workout_environment",  # Where they work out
-    "focus_areas",  # Priority muscle groups
+    # Personalization fields (some now in REQUIRED_FIELDS):
+    "past_programs",  # What programs they've tried before (optional)
+    "focus_areas",  # Priority muscle groups (optional)
 ]
 
 # Quick reply options for common questions

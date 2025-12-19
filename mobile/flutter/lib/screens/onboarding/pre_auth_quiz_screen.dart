@@ -227,7 +227,7 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
-  static const int _totalQuestions = 6;
+  static const int _totalQuestions = 5; // Reduced from 6 - combined days screens
 
   // Question 1: Goals (multi-select)
   final Set<String> _selectedGoals = {};
@@ -288,16 +288,15 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
       case 2:
+        // Combined: days per week + which days
         if (_selectedDays != null) {
           await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(_selectedDays!);
         }
-        break;
-      case 3:
         if (_selectedWorkoutDays.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
         }
         break;
-      case 4:
+      case 3:
         if (_selectedEquipment.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setEquipment(
             _selectedEquipment.toList(),
@@ -306,7 +305,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           );
         }
         break;
-      case 5:
+      case 4:
         if (_selectedMotivations.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setMotivations(_selectedMotivations.toList());
         }
@@ -341,13 +340,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 1:
         return _selectedLevel != null;
       case 2:
-        return _selectedDays != null;
+        // Combined: must select days per week AND the specific days
+        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
       case 3:
-        // Must select at least the number of days they chose
-        return _selectedWorkoutDays.length >= (_selectedDays ?? 1);
-      case 4:
         return _selectedEquipment.isNotEmpty;
-      case 5:
+      case 4:
         return _selectedMotivations.isNotEmpty;
       default:
         return false;
@@ -516,12 +513,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 1:
         return _buildFitnessLevelQuestion(isDark, textPrimary, textSecondary);
       case 2:
-        return _buildDaysQuestion(isDark, textPrimary, textSecondary);
+        return _buildCombinedDaysQuestion(isDark, textPrimary, textSecondary);
       case 3:
-        return _buildWorkoutDaysQuestion(isDark, textPrimary, textSecondary);
-      case 4:
         return _buildEquipmentQuestion(isDark, textPrimary, textSecondary);
-      case 5:
+      case 4:
         return _buildMotivationQuestion(isDark, textPrimary, textSecondary);
       default:
         return const SizedBox.shrink();
@@ -598,85 +593,215 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
   }
 
-  // Question 3: How many days per week can you train?
-  Widget _buildDaysQuestion(bool isDark, Color textPrimary, Color textSecondary) {
+  // Question 3: Combined - How many days AND which days
+  Widget _buildCombinedDaysQuestion(bool isDark, Color textPrimary, Color textSecondary) {
+    final days = [
+      {'index': 0, 'short': 'Mon', 'full': 'Monday'},
+      {'index': 1, 'short': 'Tue', 'full': 'Tuesday'},
+      {'index': 2, 'short': 'Wed', 'full': 'Wednesday'},
+      {'index': 3, 'short': 'Thu', 'full': 'Thursday'},
+      {'index': 4, 'short': 'Fri', 'full': 'Friday'},
+      {'index': 5, 'short': 'Sat', 'full': 'Saturday'},
+      {'index': 6, 'short': 'Sun', 'full': 'Sunday'},
+    ];
+
+    final requiredDays = _selectedDays ?? 0;
+    final selectedCount = _selectedWorkoutDays.length;
+
     return Padding(
-      key: const ValueKey('days'),
+      key: const ValueKey('combined_days'),
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'How many days per week can you train?',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'How many days per week can you train?',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+                height: 1.3,
+              ),
+            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
+
+            const SizedBox(height: 8),
+
+            Text(
+              'Consistency beats intensity - pick what you can maintain',
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ).animate().fadeIn(delay: 200.ms),
+
+            const SizedBox(height: 24),
+
+            // Days per week selector - horizontal scroll
+            SizedBox(
+              height: 90,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 7,
+                itemBuilder: (context, index) {
+                  final day = index + 1;
+                  final isSelected = _selectedDays == day;
+                  final descriptions = [
+                    'Light',
+                    'Easy',
+                    'Balanced',
+                    'Active',
+                    'Dedicated',
+                    'Intense',
+                    'Extreme',
+                  ];
+
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: index == 0 ? 0 : 6,
+                      right: index == 6 ? 0 : 6,
+                    ),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _selectedDays = day;
+                          // Clear selected workout days if they exceed the new limit
+                          if (_selectedWorkoutDays.length > day) {
+                            _selectedWorkoutDays.clear();
+                          }
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 70,
+                        decoration: BoxDecoration(
+                          gradient: isSelected ? AppColors.cyanGradient : null,
+                          color: isSelected
+                              ? null
+                              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.cyan
+                                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                            width: isSelected ? 2 : 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.cyan.withOpacity(0.3),
+                                    blurRadius: 10,
+                                    spreadRadius: 0,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '$day',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.white : textPrimary,
+                              ),
+                            ),
+                            Text(
+                              day == 1 ? 'day' : 'days',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isSelected ? Colors.white70 : textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              descriptions[index],
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected ? Colors.white70 : textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).animate(delay: (100 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
+                  );
+                },
+              ),
             ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
 
-          const SizedBox(height: 8),
+            const SizedBox(height: 28),
 
-          Text(
-            'Consistency beats intensity - pick what you can maintain',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
+            // Show "Which days" section only after selecting number of days
+            if (_selectedDays != null) ...[
+              Text(
+                'Which days work best?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ).animate().fadeIn(delay: 100.ms),
 
-          const SizedBox(height: 40),
+              const SizedBox(height: 6),
 
-          // Days selector - horizontal scroll
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 7,
-              itemBuilder: (context, index) {
-                final day = index + 1;
-                final isSelected = _selectedDays == day;
-                final descriptions = [
-                  'Light',
-                  'Easy',
-                  'Balanced',
-                  'Active',
-                  'Dedicated',
-                  'Intense',
-                  'Extreme',
-                ];
+              Text(
+                'Select $_selectedDays day${_selectedDays == 1 ? '' : 's'} for your workouts',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                ),
+              ).animate().fadeIn(delay: 150.ms),
 
-                return Padding(
-                  padding: EdgeInsets.only(
-                    left: index == 0 ? 0 : 8,
-                    right: index == 6 ? 0 : 8,
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
+              const SizedBox(height: 16),
+
+              // Day selector - 7 days in a row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: days.map((day) {
+                  final index = day['index'] as int;
+                  final isSelected = _selectedWorkoutDays.contains(index);
+                  final isDisabled = !isSelected && selectedCount >= requiredDays;
+
+                  return GestureDetector(
+                    onTap: isDisabled ? null : () {
                       HapticFeedback.selectionClick();
-                      setState(() => _selectedDays = day);
+                      setState(() {
+                        if (isSelected) {
+                          _selectedWorkoutDays.remove(index);
+                        } else if (selectedCount < requiredDays) {
+                          _selectedWorkoutDays.add(index);
+                        }
+                      });
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      width: 80,
+                      width: 42,
+                      height: 58,
                       decoration: BoxDecoration(
                         gradient: isSelected ? AppColors.cyanGradient : null,
                         color: isSelected
                             ? null
-                            : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                        borderRadius: BorderRadius.circular(16),
+                            : isDisabled
+                                ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))
+                                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.cyan
-                              : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                              : isDisabled
+                                  ? Colors.transparent
+                                  : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                           width: isSelected ? 2 : 1,
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: AppColors.cyan.withOpacity(0.3),
-                                  blurRadius: 12,
+                                  color: AppColors.cyan.withValues(alpha: 0.3),
+                                  blurRadius: 6,
                                   spreadRadius: 0,
                                 ),
                               ]
@@ -686,67 +811,120 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '$day',
+                            day['short'] as String,
                             style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : textPrimary,
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected
+                                  ? Colors.white
+                                  : isDisabled
+                                      ? textSecondary.withValues(alpha: 0.5)
+                                      : textPrimary,
                             ),
                           ),
-                          Text(
-                            day == 1 ? 'day' : 'days',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected ? Colors.white70 : textSecondary,
+                          if (isSelected) ...[
+                            const SizedBox(height: 3),
+                            Container(
+                              width: 5,
+                              height: 5,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            descriptions[index],
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: isSelected ? Colors.white70 : textSecondary,
-                            ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
-                  ).animate(delay: (100 + index * 50).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Recommendation hint
-          if (_selectedDays != null)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                  ).animate(delay: (200 + (index * 40)).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+                }).toList(),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lightbulb_outline, color: AppColors.cyan, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      _getDaysRecommendation(_selectedDays!),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textPrimary,
-                        height: 1.4,
-                      ),
+
+              const SizedBox(height: 20),
+
+              // Selection counter
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: selectedCount >= requiredDays
+                        ? AppColors.success.withValues(alpha: 0.15)
+                        : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: selectedCount >= requiredDays
+                          ? AppColors.success.withValues(alpha: 0.5)
+                          : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                     ),
                   ),
-                ],
-              ),
-            ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
-        ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        selectedCount >= requiredDays ? Icons.check_circle : Icons.calendar_today,
+                        size: 16,
+                        color: selectedCount >= requiredDays ? AppColors.success : AppColors.cyan,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$selectedCount / $requiredDays days selected',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: selectedCount >= requiredDays ? AppColors.success : textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ).animate().fadeIn(delay: 350.ms),
+
+              // Selected days summary
+              if (_selectedWorkoutDays.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    _getSelectedDaysSummary(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ).animate().fadeIn(delay: 300.ms),
+              ],
+            ],
+
+            // Recommendation hint at bottom
+            if (_selectedDays != null && selectedCount >= requiredDays) ...[
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lightbulb_outline, color: AppColors.cyan, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _getDaysRecommendation(_selectedDays!),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -759,189 +937,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     } else {
       return "Dedicated training! We'll include active recovery days to prevent burnout.";
     }
-  }
-
-  // Question 4: Which days work best for you?
-  Widget _buildWorkoutDaysQuestion(bool isDark, Color textPrimary, Color textSecondary) {
-    final days = [
-      {'index': 0, 'short': 'Mon', 'full': 'Monday'},
-      {'index': 1, 'short': 'Tue', 'full': 'Tuesday'},
-      {'index': 2, 'short': 'Wed', 'full': 'Wednesday'},
-      {'index': 3, 'short': 'Thu', 'full': 'Thursday'},
-      {'index': 4, 'short': 'Fri', 'full': 'Friday'},
-      {'index': 5, 'short': 'Sat', 'full': 'Saturday'},
-      {'index': 6, 'short': 'Sun', 'full': 'Sunday'},
-    ];
-
-    final requiredDays = _selectedDays ?? 3;
-    final selectedCount = _selectedWorkoutDays.length;
-
-    return Padding(
-      key: const ValueKey('workout_days'),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Which days work best?',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-              height: 1.3,
-            ),
-          ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-
-          const SizedBox(height: 8),
-
-          Text(
-            'Select $requiredDays day${requiredDays == 1 ? '' : 's'} for your workouts',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-
-          const SizedBox(height: 24),
-
-          // Day selector - 7 days in a row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: days.map((day) {
-              final index = day['index'] as int;
-              final isSelected = _selectedWorkoutDays.contains(index);
-              final isDisabled = !isSelected && selectedCount >= requiredDays;
-
-              return GestureDetector(
-                onTap: isDisabled ? null : () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    if (isSelected) {
-                      _selectedWorkoutDays.remove(index);
-                    } else if (selectedCount < requiredDays) {
-                      _selectedWorkoutDays.add(index);
-                    }
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 44,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    gradient: isSelected ? AppColors.cyanGradient : null,
-                    color: isSelected
-                        ? null
-                        : isDisabled
-                            ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))
-                            : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.cyan
-                          : isDisabled
-                              ? Colors.transparent
-                              : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.cyan.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              spreadRadius: 0,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        day['short'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected
-                              ? Colors.white
-                              : isDisabled
-                                  ? textSecondary.withValues(alpha: 0.5)
-                                  : textPrimary,
-                        ),
-                      ),
-                      if (isSelected) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ).animate(delay: (100 + (index * 50)).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
-            }).toList(),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Selection counter
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: selectedCount >= requiredDays
-                    ? AppColors.success.withValues(alpha: 0.15)
-                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: selectedCount >= requiredDays
-                      ? AppColors.success.withValues(alpha: 0.5)
-                      : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    selectedCount >= requiredDays ? Icons.check_circle : Icons.calendar_today,
-                    size: 18,
-                    color: selectedCount >= requiredDays ? AppColors.success : AppColors.cyan,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$selectedCount / $requiredDays days selected',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: selectedCount >= requiredDays ? AppColors.success : textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(delay: 400.ms),
-
-          const SizedBox(height: 16),
-
-          // Selected days summary
-          if (_selectedWorkoutDays.isNotEmpty)
-            Center(
-              child: Text(
-                _getSelectedDaysSummary(),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ).animate().fadeIn(delay: 300.ms),
-        ],
-      ),
-    );
   }
 
   String _getSelectedDaysSummary() {

@@ -519,7 +519,7 @@ async def update_user(user_id: str, user: UserUpdate):
                     # Get preferences from the update
                     prefs = update_data.get("preferences", {})
                     if isinstance(prefs, str):
-                        import json
+                        # json is already imported at module level
                         prefs = json.loads(prefs)
 
                     # Parse goals from update_data (stored as JSON string)

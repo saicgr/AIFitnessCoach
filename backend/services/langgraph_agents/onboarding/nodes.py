@@ -194,6 +194,13 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         missing_fields=", ".join(missing) if missing else "Nothing - ready to complete!",
     )
 
+    # Log the full prompt for debugging
+    logger.info("=" * 60)
+    logger.info("[Onboarding Agent] 📋 FULL SYSTEM PROMPT:")
+    logger.info("=" * 60)
+    logger.info(system_prompt)
+    logger.info("=" * 60)
+
     # Build messages
     messages = [SystemMessage(content=system_prompt)]
 
@@ -770,6 +777,13 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         user_message=user_message,
         collected_data=json.dumps(collected_data, indent=2) if collected_data else "{}",
     )
+
+    # Log the extraction prompt for debugging
+    logger.info("=" * 60)
+    logger.info("[Extract Data] 📋 EXTRACTION PROMPT:")
+    logger.info("=" * 60)
+    logger.info(extraction_prompt)
+    logger.info("=" * 60)
 
     # Call Gemini for extraction
     llm = ChatGoogleGenerativeAI(
