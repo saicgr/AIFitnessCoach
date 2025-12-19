@@ -3,7 +3,7 @@
 # If tests fail, deployment will be blocked
 
 set -e  # Exit on first error
-
+echo "Gemini Model: ${GEMINI_MODEL:-None}"
 echo "============================================"
 echo "Installing dependencies..."
 echo "============================================"
