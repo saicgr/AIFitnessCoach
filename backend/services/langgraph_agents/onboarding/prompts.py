@@ -22,31 +22,29 @@ CONVERSATION STYLE:
 - ACKNOWLEDGE what they've already told you in the quiz
 
 CRITICAL RULES:
-- The user already provided: goals, equipment, fitness_level, days_per_week in the QUIZ
-- DO NOT ask about goals, equipment, fitness_level, or days_per_week again - they are PRE-FILLED
-- Focus on the REMAINING questions: basic info form, selected_days, workout_duration, and NEW questions
+- The user already provided: goals, equipment, fitness_level, days_per_week, workoutDays (specific days), motivation in the QUIZ
+- DO NOT ask about goals, equipment, fitness_level, days_per_week, selected_days, or motivation again - they are PRE-FILLED
+- Focus on the REMAINING questions: basic info form, workout_duration, and personalization questions
 - READ NUMBERS CAREFULLY: When the user says "2", that means TWO (2), not 22
 - When acknowledging a number the user gave, use the EXACT value from COLLECTED DATA
 
 QUESTION ORDER (skip what's already collected):
 1. name, age, gender, height, weight, activity_level (collected via FORM - shown automatically)
-2. selected_days - "Which specific days work best for you?" (show day picker) - MAY BE PRE-FILLED from quiz
-3. workout_duration - "How long do you want each workout to be?"
-4. training_experience - "How long have you been lifting weights?" (affects exercise complexity)
-5. past_programs - "What workout programs have you tried before?" (avoid repetition, learn preferences)
-6. biggest_obstacle - "What's been your biggest obstacle staying consistent?" (address barriers)
-7. workout_environment - "Where do you usually work out?" (affects exercise selection)
-8. focus_areas - "Any muscle groups you want to prioritize?" (personalized programming)
+2. workout_duration - "How long do you want each workout to be?"
+3. training_experience - "How long have you been lifting weights?" (affects exercise complexity)
+4. past_programs - "What workout programs have you tried before?" (avoid repetition, learn preferences)
+5. biggest_obstacle - "What's been your biggest obstacle staying consistent?" (address barriers)
+6. workout_environment - "Where do you usually work out?" (affects exercise selection)
+7. focus_areas - "Any muscle groups you want to prioritize?" (personalized programming)
+
+NOTE: selected_days/workoutDays is PRE-FILLED from the quiz - DO NOT ask about it again!
 
 EXAMPLE FLOW (assuming quiz data is pre-filled):
 You: "Awesome! You want to build muscle, train 4 days a week with dumbbells. Let me get a few more details. Please fill in your info below!"
 [Form appears with name, age, gender, height, weight, activity level]
 
 User: "My name is John, 28 years old, male, 180cm, 75kg, moderately active"
-You: "Great to meet you, John! Which days of the week work best for your workouts?"
-
-User: "Monday, Wednesday, Friday, Saturday"
-You: "Perfect schedule! How long do you want each workout to be?"
+You: "Great to meet you, John! How long do you want each workout to be?"
 
 User: "45 minutes"
 You: "Got it! How long have you been lifting weights? This helps me pick the right exercises for you."
@@ -80,6 +78,7 @@ PRE-FILLED FROM QUIZ (do NOT ask again):
 - equipment (already collected)
 - fitness_level (already collected)
 - days_per_week (already collected)
+- workoutDays / selected_days (already collected - specific days like Mon, Wed, Fri)
 - motivation (already collected)
 
 PERSONALIZATION QUESTIONS (affect workout generation):
@@ -304,6 +303,25 @@ QUICK_REPLIES = {
         {"label": "Beginner 🌱", "value": "beginner"},
         {"label": "Intermediate 💪", "value": "intermediate"},
         {"label": "Advanced 🔥", "value": "advanced"},
+    ],
+    # Motivation - pre-filled from quiz, included for backwards compatibility
+    "motivation": [
+        {"label": "Seeing Progress 📈", "value": "progress"},
+        {"label": "Feeling Stronger 💪", "value": "strength"},
+        {"label": "Looking Better ✨", "value": "appearance"},
+        {"label": "Better Health ❤️", "value": "health"},
+        {"label": "Stress Relief 🧘", "value": "stress"},
+        {"label": "More Energy ⚡", "value": "energy"},
+    ],
+    # Workout days - pre-filled from quiz, included for backwards compatibility
+    "workoutDays": [
+        {"label": "Monday", "value": "0"},
+        {"label": "Tuesday", "value": "1"},
+        {"label": "Wednesday", "value": "2"},
+        {"label": "Thursday", "value": "3"},
+        {"label": "Friday", "value": "4"},
+        {"label": "Saturday", "value": "5"},
+        {"label": "Sunday", "value": "6"},
     ],
     "gender": [
         {"label": "Male", "value": "male"},
