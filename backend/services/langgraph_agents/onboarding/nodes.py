@@ -275,14 +275,21 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     completion_phrases = [
         "ready to crush it",
         "here's what i'm building",
-        "perfect!",
         "let's do this",
         "you're all set",
         "we're ready",
         "i'm building your",
         "your plan is ready",
         "let's get started",
+        # Additional completion patterns
+        "ready to get started",
+        "got everything i need",
+        "i've got everything",
+        "all set to build",
+        "ready to create your",
+        "ready to build your",
     ]
+    # Note: Removed "perfect!" as it's too generic and triggers on normal responses
     is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
 
     if is_completion_message:
