@@ -48,6 +48,10 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
   final Set<String> _selectedInjuries = {};
   final Set<String> _selectedConditions = {};
 
+  // Text controllers for "Other" input fields
+  final TextEditingController _otherInjuryController = TextEditingController();
+  final TextEditingController _otherConditionController = TextEditingController();
+
   late AnimationController _animController;
   late Animation<double> _scaleAnim;
 
@@ -68,6 +72,8 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
   @override
   void dispose() {
     _animController.dispose();
+    _otherInjuryController.dispose();
+    _otherConditionController.dispose();
     super.dispose();
   }
 
@@ -96,12 +102,33 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
 
   void _handleComplete() {
     HapticFeedback.mediumImpact();
-    final injuries = _selectedInjuries.contains('None')
-        ? <String>[]
-        : _selectedInjuries.toList();
-    final conditions = _selectedConditions.contains('None')
-        ? <String>[]
-        : _selectedConditions.toList();
+
+    // Build injuries list, replacing "Other" with actual text if provided
+    List<String> injuries;
+    if (_selectedInjuries.contains('None')) {
+      injuries = <String>[];
+    } else {
+      injuries = _selectedInjuries.map((item) {
+        if (item == 'Other' && _otherInjuryController.text.trim().isNotEmpty) {
+          return 'Other: ${_otherInjuryController.text.trim()}';
+        }
+        return item;
+      }).toList();
+    }
+
+    // Build conditions list, replacing "Other" with actual text if provided
+    List<String> conditions;
+    if (_selectedConditions.contains('None')) {
+      conditions = <String>[];
+    } else {
+      conditions = _selectedConditions.map((item) {
+        if (item == 'Other' && _otherConditionController.text.trim().isNotEmpty) {
+          return 'Other: ${_otherConditionController.text.trim()}';
+        }
+        return item;
+      }).toList();
+    }
+
     widget.onComplete(injuries, conditions);
   }
 
@@ -177,6 +204,16 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                       );
                     }).toList(),
                   ),
+                  // Show text field when "Other" injury is selected
+                  if (_selectedInjuries.contains('Other')) ...[
+                    const SizedBox(height: 12),
+                    _buildOtherTextField(
+                      controller: _otherInjuryController,
+                      hint: 'Please specify your injury...',
+                      accentColor: colors.error,
+                      colors: colors,
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // Health conditions section
@@ -204,6 +241,16 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
                       );
                     }).toList(),
                   ),
+                  // Show text field when "Other" condition is selected
+                  if (_selectedConditions.contains('Other')) ...[
+                    const SizedBox(height: 12),
+                    _buildOtherTextField(
+                      controller: _otherConditionController,
+                      hint: 'Please specify your condition...',
+                      accentColor: colors.orange,
+                      colors: colors,
+                    ),
+                  ],
                   const SizedBox(height: 32),
 
                   // Action buttons
@@ -306,6 +353,48 @@ class _HealthChecklistModalState extends State<HealthChecklistModal>
             color: isSelected ? accentColor : colors.textSecondary,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOtherTextField({
+    required TextEditingController controller,
+    required String hint,
+    required Color accentColor,
+    required ThemeColors colors,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: colors.glassSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: accentColor.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+          fontSize: 13,
+          color: colors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            fontSize: 13,
+            color: colors.textMuted,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+        ),
+        maxLines: 1,
+        textCapitalization: TextCapitalization.sentences,
       ),
     );
   }

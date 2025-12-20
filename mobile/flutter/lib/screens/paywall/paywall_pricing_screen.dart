@@ -20,6 +20,7 @@ class PaywallPricingScreen extends ConsumerStatefulWidget {
 class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedPlan = 'ultra_yearly';
   String _selectedBillingCycle = 'yearly'; // 'yearly', 'monthly', or 'lifetime'
+  bool _hasShownDiscount = false;
 
   @override
   Widget build(BuildContext context) {
@@ -386,10 +387,34 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   void _skipToFree(BuildContext context, WidgetRef ref) async {
+    // Show discount popup the first time user tries to leave
+    if (!_hasShownDiscount) {
+      _hasShownDiscount = true;
+      final accepted = await _showDiscountPopup(context);
+      if (accepted == true) {
+        // User accepted the discount - purchase lifetime at discounted price
+        final success = await ref.read(subscriptionProvider.notifier).purchase('lifetime_discount');
+        if (success && context.mounted) {
+          context.go('/home');
+        }
+        return;
+      }
+      // If user declined, let them go
+    }
+
     await ref.read(subscriptionProvider.notifier).skipToFree();
     if (context.mounted) {
       context.go('/home');
     }
+  }
+
+  Future<bool?> _showDiscountPopup(BuildContext context) {
+    final colors = context.colors;
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _DiscountPopup(colors: colors),
+    );
   }
 
   Future<void> _handleAction(BuildContext context, WidgetRef ref, bool isSubscribed, SubscriptionTier currentTier) async {
@@ -1119,5 +1144,229 @@ class _CurrentPlanCard extends StatelessWidget {
       return 'Renews ${DateFormat('MMM d').format(subscriptionEndDate!)}';
     }
     return 'Active';
+  }
+}
+
+/// Last-chance discount popup
+class _DiscountPopup extends StatelessWidget {
+  final ThemeColors colors;
+
+  const _DiscountPopup({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: colors.elevated,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.5), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFB800).withOpacity(0.3),
+              blurRadius: 30,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Close button
+            Align(
+              alignment: Alignment.topRight,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context, false),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: colors.textSecondary, size: 20),
+                ),
+              ),
+            ),
+
+            // Fire emoji and title
+            const Text('🔥', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(
+              'Wait! Special Offer',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'One-time exclusive discount just for you!',
+              style: TextStyle(
+                fontSize: 14,
+                color: colors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Price comparison
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFFB800).withOpacity(0.15),
+                    const Color(0xFFFFB800).withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'LIFETIME ACCESS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFFFB800),
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Original price crossed out
+                      Text(
+                        '\$99',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
+                          color: colors.textSecondary,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.red,
+                          decorationThickness: 2.5,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Arrow
+                      Icon(
+                        Icons.arrow_forward,
+                        color: const Color(0xFFFFB800),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 16),
+                      // Discounted price
+                      Text(
+                        '\$59',
+                        style: TextStyle(
+                          fontSize: 42,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFFFB800),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'SAVE \$40 (40% OFF)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Features
+            Column(
+              children: [
+                _discountFeatureRow('✓ Unlimited AI coaching forever', colors),
+                _discountFeatureRow('✓ All future updates included', colors),
+                _discountFeatureRow('✓ No recurring payments', colors),
+                _discountFeatureRow('✓ One-time payment only', colors),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // CTA Button
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFB800),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Get Lifetime for \$59',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // No thanks link
+            GestureDetector(
+              onTap: () => Navigator.pop(context, false),
+              child: Text(
+                'No thanks, I\'ll pass',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textSecondary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _discountFeatureRow(String text, ThemeColors colors) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, color: colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
