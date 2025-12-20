@@ -329,6 +329,10 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         "all set to build",
         "ready to create your",
         "ready to build your",
+        # Short prompt style patterns
+        "let's crush it",
+        "building your",
+        "plan now",
     ]
     # Note: Removed "perfect!" as it's too generic and triggers on normal responses
     is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
@@ -831,6 +835,64 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         if found_areas:
             extracted["focus_areas"] = found_areas
             logger.info(f"[Extract Data] ✅ Pre-processed: focus_areas = {found_areas}")
+
+    # PERSONALIZATION: Workout variety - affects programming style
+    existing_variety = get_field_value(collected_data, "workout_variety")
+    if "workout_variety" in missing or not existing_variety:
+        variety_map = {
+            'consistent': 'consistent',
+            'same exercises': 'consistent',
+            'same': 'consistent',
+            'track progress': 'consistent',
+            'varied': 'varied',
+            'mix it up': 'varied',
+            'mix up': 'varied',
+            'variety': 'varied',
+            'fresh': 'varied',
+            'mixed': 'mixed',
+            'both': 'mixed',
+            'both!': 'mixed',
+        }
+        user_lower = user_message.strip().lower()
+
+        for key, value in variety_map.items():
+            if key in user_lower:
+                extracted["workout_variety"] = value
+                logger.info(f"[Extract Data] ✅ Pre-processed: workout_variety = {value}")
+                break
+
+    # PERSONALIZATION: Biggest obstacle - affects coaching approach
+    existing_obstacle = get_field_value(collected_data, "biggest_obstacle")
+    if "biggest_obstacle" in missing or not existing_obstacle:
+        obstacle_map = {
+            'time': 'time',
+            'busy': 'time',
+            'schedule': 'time',
+            'motivation': 'motivation',
+            'lazy': 'motivation',
+            'unmotivated': 'motivation',
+            'consistency': 'consistency',
+            'consistent': 'consistency',
+            'stick with it': 'consistency',
+            'knowledge': 'knowledge',
+            'don\'t know': 'knowledge',
+            'not sure': 'knowledge',
+            'injuries': 'injuries',
+            'injury': 'injuries',
+            'pain': 'injuries',
+            'boredom': 'boredom',
+            'boring': 'boredom',
+            'bored': 'boredom',
+            'life events': 'life_events',
+            'life': 'life_events',
+        }
+        user_lower = user_message.strip().lower()
+
+        for key, value in obstacle_map.items():
+            if key in user_lower:
+                extracted["biggest_obstacle"] = value
+                logger.info(f"[Extract Data] ✅ Pre-processed: biggest_obstacle = {value}")
+                break
 
     # If we found data via pre-processing, use it
     if extracted:
