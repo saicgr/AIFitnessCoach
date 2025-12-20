@@ -1347,6 +1347,8 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
 
         logger.info(f"🎯 Regenerating workout with: fitness_level={fitness_level}")
         logger.info(f"  - equipment={equipment} (from request: {request.equipment})")
+        logger.info(f"  - dumbbell_count={dumbbell_count} (from request: {request.dumbbell_count})")
+        logger.info(f"  - kettlebell_count={kettlebell_count} (from request: {request.kettlebell_count})")
         logger.info(f"  - difficulty={user_difficulty}")
         logger.info(f"  - workout_type={workout_type_override}")
         logger.info(f"  - duration_minutes={request.duration_minutes}")
