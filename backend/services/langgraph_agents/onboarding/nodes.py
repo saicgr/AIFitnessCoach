@@ -180,6 +180,28 @@ async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
     }
 
 
+def detect_field_from_response(response: str) -> str | None:
+    """Detect which field the AI is asking about from response keywords."""
+    response_lower = response.lower()
+
+    # Map keywords to fields - order matters (more specific patterns first)
+    field_patterns = {
+        "workout_duration": ["how long", "30, 45, 60", "30, 45", "minutes", "per workout", "session length", "90 min"],
+        "past_programs": ["program", "ppl", "bro split", "followed", "tried before", "starting strength", "stronglifts"],
+        "focus_areas": ["prioritize", "focus area", "target", "full body", "muscle group", "any muscles"],
+        "workout_variety": ["same exercises", "mix it up", "variety", "consistent", "fresh", "each week"],
+        "biggest_obstacle": ["obstacle", "barrier", "consistency", "struggle", "challenge", "biggest"],
+        "equipment": ["equipment", "gym access", "what do you have", "access to"],
+        "goals": ["goal", "achieve", "want to", "looking to"],
+        "fitness_level": ["experience level", "fitness level", "beginner", "intermediate", "advanced"],
+    }
+
+    for field, keywords in field_patterns.items():
+        if any(kw in response_lower for kw in keywords):
+            return field
+    return None
+
+
 async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     """
     AI generates natural, human-like questions for onboarding.
@@ -349,42 +371,49 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     if is_completion_message:
         logger.info(f"[Onboarding Agent] 🎉 Completion message detected - no quick replies")
-    elif missing:
-        # Find the first missing field that ISN'T a pre-filled quiz field
-        # Pre-filled fields (goals, equipment, etc.) are already collected from the quiz
-        next_field = None
-        for field in FIELD_ORDER:
-            if field in missing and field not in prefilled_quiz_fields:
-                next_field = field
-                break
+    else:
+        # PRIORITY 1: Detect field from AI response text
+        # This ensures quick replies match what the AI is actually asking about
+        detected_field = detect_field_from_response(response_content)
 
-        if not next_field:
-            # Fallback: check if there are any non-prefilled missing fields
-            for field in missing:
-                if field not in prefilled_quiz_fields:
+        if detected_field:
+            logger.info(f"[Onboarding Agent] 🎯 Detected field from AI response: {detected_field}")
+
+            if detected_field == "selected_days":
+                component = "day_picker"
+                logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days")
+            elif detected_field in free_text_fields:
+                logger.info(f"[Onboarding Agent] 📝 Free text field ({detected_field}), no quick replies")
+            elif detected_field in QUICK_REPLIES:
+                quick_replies = QUICK_REPLIES[detected_field]
+                is_multi_select = detected_field in multi_select_fields
+                logger.info(f"[Onboarding Agent] ✅ Quick replies for detected field: {detected_field}")
+
+        # FALLBACK: Use first non-prefilled missing field (if detection didn't find anything)
+        elif missing:
+            next_field = None
+            for field in FIELD_ORDER:
+                if field in missing and field not in prefilled_quiz_fields:
                     next_field = field
                     break
 
-        logger.info(f"[Onboarding Agent] 🎯 Next field to collect: {next_field}")
+            if not next_field:
+                for field in missing:
+                    if field not in prefilled_quiz_fields:
+                        next_field = field
+                        break
 
-        # If no actionable missing field found, skip quick replies
-        if not next_field:
-            logger.info(f"[Onboarding Agent] 📝 No non-prefilled missing fields, no quick replies")
-
-        # Skip quick replies for free text fields
-        elif next_field in free_text_fields:
-            logger.info(f"[Onboarding Agent] 📝 Free text field ({next_field}), no quick replies")
-
-        # Show day picker for selected_days
-        elif next_field == "selected_days":
-            component = "day_picker"
-            logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days")
-
-        # Show quick replies for the next field if available
-        elif next_field in QUICK_REPLIES:
-            quick_replies = QUICK_REPLIES[next_field]
-            is_multi_select = next_field in multi_select_fields
-            logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: {next_field} (multi_select={is_multi_select})")
+            if next_field:
+                logger.info(f"[Onboarding Agent] 🎯 Fallback to missing field: {next_field}")
+                if next_field == "selected_days":
+                    component = "day_picker"
+                    logger.info(f"[Onboarding Agent] ✅ Showing day_picker for: selected_days")
+                elif next_field not in free_text_fields and next_field in QUICK_REPLIES:
+                    quick_replies = QUICK_REPLIES[next_field]
+                    is_multi_select = next_field in multi_select_fields
+                    logger.info(f"[Onboarding Agent] ✅ Quick replies for fallback field: {next_field}")
+            else:
+                logger.info(f"[Onboarding Agent] 📝 No actionable missing fields")
 
     total_elapsed = time.time() - start_time
     logger.info("=" * 60)
