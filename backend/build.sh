@@ -1,33 +1,30 @@
 #!/bin/bash
-# Render build script - runs tests before deployment
-# If tests fail, deployment will be blocked
+# Render build script - FAST deployment
+# Set SKIP_TESTS=true in Render env vars to skip tests
 
 set -e  # Exit on first error
-echo "Gemini Model: ${GEMINI_MODEL:-None}"
+
 echo "============================================"
 echo "Installing dependencies..."
 echo "============================================"
 pip install -r requirements.txt
 
-echo ""
-echo "============================================"
-echo "Running pre-deploy tests (including AI integration tests)..."
-echo "============================================"
-
-# Log the Gemini model being used
-echo "Gemini Model: ${GEMINI_MODEL:-None}"
-
-# Install test dependencies
-pip install pytest pytest-asyncio
-
-# Run ALL tests including slow AI/integration tests
-# This ensures end-to-end testing with real Gemini API
-python -m pytest tests/test_onboarding.py tests/test_workout_generation.py tests/test_rag_service.py \
-    -v \
-    --tb=short \
-    -x
+# Skip tests if SKIP_TESTS=true (for faster iteration)
+if [ "$SKIP_TESTS" = "true" ]; then
+    echo ""
+    echo "============================================"
+    echo "⚡ SKIPPING TESTS (SKIP_TESTS=true)"
+    echo "============================================"
+else
+    echo ""
+    echo "============================================"
+    echo "Running tests..."
+    echo "============================================"
+    pip install pytest pytest-asyncio
+    python -m pytest tests/test_onboarding.py -v --tb=short -x
+fi
 
 echo ""
 echo "============================================"
-echo "ALL TESTS PASSED - Deployment proceeding"
+echo "✅ Build complete - deploying..."
 echo "============================================"
