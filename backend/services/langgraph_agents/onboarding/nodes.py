@@ -227,9 +227,22 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
         temperature=0.5,  # Balanced: natural but less hallucination-prone
+        timeout=60,  # 60 second timeout
     )
 
-    response = await llm.ainvoke(messages)
+    try:
+        response = await llm.ainvoke(messages)
+    except Exception as e:
+        logger.error(f"[Onboarding Agent] ❌ LLM call failed: {e}")
+        # Return a friendly error message
+        return {
+            "messages": messages,
+            "next_question": "I'm having a moment - could you repeat that? 🤔",
+            "final_response": "I'm having a moment - could you repeat that? 🤔",
+            "quick_replies": None,
+            "multi_select": False,
+            "component": None,
+        }
 
     # Handle various Gemini response.content formats:
     # - string: "Hello!" (normal case)
@@ -824,12 +837,21 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
         temperature=0.3,  # Lower temperature for more consistent extraction
+        timeout=60,  # 60 second timeout
     )
 
-    response = await llm.ainvoke([
-        SystemMessage(content="You are a data extraction expert. Extract structured fitness data from user messages."),
-        HumanMessage(content=extraction_prompt)
-    ])
+    try:
+        response = await llm.ainvoke([
+            SystemMessage(content="You are a data extraction expert. Extract structured fitness data from user messages."),
+            HumanMessage(content=extraction_prompt)
+        ])
+    except Exception as e:
+        logger.error(f"[Extract Data] ❌ LLM extraction call failed: {e}")
+        # Return empty extraction on failure - let user retry
+        return {
+            "collected_data": collected_data,
+            "validation_errors": {"_error": str(e)},
+        }
 
     # Parse JSON from response
     try:
