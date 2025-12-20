@@ -789,9 +789,21 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         if active_injuries or health_conditions:
             logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
 
-        weeks = request.weeks or 12
+        # Cap weeks at 4 to prevent generating workouts too far in the future
+        # This ensures efficient generation and adaptive workout planning
+        MAX_GENERATION_WEEKS = 4
+        weeks = min(request.weeks or 4, MAX_GENERATION_WEEKS)
+
+        # Also cap the date range to prevent generating workouts beyond 4 weeks from today
+        today = datetime.now().date()
+        max_horizon = today + timedelta(days=28)  # 4 weeks from today
+
         workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, weeks)
-        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days}")
+
+        # Filter out any dates beyond our horizon
+        workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
+
+        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days} (capped at {max_horizon})")
 
         if not workout_dates:
             logger.warning("No workout dates calculated - returning empty response")
@@ -1031,7 +1043,15 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if active_injuries:
             logger.info(f"🩹 User has active injuries for remaining workouts: {active_injuries}")
 
-        all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days)
+        # Cap at 4 weeks to prevent generating workouts too far in the future
+        MAX_GENERATION_WEEKS = 4
+        today = datetime.now().date()
+        max_horizon = today + timedelta(days=28)  # 4 weeks from today
+
+        all_workout_dates = calculate_monthly_dates(request.month_start_date, request.selected_days, MAX_GENERATION_WEEKS)
+
+        # Filter out any dates beyond our horizon
+        all_workout_dates = [d for d in all_workout_dates if d.date() <= max_horizon]
 
         # Get existing workout dates
         from calendar import monthrange
@@ -1047,6 +1067,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         existing_dates = {str(w.get("scheduled_date", ""))[:10] for w in existing_workouts}
 
         workout_dates = [d for d in all_workout_dates if str(d.date()) not in existing_dates]
+
+        logger.info(f"Generating remaining workouts: {len(workout_dates)} dates (capped at {max_horizon})")
 
         if not workout_dates:
             return GenerateMonthlyResponse(workouts=[], total_generated=0)
