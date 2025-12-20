@@ -311,6 +311,13 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Fields that should NOT show quick replies (free text input)
     free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
 
+    # Pre-filled quiz fields - these should NOT trigger quick replies
+    # even if technically "missing" (the AI is told not to re-ask them)
+    prefilled_quiz_fields = [
+        "goals", "equipment", "fitness_level", "days_per_week",
+        "motivation", "workoutDays", "training_experience", "workout_environment"
+    ]
+
     # Check if AI response is a completion/summary message (no quick replies needed)
     response_lower = response_content.lower()
     completion_phrases = [
@@ -340,21 +347,29 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     if is_completion_message:
         logger.info(f"[Onboarding Agent] 🎉 Completion message detected - no quick replies")
     elif missing:
-        # SIMPLE APPROACH: Use the first missing field from FIELD_ORDER
-        # This is reliable because the AI follows the field order in its questions
+        # Find the first missing field that ISN'T a pre-filled quiz field
+        # Pre-filled fields (goals, equipment, etc.) are already collected from the quiz
         next_field = None
         for field in FIELD_ORDER:
-            if field in missing:
+            if field in missing and field not in prefilled_quiz_fields:
                 next_field = field
                 break
 
         if not next_field:
-            next_field = missing[0]  # Fallback to first missing if not in FIELD_ORDER
+            # Fallback: check if there are any non-prefilled missing fields
+            for field in missing:
+                if field not in prefilled_quiz_fields:
+                    next_field = field
+                    break
 
         logger.info(f"[Onboarding Agent] 🎯 Next field to collect: {next_field}")
 
+        # If no actionable missing field found, skip quick replies
+        if not next_field:
+            logger.info(f"[Onboarding Agent] 📝 No non-prefilled missing fields, no quick replies")
+
         # Skip quick replies for free text fields
-        if next_field in free_text_fields:
+        elif next_field in free_text_fields:
             logger.info(f"[Onboarding Agent] 📝 Free text field ({next_field}), no quick replies")
 
         # Show day picker for selected_days
