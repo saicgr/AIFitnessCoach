@@ -1315,9 +1315,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
         equipment = request.equipment if request.equipment is not None else parse_json_field(user.get("equipment"), [])
         goals = parse_json_field(user.get("goals"), [])
         preferences = parse_json_field(user.get("preferences"), {})
-        # Get equipment counts for single dumbbell/kettlebell filtering
-        dumbbell_count = preferences.get("dumbbell_count", 2)
-        kettlebell_count = preferences.get("kettlebell_count", 1)
+        # Get equipment counts - use request if provided, otherwise fall back to user preferences
+        dumbbell_count = request.dumbbell_count if request.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
+        kettlebell_count = request.kettlebell_count if request.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
 
         # Get age and activity level for personalized workouts
         user_age = user.get("age")

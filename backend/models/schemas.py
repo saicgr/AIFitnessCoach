@@ -181,6 +181,8 @@ class RegenerateWorkoutRequest(BaseModel):
     workout_type: Optional[str] = None  # Workout style: "Strength", "HIIT", "Cardio", "Flexibility", etc.
     workout_name: Optional[str] = None  # Optional workout name to use (from AI suggestion)
     ai_prompt: Optional[str] = None  # Optional AI prompt for workout generation context
+    dumbbell_count: Optional[int] = None  # Number of dumbbells available (1 or 2)
+    kettlebell_count: Optional[int] = None  # Number of kettlebells available (1 or 2)
 
 
 class UpdateProgramRequest(BaseModel):

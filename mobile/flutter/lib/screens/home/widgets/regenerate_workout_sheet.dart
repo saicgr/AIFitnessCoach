@@ -248,6 +248,8 @@ class _RegenerateWorkoutSheetState
         injuries: allInjuries,
         equipment: allEquipment.isNotEmpty ? allEquipment : null,
         workoutType: workoutType,
+        dumbbellCount: _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
+        kettlebellCount: _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
       );
 
       if (mounted) {

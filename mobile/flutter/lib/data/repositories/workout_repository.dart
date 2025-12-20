@@ -154,6 +154,8 @@ class WorkoutRepository {
     String? workoutType,
     String? aiPrompt,
     String? workoutName,
+    int? dumbbellCount,
+    int? kettlebellCount,
   }) async {
     try {
       debugPrint('🔍 [Workout] Regenerating workout $workoutId with:');
@@ -165,6 +167,8 @@ class WorkoutRepository {
       debugPrint('  - workoutType: $workoutType');
       debugPrint('  - aiPrompt: $aiPrompt');
       debugPrint('  - workoutName: $workoutName');
+      debugPrint('  - dumbbellCount: $dumbbellCount');
+      debugPrint('  - kettlebellCount: $kettlebellCount');
 
       // Use longer timeout for regeneration (AI generation can take time + server cold start)
       final response = await _apiClient.post(
@@ -180,6 +184,8 @@ class WorkoutRepository {
           if (workoutType != null) 'workout_type': workoutType,
           if (aiPrompt != null && aiPrompt.isNotEmpty) 'ai_prompt': aiPrompt,
           if (workoutName != null && workoutName.isNotEmpty) 'workout_name': workoutName,
+          if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
+          if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
         },
         options: Options(
           sendTimeout: const Duration(seconds: 30),
