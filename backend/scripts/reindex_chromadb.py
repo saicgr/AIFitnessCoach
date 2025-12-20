@@ -37,13 +37,14 @@ async def main():
         if count > 0:
             print(f"   • {name}: {count} documents")
 
-    # Delete old exercise_library collection (it has wrong dimensions)
-    print("\n🗑️  Deleting old exercise_library collection (1536 dim -> 768 dim)...")
-    try:
-        chroma_client.delete_collection("exercise_library")
-        print("   ✅ Deleted exercise_library collection")
-    except Exception as e:
-        print(f"   ⚠️  Could not delete: {e}")
+    # Delete old collections with wrong dimensions (1536 dim -> 768 dim)
+    print("\n🗑️  Deleting old collections with wrong dimensions (1536 dim -> 768 dim)...")
+    for collection_name in ["exercise_library", "custom_workout_inputs", "workout_plans"]:
+        try:
+            chroma_client.delete_collection(collection_name)
+            print(f"   ✅ Deleted {collection_name} collection")
+        except Exception as e:
+            print(f"   ⚠️  Could not delete {collection_name}: {e}")
 
     # Initialize services
     print("\n🤖 Initializing Gemini service...")
