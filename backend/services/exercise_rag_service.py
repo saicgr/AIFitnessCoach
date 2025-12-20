@@ -437,8 +437,9 @@ class ExerciseRAGService:
             if dumbbell_count == 1 and "dumbbell" in ex_equipment:
                 # User has only 1 dumbbell - check if exercise is single-dumbbell friendly
                 single_db_friendly = meta.get("single_dumbbell_friendly", "false") == "true"
+                logger.info(f"🔍 Checking '{meta.get('name')}': equipment={ex_equipment}, single_dumbbell_friendly={meta.get('single_dumbbell_friendly')}, friendly_bool={single_db_friendly}")
                 if not single_db_friendly:
-                    logger.debug(f"Filtered out '{meta.get('name')}' - requires 2 dumbbells but user has 1")
+                    logger.info(f"❌ Filtered out '{meta.get('name')}' - requires 2 dumbbells but user has 1")
                     continue
 
             if kettlebell_count == 1 and "kettlebell" in ex_equipment:
