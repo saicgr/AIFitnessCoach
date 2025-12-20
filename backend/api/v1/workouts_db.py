@@ -2652,7 +2652,8 @@ async def check_and_regenerate_workouts(
         if existing_job and existing_job.get("status") in ["pending", "in_progress"]:
             return {
                 "success": True,
-                "needs_generation": True,
+                "needs_generation": False,  # Don't show banner for existing jobs - prevents perpetual banner
+                "already_generating": True,  # Separate flag for "job already in progress"
                 "upcoming_workout_days": upcoming_count,
                 "message": "Generation already in progress",
                 "status": existing_job.get("status"),

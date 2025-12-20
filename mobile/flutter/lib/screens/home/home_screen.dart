@@ -164,8 +164,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
 
-              // Banner: Only show when we have specific generation info
-              if (_generationStartDate != null && _generationWeeks > 0)
+              // Banner: Only show when generating AND no next workout exists yet
+              // This prevents showing the banner when user already has workouts
+              if (_generationStartDate != null && _generationWeeks > 0 && nextWorkout == null)
                 SliverToBoxAdapter(
                   child: _MoreWorkoutsLoadingBanner(
                     isDark: isDark,
