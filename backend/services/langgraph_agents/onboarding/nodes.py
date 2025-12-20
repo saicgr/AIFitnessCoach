@@ -311,12 +311,15 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Fields that should NOT show quick replies (free text input)
     free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
 
-    # Pre-filled quiz fields - these should NOT trigger quick replies
-    # even if technically "missing" (the AI is told not to re-ask them)
-    prefilled_quiz_fields = [
+    # Quiz fields that MAY be pre-filled from the quiz
+    # Only skip quick replies for these if they're actually in collected_data
+    quiz_fields = [
         "goals", "equipment", "fitness_level", "days_per_week",
         "motivation", "workoutDays", "training_experience", "workout_environment"
     ]
+    # Check which quiz fields are actually pre-filled (exist in collected_data)
+    prefilled_quiz_fields = [f for f in quiz_fields if f in collected and collected[f]]
+    logger.info(f"[Onboarding Agent] Pre-filled quiz fields: {prefilled_quiz_fields}")
 
     # Check if AI response is a completion/summary message (no quick replies needed)
     response_lower = response_content.lower()
