@@ -551,6 +551,15 @@ class _ConversationalOnboardingScreenState
       "ready to make some progress",
       "i'll prepare a workout plan",
       "prepare a workout plan",
+      // Additional completion phrases
+      "ready to crush it",
+      "here's what i'm building",
+      "here's what i'm building for you",
+      "ready to get started",
+      "i've got everything",
+      "let's do this",
+      "we're ready",
+      "your plan is ready",
     ];
     return phrases.any((p) => lowerContent.contains(p));
   }
