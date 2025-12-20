@@ -48,6 +48,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // First refresh to get current workouts
     await notifier.refresh();
 
+    // Clear banner state if workouts exist
+    if (notifier.nextWorkout != null && mounted) {
+      setState(() {
+        _generationStartDate = null;
+        _generationWeeks = 0;
+        _totalExpected = 0;
+        _totalGenerated = 0;
+      });
+    }
+
     // Only check regeneration once per session to avoid expensive API calls on tab switches
     final hasChecked = ref.read(hasCheckedRegenerationProvider);
     if (hasChecked) {
