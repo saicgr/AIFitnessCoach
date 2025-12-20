@@ -180,13 +180,14 @@ async def check_completion_node(state: OnboardingState) -> Dict[str, Any]:
     }
 
 
-def detect_field_from_response(response: str) -> str | None:
+def detect_field_from_response(response: str) -> Optional[str]:
     """Detect which field the AI is asking about from response keywords."""
     response_lower = response.lower()
 
     # Map keywords to fields - order matters (more specific patterns first)
     field_patterns = {
         "workout_duration": ["how long", "30, 45, 60", "30, 45", "minutes", "per workout", "session length", "90 min"],
+        "selected_days": ["which days", "what days", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "days of the week"],
         "past_programs": ["program", "ppl", "bro split", "followed", "tried before", "starting strength", "stronglifts"],
         "focus_areas": ["prioritize", "focus area", "target", "full body", "muscle group", "any muscles"],
         "workout_variety": ["same exercises", "mix it up", "variety", "consistent", "fresh", "each week"],
@@ -371,6 +372,11 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
     if is_completion_message:
         logger.info(f"[Onboarding Agent] 🎉 Completion message detected - no quick replies")
+    # PRIORITY 0: If selected_days is missing AND days_per_week is collected, show day_picker
+    # selected_days requires days_per_week to be known first (to show the right number of days)
+    elif "selected_days" in missing and collected.get("days_per_week"):
+        component = "day_picker"
+        logger.info(f"[Onboarding Agent] ✅ selected_days missing (days_per_week={collected.get('days_per_week')}) - showing day_picker")
     else:
         # PRIORITY 1: Detect field from AI response text
         # This ensures quick replies match what the AI is actually asking about

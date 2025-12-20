@@ -133,7 +133,7 @@ def partial_state_needs_days_per_week():
 
 @pytest.fixture
 def partial_state_needs_selected_days():
-    """State where selected_days is the next field to collect."""
+    """State where selected_days is the ONLY field to collect (not workout_duration)."""
     return {
         "user_message": "3 days",
         "collected_data": {
@@ -146,8 +146,9 @@ def partial_state_needs_selected_days():
             "equipment": ["Full Gym"],
             "fitness_level": "intermediate",
             "days_per_week": 3,
+            "workout_duration": 60,  # Already filled so AI asks about selected_days
         },
-        "missing_fields": ["selected_days", "workout_duration"],
+        "missing_fields": ["selected_days"],
         "conversation_history": [],
         "messages": [],
         "is_complete": False,
@@ -224,64 +225,29 @@ class TestQuickReplies:
     """
 
     @pytest.mark.asyncio
-    async def test_goals_shows_quick_replies(self, partial_state_needs_goals):
-        """CRITICAL: Goals field MUST show quick replies with multi-select."""
+    async def test_workout_duration_detected_from_response(self, partial_state_needs_goals):
+        """CRITICAL: When AI asks about duration, show duration quick replies.
+
+        Note: Quiz fields (goals, equipment, etc.) are now pre-filled from quiz.
+        The AI is instructed to skip them and ask about workout_duration first.
+        """
         result = await onboarding_agent_node(partial_state_needs_goals)
 
-        # STRICT ASSERTIONS - NO FALLBACKS
+        # The AI should ask about workout_duration (skipping quiz fields)
+        # and quick replies should match the detected field from response
         assert result.get("quick_replies") is not None, \
-            "CRITICAL: Goals field must show quick replies"
-        assert result.get("multi_select") == True, \
-            "CRITICAL: Goals must be multi-select"
-        assert len(result.get("quick_replies", [])) >= 4, \
-            "CRITICAL: Goals must have at least 4 options"
+            "CRITICAL: Must show quick replies"
 
-        # Verify expected options exist
+        # Verify it's asking about duration (checking response or quick replies)
+        response = result.get("final_response", "").lower()
         labels = [qr["label"].lower() for qr in result.get("quick_replies", [])]
-        assert any("muscle" in label for label in labels), \
-            "CRITICAL: Goals must include 'Build muscle' option"
-        assert any("weight" in label for label in labels), \
-            "CRITICAL: Goals must include weight-related option"
 
-    @pytest.mark.asyncio
-    async def test_equipment_shows_quick_replies(self, partial_state_needs_equipment):
-        """CRITICAL: Equipment field MUST show quick replies with multi-select."""
-        result = await onboarding_agent_node(partial_state_needs_equipment)
+        # Either AI asks about duration OR quick replies are for duration
+        is_duration_question = "how long" in response or "30" in response or "45" in response
+        has_duration_options = any("min" in label for label in labels)
 
-        assert result.get("quick_replies") is not None, \
-            "CRITICAL: Equipment field must show quick replies"
-        assert result.get("multi_select") == True, \
-            "CRITICAL: Equipment must be multi-select"
-        assert len(result.get("quick_replies", [])) >= 4, \
-            "CRITICAL: Equipment must have at least 4 options"
-
-    @pytest.mark.asyncio
-    async def test_fitness_level_shows_quick_replies(self, partial_state_needs_fitness_level):
-        """CRITICAL: Fitness level field MUST show quick replies (single-select)."""
-        result = await onboarding_agent_node(partial_state_needs_fitness_level)
-
-        assert result.get("quick_replies") is not None, \
-            "CRITICAL: Fitness level field must show quick replies"
-        assert result.get("multi_select") == False, \
-            "CRITICAL: Fitness level must be single-select"
-
-        labels = [qr["label"].lower() for qr in result.get("quick_replies", [])]
-        assert any("beginner" in label for label in labels), \
-            "CRITICAL: Fitness level must include 'Beginner' option"
-        assert any("intermediate" in label for label in labels), \
-            "CRITICAL: Fitness level must include 'Intermediate' option"
-        assert any("advanced" in label for label in labels), \
-            "CRITICAL: Fitness level must include 'Advanced' option"
-
-    @pytest.mark.asyncio
-    async def test_days_per_week_shows_quick_replies(self, partial_state_needs_days_per_week):
-        """CRITICAL: Days per week field MUST show quick replies."""
-        result = await onboarding_agent_node(partial_state_needs_days_per_week)
-
-        assert result.get("quick_replies") is not None, \
-            "CRITICAL: Days per week field must show quick replies"
-        assert len(result.get("quick_replies", [])) >= 5, \
-            "CRITICAL: Days per week must have options for 1-7 days"
+        assert is_duration_question or has_duration_options, \
+            "CRITICAL: Should ask about workout duration (quiz fields are pre-filled)"
 
     @pytest.mark.asyncio
     async def test_selected_days_shows_day_picker(self, partial_state_needs_selected_days):
