@@ -230,7 +230,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Add current user message
     messages.append(HumanMessage(content=user_message))
 
-    # Call LLM to generate next question
+    # Call LLM to generate next question with retry logic
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
@@ -238,14 +238,30 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         timeout=60,  # 60 second timeout
     )
 
-    try:
-        logger.info(f"[Onboarding Agent] ⏳ Calling Gemini API ({settings.gemini_model})...")
-        llm_start = time.time()
-        response = await llm.ainvoke(messages)
-        llm_elapsed = time.time() - llm_start
-        logger.info(f"[Onboarding Agent] ✅ Gemini API responded in {llm_elapsed:.2f}s")
-    except Exception as e:
-        logger.error(f"[Onboarding Agent] ❌ LLM call failed after {time.time() - start_time:.2f}s: {e}")
+    # Retry with exponential backoff for transient API failures
+    max_retries = 3
+    response = None
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"[Onboarding Agent] ⏳ Calling Gemini API ({settings.gemini_model}) - attempt {attempt + 1}/{max_retries}...")
+            llm_start = time.time()
+            response = await llm.ainvoke(messages)
+            llm_elapsed = time.time() - llm_start
+            logger.info(f"[Onboarding Agent] ✅ Gemini API responded in {llm_elapsed:.2f}s")
+            break  # Success, exit retry loop
+        except Exception as e:
+            last_error = e
+            logger.warning(f"[Onboarding Agent] ⚠️ Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+                logger.info(f"[Onboarding Agent] Retrying in {wait_time}s...")
+                import asyncio
+                await asyncio.sleep(wait_time)
+
+    if response is None:
+        logger.error(f"[Onboarding Agent] ❌ All {max_retries} attempts failed after {time.time() - start_time:.2f}s: {last_error}")
         # Return a friendly error message
         return {
             "messages": messages,
@@ -404,6 +420,11 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     logger.info(f"[Extract Data] Collected data keys: {list(collected_data.keys())}")
     logger.info(f"[Extract Data] Current missing fields: {missing}")
     logger.info(f"[Extract Data] User message: {user_message}")
+
+    # Log pre-filled quiz data specifically for debugging
+    training_exp = get_field_value(collected_data, "training_experience")
+    fitness_level = get_field_value(collected_data, "fitness_level")
+    logger.info(f"[Extract Data] 🎓 Quiz data: training_experience={training_exp}, fitness_level={fitness_level}")
 
     # NON-GYM ACTIVITY DETECTION: If user mentions walking/steps/etc, auto-set complementary goals
     if "goals" in missing:
@@ -814,7 +835,31 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     # If we found data via pre-processing, use it
     if extracted:
         merged = collected_data.copy()
-        merged.update(extracted)
+
+        # Fields that come from pre-auth quiz and should NOT be overwritten if already set
+        # These are filled by the user before onboarding starts
+        pre_filled_fields = {
+            "training_experience", "trainingExperience",
+            "workout_environment", "workoutEnvironment",
+            "fitness_level", "fitnessLevel",
+            "days_per_week", "daysPerWeek",
+            "workout_days", "workoutDays",
+            "selected_days", "selectedDays",
+            "motivations", "goals", "equipment",
+        }
+
+        # Merge extracted data, but protect pre-filled quiz data
+        for key, value in extracted.items():
+            if key in pre_filled_fields:
+                # Only set if not already present - preserve pre-filled quiz data
+                existing_value = get_field_value(merged, key)
+                if not existing_value:
+                    merged[key] = value
+                else:
+                    logger.info(f"[Extract Data] 🛡️ Preserving pre-filled {key}='{existing_value}', ignoring extracted value '{value}'")
+            else:
+                merged[key] = value
+
         logger.info(f"[Extract Data] 🎯 Pre-processed: {list(extracted.keys())}")
 
         # Calculate how many fields we still need after pre-processing
@@ -856,7 +901,7 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     logger.info(extraction_prompt)
     logger.info("=" * 60)
 
-    # Call Gemini for extraction
+    # Call Gemini for extraction with retry logic
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
@@ -864,21 +909,37 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         timeout=60,  # 60 second timeout
     )
 
-    try:
-        logger.info(f"[Extract Data] ⏳ Calling Gemini API for extraction...")
-        llm_start = time.time()
-        response = await llm.ainvoke([
-            SystemMessage(content="You are a data extraction expert. Extract structured fitness data from user messages."),
-            HumanMessage(content=extraction_prompt)
-        ])
-        llm_elapsed = time.time() - llm_start
-        logger.info(f"[Extract Data] ✅ Gemini API responded in {llm_elapsed:.2f}s")
-    except Exception as e:
-        logger.error(f"[Extract Data] ❌ LLM extraction call failed after {time.time() - start_time:.2f}s: {e}")
-        # Return empty extraction on failure - let user retry
+    # Retry with exponential backoff for transient API failures
+    max_retries = 3
+    response = None
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"[Extract Data] ⏳ Calling Gemini API for extraction (attempt {attempt + 1}/{max_retries})...")
+            llm_start = time.time()
+            response = await llm.ainvoke([
+                SystemMessage(content="You are a data extraction expert. Extract structured fitness data from user messages."),
+                HumanMessage(content=extraction_prompt)
+            ])
+            llm_elapsed = time.time() - llm_start
+            logger.info(f"[Extract Data] ✅ Gemini API responded in {llm_elapsed:.2f}s")
+            break  # Success, exit retry loop
+        except Exception as e:
+            last_error = e
+            logger.warning(f"[Extract Data] ⚠️ Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+                logger.info(f"[Extract Data] Retrying in {wait_time}s...")
+                import asyncio
+                await asyncio.sleep(wait_time)
+
+    if response is None:
+        logger.error(f"[Extract Data] ❌ All {max_retries} extraction attempts failed after {time.time() - start_time:.2f}s: {last_error}")
+        # Return existing data on failure - let user retry
         return {
             "collected_data": collected_data,
-            "validation_errors": {"_error": str(e)},
+            "validation_errors": {"_error": str(last_error)},
         }
 
     # Parse JSON from response
