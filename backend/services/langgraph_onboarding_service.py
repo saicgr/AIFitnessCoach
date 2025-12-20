@@ -48,7 +48,13 @@ class LangGraphOnboardingService:
                 - quick_replies: Optional quick reply buttons
                 - component: Optional UI component (day_picker, etc.)
         """
-        logger.info(f"[LangGraph Onboarding] Processing message from user {user_id}")
+        logger.info("=" * 80)
+        logger.info(f"[LangGraph Onboarding] 🚀 PROCESSING MESSAGE")
+        logger.info(f"[LangGraph Onboarding] User ID: {user_id}")
+        logger.info(f"[LangGraph Onboarding] User message: {message}")
+        logger.info(f"[LangGraph Onboarding] Collected data keys: {list(collected_data.keys())}")
+        logger.info(f"[LangGraph Onboarding] Conversation history length: {len(conversation_history)}")
+        logger.info("=" * 80)
 
         # Build initial state
         initial_state: OnboardingState = {
@@ -70,10 +76,20 @@ class LangGraphOnboardingService:
 
         try:
             # Run the graph
-            logger.info("[LangGraph Onboarding] Invoking graph...")
+            import time
+            start_time = time.time()
+            logger.info("[LangGraph Onboarding] ⏳ Invoking graph...")
             result = await self.graph.ainvoke(initial_state)
+            elapsed = time.time() - start_time
 
-            logger.info(f"[LangGraph Onboarding] Graph completed. Complete: {result.get('is_complete')}")
+            logger.info("=" * 80)
+            logger.info(f"[LangGraph Onboarding] ✅ GRAPH COMPLETED in {elapsed:.2f}s")
+            logger.info(f"[LangGraph Onboarding] Is complete: {result.get('is_complete')}")
+            logger.info(f"[LangGraph Onboarding] Missing fields: {result.get('missing_fields')}")
+            logger.info(f"[LangGraph Onboarding] Quick replies: {result.get('quick_replies') is not None}")
+            logger.info(f"[LangGraph Onboarding] Component: {result.get('component')}")
+            logger.info(f"[LangGraph Onboarding] AI Response: {result.get('final_response', '')[:200]}...")
+            logger.info("=" * 80)
 
             # Extract response data
             response = {

@@ -187,11 +187,19 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     The AI creates conversational responses that feel like a real fitness coach,
     adapting to the user's name and previous answers.
     """
-    logger.info("[Onboarding Agent] AI generating next question...")
+    import time
+    start_time = time.time()
+    logger.info("=" * 60)
+    logger.info("[Onboarding Agent] 🤖 STARTING AI QUESTION GENERATION")
+    logger.info("=" * 60)
 
     collected = state.get("collected_data", {})
     missing = state.get("missing_fields", [])
     history = state.get("conversation_history", [])
+
+    logger.info(f"[Onboarding Agent] Collected fields: {list(collected.keys())}")
+    logger.info(f"[Onboarding Agent] Missing fields: {missing}")
+    logger.info(f"[Onboarding Agent] History length: {len(history)}")
 
     # Ensure user_message is a string (LangGraph state might accumulate to list)
     user_message = ensure_string(state.get("user_message", ""))
@@ -231,9 +239,13 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     )
 
     try:
+        logger.info(f"[Onboarding Agent] ⏳ Calling Gemini API ({settings.gemini_model})...")
+        llm_start = time.time()
         response = await llm.ainvoke(messages)
+        llm_elapsed = time.time() - llm_start
+        logger.info(f"[Onboarding Agent] ✅ Gemini API responded in {llm_elapsed:.2f}s")
     except Exception as e:
-        logger.error(f"[Onboarding Agent] ❌ LLM call failed: {e}")
+        logger.error(f"[Onboarding Agent] ❌ LLM call failed after {time.time() - start_time:.2f}s: {e}")
         # Return a friendly error message
         return {
             "messages": messages,
@@ -336,6 +348,14 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
             is_multi_select = next_field in multi_select_fields
             logger.info(f"[Onboarding Agent] ✅ Adding quick replies for: {next_field} (multi_select={is_multi_select})")
 
+    total_elapsed = time.time() - start_time
+    logger.info("=" * 60)
+    logger.info(f"[Onboarding Agent] 🏁 COMPLETED in {total_elapsed:.2f}s")
+    logger.info(f"[Onboarding Agent] Response: {response_content[:100]}...")
+    logger.info(f"[Onboarding Agent] Quick replies: {quick_replies is not None}")
+    logger.info(f"[Onboarding Agent] Component: {component}")
+    logger.info("=" * 60)
+
     return {
         "messages": messages + [response],
         "next_question": response_content,
@@ -361,7 +381,11 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     - "home workouts" → equipment: Bodyweight Only
     - "5'10, 150 lbs" → heightCm: 177.8, weightKg: 68.0
     """
-    logger.info("[Extract Data] Extracting data from user message...")
+    import time
+    start_time = time.time()
+    logger.info("=" * 60)
+    logger.info("[Extract Data] 📊 STARTING DATA EXTRACTION")
+    logger.info("=" * 60)
 
     # Ensure user_message is a string (LangGraph state might accumulate to list)
     user_message = ensure_string(state.get("user_message", ""))
@@ -841,12 +865,16 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     )
 
     try:
+        logger.info(f"[Extract Data] ⏳ Calling Gemini API for extraction...")
+        llm_start = time.time()
         response = await llm.ainvoke([
             SystemMessage(content="You are a data extraction expert. Extract structured fitness data from user messages."),
             HumanMessage(content=extraction_prompt)
         ])
+        llm_elapsed = time.time() - llm_start
+        logger.info(f"[Extract Data] ✅ Gemini API responded in {llm_elapsed:.2f}s")
     except Exception as e:
-        logger.error(f"[Extract Data] ❌ LLM extraction call failed: {e}")
+        logger.error(f"[Extract Data] ❌ LLM extraction call failed after {time.time() - start_time:.2f}s: {e}")
         # Return empty extraction on failure - let user retry
         return {
             "collected_data": collected_data,
@@ -924,13 +952,20 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
 
         logger.info(f"[Extract Data] Merged data: {merged}")
 
+        total_elapsed = time.time() - start_time
+        logger.info("=" * 60)
+        logger.info(f"[Extract Data] 🏁 COMPLETED in {total_elapsed:.2f}s")
+        logger.info(f"[Extract Data] Extracted fields: {list(extracted.keys()) if extracted else 'none'}")
+        logger.info(f"[Extract Data] Total collected: {len(merged)} fields")
+        logger.info("=" * 60)
+
         return {
             "collected_data": merged,
             "validation_errors": {},  # TODO: Add validation
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"[Extract Data] JSON parse error: {e}")
+        logger.error(f"[Extract Data] ❌ JSON parse error after {time.time() - start_time:.2f}s: {e}")
         logger.error(f"[Extract Data] Response was: {response.content}")
 
         # If extraction fails, just return existing data
