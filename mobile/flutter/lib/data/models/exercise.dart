@@ -41,6 +41,8 @@ class WorkoutExercise extends Equatable {
   final String? instructions;
   @JsonKey(name: 'is_completed')
   final bool? isCompleted;
+  @JsonKey(name: 'alternating_hands')
+  final bool? alternatingHands;
 
   const WorkoutExercise({
     this.id,
@@ -64,6 +66,7 @@ class WorkoutExercise extends Equatable {
     this.secondaryMuscles,
     this.instructions,
     this.isCompleted,
+    this.alternatingHands,
   });
 
   factory WorkoutExercise.fromJson(Map<String, dynamic> json) =>
@@ -148,6 +151,7 @@ class WorkoutExercise extends Equatable {
     dynamic secondaryMuscles,
     String? instructions,
     bool? isCompleted,
+    bool? alternatingHands,
   }) {
     return WorkoutExercise(
       id: id ?? this.id,
@@ -171,6 +175,7 @@ class WorkoutExercise extends Equatable {
       secondaryMuscles: secondaryMuscles ?? this.secondaryMuscles,
       instructions: instructions ?? this.instructions,
       isCompleted: isCompleted ?? this.isCompleted,
+      alternatingHands: alternatingHands ?? this.alternatingHands,
     );
   }
 }

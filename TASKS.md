@@ -1,6 +1,48 @@
+## 🎯 CURRENT TASK: Alternating Hands Label + More Single-Dumbbell Exercises
+
+### Summary
+The user regenerated a workout with 1 dumbbell but only got 1 exercise repeated 3 times (15 min workout). This is because only 2 exercises were marked as single-dumbbell friendly. We need to:
+1. Improve SQL logic to include 50-100+ single-dumbbell exercises
+2. Add "Alternating Hands" orange label to these exercises in the UI
+
+### Steps to Complete
+
+#### 1. ✅ DONE - Code Changes
+- Updated `backend/migrations/023_improve_single_dumbbell_logic.sql` with better logic
+- Updated `backend/services/exercise_rag_service.py` to include `alternating_hands` field
+- Updated `mobile/flutter/lib/data/models/exercise.dart` with `alternating_hands` field
+- Updated `mobile/flutter/lib/screens/workout/widgets/expanded_exercise_card.dart` to show orange chip
+
+#### 2. ⏳ TODO - Run Migration
+Run this in Supabase SQL Editor:
+```sql
+-- File: backend/migrations/023_improve_single_dumbbell_logic.sql
+```
+This will update the `exercise_library_cleaned` view to mark 50-100+ exercises as single-dumbbell friendly.
+
+#### 3. ⏳ TODO - Reindex ChromaDB
+```bash
+cd backend && python3 scripts/reindex_chromadb.py
+```
+Takes ~5-10 minutes. This updates ChromaDB with the new metadata.
+
+#### 4. ⏳ TODO - Rebuild Flutter App
+```bash
+cd mobile/flutter
+flutter pub run build_runner build --delete-conflicting-outputs
+flutter clean && flutter pub get
+flutter run  # or flutter build apk
+```
+
+### Expected Result
+- Workouts with 1 dumbbell will have 3-5 different exercises (not 1 repeated)
+- Each single-dumbbell exercise shows orange "Alternating Hands" chip
+- Better user experience for home workouts with limited equipment
+
+---
+
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-11. Kettlebells or dumbbell what if they only have one?
 12. Swap exercise and regenrate broken
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
 17. Add directly from library

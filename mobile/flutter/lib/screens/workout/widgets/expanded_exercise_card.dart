@@ -368,6 +368,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                         ),
                       // Breathing guidance chip
                       _buildBreathingChip(context),
+                      // Alternating hands chip (for single-dumbbell exercises)
+                      if (exercise.alternatingHands == true)
+                        _buildAlternatingHandsChip(),
                     ],
                   ),
                 ],
@@ -632,6 +635,31 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAlternatingHandsChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.sync_alt, size: 12, color: AppColors.orange),
+          const SizedBox(width: 4),
+          Text(
+            'Alternating Hands',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.orange,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

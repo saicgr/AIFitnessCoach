@@ -487,6 +487,7 @@ class ExerciseRAGService:
                 "similarity": similarity,
                 "single_dumbbell_friendly": meta.get("single_dumbbell_friendly", "false") == "true",
                 "single_kettlebell_friendly": meta.get("single_kettlebell_friendly", "false") == "true",
+                "alternating_hands": meta.get("single_dumbbell_friendly", "false") == "true",  # Alias for UI
             })
 
         if not candidates:
