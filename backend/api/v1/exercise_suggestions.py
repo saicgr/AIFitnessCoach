@@ -3,6 +3,8 @@ Exercise Suggestions API - LangGraph agent-powered exercise alternatives.
 
 ENDPOINTS:
 - POST /api/v1/exercise-suggestions/suggest - Get AI-powered exercise suggestions
+
+Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 """
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Dict, Any
