@@ -29,6 +29,7 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       secondaryMuscles: json['secondary_muscles'],
       instructions: json['instructions'] as String?,
       isCompleted: json['is_completed'] as bool?,
+      alternatingHands: json['alternating_hands'] as bool?,
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -54,6 +55,7 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'secondary_muscles': instance.secondaryMuscles,
       'instructions': instance.instructions,
       'is_completed': instance.isCompleted,
+      'alternating_hands': instance.alternatingHands,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>
