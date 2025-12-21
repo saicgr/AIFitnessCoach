@@ -50,17 +50,15 @@ WITH cleaned_exercises AS (
         CASE
             WHEN exercise_library.equipment ILIKE '%dumbbell%'
                  AND (
-                     -- Explicitly single-arm/unilateral movements
+                     -- Explicitly single-arm/unilateral movements (SAFEST - always include these)
                      exercise_library.exercise_name ~* '(single|one|unilateral|alternating|alt )'
-                     -- Common single-dumbbell exercise patterns
-                     OR exercise_library.exercise_name ~* 'dumbbell.*(curl|press|raise|extension|kickback|row|shrug|swing|snatch|clean|fly|pullover|upright)'
-                     -- Position-based exercises (can be done one arm at a time)
-                     OR exercise_library.exercise_name ~* '(seated|standing|lying|kneeling|bent over|leaning|incline|decline).*(dumbbell|db).*(curl|press|raise|extension|kickback|row|fly|pullover)'
-                     -- Specific single-dumbbell friendly exercises
-                     OR exercise_library.exercise_name ~* '(lateral raise|front raise|rear raise|overhead|arnold|concentration|hammer|tricep|bicep|shoulder|deltoid)'
+                     -- Single-arm exercise patterns (can be done with 1 dumbbell)
+                     OR exercise_library.exercise_name ~* '(single.arm|one.arm|single.dumbbell|one.dumbbell)'
+                     -- Specific single-arm exercises
+                     OR exercise_library.exercise_name ~* '(concentration|arnold|lateral raise|front raise|overhead|kickback)'
                  )
                  -- EXCLUDE: Exercises that explicitly require 2 dumbbells
-                 AND exercise_library.exercise_name !~* '(bench press|chest press|both|two hands|dual|double)'
+                 AND exercise_library.exercise_name !~* '(bench press|chest press|both|two hands|dual|double|around|rear.*shrug|full.*shrug|w press|bicep curl to|face down)'
             THEN TRUE
             ELSE FALSE
         END AS single_dumbbell_friendly,
@@ -68,9 +66,15 @@ WITH cleaned_exercises AS (
         CASE
             WHEN exercise_library.equipment ILIKE '%kettlebell%'
                  AND (
-                     exercise_library.exercise_name ~* '(single|one|unilateral|alternating|alt |swing|snatch|clean|press|row|goblet|halo|windmill)'
-                     OR exercise_library.exercise_name ~* '^kettlebell (swing|snatch|clean|press|row|goblet|halo|windmill)'
+                     -- Explicitly single-arm/unilateral movements
+                     exercise_library.exercise_name ~* '(single|one|unilateral|alternating|alt )'
+                     -- Single kettlebell exercise patterns
+                     OR exercise_library.exercise_name ~* '(goblet|halo|windmill)'
+                     -- Common single kettlebell movements
+                     OR exercise_library.exercise_name ~* '^kettlebell (swing|snatch|clean|strict press|half kneeling|kneeling one arm|standing bottoms-up one arm)'
                  )
+                 -- EXCLUDE: Exercises that require 2 kettlebells
+                 AND exercise_library.exercise_name !~* '(seesaw|both|two|dual|double|around)'
             THEN TRUE
             ELSE FALSE
         END AS single_kettlebell_friendly,

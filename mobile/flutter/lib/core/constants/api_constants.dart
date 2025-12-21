@@ -3,7 +3,9 @@ class ApiConstants {
   ApiConstants._();
 
   /// Base URL for the backend API
-  static const String baseUrl = 'https://aifitnesscoach-zqi3.onrender.com';
+  // Development: Use localhost:8000 for local testing
+  // Production: Use https://aifitnesscoach-zqi3.onrender.com
+  static const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator localhost
 
   /// API version prefix
   static const String apiVersion = '/api/v1';
