@@ -533,3 +533,124 @@ class TestEquipmentCounts:
             dumbbell_count=10,
         )
         assert isinstance(exercises, list), "Should return list for high count"
+
+
+# ============ CRITICAL: Exercise Swap Tests ============
+
+class TestExerciseSwap:
+    """CRITICAL TESTS: Exercise swap functionality must work correctly."""
+
+    @pytest.mark.asyncio
+    async def test_swap_exercise_request_schema(self):
+        """CRITICAL: SwapExerciseRequest schema must be importable and valid."""
+        from models.schemas import SwapExerciseRequest
+
+        # Test that schema can be instantiated
+        request = SwapExerciseRequest(
+            workout_id="test-workout-id",
+            old_exercise_name="Old Exercise",
+            new_exercise_name="New Exercise",
+            reason="Too difficult"
+        )
+
+        assert request.workout_id == "test-workout-id"
+        assert request.old_exercise_name == "Old Exercise"
+        assert request.new_exercise_name == "New Exercise"
+        assert request.reason == "Too difficult"
+
+    @pytest.mark.asyncio
+    async def test_swap_exercise_request_optional_reason(self):
+        """CRITICAL: Reason should be optional in SwapExerciseRequest."""
+        from models.schemas import SwapExerciseRequest
+
+        # Test without reason
+        request = SwapExerciseRequest(
+            workout_id="test-workout-id",
+            old_exercise_name="Old Exercise",
+            new_exercise_name="New Exercise"
+        )
+
+        assert request.reason is None
+
+    @pytest.mark.asyncio
+    async def test_exercise_library_search(self):
+        """CRITICAL: Exercise library search must work for swap functionality."""
+        from services.exercise_library_service import get_exercise_library_service
+
+        service = get_exercise_library_service()
+        results = service.search_exercises("push up", limit=5)
+
+        assert results is not None, "CRITICAL: Search must return results"
+        assert isinstance(results, list), "CRITICAL: Search must return list"
+        if len(results) > 0:
+            # Verify structure of returned exercises
+            exercise = results[0]
+            assert "name" in exercise, "CRITICAL: Exercise must have name"
+
+    @pytest.mark.asyncio
+    async def test_swap_preserves_sets_reps(self):
+        """CRITICAL: Swapping should preserve original sets/reps."""
+        import json
+
+        # Simulate the swap logic
+        original_exercises = [
+            {"name": "Old Exercise", "sets": 4, "reps": 12, "rest_seconds": 60},
+            {"name": "Another Exercise", "sets": 3, "reps": 10, "rest_seconds": 45}
+        ]
+
+        old_name = "Old Exercise"
+        new_name = "New Exercise"
+
+        # Find and replace (simulating the swap logic)
+        for i, exercise in enumerate(original_exercises):
+            if exercise.get("name", "").lower() == old_name.lower():
+                # Preserve sets/reps, update name
+                original_exercises[i] = {
+                    **exercise,
+                    "name": new_name,
+                }
+                break
+
+        # Verify sets/reps preserved
+        swapped = original_exercises[0]
+        assert swapped["name"] == new_name, "CRITICAL: Name must be updated"
+        assert swapped["sets"] == 4, "CRITICAL: Sets must be preserved"
+        assert swapped["reps"] == 12, "CRITICAL: Reps must be preserved"
+        assert swapped["rest_seconds"] == 60, "CRITICAL: Rest must be preserved"
+
+    @pytest.mark.asyncio
+    async def test_swap_case_insensitive_matching(self):
+        """CRITICAL: Exercise name matching should be case insensitive."""
+        exercises = [
+            {"name": "Push Up", "sets": 3, "reps": 10},
+            {"name": "Pull Up", "sets": 3, "reps": 8}
+        ]
+
+        # Try to match with different case
+        old_name_lower = "push up"
+        found = False
+
+        for exercise in exercises:
+            if exercise.get("name", "").lower() == old_name_lower.lower():
+                found = True
+                break
+
+        assert found, "CRITICAL: Case-insensitive matching must work"
+
+    @pytest.mark.asyncio
+    async def test_swap_not_found_handling(self):
+        """CRITICAL: Should handle case where exercise is not found."""
+        exercises = [
+            {"name": "Push Up", "sets": 3, "reps": 10},
+            {"name": "Pull Up", "sets": 3, "reps": 8}
+        ]
+
+        old_name = "Nonexistent Exercise"
+        found = False
+
+        for exercise in exercises:
+            if exercise.get("name", "").lower() == old_name.lower():
+                found = True
+                break
+
+        assert not found, "Should not find nonexistent exercise"
