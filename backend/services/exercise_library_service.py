@@ -208,10 +208,39 @@ class ExerciseLibraryService:
         query: str,
         limit: int = 20
     ) -> List[Dict[str, Any]]:
-        """Search exercises by name."""
+        """Search exercises by name.
+
+        Returns exercises with normalized field names:
+        - 'name' instead of 'exercise_name'
+        - 'muscle_group' mapped from 'target_muscle' or 'body_part'
+        """
         try:
             result = self.client.table("exercise_library").select("*").ilike("exercise_name", f"%{query}%").limit(limit).execute()
-            return result.data or []
+            exercises = result.data or []
+
+            # Normalize field names to match expected format
+            normalized = []
+            for ex in exercises:
+                raw_name = ex.get('exercise_name', 'Unknown Exercise')
+                # Clean exercise name for display
+                from services.exercise_rag_service import _clean_exercise_name_for_display
+                clean_name = _clean_exercise_name_for_display(raw_name)
+
+                # Get equipment - infer from name if missing
+                raw_eq = ex.get('equipment', '')
+                if not raw_eq or raw_eq.lower() in ['bodyweight', 'body weight', 'none', '']:
+                    equipment = _infer_equipment_from_name(clean_name)
+                else:
+                    equipment = raw_eq
+
+                normalized.append({
+                    **ex,  # Include all original fields
+                    'name': clean_name,  # Add normalized 'name' field
+                    'equipment': equipment,
+                    'muscle_group': ex.get('target_muscle', ex.get('body_part', 'unknown')),
+                })
+
+            return normalized
         except Exception as e:
             logger.error(f"Error searching exercises: {e}")
             return []
