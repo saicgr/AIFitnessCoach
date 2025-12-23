@@ -177,10 +177,18 @@ typedef OnNotificationTappedCallback = void Function(String? notificationType);
 
 /// Notification service for FCM + Local Notifications
 class NotificationService {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   String? _fcmToken;
+  bool _firebaseAvailable = false;
+
+  /// Get Firebase Messaging instance, initializing lazily
+  FirebaseMessaging? get messaging {
+    if (!_firebaseAvailable) return null;
+    _messaging ??= FirebaseMessaging.instance;
+    return _messaging;
+  }
 
   /// Callback to store received notifications in the app's notification inbox
   OnNotificationReceivedCallback? onNotificationReceived;
@@ -287,8 +295,19 @@ class NotificationService {
     // Set local timezone based on device's current offset
     _initializeLocalTimezone();
 
-    // Set up background message handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Check if Firebase is available
+    try {
+      // This will throw if Firebase is not initialized
+      _firebaseAvailable = Firebase.apps.isNotEmpty;
+    } catch (e) {
+      _firebaseAvailable = false;
+      debugPrint('⚠️ [FCM] Firebase not available: $e');
+    }
+
+    if (_firebaseAvailable) {
+      // Set up background message handler
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    }
 
     // Initialize local notifications
     await _initializeLocalNotifications();
@@ -302,26 +321,28 @@ class NotificationService {
     // Get FCM token
     await _getToken();
 
-    // Listen for token refresh
-    _messaging.onTokenRefresh.listen((newToken) {
-      debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
-      _fcmToken = newToken;
-      // TODO: Send new token to backend
-    });
+    // Listen for token refresh (only if Firebase is available)
+    if (_firebaseAvailable && messaging != null) {
+      messaging!.onTokenRefresh.listen((newToken) {
+        debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
+        _fcmToken = newToken;
+        // TODO: Send new token to backend
+      });
 
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-    // Handle when app is opened from notification
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+      // Handle when app is opened from notification
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
-    // Check if app was opened from a notification
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleMessageOpenedApp(initialMessage);
+      // Check if app was opened from a notification
+      final initialMessage = await messaging!.getInitialMessage();
+      if (initialMessage != null) {
+        _handleMessageOpenedApp(initialMessage);
+      }
     }
 
-    debugPrint('🔔 [FCM] Notification service initialized');
+    debugPrint('🔔 [FCM] Notification service initialized (Firebase: $_firebaseAvailable)');
   }
 
   /// Initialize local notifications plugin
@@ -387,8 +408,13 @@ class NotificationService {
   /// Request notification permission
   /// Only shows the system dialog if permission hasn't been granted yet
   Future<bool> _requestPermission() async {
+    if (!_firebaseAvailable || messaging == null) {
+      debugPrint('⚠️ [FCM] Firebase not available, skipping permission request');
+      return false;
+    }
+
     // First, check current permission status
-    final currentSettings = await _messaging.getNotificationSettings();
+    final currentSettings = await messaging!.getNotificationSettings();
 
     // If already authorized, don't show the dialog again
     if (currentSettings.authorizationStatus == AuthorizationStatus.authorized ||
@@ -398,7 +424,7 @@ class NotificationService {
     }
 
     // Only request if not authorized yet
-    final settings = await _messaging.requestPermission(
+    final settings = await messaging!.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -417,8 +443,13 @@ class NotificationService {
 
   /// Get FCM token
   Future<String?> _getToken() async {
+    if (!_firebaseAvailable || messaging == null) {
+      debugPrint('⚠️ [FCM] Firebase not available, skipping token retrieval');
+      return null;
+    }
+
     try {
-      _fcmToken = await _messaging.getToken();
+      _fcmToken = await messaging!.getToken();
       if (_fcmToken != null) {
         debugPrint('🔔 [FCM] Token: ${_fcmToken!.substring(0, 20)}...');
       }
