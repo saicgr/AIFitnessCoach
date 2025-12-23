@@ -20,7 +20,7 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import (
     Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
-    SwapWorkoutsRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
+    SwapWorkoutsRequest, SwapExerciseRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
     GenerateMonthlyRequest, GenerateMonthlyResponse,
     RegenerateWorkoutRequest, RevertWorkoutRequest, WorkoutVersionInfo,
     PendingWorkoutGenerationStatus, ScheduleBackgroundGenerationRequest,
@@ -539,6 +539,92 @@ async def swap_workout_date(request: SwapWorkoutsRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to swap workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/swap-exercise", response_model=Workout)
+async def swap_exercise_in_workout(request: SwapExerciseRequest):
+    """Swap an exercise within a workout with a new exercise from the library."""
+    logger.info(f"Swapping exercise '{request.old_exercise_name}' with '{request.new_exercise_name}' in workout {request.workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout
+        workout = db.get_workout(request.workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Parse exercises
+        exercises_json = workout.get("exercises_json", "[]")
+        if isinstance(exercises_json, str):
+            exercises = json.loads(exercises_json)
+        else:
+            exercises = exercises_json
+
+        # Find and replace the exercise
+        exercise_found = False
+        for i, exercise in enumerate(exercises):
+            if exercise.get("name", "").lower() == request.old_exercise_name.lower():
+                exercise_found = True
+
+                # Get new exercise details from library
+                exercise_lib = get_exercise_library_service()
+                new_exercise_data = exercise_lib.search_exercises(request.new_exercise_name, limit=1)
+
+                if new_exercise_data:
+                    new_ex = new_exercise_data[0]
+                    # Preserve sets/reps from old exercise, update other fields
+                    exercises[i] = {
+                        **exercise,  # Keep original sets, reps, rest_seconds
+                        "name": new_ex.get("name", request.new_exercise_name),
+                        "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part") or exercise.get("muscle_group"),
+                        "equipment": new_ex.get("equipment") or exercise.get("equipment"),
+                        "notes": new_ex.get("instructions") or exercise.get("notes", ""),
+                        "gif_url": new_ex.get("gif_url") or new_ex.get("video_url"),
+                        "video_url": new_ex.get("video_url") or new_ex.get("gif_url"),
+                        "library_id": new_ex.get("id"),
+                    }
+                else:
+                    # Just update the name if exercise not found in library
+                    exercises[i]["name"] = request.new_exercise_name
+                break
+
+        if not exercise_found:
+            raise HTTPException(status_code=404, detail=f"Exercise '{request.old_exercise_name}' not found in workout")
+
+        # Update the workout
+        update_data = {
+            "exercises_json": json.dumps(exercises),
+            "last_modified_at": datetime.now().isoformat(),
+            "last_modified_method": "exercise_swap"
+        }
+
+        updated = db.update_workout(request.workout_id, update_data)
+        if not updated:
+            raise HTTPException(status_code=500, detail="Failed to update workout")
+
+        # Log the change
+        log_workout_change(
+            request.workout_id,
+            workout.get("user_id"),
+            "exercise_swap",
+            "exercises_json",
+            request.old_exercise_name,
+            request.new_exercise_name
+        )
+
+        updated_workout = row_to_workout(updated)
+        logger.info(f"Exercise swapped successfully in workout {request.workout_id}")
+
+        # Re-index to RAG
+        await index_workout_to_rag(updated_workout)
+
+        return updated_workout
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to swap exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -619,7 +619,7 @@ class WorkoutRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.workouts}/swap',
+        '${ApiConstants.workouts}/swap-exercise',
         data: {
           'workout_id': workoutId,
           'old_exercise_name': oldExerciseName,

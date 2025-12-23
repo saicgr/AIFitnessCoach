@@ -169,6 +169,14 @@ class SwapWorkoutsRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class SwapExerciseRequest(BaseModel):
+    """Request to swap an exercise within a workout."""
+    workout_id: str
+    old_exercise_name: str
+    new_exercise_name: str
+    reason: Optional[str] = None
+
+
 class RegenerateWorkoutRequest(BaseModel):
     workout_id: str
     user_id: str
