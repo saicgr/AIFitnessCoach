@@ -2166,7 +2166,24 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
 
-        // 7. Auto-post to social feed (if enabled in privacy settings)
+        // 7. Build exercises performance data for social post
+        final exercisesPerformanceForSocial = <Map<String, dynamic>>[];
+        for (int i = 0; i < _exercises.length; i++) {
+          final exercise = _exercises[i];
+          final sets = _completedSets[i] ?? [];
+          if (sets.isNotEmpty) {
+            final avgWeight = sets.fold<double>(0, (sum, s) => sum + s.weight) / sets.length;
+            final totalExReps = sets.fold<int>(0, (sum, s) => sum + s.reps);
+            exercisesPerformanceForSocial.add({
+              'name': exercise.name,
+              'sets': sets.length,
+              'reps': (totalExReps / sets.length).round(), // avg reps per set
+              'weight_kg': avgWeight,
+            });
+          }
+        }
+
+        // 8. Auto-post to social feed (if enabled in privacy settings)
         try {
           final socialService = ref.read(socialServiceProvider);
           await socialService.autoPostWorkoutCompletion(
@@ -2176,8 +2193,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             durationMinutes: (_workoutSeconds / 60).round(),
             exercisesCount: exercisesWithSets,
             totalVolume: totalVolumeKg,
+            exercisesPerformance: exercisesPerformanceForSocial,
           );
-          debugPrint('🎉 [Social] Workout auto-posted to feed');
+          debugPrint('🎉 [Social] Workout auto-posted to feed with ${exercisesPerformanceForSocial.length} exercises');
         } catch (e) {
           debugPrint('⚠️ [Social] Failed to auto-post workout: $e');
           // Non-critical - don't block workout completion

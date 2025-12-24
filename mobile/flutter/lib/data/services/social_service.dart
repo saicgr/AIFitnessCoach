@@ -302,6 +302,7 @@ class SocialService {
     required int durationMinutes,
     required int exercisesCount,
     double? totalVolume,
+    List<Map<String, dynamic>>? exercisesPerformance,
     PostVisibility visibility = PostVisibility.friends,
   }) async {
     // Check privacy settings
@@ -324,6 +325,8 @@ class SocialService {
           'duration_minutes': durationMinutes,
           'exercises_count': exercisesCount,
           if (totalVolume != null) 'total_volume': totalVolume,
+          if (exercisesPerformance != null && exercisesPerformance.isNotEmpty)
+            'exercises_performance': exercisesPerformance,
         },
         visibility: visibility,
         workoutLogId: workoutLogId,
