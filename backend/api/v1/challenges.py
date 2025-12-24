@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from models.workout_challenges import (
     SendChallengeRequest, SendChallengeResponse,
     AcceptChallengeRequest, DeclineChallengeRequest, CompleteChallengeRequest,
+    AbandonChallengeRequest,
     WorkoutChallenge, ChallengesResponse,
     ChallengeNotification, NotificationsResponse,
     ChallengeStats, ChallengeStatus,
@@ -454,6 +455,100 @@ async def complete_challenge(
         print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
 
     print(f"✅ [Challenges] User {user_id} completed challenge {challenge_id} (beat: {did_beat})")
+
+    return WorkoutChallenge(**update_result.data[0])
+
+
+@router.post("/abandon/{challenge_id}", response_model=WorkoutChallenge)
+async def abandon_challenge(
+    user_id: str,
+    challenge_id: str,
+    request: AbandonChallengeRequest,
+):
+    """
+    Abandon/quit a challenge midway through workout.
+
+    This is used when a user gives up during the challenge workout.
+    The quit reason will be shown to the challenger (making it embarrassing!).
+
+    Args:
+        user_id: User abandoning the challenge
+        challenge_id: Challenge ID
+        request: Quit reason and partial stats
+
+    Returns:
+        Updated challenge with abandonment data
+    """
+    supabase = get_supabase_client()
+
+    # Get challenge with challenger info
+    challenge_result = supabase.table("workout_challenges").select(
+        "*, from_user:users!from_user_id(name, avatar_url)"
+    ).eq("id", challenge_id).eq("to_user_id", user_id).execute()
+
+    if not challenge_result.data:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+
+    challenge = challenge_result.data[0]
+
+    if challenge["status"] != "accepted":
+        raise HTTPException(status_code=400, detail="Can only abandon accepted challenges")
+
+    # Update challenge to abandoned status
+    update_result = supabase.table("workout_challenges").update({
+        "status": "abandoned",
+        "abandoned_at": datetime.now(timezone.utc).isoformat(),
+        "quit_reason": request.quit_reason,
+        "partial_stats": request.partial_stats,
+    }).eq("id", challenge_id).execute()
+
+    # Post to activity feed (optional - for public shame!)
+    try:
+        challenger_name = challenge.get("from_user", {}).get("name", "someone")
+
+        activity_data = {
+            "workout_name": challenge["workout_name"],
+            "challenger_name": challenger_name,
+            "challenger_id": challenge["from_user_id"],
+            "challenge_id": challenge_id,
+            "quit_reason": request.quit_reason,
+            "partial_stats": request.partial_stats,
+            "target_stats": challenge["workout_data"],
+        }
+
+        # Only post if user wants public accountability (could be a setting)
+        # For now, we DON'T auto-post abandonments to feed (too harsh)
+        # But we DO notify the challenger via challenge_notifications (trigger handles this)
+
+        print(f"🐔 [Challenges] User {user_id} abandoned challenge {challenge_id}: {request.quit_reason}")
+    except Exception as e:
+        print(f"⚠️ [Challenges] Error processing abandonment: {e}")
+
+    # Log to ChromaDB for AI insights
+    try:
+        social_rag = get_social_rag_service()
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+        challenger_name = challenge.get("from_user", {}).get("name", "someone")
+
+        collection = social_rag.get_social_collection()
+        collection.add(
+            documents=[
+                f"{user_name} abandoned the workout challenge from {challenger_name} "
+                f"for '{challenge['workout_name']}' with reason: {request.quit_reason}"
+            ],
+            metadatas=[{
+                "type": "challenge_abandoned",
+                "user_id": user_id,
+                "challenge_id": challenge_id,
+                "workout_name": challenge["workout_name"],
+                "quit_reason": request.quit_reason,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }],
+            ids=[f"challenge_abandoned_{challenge_id}"],
+        )
+    except Exception as e:
+        print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
 
     return WorkoutChallenge(**update_result.data[0])
 

@@ -204,6 +204,36 @@ class ChallengesService {
     }
   }
 
+  /// Abandon/quit a challenge midway through workout
+  Future<Map<String, dynamic>> abandonChallenge({
+    required String userId,
+    required String challengeId,
+    required String quitReason,
+    Map<String, dynamic>? partialStats,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConstants.baseUrl}/challenges/abandon/$challengeId',
+        queryParameters: {'user_id': userId},
+        data: {
+          'challenge_id': challengeId,
+          'quit_reason': quitReason,
+          if (partialStats != null) 'partial_stats': partialStats,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('🐔 [Challenges] Abandoned challenge $challengeId: $quitReason');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to abandon challenge: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenges] Error abandoning challenge: $e');
+      rethrow;
+    }
+  }
+
   // ============================================================
   // NOTIFICATIONS
   // ============================================================

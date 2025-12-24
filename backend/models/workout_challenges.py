@@ -15,6 +15,7 @@ class ChallengeStatus(str, Enum):
     declined = "declined"
     completed = "completed"
     expired = "expired"
+    abandoned = "abandoned"  # Quit midway through workout
 
 
 class NotificationType(str, Enum):
@@ -23,6 +24,7 @@ class NotificationType(str, Enum):
     challenge_accepted = "challenge_accepted"
     challenge_completed = "challenge_completed"
     challenge_beaten = "challenge_beaten"
+    challenge_abandoned = "challenge_abandoned"  # Opponent quit
 
 
 # ============================================================
@@ -57,6 +59,13 @@ class CompleteChallengeRequest(BaseModel):
     challenged_stats: dict  # Their stats (duration, volume, etc.)
 
 
+class AbandonChallengeRequest(BaseModel):
+    """Request to abandon/quit a challenge midway through workout."""
+    challenge_id: str
+    quit_reason: str = Field(..., description="Reason for quitting (shown to challenger)")
+    partial_stats: Optional[dict] = Field(None, description="Partial workout stats before quitting")
+
+
 # ============================================================
 # RESPONSE MODELS
 # ============================================================
@@ -75,6 +84,9 @@ class WorkoutChallenge(BaseModel):
     accepted_at: Optional[datetime] = None
     declined_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
+    abandoned_at: Optional[datetime] = None
+    quit_reason: Optional[str] = None  # Why they quit (shown to challenger)
+    partial_stats: Optional[dict] = None  # Stats before quitting
     challenger_stats: Optional[dict] = None
     challenged_stats: Optional[dict] = None
     did_beat: Optional[bool] = None
