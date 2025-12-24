@@ -34,6 +34,8 @@ class ChallengesService {
     String? workoutLogId,
     String? activityId,
     String? challengeMessage,
+    bool isRetry = false,
+    String? retriedFromChallengeId,
   }) async {
     try {
       final response = await _apiClient.post(
@@ -46,6 +48,8 @@ class ChallengesService {
           if (workoutLogId != null) 'workout_log_id': workoutLogId,
           if (activityId != null) 'activity_id': activityId,
           if (challengeMessage != null) 'challenge_message': challengeMessage,
+          'is_retry': isRetry,
+          if (retriedFromChallengeId != null) 'retried_from_challenge_id': retriedFromChallengeId,
         },
       );
 

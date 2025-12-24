@@ -735,23 +735,56 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
   void _retryChallenge(Map<String, dynamic> challenge) {
     HapticFeedback.mediumImpact();
 
+    final challengeId = challenge['id'] as String;
+    final fromUserId = challenge['from_user_id'] as String;
+    final workoutName = challenge['workout_name'] as String;
+    final workoutData = challenge['workout_data'] as Map<String, dynamic>;
+
     // Show confirmation dialog
     showDialog(
       context: context,
       builder: (context) => _RetryConfirmationDialog(
         challengerName: challenge['from_user_name'] ?? 'them',
-        workoutName: challenge['workout_name'] ?? 'this workout',
-        workoutData: challenge['workout_data'] as Map<String, dynamic>,
-        onConfirm: () {
+        workoutName: workoutName,
+        workoutData: workoutData,
+        onConfirm: () async {
           Navigator.pop(context);
-          // TODO: Navigate to ActiveWorkoutScreen with workout data
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🔥 Challenge accepted! Let\'s crush it!'),
-              backgroundColor: AppColors.orange,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+
+          // Create retry challenge (reverse direction: you challenge them back)
+          try {
+            await _challengesService.sendChallenges(
+              userId: widget.userId,
+              toUserIds: [fromUserId],  // Challenge the original challenger
+              workoutName: workoutName,
+              workoutData: workoutData,
+              isRetry: true,  // Mark as retry
+              retriedFromChallengeId: challengeId,  // Reference original challenge
+              challengeMessage: 'Round 2! 💪',  // Optional retry message
+            );
+
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('🔥 Retry challenge sent! Time for redemption!'),
+                backgroundColor: AppColors.orange,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+
+            // Refresh challenges list
+            _loadChallenges();
+          } catch (e) {
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to send retry: $e'),
+                backgroundColor: AppColors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         },
       ),
     );

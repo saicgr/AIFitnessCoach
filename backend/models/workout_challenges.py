@@ -39,6 +39,8 @@ class SendChallengeRequest(BaseModel):
     workout_name: str = Field(..., description="Name of the workout")
     workout_data: dict = Field(..., description="Workout stats to beat (duration, volume, exercises)")
     challenge_message: Optional[str] = Field(None, description="Personal challenge message")
+    is_retry: bool = Field(False, description="Whether this is a retry of a previous challenge")
+    retried_from_challenge_id: Optional[str] = Field(None, description="Original challenge ID if this is a retry")
 
 
 class AcceptChallengeRequest(BaseModel):
@@ -90,6 +92,9 @@ class WorkoutChallenge(BaseModel):
     challenger_stats: Optional[dict] = None
     challenged_stats: Optional[dict] = None
     did_beat: Optional[bool] = None
+    is_retry: bool = False  # Whether this is a retry
+    retried_from_challenge_id: Optional[str] = None  # Original challenge ID
+    retry_count: int = 0  # Number of times this has been retried
     created_at: datetime
     expires_at: datetime
 
@@ -144,7 +149,12 @@ class ChallengeStats(BaseModel):
     challenges_declined: int
     challenges_won: int
     challenges_lost: int
+    challenges_abandoned: int
     win_rate: float  # Percentage of challenges won
+    total_retries: int  # How many retries this user has attempted
+    retries_won: int  # How many retries resulted in wins
+    retry_win_rate: float  # Percentage of retries won
+    most_retried_workout: Optional[str] = None  # Workout they retry most often
 
 
 class SendChallengeResponse(BaseModel):

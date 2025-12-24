@@ -72,12 +72,15 @@ async def send_challenges(
             "workout_data": request.workout_data,
             "challenge_message": request.challenge_message,
             "status": "pending",
+            "is_retry": request.is_retry,
         }
 
         if request.workout_log_id:
             challenge_data["workout_log_id"] = request.workout_log_id
         if request.activity_id:
             challenge_data["activity_id"] = request.activity_id
+        if request.retried_from_challenge_id:
+            challenge_data["retried_from_challenge_id"] = request.retried_from_challenge_id
 
         # Insert challenge
         result = supabase.table("workout_challenges").insert(challenge_data).execute()
@@ -93,18 +96,39 @@ async def send_challenges(
                 to_user_name = to_user_result.data[0]["name"] if to_user_result.data else "User"
 
                 collection = social_rag.get_social_collection()
-                collection.add(
-                    documents=[f"{challenger_name} challenged {to_user_name} to beat {request.workout_name}"],
-                    metadatas=[{
-                        "from_user_id": user_id,
-                        "to_user_id": to_user_id,
-                        "challenge_id": challenge_id,
-                        "interaction_type": "challenge_sent",
-                        "workout_name": request.workout_name,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                    }],
-                    ids=[f"challenge_sent_{challenge_id}"],
-                )
+
+                # Different logging for retries vs new challenges
+                if request.is_retry:
+                    # Retry: Show persistence and determination
+                    collection.add(
+                        documents=[f"{challenger_name} RETRIED challenge against {to_user_name} for '{request.workout_name}' (not giving up!)"],
+                        metadatas=[{
+                            "from_user_id": user_id,
+                            "to_user_id": to_user_id,
+                            "challenge_id": challenge_id,
+                            "interaction_type": "challenge_retry",
+                            "workout_name": request.workout_name,
+                            "is_retry": True,
+                            "retried_from_challenge_id": request.retried_from_challenge_id,
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                        }],
+                        ids=[f"challenge_retry_{challenge_id}"],
+                    )
+                    print(f"🔄 [Challenges] Retry logged: {challenger_name} -> {to_user_name} for {request.workout_name}")
+                else:
+                    # New challenge
+                    collection.add(
+                        documents=[f"{challenger_name} challenged {to_user_name} to beat {request.workout_name}"],
+                        metadatas=[{
+                            "from_user_id": user_id,
+                            "to_user_id": to_user_id,
+                            "challenge_id": challenge_id,
+                            "interaction_type": "challenge_sent",
+                            "workout_name": request.workout_name,
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                        }],
+                        ids=[f"challenge_sent_{challenge_id}"],
+                    )
             except Exception as e:
                 print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
 
@@ -667,9 +691,24 @@ async def get_challenge_stats(user_id: str):
     ).eq("to_user_id", user_id).eq("status", "completed").eq("did_beat", False).execute()
     challenges_lost = lost_result.count or 0
 
+    # Count abandoned
+    abandoned_result = supabase.table("workout_challenges").select(
+        "id", count="exact"
+    ).eq("to_user_id", user_id).eq("status", "abandoned").execute()
+    challenges_abandoned = abandoned_result.count or 0
+
     # Calculate win rate
     total_completed = challenges_won + challenges_lost
     win_rate = (challenges_won / total_completed * 100) if total_completed > 0 else 0.0
+
+    # Get retry statistics using database function
+    retry_stats_result = supabase.rpc("get_user_retry_stats", {"p_user_id": user_id}).execute()
+    retry_stats = retry_stats_result.data[0] if retry_stats_result.data else {}
+
+    total_retries = retry_stats.get("total_retries", 0) or 0
+    retries_won = retry_stats.get("retries_won", 0) or 0
+    retry_win_rate = retry_stats.get("retry_win_rate", 0.0) or 0.0
+    most_retried_workout = retry_stats.get("most_retried_workout")
 
     return ChallengeStats(
         user_id=user_id,
@@ -679,5 +718,10 @@ async def get_challenge_stats(user_id: str):
         challenges_declined=challenges_declined,
         challenges_won=challenges_won,
         challenges_lost=challenges_lost,
+        challenges_abandoned=challenges_abandoned,
         win_rate=round(win_rate, 2),
+        total_retries=total_retries,
+        retries_won=retries_won,
+        retry_win_rate=round(retry_win_rate, 2),
+        most_retried_workout=most_retried_workout,
     )
