@@ -29,6 +29,7 @@ from models.social import (
     SimplifiedActivityItem, SimplifiedChallenge, SeniorSocialSummary,
 )
 from utils.supabase_client import get_supabase_client
+from services.social_rag_service import get_social_rag_service
 
 router = APIRouter(prefix="/social")
 
@@ -319,7 +320,30 @@ async def create_activity(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create activity")
 
-    return ActivityFeedItem(**result.data[0])
+    activity_item = ActivityFeedItem(**result.data[0])
+
+    # Store in ChromaDB for AI context
+    try:
+        # Get user name
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+        social_rag = get_social_rag_service()
+        social_rag.add_activity_to_rag(
+            activity_id=activity_item.id,
+            user_id=user_id,
+            user_name=user_name,
+            activity_type=activity.activity_type.value,
+            activity_data=activity.activity_data,
+            visibility=activity.visibility.value,
+            created_at=activity_item.created_at,
+        )
+        print(f"✅ [Social] Activity {activity_item.id} saved to ChromaDB")
+    except Exception as e:
+        # Non-critical - don't fail the request if ChromaDB fails
+        print(f"⚠️ [Social] Failed to save activity to ChromaDB: {e}")
+
+    return activity_item
 
 
 @router.delete("/feed/{activity_id}")
@@ -347,6 +371,13 @@ async def delete_activity(
         raise HTTPException(status_code=403, detail="Not authorized to delete this activity")
 
     result = supabase.table("activity_feed").delete().eq("id", activity_id).execute()
+
+    # Remove from ChromaDB
+    try:
+        social_rag = get_social_rag_service()
+        social_rag.delete_activity_from_rag(activity_id)
+    except Exception as e:
+        print(f"⚠️ [Social] Failed to remove activity from ChromaDB: {e}")
 
     return {"message": "Activity deleted successfully"}
 
@@ -393,7 +424,35 @@ async def add_reaction(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to add reaction")
 
-    return ActivityReaction(**result.data[0])
+    reaction_obj = ActivityReaction(**result.data[0])
+
+    # Store in ChromaDB for AI social context
+    try:
+        # Get user name and activity owner
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+        activity_result = supabase.table("activity_feed").select("user_id").eq("id", reaction.activity_id).execute()
+        if activity_result.data:
+            activity_owner_id = activity_result.data[0]["user_id"]
+            owner_result = supabase.table("users").select("name").eq("id", activity_owner_id).execute()
+            activity_owner = owner_result.data[0]["name"] if owner_result.data else "User"
+
+            social_rag = get_social_rag_service()
+            social_rag.add_reaction_to_rag(
+                reaction_id=reaction_obj.id,
+                activity_id=reaction.activity_id,
+                user_id=user_id,
+                user_name=user_name,
+                reaction_type=reaction.reaction_type.value,
+                activity_owner=activity_owner,
+                created_at=reaction_obj.created_at,
+            )
+            print(f"✅ [Social] Reaction {reaction_obj.id} saved to ChromaDB")
+    except Exception as e:
+        print(f"⚠️ [Social] Failed to save reaction to ChromaDB: {e}")
+
+    return reaction_obj
 
 
 @router.delete("/reactions/{activity_id}")
@@ -413,12 +472,29 @@ async def remove_reaction(
     """
     supabase = get_supabase_client()
 
+    # Get reaction ID before deleting
+    reaction_result = supabase.table("activity_reactions").select("id").eq(
+        "activity_id", activity_id
+    ).eq("user_id", user_id).execute()
+
+    if not reaction_result.data:
+        raise HTTPException(status_code=404, detail="Reaction not found")
+
+    reaction_id = reaction_result.data[0]["id"]
+
     result = supabase.table("activity_reactions").delete().eq(
         "activity_id", activity_id
     ).eq("user_id", user_id).execute()
 
     if not result.data:
         raise HTTPException(status_code=404, detail="Reaction not found")
+
+    # Remove from ChromaDB
+    try:
+        social_rag = get_social_rag_service()
+        social_rag.remove_reaction_from_rag(reaction_id)
+    except Exception as e:
+        print(f"⚠️ [Social] Failed to remove reaction from ChromaDB: {e}")
 
     return {"message": "Reaction removed successfully"}
 
