@@ -5,7 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../floating_chat/floating_chat_overlay.dart';
 
 /// Simplified bottom navigation for Senior Mode
-/// 4 items: Home, Library, Social, Settings + AI Coach floating button
+/// 4 items: Home, Workouts, Food, Settings + AI Coach floating button
 class SeniorBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -48,14 +48,14 @@ class SeniorBottomNav extends StatelessWidget {
               onTap: () => onTap(0),
             ),
             _SeniorNavItem(
-              icon: Icons.fitness_center_rounded,
-              label: 'Library',
+              icon: Icons.insights_rounded,
+              label: 'Workouts',
               isSelected: currentIndex == 1,
               onTap: () => onTap(1),
             ),
             _SeniorNavItem(
-              icon: Icons.people_rounded,
-              label: 'Social',
+              icon: Icons.restaurant_rounded,
+              label: 'Food',
               isSelected: currentIndex == 2,
               onTap: () => onTap(2),
             ),

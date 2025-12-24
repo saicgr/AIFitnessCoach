@@ -197,6 +197,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: DailyActivityCard(),
               ),
 
+              // Library Quick Access - Prominent button
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: _LibraryQuickAccessCard(isDark: isDark),
+                ),
+              ),
+
               // Next Workout Card
               SliverToBoxAdapter(
                 child: workoutsState.when(
@@ -1485,6 +1493,98 @@ class _ErrorCard extends StatelessWidget {
               child: const Text('Try Again'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Library Quick Access Card
+// ─────────────────────────────────────────────────────────────────
+
+class _LibraryQuickAccessCard extends StatelessWidget {
+  final bool isDark;
+
+  const _LibraryQuickAccessCard({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    return Material(
+      color: elevatedColor,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () {
+          HapticService.medium();
+          context.push('/library');
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.purple.withOpacity(0.3),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                elevatedColor,
+                AppColors.purple.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.purple, AppColors.cyan],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.fitness_center,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exercise Library',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Browse exercises, programs & workout history',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Arrow
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 18,
+                color: AppColors.purple,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -8,6 +8,9 @@ import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/challenges_service.dart';
+import '../challenges/widgets/challenge_complete_dialog.dart';
+import '../challenges/widgets/challenge_friends_dialog.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -22,6 +25,10 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final int? totalReps;
   final double? totalVolumeKg;
 
+  // Challenge parameters (if workout was from a challenge)
+  final String? challengeId;
+  final Map<String, dynamic>? challengeData;
+
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
@@ -34,6 +41,8 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.totalSets,
     this.totalReps,
     this.totalVolumeKg,
+    this.challengeId,
+    this.challengeData,
   });
 
   @override
@@ -65,6 +74,173 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     _loadAICoachFeedback();
     _loadAchievements();
     _loadExerciseProgress();
+
+    // Complete challenge if this workout was from a challenge
+    if (widget.challengeId != null && widget.workoutLogId != null) {
+      _completeChallenge();
+    }
+  }
+
+  /// Complete challenge and show result dialog
+  Future<void> _completeChallenge() async {
+    try {
+      final challengesService = ChallengesService(ref.read(apiClientProvider));
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) return;
+
+      // Calculate challenged stats
+      final challengedStats = {
+        'duration_minutes': widget.duration,
+        'total_volume': (widget.totalVolumeKg ?? 0) * 2.20462, // Convert to lbs
+        'exercises_count': widget.exercisesPerformance?.length ?? 0,
+        'total_sets': widget.totalSets ?? 0,
+        'total_reps': widget.totalReps ?? 0,
+      };
+
+      debugPrint('🏆 [Challenge] Completing challenge ${widget.challengeId}');
+      debugPrint('📊 [Challenge] Stats: $challengedStats');
+
+      // Call complete challenge API
+      final result = await challengesService.completeChallenge(
+        userId: userId,
+        challengeId: widget.challengeId!,
+        workoutLogId: widget.workoutLogId!,
+        challengedStats: challengedStats,
+      );
+
+      final didBeat = result['did_beat'] as bool? ?? false;
+      final challengerName = widget.challengeData?['challenger_name'] ?? 'them';
+      final workoutData = widget.challengeData?['workout_data'] as Map<String, dynamic>? ?? {};
+
+      debugPrint(didBeat ? '🎉 [Challenge] VICTORY!' : '💪 [Challenge] Good attempt!');
+
+      // Show challenge complete dialog after a short delay
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => ChallengeCompleteDialog(
+                challengerName: challengerName,
+                workoutName: widget.workout.name,
+                didBeat: didBeat,
+                yourStats: challengedStats,
+                theirStats: workoutData,
+                onViewFeed: () {
+                  // Navigate to social feed
+                  if (mounted) {
+                    context.go('/social');
+                  }
+                },
+                onDismiss: () {
+                  // Dialog dismissed
+                },
+              ),
+            );
+
+            // Trigger confetti if victory!
+            if (didBeat) {
+              _confettiController.play();
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenge] Error completing challenge: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error completing challenge: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show Challenge Friends dialog
+  Future<void> _showChallengeFriendsDialog() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null || widget.workoutLogId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to challenge friends at this time'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // Fetch friends list
+      debugPrint('🔍 [Challenge] Fetching friends list...');
+      final response = await apiClient.get(
+        '/v1/social/connections?user_id=$userId&status=accepted',
+      );
+
+      final connections = (response.data['connections'] as List?) ?? [];
+      final friends = connections.map((c) {
+        final friend = c['connected_user'] ?? c['requester'];
+        return {
+          'id': friend['id'],
+          'name': friend['name'] ?? 'Unknown',
+          'avatar_url': friend['avatar_url'],
+        };
+      }).toList();
+
+      if (friends.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You don\'t have any friends yet. Add some friends first!'),
+              backgroundColor: AppColors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Prepare workout data for challenge
+      final workoutData = {
+        'duration_minutes': widget.duration,
+        'total_volume': (widget.totalVolumeKg ?? 0) * 2.20462, // Convert to lbs
+        'exercises_count': widget.exercisesPerformance?.length ?? 0,
+        'total_sets': widget.totalSets ?? 0,
+        'total_reps': widget.totalReps ?? 0,
+      };
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => ChallengeFriendsDialog(
+            userId: userId,
+            workoutLogId: widget.workoutLogId!,
+            workoutName: widget.workout.name,
+            workoutData: workoutData,
+            friends: friends,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [Challenge] Error showing challenge dialog: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -615,7 +791,30 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   ],
                 ).animate().fadeIn(delay: 700.ms),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
+
+                // Challenge Friends Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _showChallengeFriendsDialog,
+                    icon: const Icon(Icons.emoji_events, size: 20),
+                    label: const Text(
+                      'Challenge Friends',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      foregroundColor: AppColors.orange,
+                      side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5), width: 2),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 750.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 16),
 
                 // Done Button
                 SizedBox(

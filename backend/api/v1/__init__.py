@@ -8,7 +8,8 @@ from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
-from api.v1 import subscriptions, analytics
+from api.v1 import subscriptions, analytics, stats, social
+from api.v1 import saved_workouts, challenges, leaderboard
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -73,3 +74,18 @@ router.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subs
 
 # Analytics and screen time tracking
 router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+
+# Comprehensive stats endpoints (aggregates achievements, PRs, measurements, workout stats)
+router.include_router(stats.router, tags=["Stats"])
+
+# Social features endpoints (connections, feed, challenges, reactions)
+router.include_router(social.router, tags=["Social"])
+
+# Saved and scheduled workouts from social feed
+router.include_router(saved_workouts.router, prefix="/saved-workouts", tags=["Saved Workouts"])
+
+# Workout challenges (friend-to-friend)
+router.include_router(challenges.router, tags=["Challenges"])
+
+# Leaderboards (global, country, friends)
+router.include_router(leaderboard.router, tags=["Leaderboard"])

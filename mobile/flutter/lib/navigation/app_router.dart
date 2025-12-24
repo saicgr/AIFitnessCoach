@@ -12,6 +12,7 @@ import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
+import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/personalized_preview_screen.dart';
@@ -346,9 +347,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/library',
+            path: '/nutrition',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: LibraryScreen(),
+              child: NutritionScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/stats',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ComprehensiveStatsScreen(),
             ),
           ),
           GoRoute(
@@ -484,16 +491,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AchievementsScreen(),
       ),
 
+      // Library (Exercise database, programs) - Full screen outside shell
+      GoRoute(
+        path: '/library',
+        builder: (context, state) => const LibraryScreen(),
+      ),
+
       // Hydration
       GoRoute(
         path: '/hydration',
         builder: (context, state) => const HydrationScreen(),
-      ),
-
-      // Nutrition
-      GoRoute(
-        path: '/nutrition',
-        builder: (context, state) => const NutritionScreen(),
       ),
 
       // Weekly Summaries

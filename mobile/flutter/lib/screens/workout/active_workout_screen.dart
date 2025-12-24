@@ -17,9 +17,12 @@ import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/challenges_service.dart';
+import '../../data/providers/social_provider.dart';
 import '../../data/rest_messages.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import '../challenges/widgets/challenge_quit_dialog.dart';
 
 /// Log for a single set
 class SetLog {
@@ -38,8 +41,15 @@ class SetLog {
 
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
   final Workout workout;
+  final String? challengeId; // If this workout is from a challenge
+  final Map<String, dynamic>? challengeData; // Challenge details (opponent, stats to beat)
 
-  const ActiveWorkoutScreen({super.key, required this.workout});
+  const ActiveWorkoutScreen({
+    super.key,
+    required this.workout,
+    this.challengeId,
+    this.challengeData,
+  });
 
   @override
   ConsumerState<ActiveWorkoutScreen> createState() => _ActiveWorkoutScreenState();
@@ -2164,6 +2174,41 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         // 6. Mark workout as complete in workouts table
         await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
+
+        // 7. Build exercises performance data for social post
+        final exercisesPerformanceForSocial = <Map<String, dynamic>>[];
+        for (int i = 0; i < _exercises.length; i++) {
+          final exercise = _exercises[i];
+          final sets = _completedSets[i] ?? [];
+          if (sets.isNotEmpty) {
+            final avgWeight = sets.fold<double>(0, (sum, s) => sum + s.weight) / sets.length;
+            final totalExReps = sets.fold<int>(0, (sum, s) => sum + s.reps);
+            exercisesPerformanceForSocial.add({
+              'name': exercise.name,
+              'sets': sets.length,
+              'reps': (totalExReps / sets.length).round(), // avg reps per set
+              'weight_kg': avgWeight,
+            });
+          }
+        }
+
+        // 8. Auto-post to social feed (if enabled in privacy settings)
+        try {
+          final socialService = ref.read(socialServiceProvider);
+          await socialService.autoPostWorkoutCompletion(
+            userId: userId,
+            workoutLogId: workoutLogId ?? '',
+            workoutName: widget.workout.name,
+            durationMinutes: (_workoutSeconds / 60).round(),
+            exercisesCount: exercisesWithSets,
+            totalVolume: totalVolumeKg,
+            exercisesPerformance: exercisesPerformanceForSocial,
+          );
+          debugPrint('🎉 [Social] Workout auto-posted to feed with ${exercisesPerformanceForSocial.length} exercises');
+        } catch (e) {
+          debugPrint('⚠️ [Social] Failed to auto-post workout: $e');
+          // Non-critical - don't block workout completion
+        }
       }
     } catch (e) {
       debugPrint('❌ Failed to complete workout: $e');
@@ -2209,6 +2254,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         'totalSets': totalCompletedSets,
         'totalReps': totalReps,
         'totalVolumeKg': totalVolumeKg,
+        // Challenge data (if this workout was from a challenge)
+        'challengeId': widget.challengeId,
+        'challengeData': widget.challengeData,
       });
     }
   }
@@ -2327,6 +2375,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   void _showQuitDialog() {
+    // If this is a challenge workout, show the Challenge Quit Dialog with psychological pressure!
+    if (widget.challengeId != null && widget.challengeData != null) {
+      _showChallengeQuitDialog();
+      return;
+    }
+
     // Calculate progress stats
     int totalCompletedSets = 0;
     int exercisesWithCompletedSets = 0;
@@ -2543,6 +2597,80 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               ],
             ),
           );
+        },
+      ),
+    );
+  }
+
+  /// Show Challenge Quit Dialog with psychological pressure!
+  void _showChallengeQuitDialog() {
+    final challengerName = widget.challengeData!['challenger_name'] ?? 'Someone';
+    final workoutName = widget.workout.name;
+
+    // Calculate partial stats
+    int totalSets = 0;
+    double totalVolume = 0;
+    for (final sets in _completedSets.values) {
+      for (final setLog in sets) {
+        totalSets++;
+        totalVolume += setLog.reps * setLog.weight;
+      }
+    }
+
+    final partialStats = totalSets > 0 ? {
+      'exercises_completed': _completedSets.values.where((s) => s.isNotEmpty).length,
+      'sets_completed': totalSets,
+      'total_volume': totalVolume,
+      'duration_minutes': (_workoutSeconds / 60).round(),
+    } : null;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ChallengeQuitDialog(
+        challengerName: challengerName,
+        workoutName: workoutName,
+        onContinue: () {
+          // User chose to continue - do nothing, dialog closes
+          debugPrint('💪 User decided to continue challenge!');
+        },
+        onConfirmQuit: (quitReason) async {
+          debugPrint('🐔 User quit challenge: $quitReason');
+
+          try {
+            // Call abandon challenge API
+            final challengesService = ChallengesService(ref.read(apiClientProvider));
+            final apiClient = ref.read(apiClientProvider);
+            final userId = await apiClient.getUserId();
+
+            if (userId != null) {
+              await challengesService.abandonChallenge(
+                userId: userId,
+                challengeId: widget.challengeId!,
+                quitReason: quitReason,
+                partialStats: partialStats,
+              );
+
+              debugPrint('✅ Challenge abandoned successfully');
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Challenge abandoned: $quitReason'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            debugPrint('❌ Error abandoning challenge: $e');
+          }
+
+          // Navigate back/quit workout
+          if (mounted) {
+            Navigator.pop(context); // Close workout screen
+          }
         },
       ),
     );
@@ -3473,6 +3601,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Column(
         children: [
+          // Challenge banner (if this is a challenge workout)
+          if (widget.challengeId != null && widget.challengeData != null) ...[
+            _buildChallengeBanner(),
+            const SizedBox(height: 8),
+          ],
+
           // Top row: Close, title, pause - more compact
           Row(
             children: [
@@ -3688,6 +3822,122 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);
+  }
+
+  /// Build challenge banner showing opponent and stats to beat
+  Widget _buildChallengeBanner() {
+    final challengerName = widget.challengeData!['challenger_name'] ?? 'Someone';
+    final workoutData = widget.challengeData!['workout_data'] as Map<String, dynamic>? ?? {};
+    final targetDuration = workoutData['duration_minutes'];
+    final targetVolume = workoutData['total_volume'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.orange.withValues(alpha: 0.9),
+            AppColors.red.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.orange.withValues(alpha: 0.3),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black45)],
+                    ),
+                    children: [
+                      const TextSpan(text: 'CHALLENGING '),
+                      TextSpan(
+                        text: challengerName.toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (targetDuration != null)
+                _buildChallengeStat('⏱️', 'Beat', '$targetDuration min'),
+              if (targetDuration != null && targetVolume != null)
+                Container(
+                  width: 1,
+                  height: 20,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              if (targetVolume != null)
+                _buildChallengeStat('💪', 'Beat', '${targetVolume.toStringAsFixed(0)} lbs'),
+            ],
+          ),
+        ],
+      ),
+    ).animate().slideY(begin: -0.5, duration: 400.ms, curve: Curves.easeOut);
+  }
+
+  Widget _buildChallengeStat(String emoji, String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 14)),
+        const SizedBox(width: 4),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.white.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                shadows: [Shadow(blurRadius: 4, color: Colors.black45)],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   /// Build 1RM prompt button for rest overlay

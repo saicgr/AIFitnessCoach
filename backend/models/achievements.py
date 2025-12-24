@@ -28,8 +28,11 @@ class UserAchievement(BaseModel):
     trigger_value: Optional[float] = None
     trigger_details: Optional[dict] = None
     is_notified: bool = False
-    # Joined achievement info
+    # Joined achievement info (from achievement_types table)
     achievement: Optional[AchievementType] = None
+    achievement_name: Optional[str] = None
+    achievement_icon: Optional[str] = None
+    achievement_category: Optional[str] = None
 
 
 class UserStreak(BaseModel):
