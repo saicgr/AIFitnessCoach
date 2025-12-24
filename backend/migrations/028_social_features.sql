@@ -257,6 +257,7 @@ CREATE TABLE IF NOT EXISTS user_privacy_settings (
     -- Social features
     allow_friend_requests BOOLEAN DEFAULT true,
     allow_challenge_invites BOOLEAN DEFAULT true,
+    allow_workout_challenges BOOLEAN DEFAULT true, -- NEW: Enable "BEAT THIS" button on posts
 
     -- Leaderboards
     show_on_leaderboards BOOLEAN DEFAULT true,

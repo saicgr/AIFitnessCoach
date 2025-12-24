@@ -115,12 +115,21 @@ CREATE TABLE IF NOT EXISTS workout_shares (
     -- Share metadata
     share_count INT DEFAULT 0, -- How many times saved by others
     completion_count INT DEFAULT 0, -- How many times completed by others
+    challenge_count INT DEFAULT 0, -- How many times challenged (BEAT THIS clicked)
     average_rating DECIMAL(3,2), -- User ratings (0-5)
+    average_completion_time INT, -- Average time to complete (minutes)
+
+    -- Badges (auto-calculated by triggers)
+    is_trending BOOLEAN DEFAULT false, -- Trending in last 7 days
+    is_hall_of_fame BOOLEAN DEFAULT false, -- 100+ saves
+    is_most_copied BOOLEAN DEFAULT false, -- Top 10 this week
+    is_beast_mode BOOLEAN DEFAULT false, -- 50+ challenges accepted
 
     -- Visibility
     is_public BOOLEAN DEFAULT false,
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
     UNIQUE(shared_by, workout_log_id)
 );
@@ -128,8 +137,11 @@ CREATE TABLE IF NOT EXISTS workout_shares (
 CREATE INDEX idx_workout_shares_user ON workout_shares(shared_by);
 CREATE INDEX idx_workout_shares_activity ON workout_shares(activity_id);
 CREATE INDEX idx_workout_shares_public ON workout_shares(is_public) WHERE is_public = true;
+CREATE INDEX idx_workout_shares_trending ON workout_shares(is_trending) WHERE is_trending = true;
+CREATE INDEX idx_workout_shares_share_count ON workout_shares(share_count DESC);
+CREATE INDEX idx_workout_shares_challenge_count ON workout_shares(challenge_count DESC);
 
-COMMENT ON TABLE workout_shares IS 'Tracks sharing metrics for workouts';
+COMMENT ON TABLE workout_shares IS 'Tracks sharing metrics and badges for workouts';
 
 -- ============================================================
 -- TRIGGERS

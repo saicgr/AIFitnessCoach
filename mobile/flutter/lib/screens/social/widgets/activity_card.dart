@@ -585,59 +585,73 @@ class _ActivityCardState extends State<ActivityCard> {
           Divider(height: 1, color: cardBorder.withValues(alpha: 0.3)),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
               children: [
-                // Save button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _showSaveWorkoutDialog(context);
-                    },
-                    icon: const Icon(Icons.bookmark_outline, size: 18),
-                    label: const Text('Save'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.cyan,
-                      side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Do Now button
-                Expanded(
+                // BEAT THIS button - prominent and viral
+                SizedBox(
+                  width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       HapticFeedback.mediumImpact();
-                      _showDoWorkoutDialog(context);
+                      _showBeatWorkoutDialog(context);
                     },
-                    icon: const Icon(Icons.play_arrow, size: 18),
-                    label: const Text('Do Now'),
+                    icon: const Icon(Icons.emoji_events, size: 20),
+                    label: const Text(
+                      'BEAT THIS WORKOUT 💪',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
+                      backgroundColor: AppColors.orange,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 2,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(height: 8),
 
-                // Schedule button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _showScheduleWorkoutDialog(context);
-                    },
-                    icon: const Icon(Icons.calendar_today, size: 18),
-                    label: const Text('Schedule'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.orange,
-                      side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                // Secondary actions row
+                Row(
+                  children: [
+                    // Save button
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _showSaveWorkoutDialog(context);
+                        },
+                        icon: const Icon(Icons.bookmark_outline, size: 16),
+                        label: const Text('Save', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.cyan,
+                          side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+
+                    // Schedule button
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _showScheduleWorkoutDialog(context);
+                        },
+                        icon: const Icon(Icons.calendar_today, size: 16),
+                        label: const Text('Schedule', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textMuted,
+                          side: BorderSide(color: cardBorder.withValues(alpha: 0.5)),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -702,30 +716,75 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
-  /// Show do workout dialog
-  void _showDoWorkoutDialog(BuildContext context) {
+  /// Show beat workout dialog with competitive messaging
+  void _showBeatWorkoutDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final workoutName = widget.activityData['workout_name'] ?? 'this workout';
+    final duration = widget.activityData['duration_minutes'] ?? 0;
+    final totalVolume = widget.activityData['total_volume'];
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: elevated,
-        title: const Text('Do This Workout Now'),
+        title: Row(
+          children: [
+            const Icon(Icons.emoji_events, color: AppColors.orange, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'BEAT THIS WORKOUT',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Start "${widget.activityData['workout_name']}" now?',
-              style: const TextStyle(fontSize: 14),
+            RichText(
+              text: TextSpan(
+                style: DefaultTextStyle.of(context).style,
+                children: [
+                  TextSpan(
+                    text: '${widget.userName}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const TextSpan(text: ' crushed '),
+                  TextSpan(
+                    text: workoutName,
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.orange),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                children: [
+                  _buildChallengeStat('⏱️', 'Time', '$duration min'),
+                  if (totalVolume != null) ...[
+                    const SizedBox(height: 8),
+                    _buildChallengeStat('💪', 'Total Volume', '${totalVolume.toStringAsFixed(0)} lbs'),
+                  ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'This will replace your current workout plan for today.',
+              'Can you beat their performance? Start now!',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: AppColors.textMuted,
+                fontStyle: FontStyle.italic,
               ),
             ),
           ],
@@ -733,27 +792,55 @@ class _ActivityCardState extends State<ActivityCard> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Not Today'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navigate to ActiveWorkoutScreen with this workout
+              // TODO: Navigate to ActiveWorkoutScreen with challenge mode
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🏋️ Starting workout...'),
-                  backgroundColor: AppColors.cyan,
+                  content: Text('🏆 Challenge accepted! Starting workout...'),
+                  backgroundColor: AppColors.orange,
                   behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 2),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: AppColors.orange,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Start Workout'),
+            child: const Text(
+              'ACCEPT CHALLENGE',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildChallengeStat(String emoji, String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontSize: 13)),
+          ],
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.orange,
+          ),
+        ),
+      ],
     );
   }
 
