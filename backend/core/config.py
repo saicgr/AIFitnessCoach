@@ -64,7 +64,12 @@ class Settings(BaseSettings):
     revenuecat_webhook_secret: Optional[str] = None
 
     # CORS (for Flutter app)
-    cors_origins: list[str] = ["*"]
+    # Specific allowed origins - do not use ["*"] with allow_credentials=True
+    cors_origins: list[str] = [
+        "https://aifitnesscoach-zqi3.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ]
 
     class Config:
         env_file = ".env"

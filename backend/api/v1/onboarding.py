@@ -10,11 +10,18 @@ This stores the entire conversation (questions + answers + timestamps) in the us
 as a JSONB field for later review/analysis.
 
 NOW USES LANGGRAPH AGENT - NO HARDCODED QUESTIONS!
+
+RATE LIMITS:
+- /parse-response: 10 requests/minute (AI-intensive)
+- /validate-data: 20 requests/minute
+- /save-conversation: 10 requests/minute
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import json
 
 from services.langgraph_onboarding_service import LangGraphOnboardingService
@@ -23,6 +30,9 @@ from core.logger import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
 
 # Initialize LangGraph onboarding service
 # This replaces the old hardcoded question service
@@ -73,7 +83,8 @@ class SaveConversationRequest(BaseModel):
 
 
 @router.post("/parse-response", response_model=ParseOnboardingResponse)
-async def parse_onboarding_response(request: ParseOnboardingRequest):
+@limiter.limit("10/minute")
+async def parse_onboarding_response(http_request: Request, request: ParseOnboardingRequest):
     """
     Parse user's natural language response and extract onboarding data.
 
@@ -138,7 +149,8 @@ async def parse_onboarding_response(request: ParseOnboardingRequest):
 
 
 @router.post("/validate-data", response_model=ValidateDataResponse)
-async def validate_onboarding_data(request: ValidateDataRequest):
+@limiter.limit("20/minute")
+async def validate_onboarding_data(http_request: Request, request: ValidateDataRequest):
     """
     Validate partial or complete onboarding data.
 
@@ -181,7 +193,8 @@ async def validate_onboarding_data(request: ValidateDataRequest):
 
 
 @router.post("/save-conversation")
-async def save_conversation(request: SaveConversationRequest):
+@limiter.limit("10/minute")
+async def save_conversation(http_request: Request, request: SaveConversationRequest):
     """
     Save the entire onboarding conversation to the database.
 

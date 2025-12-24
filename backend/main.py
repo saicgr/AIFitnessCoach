@@ -10,7 +10,11 @@ AWS Lambda deployment:
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import uvicorn
 import time
 import traceback
@@ -27,6 +31,38 @@ from services.job_queue_service import get_job_queue_service
 
 settings = get_settings()
 logger = get_logger(__name__)
+
+# Initialize rate limiter
+# Uses client IP address for rate limiting by default
+# Default global limit: 100 requests per minute
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+
+        # Enable XSS filter in browsers
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # Enforce HTTPS
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+        # Restrict resource loading
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+
+        # Control referrer information
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        return response
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
@@ -169,10 +205,22 @@ app = FastAPI(
     1. POST /api/v1/chat/send - Send a message to the AI coach
     2. GET /api/v1/chat/rag/stats - Check RAG system status
     3. POST /api/v1/chat/rag/search - Search similar past conversations
+
+    ## Rate Limits
+    - Global: 100 requests/minute
+    - Chat endpoints: 10 requests/minute
+    - AI generation endpoints: 5 requests/minute
+    - Authentication endpoints: 5 requests/minute
     """,
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Attach limiter to app state for endpoint decorators
+app.state.limiter = limiter
+
+# Add rate limit exceeded exception handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add CORS middleware for Flutter app
 app.add_middleware(
@@ -185,6 +233,9 @@ app.add_middleware(
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
+
+# Add security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")

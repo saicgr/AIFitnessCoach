@@ -9,29 +9,29 @@ from datetime import datetime
 
 class WorkoutExitCreate(BaseModel):
     """Request to log a workout exit/quit event."""
-    user_id: str  # UUID string
-    workout_id: str  # UUID string
-    exit_reason: str  # "completed", "too_tired", "out_of_time", "not_feeling_well", "equipment_unavailable", "injury", "other"
-    exit_notes: Optional[str] = None  # Optional additional notes
-    exercises_completed: int = 0  # Number of exercises completed before exit
-    total_exercises: int = 0  # Total exercises in workout
-    sets_completed: int = 0  # Total sets completed
-    time_spent_seconds: int = 0  # Total time spent in workout
-    progress_percentage: float = 0.0  # Percentage of workout completed (0-100)
+    user_id: str = Field(..., max_length=100)  # UUID string
+    workout_id: str = Field(..., max_length=100)  # UUID string
+    exit_reason: str = Field(..., max_length=100)  # "completed", "too_tired", "out_of_time", etc.
+    exit_notes: Optional[str] = Field(default=None, max_length=1000)  # Optional additional notes
+    exercises_completed: int = Field(default=0, ge=0, le=100)  # Number of exercises completed
+    total_exercises: int = Field(default=0, ge=0, le=100)  # Total exercises in workout
+    sets_completed: int = Field(default=0, ge=0, le=500)  # Total sets completed
+    time_spent_seconds: int = Field(default=0, ge=0, le=86400)  # Total time spent (max 24h)
+    progress_percentage: float = Field(default=0.0, ge=0, le=100)  # Percentage of workout completed
 
 
 class WorkoutExit(BaseModel):
     """Workout exit log entry."""
-    id: str  # UUID string
-    user_id: str
-    workout_id: str
-    exit_reason: str
-    exit_notes: Optional[str] = None
-    exercises_completed: int
-    total_exercises: int
-    sets_completed: int
-    time_spent_seconds: int
-    progress_percentage: float
+    id: str = Field(..., max_length=100)  # UUID string
+    user_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    exit_reason: str = Field(..., max_length=100)
+    exit_notes: Optional[str] = Field(default=None, max_length=1000)
+    exercises_completed: int = Field(..., ge=0, le=100)
+    total_exercises: int = Field(..., ge=0, le=100)
+    sets_completed: int = Field(..., ge=0, le=500)
+    time_spent_seconds: int = Field(..., ge=0, le=86400)
+    progress_percentage: float = Field(..., ge=0, le=100)
     exited_at: datetime
 
 
@@ -39,51 +39,51 @@ class WorkoutExit(BaseModel):
 
 class ExerciseFeedbackCreate(BaseModel):
     """Create feedback for an individual exercise."""
-    user_id: str
-    workout_id: str
-    exercise_name: str
-    exercise_index: int
+    user_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    exercise_index: int = Field(..., ge=0, le=100)
     rating: int = Field(..., ge=1, le=5)  # 1-5 stars
-    comment: Optional[str] = None
-    difficulty_felt: Optional[str] = None  # "too_easy", "just_right", "too_hard"
+    comment: Optional[str] = Field(default=None, max_length=1000)
+    difficulty_felt: Optional[str] = Field(default=None, max_length=50)  # "too_easy", "just_right", "too_hard"
     would_do_again: bool = True
 
 
 class ExerciseFeedback(BaseModel):
     """Exercise feedback entry."""
-    id: str
-    user_id: str
-    workout_id: str
-    exercise_name: str
-    exercise_index: int
-    rating: int
-    comment: Optional[str] = None
-    difficulty_felt: Optional[str] = None
+    id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    exercise_index: int = Field(..., ge=0, le=100)
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = Field(default=None, max_length=1000)
+    difficulty_felt: Optional[str] = Field(default=None, max_length=50)
     would_do_again: bool = True
     created_at: datetime
 
 
 class WorkoutFeedbackCreate(BaseModel):
     """Create overall workout feedback."""
-    user_id: str
-    workout_id: str
+    user_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
     overall_rating: int = Field(..., ge=1, le=5)  # 1-5 stars
-    energy_level: Optional[str] = None  # "exhausted", "tired", "good", "energized", "great"
-    overall_difficulty: Optional[str] = None  # "too_easy", "just_right", "too_hard"
-    comment: Optional[str] = None
+    energy_level: Optional[str] = Field(default=None, max_length=50)  # "exhausted", "tired", "good", etc.
+    overall_difficulty: Optional[str] = Field(default=None, max_length=50)  # "too_easy", "just_right", "too_hard"
+    comment: Optional[str] = Field(default=None, max_length=2000)
     would_recommend: bool = True
-    exercise_feedback: Optional[List[ExerciseFeedbackCreate]] = None  # Individual exercise feedback
+    exercise_feedback: Optional[List[ExerciseFeedbackCreate]] = Field(default=None, max_length=50)
 
 
 class WorkoutFeedback(BaseModel):
     """Overall workout feedback entry."""
-    id: str
-    user_id: str
-    workout_id: str
-    overall_rating: int
-    energy_level: Optional[str] = None
-    overall_difficulty: Optional[str] = None
-    comment: Optional[str] = None
+    id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    overall_rating: int = Field(..., ge=1, le=5)
+    energy_level: Optional[str] = Field(default=None, max_length=50)
+    overall_difficulty: Optional[str] = Field(default=None, max_length=50)
+    comment: Optional[str] = Field(default=None, max_length=2000)
     would_recommend: bool = True
     completed_at: datetime
     created_at: datetime
@@ -91,28 +91,28 @@ class WorkoutFeedback(BaseModel):
 
 class WorkoutFeedbackWithExercises(WorkoutFeedback):
     """Workout feedback including individual exercise ratings."""
-    exercise_feedback: List[ExerciseFeedback] = []
+    exercise_feedback: List[ExerciseFeedback] = Field(default=[], max_length=50)
 
 
 # Drink Intake during workout
 
 class DrinkIntakeCreate(BaseModel):
     """Request to log drink intake during workout."""
-    user_id: str  # UUID string
-    workout_log_id: str  # UUID string - links to workout_logs table
-    amount_ml: int  # Amount in milliliters
-    drink_type: str = "water"  # "water", "sports_drink", "protein_shake", "bcaa", "other"
-    notes: Optional[str] = None
+    user_id: str = Field(..., max_length=100)  # UUID string
+    workout_log_id: str = Field(..., max_length=100)  # UUID string
+    amount_ml: int = Field(..., ge=1, le=10000)  # Amount in milliliters
+    drink_type: str = Field(default="water", max_length=50)  # "water", "sports_drink", etc.
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class DrinkIntake(BaseModel):
     """Drink intake log entry."""
-    id: str  # UUID string
-    user_id: str
-    workout_log_id: str
-    amount_ml: int
-    drink_type: str
-    notes: Optional[str] = None
+    id: str = Field(..., max_length=100)  # UUID string
+    user_id: str = Field(..., max_length=100)
+    workout_log_id: str = Field(..., max_length=100)
+    amount_ml: int = Field(..., ge=1, le=10000)
+    drink_type: str = Field(..., max_length=50)
+    notes: Optional[str] = Field(default=None, max_length=500)
     logged_at: datetime
 
 
@@ -120,27 +120,27 @@ class DrinkIntake(BaseModel):
 
 class RestIntervalCreate(BaseModel):
     """Request to log rest interval during workout."""
-    user_id: str  # UUID string
-    workout_log_id: str  # UUID string - links to workout_logs table
-    exercise_index: int  # Index of the exercise in workout
-    exercise_name: str
-    set_number: Optional[int] = None  # Which set the rest followed (null = between exercises)
-    rest_duration_seconds: int  # Actual rest taken
-    prescribed_rest_seconds: Optional[int] = None  # What was recommended
-    rest_type: str = "between_sets"  # "between_sets", "between_exercises", "unplanned"
-    notes: Optional[str] = None
+    user_id: str = Field(..., max_length=100)  # UUID string
+    workout_log_id: str = Field(..., max_length=100)  # UUID string
+    exercise_index: int = Field(..., ge=0, le=100)  # Index of the exercise in workout
+    exercise_name: str = Field(..., max_length=200)
+    set_number: Optional[int] = Field(default=None, ge=1, le=100)  # Which set the rest followed
+    rest_duration_seconds: int = Field(..., ge=0, le=3600)  # Actual rest taken (max 1 hour)
+    prescribed_rest_seconds: Optional[int] = Field(default=None, ge=0, le=600)  # What was recommended
+    rest_type: str = Field(default="between_sets", max_length=50)  # "between_sets", "between_exercises", etc.
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class RestInterval(BaseModel):
     """Rest interval log entry."""
-    id: str  # UUID string
-    user_id: str
-    workout_log_id: str
-    exercise_index: int
-    exercise_name: str
-    set_number: Optional[int] = None
-    rest_duration_seconds: int
-    prescribed_rest_seconds: Optional[int] = None
-    rest_type: str
-    notes: Optional[str] = None
+    id: str = Field(..., max_length=100)  # UUID string
+    user_id: str = Field(..., max_length=100)
+    workout_log_id: str = Field(..., max_length=100)
+    exercise_index: int = Field(..., ge=0, le=100)
+    exercise_name: str = Field(..., max_length=200)
+    set_number: Optional[int] = Field(default=None, ge=1, le=100)
+    rest_duration_seconds: int = Field(..., ge=0, le=3600)
+    prescribed_rest_seconds: Optional[int] = Field(default=None, ge=0, le=600)
+    rest_type: str = Field(..., max_length=50)
+    notes: Optional[str] = Field(default=None, max_length=500)
     logged_at: datetime

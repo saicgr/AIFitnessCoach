@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/saved_workouts_service.dart';
-import '../../../data/api_client.dart';
+import '../../../data/services/api_client.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Reaction type enum matching backend

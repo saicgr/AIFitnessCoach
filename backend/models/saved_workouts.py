@@ -38,12 +38,12 @@ class ScheduledWorkoutStatus(str, Enum):
 
 class ExerciseTemplate(BaseModel):
     """Template for an exercise in a saved workout."""
-    name: str
-    sets: int
-    reps: int
-    weight_kg: float
-    rest_seconds: Optional[int] = 60
-    notes: Optional[str] = None
+    name: str = Field(..., max_length=200)
+    sets: int = Field(..., ge=1, le=20)
+    reps: int = Field(..., ge=1, le=100)
+    weight_kg: float = Field(..., ge=0, le=1000)
+    rest_seconds: Optional[int] = Field(default=60, ge=0, le=600)
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 # ============================================================
@@ -52,21 +52,21 @@ class ExerciseTemplate(BaseModel):
 
 class SavedWorkoutBase(BaseModel):
     """Base model for saved workouts."""
-    workout_name: str
-    workout_description: Optional[str] = None
-    exercises: List[ExerciseTemplate]
-    total_exercises: int
-    estimated_duration_minutes: Optional[int] = None
+    workout_name: str = Field(..., max_length=200)
+    workout_description: Optional[str] = Field(default=None, max_length=2000)
+    exercises: List[ExerciseTemplate] = Field(..., max_length=50)
+    total_exercises: int = Field(..., ge=0, le=100)
+    estimated_duration_minutes: Optional[int] = Field(default=None, ge=1, le=480)
     difficulty_level: Optional[DifficultyLevel] = None
-    folder: Optional[str] = "Favorites"
-    tags: List[str] = Field(default_factory=list)
-    notes: Optional[str] = None
+    folder: Optional[str] = Field(default="Favorites", max_length=100)
+    tags: List[str] = Field(default_factory=list, max_length=20)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class SavedWorkoutCreate(SavedWorkoutBase):
     """Create a saved workout."""
-    source_activity_id: Optional[str] = None
-    source_user_id: Optional[str] = None
+    source_activity_id: Optional[str] = Field(default=None, max_length=100)
+    source_user_id: Optional[str] = Field(default=None, max_length=100)
 
 
 class SavedWorkout(SavedWorkoutBase):
@@ -90,11 +90,11 @@ class SavedWorkout(SavedWorkoutBase):
 
 class SavedWorkoutUpdate(BaseModel):
     """Update a saved workout."""
-    workout_name: Optional[str] = None
-    workout_description: Optional[str] = None
-    folder: Optional[str] = None
-    tags: Optional[List[str]] = None
-    notes: Optional[str] = None
+    workout_name: Optional[str] = Field(default=None, max_length=200)
+    workout_description: Optional[str] = Field(default=None, max_length=2000)
+    folder: Optional[str] = Field(default=None, max_length=100)
+    tags: Optional[List[str]] = Field(default=None, max_length=20)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class SavedWorkoutsResponse(BaseModel):
@@ -112,17 +112,17 @@ class ScheduledWorkoutBase(BaseModel):
     """Base model for scheduled workouts."""
     scheduled_date: date
     scheduled_time: Optional[time] = None
-    workout_name: str
-    exercises: List[ExerciseTemplate]
+    workout_name: str = Field(..., max_length=200)
+    exercises: List[ExerciseTemplate] = Field(..., max_length=50)
     reminder_enabled: bool = True
-    reminder_minutes_before: int = 60
-    notes: Optional[str] = None
+    reminder_minutes_before: int = Field(default=60, ge=0, le=1440)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class ScheduledWorkoutCreate(ScheduledWorkoutBase):
     """Create a scheduled workout."""
-    saved_workout_id: Optional[str] = None
-    workout_id: Optional[str] = None
+    saved_workout_id: Optional[str] = Field(default=None, max_length=100)
+    workout_id: Optional[str] = Field(default=None, max_length=100)
 
 
 class ScheduledWorkout(ScheduledWorkoutBase):
@@ -146,8 +146,8 @@ class ScheduledWorkoutUpdate(BaseModel):
     scheduled_time: Optional[time] = None
     status: Optional[ScheduledWorkoutStatus] = None
     reminder_enabled: Optional[bool] = None
-    reminder_minutes_before: Optional[int] = None
-    notes: Optional[str] = None
+    reminder_minutes_before: Optional[int] = Field(default=None, ge=0, le=1440)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class ScheduledWorkoutsResponse(BaseModel):
@@ -200,26 +200,26 @@ class PopularWorkout(BaseModel):
 
 class SaveWorkoutFromActivity(BaseModel):
     """Request to save a workout from an activity."""
-    activity_id: str
-    folder: Optional[str] = "From Friends"
-    notes: Optional[str] = None
+    activity_id: str = Field(..., max_length=100)
+    folder: Optional[str] = Field(default="From Friends", max_length=100)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 class DoWorkoutNow(BaseModel):
     """Request to start a saved workout now."""
-    saved_workout_id: str
+    saved_workout_id: str = Field(..., max_length=100)
     # Will create a workout session and navigate to ActiveWorkoutScreen
 
 
 class ScheduleWorkoutRequest(BaseModel):
     """Request to schedule a workout."""
-    saved_workout_id: Optional[str] = None
-    activity_id: Optional[str] = None  # Can schedule directly from activity
+    saved_workout_id: Optional[str] = Field(default=None, max_length=100)
+    activity_id: Optional[str] = Field(default=None, max_length=100)  # Can schedule directly from activity
     scheduled_date: date
     scheduled_time: Optional[time] = None
     reminder_enabled: bool = True
-    reminder_minutes_before: int = 60
-    notes: Optional[str] = None
+    reminder_minutes_before: int = Field(default=60, ge=0, le=1440)
+    notes: Optional[str] = Field(default=None, max_length=2000)
 
 
 # ============================================================

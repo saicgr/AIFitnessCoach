@@ -1,0 +1,258 @@
+"""
+Shared utilities and helper functions for workout endpoints.
+
+This module contains common utilities used across workout-related endpoints:
+- Database row conversion
+- JSON field parsing
+- Workout change logging
+- RAG indexing
+- Date calculations
+"""
+import json
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+from core.supabase_db import get_supabase_db
+from core.logger import get_logger
+from models.schemas import Workout
+from services.gemini_service import GeminiService
+from services.rag_service import WorkoutRAGService
+
+logger = get_logger(__name__)
+
+# Initialize workout RAG service (lazy loading)
+_workout_rag_service: Optional[WorkoutRAGService] = None
+
+
+def get_workout_rag_service() -> WorkoutRAGService:
+    """Get or create the workout RAG service instance."""
+    global _workout_rag_service
+    if _workout_rag_service is None:
+        gemini_service = GeminiService()
+        _workout_rag_service = WorkoutRAGService(gemini_service)
+    return _workout_rag_service
+
+
+def parse_json_field(value, default):
+    """Parse a field that could be a JSON string or already parsed."""
+    if value is None:
+        return default
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return default
+    return value if isinstance(value, (list, dict)) else default
+
+
+def row_to_workout(row: dict) -> Workout:
+    """Convert a Supabase row dict to Workout model."""
+    exercises_json = row.get("exercises_json") or row.get("exercises")
+    if isinstance(exercises_json, list):
+        exercises_json = json.dumps(exercises_json)
+    elif exercises_json is None:
+        exercises_json = "[]"
+
+    # Convert dict/list fields to JSON strings
+    generation_metadata = row.get("generation_metadata")
+    if isinstance(generation_metadata, (dict, list)):
+        generation_metadata = json.dumps(generation_metadata)
+
+    modification_history = row.get("modification_history")
+    if isinstance(modification_history, (dict, list)):
+        modification_history = json.dumps(modification_history)
+
+    return Workout(
+        id=str(row.get("id")),  # Ensure string for UUID
+        user_id=str(row.get("user_id")),
+        name=row.get("name"),
+        type=row.get("type"),
+        difficulty=row.get("difficulty"),
+        scheduled_date=row.get("scheduled_date"),
+        is_completed=row.get("is_completed", False),
+        exercises_json=exercises_json,
+        duration_minutes=row.get("duration_minutes", 45),
+        created_at=row.get("created_at"),
+        generation_method=row.get("generation_method"),
+        generation_source=row.get("generation_source"),
+        generation_metadata=generation_metadata,
+        generated_at=row.get("generated_at"),
+        last_modified_method=row.get("last_modified_method"),
+        last_modified_at=row.get("last_modified_at"),
+        modification_history=modification_history,
+        # SCD2 versioning fields
+        version_number=row.get("version_number", 1),
+        is_current=row.get("is_current", True),
+        valid_from=row.get("valid_from"),
+        valid_to=row.get("valid_to"),
+        parent_workout_id=row.get("parent_workout_id"),
+        superseded_by=row.get("superseded_by"),
+    )
+
+
+def log_workout_change(
+    workout_id: str,
+    user_id: str,
+    change_type: str,
+    field_changed: str = None,
+    old_value=None,
+    new_value=None,
+    change_source: str = "api",
+    change_reason: str = None
+):
+    """Log a change to a workout for audit trail."""
+    try:
+        db = get_supabase_db()
+        change_data = {
+            "workout_id": workout_id,
+            "user_id": user_id,
+            "change_type": change_type,
+            "field_changed": field_changed,
+            "old_value": json.dumps(old_value) if old_value is not None else None,
+            "new_value": json.dumps(new_value) if new_value is not None else None,
+            "change_source": change_source,
+            "change_reason": change_reason,
+        }
+        db.create_workout_change(change_data)
+        logger.debug(f"Logged workout change: workout_id={workout_id}, type={change_type}")
+    except Exception as e:
+        logger.error(f"Failed to log workout change: {e}")
+
+
+async def index_workout_to_rag(workout: Workout):
+    """Index a workout to RAG for retrieval (fire-and-forget)."""
+    try:
+        rag_service = get_workout_rag_service()
+        exercises = json.loads(workout.exercises_json) if isinstance(workout.exercises_json, str) else workout.exercises_json
+        scheduled_date = workout.scheduled_date
+        if hasattr(scheduled_date, 'isoformat'):
+            scheduled_date = scheduled_date.isoformat()
+        await rag_service.index_workout(
+            workout_id=workout.id,
+            user_id=workout.user_id,
+            name=workout.name,
+            workout_type=workout.type,
+            difficulty=workout.difficulty,
+            exercises=exercises,
+            scheduled_date=str(scheduled_date),
+            is_completed=workout.is_completed,
+            generation_method=workout.generation_method,
+        )
+    except Exception as e:
+        logger.error(f"Failed to index workout to RAG: {e}")
+
+
+async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
+    """
+    Get list of exercise names used by user in recent workouts.
+
+    This ensures variety by avoiding exercises the user has done recently.
+
+    Args:
+        user_id: The user's ID
+        days: Number of days to look back (default 7)
+
+    Returns:
+        List of exercise names to avoid
+    """
+    try:
+        db = get_supabase_db()
+        cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
+
+        # Get recent workouts for this user
+        response = db.client.table("workouts").select(
+            "exercises_json"
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", cutoff_date
+        ).execute()
+
+        if not response.data:
+            return []
+
+        # Extract all exercise names from recent workouts
+        recent_exercises = set()
+        for workout in response.data:
+            exercises_json = workout.get("exercises_json", [])
+            if isinstance(exercises_json, str):
+                try:
+                    exercises_json = json.loads(exercises_json)
+                except json.JSONDecodeError:
+                    continue
+
+            for exercise in exercises_json:
+                if isinstance(exercise, dict):
+                    name = exercise.get("name") or exercise.get("exercise_name")
+                    if name:
+                        recent_exercises.add(name)
+
+        logger.info(f"Found {len(recent_exercises)} recently used exercises for user {user_id} (last {days} days)")
+        return list(recent_exercises)
+
+    except Exception as e:
+        logger.error(f"Error getting recently used exercises: {e}")
+        return []
+
+
+def get_workout_focus(split: str, selected_days: List[int]) -> dict:
+    """Return workout focus for each day based on training split.
+
+    For full_body split, we rotate through different emphasis areas to ensure variety
+    while still targeting the whole body.
+    """
+    num_days = len(selected_days)
+
+    if split == "full_body":
+        # Rotate emphasis to ensure variety even in full-body workouts
+        # Each still targets full body but with different primary focus
+        full_body_emphases = [
+            "full_body_push",   # Emphasis on pushing movements (chest, shoulders, triceps)
+            "full_body_pull",   # Emphasis on pulling movements (back, biceps)
+            "full_body_legs",   # Emphasis on lower body (legs, glutes)
+            "full_body_core",   # Emphasis on core and stability
+            "full_body_upper",  # Upper body focused full-body
+            "full_body_lower",  # Lower body focused full-body
+            "full_body_power",  # Power/explosive movements
+        ]
+        return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+    elif split == "upper_lower":
+        focuses = ["upper", "lower"] * (num_days // 2 + 1)
+        return {day: focuses[i] for i, day in enumerate(selected_days)}
+    elif split == "push_pull_legs":
+        focuses = ["push", "pull", "legs"] * (num_days // 3 + 1)
+        return {day: focuses[i] for i, day in enumerate(selected_days)}
+    elif split == "body_part":
+        body_parts = ["chest", "back", "shoulders", "legs", "arms", "core"]
+        return {day: body_parts[i % len(body_parts)] for i, day in enumerate(selected_days)}
+
+    return {day: "full_body" for day in selected_days}
+
+
+def calculate_workout_date(week_start_date: str, day_index: int) -> datetime:
+    """Calculate the actual date for a workout based on week start and day index."""
+    base_date = datetime.fromisoformat(week_start_date)
+    return base_date + timedelta(days=day_index)
+
+
+def calculate_monthly_dates(month_start_date: str, selected_days: List[int], weeks: int = 12) -> List[datetime]:
+    """Calculate workout dates for specified number of weeks from the start date."""
+    base_date = datetime.fromisoformat(month_start_date)
+    end_date = base_date + timedelta(days=weeks * 7)
+
+    workout_dates = []
+    current_date = base_date
+
+    while current_date < end_date:
+        weekday = current_date.weekday()
+        if weekday in selected_days:
+            workout_dates.append(current_date)
+        current_date += timedelta(days=1)
+
+    return workout_dates
+
+
+def extract_name_words(workout_name: str) -> List[str]:
+    """Extract significant words from a workout name."""
+    import re
+    ignore_words = {'the', 'a', 'an', 'of', 'for', 'and', 'or', 'to', 'workout', 'session'}
+    words = re.findall(r'[A-Za-z]{3,}', workout_name.lower())
+    return [w for w in words if w not in ignore_words]

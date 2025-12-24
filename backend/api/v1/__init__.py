@@ -1,15 +1,18 @@
 # API v1 module
 from fastapi import APIRouter
 from api.v1 import chat, health
-from api.v1 import users, exercises, workouts_db, performance_db
-from api.v1 import metrics, videos, onboarding, reminders, nutrition, library
+from api.v1 import users, exercises, performance_db
+from api.v1 import metrics, videos, onboarding, reminders, nutrition
 from api.v1 import exercise_suggestions
+from api.v1 import library  # Modular library package
 from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
-from api.v1 import subscriptions, analytics, stats, social
+from api.v1 import subscriptions, analytics, stats
 from api.v1 import saved_workouts, challenges, leaderboard
+from api.v1 import workouts  # Modular workouts package
+from api.v1 import social  # Modular social package
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -21,7 +24,7 @@ router.include_router(health.router, prefix="/health", tags=["Health"])
 # Supabase-backed CRUD endpoints
 router.include_router(users.router, prefix="/users", tags=["Users"])
 router.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
-router.include_router(workouts_db.router, prefix="/workouts", tags=["Workouts"])
+router.include_router(workouts.router, prefix="/workouts", tags=["Workouts"])
 router.include_router(performance_db.router, prefix="/performance", tags=["Performance"])
 
 # Health metrics endpoints

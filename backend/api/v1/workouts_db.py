@@ -9,10 +9,20 @@ ENDPOINTS:
 - DELETE /api/v1/workouts-db/{id} - Delete workout
 - POST /api/v1/workouts-db/{id}/complete - Mark workout as completed
 - POST /api/v1/workouts-db/update-program - Update program preferences, delete future workouts
+
+RATE LIMITS:
+- /generate: 5 requests/minute (AI-intensive)
+- /generate-weekly: 5 requests/minute (AI-intensive)
+- /generate-monthly: 5 requests/minute (AI-intensive)
+- /regenerate: 5 requests/minute (AI-intensive)
+- /suggest: 5 requests/minute (AI-intensive)
+- Other endpoints: default global limit
 """
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
 from typing import List, Optional
 from datetime import datetime, timedelta
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import json
 import asyncio
 
@@ -37,6 +47,9 @@ from services.warmup_stretch_service import get_warmup_stretch_service
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
 
 
 async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
@@ -430,7 +443,8 @@ async def complete_workout(workout_id: str):
 
 
 @router.post("/generate", response_model=Workout)
-async def generate_workout(request: GenerateWorkoutRequest):
+@limiter.limit("5/minute")
+async def generate_workout(http_request: Request, request: GenerateWorkoutRequest):
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {request.user_id}")
 
@@ -669,7 +683,8 @@ def calculate_workout_date(week_start_date: str, day_index: int) -> datetime:
 
 
 @router.post("/generate-weekly", response_model=GenerateWeeklyResponse)
-async def generate_weekly_workouts(request: GenerateWeeklyRequest):
+@limiter.limit("5/minute")
+async def generate_weekly_workouts(http_request: Request, request: GenerateWeeklyRequest):
     """Generate workouts for multiple days in a week."""
     logger.info(f"Generating weekly workouts for user {request.user_id}")
 
@@ -841,7 +856,8 @@ def extract_name_words(workout_name: str) -> List[str]:
 
 
 @router.post("/generate-monthly", response_model=GenerateMonthlyResponse)
-async def generate_monthly_workouts(request: GenerateMonthlyRequest):
+@limiter.limit("5/minute")
+async def generate_monthly_workouts(http_request: Request, request: GenerateMonthlyRequest):
     """Generate workouts for a full month."""
     import asyncio
 
@@ -1094,7 +1110,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
 
 @router.post("/generate-remaining", response_model=GenerateMonthlyResponse)
-async def generate_remaining_workouts(request: GenerateMonthlyRequest):
+@limiter.limit("5/minute")
+async def generate_remaining_workouts(http_request: Request, request: GenerateMonthlyRequest):
     """Generate remaining workouts for the month, skipping existing ones."""
     import asyncio
 
@@ -1367,7 +1384,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 # ==================== WORKOUT VERSIONING (SCD2) ENDPOINTS ====================
 
 @router.post("/regenerate", response_model=Workout)
-async def regenerate_workout(request: RegenerateWorkoutRequest):
+@limiter.limit("5/minute")
+async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRequest):
     """
     Regenerate a workout with new settings while preserving version history (SCD2).
 
@@ -1677,7 +1695,8 @@ class WorkoutSuggestionsResponse(BaseModel):
 
 
 @router.post("/suggest", response_model=WorkoutSuggestionsResponse)
-async def get_workout_suggestions(request: WorkoutSuggestionRequest):
+@limiter.limit("5/minute")
+async def get_workout_suggestions(http_request: Request, request: WorkoutSuggestionRequest):
     """
     Get AI-powered workout suggestions for regeneration.
 
@@ -2875,7 +2894,8 @@ async def get_user_exit_stats(user_id: str):
 
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
-async def update_program(request: UpdateProgramRequest):
+@limiter.limit("5/minute")
+async def update_program(http_request: Request, request: UpdateProgramRequest):
     """
     Update user's program preferences and delete future incomplete workouts.
 

@@ -84,19 +84,19 @@ class UserConnection(BaseModel):
 
 class UserConnectionCreate(BaseModel):
     """Request to create a connection."""
-    following_id: str
+    following_id: str = Field(..., max_length=100)
     connection_type: ConnectionType = ConnectionType.FOLLOWING
 
 
 class UserProfile(BaseModel):
     """Basic user profile for social features."""
-    id: str
-    name: str
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
-    total_workouts: int = 0
-    current_streak: int = 0
-    total_achievements: int = 0
+    id: str = Field(..., max_length=100)
+    name: str = Field(..., max_length=200)
+    avatar_url: Optional[str] = Field(default=None, max_length=500)
+    bio: Optional[str] = Field(default=None, max_length=1000)
+    total_workouts: int = Field(default=0, ge=0)
+    current_streak: int = Field(default=0, ge=0)
+    total_achievements: int = Field(default=0, ge=0)
 
 
 class UserConnectionWithProfile(UserConnection):
@@ -167,7 +167,7 @@ class ActivityReaction(BaseModel):
 
 class ActivityReactionCreate(BaseModel):
     """Request to create a reaction."""
-    activity_id: str
+    activity_id: str = Field(..., max_length=100)
     reaction_type: ReactionType
 
 
@@ -203,14 +203,14 @@ class ActivityComment(BaseModel):
 
 class ActivityCommentCreate(BaseModel):
     """Request to create a comment."""
-    activity_id: str
-    comment_text: str
-    parent_comment_id: Optional[str] = None
+    activity_id: str = Field(..., max_length=100)
+    comment_text: str = Field(..., min_length=1, max_length=2000)
+    parent_comment_id: Optional[str] = Field(default=None, max_length=100)
 
 
 class ActivityCommentUpdate(BaseModel):
     """Request to update a comment."""
-    comment_text: str
+    comment_text: str = Field(..., min_length=1, max_length=2000)
 
 
 class CommentsResponse(BaseModel):
@@ -247,11 +247,11 @@ class Challenge(BaseModel):
 
 class ChallengeCreate(BaseModel):
     """Request to create a challenge."""
-    title: str
-    description: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, max_length=2000)
     challenge_type: ChallengeType
-    goal_value: float
-    goal_unit: Optional[str] = None
+    goal_value: float = Field(..., ge=0)
+    goal_unit: Optional[str] = Field(default=None, max_length=50)
     start_date: datetime
     end_date: datetime
     is_public: bool = False
@@ -275,12 +275,12 @@ class ChallengeParticipant(BaseModel):
 
 class ChallengeParticipantCreate(BaseModel):
     """Request to join a challenge."""
-    challenge_id: str
+    challenge_id: str = Field(..., max_length=100)
 
 
 class ChallengeParticipantUpdate(BaseModel):
     """Request to update challenge progress."""
-    current_value: float
+    current_value: float = Field(..., ge=0)
 
 
 class ChallengeWithParticipation(Challenge):

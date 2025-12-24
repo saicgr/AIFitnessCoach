@@ -31,7 +31,7 @@ class GetLeaderboardRequest(BaseModel):
     """Request to get leaderboard data."""
     leaderboard_type: LeaderboardType = Field(LeaderboardType.challenge_masters, description="Type of leaderboard")
     filter_type: LeaderboardFilter = Field(LeaderboardFilter.global_lb, description="Filter: global, country, or friends")
-    country_code: Optional[str] = Field(None, description="ISO country code (e.g., US, GB, CA) - required if filter=country")
+    country_code: Optional[str] = Field(None, max_length=10, description="ISO country code (e.g., US, GB, CA) - required if filter=country")
     limit: int = Field(100, ge=1, le=500, description="Number of entries to return (max 500)")
     offset: int = Field(0, ge=0, description="Offset for pagination")
 
@@ -39,7 +39,7 @@ class GetLeaderboardRequest(BaseModel):
 class GetUserRankRequest(BaseModel):
     """Request to get user's rank in leaderboard."""
     leaderboard_type: LeaderboardType = Field(LeaderboardType.challenge_masters, description="Type of leaderboard")
-    country_filter: Optional[str] = Field(None, description="Optional country filter")
+    country_filter: Optional[str] = Field(None, max_length=10, description="Optional country filter")
 
 
 # ============================================================
@@ -149,9 +149,9 @@ class LeaderboardStats(BaseModel):
 
 class AsyncChallengeRequest(BaseModel):
     """Request to create async 'Beat Their Best' challenge from leaderboard."""
-    target_user_id: str = Field(..., description="User to challenge")
-    workout_log_id: Optional[str] = Field(None, description="Specific workout to beat (their best)")
-    challenge_message: Optional[str] = Field("I'm coming for your record! 💪", description="Challenge message")
+    target_user_id: str = Field(..., max_length=100, description="User to challenge")
+    workout_log_id: Optional[str] = Field(None, max_length=100, description="Specific workout to beat (their best)")
+    challenge_message: Optional[str] = Field("I'm coming for your record!", max_length=500, description="Challenge message")
 
 
 class AsyncChallengeResponse(BaseModel):

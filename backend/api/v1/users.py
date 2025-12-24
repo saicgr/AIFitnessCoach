@@ -12,19 +12,29 @@ ENDPOINTS:
 - PUT  /api/v1/users/{id} - Update user
 - DELETE /api/v1/users/{id} - Delete user
 - DELETE /api/v1/users/{id}/reset - Full reset (delete all user data)
+
+RATE LIMITS:
+- /auth/google: 5 requests/minute (authentication)
+- / (POST create): 5 requests/minute
+- Other endpoints: default global limit
 """
 import json
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import io
 
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from models.schemas import User, UserCreate, UserUpdate
+
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
 
 
 class GoogleAuthRequest(BaseModel):
@@ -119,7 +129,8 @@ def row_to_user(row: dict) -> User:
 
 
 @router.post("/auth/google", response_model=User)
-async def google_auth(request: GoogleAuthRequest):
+@limiter.limit("5/minute")
+async def google_auth(http_request: Request, request: GoogleAuthRequest):
     """
     Authenticate with Google OAuth via Supabase.
 
@@ -214,7 +225,8 @@ def merge_extended_fields_into_preferences(
 
 
 @router.post("/", response_model=User)
-async def create_user(user: UserCreate):
+@limiter.limit("5/minute")
+async def create_user(http_request: Request, user: UserCreate):
     """Create a new user."""
     logger.info(f"Creating user: level={user.fitness_level}")
 

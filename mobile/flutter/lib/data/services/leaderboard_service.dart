@@ -28,7 +28,7 @@ enum LeaderboardFilter {
 class LeaderboardService {
   final ApiClient _apiClient;
 
-  LeaderboardService(this _apiClient);
+  LeaderboardService(this._apiClient);
 
   // ============================================================
   // GET LEADERBOARD

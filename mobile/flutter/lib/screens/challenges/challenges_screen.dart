@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/challenges_service.dart';
-import '../../data/api_client.dart';
+import '../../data/services/api_client.dart';
 import 'widgets/challenge_card.dart';
 
 /// Screen to view and manage workout challenges

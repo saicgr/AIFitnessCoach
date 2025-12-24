@@ -6,12 +6,20 @@ ENDPOINTS:
 - GET  /api/v1/chat/history/{user_id} - Get chat history for a user
 - GET  /api/v1/chat/rag/stats - Get RAG system statistics
 - POST /api/v1/chat/rag/search - Search similar past conversations
+
+RATE LIMITS:
+- /send: 10 requests/minute (AI-intensive)
+- /extract-intent: 10 requests/minute (AI-intensive)
+- /rag/search: 20 requests/minute
+- /history: 30 requests/minute
 """
 import json
 import time
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
@@ -22,6 +30,9 @@ from core.supabase_client import get_supabase
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Rate limiter instance - uses the same key function as main app
+limiter = Limiter(key_func=get_remote_address)
 
 # Service instances (will be initialized on startup)
 gemini_service: Optional[GeminiService] = None
@@ -44,8 +55,10 @@ def get_rag_service() -> RAGService:
 
 
 @router.post("/send", response_model=ChatResponse)
+@limiter.limit("10/minute")
 async def send_message(
     request: ChatRequest,
+    http_request: Request,
     coach: LangGraphCoachService = Depends(get_coach_service),
 ):
     """
@@ -135,7 +148,8 @@ class ChatHistoryItem(BaseModel):
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
-async def get_chat_history(user_id: str, limit: int = 100):
+@limiter.limit("30/minute")
+async def get_chat_history(http_request: Request, user_id: str, limit: int = 100):
     """
     Get chat history for a user.
 
@@ -215,8 +229,10 @@ def get_gemini_service_dep() -> GeminiService:
 
 
 @router.post("/extract-intent", response_model=ExtractIntentResponse)
+@limiter.limit("10/minute")
 async def extract_intent(
     request: ExtractIntentRequest,
+    http_request: Request,
     gemini: GeminiService = Depends(get_gemini_service_dep),
 ):
     """
@@ -254,8 +270,10 @@ class RAGSearchResult(BaseModel):
 
 
 @router.post("/rag/search", response_model=List[RAGSearchResult])
+@limiter.limit("20/minute")
 async def search_similar(
     request: RAGSearchRequest,
+    http_request: Request,
     rag: RAGService = Depends(get_rag_service),
 ):
     """

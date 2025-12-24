@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/challenges_service.dart';
-import '../../../data/api_client.dart';
+import '../../../data/services/api_client.dart';
 
 /// Dialog to challenge friends after completing a workout
 class ChallengeFriendsDialog extends StatefulWidget {

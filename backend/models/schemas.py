@@ -70,7 +70,7 @@ from models.notifications import (
 )
 
 # Workout models - kept here as they are the most complex and heavily used
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 
@@ -80,70 +80,70 @@ from datetime import datetime
 # ============================================
 
 class WorkoutCreate(BaseModel):
-    user_id: str
-    name: str
-    type: str
-    difficulty: str
+    user_id: str = Field(..., max_length=100)
+    name: str = Field(..., max_length=200)
+    type: str = Field(..., max_length=50)
+    difficulty: str = Field(..., max_length=50)
     scheduled_date: datetime
-    exercises_json: str
-    duration_minutes: int = 45
-    generation_method: str = "algorithm"
-    generation_source: str = "onboarding"
-    generation_metadata: str = "{}"
+    exercises_json: str = Field(..., max_length=100000)
+    duration_minutes: int = Field(default=45, ge=1, le=480)
+    generation_method: str = Field(default="algorithm", max_length=50)
+    generation_source: str = Field(default="onboarding", max_length=50)
+    generation_metadata: str = Field(default="{}", max_length=50000)
 
 
 class WorkoutUpdate(BaseModel):
-    name: Optional[str] = None
-    type: Optional[str] = None
-    difficulty: Optional[str] = None
+    name: Optional[str] = Field(default=None, max_length=200)
+    type: Optional[str] = Field(default=None, max_length=50)
+    difficulty: Optional[str] = Field(default=None, max_length=50)
     scheduled_date: Optional[datetime] = None
     is_completed: Optional[bool] = None
-    exercises_json: Optional[str] = None
-    last_modified_method: Optional[str] = None
+    exercises_json: Optional[str] = Field(default=None, max_length=100000)
+    last_modified_method: Optional[str] = Field(default=None, max_length=50)
 
 
 class Workout(BaseModel):
-    id: str
-    user_id: str
-    name: str
-    type: str
-    difficulty: str
+    id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    name: str = Field(..., max_length=200)
+    type: str = Field(..., max_length=50)
+    difficulty: str = Field(..., max_length=50)
     scheduled_date: datetime
     is_completed: bool
-    exercises_json: str
-    duration_minutes: int = 45
+    exercises_json: str = Field(..., max_length=100000)
+    duration_minutes: int = Field(default=45, ge=1, le=480)
     created_at: Optional[datetime] = None
-    generation_method: Optional[str] = None
-    generation_source: Optional[str] = None
-    generation_metadata: Optional[str] = None
+    generation_method: Optional[str] = Field(default=None, max_length=50)
+    generation_source: Optional[str] = Field(default=None, max_length=50)
+    generation_metadata: Optional[str] = Field(default=None, max_length=50000)
     generated_at: Optional[datetime] = None
-    last_modified_method: Optional[str] = None
+    last_modified_method: Optional[str] = Field(default=None, max_length=50)
     last_modified_at: Optional[datetime] = None
-    modification_history: Optional[str] = None
-    version_number: int = 1
+    modification_history: Optional[str] = Field(default=None, max_length=100000)
+    version_number: int = Field(default=1, ge=1)
     is_current: bool = True
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    parent_workout_id: Optional[str] = None
-    superseded_by: Optional[str] = None
+    parent_workout_id: Optional[str] = Field(default=None, max_length=100)
+    superseded_by: Optional[str] = Field(default=None, max_length=100)
 
 
 class GenerateWorkoutRequest(BaseModel):
-    user_id: str
-    workout_type: Optional[str] = None
-    duration_minutes: Optional[int] = 45
-    focus_areas: Optional[List[str]] = None
-    exclude_exercises: Optional[List[str]] = None
-    fitness_level: Optional[str] = None
-    goals: Optional[List[str]] = None
-    equipment: Optional[List[str]] = None
+    user_id: str = Field(..., max_length=100)
+    workout_type: Optional[str] = Field(default=None, max_length=50)
+    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
+    exclude_exercises: Optional[List[str]] = Field(default=None, max_length=50)
+    fitness_level: Optional[str] = Field(default=None, max_length=50)
+    goals: Optional[List[str]] = Field(default=None, max_length=20)
+    equipment: Optional[List[str]] = Field(default=None, max_length=50)
 
 
 class GenerateWeeklyRequest(BaseModel):
-    user_id: str
-    week_start_date: str
-    selected_days: List[int]
-    duration_minutes: Optional[int] = 45
+    user_id: str = Field(..., max_length=100)
+    week_start_date: str = Field(..., max_length=20)
+    selected_days: List[int] = Field(..., max_length=7)
+    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
 
 
 class GenerateWeeklyResponse(BaseModel):
@@ -151,11 +151,11 @@ class GenerateWeeklyResponse(BaseModel):
 
 
 class GenerateMonthlyRequest(BaseModel):
-    user_id: str
-    month_start_date: str
-    selected_days: List[int]
-    duration_minutes: Optional[int] = 45
-    weeks: Optional[int] = 12
+    user_id: str = Field(..., max_length=100)
+    month_start_date: str = Field(..., max_length=20)
+    selected_days: List[int] = Field(..., max_length=7)
+    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    weeks: Optional[int] = Field(default=12, ge=1, le=52)
 
 
 class GenerateMonthlyResponse(BaseModel):
@@ -164,71 +164,71 @@ class GenerateMonthlyResponse(BaseModel):
 
 
 class SwapWorkoutsRequest(BaseModel):
-    workout_id: str
-    new_date: str
-    reason: Optional[str] = None
+    workout_id: str = Field(..., max_length=100)
+    new_date: str = Field(..., max_length=20)
+    reason: Optional[str] = Field(default=None, max_length=500)
 
 
 class SwapExerciseRequest(BaseModel):
     """Request to swap an exercise within a workout."""
-    workout_id: str
-    old_exercise_name: str
-    new_exercise_name: str
-    reason: Optional[str] = None
+    workout_id: str = Field(..., max_length=100)
+    old_exercise_name: str = Field(..., max_length=200)
+    new_exercise_name: str = Field(..., max_length=200)
+    reason: Optional[str] = Field(default=None, max_length=500)
 
 
 class RegenerateWorkoutRequest(BaseModel):
-    workout_id: str
-    user_id: str
-    duration_minutes: Optional[int] = 45
-    fitness_level: Optional[str] = None
-    difficulty: Optional[str] = None
-    equipment: Optional[List[str]] = None
-    focus_areas: Optional[List[str]] = None
-    injuries: Optional[List[str]] = None  # List of injury areas to avoid (e.g., "Shoulder", "Knee")
-    workout_type: Optional[str] = None  # Workout style: "Strength", "HIIT", "Cardio", "Flexibility", etc.
-    workout_name: Optional[str] = None  # Optional workout name to use (from AI suggestion)
-    ai_prompt: Optional[str] = None  # Optional AI prompt for workout generation context
-    dumbbell_count: Optional[int] = None  # Number of dumbbells available (1 or 2)
-    kettlebell_count: Optional[int] = None  # Number of kettlebells available (1 or 2)
+    workout_id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    fitness_level: Optional[str] = Field(default=None, max_length=50)
+    difficulty: Optional[str] = Field(default=None, max_length=50)
+    equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
+    injuries: Optional[List[str]] = Field(default=None, max_length=20)  # List of injury areas to avoid
+    workout_type: Optional[str] = Field(default=None, max_length=50)  # Workout style: "Strength", "HIIT", etc.
+    workout_name: Optional[str] = Field(default=None, max_length=200)  # Optional workout name
+    ai_prompt: Optional[str] = Field(default=None, max_length=2000)  # Optional AI prompt for context
+    dumbbell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of dumbbells available
+    kettlebell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of kettlebells available
 
 
 class UpdateProgramRequest(BaseModel):
     """Request to update program preferences and regenerate future workouts."""
-    user_id: str
-    difficulty: Optional[str] = None
-    duration_minutes: Optional[int] = 45
-    workout_type: Optional[str] = None
-    workout_days: Optional[List[str]] = None  # ["Mon", "Wed", "Fri"]
-    equipment: Optional[List[str]] = None
-    focus_areas: Optional[List[str]] = None
-    injuries: Optional[List[str]] = None
-    dumbbell_count: Optional[int] = 2  # 1 or 2 dumbbells
-    kettlebell_count: Optional[int] = 1  # 1 or 2 kettlebells
+    user_id: str = Field(..., max_length=100)
+    difficulty: Optional[str] = Field(default=None, max_length=50)
+    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    workout_type: Optional[str] = Field(default=None, max_length=50)
+    workout_days: Optional[List[str]] = Field(default=None, max_length=7)  # ["Mon", "Wed", "Fri"]
+    equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
+    injuries: Optional[List[str]] = Field(default=None, max_length=20)
+    dumbbell_count: Optional[int] = Field(default=2, ge=1, le=10)  # 1 or 2 dumbbells
+    kettlebell_count: Optional[int] = Field(default=1, ge=1, le=10)  # 1 or 2 kettlebells
 
 
 class UpdateProgramResponse(BaseModel):
     """Response from update program endpoint."""
     success: bool
-    message: str
-    workouts_deleted: int
+    message: str = Field(..., max_length=500)
+    workouts_deleted: int = Field(..., ge=0)
     preferences_updated: bool
 
 
 class RevertWorkoutRequest(BaseModel):
-    workout_id: str
-    target_version: int
+    workout_id: str = Field(..., max_length=100)
+    target_version: int = Field(..., ge=1)
 
 
 class WorkoutVersionInfo(BaseModel):
-    id: str
-    version_number: int
-    name: str
+    id: str = Field(..., max_length=100)
+    version_number: int = Field(..., ge=1)
+    name: str = Field(..., max_length=200)
     is_current: bool
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    generation_method: Optional[str] = None
-    exercises_count: int = 0
+    generation_method: Optional[str] = Field(default=None, max_length=50)
+    exercises_count: int = Field(default=0, ge=0)
 
 
 # ============================================
@@ -236,14 +236,14 @@ class WorkoutVersionInfo(BaseModel):
 # ============================================
 
 class WorkoutLogCreate(BaseModel):
-    workout_id: str
-    user_id: str
-    sets_json: str
-    total_time_seconds: int
+    workout_id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    sets_json: str = Field(..., max_length=100000)
+    total_time_seconds: int = Field(..., ge=0, le=86400)  # max 24 hours
 
 
 class WorkoutLog(WorkoutLogCreate):
-    id: str
+    id: str = Field(..., max_length=100)
     completed_at: datetime
 
 
@@ -252,24 +252,24 @@ class WorkoutLog(WorkoutLogCreate):
 # ============================================
 
 class PerformanceLogCreate(BaseModel):
-    workout_log_id: str
-    user_id: str
-    exercise_id: str
-    exercise_name: str
-    set_number: int
-    reps_completed: int
-    weight_kg: float
-    set_type: Optional[str] = None
-    rpe: Optional[float] = None
-    rir: Optional[int] = None
-    tempo: Optional[str] = None
+    workout_log_id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    exercise_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    set_number: int = Field(..., ge=1, le=100)
+    reps_completed: int = Field(..., ge=0, le=1000)
+    weight_kg: float = Field(..., ge=0, le=1000)
+    set_type: Optional[str] = Field(default=None, max_length=50)
+    rpe: Optional[float] = Field(default=None, ge=0, le=10)
+    rir: Optional[int] = Field(default=None, ge=0, le=10)
+    tempo: Optional[str] = Field(default=None, max_length=20)
     is_completed: bool = True
-    failed_at_rep: Optional[int] = None
-    notes: Optional[str] = None
+    failed_at_rep: Optional[int] = Field(default=None, ge=0)
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class PerformanceLog(PerformanceLogCreate):
-    id: str
+    id: str = Field(..., max_length=100)
     recorded_at: datetime
 
 
@@ -278,18 +278,18 @@ class PerformanceLog(PerformanceLogCreate):
 # ============================================
 
 class StrengthRecordCreate(BaseModel):
-    user_id: str
-    exercise_id: str
-    exercise_name: str
-    weight_kg: float
-    reps: int
-    estimated_1rm: float
-    rpe: Optional[float] = None
+    user_id: str = Field(..., max_length=100)
+    exercise_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    weight_kg: float = Field(..., ge=0, le=1000)
+    reps: int = Field(..., ge=1, le=1000)
+    estimated_1rm: float = Field(..., ge=0, le=2000)
+    rpe: Optional[float] = Field(default=None, ge=0, le=10)
     is_pr: bool = False
 
 
 class StrengthRecord(StrengthRecordCreate):
-    id: str
+    id: str = Field(..., max_length=100)
     achieved_at: datetime
 
 
@@ -298,20 +298,20 @@ class StrengthRecord(StrengthRecordCreate):
 # ============================================
 
 class WeeklyVolumeCreate(BaseModel):
-    user_id: str
-    muscle_group: str
-    week_number: int
-    year: int
-    total_sets: int
-    total_reps: int
-    total_volume_kg: float
-    frequency: int
-    target_sets: int
-    recovery_status: str = "recovered"
+    user_id: str = Field(..., max_length=100)
+    muscle_group: str = Field(..., max_length=50)
+    week_number: int = Field(..., ge=1, le=53)
+    year: int = Field(..., ge=2000, le=2100)
+    total_sets: int = Field(..., ge=0)
+    total_reps: int = Field(..., ge=0)
+    total_volume_kg: float = Field(..., ge=0)
+    frequency: int = Field(..., ge=0, le=7)
+    target_sets: int = Field(..., ge=0)
+    recovery_status: str = Field(default="recovered", max_length=50)
 
 
 class WeeklyVolume(WeeklyVolumeCreate):
-    id: str
+    id: str = Field(..., max_length=100)
     updated_at: datetime
 
 
@@ -320,14 +320,14 @@ class WeeklyVolume(WeeklyVolumeCreate):
 # ============================================
 
 class ChatCreate(BaseModel):
-    user_id: str
-    user_message: str
-    ai_response: str
-    context_json: Optional[str] = None
+    user_id: str = Field(..., max_length=100)
+    user_message: str = Field(..., max_length=5000)
+    ai_response: str = Field(..., max_length=20000)
+    context_json: Optional[str] = Field(default=None, max_length=50000)
 
 
 class ChatHistory(ChatCreate):
-    id: str
+    id: str = Field(..., max_length=100)
     timestamp: datetime
 
 
@@ -336,16 +336,16 @@ class ChatHistory(ChatCreate):
 # ============================================
 
 class InjuryCreate(BaseModel):
-    user_id: str
-    body_part: str
-    severity: str
+    user_id: str = Field(..., max_length=100)
+    body_part: str = Field(..., max_length=100)
+    severity: str = Field(..., max_length=50)
     onset_date: datetime
-    affected_exercises: str
+    affected_exercises: str = Field(..., max_length=10000)
     is_active: bool = True
 
 
 class Injury(InjuryCreate):
-    id: str
+    id: str = Field(..., max_length=100)
 
 
 # ============================================
@@ -353,30 +353,30 @@ class Injury(InjuryCreate):
 # ============================================
 
 class ExerciseAnalytics(BaseModel):
-    exercise_id: str
-    exercise_name: str
-    total_sets: int
-    total_reps: int
-    total_volume_kg: float
-    max_weight_kg: float
-    current_1rm: float
+    exercise_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    total_sets: int = Field(..., ge=0)
+    total_reps: int = Field(..., ge=0)
+    total_volume_kg: float = Field(..., ge=0)
+    max_weight_kg: float = Field(..., ge=0)
+    current_1rm: float = Field(..., ge=0)
     progression_rate: float
 
 
 class MuscleGroupVolume(BaseModel):
-    muscle_group: str
-    total_sets: int
-    target_sets: int
-    percentage: float
-    recovery_status: str
+    muscle_group: str = Field(..., max_length=50)
+    total_sets: int = Field(..., ge=0)
+    target_sets: int = Field(..., ge=0)
+    percentage: float = Field(..., ge=0)
+    recovery_status: str = Field(..., max_length=50)
 
 
 class PerformanceAnalyticsResponse(BaseModel):
     weekly_volumes: List[MuscleGroupVolume]
     top_exercises: List[ExerciseAnalytics]
-    total_workouts: int
-    total_volume_kg: float
-    avg_workout_duration_minutes: float
+    total_workouts: int = Field(..., ge=0)
+    total_volume_kg: float = Field(..., ge=0)
+    avg_workout_duration_minutes: float = Field(..., ge=0)
 
 
 # ============================================
@@ -384,17 +384,17 @@ class PerformanceAnalyticsResponse(BaseModel):
 # ============================================
 
 class ChatMessageRequest(BaseModel):
-    user_id: str
-    message: str
-    image_base64: Optional[str] = None
-    conversation_history: Optional[List[dict]] = None
+    user_id: str = Field(..., max_length=100)
+    message: str = Field(..., max_length=5000)
+    image_base64: Optional[str] = Field(default=None, max_length=17_800_000)  # ~10MB decoded
+    conversation_history: Optional[List[dict]] = Field(default=None, max_length=100)
 
 
 class ChatMessageResponse(BaseModel):
-    response: str
-    intent: Optional[str] = None
+    response: str = Field(..., max_length=20000)
+    intent: Optional[str] = Field(default=None, max_length=50)
     tool_results: Optional[List[dict]] = None
-    food_log_id: Optional[str] = None
+    food_log_id: Optional[str] = Field(default=None, max_length=100)
     nutrition_data: Optional[dict] = None
 
 
@@ -403,97 +403,97 @@ class ChatMessageResponse(BaseModel):
 # ============================================
 
 class WarmupExercise(BaseModel):
-    name: str
-    sets: int = 1
-    reps: Optional[int] = None
-    duration_seconds: Optional[int] = None
-    rest_seconds: int = 10
-    equipment: str = "none"
-    muscle_group: str
-    notes: Optional[str] = None
+    name: str = Field(..., max_length=200)
+    sets: int = Field(default=1, ge=1, le=20)
+    reps: Optional[int] = Field(default=None, ge=1, le=100)
+    duration_seconds: Optional[int] = Field(default=None, ge=1, le=600)
+    rest_seconds: int = Field(default=10, ge=0, le=300)
+    equipment: str = Field(default="none", max_length=100)
+    muscle_group: str = Field(..., max_length=50)
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class WarmupCreate(BaseModel):
-    workout_id: str
-    exercises_json: List[WarmupExercise]
-    duration_minutes: int = 5
+    workout_id: str = Field(..., max_length=100)
+    exercises_json: List[WarmupExercise] = Field(..., max_length=20)
+    duration_minutes: int = Field(default=5, ge=1, le=60)
 
 
 class Warmup(BaseModel):
-    id: str
-    workout_id: Optional[str] = None
-    exercises_json: List[WarmupExercise]
-    duration_minutes: int = 5
+    id: str = Field(..., max_length=100)
+    workout_id: Optional[str] = Field(default=None, max_length=100)
+    exercises_json: List[WarmupExercise] = Field(..., max_length=20)
+    duration_minutes: int = Field(default=5, ge=1, le=60)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    version_number: int = 1
+    version_number: int = Field(default=1, ge=1)
     is_current: bool = True
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    parent_warmup_id: Optional[str] = None
-    superseded_by: Optional[str] = None
+    parent_warmup_id: Optional[str] = Field(default=None, max_length=100)
+    superseded_by: Optional[str] = Field(default=None, max_length=100)
 
 
 class WarmupVersionInfo(BaseModel):
-    id: str
-    version_number: int
+    id: str = Field(..., max_length=100)
+    version_number: int = Field(..., ge=1)
     is_current: bool
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    exercises_count: int = 0
+    exercises_count: int = Field(default=0, ge=0)
 
 
 class StretchExercise(BaseModel):
-    name: str
-    sets: int = 1
-    reps: int = 1
-    duration_seconds: int = 30
-    rest_seconds: int = 0
-    equipment: str = "none"
-    muscle_group: str
-    notes: Optional[str] = None
+    name: str = Field(..., max_length=200)
+    sets: int = Field(default=1, ge=1, le=20)
+    reps: int = Field(default=1, ge=1, le=100)
+    duration_seconds: int = Field(default=30, ge=1, le=600)
+    rest_seconds: int = Field(default=0, ge=0, le=300)
+    equipment: str = Field(default="none", max_length=100)
+    muscle_group: str = Field(..., max_length=50)
+    notes: Optional[str] = Field(default=None, max_length=500)
 
 
 class StretchCreate(BaseModel):
-    workout_id: str
-    exercises_json: List[StretchExercise]
-    duration_minutes: int = 5
+    workout_id: str = Field(..., max_length=100)
+    exercises_json: List[StretchExercise] = Field(..., max_length=20)
+    duration_minutes: int = Field(default=5, ge=1, le=60)
 
 
 class Stretch(BaseModel):
-    id: str
-    workout_id: Optional[str] = None
-    exercises_json: List[StretchExercise]
-    duration_minutes: int = 5
+    id: str = Field(..., max_length=100)
+    workout_id: Optional[str] = Field(default=None, max_length=100)
+    exercises_json: List[StretchExercise] = Field(..., max_length=20)
+    duration_minutes: int = Field(default=5, ge=1, le=60)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    version_number: int = 1
+    version_number: int = Field(default=1, ge=1)
     is_current: bool = True
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    parent_stretch_id: Optional[str] = None
-    superseded_by: Optional[str] = None
+    parent_stretch_id: Optional[str] = Field(default=None, max_length=100)
+    superseded_by: Optional[str] = Field(default=None, max_length=100)
 
 
 class StretchVersionInfo(BaseModel):
-    id: str
-    version_number: int
+    id: str = Field(..., max_length=100)
+    version_number: int = Field(..., ge=1)
     is_current: bool
     valid_from: Optional[datetime] = None
     valid_to: Optional[datetime] = None
-    exercises_count: int = 0
+    exercises_count: int = Field(default=0, ge=0)
 
 
 class RegenerateWarmupRequest(BaseModel):
-    warmup_id: str
-    workout_id: str
-    duration_minutes: Optional[int] = 5
+    warmup_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    duration_minutes: Optional[int] = Field(default=5, ge=1, le=60)
 
 
 class RegenerateStretchRequest(BaseModel):
-    stretch_id: str
-    workout_id: str
-    duration_minutes: Optional[int] = 5
+    stretch_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    duration_minutes: Optional[int] = Field(default=5, ge=1, le=60)
 
 
 # ============================================
@@ -501,19 +501,19 @@ class RegenerateStretchRequest(BaseModel):
 # ============================================
 
 class PendingWorkoutGenerationStatus(BaseModel):
-    user_id: str
-    status: str
-    total_expected: int = 0
-    total_generated: int = 0
-    error_message: Optional[str] = None
+    user_id: str = Field(..., max_length=100)
+    status: str = Field(..., max_length=50)
+    total_expected: int = Field(default=0, ge=0)
+    total_generated: int = Field(default=0, ge=0)
+    error_message: Optional[str] = Field(default=None, max_length=1000)
 
 
 class ScheduleBackgroundGenerationRequest(BaseModel):
-    user_id: str
-    month_start_date: str
-    duration_minutes: int = 45
-    selected_days: List[int]
-    weeks: int = 11
+    user_id: str = Field(..., max_length=100)
+    month_start_date: str = Field(..., max_length=20)
+    duration_minutes: int = Field(default=45, ge=1, le=480)
+    selected_days: List[int] = Field(..., max_length=7)
+    weeks: int = Field(default=11, ge=1, le=52)
 
 
 # ============================================
@@ -521,23 +521,23 @@ class ScheduleBackgroundGenerationRequest(BaseModel):
 # ============================================
 
 class WorkoutExerciseItem(BaseModel):
-    name: str
-    sets: int = 3
-    reps: int = 10
-    weight: Optional[float] = None
-    rest_seconds: int = 60
-    notes: Optional[str] = None
-    target_muscles: Optional[List[str]] = None
-    equipment: Optional[str] = None
+    name: str = Field(..., max_length=200)
+    sets: int = Field(default=3, ge=1, le=20)
+    reps: int = Field(default=10, ge=1, le=100)
+    weight: Optional[float] = Field(default=None, ge=0, le=1000)
+    rest_seconds: int = Field(default=60, ge=0, le=600)
+    notes: Optional[str] = Field(default=None, max_length=500)
+    target_muscles: Optional[List[str]] = Field(default=None, max_length=20)
+    equipment: Optional[str] = Field(default=None, max_length=100)
 
 
 class UpdateWorkoutExercisesRequest(BaseModel):
-    exercises: List[WorkoutExerciseItem]
+    exercises: List[WorkoutExerciseItem] = Field(..., max_length=50)
 
 
 class UpdateWarmupExercisesRequest(BaseModel):
-    exercises: List[WarmupExercise]
+    exercises: List[WarmupExercise] = Field(..., max_length=20)
 
 
 class UpdateStretchExercisesRequest(BaseModel):
-    exercises: List[StretchExercise]
+    exercises: List[StretchExercise] = Field(..., max_length=20)

@@ -1,0 +1,342 @@
+"""
+Library utility functions.
+
+This module contains helper functions for the library API:
+- Database pagination
+- Body part normalization
+- Row conversion functions
+- Goal/suitability derivation
+"""
+import re
+from typing import List, Dict, Any, Optional
+
+from core.supabase_db import get_supabase_db
+from .models import LibraryExercise, LibraryProgram
+
+
+async def fetch_all_rows(
+    db,
+    table_name: str,
+    select_columns: str = "*",
+    order_by: str = None,
+    equipment_filter: str = None,
+    difficulty_filter: int = None,
+    search_filter: str = None
+) -> List[Dict[str, Any]]:
+    """
+    Fetch all rows from a Supabase table, handling the 1000 row limit.
+    Uses pagination to get all results.
+    Optionally applies DB-level filters before fetching.
+    """
+    all_rows = []
+    page_size = 1000
+    offset = 0
+
+    while True:
+        query = db.client.table(table_name).select(select_columns)
+
+        # Apply optional DB-level filters
+        if equipment_filter:
+            query = query.ilike("equipment", f"%{equipment_filter}%")
+        if difficulty_filter:
+            query = query.eq("difficulty_level", difficulty_filter)
+        if search_filter:
+            query = query.or_(f"name.ilike.%{search_filter}%,original_name.ilike.%{search_filter}%")
+
+        if order_by:
+            query = query.order(order_by)
+        result = query.range(offset, offset + page_size - 1).execute()
+
+        if not result.data:
+            break
+
+        all_rows.extend(result.data)
+
+        if len(result.data) < page_size:
+            break
+
+        offset += page_size
+
+    return all_rows
+
+
+def normalize_body_part(target_muscle: str) -> str:
+    """
+    Normalize target_muscle to a simple body part category.
+    The exercise_library has very detailed target_muscle values.
+    We want to group them into broader categories.
+    """
+    if not target_muscle:
+        return "Other"
+
+    target_lower = target_muscle.lower()
+
+    # Map to broader categories
+    if any(x in target_lower for x in ["chest", "pectoralis"]):
+        return "Chest"
+    elif any(x in target_lower for x in ["back", "latissimus", "rhomboid", "trapezius"]):
+        return "Back"
+    elif any(x in target_lower for x in ["shoulder", "deltoid"]):
+        return "Shoulders"
+    elif any(x in target_lower for x in ["bicep", "brachii"]):
+        return "Biceps"
+    elif any(x in target_lower for x in ["tricep"]):
+        return "Triceps"
+    elif any(x in target_lower for x in ["forearm", "wrist"]):
+        return "Forearms"
+    elif any(x in target_lower for x in ["quad", "thigh"]):
+        return "Quadriceps"
+    elif any(x in target_lower for x in ["hamstring"]):
+        return "Hamstrings"
+    elif any(x in target_lower for x in ["glute"]):
+        return "Glutes"
+    elif any(x in target_lower for x in ["calf", "gastrocnemius", "soleus"]):
+        return "Calves"
+    elif any(x in target_lower for x in ["abdominal", "rectus abdominis", "core", "oblique"]):
+        return "Core"
+    elif any(x in target_lower for x in ["lower back", "erector"]):
+        return "Lower Back"
+    elif any(x in target_lower for x in ["hip", "adduct", "abduct"]):
+        return "Hips"
+    elif any(x in target_lower for x in ["neck"]):
+        return "Neck"
+    else:
+        return "Other"
+
+
+def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> LibraryExercise:
+    """Convert a Supabase row to LibraryExercise model.
+
+    Args:
+        row: Database row
+        from_cleaned_view: True if row is from exercise_library_cleaned view,
+                          False if from base exercise_library table
+
+    View columns: id, name, original_name, body_part, equipment, target_muscle,
+                  secondary_muscles, instructions, difficulty_level, category,
+                  gif_url, video_url, goals, suitable_for, avoid_if
+    """
+    if from_cleaned_view:
+        # From cleaned view - uses 'name' and 'original_name' columns
+        return LibraryExercise(
+            id=row.get("id"),
+            name=row.get("name", ""),
+            original_name=row.get("original_name", ""),
+            body_part=normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
+            equipment=row.get("equipment", ""),
+            target_muscle=row.get("target_muscle"),
+            secondary_muscles=row.get("secondary_muscles"),
+            instructions=row.get("instructions"),
+            difficulty_level=row.get("difficulty_level"),
+            category=row.get("category"),
+            gif_url=row.get("gif_url"),
+            video_url=row.get("video_url"),
+            image_url=row.get("image_url"),
+            goals=row.get("goals", []),
+            suitable_for=row.get("suitable_for", []),
+            avoid_if=row.get("avoid_if", []),
+        )
+    else:
+        # From base table - clean name manually
+        original_name = row.get("exercise_name", "")
+        cleaned_name = re.sub(r'_(Female|Male|female|male)$', '', original_name).strip()
+        return LibraryExercise(
+            id=row.get("id"),
+            name=cleaned_name,
+            original_name=original_name,
+            body_part=normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
+            equipment=row.get("equipment", ""),
+            target_muscle=row.get("target_muscle"),
+            secondary_muscles=row.get("secondary_muscles"),
+            instructions=row.get("instructions"),
+            difficulty_level=row.get("difficulty_level"),
+            category=row.get("category"),
+            gif_url=row.get("gif_url"),
+            video_url=row.get("video_s3_path"),
+            image_url=row.get("image_s3_path"),
+            goals=row.get("goals", []),
+            suitable_for=row.get("suitable_for", []),
+            avoid_if=row.get("avoid_if", []),
+        )
+
+
+def row_to_library_program(row: dict) -> LibraryProgram:
+    """Convert a Supabase row to LibraryProgram model."""
+    return LibraryProgram(
+        id=row.get("id"),
+        name=row.get("program_name", ""),
+        category=row.get("program_category", ""),
+        subcategory=row.get("program_subcategory"),
+        difficulty_level=row.get("difficulty_level"),
+        duration_weeks=row.get("duration_weeks"),
+        sessions_per_week=row.get("sessions_per_week"),
+        session_duration_minutes=row.get("session_duration_minutes"),
+        tags=row.get("tags") if isinstance(row.get("tags"), list) else [],
+        goals=row.get("goals") if isinstance(row.get("goals"), list) else [],
+        description=row.get("description"),
+        short_description=row.get("short_description"),
+        celebrity_name=row.get("celebrity_name"),
+    )
+
+
+def derive_exercise_type(video_url: str, body_part: str) -> str:
+    """
+    Derive exercise type from video path folder or body part.
+    Video paths look like: s3://ai-fitness-coach/VERTICAL VIDEOS/Yoga/...
+    """
+    if not video_url:
+        # Fallback based on body part
+        if body_part and body_part.lower() in ['core', 'other']:
+            return 'Functional'
+        return 'Strength'
+
+    video_lower = video_url.lower()
+
+    # Check video path for exercise type indicators
+    if 'yoga' in video_lower:
+        return 'Yoga'
+    elif 'stretch' in video_lower or 'mobility' in video_lower:
+        return 'Stretching'
+    elif 'hiit' in video_lower or 'cardio' in video_lower:
+        return 'Cardio'
+    elif 'calisthenics' in video_lower or 'functional' in video_lower:
+        return 'Functional'
+    elif 'abdominals' in video_lower or 'abs' in video_lower:
+        return 'Core'
+    elif any(x in video_lower for x in ['chest', 'back', 'shoulders', 'arms', 'legs', 'bicep', 'tricep']):
+        return 'Strength'
+    else:
+        return 'Strength'
+
+
+def derive_goals(name: str, body_part: str, target_muscle: str, video_url: str) -> List[str]:
+    """
+    Derive fitness goals this exercise supports based on name, muscles, and type.
+    """
+    goals = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+    tm_lower = target_muscle.lower() if target_muscle else ""
+    video_lower = video_url.lower() if video_url else ""
+
+    # Testosterone boosting - compound movements targeting large muscle groups
+    testosterone_keywords = ['squat', 'deadlift', 'bench press', 'row', 'pull-up', 'pullup',
+                           'lunge', 'leg press', 'hip thrust', 'clean', 'snatch']
+    if any(kw in name_lower for kw in testosterone_keywords) or bp_lower in ['quadriceps', 'glutes', 'back', 'chest']:
+        goals.append('Testosterone Boost')
+
+    # Weight loss / Fat burn - high intensity, cardio, full body
+    fat_burn_keywords = ['jump', 'burpee', 'hiit', 'cardio', 'mountain climber', 'plank jack',
+                        'high knee', 'sprint', 'skater', 'squat jump', 'box jump']
+    if any(kw in name_lower for kw in fat_burn_keywords) or 'cardio' in video_lower or 'hiit' in video_lower:
+        goals.append('Fat Burn')
+
+    # Muscle building - strength exercises with weights
+    muscle_keywords = ['press', 'curl', 'extension', 'row', 'fly', 'raise', 'pulldown', 'dip']
+    if any(kw in name_lower for kw in muscle_keywords):
+        goals.append('Muscle Building')
+
+    # Flexibility - yoga, stretching
+    flex_keywords = ['stretch', 'yoga', 'pose', 'flexibility', 'mobility', 'pigeon', 'cobra']
+    if any(kw in name_lower for kw in flex_keywords) or 'yoga' in video_lower or 'stretch' in video_lower:
+        goals.append('Flexibility')
+
+    # Core strength
+    core_keywords = ['crunch', 'plank', 'sit-up', 'ab ', 'core', 'twist', 'russian', 'hollow']
+    if any(kw in name_lower for kw in core_keywords) or bp_lower == 'core':
+        goals.append('Core Strength')
+
+    # Pelvic floor / Hip health
+    pelvic_keywords = ['kegel', 'pelvic', 'hip', 'glute bridge', 'clamshell', 'bird dog', 'dead bug']
+    if any(kw in name_lower for kw in pelvic_keywords) or bp_lower in ['hips', 'glutes']:
+        goals.append('Pelvic Health')
+
+    # Posture improvement
+    posture_keywords = ['face pull', 'reverse fly', 'row', 'scapula', 'thoracic', 'cat cow', 'superman']
+    if any(kw in name_lower for kw in posture_keywords) or 'back' in bp_lower:
+        goals.append('Posture')
+
+    return goals if goals else ['General Fitness']
+
+
+def derive_suitable_for(name: str, body_part: str, equipment: str, video_url: str) -> List[str]:
+    """
+    Derive who this exercise is suitable for based on intensity and requirements.
+    """
+    suitable = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+    eq_lower = equipment.lower() if equipment else ""
+    video_lower = video_url.lower() if video_url else ""
+
+    # Beginner friendly - bodyweight, simple movements
+    beginner_safe = ['wall', 'assisted', 'modified', 'seated', 'lying', 'supported']
+    high_impact = ['jump', 'burpee', 'box jump', 'plyometric', 'sprint', 'snatch', 'clean']
+
+    is_bodyweight = not equipment or 'bodyweight' in eq_lower or eq_lower == ''
+    is_high_impact = any(kw in name_lower for kw in high_impact)
+    is_beginner_mod = any(kw in name_lower for kw in beginner_safe)
+
+    if (is_bodyweight and not is_high_impact) or is_beginner_mod:
+        suitable.append('Beginner Friendly')
+
+    # Senior friendly - low impact, seated, stability focused
+    senior_safe = ['chair', 'seated', 'wall', 'balance', 'standing', 'stretch', 'yoga']
+    if any(kw in name_lower for kw in senior_safe) and not is_high_impact:
+        suitable.append('Senior Friendly')
+
+    # Pregnancy safe - no lying flat, no high impact, no heavy abs
+    pregnancy_unsafe = ['crunch', 'sit-up', 'lying leg raise', 'plank', 'burpee', 'jump',
+                       'heavy', 'deadlift', 'v-up', 'twist']
+    pregnancy_safe = ['cat cow', 'bird dog', 'kegel', 'pelvic tilt', 'wall sit',
+                     'seated', 'standing', 'arm', 'shoulder']
+    if any(kw in name_lower for kw in pregnancy_safe) and not any(kw in name_lower for kw in pregnancy_unsafe):
+        suitable.append('Pregnancy Safe')
+
+    # Low impact - good for joint issues
+    if not is_high_impact and ('stretch' in video_lower or 'yoga' in video_lower or is_bodyweight):
+        suitable.append('Low Impact')
+
+    # Home workout friendly
+    home_equipment = ['bodyweight', 'dumbbell', 'resistance band', 'yoga mat', 'chair', '']
+    if not equipment or any(eq in eq_lower for eq in home_equipment):
+        suitable.append('Home Workout')
+
+    return suitable if suitable else ['Gym']
+
+
+def derive_avoids(name: str, body_part: str, equipment: str) -> List[str]:
+    """
+    Derive what body parts/conditions this exercise might stress.
+    Helps users with injuries filter out exercises.
+    """
+    avoids = []
+    name_lower = name.lower() if name else ""
+    bp_lower = body_part.lower() if body_part else ""
+
+    # Exercises that stress the knees
+    knee_stress = ['squat', 'lunge', 'leg press', 'leg extension', 'jump', 'step-up', 'pistol']
+    if any(kw in name_lower for kw in knee_stress) or bp_lower in ['quadriceps', 'glutes']:
+        avoids.append('Stresses Knees')
+
+    # Exercises that stress the lower back
+    back_stress = ['deadlift', 'bent over', 'good morning', 'hyperextension', 'row', 'clean', 'snatch']
+    if any(kw in name_lower for kw in back_stress):
+        avoids.append('Stresses Lower Back')
+
+    # Exercises that stress shoulders
+    shoulder_stress = ['overhead', 'press', 'raise', 'pull-up', 'dip', 'push-up', 'fly']
+    if any(kw in name_lower for kw in shoulder_stress) or bp_lower == 'shoulders':
+        avoids.append('Stresses Shoulders')
+
+    # Exercises that stress wrists
+    wrist_stress = ['push-up', 'plank', 'handstand', 'front rack', 'wrist']
+    if any(kw in name_lower for kw in wrist_stress):
+        avoids.append('Stresses Wrists')
+
+    # High impact on joints
+    high_impact = ['jump', 'burpee', 'box jump', 'plyometric', 'sprint', 'running']
+    if any(kw in name_lower for kw in high_impact):
+        avoids.append('High Impact')
+
+    return avoids

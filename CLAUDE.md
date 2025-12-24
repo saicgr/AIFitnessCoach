@@ -26,7 +26,7 @@ Good practice:
 
 ### 2. API Integration Testing
 
-**Before deploying any OpenAI/API integration:**
+**Before deploying any Gemini/API integration:**
 
 1. **Create test data files** with sample API responses
 2. **Write unit tests** for parsing logic
@@ -134,7 +134,7 @@ if (kDebugMode) {
 - ⚠️  = Warning
 - 🎯 = Important milestone
 - 🏋️ = Workout-related
-- 🤖 = AI/OpenAI-related
+- 🤖 = AI/Gemini-related
 
 ### 7. State Management (Riverpod)
 
@@ -179,7 +179,7 @@ if (kDebugMode) {
 
 **Commit Messages:**
 ```
-feat: Add workout generation with OpenAI
+feat: Add workout generation with Gemini
 fix: Resolve JSON parsing error in workout service
 refactor: Improve chat UI message display logic
 test: Add unit tests for workout parsing
@@ -212,16 +212,16 @@ test: Add unit tests for workout parsing
 - Leverage null safety features
 - Use async/await properly
 
-### 13. OpenAI Integration Specific
+### 13. Gemini Integration Specific
 
 **Best Practices:**
-- Set reasonable timeouts (120s for GPT-4)
 - Parse JSON robustly (handle markdown code blocks)
-- Provide clear system prompts
+- Provide clear system instructions
 - Log request/response for debugging
-- Handle rate limits gracefully
-- Consider using streaming for better UX
+- Handle quota limits gracefully
+- Consider using streaming (`generateContentStream`) for better UX
 - Cache responses when appropriate
+- Configure safety settings appropriately for fitness content
 
 **Prompt Engineering:**
 - Be specific about response format
@@ -229,6 +229,7 @@ test: Add unit tests for workout parsing
 - Provide examples in prompt
 - Handle variation in AI responses
 - Validate all AI-generated data
+- Be aware of Gemini's safety filters that may block responses
 
 ### 14. Flutter Best Practices
 
@@ -271,22 +272,23 @@ Before considering code complete:
 
 **Key Requirements:**
 - NO mock data in production
-- Real OpenAI integration only
+- Real Gemini integration only
 - Workouts must generate successfully
 - Chat must handle long conversations
 - Must work on both Android and iOS
 - Clean, modern UI (2024 standards)
 
 **Testing Priority:**
-1. OpenAI API integration (highest priority)
+1. Gemini API integration (highest priority)
 2. Database operations
 3. Navigation flow
 4. UI responsiveness
 5. Error handling
 
 **Known Issues to Watch:**
-- JSON parsing from OpenAI (use robust extraction)
-- Timeout for large GPT-4 responses
+- JSON parsing from Gemini (use robust extraction)
+- Timeout for large Gemini responses
+- Gemini safety filters blocking fitness content
 - Android network permissions
 - Deep nested widget trees in chat
 - State management with Riverpod
@@ -301,6 +303,6 @@ Before considering code complete:
 
 ---
 
-**Version:** 1.0
-**Last Updated:** 2025-11-21
+**Version:** 1.1
+**Last Updated:** 2025-12-24
 **Maintained by:** Claude for AI Fitness Coach Project

@@ -36,6 +36,8 @@ class AppColors {
   static const Color limeGreen = Color(0xFFD4FF00);
   static const Color green = Color(0xFF22C55E);
   static const Color yellow = Color(0xFFFACC15);
+  static const Color red = Color(0xFFEF4444);
+  static const Color pink = Color(0xFFEC4899);
 
   // Surface colors
   static const Color surface = Color(0xFF121212);

@@ -33,38 +33,38 @@ class NotificationType(str, Enum):
 
 class SendChallengeRequest(BaseModel):
     """Request to send a workout challenge to friends."""
-    to_user_ids: List[str] = Field(..., description="List of user IDs to challenge")
-    workout_log_id: Optional[str] = Field(None, description="Workout log ID (if from completed workout)")
-    activity_id: Optional[str] = Field(None, description="Activity ID (if from social feed)")
-    workout_name: str = Field(..., description="Name of the workout")
+    to_user_ids: List[str] = Field(..., max_length=20, description="List of user IDs to challenge (max 20)")
+    workout_log_id: Optional[str] = Field(None, max_length=100, description="Workout log ID (if from completed workout)")
+    activity_id: Optional[str] = Field(None, max_length=100, description="Activity ID (if from social feed)")
+    workout_name: str = Field(..., max_length=200, description="Name of the workout")
     workout_data: dict = Field(..., description="Workout stats to beat (duration, volume, exercises)")
-    challenge_message: Optional[str] = Field(None, description="Personal challenge message")
+    challenge_message: Optional[str] = Field(None, max_length=500, description="Personal challenge message")
     is_retry: bool = Field(False, description="Whether this is a retry of a previous challenge")
-    retried_from_challenge_id: Optional[str] = Field(None, description="Original challenge ID if this is a retry")
+    retried_from_challenge_id: Optional[str] = Field(None, max_length=100, description="Original challenge ID if this is a retry")
 
 
 class AcceptChallengeRequest(BaseModel):
     """Request to accept a challenge."""
-    challenge_id: str
+    challenge_id: str = Field(..., max_length=100)
 
 
 class DeclineChallengeRequest(BaseModel):
     """Request to decline a challenge."""
-    challenge_id: str
-    reason: Optional[str] = None
+    challenge_id: str = Field(..., max_length=100)
+    reason: Optional[str] = Field(None, max_length=500)
 
 
 class CompleteChallengeRequest(BaseModel):
     """Request to mark challenge as completed with results."""
-    challenge_id: str
-    workout_log_id: str  # The workout they just completed
+    challenge_id: str = Field(..., max_length=100)
+    workout_log_id: str = Field(..., max_length=100)  # The workout they just completed
     challenged_stats: dict  # Their stats (duration, volume, etc.)
 
 
 class AbandonChallengeRequest(BaseModel):
     """Request to abandon/quit a challenge midway through workout."""
-    challenge_id: str
-    quit_reason: str = Field(..., description="Reason for quitting (shown to challenger)")
+    challenge_id: str = Field(..., max_length=100)
+    quit_reason: str = Field(..., max_length=500, description="Reason for quitting (shown to challenger)")
     partial_stats: Optional[dict] = Field(None, description="Partial workout stats before quitting")
 
 

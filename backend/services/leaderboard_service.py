@@ -7,9 +7,14 @@ This service handles all leaderboard-related business logic, keeping API endpoin
 from typing import Optional, Dict, List, Any
 from datetime import datetime, timezone
 
-from utils.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 from services.social_rag_service import get_social_rag_service
 from models.leaderboard import LeaderboardType, LeaderboardFilter
+
+
+def get_supabase_client():
+    """Get Supabase client for database operations."""
+    return get_supabase().client
 
 
 class LeaderboardService:

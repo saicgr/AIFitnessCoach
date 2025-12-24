@@ -4,11 +4,16 @@ Exercise Suggestions API - LangGraph agent-powered exercise alternatives.
 ENDPOINTS:
 - POST /api/v1/exercise-suggestions/suggest - Get AI-powered exercise suggestions
 
+RATE LIMITS:
+- /suggest: 5 requests/minute (AI-intensive)
+
 Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from services.langgraph_agents.exercise_suggestion import (
     ExerciseSuggestionState,
@@ -18,6 +23,9 @@ from core.logger import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
 
 # Build the graph once at module load
 exercise_suggestion_graph = None
@@ -74,7 +82,8 @@ class SuggestionResponse(BaseModel):
 # ==================== Endpoints ====================
 
 @router.post("/suggest", response_model=SuggestionResponse)
-async def get_exercise_suggestions(request: SuggestionRequest):
+@limiter.limit("5/minute")
+async def get_exercise_suggestions(http_request: Request, request: SuggestionRequest):
     """
     Get AI-powered exercise suggestions.
 

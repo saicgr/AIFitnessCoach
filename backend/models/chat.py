@@ -44,12 +44,12 @@ class CoachIntent(str, Enum):
 class AISettings(BaseModel):
     """AI personality and behavior settings."""
     # Personality & Tone
-    coaching_style: str = "motivational"  # "motivational", "professional", "friendly", "tough-love"
-    communication_tone: str = "encouraging"  # "casual", "encouraging", "formal"
-    encouragement_level: float = 0.7  # 0.0 - 1.0
+    coaching_style: str = Field(default="motivational", max_length=50)  # "motivational", "professional", "friendly", "tough-love"
+    communication_tone: str = Field(default="encouraging", max_length=50)  # "casual", "encouraging", "formal"
+    encouragement_level: float = Field(default=0.7, ge=0.0, le=1.0)  # 0.0 - 1.0
 
     # Response Preferences
-    response_length: str = "balanced"  # "concise", "balanced", "detailed"
+    response_length: str = Field(default="balanced", max_length=50)  # "concise", "balanced", "detailed"
     use_emojis: bool = True
     include_tips: bool = True
 
@@ -62,22 +62,22 @@ class AISettings(BaseModel):
 
 class UserProfile(BaseModel):
     """User profile for context in chat."""
-    id: str  # UUID from Supabase
-    fitness_level: str = "beginner"
-    goals: List[str] = []
-    equipment: List[str] = []
-    active_injuries: List[str] = []
-    name: Optional[str] = None
+    id: str = Field(..., max_length=100)  # UUID from Supabase
+    fitness_level: str = Field(default="beginner", max_length=50)
+    goals: List[str] = Field(default=[], max_length=20)
+    equipment: List[str] = Field(default=[], max_length=50)
+    active_injuries: List[str] = Field(default=[], max_length=20)
+    name: Optional[str] = Field(default=None, max_length=200)
 
 
 class WorkoutContext(BaseModel):
     """Current workout context."""
     id: int
-    name: str
-    type: str
-    difficulty: str
-    exercises: List[Dict[str, Any]] = []
-    scheduled_date: Optional[str] = None
+    name: str = Field(..., max_length=200)
+    type: str = Field(..., max_length=50)
+    difficulty: str = Field(..., max_length=50)
+    exercises: List[Dict[str, Any]] = Field(default=[], max_length=50)
+    scheduled_date: Optional[str] = Field(default=None, max_length=20)
     is_completed: bool = False
 
 
@@ -106,8 +106,8 @@ class ChatRequest(BaseModel):
             "ai_settings": {...}
         }
     """
-    message: str = Field(..., min_length=1, description="User's message")
-    user_id: str = Field(..., description="User ID (UUID from Supabase)")
+    message: str = Field(..., min_length=1, max_length=5000, description="User's message (max 5000 characters)")
+    user_id: str = Field(..., max_length=100, description="User ID (UUID from Supabase)")
     user_profile: Optional[UserProfile] = None
     current_workout: Optional[WorkoutContext] = None
     workout_schedule: Optional[WorkoutScheduleContext] = Field(
@@ -116,11 +116,13 @@ class ChatRequest(BaseModel):
     )
     conversation_history: List[Dict[str, Any]] = Field(
         default=[],
-        description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}]"
+        max_length=100,
+        description="Previous messages in format [{'role': 'user'/'assistant', 'content': '...'}] (max 100 messages)"
     )
     image_base64: Optional[str] = Field(
         default=None,
-        description="Base64 encoded image for food analysis (without data:image prefix)"
+        max_length=17_800_000,
+        description="Base64 encoded image for food analysis (max ~10MB decoded, ~13.3MB base64)"
     )
     ai_settings: Optional[AISettings] = Field(
         default=None,
@@ -131,17 +133,17 @@ class ChatRequest(BaseModel):
 class IntentExtraction(BaseModel):
     """Extracted intent and entities from user message."""
     intent: CoachIntent
-    exercises: List[str] = []
-    muscle_groups: List[str] = []
-    modification: Optional[str] = None
-    body_part: Optional[str] = None
+    exercises: List[str] = Field(default=[], max_length=20)
+    muscle_groups: List[str] = Field(default=[], max_length=20)
+    modification: Optional[str] = Field(default=None, max_length=200)
+    body_part: Optional[str] = Field(default=None, max_length=100)
     # App settings fields
-    setting_name: Optional[str] = None
+    setting_name: Optional[str] = Field(default=None, max_length=100)
     setting_value: Optional[bool] = None
     # Navigation fields
-    destination: Optional[str] = None
+    destination: Optional[str] = Field(default=None, max_length=100)
     # Hydration logging fields
-    hydration_amount: Optional[int] = None  # Number of glasses/cups
+    hydration_amount: Optional[int] = Field(default=None, ge=0, le=100)  # Number of glasses/cups
 
 
 class ChatResponse(BaseModel):
@@ -180,20 +182,20 @@ class ChatResponse(BaseModel):
 class ChatMessage(BaseModel):
     """Stored chat message."""
     id: Optional[int] = None
-    user_id: str  # UUID from Supabase
-    user_message: str
-    ai_response: str
-    intent: str
-    context_json: Optional[str] = None
+    user_id: str = Field(..., max_length=100)  # UUID from Supabase
+    user_message: str = Field(..., max_length=5000)
+    ai_response: str = Field(..., max_length=20000)
+    intent: str = Field(..., max_length=50)
+    context_json: Optional[str] = Field(default=None, max_length=50000)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class RAGDocument(BaseModel):
     """Document stored in RAG system."""
-    id: str
-    question: str
-    answer: str
-    intent: str
-    user_id: str  # UUID from Supabase
+    id: str = Field(..., max_length=100)
+    question: str = Field(..., max_length=5000)
+    answer: str = Field(..., max_length=20000)
+    intent: str = Field(..., max_length=50)
+    user_id: str = Field(..., max_length=100)  # UUID from Supabase
     metadata: Dict[str, Any] = {}
     embedding: Optional[List[float]] = None

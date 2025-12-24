@@ -135,7 +135,9 @@ The final response must include the detailed image prompt, the generated image, 
 26. Paywall 3 separate screens (display yearly price as monthly as well)
 26.1 Why is costs this much?
 26.2 Terms and Service and Privacy Policy
+27. Chatgpt launced apps today 23rd Dec 2025. These are some documentations and things knowledge https://developers.openai.com/apps-sdk/quickstart https://openai.com/index/introducing-apps-in-chatgpt/ https://developers.openai.com/apps-sdk/deploy/submission https://developers.openai.com/blog/what-makes-a-great-chatgpt-app/ https://developers.openai.com/apps-sdk/app-submission-guidelines#submitting-your-app https://openai.com/index/developers-can-now-submit-apps-to-chatgpt/
 
+Can you review and resrarch them all and think for scenarios if this app AIFitnessCoach has any use cases you would have review code and everything and then create a document to document if this app can be an app in chatgpt
 
 FUTURE
 1. Modify workout names based on interests, regions, favorite hero, movies etc

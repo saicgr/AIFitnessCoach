@@ -24,8 +24,13 @@ from models.workout_challenges import (
     ChallengeNotification, NotificationsResponse,
     ChallengeStats, ChallengeStatus,
 )
-from utils.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 from services.social_rag_service import get_social_rag_service
+
+
+def get_supabase_client():
+    """Get Supabase client for database operations."""
+    return get_supabase().client
 
 router = APIRouter(prefix="/challenges")
 
