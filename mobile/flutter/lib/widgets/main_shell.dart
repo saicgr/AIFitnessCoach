@@ -17,7 +17,7 @@ class MainShell extends ConsumerWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/nutrition')) return 1;
-    if (location.startsWith('/stats') || location.startsWith('/library') || location.startsWith('/schedule')) return 2;
+    if (location.startsWith('/stats')) return 2;
     if (location.startsWith('/social')) return 3;
     if (location.startsWith('/profile')) return 4;
     return 0;
@@ -32,7 +32,7 @@ class MainShell extends ConsumerWidget {
         context.go('/nutrition');
         break;
       case 2:
-        context.go('/library'); // Stats/Workouts screen
+        context.go('/stats'); // Comprehensive stats screen
         break;
       case 3:
         context.go('/social');
