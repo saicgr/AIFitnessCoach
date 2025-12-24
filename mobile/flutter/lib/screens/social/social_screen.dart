@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import 'tabs/feed_tab.dart';
 import 'tabs/challenges_tab.dart';
+import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'senior/senior_social_screen.dart';
 
@@ -24,7 +25,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -96,6 +97,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   tabs: const [
                     Tab(text: 'Feed'),
                     Tab(text: 'Challenges'),
+                    Tab(text: 'Leaderboard'),
                     Tab(text: 'Friends'),
                   ],
                 ),
@@ -107,6 +109,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             children: const [
               FeedTab(),
               ChallengesTab(),
+              LeaderboardTab(),
               FriendsTab(),
             ],
           ),

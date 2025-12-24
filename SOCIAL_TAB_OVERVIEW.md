@@ -2,13 +2,13 @@
 
 ## Tab Structure
 
-The Social screen has **3 main tabs**:
+The Social screen has **4 main tabs**:
 
 ```
 ┌─────────────────────────────────────────┐
 │  Social                    🔍  👤+      │
 ├─────────────────────────────────────────┤
-│  Feed  │ Challenges │ Friends           │
+│  Feed  │ Challenges │ Leaderboard │ Friends │
 │  ────                                   │
 └─────────────────────────────────────────┘
 ```
@@ -197,7 +197,158 @@ Currently shows **placeholder challenges**:
 
 ---
 
-## 3. Friends Tab
+## 3. Leaderboard Tab
+
+**✅ FULLY IMPLEMENTED** - Complete leaderboard system with country filtering!
+
+### Leaderboard Type Tabs
+
+```
+┌─────────────────────────────────────────┐
+│  🏆 Masters │ 🏋️ Volume │ 🔥 Streaks │ ⚡ This Week │
+│  ─────────                              │
+└─────────────────────────────────────────┘
+```
+
+**4 Leaderboard Types**:
+- **🏆 Challenge Masters**: Most challenge victories (first-attempt only!)
+- **🏋️ Volume Kings**: Total weight lifted across all workouts
+- **🔥 Workout Streaks**: Longest workout streaks (consistency)
+- **⚡ This Week**: Weekly challenges (resets every Monday)
+
+### Filter Chips
+
+```
+┌─────────────────────────────────────────┐
+│  🌍 Global │ 🇺🇸 Country │ 👥 Friends  │
+│  ──────                                 │
+└─────────────────────────────────────────┘
+```
+
+**3 Filter Options**:
+- **🌍 Global**: All users worldwide (unlocked at 10 workouts)
+- **🇺🇸 Country**: Users from your country (with country flag)
+- **👥 Friends**: Your friends only (always accessible)
+
+### Locked State (< 10 workouts)
+
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│           🔒                            │
+│    (Lock Icon in Orange Circle)        │
+│                                         │
+│  Global Leaderboard Locked              │
+│                                         │
+│  Complete 3 more workouts to unlock!    │
+│                                         │
+│  Progress                    7 / 10     │
+│  ████████░░ 70%                         │
+│                                         │
+│  [View Friends Leaderboard]             │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Unlocked Leaderboard View
+
+```
+┌─────────────────────────────────────────┐
+│  ┌─────────────────────────────────┐   │
+│  │ 🏆 YOUR RANK: #847              │   │
+│  │ ┌──────────┬──────────────────┐ │   │
+│  │ │ Top 5.2% │ 124 wins | 87%   │ │   │
+│  │ └──────────┴──────────────────┘ │   │
+│  └─────────────────────────────────┘   │
+│                                         │
+│  Updates in 23 min • Updated 37m ago    │
+│                                         │
+│  🥇 #1  🇺🇸 John Doe       1,247  ⚡   │
+│         🏆 1,247 wins | 📊 94.2%       │
+│         [BEAT HIS BEST]                 │
+│                                         │
+│  🥈 #2  🇬🇧 Sarah Lee      1,104  ✓   │
+│         🏆 1,104 wins | 📊 91.8%       │
+│         [Challenge Friend]              │
+│                                         │
+│  🥉 #3  🇨🇦 Mike Chen        892  +   │
+│         🏆 892 wins | 📊 88.5%         │
+│         [BEAT HIS BEST]                 │
+│                                         │
+│  ...                                    │
+│  ─────── YOUR RANK ───────              │
+│  846 🇺🇸 Alex Kim          125  +      │
+│  🔹 #847 YOU               124         │
+│       🏆 124 wins | 📊 87.0%           │
+│  848 🇺🇸 Chris Lee         123  +      │
+│  ─────────────────────────              │
+│  ...                                    │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Entry Card Features
+
+**Rank Display**:
+- 🥇 Gold medal for #1
+- 🥈 Silver medal for #2
+- 🥉 Bronze medal for #3
+- #4 and below show rank number
+
+**User Info**:
+- Avatar (or default icon)
+- Username
+- Country flag emoji (🇺🇸 🇬🇧 🇨🇦)
+- "✓ Friend" badge (green) if in friends list
+
+**Stats Display** (varies by leaderboard type):
+- Challenge Masters: 🏆 wins | 📊 win rate %
+- Volume Kings: 🏋️ total volume (K lbs) | 💪 workouts
+- Streaks: 🔥 current streak | ⭐ best streak
+- This Week: ⚡ weekly wins | 📊 weekly win rate %
+
+**Challenge Buttons**:
+- **Friends**: 🏆 Challenge button (direct challenge with notification)
+- **Strangers**: ⚡ Beat Their Best button (async, no notification until beaten)
+
+### Challenge Options Modal
+
+When clicking challenge button:
+
+```
+┌─────────────────────────────────────────┐
+│  Challenge John Doe                     │
+├─────────────────────────────────────────┤
+│                                         │
+│  🏆 Challenge Directly                  │
+│  Send a direct challenge notification   │
+│  (Friends only)                         │
+│                                         │
+│  ─────────────────────────────────      │
+│                                         │
+│  ⚡ Beat Their Best                     │
+│  Try to beat their record!              │
+│  (Async - they only get notified if     │
+│   you beat it)                          │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Key Features
+
+✅ **Country Filtering**: Show flag emojis (🇺🇸 🇬🇧 🇨🇦 etc.)
+✅ **Unlock Gate**: 10 workouts or 7 days to unlock global
+✅ **Friends Always Accessible**: Can always view friends leaderboard
+✅ **First-Attempt Only**: Retries don't count toward leaderboard
+✅ **Hourly Refresh**: Data updates every hour
+✅ **User Rank Card**: Sticky card showing your position
+✅ **Percentile**: "Top 5.2%" calculation
+✅ **Async Challenges**: "Beat Their Best" for non-friends
+✅ **Pull to Refresh**: Swipe down to manually refresh
+
+---
+
+## 4. Friends Tab
 
 Shows your friend connections:
 
@@ -333,6 +484,7 @@ Since the Challenges Tab isn't fully integrated yet, users access challenges thr
 
 - ✅ **Feed Tab**: Fully functional with challenge victory/completion posts, "BEAT THIS" buttons, reactions
 - ⚠️ **Challenges Tab**: Placeholder content (needs integration with ChallengesService)
+- ✅ **Leaderboard Tab**: **FULLY IMPLEMENTED** - Global/country/friends rankings with async challenges
 - ✅ **Friends Tab**: Basic friends list
 
 **The Challenge System Works Through**:
