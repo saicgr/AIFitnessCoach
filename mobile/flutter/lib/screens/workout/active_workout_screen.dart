@@ -2254,6 +2254,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         'totalSets': totalCompletedSets,
         'totalReps': totalReps,
         'totalVolumeKg': totalVolumeKg,
+        // Challenge data (if this workout was from a challenge)
+        'challengeId': widget.challengeId,
+        'challengeData': widget.challengeData,
       });
     }
   }
