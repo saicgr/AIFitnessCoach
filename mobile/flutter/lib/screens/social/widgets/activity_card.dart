@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+/// Reaction type enum matching backend
+enum ReactionType {
+  cheer('cheer', '🎉', 'Cheer', AppColors.orange),
+  fire('fire', '🔥', 'Fire', AppColors.red),
+  strong('strong', '💪', 'Strong', AppColors.purple),
+  clap('clap', '👏', 'Clap', AppColors.cyan),
+  heart('heart', '❤️', 'Heart', AppColors.pink);
+
+  final String value;
+  final String emoji;
+  final String label;
+  final Color color;
+
+  const ReactionType(this.value, this.emoji, this.label, this.color);
+}
 
 /// Activity Card - Displays a single activity feed item
 class ActivityCard extends StatelessWidget {
@@ -12,7 +29,8 @@ class ActivityCard extends StatelessWidget {
   final int reactionCount;
   final int commentCount;
   final bool hasUserReacted;
-  final VoidCallback onReact;
+  final String? userReactionType; // Type of user's reaction (if any)
+  final Function(String reactionType) onReact; // Changed to accept reaction type
   final VoidCallback onComment;
 
   const ActivityCard({
@@ -25,6 +43,7 @@ class ActivityCard extends StatelessWidget {
     required this.reactionCount,
     required this.commentCount,
     required this.hasUserReacted,
+    this.userReactionType,
     required this.onReact,
     required this.onComment,
   });
@@ -118,28 +137,46 @@ class ActivityCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: [
-                // React button
+                // React button with long-press support
                 Expanded(
-                  child: InkWell(
-                    onTap: onReact,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
+                  child: GestureDetector(
+                    onTap: () {
+                      // Quick tap - toggle default reaction (heart)
+                      HapticFeedback.lightImpact();
+                      onReact(hasUserReacted ? 'remove' : 'heart');
+                    },
+                    onLongPress: () {
+                      // Long press - show emoji picker
+                      HapticFeedback.mediumImpact();
+                      _showReactionPicker(context);
+                    },
+                    child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            hasUserReacted ? Icons.favorite : Icons.favorite_border,
-                            size: 20,
-                            color: hasUserReacted ? AppColors.pink : AppColors.textMuted,
-                          ),
+                          // Show emoji if user has reacted, otherwise heart icon
+                          if (hasUserReacted && userReactionType != null)
+                            Text(
+                              _getReactionEmoji(userReactionType!),
+                              style: const TextStyle(fontSize: 20),
+                            )
+                          else
+                            Icon(
+                              hasUserReacted ? Icons.favorite : Icons.favorite_border,
+                              size: 20,
+                              color: hasUserReacted ? AppColors.pink : AppColors.textMuted,
+                            ),
                           const SizedBox(width: 6),
                           Text(
-                            reactionCount > 0 ? '$reactionCount' : 'Cheer',
+                            reactionCount > 0 ? '$reactionCount' : 'React',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: hasUserReacted ? AppColors.pink : AppColors.textMuted,
+                              color: hasUserReacted ? _getReactionColor(userReactionType) : AppColors.textMuted,
                             ),
                           ),
                         ],
@@ -190,6 +227,149 @@ class ActivityCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Show reaction picker bottom sheet
+  void _showReactionPicker(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textMuted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Title
+            Text(
+              'React to this post',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 20),
+
+            // Reaction options
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: ReactionType.values.map((reaction) {
+                final isSelected = userReactionType == reaction.value;
+                return _buildReactionButton(
+                  context,
+                  reaction: reaction,
+                  isSelected: isSelected,
+                  onTap: () {
+                    Navigator.pop(context);
+                    HapticFeedback.mediumImpact();
+                    onReact(reaction.value);
+                  },
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Remove reaction button (if user has reacted)
+            if (hasUserReacted)
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  HapticFeedback.lightImpact();
+                  onReact('remove');
+                },
+                icon: const Icon(Icons.close, size: 18),
+                label: const Text('Remove Reaction'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReactionButton(
+    BuildContext context, {
+    required ReactionType reaction,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? reaction.color.withValues(alpha: 0.2)
+              : Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isSelected
+                ? reaction.color
+                : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              reaction.emoji,
+              style: const TextStyle(fontSize: 32),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              reaction.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? reaction.color : AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getReactionEmoji(String reactionType) {
+    try {
+      return ReactionType.values
+          .firstWhere((r) => r.value == reactionType)
+          .emoji;
+    } catch (_) {
+      return '❤️';
+    }
+  }
+
+  Color _getReactionColor(String? reactionType) {
+    if (reactionType == null) return AppColors.pink;
+    try {
+      return ReactionType.values
+          .firstWhere((r) => r.value == reactionType)
+          .color;
+    } catch (_) {
+      return AppColors.pink;
+    }
   }
 
   Widget _buildActivityContent(BuildContext context) {

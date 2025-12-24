@@ -82,7 +82,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     reactionCount: 12,
                     commentCount: 3,
                     hasUserReacted: index == 0,
-                    onReact: () => _handleReaction(),
+                    userReactionType: index == 0 ? 'fire' : null, // Example: first item has fire reaction
+                    onReact: (reactionType) => _handleReaction(reactionType),
                     onComment: () => _handleComment(),
                   ),
                 );
@@ -179,9 +180,10 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     );
   }
 
-  void _handleReaction() {
+  void _handleReaction(String reactionType) {
     HapticFeedback.lightImpact();
     // TODO: Send reaction to API
+    debugPrint('Reaction: $reactionType');
   }
 
   void _handleComment() {
