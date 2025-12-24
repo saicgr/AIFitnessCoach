@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 
 from models.social import (
@@ -525,7 +525,7 @@ async def update_comment(
 
     result = supabase.table("activity_comments").update({
         "comment_text": update.comment_text,
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", comment_id).execute()
 
     if not result.data:
@@ -676,7 +676,7 @@ async def get_challenges(
     if is_public is not None:
         query = query.eq("is_public", is_public)
     if active_only:
-        query = query.gte("end_date", datetime.utcnow().isoformat())
+        query = query.gte("end_date", datetime.now(timezone.utc).isoformat())
 
     query = query.order("created_at", desc=True)
 
@@ -789,7 +789,7 @@ async def update_challenge_progress(
     completed_at = None
     if progress_percentage >= 100:
         status = "completed"
-        completed_at = datetime.utcnow().isoformat()
+        completed_at = datetime.now(timezone.utc).isoformat()
 
     result = supabase.table("challenge_participants").update({
         "current_value": update.current_value,
@@ -890,7 +890,7 @@ async def get_privacy_settings(user_id: str):
         # Return default settings
         return UserPrivacySettings(
             user_id=user_id,
-            updated_at=datetime.utcnow(),
+            updated_at=datetime.now(timezone.utc),
         )
 
     return UserPrivacySettings(**result.data[0])
@@ -919,7 +919,7 @@ async def update_privacy_settings(
         for k, v in update.dict(exclude_unset=True).items()
         if v is not None
     }
-    update_data["updated_at"] = datetime.utcnow().isoformat()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     # Upsert (update if exists, insert if not)
     result = supabase.table("user_privacy_settings").upsert({
@@ -956,7 +956,7 @@ async def get_social_summary(user_id: str):
     # Get suggested challenges (public, active, not yet joined)
     challenges_result = supabase.table("challenges").select("*").eq(
         "is_public", True
-    ).gte("end_date", datetime.utcnow().isoformat()).limit(5).execute()
+    ).gte("end_date", datetime.now(timezone.utc).isoformat()).limit(5).execute()
 
     suggested_challenges = [Challenge(**row) for row in challenges_result.data]
 
@@ -1029,7 +1029,7 @@ async def get_senior_social_summary(user_id: str):
         if row.get("challenges"):
             challenge_data = row["challenges"]
             end_date = datetime.fromisoformat(challenge_data["end_date"].replace("Z", "+00:00"))
-            days_remaining = max(0, (end_date - datetime.utcnow()).days)
+            days_remaining = max(0, (end_date - datetime.now(timezone.utc)).days)
 
             simplified_challenges.append(SimplifiedChallenge(
                 id=row["id"],

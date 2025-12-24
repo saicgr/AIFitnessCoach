@@ -17,6 +17,7 @@ import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/social_provider.dart';
 import '../../data/rest_messages.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
@@ -2164,6 +2165,23 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         // 6. Mark workout as complete in workouts table
         await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
+
+        // 7. Auto-post to social feed (if enabled in privacy settings)
+        try {
+          final socialService = ref.read(socialServiceProvider);
+          await socialService.autoPostWorkoutCompletion(
+            userId: userId,
+            workoutLogId: workoutLogId ?? '',
+            workoutName: widget.workout.name,
+            durationMinutes: (_workoutSeconds / 60).round(),
+            exercisesCount: exercisesWithSets,
+            totalVolume: totalVolumeKg,
+          );
+          debugPrint('🎉 [Social] Workout auto-posted to feed');
+        } catch (e) {
+          debugPrint('⚠️ [Social] Failed to auto-post workout: $e');
+          // Non-critical - don't block workout completion
+        }
       }
     } catch (e) {
       debugPrint('❌ Failed to complete workout: $e');
