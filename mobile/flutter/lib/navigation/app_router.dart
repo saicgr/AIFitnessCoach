@@ -346,6 +346,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/nutrition',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: NutritionScreen(),
+            ),
+          ),
+          GoRoute(
             path: '/library',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: LibraryScreen(),
@@ -488,12 +494,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/hydration',
         builder: (context, state) => const HydrationScreen(),
-      ),
-
-      // Nutrition
-      GoRoute(
-        path: '/nutrition',
-        builder: (context, state) => const NutritionScreen(),
       ),
 
       // Weekly Summaries

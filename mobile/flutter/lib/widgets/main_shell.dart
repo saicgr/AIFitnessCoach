@@ -16,9 +16,10 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/library')) return 1;
-    if (location.startsWith('/social')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/nutrition')) return 1;
+    if (location.startsWith('/stats') || location.startsWith('/library') || location.startsWith('/schedule')) return 2;
+    if (location.startsWith('/social')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -28,12 +29,15 @@ class MainShell extends ConsumerWidget {
         context.go('/home');
         break;
       case 1:
-        context.go('/library');
+        context.go('/nutrition');
         break;
       case 2:
-        context.go('/social');
+        context.go('/library'); // Stats/Workouts screen
         break;
       case 3:
+        context.go('/social');
+        break;
+      case 4:
         context.go('/profile');
         break;
     }
@@ -106,7 +110,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           // Nav bar
           Container(
             height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 240),
+            constraints: const BoxConstraints(maxWidth: 300), // Increased from 240 for 5 items
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -135,13 +139,23 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  // Library - Purple
+                  // Nutrition - Green
                   _NavItem(
-                    icon: Icons.fitness_center_outlined,
-                    selectedIcon: Icons.fitness_center,
-                    label: 'Library',
+                    icon: Icons.restaurant_outlined,
+                    selectedIcon: Icons.restaurant,
+                    label: 'Nutrition',
                     isSelected: selectedIndex == 1,
                     onTap: () => onItemTapped(1),
+                    itemHeight: itemHeight,
+                    selectedColor: const Color(0xFF34C759),
+                  ),
+                  // Stats/Workouts - Purple
+                  _NavItem(
+                    icon: Icons.insights_outlined,
+                    selectedIcon: Icons.insights,
+                    label: 'Stats',
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemTapped(2),
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
@@ -150,20 +164,20 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     icon: Icons.people_outline_rounded,
                     selectedIcon: Icons.people_rounded,
                     label: 'Social',
-                    isSelected: selectedIndex == 2,
-                    onTap: () => onItemTapped(2),
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
                   ),
-                  // Profile - Green
+                  // Profile - Pink
                   _NavItem(
                     icon: Icons.person_outline_rounded,
                     selectedIcon: Icons.person_rounded,
                     label: 'Profile',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
+                    isSelected: selectedIndex == 4,
+                    onTap: () => onItemTapped(4),
                     itemHeight: itemHeight,
-                    selectedColor: const Color(0xFF34C759),
+                    selectedColor: const Color(0xFFFF2D55),
                   ),
                 ],
               ),

@@ -51,12 +51,12 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
         setState(() => _currentNavIndex = 0);
         break;
       case 1:
-        // Go to library
+        // Go to workouts/stats
         context.push('/library');
         break;
       case 2:
-        // Go to social
-        context.push('/social');
+        // Go to nutrition/food
+        context.push('/nutrition');
         break;
       case 3:
         // Go to settings
