@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/social_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
 
@@ -15,12 +17,23 @@ class FeedTab extends ConsumerStatefulWidget {
 
 class _FeedTabState extends ConsumerState<FeedTab> {
   final ScrollController _scrollController = ScrollController();
-  bool _isLoading = false;
+  String? _userId;
+  bool _isLoadingUser = true;
 
   @override
   void initState() {
     super.initState();
-    // TODO: Load activity feed from API
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (mounted) {
+      setState(() {
+        _userId = userId;
+        _isLoadingUser = false;
+      });
+    }
   }
 
   @override
@@ -33,77 +46,126 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // TODO: Replace with actual data from provider
-    final hasActivities = false; // Placeholder
+    // Show loading while fetching userId
+    if (_isLoadingUser) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    if (!hasActivities && !_isLoading) {
+    // If no userId, show error
+    if (_userId == null) {
       return SocialEmptyState(
-        icon: Icons.people_outline_rounded,
-        title: 'No Activity Yet',
-        description: 'Follow friends to see their workouts\nand achievements here!',
-        actionLabel: 'Find Friends',
-        onAction: () {
-          // TODO: Navigate to friends tab or search
-          HapticFeedback.lightImpact();
-        },
+        icon: Icons.error_outline_rounded,
+        title: 'Not Logged In',
+        description: 'Please log in to see your activity feed',
+        actionLabel: null,
+        onAction: null,
       );
     }
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        // Quick Stats Summary
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _buildQuickStats(context, isDark),
-          ),
-        ),
+    // Use the activityFeedProvider to load feed data
+    final activityFeedAsync = ref.watch(activityFeedProvider(_userId!));
 
-        // Activity Feed List
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                // TODO: Replace with actual activity data
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: ActivityCard(
-                    userName: 'John Doe',
-                    userAvatar: null,
-                    activityType: 'workout_completed',
-                    activityData: {
-                      'workout_name': 'Upper Body Strength',
-                      'duration_minutes': 45,
-                      'exercises_count': 8,
-                    },
-                    timestamp: DateTime.now().subtract(Duration(hours: index + 1)),
-                    reactionCount: 12,
-                    commentCount: 3,
-                    hasUserReacted: index == 0,
-                    userReactionType: index == 0 ? 'fire' : null, // Example: first item has fire reaction
-                    onReact: (reactionType) => _handleReaction(reactionType),
-                    onComment: () => _handleComment(),
-                  ),
-                );
-              },
-              childCount: 5, // TODO: Replace with actual count
+    return activityFeedAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) {
+        debugPrint('❌ [FeedTab] Error loading feed: $error');
+        return SocialEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'Failed to Load Feed',
+          description: 'Could not load your activity feed.\nPlease try again later.',
+          actionLabel: 'Retry',
+          onAction: () {
+            ref.invalidate(activityFeedProvider(_userId!));
+          },
+        );
+      },
+      data: (feedData) {
+        final activities = (feedData['activities'] as List?) ?? [];
+        final hasActivities = activities.isNotEmpty;
+
+        if (!hasActivities) {
+          return SocialEmptyState(
+            icon: Icons.people_outline_rounded,
+            title: 'No Activity Yet',
+            description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
+            actionLabel: null,
+            onAction: null,
+          );
+        }
+
+        return CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            // Quick Stats Summary
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: _buildQuickStats(context, isDark, feedData),
+              ),
             ),
-          ),
-        ),
 
-        // Bottom spacing for floating nav bar
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 100),
-        ),
-      ],
+            // Activity Feed List
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final activity = activities[index] as Map<String, dynamic>;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: ActivityCard(
+                        userName: activity['user_name'] as String? ?? 'User',
+                        userAvatar: activity['user_avatar'] as String?,
+                        activityType: activity['activity_type'] as String? ?? 'workout_completed',
+                        activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
+                        timestamp: _parseTimestamp(activity['created_at']),
+                        reactionCount: activity['reaction_count'] as int? ?? 0,
+                        commentCount: activity['comment_count'] as int? ?? 0,
+                        hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
+                        userReactionType: activity['user_reaction_type'] as String?,
+                        onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType),
+                        onComment: () => _handleComment(activity['id'] as String),
+                      ),
+                    );
+                  },
+                  childCount: activities.length,
+                ),
+              ),
+            ),
+
+            // Bottom spacing for floating nav bar
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 100),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildQuickStats(BuildContext context, bool isDark) {
+  DateTime _parseTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is String) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (e) {
+        debugPrint('⚠️ [FeedTab] Failed to parse timestamp: $timestamp');
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
+  }
+
+  Widget _buildQuickStats(BuildContext context, bool isDark, Map<String, dynamic> feedData) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Extract stats from feedData
+    final friendsCount = feedData['friends_count'] as int? ?? 0;
+    final challengesCount = feedData['challenges_count'] as int? ?? 0;
+    final reactionsCount = feedData['reactions_received_count'] as int? ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -119,7 +181,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             context,
             icon: Icons.people_rounded,
             label: 'Friends',
-            value: '24',
+            value: friendsCount.toString(),
             color: AppColors.cyan,
           ),
           _buildStatDivider(isDark),
@@ -127,7 +189,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             context,
             icon: Icons.emoji_events_rounded,
             label: 'Challenges',
-            value: '3',
+            value: challengesCount.toString(),
             color: AppColors.orange,
           ),
           _buildStatDivider(isDark),
@@ -135,7 +197,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             context,
             icon: Icons.favorite_rounded,
             label: 'Reactions',
-            value: '89',
+            value: reactionsCount.toString(),
             color: AppColors.pink,
           ),
         ],
@@ -180,14 +242,60 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     );
   }
 
-  void _handleReaction(String reactionType) {
+  Future<void> _handleReaction(String activityId, String reactionType) async {
     HapticFeedback.lightImpact();
-    // TODO: Send reaction to API
-    debugPrint('Reaction: $reactionType');
+
+    if (_userId == null) return;
+
+    try {
+      final socialService = ref.read(socialServiceProvider);
+
+      // Toggle reaction: if already reacted with this type, remove it; otherwise add/update
+      final activity = ref.read(activityFeedProvider(_userId!)).value?['activities']
+          ?.firstWhere((a) => a['id'] == activityId, orElse: () => null);
+
+      if (activity != null &&
+          activity['user_has_reacted'] == true &&
+          activity['user_reaction_type'] == reactionType) {
+        // Remove reaction
+        await socialService.removeReaction(
+          userId: _userId!,
+          activityId: activityId,
+        );
+        debugPrint('🔄 [FeedTab] Removed reaction: $reactionType');
+      } else {
+        // Add or update reaction
+        await socialService.addReaction(
+          userId: _userId!,
+          activityId: activityId,
+          reactionType: reactionType,
+        );
+        debugPrint('🔄 [FeedTab] Added reaction: $reactionType');
+      }
+
+      // Refresh the feed to show updated reaction counts
+      ref.invalidate(activityFeedProvider(_userId!));
+    } catch (e) {
+      debugPrint('❌ [FeedTab] Error handling reaction: $e');
+      // Show error snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update reaction. Please try again.')),
+        );
+      }
+    }
   }
 
-  void _handleComment() {
+  void _handleComment(String activityId) {
     HapticFeedback.lightImpact();
     // TODO: Show comment bottom sheet
+    debugPrint('💬 [FeedTab] Comment on activity: $activityId');
+
+    // Placeholder: Show coming soon message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comments feature coming soon!')),
+      );
+    }
   }
 }
