@@ -8,7 +8,7 @@ from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
-from api.v1 import subscriptions, analytics
+from api.v1 import subscriptions, analytics, stats
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -73,3 +73,6 @@ router.include_router(subscriptions.router, prefix="/subscriptions", tags=["Subs
 
 # Analytics and screen time tracking
 router.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+
+# Comprehensive stats endpoints (aggregates achievements, PRs, measurements, workout stats)
+router.include_router(stats.router, tags=["Stats"])
