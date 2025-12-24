@@ -581,31 +581,243 @@ class _ActivityCardState extends State<ActivityCard> {
             },
           ),
 
-          // Copy workout button
+          // Workout action buttons
+          Divider(height: 1, color: cardBorder.withValues(alpha: 0.3)),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  // TODO: Implement copy workout feature
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Copy Workout feature coming soon!'),
-                      backgroundColor: AppColors.cyan,
-                      behavior: SnackBarBehavior.floating,
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Save button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _showSaveWorkoutDialog(context);
+                    },
+                    icon: const Icon(Icons.bookmark_outline, size: 18),
+                    label: const Text('Save'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.cyan,
+                      side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.copy_outlined, size: 18),
-                label: const Text('Copy This Workout'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.cyan,
-                  side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+                  ),
                 ),
+                const SizedBox(width: 8),
+
+                // Do Now button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _showDoWorkoutDialog(context);
+                    },
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: const Text('Do Now'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cyan,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Schedule button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      _showScheduleWorkoutDialog(context);
+                    },
+                    icon: const Icon(Icons.calendar_today, size: 18),
+                    label: const Text('Schedule'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.orange,
+                      side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show save workout dialog
+  void _showSaveWorkoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: elevated,
+        title: const Text('Save Workout'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Save "${widget.activityData['workout_name']}" to your library?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You can access it anytime from the Library tab.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
               ),
             ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Call API to save workout
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Workout saved to Library!'),
+                  backgroundColor: AppColors.cyan,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.cyan,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show do workout dialog
+  void _showDoWorkoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: elevated,
+        title: const Text('Do This Workout Now'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Start "${widget.activityData['workout_name']}" now?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This will replace your current workout plan for today.',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to ActiveWorkoutScreen with this workout
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🏋️ Starting workout...'),
+                  backgroundColor: AppColors.cyan,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.cyan,
+            ),
+            child: const Text('Start Workout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show schedule workout dialog
+  void _showScheduleWorkoutDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: elevated,
+        title: const Text('Schedule Workout'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Schedule "${widget.activityData['workout_name']}" for:',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: selectedDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  selectedDate = date;
+                }
+              },
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: Text('${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.cyan,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Call API to schedule workout
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('📅 Workout scheduled for ${selectedDate.month}/${selectedDate.day}!'),
+                  backgroundColor: AppColors.orange,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange,
+            ),
+            child: const Text('Schedule'),
           ),
         ],
       ),
