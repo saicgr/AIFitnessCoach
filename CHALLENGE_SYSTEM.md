@@ -87,8 +87,34 @@ A comprehensive friend-to-friend workout challenge system with psychological pre
 **Retrying Challenges**
 - Click "Retry Challenge" → confirmation dialog
 - "This will challenge [name] back with the same workout!"
-- Creates new challenge in reverse direction
-- User can attempt to beat the original workout
+- Creates new challenge in reverse direction with retry tracking
+- Challenge marked as `is_retry = true` in database
+- Links to original challenge via `retried_from_challenge_id`
+- Original challenge's `retry_count` auto-increments
+- ChromaDB logs retry event separately from new challenges
+- Retry message: "Round 2! 💪"
+- User can track retry win rate and most retried workouts
+
+### 5. Retry Tracking & Analytics
+
+**Retry Statistics (Profile)**
+- **Total Retries**: Number of times user has retried challenges
+- **Retries Won**: How many retry attempts resulted in victories
+- **Retry Win Rate**: Percentage of retries that were successful
+- **Most Retried Workout**: Which workout they retry most often
+- **Retry Chains**: View full history of retry attempts
+
+**Database Tracking**
+- Every retry is linked to original challenge
+- Retry count tracked on original challenge
+- Recursive query to view full retry chains
+- Statistics calculated via database function
+
+**AI Insights (via ChromaDB)**
+- "You usually win on your 2nd retry attempt!"
+- "Leg workouts require 3x more retries on average"
+- "Your persistence paid off - 5th retry was the charm!"
+- "Friends are retrying your workouts more - you set tough benchmarks!"
 
 ## Technical Architecture
 
@@ -114,6 +140,9 @@ A comprehensive friend-to-friend workout challenge system with psychological pre
 - did_beat (BOOLEAN)
 - quit_reason (TEXT) -- Shown to challenger
 - partial_stats (JSONB) -- Stats before quitting
+- is_retry (BOOLEAN) -- Whether this is a retry challenge
+- retried_from_challenge_id (UUID, FK → workout_challenges) -- Original challenge if retry
+- retry_count (INTEGER) -- Number of times this challenge has been retried
 - created_at (TIMESTAMP)
 - expires_at (TIMESTAMP) -- Default: NOW() + 7 days
 ```
@@ -133,11 +162,19 @@ A comprehensive friend-to-friend workout challenge system with psychological pre
 - `create_challenge_notification()` - Auto-notify on challenge creation
 - `notify_challenge_accepted()` - Auto-notify when accepted
 - `notify_challenge_abandoned()` - Auto-notify when user quits
+- `increment_retry_count()` - Auto-increment retry_count when retry is created
 - `expire_old_challenges()` - Auto-expire pending challenges after 7 days
+
+#### Database Functions
+- `get_user_retry_stats(p_user_id)` - Get retry statistics for a user
+  - Returns: total_retries, retries_won, retry_win_rate, most_retried_workout, avg_retries_to_win
+- `get_user_abandonment_stats(p_user_id)` - Get quit statistics for a user
+  - Returns: total_abandoned, most_common_quit_reason, abandonment_rate
 
 #### Views
 - `pending_challenges_with_users` - Active challenges with user details
-- `challenge_leaderboard` - Win/loss/abandonment stats per user
+- `challenge_leaderboard` - Win/loss/abandonment/retry stats per user (includes retry counts and win rates)
+- `challenge_retry_chains` - Recursive view showing full retry chains for challenges
 
 ### Backend API Endpoints
 
@@ -285,6 +322,9 @@ All challenge events are logged to ChromaDB for AI insights:
 # Challenge creation
 "John challenged Sarah to 'Beast Mode Legs' (35 min, 10000 lbs)"
 
+# Challenge retry
+"Sarah RETRIED challenge against John for 'Beast Mode Legs' (not giving up!)"
+
 # Challenge completion
 "Sarah beat John's 'Beast Mode Legs' challenge (28 min vs 35 min, 12500 lbs vs 10000 lbs)"
 
@@ -293,6 +333,7 @@ All challenge events are logged to ChromaDB for AI insights:
 
 # Challenge patterns
 "Users tend to abandon leg workouts 3x more than upper body"
+"Most users win challenges on their 2nd retry attempt"
 ```
 
 ### AI Use Cases
@@ -300,6 +341,9 @@ All challenge events are logged to ChromaDB for AI insights:
 - **Smart Challenge Recommendations**: "Based on your history, you have an 80% win rate on upper body challenges"
 - **Workout Difficulty Calibration**: "This workout has a 65% abandonment rate - it's tough but you can do it!"
 - **Social Insights**: "Your friends challenge you to leg workouts 2x more - they think it's your weakness!"
+- **Retry Insights**: "You usually win on your 2nd retry attempt - keep going!"
+- **Persistence Recognition**: "This is your 5th retry for this workout - your determination is inspiring!"
+- **Workout Analysis**: "Leg workouts require 3x more retries on average - you're not alone!"
 
 ## Migrations
 
@@ -318,6 +362,15 @@ All challenge events are logged to ChromaDB for AI insights:
 - Adds `notify_challenge_abandoned()` trigger
 - Updates leaderboard view with abandonment stats
 - Adds `get_user_abandonment_stats()` function
+
+### Migration 032: Retry Tracking
+**File**: `backend/migrations/032_challenge_retry_tracking.sql`
+- Adds `is_retry`, `retried_from_challenge_id`, `retry_count` columns
+- Creates `increment_retry_count()` trigger (auto-increments when retry created)
+- Updates `challenge_leaderboard` view with retry statistics
+- Adds `get_user_retry_stats()` function (total retries, retry win rate, most retried workout)
+- Creates `challenge_retry_chains` recursive view for visualizing retry chains
+- Adds indexes for retry queries
 
 ## Configuration Options
 
