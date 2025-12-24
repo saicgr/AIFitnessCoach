@@ -9,7 +9,7 @@ from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
 from api.v1 import subscriptions, analytics, stats, social
-from api.v1 import saved_workouts, challenges
+from api.v1 import saved_workouts, challenges, leaderboard
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -86,3 +86,6 @@ router.include_router(saved_workouts.router, prefix="/saved-workouts", tags=["Sa
 
 # Workout challenges (friend-to-friend)
 router.include_router(challenges.router, tags=["Challenges"])
+
+# Leaderboards (global, country, friends)
+router.include_router(leaderboard.router, tags=["Leaderboard"])
