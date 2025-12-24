@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/services/saved_workouts_service.dart';
+import '../../../data/api_client.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Reaction type enum matching backend
@@ -21,6 +23,8 @@ enum ReactionType {
 
 /// Activity Card - Displays a single activity feed item with expandable workout details
 class ActivityCard extends StatefulWidget {
+  final String activityId; // Activity ID for saving/scheduling
+  final String currentUserId; // Current logged-in user ID
   final String userName;
   final String? userAvatar;
   final String activityType;
@@ -32,9 +36,12 @@ class ActivityCard extends StatefulWidget {
   final String? userReactionType; // Type of user's reaction (if any)
   final Function(String reactionType) onReact; // Changed to accept reaction type
   final VoidCallback onComment;
+  final List<Map<String, dynamic>>? badges; // Optional workout badges (TRENDING, HALL OF FAME, etc.)
 
   const ActivityCard({
     super.key,
+    required this.activityId,
+    required this.currentUserId,
     required this.userName,
     this.userAvatar,
     required this.activityType,
@@ -46,6 +53,7 @@ class ActivityCard extends StatefulWidget {
     this.userReactionType,
     required this.onReact,
     required this.onComment,
+    this.badges,
   });
 
   @override
@@ -54,6 +62,13 @@ class ActivityCard extends StatefulWidget {
 
 class _ActivityCardState extends State<ActivityCard> {
   bool _isExpanded = false;
+  late final SavedWorkoutsService _savedWorkoutsService;
+
+  @override
+  void initState() {
+    super.initState();
+    _savedWorkoutsService = SavedWorkoutsService(ApiClient());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +422,12 @@ class _ActivityCardState extends State<ActivityCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Display badges if available
+        if (widget.badges != null && widget.badges!.isNotEmpty) ...[
+          _buildBadges(context, widget.badges!),
+          const SizedBox(height: 8),
+        ],
+
         RichText(
           text: TextSpan(
             style: DefaultTextStyle.of(context).style,
@@ -695,16 +716,47 @@ class _ActivityCardState extends State<ActivityCard> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Call API to save workout
+
+              // Show loading
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('✅ Workout saved to Library!'),
-                  backgroundColor: AppColors.cyan,
+                  content: Text('Saving workout...'),
+                  duration: Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
+
+              try {
+                // Call API to save workout
+                await _savedWorkoutsService.saveWorkoutFromActivity(
+                  userId: widget.currentUserId,
+                  activityId: widget.activityId,
+                  folder: 'From Friends',
+                );
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Workout saved to Library!'),
+                      backgroundColor: AppColors.cyan,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                debugPrint('❌ Error saving workout: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to save workout: $e'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.cyan,
@@ -795,17 +847,55 @@ class _ActivityCardState extends State<ActivityCard> {
             child: const Text('Not Today'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Navigate to ActiveWorkoutScreen with challenge mode
+
+              // Show loading
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🏆 Challenge accepted! Starting workout...'),
-                  backgroundColor: AppColors.orange,
+                  content: Text('💪 Accepting challenge...'),
+                  duration: Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
-                  duration: Duration(seconds: 2),
                 ),
               );
+
+              try {
+                // Call API to accept challenge (tracks click, saves workout, returns session)
+                final workoutSession = await _savedWorkoutsService.acceptChallenge(
+                  userId: widget.currentUserId,
+                  activityId: widget.activityId,
+                );
+
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('🏆 Challenge accepted! Starting workout...'),
+                      backgroundColor: AppColors.orange,
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+
+                  // TODO: Navigate to ActiveWorkoutScreen with workoutSession data
+                  // Navigator.push(context, MaterialPageRoute(
+                  //   builder: (context) => ActiveWorkoutScreen(
+                  //     workoutData: workoutSession,
+                  //     isChallengeMode: true,
+                  //   ),
+                  // ));
+                }
+              } catch (e) {
+                debugPrint('❌ Error accepting challenge: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to start challenge: $e'),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.orange,
@@ -848,65 +938,15 @@ class _ActivityCardState extends State<ActivityCard> {
   void _showScheduleWorkoutDialog(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: elevated,
-        title: const Text('Schedule Workout'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Schedule "${widget.activityData['workout_name']}" for:',
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (date != null) {
-                  selectedDate = date;
-                }
-              },
-              icon: const Icon(Icons.calendar_today, size: 18),
-              label: Text('${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Call API to schedule workout
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('📅 Workout scheduled for ${selectedDate.month}/${selectedDate.day}!'),
-                  backgroundColor: AppColors.orange,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
-            ),
-            child: const Text('Schedule'),
-          ),
-        ],
+      builder: (context) => _ScheduleWorkoutDialog(
+        activityId: widget.activityId,
+        currentUserId: widget.currentUserId,
+        workoutName: widget.activityData['workout_name'] ?? 'this workout',
+        savedWorkoutsService: _savedWorkoutsService,
+        elevated: elevated,
       ),
     );
   }
@@ -1052,6 +1092,183 @@ class _ActivityCardState extends State<ActivityCard> {
             fontSize: 13,
             color: AppColors.textMuted,
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Build badge chips (TRENDING, HALL OF FAME, BEAST MODE, etc.)
+  Widget _buildBadges(BuildContext context, List<Map<String, dynamic>> badges) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: badges.map((badge) {
+        final type = badge['type'] as String;
+        final label = badge['label'] as String;
+        final colorStr = badge['color'] as String;
+
+        // Map color strings to actual colors
+        Color badgeColor;
+        switch (colorStr.toLowerCase()) {
+          case 'orange':
+            badgeColor = AppColors.orange;
+            break;
+          case 'gold':
+            badgeColor = const Color(0xFFFFD700);
+            break;
+          case 'red':
+            badgeColor = AppColors.red;
+            break;
+          case 'purple':
+            badgeColor = AppColors.purple;
+            break;
+          default:
+            badgeColor = AppColors.cyan;
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: badgeColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: badgeColor.withValues(alpha: 0.4), width: 1),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: badgeColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+/// Schedule Workout Dialog - Stateful to handle date selection
+class _ScheduleWorkoutDialog extends StatefulWidget {
+  final String activityId;
+  final String currentUserId;
+  final String workoutName;
+  final SavedWorkoutsService savedWorkoutsService;
+  final Color elevated;
+
+  const _ScheduleWorkoutDialog({
+    required this.activityId,
+    required this.currentUserId,
+    required this.workoutName,
+    required this.savedWorkoutsService,
+    required this.elevated,
+  });
+
+  @override
+  State<_ScheduleWorkoutDialog> createState() => _ScheduleWorkoutDialogState();
+}
+
+class _ScheduleWorkoutDialogState extends State<_ScheduleWorkoutDialog> {
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = DateTime.now().add(const Duration(days: 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: widget.elevated,
+      title: const Text('Schedule Workout'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Schedule "${widget.workoutName}" for:',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (date != null) {
+                setState(() {
+                  _selectedDate = date;
+                });
+              }
+            },
+            icon: const Icon(Icons.calendar_today, size: 18),
+            label: Text(
+              '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.cyan,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            Navigator.pop(context);
+
+            // Show loading
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('📅 Scheduling workout...'),
+                duration: Duration(seconds: 1),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+
+            try {
+              // Call API to schedule workout
+              await widget.savedWorkoutsService.saveAndSchedule(
+                userId: widget.currentUserId,
+                activityId: widget.activityId,
+                scheduledDate: _selectedDate,
+              );
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '📅 Workout scheduled for ${_selectedDate.month}/${_selectedDate.day}!',
+                    ),
+                    backgroundColor: AppColors.orange,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            } catch (e) {
+              debugPrint('❌ Error scheduling workout: $e');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to schedule workout: $e'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.orange,
+          ),
+          child: const Text('Schedule'),
         ),
       ],
     );

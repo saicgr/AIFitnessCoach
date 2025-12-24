@@ -13,8 +13,166 @@ from models.saved_workouts import (
     ExerciseTemplate,
 )
 from utils.supabase_client import get_supabase_client
+from services.social_rag_service import get_social_rag_service
 
 router = APIRouter(prefix="/saved-workouts")
+
+
+# ============================================================
+# CHALLENGE TRACKING
+# ============================================================
+
+@router.post("/challenge/{activity_id}")
+async def track_challenge_click(
+    user_id: str,
+    activity_id: str,
+):
+    """
+    Track when user clicks 'BEAT THIS WORKOUT' button.
+    Increments challenge_count in workout_shares.
+
+    Args:
+        user_id: User who accepted the challenge
+        activity_id: Activity ID being challenged
+
+    Returns:
+        Updated challenge count
+    """
+    supabase = get_supabase_client()
+
+    # Get or create workout_shares entry
+    shares_result = supabase.table("workout_shares").select("*").eq(
+        "activity_id", activity_id
+    ).execute()
+
+    if shares_result.data:
+        # Update existing
+        share_id = shares_result.data[0]["id"]
+        new_count = shares_result.data[0]["challenge_count"] + 1
+
+        supabase.table("workout_shares").update({
+            "challenge_count": new_count,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", share_id).execute()
+
+    else:
+        # Create new workout_shares entry
+        activity_result = supabase.table("activity_feed").select("user_id").eq(
+            "id", activity_id
+        ).execute()
+
+        if not activity_result.data:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        new_count = 1
+        supabase.table("workout_shares").insert({
+            "shared_by": activity_result.data[0]["user_id"],
+            "activity_id": activity_id,
+            "challenge_count": new_count,
+            "is_public": True,
+        }).execute()
+
+    # Store challenge in ChromaDB for AI insights
+    try:
+        social_rag = get_social_rag_service()
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+        # Log challenge acceptance
+        collection = social_rag.get_social_collection()
+        collection.add(
+            documents=[f"{user_name} accepted challenge for activity {activity_id}"],
+            metadatas=[{
+                "user_id": user_id,
+                "activity_id": activity_id,
+                "interaction_type": "challenge",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }],
+            ids=[f"challenge_{user_id}_{activity_id}_{datetime.now().timestamp()}"],
+        )
+    except Exception as e:
+        print(f"⚠️ [Challenge] Failed to log to ChromaDB: {e}")
+
+    print(f"✅ [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
+
+    return {
+        "challenge_count": new_count,
+        "message": "Challenge tracked successfully"
+    }
+
+
+# ============================================================
+# WORKOUT BADGES
+# ============================================================
+
+@router.get("/badges/{activity_id}")
+async def get_workout_badges(activity_id: str):
+    """
+    Get badges for a workout activity.
+
+    Returns badges like TRENDING, HALL OF FAME, MOST COPIED, BEAST MODE.
+
+    Args:
+        activity_id: Activity ID
+
+    Returns:
+        List of badges with metadata
+    """
+    supabase = get_supabase_client()
+
+    # Get workout_shares data
+    shares_result = supabase.table("workout_shares").select("*").eq(
+        "activity_id", activity_id
+    ).execute()
+
+    badges = []
+
+    if shares_result.data:
+        share = shares_result.data[0]
+
+        # TRENDING badge
+        if share.get("is_trending"):
+            badges.append({
+                "type": "trending",
+                "label": "🔥 TRENDING",
+                "color": "orange",
+                "description": f"{share['share_count']} saves in last 7 days"
+            })
+
+        # HALL OF FAME badge
+        if share.get("is_hall_of_fame") or share.get("share_count", 0) >= 100:
+            badges.append({
+                "type": "hall_of_fame",
+                "label": "👑 HALL OF FAME",
+                "color": "gold",
+                "description": f"{share['share_count']} total saves"
+            })
+
+        # MOST COPIED badge
+        if share.get("is_most_copied"):
+            badges.append({
+                "type": "most_copied",
+                "label": "⭐ MOST COPIED",
+                "color": "cyan",
+                "description": "Top 10 this week"
+            })
+
+        # BEAST MODE badge
+        if share.get("is_beast_mode") or share.get("challenge_count", 0) >= 50:
+            badges.append({
+                "type": "beast_mode",
+                "label": "💀 BEAST MODE",
+                "color": "red",
+                "description": f"{share['challenge_count']} challenges accepted"
+            })
+
+    return {
+        "activity_id": activity_id,
+        "badges": badges,
+        "share_count": shares_result.data[0]["share_count"] if shares_result.data else 0,
+        "challenge_count": shares_result.data[0]["challenge_count"] if shares_result.data else 0,
+        "completion_count": shares_result.data[0]["completion_count"] if shares_result.data else 0,
+    }
 
 
 # ============================================================
@@ -109,6 +267,29 @@ async def save_workout_from_activity(
     if activity.get("users"):
         saved_workout.source_user_name = activity["users"].get("name")
         saved_workout.source_user_avatar = activity["users"].get("avatar_url")
+
+    # Store in ChromaDB for recommendations
+    try:
+        social_rag = get_social_rag_service()
+        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+        user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+        collection = social_rag.get_social_collection()
+        collection.add(
+            documents=[f"{user_name} saved {workout_name} from {saved_workout.source_user_name}"],
+            metadatas=[{
+                "user_id": user_id,
+                "saved_workout_id": saved_workout.id,
+                "source_activity_id": request.activity_id,
+                "interaction_type": "save",
+                "workout_name": workout_name,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }],
+            ids=[f"save_{saved_workout.id}"],
+        )
+        print(f"✅ [Saved Workouts] Logged save to ChromaDB")
+    except Exception as e:
+        print(f"⚠️ [Saved Workouts] Failed to log to ChromaDB: {e}")
 
     print(f"✅ [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
 

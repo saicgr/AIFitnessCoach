@@ -9,6 +9,7 @@ from api.v1 import feedback, achievements, summaries, insights
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
 from api.v1 import subscriptions, analytics, stats, social
+from api.v1 import saved_workouts
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -79,3 +80,6 @@ router.include_router(stats.router, tags=["Stats"])
 
 # Social features endpoints (connections, feed, challenges, reactions)
 router.include_router(social.router, tags=["Social"])
+
+# Saved and scheduled workouts from social feed
+router.include_router(saved_workouts.router, prefix="/saved-workouts", tags=["Saved Workouts"])
