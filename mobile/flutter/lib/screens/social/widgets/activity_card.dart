@@ -406,6 +406,10 @@ class _ActivityCardState extends State<ActivityCard> {
         return _buildWeightMilestoneContent(context);
       case 'streak_milestone':
         return _buildStreakContent(context);
+      case 'challenge_victory':
+        return _buildChallengeVictoryContent(context);
+      case 'challenge_completed':
+        return _buildChallengeCompletedContent(context);
       default:
         return _buildGenericContent(context);
     }
@@ -1069,6 +1073,411 @@ class _ActivityCardState extends State<ActivityCard> {
                 ),
               ),
               const TextSpan(text: '!'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChallengeVictoryContent(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final workoutName = widget.activityData['workout_name'] ?? 'a workout';
+    final challengerName = widget.activityData['challenger_name'] ?? 'someone';
+    final yourDuration = widget.activityData['your_duration'];
+    final yourVolume = widget.activityData['your_volume'];
+    final theirDuration = widget.activityData['their_duration'];
+    final theirVolume = widget.activityData['their_volume'];
+    final timeDifference = widget.activityData['time_difference'];
+    final volumeDifference = widget.activityData['volume_difference'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Victory header with trophy
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.yellow.withValues(alpha: 0.4),
+                    Colors.orange.withValues(alpha: 0.4),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                  width: 2,
+                ),
+              ),
+              child: const Center(
+                child: Text('🏆', style: TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'VICTORY!',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFFFD700),
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: [
+                        const TextSpan(text: 'beat '),
+                        TextSpan(
+                          text: '$challengerName\'s',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: ' '),
+                        TextSpan(
+                          text: workoutName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Comparison stats
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.green.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.green.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Time comparison
+              if (yourDuration != null && theirDuration != null) ...[
+                _buildVictoryComparison(
+                  emoji: '⏱️',
+                  label: 'Time',
+                  yourValue: '$yourDuration min',
+                  theirValue: '$theirDuration min',
+                  improvement: timeDifference != null && timeDifference > 0
+                      ? '${timeDifference.abs()} min faster'
+                      : null,
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // Volume comparison
+              if (yourVolume != null && theirVolume != null)
+                _buildVictoryComparison(
+                  emoji: '💪',
+                  label: 'Volume',
+                  yourValue: '${yourVolume.toStringAsFixed(0)} lbs',
+                  theirValue: '${theirVolume.toStringAsFixed(0)} lbs',
+                  improvement: volumeDifference != null && volumeDifference > 0
+                      ? '+${volumeDifference.toStringAsFixed(0)} lbs'
+                      : null,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVictoryComparison({
+    required String emoji,
+    required String label,
+    required String yourValue,
+    required String theirValue,
+    String? improvement,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const SizedBox(width: 24),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'You',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        yourValue,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Icon(Icons.arrow_forward, size: 16, color: AppColors.textMuted),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Them',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        theirValue,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (improvement != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const SizedBox(width: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  improvement,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildChallengeCompletedContent(BuildContext context) {
+    final workoutName = widget.activityData['workout_name'] ?? 'a workout';
+    final challengerName = widget.activityData['challenger_name'] ?? 'someone';
+    final yourDuration = widget.activityData['your_duration'];
+    final yourVolume = widget.activityData['your_volume'];
+    final theirDuration = widget.activityData['their_duration'];
+    final theirVolume = widget.activityData['their_volume'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Challenge attempted header
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.orange.withValues(alpha: 0.4),
+                  width: 2,
+                ),
+              ),
+              child: const Center(
+                child: Text('💪', style: TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'CHALLENGE ATTEMPTED',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.orange,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: [
+                        const TextSpan(text: 'challenged '),
+                        TextSpan(
+                          text: '$challengerName\'s',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: ' '),
+                        TextSpan(
+                          text: workoutName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // Stats comparison
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.orange.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 16, color: AppColors.orange),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Keep training! Every attempt makes you stronger 🔥',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Stats
+              if (yourDuration != null && theirDuration != null) ...[
+                _buildChallengeStatRow('⏱️', 'Time', '$yourDuration min', '$theirDuration min'),
+                const SizedBox(height: 8),
+              ],
+              if (yourVolume != null && theirVolume != null)
+                _buildChallengeStatRow('💪', 'Volume', '${yourVolume.toStringAsFixed(0)} lbs', '${theirVolume.toStringAsFixed(0)} lbs'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChallengeStatRow(String emoji, String label, String yourValue, String targetValue) {
+    return Row(
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 16)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    'You: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    yourValue,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('•', style: TextStyle(color: AppColors.textMuted)),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Target: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    targetValue,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.orange,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

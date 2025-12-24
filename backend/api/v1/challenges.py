@@ -335,26 +335,29 @@ async def complete_challenge(
     user_id: str,
     challenge_id: str,
     request: CompleteChallengeRequest,
+    auto_post_to_feed: bool = True,  # NEW: Auto-post to activity feed
 ):
     """
     Mark challenge as completed with results.
 
     Compares user's performance to the original challenge stats.
+    Optionally posts result to activity feed (default: true).
 
     Args:
         user_id: User completing the challenge
         challenge_id: Challenge ID
         request: Completion data (workout_log_id, stats)
+        auto_post_to_feed: Whether to post result to activity feed
 
     Returns:
         Updated challenge with comparison results
     """
     supabase = get_supabase_client()
 
-    # Get challenge
-    challenge_result = supabase.table("workout_challenges").select("*").eq(
-        "id", challenge_id
-    ).eq("to_user_id", user_id).execute()
+    # Get challenge with challenger info
+    challenge_result = supabase.table("workout_challenges").select(
+        "*, from_user:users!from_user_id(name, avatar_url)"
+    ).eq("id", challenge_id).eq("to_user_id", user_id).execute()
 
     if not challenge_result.data:
         raise HTTPException(status_code=404, detail="Challenge not found")
@@ -386,6 +389,47 @@ async def complete_challenge(
         "challenged_stats": challenged_stats,
         "did_beat": did_beat,
     }).eq("id", challenge_id).execute()
+
+    # Auto-post to activity feed if enabled
+    if auto_post_to_feed:
+        try:
+            challenger_name = challenge.get("from_user", {}).get("name", "someone")
+
+            # Create activity post
+            activity_type = "challenge_victory" if did_beat else "challenge_completed"
+
+            activity_data = {
+                "workout_name": challenge["workout_name"],
+                "challenger_name": challenger_name,
+                "challenger_id": challenge["from_user_id"],
+                "challenge_id": challenge_id,
+                "did_beat": did_beat,
+                # Your stats
+                "your_duration": challenged_stats.get("duration_minutes"),
+                "your_volume": challenged_stats.get("total_volume"),
+                # Their stats to beat
+                "their_duration": original_stats.get("duration_minutes"),
+                "their_volume": original_stats.get("total_volume"),
+                # Comparison
+                "time_difference": (
+                    original_stats.get("duration_minutes", 0) - challenged_stats.get("duration_minutes", 0)
+                ) if did_beat else None,
+                "volume_difference": (
+                    challenged_stats.get("total_volume", 0) - original_stats.get("total_volume", 0)
+                ) if did_beat else None,
+            }
+
+            supabase.table("activity_feed").insert({
+                "user_id": user_id,
+                "activity_type": activity_type,
+                "activity_data": activity_data,
+                "visibility": "friends",  # Default to friends
+            }).execute()
+
+            print(f"✅ [Challenges] Posted challenge result to activity feed (beat: {did_beat})")
+        except Exception as e:
+            print(f"⚠️ [Challenges] Failed to post to activity feed: {e}")
+            # Don't fail the challenge completion if posting fails
 
     # Log to ChromaDB
     try:
