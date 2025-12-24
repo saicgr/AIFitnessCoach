@@ -6,6 +6,9 @@ import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/leaderboard_locked_state.dart';
+import '../widgets/leaderboard_rank_card.dart';
+import '../widgets/leaderboard_entry_card.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Leaderboard Tab - Global, country, and friends rankings
@@ -255,110 +258,15 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   }
 
   Widget _buildLockedState(BuildContext context, bool isDark) {
-    final workoutsCompleted = _unlockStatus?['workouts_completed'] ?? 0;
-    final workoutsNeeded = _unlockStatus?['workouts_needed'] ?? 10;
-    final progress = _unlockStatus?['progress_percentage'] ?? 0.0;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Lock Icon
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.lock_outline,
-                  size: 50,
-                  color: AppColors.orange,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Title
-            Text(
-              'Global Leaderboard Locked',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 12),
-
-            // Message
-            Text(
-              _unlockStatus?['unlock_message'] ?? 'Complete more workouts to unlock!',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 24),
-
-            // Progress Bar
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progress',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      '$workoutsCompleted / 10 workouts',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress / 100,
-                    minHeight: 8,
-                    backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.orange),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            // Friends Leaderboard Button
-            OutlinedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _selectedFilter = LeaderboardFilter.friends;
-                });
-                _loadLeaderboard();
-              },
-              icon: const Icon(Icons.people_outline),
-              label: const Text('View Friends Leaderboard'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-                side: const BorderSide(color: AppColors.cyan),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return LeaderboardLockedState(
+      unlockStatus: _unlockStatus,
+      isDark: isDark,
+      onViewFriendsLeaderboard: () {
+        setState(() {
+          _selectedFilter = LeaderboardFilter.friends;
+        });
+        _loadLeaderboard();
+      },
     );
   }
 
@@ -387,7 +295,11 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
           // User's Rank Card (Sticky)
           if (userRank != null)
             SliverToBoxAdapter(
-              child: _buildUserRankCard(context, isDark, userRank),
+              child: LeaderboardRankCard(
+                userRank: userRank,
+                selectedType: _selectedType,
+                isDark: isDark,
+              ),
             ),
 
           // Last Updated Info
@@ -414,7 +326,13 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
                   final entry = entries[index] as Map<String, dynamic>;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildLeaderboardEntry(context, isDark, entry),
+                    child: LeaderboardEntryCard(
+                      entry: entry,
+                      selectedType: _selectedType,
+                      leaderboardService: _leaderboardService,
+                      isDark: isDark,
+                      onChallengeTap: () => _showChallengeOptions(context, entry),
+                    ),
                   );
                 },
                 childCount: entries.length,
@@ -428,269 +346,6 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildUserRankCard(BuildContext context, bool isDark, Map<String, dynamic> userRank) {
-    final rank = userRank['rank'] as int;
-    final totalUsers = userRank['total_users'] as int;
-    final percentile = userRank['percentile'] as num;
-    final userStats = userRank['user_stats'] as Map<String, dynamic>?;
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.orange.withValues(alpha: 0.2),
-            AppColors.cyan.withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.5),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.emoji_events, color: AppColors.orange, size: 32),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'YOUR RANK',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.textMuted,
-                            letterSpacing: 1.2,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          '#$rank',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.orange,
-                              ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'of $totalUsers',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textMuted,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Top ${percentile.toStringAsFixed(1)}%',
-                  style: const TextStyle(
-                    color: AppColors.cyan,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // User's stats
-          if (userStats != null) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            _buildStatsRow(context, userStats),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardEntry(BuildContext context, bool isDark, Map<String, dynamic> entry) {
-    final rank = entry['rank'] as int;
-    final userName = entry['user_name'] as String? ?? 'User';
-    final avatarUrl = entry['avatar_url'] as String?;
-    final countryCode = entry['country_code'] as String?;
-    final isFriend = entry['is_friend'] as bool? ?? false;
-    final isCurrentUser = entry['is_current_user'] as bool? ?? false;
-
-    final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final highlightColor = isCurrentUser
-        ? AppColors.cyan.withValues(alpha: 0.1)
-        : (isFriend ? AppColors.green.withValues(alpha: 0.05) : cardColor);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: highlightColor,
-        borderRadius: BorderRadius.circular(12),
-        border: isCurrentUser
-            ? Border.all(color: AppColors.cyan.withValues(alpha: 0.5), width: 2)
-            : null,
-      ),
-      child: Row(
-        children: [
-          // Rank/Medal
-          SizedBox(
-            width: 50,
-            child: Text(
-              rank <= 3 ? _leaderboardService.getMedalEmoji(rank) : '#$rank',
-              style: TextStyle(
-                fontSize: rank <= 3 ? 28 : 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-
-          // Avatar
-          CircleAvatar(
-            radius: 24,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-            child: avatarUrl == null ? const Icon(Icons.person) : null,
-          ),
-
-          const SizedBox(width: 12),
-
-          // Name and Country
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        userName,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (countryCode != null) ...[
-                      const SizedBox(width: 6),
-                      Text(
-                        _leaderboardService.getCountryFlag(countryCode),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                    if (isFriend && !isCurrentUser) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          '✓ Friend',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                _buildStatsRow(context, entry),
-              ],
-            ),
-          ),
-
-          // Challenge Button
-          if (!isCurrentUser)
-            IconButton(
-              onPressed: () => _showChallengeOptions(context, entry),
-              icon: Icon(
-                isFriend ? Icons.emoji_events : Icons.flash_on,
-                color: isFriend ? AppColors.orange : AppColors.cyan,
-              ),
-              tooltip: isFriend ? 'Challenge Friend' : 'Beat Their Best',
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsRow(BuildContext context, Map<String, dynamic> entry) {
-    final List<Widget> stats = [];
-
-    // Challenge Masters stats
-    if (_selectedType == LeaderboardType.challengeMasters) {
-      final wins = entry['first_wins'] ?? 0;
-      final winRate = entry['win_rate'] ?? 0.0;
-      stats.addAll([
-        _buildStatItem('🏆', '$wins wins'),
-        _buildStatItem('📊', '${winRate.toStringAsFixed(1)}%'),
-      ]);
-    }
-    // Volume Kings stats
-    else if (_selectedType == LeaderboardType.volumeKings) {
-      final volume = entry['total_volume_lbs'] ?? 0.0;
-      final workouts = entry['total_workouts'] ?? 0;
-      stats.addAll([
-        _buildStatItem('🏋️', '${(volume / 1000).toStringAsFixed(1)}K lbs'),
-        _buildStatItem('💪', '$workouts workouts'),
-      ]);
-    }
-    // Streaks stats
-    else if (_selectedType == LeaderboardType.streaks) {
-      final currentStreak = entry['current_streak'] ?? 0;
-      final bestStreak = entry['best_streak'] ?? 0;
-      stats.addAll([
-        _buildStatItem('🔥', '$currentStreak days'),
-        _buildStatItem('⭐', 'Best: $bestStreak'),
-      ]);
-    }
-    // Weekly stats
-    else if (_selectedType == LeaderboardType.weeklyChallenges) {
-      final weeklyWins = entry['weekly_wins'] ?? 0;
-      final weeklyRate = entry['weekly_win_rate'] ?? 0.0;
-      stats.addAll([
-        _buildStatItem('⚡', '$weeklyWins wins'),
-        _buildStatItem('📊', '${weeklyRate.toStringAsFixed(1)}%'),
-      ]);
-    }
-
-    return Row(
-      children: stats.expand((w) => [w, const SizedBox(width: 12)]).take(stats.length * 2 - 1).toList(),
-    );
-  }
-
-  Widget _buildStatItem(String emoji, String text) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 14)),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textMuted,
-          ),
-        ),
-      ],
     );
   }
 

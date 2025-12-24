@@ -20,10 +20,10 @@ from models.leaderboard import (
     AsyncChallengeRequest, AsyncChallengeResponse,
     LeaderboardType, LeaderboardFilter,
 )
-from utils.supabase_client import get_supabase_client
-from services.social_rag_service import get_social_rag_service
+from services.leaderboard_service import LeaderboardService
 
 router = APIRouter(prefix="/leaderboard")
+leaderboard_service = LeaderboardService()
 
 
 # ============================================================
@@ -53,80 +53,49 @@ async def get_leaderboard(
     Returns:
         Leaderboard data with user's rank
     """
-    supabase = get_supabase_client()
-
-    # Check if user has unlocked global leaderboard
-    unlock_result = supabase.rpc("check_leaderboard_unlock", {"p_user_id": user_id}).execute()
-    unlock_status = unlock_result.data[0] if unlock_result.data else {}
+    # Check unlock status (global leaderboard requires 10 workouts)
+    unlock_status = leaderboard_service.check_unlock_status(user_id)
     is_unlocked = unlock_status.get("is_unlocked", False)
 
-    # If global leaderboard not unlocked, only allow friends filter
     if filter_type == LeaderboardFilter.global_lb and not is_unlocked:
         raise HTTPException(
             status_code=403,
             detail=f"Complete {unlock_status.get('workouts_needed', 10)} more workouts to unlock global leaderboard"
         )
 
-    # Select appropriate materialized view
-    view_name = {
-        LeaderboardType.challenge_masters: "leaderboard_challenge_masters",
-        LeaderboardType.volume_kings: "leaderboard_volume_kings",
-        LeaderboardType.streaks: "leaderboard_streaks",
-        LeaderboardType.weekly_challenges: "leaderboard_weekly_challenges",
-    }[leaderboard_type]
+    # Validate country filter
+    if filter_type == LeaderboardFilter.country and not country_code:
+        raise HTTPException(status_code=400, detail="country_code required for country filter")
 
-    # Build query based on filter type
-    if filter_type == LeaderboardFilter.friends:
-        # Get user's friends
-        friends_result = supabase.table("connections").select("friend_id").eq(
-            "user_id", user_id
-        ).eq("status", "accepted").execute()
-        friend_ids = [f["friend_id"] for f in friends_result.data] if friends_result.data else []
+    # Get leaderboard entries from service
+    result = leaderboard_service.get_leaderboard_entries(
+        leaderboard_type=leaderboard_type,
+        filter_type=filter_type,
+        user_id=user_id,
+        country_code=country_code,
+        limit=limit,
+        offset=offset,
+    )
 
-        if not friend_ids:
-            # No friends, return empty leaderboard
-            return LeaderboardResponse(
-                leaderboard_type=leaderboard_type,
-                filter_type=filter_type,
-                entries=[],
-                total_entries=0,
-                limit=limit,
-                offset=offset,
-                has_more=False,
-                last_updated=datetime.now(timezone.utc),
-            )
+    entries_data = result["entries"]
+    total_entries = result["total"]
 
-        # Query friends only
-        query = supabase.table(view_name).select("*").in_("user_id", friend_ids)
+    # Handle empty results
+    if not entries_data:
+        return LeaderboardResponse(
+            leaderboard_type=leaderboard_type,
+            filter_type=filter_type,
+            country_code=country_code,
+            entries=[],
+            total_entries=0,
+            limit=limit,
+            offset=offset,
+            has_more=False,
+            last_updated=datetime.now(timezone.utc),
+        )
 
-    elif filter_type == LeaderboardFilter.country:
-        # Validate country_code
-        if not country_code:
-            raise HTTPException(status_code=400, detail="country_code required for country filter")
-
-        # Query specific country
-        query = supabase.table(view_name).select("*").eq("country_code", country_code)
-
-    else:  # Global
-        # Query all users
-        query = supabase.table(view_name).select("*")
-
-    # Get total count
-    count_result = query.execute()
-    total_entries = len(count_result.data) if count_result.data else 0
-
-    # Apply pagination and ordering
-    entries_result = query.order(
-        _get_order_column(leaderboard_type), desc=True
-    ).range(offset, offset + limit - 1).execute()
-
-    entries_data = entries_result.data if entries_result.data else []
-
-    # Get friend IDs for is_friend flag
-    friends_result = supabase.table("connections").select("friend_id").eq(
-        "user_id", user_id
-    ).eq("status", "accepted").execute()
-    friend_ids_set = set([f["friend_id"] for f in friends_result.data]) if friends_result.data else set()
+    # Get friend IDs for flags
+    friend_ids_set = set(leaderboard_service._get_friend_ids(user_id))
 
     # Convert to LeaderboardEntry models
     entries = []
@@ -140,12 +109,27 @@ async def get_leaderboard(
         ))
 
     # Get user's rank
-    user_rank = await _get_user_rank(
-        user_id, leaderboard_type, country_code if filter_type == LeaderboardFilter.country else None
+    user_rank_data = leaderboard_service.get_user_rank(
+        user_id=user_id,
+        leaderboard_type=leaderboard_type,
+        country_filter=country_code if filter_type == LeaderboardFilter.country else None,
     )
 
+    user_rank = None
+    if user_rank_data:
+        rank_info = user_rank_data["rank_info"]
+        stats = user_rank_data["stats"]
+        user_stats = _build_leaderboard_entry(stats, rank_info["rank"], leaderboard_type, False, True)
+        user_rank = UserRank(
+            user_id=user_id,
+            rank=rank_info["rank"],
+            total_users=rank_info["total_users"],
+            percentile=rank_info["percentile"],
+            user_stats=user_stats,
+        )
+
     # Calculate refresh time
-    last_updated = entries_data[0]["last_updated"] if entries_data else datetime.now(timezone.utc)
+    last_updated = entries_data[0].get("last_updated", datetime.now(timezone.utc))
     if isinstance(last_updated, str):
         last_updated = datetime.fromisoformat(last_updated.replace("Z", "+00:00"))
 
@@ -187,53 +171,27 @@ async def get_user_rank(
     Returns:
         User's rank and stats
     """
-    return await _get_user_rank(user_id, leaderboard_type, country_filter)
+    result = leaderboard_service.get_user_rank(
+        user_id=user_id,
+        leaderboard_type=leaderboard_type,
+        country_filter=country_filter,
+    )
 
+    if not result:
+        raise HTTPException(status_code=404, detail="User rank not found")
 
-async def _get_user_rank(
-    user_id: str,
-    leaderboard_type: LeaderboardType,
-    country_filter: Optional[str] = None,
-) -> Optional[UserRank]:
-    """Internal helper to get user rank."""
-    supabase = get_supabase_client()
+    rank_info = result["rank_info"]
+    stats = result["stats"]
 
-    # Call database function
-    rank_result = supabase.rpc("get_user_leaderboard_rank", {
-        "p_user_id": user_id,
-        "p_leaderboard_type": leaderboard_type.value,
-        "p_country_filter": country_filter,
-    }).execute()
-
-    if not rank_result.data:
-        return None
-
-    rank_data = rank_result.data[0]
-
-    # Get user's stats from appropriate view
-    view_name = {
-        LeaderboardType.challenge_masters: "leaderboard_challenge_masters",
-        LeaderboardType.volume_kings: "leaderboard_volume_kings",
-        LeaderboardType.streaks: "leaderboard_streaks",
-        LeaderboardType.weekly_challenges: "leaderboard_weekly_challenges",
-    }[leaderboard_type]
-
-    user_stats_result = supabase.table(view_name).select("*").eq("user_id", user_id).execute()
-    user_stats_data = user_stats_result.data[0] if user_stats_result.data else None
-
-    if not user_stats_data:
-        return None
-
-    # Build user stats entry
     user_stats = _build_leaderboard_entry(
-        user_stats_data, rank_data["rank"], leaderboard_type, False, True
+        stats, rank_info["rank"], leaderboard_type, False, True
     )
 
     return UserRank(
         user_id=user_id,
-        rank=rank_data["rank"],
-        total_users=rank_data["total_users"],
-        percentile=rank_data["percentile"],
+        rank=rank_info["rank"],
+        total_users=rank_info["total_users"],
+        percentile=rank_info["percentile"],
         user_stats=user_stats,
     )
 
@@ -253,19 +211,12 @@ async def get_unlock_status(user_id: str):
     Returns:
         Unlock status and progress
     """
-    supabase = get_supabase_client()
-
-    result = supabase.rpc("check_leaderboard_unlock", {"p_user_id": user_id}).execute()
-
-    if not result.data:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    data = result.data[0]
+    data = leaderboard_service.check_unlock_status(user_id)
 
     is_unlocked = data["is_unlocked"]
     workouts_completed = data["workouts_completed"]
     workouts_needed = data["workouts_needed"]
-    days_active = data["days_active"]
+    days_active = data.get("days_active", 0)
 
     # Create unlock message
     if is_unlocked:
@@ -300,48 +251,15 @@ async def get_leaderboard_stats():
     Returns:
         Aggregate stats across all leaderboards
     """
-    supabase = get_supabase_client()
-
-    # Get stats from different views
-    masters_result = supabase.table("leaderboard_challenge_masters").select("country_code, first_wins").execute()
-    volume_result = supabase.table("leaderboard_volume_kings").select("total_volume_lbs").execute()
-    streaks_result = supabase.table("leaderboard_streaks").select("best_streak").execute()
-
-    masters_data = masters_result.data if masters_result.data else []
-    volume_data = volume_result.data if volume_result.data else []
-    streaks_data = streaks_result.data if streaks_result.data else []
-
-    # Calculate stats
-    total_users = len(masters_data)
-    countries = set(entry["country_code"] for entry in masters_data if entry.get("country_code"))
-    total_countries = len(countries)
-
-    # Top country (most users)
-    country_counts = {}
-    for entry in masters_data:
-        cc = entry.get("country_code")
-        if cc:
-            country_counts[cc] = country_counts.get(cc, 0) + 1
-
-    top_country = max(country_counts.items(), key=lambda x: x[1])[0] if country_counts else None
-
-    # Average wins
-    total_wins = sum(entry.get("first_wins", 0) for entry in masters_data)
-    average_wins = (total_wins / total_users) if total_users > 0 else 0
-
-    # Highest streak
-    highest_streak = max((entry.get("best_streak", 0) for entry in streaks_data), default=0)
-
-    # Total volume
-    total_volume = sum(entry.get("total_volume_lbs", 0) for entry in volume_data)
+    stats = leaderboard_service.get_leaderboard_stats()
 
     return LeaderboardStats(
-        total_users=total_users,
-        total_countries=total_countries,
-        top_country=top_country,
-        average_wins=round(average_wins, 1),
-        highest_streak=highest_streak,
-        total_volume_lifted=round(total_volume, 0),
+        total_users=stats["total_users"],
+        total_countries=stats["total_countries"],
+        top_country=stats["top_country"],
+        average_wins=stats["average_wins"],
+        highest_streak=stats["highest_streak"],
+        total_volume_lifted=stats["total_volume_lifted"],
     )
 
 
@@ -367,96 +285,26 @@ async def create_async_challenge(
     Returns:
         Challenge created confirmation
     """
-    supabase = get_supabase_client()
-    social_rag = get_social_rag_service()
-
-    # Get target user info
-    target_user_result = supabase.table("users").select("name").eq("id", request.target_user_id).execute()
-    if not target_user_result.data:
-        raise HTTPException(status_code=404, detail="Target user not found")
-
-    target_user_name = target_user_result.data[0]["name"]
-
-    # Get their best workout (if workout_log_id not specified, find their best)
-    if request.workout_log_id:
-        workout_result = supabase.table("workout_logs").select("*").eq(
-            "id", request.workout_log_id
-        ).eq("user_id", request.target_user_id).execute()
-
-        if not workout_result.data:
-            raise HTTPException(status_code=404, detail="Workout not found")
-
-        workout_data = workout_result.data[0]
-    else:
-        # Find their best workout (highest total volume)
-        best_workout_result = supabase.table("workout_logs").select("*").eq(
-            "user_id", request.target_user_id
-        ).order("performance_data->total_volume", desc=True).limit(1).execute()
-
-        if not best_workout_result.data:
-            raise HTTPException(status_code=404, detail="No workouts found for this user")
-
-        workout_data = best_workout_result.data[0]
-
-    # Extract workout stats
-    performance_data = workout_data.get("performance_data", {})
-    target_stats = {
-        "duration_minutes": performance_data.get("duration_minutes", 0),
-        "total_volume": performance_data.get("total_volume", 0),
-        "exercises_count": performance_data.get("exercises_count", 0),
-    }
-
-    # Create challenge (marked as async, no notification yet)
-    challenge_data = {
-        "from_user_id": user_id,
-        "to_user_id": request.target_user_id,
-        "workout_log_id": workout_data["id"],
-        "workout_name": workout_data.get("workout_name", "Their Best Workout"),
-        "workout_data": target_stats,
-        "challenge_message": request.challenge_message,
-        "status": "accepted",  # Auto-accept (async challenge)
-        "accepted_at": datetime.now(timezone.utc).isoformat(),
-        "challenger_stats": target_stats,  # Their stats
-    }
-
-    challenge_result = supabase.table("workout_challenges").insert(challenge_data).execute()
-
-    if not challenge_result.data:
-        raise HTTPException(status_code=500, detail="Failed to create challenge")
-
-    challenge_id = challenge_result.data[0]["id"]
-
-    # Log to ChromaDB (async challenge, different from normal challenges)
     try:
-        challenger_result = supabase.table("users").select("name").eq("id", user_id).execute()
-        challenger_name = challenger_result.data[0]["name"] if challenger_result.data else "User"
-
-        collection = social_rag.get_social_collection()
-        collection.add(
-            documents=[f"{challenger_name} is attempting to BEAT {target_user_name}'s best workout '{workout_data.get('workout_name')}' (ASYNC challenge)"],
-            metadatas=[{
-                "from_user_id": user_id,
-                "to_user_id": request.target_user_id,
-                "challenge_id": challenge_id,
-                "interaction_type": "async_challenge_created",
-                "workout_name": workout_data.get("workout_name"),
-                "is_async": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }],
-            ids=[f"async_challenge_{challenge_id}"],
+        result = leaderboard_service.create_async_challenge(
+            user_id=user_id,
+            target_user_id=request.target_user_id,
+            workout_log_id=request.workout_log_id,
+            challenge_message=request.challenge_message,
         )
-        print(f"🏆 [Leaderboard] Async challenge logged: {challenger_name} vs {target_user_name}")
-    except Exception as e:
-        print(f"⚠️ [Leaderboard] Failed to log to ChromaDB: {e}")
 
-    return AsyncChallengeResponse(
-        message="Challenge created! Beat their record and they'll be notified!",
-        challenge_created=True,
-        target_user_name=target_user_name,
-        workout_name=workout_data.get("workout_name", "Their Best Workout"),
-        target_stats=target_stats,
-        notification_sent=False,  # Only notified if you beat it
-    )
+        return AsyncChallengeResponse(
+            message="Challenge created! Beat their record and they'll be notified!",
+            challenge_created=True,
+            target_user_name=result["target_user_name"],
+            workout_name=result["workout_name"],
+            target_stats=result["target_stats"],
+            notification_sent=False,  # Only notified if you beat it
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create challenge: {str(e)}")
 
 
 # ============================================================
