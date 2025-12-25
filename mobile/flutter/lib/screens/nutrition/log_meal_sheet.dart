@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/main_shell.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
@@ -15,12 +17,18 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
 
   if (userId == null || !context.mounted) return;
 
-  showModalBottomSheet(
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+  await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => LogMealSheet(userId: userId, isDark: isDark),
   );
+
+  // Show nav bar when sheet is closed
+  ref.read(floatingNavBarVisibleProvider.notifier).state = true;
 }
 
 /// Bottom sheet for logging meals with multiple input methods
@@ -121,9 +129,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       );
 
       if (mounted) {
-        Navigator.pop(context);
-        _showSuccessSnackbar(response.totalCalories);
-        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+        setState(() => _isLoading = false);
+        // Show rainbow confirmation dialog
+        final confirmed = await _showRainbowNutritionConfirmation(response, description);
+        if (confirmed == true && mounted) {
+          Navigator.pop(context);
+          _showSuccessSnackbar(response.totalCalories);
+          ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+        }
       }
     } catch (e) {
       setState(() {
@@ -131,6 +144,169 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         _error = e.toString();
       });
     }
+  }
+
+  Future<bool?> _showRainbowNutritionConfirmation(LogFoodResponse response, String description) {
+    final isDark = widget.isDark;
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Rainbow colors for nutrition values
+    const caloriesColor = Color(0xFFFF6B6B);  // Red/Coral
+    const proteinColor = Color(0xFFFFD93D);   // Yellow/Gold
+    const carbsColor = Color(0xFF6BCB77);     // Green
+    const fatColor = Color(0xFF4D96FF);       // Blue
+    const fiberColor = Color(0xFF9B59B6);     // Purple
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: nearBlack,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'AI Estimated Nutrition',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Food description
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.restaurant, size: 20, color: textMuted),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      description,
+                      style: TextStyle(color: textPrimary, fontSize: 14),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Rainbow nutrition grid
+            _RainbowNutritionCard(
+              icon: Icons.local_fire_department,
+              label: 'Calories',
+              value: '${response.totalCalories}',
+              unit: 'kcal',
+              color: caloriesColor,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _RainbowNutritionCard(
+                    icon: Icons.fitness_center,
+                    label: 'Protein',
+                    value: response.proteinG.toStringAsFixed(1),
+                    unit: 'g',
+                    color: proteinColor,
+                    isDark: isDark,
+                    compact: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _RainbowNutritionCard(
+                    icon: Icons.grain,
+                    label: 'Carbs',
+                    value: response.carbsG.toStringAsFixed(1),
+                    unit: 'g',
+                    color: carbsColor,
+                    isDark: isDark,
+                    compact: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _RainbowNutritionCard(
+                    icon: Icons.opacity,
+                    label: 'Fat',
+                    value: response.fatG.toStringAsFixed(1),
+                    unit: 'g',
+                    color: fatColor,
+                    isDark: isDark,
+                    compact: true,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _RainbowNutritionCard(
+                    icon: Icons.eco,
+                    label: 'Fiber',
+                    value: (response.fiberG ?? 0).toStringAsFixed(1),
+                    unit: 'g',
+                    color: fiberColor,
+                    isDark: isDark,
+                    compact: true,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              'These values are AI estimates based on your description.',
+              style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: TextStyle(color: textMuted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6BCB77),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check, size: 18),
+                SizedBox(width: 8),
+                Text('Log This'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleBarcodeScan(String barcode) async {
@@ -561,7 +737,103 @@ class _VoiceTab extends StatefulWidget {
 }
 
 class _VoiceTabState extends State<_VoiceTab> {
+  final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
+  bool _speechAvailable = false;
+  String _recognizedText = '';
+  String _statusMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    try {
+      _speechAvailable = await _speech.initialize(
+        onStatus: (status) {
+          debugPrint('Speech status: $status');
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) {
+              setState(() => _isListening = false);
+              // Auto-submit if we have text
+              if (_recognizedText.isNotEmpty) {
+                widget.onSubmit(_recognizedText);
+              }
+            }
+          }
+        },
+        onError: (error) {
+          debugPrint('Speech error: $error');
+          if (mounted) {
+            setState(() {
+              _isListening = false;
+              _statusMessage = 'Error: ${error.errorMsg}';
+            });
+          }
+        },
+      );
+      if (mounted) {
+        setState(() {
+          _statusMessage = _speechAvailable ? '' : 'Speech recognition not available';
+        });
+      }
+    } catch (e) {
+      debugPrint('Speech init error: $e');
+      if (mounted) {
+        setState(() {
+          _speechAvailable = false;
+          _statusMessage = 'Could not initialize speech recognition';
+        });
+      }
+    }
+  }
+
+  Future<void> _startListening() async {
+    if (!_speechAvailable) {
+      setState(() => _statusMessage = 'Speech recognition not available');
+      return;
+    }
+
+    setState(() {
+      _isListening = true;
+      _recognizedText = '';
+      _statusMessage = '';
+    });
+
+    await _speech.listen(
+      onResult: (result) {
+        if (mounted) {
+          setState(() {
+            _recognizedText = result.recognizedWords;
+          });
+        }
+      },
+      listenFor: const Duration(seconds: 30),
+      pauseFor: const Duration(seconds: 3),
+      localeId: 'en_US',
+    );
+  }
+
+  Future<void> _stopListening() async {
+    await _speech.stop();
+    setState(() => _isListening = false);
+  }
+
+  void _toggleListening() {
+    if (_isListening) {
+      _stopListening();
+    } else {
+      _startListening();
+    }
+  }
+
+  @override
+  void dispose() {
+    _speech.stop();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -581,8 +853,9 @@ class _VoiceTabState extends State<_VoiceTab> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Mic button
                 GestureDetector(
-                  onTap: () => setState(() => _isListening = !_isListening),
+                  onTap: _toggleListening,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     padding: EdgeInsets.all(_isListening ? 40 : 32),
@@ -607,44 +880,119 @@ class _VoiceTabState extends State<_VoiceTab> {
                 ),
                 const SizedBox(height: 8),
                 Text('Describe what you ate', style: TextStyle(fontSize: 14, color: textMuted)),
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: elevated, borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                // Show recognized text
+                if (_recognizedText.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: teal.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.format_quote, size: 16, color: teal),
+                            const SizedBox(width: 8),
+                            Text('You said:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _recognizedText,
+                          style: TextStyle(fontSize: 16, color: textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Example:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
-                      const SizedBox(height: 8),
-                      Text(
-                        '"I had two scrambled eggs with toast and a glass of orange juice"',
-                        style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: textSecondary),
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() => _recognizedText = '');
+                        },
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('Try Again'),
+                      ),
+                      const SizedBox(width: 16),
+                      FilledButton.icon(
+                        onPressed: () => widget.onSubmit(_recognizedText),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Log This'),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.warning : AppColorsLight.warning).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 20, color: isDark ? AppColors.warning : AppColorsLight.warning),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Voice input coming soon! Use the Describe tab for now.',
-                    style: TextStyle(fontSize: 12, color: textSecondary),
+                ] else ...[
+                  // Show example when no text recognized
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: elevated, borderRadius: BorderRadius.circular(12)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Example:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
+                        const SizedBox(height: 8),
+                        Text(
+                          '"I had two scrambled eggs with toast and a glass of orange juice"',
+                          style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
+
+          // Status message or tip
+          if (_statusMessage.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (isDark ? AppColors.warning : AppColorsLight.warning).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: isDark ? AppColors.warning : AppColorsLight.warning),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _statusMessage,
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: teal.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.tips_and_updates_outlined, size: 20, color: teal),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Speak naturally - AI will estimate nutrition from your description',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1020,6 +1368,135 @@ class _NutritionInfoRow extends StatelessWidget {
           Text(value, style: TextStyle(color: textSecondary)),
         ],
       ),
+    );
+  }
+}
+
+/// Rainbow-colored nutrition card for AI estimates
+class _RainbowNutritionCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final String unit;
+  final Color color;
+  final bool isDark;
+  final bool compact;
+
+  const _RainbowNutritionCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.color,
+    required this.isDark,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Container(
+      padding: EdgeInsets.all(compact ? 12 : 16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, size: 16, color: color),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: value,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' $unit',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 24, color: color),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: value,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                            TextSpan(
+                              text: ' $unit',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }

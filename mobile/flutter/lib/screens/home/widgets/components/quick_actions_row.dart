@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/main_shell.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 
 /// A compact row of quick action buttons for common tasks
@@ -244,6 +245,9 @@ class _WaterQuickActionButtonState
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -325,7 +329,10 @@ class _WaterQuickActionButtonState
           ),
         ),
       ),
-    );
+    ).then((_) {
+      // Show nav bar when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   @override

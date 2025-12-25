@@ -75,6 +75,7 @@ dependencies:
 
   # Image Picker (for food photos)
   image_picker: ^1.1.2
+  speech_to_text: ^7.3.0
 
 dev_dependencies:
   flutter_test:

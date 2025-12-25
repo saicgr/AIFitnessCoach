@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
@@ -59,10 +58,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
         ],
       ),
       body: state.isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: teal),
-            )
-          : RefreshIndicator(
+          ? _NutritionLoadingSkeleton(isDark: isDark)
+          : state.error != null
+              ? _NutritionErrorState(
+                  error: state.error!,
+                  onRetry: _loadData,
+                  isDark: isDark,
+                )
+              : RefreshIndicator(
               onRefresh: _loadData,
               color: teal,
               child: SingleChildScrollView(
@@ -100,9 +103,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
                         ).animate().fadeIn(delay: (50 * e.key).ms);
                       }),
                     ] else
-                      _EmptyMealsState(isDark: isDark)
-                          .animate()
-                          .fadeIn(delay: 150.ms),
+                      _EmptyMealsState(
+                        isDark: isDark,
+                        onLogMeal: () => _showLogMealSheet(isDark),
+                      ).animate().fadeIn(delay: 150.ms),
 
                     const SizedBox(height: 100),
                   ],
@@ -182,7 +186,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
                   color: textPrimary,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               TextField(
                 controller: caloriesController,
                 keyboardType: TextInputType.number,
@@ -216,7 +220,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: () {
                     if (_userId != null) {
                       ref.read(nutritionProvider.notifier).updateTargets(
@@ -230,11 +234,21 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
                     }
                     Navigator.pop(context);
                   },
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
                     backgroundColor: teal,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Update Targets'),
+                  child: const Text(
+                    'Update Targets',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -257,6 +271,255 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen> {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Error State with Retry
+// ─────────────────────────────────────────────────────────────────
+
+class _NutritionErrorState extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+  final bool isDark;
+
+  const _NutritionErrorState({
+    required this.error,
+    required this.onRetry,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Error icon with background
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: errorColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 40,
+                color: errorColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Unable to load nutrition data',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please check your connection and try again',
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: errorColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Show technical error in debug mode
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                error.length > 100 ? '${error.substring(0, 100)}...' : error,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                  fontFamily: 'monospace',
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Loading Skeleton
+// ─────────────────────────────────────────────────────────────────
+
+class _NutritionLoadingSkeleton extends StatelessWidget {
+  final bool isDark;
+
+  const _NutritionLoadingSkeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Calorie ring skeleton
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                // Circle placeholder
+                Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: glassSurface,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Stats row placeholder
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _SkeletonBox(width: 60, height: 40, isDark: isDark),
+                    const SizedBox(width: 48),
+                    _SkeletonBox(width: 60, height: 40, isDark: isDark),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Macro cards skeleton
+          Row(
+            children: [
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 120, isDark: isDark)),
+              const SizedBox(width: 12),
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 120, isDark: isDark)),
+              const SizedBox(width: 12),
+              Expanded(child: _SkeletonBox(width: double.infinity, height: 120, isDark: isDark)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Section header skeleton
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _SkeletonBox(width: 120, height: 16, isDark: isDark),
+          ),
+          const SizedBox(height: 16),
+          // Meal cards skeleton
+          _SkeletonBox(width: double.infinity, height: 100, isDark: isDark),
+          const SizedBox(height: 12),
+          _SkeletonBox(width: double.infinity, height: 100, isDark: isDark),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton placeholder box with shimmer effect
+class _SkeletonBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final bool isDark;
+
+  const _SkeletonBox({
+    required this.width,
+    required this.height,
+    required this.isDark,
+  });
+
+  @override
+  State<_SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<_SkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+    _animation = Tween<double>(begin: 0.3, end: 0.6).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: baseColor.withOpacity(_animation.value),
+            borderRadius: BorderRadius.circular(12),
+          ),
+        );
+      },
     );
   }
 }
@@ -359,7 +622,7 @@ class _CalorieRing extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -368,7 +631,7 @@ class _CalorieRing extends StatelessWidget {
                 height: 24,
                 width: 1,
                 color: cardBorder,
-                margin: const EdgeInsets.symmetric(horizontal: 24),
+                margin: const EdgeInsets.symmetric(horizontal: 32),
               ),
               _CalorieStat(label: 'Remaining', value: remaining, isDark: isDark),
             ],
@@ -532,7 +795,7 @@ class _MacroCard extends StatelessWidget {
               Text(
                 '${(percentage * 100).toInt()}%',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
@@ -787,7 +1050,7 @@ class _MacroChip extends StatelessWidget {
       child: Text(
         '$label: ${value.toInt()}g',
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           color: color,
         ),
@@ -797,13 +1060,14 @@ class _MacroChip extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Empty Meals State
+// Empty Meals State - Enhanced with visual appeal and guidance
 // ─────────────────────────────────────────────────────────────────
 
 class _EmptyMealsState extends StatelessWidget {
   final bool isDark;
+  final VoidCallback? onLogMeal;
 
-  const _EmptyMealsState({required this.isDark});
+  const _EmptyMealsState({required this.isDark, this.onLogMeal});
 
   @override
   Widget build(BuildContext context) {
@@ -811,37 +1075,178 @@ class _EmptyMealsState extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final success = isDark ? AppColors.success : AppColorsLight.success;
 
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+        ),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.restaurant_outlined,
-            size: 64,
-            color: textMuted,
+          // Animated food illustration container
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  teal.withOpacity(0.15),
+                  success.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  Icons.restaurant_menu_rounded,
+                  size: 48,
+                  color: teal,
+                ),
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: success,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: elevated,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            'No meals logged today',
+            'Start tracking your nutrition',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: textSecondary,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap the button below to log your first meal',
+            'Log your meals to track calories, protein, carbs, and fat throughout the day',
             style: TextStyle(
               fontSize: 14,
-              color: textMuted,
+              color: textSecondary,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          // Quick action hints
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _QuickHint(
+                icon: Icons.camera_alt_outlined,
+                label: 'Photo',
+                isDark: isDark,
+              ),
+              const SizedBox(width: 16),
+              _QuickHint(
+                icon: Icons.mic_outlined,
+                label: 'Voice',
+                isDark: isDark,
+              ),
+              const SizedBox(width: 16),
+              _QuickHint(
+                icon: Icons.qr_code_scanner,
+                label: 'Scan',
+                isDark: isDark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // CTA Button
+          if (onLogMeal != null)
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onLogMeal,
+                icon: const Icon(Icons.add_rounded, size: 20),
+                label: const Text(
+                  'Log Your First Meal',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Quick hint chip for empty state
+class _QuickHint extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+
+  const _QuickHint({
+    required this.icon,
+    required this.label,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final glassSurface =
+        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: glassSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: textMuted),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: textMuted,
+            ),
           ),
         ],
       ),
@@ -1070,9 +1475,12 @@ class _LogMealSheetState extends ConsumerState<_LogMealSheet>
             onPressed: () => Navigator.pop(context, false),
             child: Text('Cancel', style: TextStyle(color: textMuted)),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: teal),
+            style: FilledButton.styleFrom(
+              backgroundColor: teal,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Log This'),
           ),
         ],
@@ -1161,7 +1569,7 @@ class _LogMealSheetState extends ConsumerState<_LogMealSheet>
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedMealType = type),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected ? teal.withOpacity(0.2) : elevated,
                           borderRadius: BorderRadius.circular(12),
@@ -1173,11 +1581,12 @@ class _LogMealSheetState extends ConsumerState<_LogMealSheet>
                           children: [
                             Text(type.emoji,
                                 style: const TextStyle(fontSize: 20)),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
                               type.label,
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                                 color: isSelected ? teal : textSecondary,
                               ),
                             ),
@@ -1210,20 +1619,21 @@ class _LogMealSheetState extends ConsumerState<_LogMealSheet>
               labelColor: Colors.white,
               unselectedLabelColor: textMuted,
               labelStyle: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
               dividerColor: Colors.transparent,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
               tabs: const [
-                Tab(icon: Icon(Icons.camera_alt, size: 18), text: 'Photo'),
-                Tab(icon: Icon(Icons.mic, size: 18), text: 'Voice'),
-                Tab(icon: Icon(Icons.edit, size: 18), text: 'Describe'),
-                Tab(icon: Icon(Icons.qr_code_scanner, size: 18), text: 'Scan'),
-                Tab(icon: Icon(Icons.flash_on, size: 18), text: 'Quick'),
+                Tab(icon: Icon(Icons.camera_alt_outlined, size: 18), text: 'Photo'),
+                Tab(icon: Icon(Icons.mic_outlined, size: 18), text: 'Voice'),
+                Tab(icon: Icon(Icons.edit_outlined, size: 18), text: 'Type'),
+                Tab(icon: Icon(Icons.qr_code_scanner_outlined, size: 18), text: 'Scan'),
+                Tab(icon: Icon(Icons.bolt_outlined, size: 18), text: 'Quick'),
               ],
             ),
           ),

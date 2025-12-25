@@ -7,6 +7,9 @@ import '../core/theme/theme_provider.dart';
 import 'floating_chat/floating_chat_provider.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
+/// Provider to control floating nav bar visibility
+final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
+
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -44,6 +47,7 @@ class MainShell extends ConsumerWidget {
     final selectedIndex = _calculateSelectedIndex(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
 
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(
@@ -60,9 +64,18 @@ class MainShell extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _FloatingNavBarWithAI(
-              selectedIndex: selectedIndex,
-              onItemTapped: (index) => _onItemTapped(context, index),
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              offset: isNavBarVisible ? Offset.zero : const Offset(0, 1.5),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isNavBarVisible ? 1.0 : 0.0,
+                child: _FloatingNavBarWithAI(
+                  selectedIndex: selectedIndex,
+                  onItemTapped: (index) => _onItemTapped(context, index),
+                ),
+              ),
             ),
           ),
         ],
