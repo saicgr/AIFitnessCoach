@@ -526,28 +526,22 @@ async def log_food_from_barcode(request: LogBarcodeRequest):
         
         # Create food log
         db = get_supabase_db()
-        import uuid
-        food_log_id = str(uuid.uuid4())
-        
-        log_data = {
-            "id": food_log_id,
-            "user_id": request.user_id,
-            "meal_type": request.meal_type,
-            "logged_at": datetime.now().isoformat(),
-            "food_items": [food_item],
-            "total_calories": total_calories,
-            "protein_g": protein_g,
-            "carbs_g": carbs_g,
-            "fat_g": fat_g,
-            "fiber_g": fiber_g,
-            "health_score": None,
-            "ai_feedback": None,
-            "created_at": datetime.now().isoformat(),
-        }
-        
-        # Save to database
-        db.create_food_log(log_data)
-        
+
+        # Save to database using positional arguments
+        created_log = db.create_food_log(
+            user_id=request.user_id,
+            meal_type=request.meal_type,
+            food_items=[food_item],
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            ai_feedback=None,
+            health_score=None,
+        )
+
+        food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged barcode {request.barcode} as {food_log_id}")
         
         return LogBarcodeResponse(
@@ -619,27 +613,22 @@ async def log_food_from_image(
 
         # Create food log
         db = get_supabase_db()
-        food_log_id = str(uuid.uuid4())
 
-        log_data = {
-            "id": food_log_id,
-            "user_id": user_id,
-            "meal_type": meal_type,
-            "logged_at": datetime.now().isoformat(),
-            "food_items": food_items,
-            "total_calories": total_calories,
-            "protein_g": protein_g,
-            "carbs_g": carbs_g,
-            "fat_g": fat_g,
-            "fiber_g": fiber_g,
-            "health_score": None,
-            "ai_feedback": food_analysis.get('feedback'),
-            "created_at": datetime.now().isoformat(),
-        }
+        # Save to database using positional arguments
+        created_log = db.create_food_log(
+            user_id=user_id,
+            meal_type=meal_type,
+            food_items=food_items,
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            ai_feedback=food_analysis.get('feedback'),
+            health_score=None,
+        )
 
-        # Save to database
-        db.create_food_log(log_data)
-
+        food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food from image as {food_log_id}")
 
         return LogFoodResponse(
@@ -698,26 +687,23 @@ async def log_food_from_text(request: LogTextRequest):
 
         # Create food log
         db = get_supabase_db()
-        food_log_id = str(uuid.uuid4())
 
-        log_data = {
-            "id": food_log_id,
-            "user_id": request.user_id,
-            "meal_type": request.meal_type,
-            "logged_at": datetime.now().isoformat(),
-            "food_items": food_items,
-            "total_calories": total_calories,
-            "protein_g": protein_g,
-            "carbs_g": carbs_g,
-            "fat_g": fat_g,
-            "fiber_g": fiber_g,
-            "health_score": None,
-            "ai_feedback": food_analysis.get('feedback'),
-            "created_at": datetime.now().isoformat(),
-        }
+        # Save to database using positional arguments
+        created_log = db.create_food_log(
+            user_id=request.user_id,
+            meal_type=request.meal_type,
+            food_items=food_items,
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            ai_feedback=food_analysis.get('feedback'),
+            health_score=None,
+        )
 
-        # Save to database
-        db.create_food_log(log_data)
+        # Get the food log ID from the created record
+        food_log_id = created_log.get('id') if created_log else "unknown"
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
 
