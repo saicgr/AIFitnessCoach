@@ -55,7 +55,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    // Describe tab is now at index 0 (default)
+    _tabController = TabController(length: 5, vsync: this, initialIndex: 0);
     _selectedMealType = _getDefaultMealType();
   }
 
@@ -144,6 +145,44 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         _error = e.toString();
       });
     }
+  }
+
+  /// Analyze food from text and return the response for preview
+  Future<LogFoodResponse?> _analyzeFood() async {
+    final description = _descriptionController.text.trim();
+    if (description.isEmpty) return null;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final response = await repository.logFoodFromText(
+        userId: widget.userId,
+        description: description,
+        mealType: _selectedMealType.value,
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return response;
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+      return null;
+    }
+  }
+
+  /// Log an already analyzed food response
+  void _logAnalyzedFood(LogFoodResponse response) {
+    Navigator.pop(context);
+    _showSuccessSnackbar(response.totalCalories);
+    ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
   }
 
   Future<bool?> _showRainbowNutritionConfirmation(LogFoodResponse response, String description) {
@@ -547,9 +586,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               unselectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
               dividerColor: Colors.transparent,
               tabs: const [
+                Tab(icon: Icon(Icons.edit, size: 18), text: 'Describe'),
                 Tab(icon: Icon(Icons.camera_alt, size: 18), text: 'Photo'),
                 Tab(icon: Icon(Icons.mic, size: 18), text: 'Voice'),
-                Tab(icon: Icon(Icons.edit, size: 18), text: 'Describe'),
                 Tab(icon: Icon(Icons.qr_code_scanner, size: 18), text: 'Scan'),
                 Tab(icon: Icon(Icons.flash_on, size: 18), text: 'Quick'),
               ],
@@ -608,17 +647,18 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               child: TabBarView(
                 controller: _tabController,
                 children: [
+                  _DescribeTab(
+                    controller: _descriptionController,
+                    onAnalyze: _analyzeFood,
+                    onLog: _logAnalyzedFood,
+                    isDark: isDark,
+                  ),
                   _PhotoTab(onPickImage: _pickImage, isDark: isDark),
                   _VoiceTab(
                     onSubmit: (text) {
                       _descriptionController.text = text;
                       _logFromText();
                     },
-                    isDark: isDark,
-                  ),
-                  _DescribeTab(
-                    controller: _descriptionController,
-                    onSubmit: _logFromText,
                     isDark: isDark,
                   ),
                   _ScanTab(onBarcodeDetected: _handleBarcodeScan, isDark: isDark),
@@ -1000,24 +1040,83 @@ class _VoiceTabState extends State<_VoiceTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Describe Tab
+// Describe Tab - Two-step flow: Analyze → Preview → Log
 // ─────────────────────────────────────────────────────────────────
 
-class _DescribeTab extends StatelessWidget {
+class _DescribeTab extends StatefulWidget {
   final TextEditingController controller;
-  final VoidCallback onSubmit;
+  final Future<LogFoodResponse?> Function() onAnalyze;
+  final void Function(LogFoodResponse) onLog;
   final bool isDark;
 
-  const _DescribeTab({required this.controller, required this.onSubmit, required this.isDark});
+  const _DescribeTab({
+    required this.controller,
+    required this.onAnalyze,
+    required this.onLog,
+    required this.isDark,
+  });
+
+  @override
+  State<_DescribeTab> createState() => _DescribeTabState();
+}
+
+class _DescribeTabState extends State<_DescribeTab> {
+  LogFoodResponse? _analyzedResponse;
+  bool _isAnalyzing = false;
+
+  // Rainbow colors for nutrition values
+  static const caloriesColor = Color(0xFFFF6B6B);
+  static const proteinColor = Color(0xFFFFD93D);
+  static const carbsColor = Color(0xFF6BCB77);
+  static const fatColor = Color(0xFF4D96FF);
+  static const fiberColor = Color(0xFF9B59B6);
+
+  Future<void> _handleAnalyze() async {
+    if (widget.controller.text.trim().isEmpty) return;
+
+    setState(() => _isAnalyzing = true);
+    final response = await widget.onAnalyze();
+    if (mounted) {
+      setState(() {
+        _isAnalyzing = false;
+        _analyzedResponse = response;
+      });
+    }
+  }
+
+  void _handleEdit() {
+    setState(() => _analyzedResponse = null);
+  }
+
+  void _handleLog() {
+    if (_analyzedResponse != null) {
+      widget.onLog(_analyzedResponse!);
+    }
+  }
+
+  void _appendText(String text) {
+    if (widget.controller.text.isNotEmpty && !widget.controller.text.endsWith(', ')) {
+      widget.controller.text += ', ';
+    }
+    widget.controller.text += text;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return Padding(
+    // If we have analyzed nutrition, show the preview
+    if (_analyzedResponse != null) {
+      return _buildNutritionPreview(isDark, textPrimary, textMuted, textSecondary, elevated, teal);
+    }
+
+    // Otherwise show the input form
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1027,21 +1126,19 @@ class _DescribeTab extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
           ),
           const SizedBox(height: 16),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              maxLines: null,
-              expands: true,
-              textAlignVertical: TextAlignVertical.top,
-              style: TextStyle(color: textPrimary),
-              decoration: InputDecoration(
-                hintText: 'e.g., 2 eggs, toast with butter, and a glass of orange juice',
-                hintStyle: TextStyle(color: textMuted),
-                filled: true,
-                fillColor: elevated,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.all(16),
-              ),
+          TextField(
+            controller: widget.controller,
+            maxLines: 5,
+            minLines: 3,
+            textAlignVertical: TextAlignVertical.top,
+            style: TextStyle(color: textPrimary),
+            decoration: InputDecoration(
+              hintText: 'e.g., 2 eggs, toast with butter, and a glass of orange juice',
+              hintStyle: TextStyle(color: textMuted),
+              filled: true,
+              fillColor: elevated,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.all(16),
             ),
           ),
           const SizedBox(height: 16),
@@ -1060,14 +1157,25 @@ class _DescribeTab extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onSubmit,
+            child: ElevatedButton.icon(
+              onPressed: _isAnalyzing ? null : _handleAnalyze,
+              icon: _isAnalyzing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.send, size: 18),
+              label: Text(
+                _isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: teal,
+                disabledBackgroundColor: teal.withValues(alpha: 0.5),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Log This Meal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -1075,11 +1183,169 @@ class _DescribeTab extends StatelessWidget {
     );
   }
 
-  void _appendText(String text) {
-    if (controller.text.isNotEmpty && !controller.text.endsWith(', ')) {
-      controller.text += ', ';
-    }
-    controller.text += text;
+  Widget _buildNutritionPreview(
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color textSecondary,
+    Color elevated,
+    Color teal,
+  ) {
+    final response = _analyzedResponse!;
+    final description = widget.controller.text.trim();
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with edit option
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: const Color(0xFFFFD93D), size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'AI Estimated Nutrition',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _handleEdit,
+                icon: Icon(Icons.edit, size: 16, color: textMuted),
+                label: Text('Edit', style: TextStyle(color: textMuted)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Food description
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.restaurant, size: 20, color: textMuted),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    description,
+                    style: TextStyle(color: textPrimary, fontSize: 14),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Nutrition cards
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _RainbowNutritionCard(
+                    icon: Icons.local_fire_department,
+                    label: 'Calories',
+                    value: '${response.totalCalories}',
+                    unit: 'kcal',
+                    color: caloriesColor,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.fitness_center,
+                          label: 'Protein',
+                          value: response.proteinG.toStringAsFixed(1),
+                          unit: 'g',
+                          color: proteinColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.grain,
+                          label: 'Carbs',
+                          value: response.carbsG.toStringAsFixed(1),
+                          unit: 'g',
+                          color: carbsColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.opacity,
+                          label: 'Fat',
+                          value: response.fatG.toStringAsFixed(1),
+                          unit: 'g',
+                          color: fatColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.eco,
+                          label: 'Fiber',
+                          value: (response.fiberG ?? 0).toStringAsFixed(1),
+                          unit: 'g',
+                          color: fiberColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'These values are AI estimates based on your description.',
+                    style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Log button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _handleLog,
+              icon: const Icon(Icons.check, size: 20),
+              label: const Text(
+                'Log This Meal',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6BCB77),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

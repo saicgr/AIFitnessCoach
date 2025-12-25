@@ -396,6 +396,7 @@ IMPORTANT:
 - Provide helpful feedback about the nutritional quality'''
 
         try:
+            print(f"🔍 [Gemini] Parsing food description: {description[:100]}...")
             response = await client.aio.models.generate_content(
                 model=self.model,
                 contents=prompt,
@@ -406,7 +407,12 @@ IMPORTANT:
                 ),
             )
 
-            content = response.text.strip()
+            content = response.text.strip() if response.text else ""
+            print(f"🔍 [Gemini] Raw response: {content[:500]}...")
+
+            if not content:
+                print("❌ [Gemini] Empty response from API")
+                return None
 
             # Clean markdown if present
             if content.startswith("```json"):
@@ -416,10 +422,18 @@ IMPORTANT:
             if content.endswith("```"):
                 content = content[:-3]
 
-            return json.loads(content.strip())
+            result = json.loads(content.strip())
+            print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
+            return result
 
+        except json.JSONDecodeError as e:
+            print(f"❌ [Gemini] JSON parsing failed: {e}")
+            print(f"❌ [Gemini] Content was: {content[:500] if content else 'empty'}")
+            return None
         except Exception as e:
-            print(f"Food description parsing failed: {e}")
+            print(f"❌ [Gemini] Food description parsing failed: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _get_holiday_theme(self, workout_date: Optional[str] = None) -> Optional[str]:
