@@ -125,7 +125,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               barrierDismissible: false,
               builder: (context) => ChallengeCompleteDialog(
                 challengerName: challengerName,
-                workoutName: widget.workout.name,
+                workoutName: widget.workout.name ?? 'Workout',
                 didBeat: didBeat,
                 yourStats: challengedStats,
                 theirStats: workoutData,
@@ -223,7 +223,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           builder: (context) => ChallengeFriendsDialog(
             userId: userId,
             workoutLogId: widget.workoutLogId!,
-            workoutName: widget.workout.name,
+            workoutName: widget.workout.name ?? 'Workout',
             workoutData: workoutData,
             friends: friends,
           ),

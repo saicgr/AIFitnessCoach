@@ -115,6 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final upcomingWorkouts = workoutsNotifier.upcomingWorkouts;
     final completedCount = workoutsNotifier.completedCount;
     final weeklyProgress = workoutsNotifier.weeklyProgress;
+    final currentStreak = workoutsNotifier.currentStreak;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
@@ -135,8 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: _buildHeader(
                   context,
                   user?.displayName ?? 'User',
-                  completedCount,
-                  weeklyProgress.$1,
+                  currentStreak,
                   isDark,
                 ),
               ),
@@ -165,15 +165,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: DailyActivityCard(),
               ),
 
-              // Library Quick Access
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: LibraryQuickAccessCard(isDark: isDark),
-                ),
-              ),
-
               // Next Workout Card
               SliverToBoxAdapter(
                 child: _buildNextWorkoutSection(
@@ -182,6 +173,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   workoutsNotifier,
                   nextWorkout,
                   isAIGenerating,
+                ),
+              ),
+
+              // Quick Actions Row
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  child: QuickActionsRow(),
                 ),
               ),
 
@@ -252,8 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildHeader(
     BuildContext context,
     String userName,
-    int completedCount,
-    int weeklyCount,
+    int currentStreak,
     bool isDark,
   ) {
     return Padding(
@@ -278,19 +276,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
-          StatBadge(
-            icon: Icons.check_circle_outline,
-            value: '$completedCount',
-            color: AppColors.success,
-            tooltip: 'Total workouts completed',
-          ),
+          // Streak Badge
+          _StreakBadge(streak: currentStreak, isDark: isDark),
           const SizedBox(width: 8),
-          StatBadge(
-            icon: Icons.local_fire_department,
-            value: '$weeklyCount',
-            color: AppColors.orange,
-            tooltip: 'Workouts this week',
-          ),
+          _LibraryButton(isDark: isDark),
           const SizedBox(width: 4),
           NotificationBellButton(isDark: isDark),
           const SizedBox(width: 4),
@@ -346,6 +335,111 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         }
                       },
                     ),
+    );
+  }
+}
+
+/// A button that navigates to the library screen
+class _LibraryButton extends StatelessWidget {
+  final bool isDark;
+
+  const _LibraryButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Material(
+      color: elevatedColor,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          context.push('/library');
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.purple.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.fitness_center,
+                size: 16,
+                color: AppColors.purple,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Library',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A badge showing the current workout streak with fire icon
+class _StreakBadge extends StatelessWidget {
+  final int streak;
+  final bool isDark;
+
+  const _StreakBadge({
+    required this.streak,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Tooltip(
+      message: streak > 0 ? '$streak day streak!' : 'Start your streak!',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: streak > 0
+                ? AppColors.orange.withOpacity(0.5)
+                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              size: 16,
+              color: streak > 0 ? AppColors.orange : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$streak',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: streak > 0 ? AppColors.orange : textColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

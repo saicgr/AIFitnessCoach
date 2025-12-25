@@ -269,6 +269,159 @@ IMPORTANT:
             embeddings.append(emb)
         return embeddings
 
+    # ============================================
+    # Food Analysis Methods
+    # ============================================
+
+    async def analyze_food_image(
+        self,
+        image_base64: str,
+        mime_type: str = "image/jpeg",
+    ) -> Optional[Dict]:
+        """
+        Analyze a food image and extract nutrition information using Gemini Vision.
+
+        Args:
+            image_base64: Base64 encoded image data
+            mime_type: Image MIME type (e.g., 'image/jpeg', 'image/png')
+
+        Returns:
+            Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
+        """
+        prompt = '''Analyze this food image and provide detailed nutrition information.
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation):
+{
+  "food_items": [
+    {
+      "name": "Food item name",
+      "amount": "Estimated portion (e.g., '1 cup', '200g', '1 medium')",
+      "calories": 150,
+      "protein_g": 10.0,
+      "carbs_g": 15.0,
+      "fat_g": 5.0
+    }
+  ],
+  "total_calories": 450,
+  "protein_g": 25.0,
+  "carbs_g": 40.0,
+  "fat_g": 15.0,
+  "fiber_g": 5.0,
+  "feedback": "Brief nutritional feedback about the meal"
+}
+
+IMPORTANT:
+- Identify ALL visible food items in the image
+- Estimate realistic portion sizes based on visual cues
+- Use standard USDA nutrition data for calorie/macro estimates
+- If you cannot identify the food, make your best educated guess
+- Total values should be the sum of individual items
+- Provide helpful feedback about the nutritional quality of the meal'''
+
+        try:
+            # Create image part from base64
+            image_part = types.Part.from_bytes(
+                data=__import__('base64').b64decode(image_base64),
+                mime_type=mime_type
+            )
+
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=[prompt, image_part],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=2000,
+                    temperature=0.3,
+                ),
+            )
+
+            content = response.text.strip()
+
+            # Clean markdown if present
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            return json.loads(content.strip())
+
+        except Exception as e:
+            print(f"Food image analysis failed: {e}")
+            return None
+
+    async def parse_food_description(self, description: str) -> Optional[Dict]:
+        """
+        Parse a text description of food and extract nutrition information.
+
+        Args:
+            description: Natural language description of food
+                        (e.g., "2 eggs, toast with butter, and orange juice")
+
+        Returns:
+            Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
+        """
+        prompt = f'''Parse this food description and provide detailed nutrition information.
+
+Food description: "{description}"
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation):
+{{
+  "food_items": [
+    {{
+      "name": "Food item name",
+      "amount": "Portion from description or reasonable default",
+      "calories": 150,
+      "protein_g": 10.0,
+      "carbs_g": 15.0,
+      "fat_g": 5.0
+    }}
+  ],
+  "total_calories": 450,
+  "protein_g": 25.0,
+  "carbs_g": 40.0,
+  "fat_g": 15.0,
+  "fiber_g": 5.0,
+  "feedback": "Brief nutritional feedback about the meal"
+}}
+
+IMPORTANT:
+- Extract ALL food items mentioned in the description
+- Use quantities specified (e.g., "2 eggs" = 2 large eggs)
+- If no quantity specified, assume a standard single serving
+- Use standard USDA nutrition data for calorie/macro estimates
+- Total values should be the sum of individual items
+- Account for preparation methods mentioned (e.g., "fried" vs "boiled")
+- Provide helpful feedback about the nutritional quality'''
+
+        try:
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=2000,
+                    temperature=0.3,
+                ),
+            )
+
+            content = response.text.strip()
+
+            # Clean markdown if present
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            return json.loads(content.strip())
+
+        except Exception as e:
+            print(f"Food description parsing failed: {e}")
+            return None
+
     def _get_holiday_theme(self, workout_date: Optional[str] = None) -> Optional[str]:
         """
         Check if workout date is near a holiday and return themed naming suggestions.

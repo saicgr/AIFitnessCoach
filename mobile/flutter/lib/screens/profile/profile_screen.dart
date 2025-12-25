@@ -171,7 +171,14 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(child: SizedBox()),
+            Expanded(
+              child: QuickAccessCard(
+                icon: Icons.insights,
+                title: 'Stats',
+                color: AppColors.purple,
+                onTap: () => context.push('/stats'),
+              ),
+            ),
           ],
         ).animate().fadeIn(delay: 160.ms),
       ],

@@ -462,8 +462,10 @@ class _RegenerateWorkoutSheetState
           EquipmentSelector(
             selectedEquipment: _selectedEquipment,
             onSelectionChanged: (eq) =>
-                setState(() => _selectedEquipment.clear()
-                  ..addAll(eq)),
+                setState(() {
+                  _selectedEquipment.clear();
+                  _selectedEquipment.addAll(eq);
+                }),
             customEquipment: _customEquipment,
             showCustomInput: _showEquipmentInput,
             onToggleCustomInput: () =>
@@ -487,8 +489,10 @@ class _RegenerateWorkoutSheetState
           FocusAreasSelector(
             selectedAreas: _selectedFocusAreas,
             onSelectionChanged: (areas) =>
-                setState(() => _selectedFocusAreas.clear()
-                  ..addAll(areas)),
+                setState(() {
+                  _selectedFocusAreas.clear();
+                  _selectedFocusAreas.addAll(areas);
+                }),
             customFocusArea: _customFocusArea,
             showCustomInput: _showFocusAreaInput,
             onToggleCustomInput: () =>
@@ -506,8 +510,10 @@ class _RegenerateWorkoutSheetState
           InjuriesSelector(
             selectedInjuries: _selectedInjuries,
             onSelectionChanged: (injuries) =>
-                setState(() => _selectedInjuries.clear()
-                  ..addAll(injuries)),
+                setState(() {
+                  _selectedInjuries.clear();
+                  _selectedInjuries.addAll(injuries);
+                }),
             customInjury: _customInjury,
             showCustomInput: _showInjuryInput,
             onToggleCustomInput: () =>

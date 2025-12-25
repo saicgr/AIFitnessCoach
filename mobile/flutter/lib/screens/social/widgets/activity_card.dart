@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/saved_workouts_service.dart';
 import '../../../data/services/api_client.dart';
@@ -67,7 +68,11 @@ class _ActivityCardState extends State<ActivityCard> {
   @override
   void initState() {
     super.initState();
-    _savedWorkoutsService = SavedWorkoutsService(ApiClient());
+    final storage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    );
+    _savedWorkoutsService = SavedWorkoutsService(ApiClient(storage));
   }
 
   @override

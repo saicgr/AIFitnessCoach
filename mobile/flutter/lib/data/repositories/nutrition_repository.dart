@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../models/nutrition.dart';
 import '../services/api_client.dart';
 
@@ -208,6 +210,96 @@ class NutritionRepository {
       );
     } catch (e) {
       debugPrint('Error updating nutrition targets: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Barcode & AI Food Logging Methods
+  // ============================================
+
+  /// Lookup a product by barcode
+  Future<BarcodeProduct> lookupBarcode(String barcode) async {
+    try {
+      final response = await _client.get('/nutrition/barcode/$barcode');
+      return BarcodeProduct.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error looking up barcode: $e');
+      rethrow;
+    }
+  }
+
+  /// Log food from barcode scan
+  Future<LogBarcodeResponse> logFoodFromBarcode({
+    required String userId,
+    required String barcode,
+    required String mealType,
+    double servings = 1.0,
+    double? servingSizeG,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/log-barcode',
+        data: {
+          'user_id': userId,
+          'barcode': barcode,
+          'meal_type': mealType,
+          'servings': servings,
+          if (servingSizeG != null) 'serving_size_g': servingSizeG,
+        },
+      );
+      return LogBarcodeResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error logging food from barcode: $e');
+      rethrow;
+    }
+  }
+
+  /// Log food from image using Gemini Vision
+  Future<LogFoodResponse> logFoodFromImage({
+    required String userId,
+    required String mealType,
+    required File imageFile,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'user_id': userId,
+        'meal_type': mealType,
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: 'food_image.jpg',
+        ),
+      });
+
+      final response = await _client.post(
+        '/nutrition/log-image',
+        data: formData,
+      );
+      return LogFoodResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error logging food from image: $e');
+      rethrow;
+    }
+  }
+
+  /// Log food from text description using Gemini
+  Future<LogFoodResponse> logFoodFromText({
+    required String userId,
+    required String description,
+    required String mealType,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/log-text',
+        data: {
+          'user_id': userId,
+          'description': description,
+          'meal_type': mealType,
+        },
+      );
+      return LogFoodResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error logging food from text: $e');
       rethrow;
     }
   }

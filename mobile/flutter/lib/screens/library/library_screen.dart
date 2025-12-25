@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/services/haptic_service.dart';
 import 'tabs/exercises_tab.dart';
 import 'tabs/programs_tab.dart';
-import 'tabs/my_stats_tab.dart';
 
 // Export providers and models for external use
 export 'providers/library_providers.dart';
@@ -25,7 +26,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -63,7 +64,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 children: const [
                   ExercisesTab(),
                   ProgramsTab(),
-                  MyStatsTab(),
                 ],
               ),
             ),
@@ -74,25 +74,49 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   }
 
   Widget _buildHeader(BuildContext context, bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Library',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+          // Back button
+          IconButton(
+            onPressed: () {
+              HapticService.light();
+              context.pop();
+            },
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: textMuted,
+              size: 20,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Browse exercises and programs',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.textSecondary
-                      : AppColorsLight.textSecondary,
+          const SizedBox(width: 12),
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Library',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Browse exercises and programs',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark
+                            ? AppColors.textSecondary
+                            : AppColorsLight.textSecondary,
+                      ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -135,7 +159,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         tabs: const [
           Tab(text: 'Exercises'),
           Tab(text: 'Programs'),
-          Tab(text: 'My Stats'),
         ],
       ),
     );

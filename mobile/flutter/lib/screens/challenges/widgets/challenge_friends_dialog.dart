@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 
 /// Dialog to challenge friends after completing a workout
-class ChallengeFriendsDialog extends StatefulWidget {
+class ChallengeFriendsDialog extends ConsumerStatefulWidget {
   final String userId;
   final String workoutLogId;
   final String workoutName;
@@ -22,10 +24,10 @@ class ChallengeFriendsDialog extends StatefulWidget {
   });
 
   @override
-  State<ChallengeFriendsDialog> createState() => _ChallengeFriendsDialogState();
+  ConsumerState<ChallengeFriendsDialog> createState() => _ChallengeFriendsDialogState();
 }
 
-class _ChallengeFriendsDialogState extends State<ChallengeFriendsDialog> {
+class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog> {
   final Set<String> _selectedFriendIds = {};
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -36,7 +38,11 @@ class _ChallengeFriendsDialogState extends State<ChallengeFriendsDialog> {
   @override
   void initState() {
     super.initState();
-    _challengesService = ChallengesService(ApiClient());
+    final storage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    );
+    _challengesService = ChallengesService(ApiClient(storage));
   }
 
   @override

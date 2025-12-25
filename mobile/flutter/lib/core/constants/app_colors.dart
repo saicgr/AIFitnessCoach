@@ -41,6 +41,7 @@ class AppColors {
 
   // Surface colors
   static const Color surface = Color(0xFF121212);
+  static const Color background = Color(0xFF000000);
 
   // Semantic Colors
   static const Color success = Color(0xFF22C55E);
@@ -116,6 +117,7 @@ class AppColorsLight {
   static const Color glassSurface = Color(0xFFF8F8FA);
   static const Color cardBorder = Color(0xFFE4E4E7);
   static const Color surface = Color(0xFFF9FAFB);
+  static const Color background = Color(0xFFFFFFFF);
 
   // Text Colors
   static const Color textPrimary = Color(0xFF18181B);

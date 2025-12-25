@@ -109,3 +109,107 @@ Map<String, dynamic> _$NutritionTargetsToJson(NutritionTargets instance) =>
       'daily_carbs_target_g': instance.dailyCarbsTargetG,
       'daily_fat_target_g': instance.dailyFatTargetG,
     };
+
+ProductNutrients _$ProductNutrientsFromJson(Map<String, dynamic> json) =>
+    ProductNutrients(
+      caloriesPer100g: (json['calories_per_100g'] as num?)?.toDouble() ?? 0,
+      proteinPer100g: (json['protein_per_100g'] as num?)?.toDouble() ?? 0,
+      carbsPer100g: (json['carbs_per_100g'] as num?)?.toDouble() ?? 0,
+      fatPer100g: (json['fat_per_100g'] as num?)?.toDouble() ?? 0,
+      fiberPer100g: (json['fiber_per_100g'] as num?)?.toDouble() ?? 0,
+      sugarPer100g: (json['sugar_per_100g'] as num?)?.toDouble(),
+      sodiumPer100g: (json['sodium_per_100g'] as num?)?.toDouble(),
+      servingSizeG: (json['serving_size_g'] as num?)?.toDouble(),
+    );
+
+Map<String, dynamic> _$ProductNutrientsToJson(ProductNutrients instance) =>
+    <String, dynamic>{
+      'calories_per_100g': instance.caloriesPer100g,
+      'protein_per_100g': instance.proteinPer100g,
+      'carbs_per_100g': instance.carbsPer100g,
+      'fat_per_100g': instance.fatPer100g,
+      'fiber_per_100g': instance.fiberPer100g,
+      'sugar_per_100g': instance.sugarPer100g,
+      'sodium_per_100g': instance.sodiumPer100g,
+      'serving_size_g': instance.servingSizeG,
+    };
+
+BarcodeProduct _$BarcodeProductFromJson(Map<String, dynamic> json) =>
+    BarcodeProduct(
+      barcode: json['barcode'] as String,
+      productName: json['product_name'] as String,
+      brand: json['brand'] as String?,
+      categories: json['categories'] as String?,
+      imageUrl: json['image_url'] as String?,
+      imageThumbUrl: json['image_thumb_url'] as String?,
+      nutrients: json['nutrients'] as Map<String, dynamic>? ?? const {},
+      nutriscoreGrade: json['nutriscore_grade'] as String?,
+      novaGroup: (json['nova_group'] as num?)?.toInt(),
+      ingredientsText: json['ingredients_text'] as String?,
+      allergens: json['allergens'] as String?,
+    );
+
+Map<String, dynamic> _$BarcodeProductToJson(BarcodeProduct instance) =>
+    <String, dynamic>{
+      'barcode': instance.barcode,
+      'product_name': instance.productName,
+      'brand': instance.brand,
+      'categories': instance.categories,
+      'image_url': instance.imageUrl,
+      'image_thumb_url': instance.imageThumbUrl,
+      'nutrients': instance.nutrients,
+      'nutriscore_grade': instance.nutriscoreGrade,
+      'nova_group': instance.novaGroup,
+      'ingredients_text': instance.ingredientsText,
+      'allergens': instance.allergens,
+    };
+
+LogBarcodeResponse _$LogBarcodeResponseFromJson(Map<String, dynamic> json) =>
+    LogBarcodeResponse(
+      success: json['success'] as bool,
+      foodLogId: json['food_log_id'] as String,
+      productName: json['product_name'] as String,
+      totalCalories: (json['total_calories'] as num).toInt(),
+      proteinG: (json['protein_g'] as num).toDouble(),
+      carbsG: (json['carbs_g'] as num).toDouble(),
+      fatG: (json['fat_g'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$LogBarcodeResponseToJson(LogBarcodeResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'food_log_id': instance.foodLogId,
+      'product_name': instance.productName,
+      'total_calories': instance.totalCalories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+    };
+
+LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
+    LogFoodResponse(
+      success: json['success'] as bool,
+      foodLogId: json['food_log_id'] as String,
+      foodItems:
+          (json['food_items'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [],
+      totalCalories: (json['total_calories'] as num).toInt(),
+      proteinG: (json['protein_g'] as num).toDouble(),
+      carbsG: (json['carbs_g'] as num).toDouble(),
+      fatG: (json['fat_g'] as num).toDouble(),
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+    );
+
+Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'food_log_id': instance.foodLogId,
+      'food_items': instance.foodItems,
+      'total_calories': instance.totalCalories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'fiber_g': instance.fiberG,
+    };

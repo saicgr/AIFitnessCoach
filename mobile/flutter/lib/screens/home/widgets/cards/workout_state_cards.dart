@@ -171,9 +171,10 @@ class ErrorCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
-            TextButton(
+            FilledButton.icon(
               onPressed: onRetry,
-              child: const Text('Try Again'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
             ),
           ],
         ),

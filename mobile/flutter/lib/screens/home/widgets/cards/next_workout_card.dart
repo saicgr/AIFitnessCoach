@@ -122,8 +122,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to skip: $e'),
+          const SnackBar(
+            content: Text('Could not skip workout. Please try again.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -239,7 +239,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                               Text(
                                 _getScheduledDateLabel(workout.scheduledDate),
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.cyan,
                                   letterSpacing: 0.5,
@@ -261,7 +261,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                           child: Text(
                             workout.type?.toUpperCase() ?? 'STRENGTH',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: typeColor,
                               letterSpacing: 0.5,
@@ -281,7 +281,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                           child: Text(
                             (workout.difficulty ?? 'Medium').capitalize(),
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: difficultyColor,
                             ),
@@ -404,13 +404,5 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         ),
       ),
     );
-  }
-}
-
-/// Extension to capitalize first letter of a string
-extension StringCapitalize on String {
-  String capitalize() {
-    if (isEmpty) return this;
-    return '${this[0].toUpperCase()}${substring(1).toLowerCase()}';
   }
 }

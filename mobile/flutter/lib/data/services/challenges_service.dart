@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../api_client.dart';
-import '../../../core/constants/api_constants.dart';
+import 'api_client.dart';
+import '../../core/constants/api_constants.dart';
 
 /// Challenge status enum
 enum ChallengeStatus {

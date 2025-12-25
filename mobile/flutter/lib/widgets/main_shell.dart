@@ -17,9 +17,8 @@ class MainShell extends ConsumerWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/nutrition')) return 1;
-    if (location.startsWith('/stats')) return 2;
-    if (location.startsWith('/social')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    if (location.startsWith('/social')) return 2;
+    if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
@@ -32,12 +31,9 @@ class MainShell extends ConsumerWidget {
         context.go('/nutrition');
         break;
       case 2:
-        context.go('/stats'); // Comprehensive stats screen
-        break;
-      case 3:
         context.go('/social');
         break;
-      case 4:
+      case 3:
         context.go('/profile');
         break;
     }
@@ -95,7 +91,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // Dynamic sizing based on nav bar dimensions
     const navBarHeight = 46.0;
     const navBarRadius = navBarHeight / 2; // Fully rounded ends = 23
-    const itemPadding = 3.0; // Even padding on all sides
+    const itemPadding = 4.0; // 8px grid compliant padding
     final itemHeight = navBarHeight - (itemPadding * 2); // 40
 
     return Padding(
@@ -110,7 +106,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           // Nav bar
           Container(
             height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 300), // Increased from 240 for 5 items
+            constraints: const BoxConstraints(maxWidth: 240), // 4 items
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -149,23 +145,13 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFF34C759),
                   ),
-                  // Stats/Workouts - Purple
+                  // Social - Orange (trophy icon for leaderboard/challenges)
                   _NavItem(
-                    icon: Icons.insights_outlined,
-                    selectedIcon: Icons.insights,
-                    label: 'Stats',
+                    icon: Icons.emoji_events_outlined,
+                    selectedIcon: Icons.emoji_events,
+                    label: 'Social',
                     isSelected: selectedIndex == 2,
                     onTap: () => onItemTapped(2),
-                    itemHeight: itemHeight,
-                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
-                  ),
-                  // Social - Orange
-                  _NavItem(
-                    icon: Icons.people_outline_rounded,
-                    selectedIcon: Icons.people_rounded,
-                    label: 'Social',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
                   ),
@@ -174,8 +160,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     icon: Icons.person_outline_rounded,
                     selectedIcon: Icons.person_rounded,
                     label: 'Profile',
-                    isSelected: selectedIndex == 4,
-                    onTap: () => onItemTapped(4),
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF2D55),
                   ),
@@ -185,7 +171,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           ),
 
           // Spacing between nav bar and AI button
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
 
           // AI Coach Button - fixed position
           _AICoachButton(
@@ -270,24 +256,32 @@ class _NavItem extends StatelessWidget {
     // Squircle radius - about 1/3 of height for smooth rounded rectangle
     final squircleRadius = itemHeight / 3;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: itemHeight, // Square for even borders
-        height: itemHeight,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? selectedColor.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(squircleRadius),
-        ),
-        child: Center(
-          child: Icon(
-            isSelected ? selectedIcon : icon,
-            color: isSelected ? selectedColor : textMuted,
-            size: 22,
+    return Semantics(
+      label: label,
+      selected: isSelected,
+      button: true,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: itemHeight, // Square for even borders
+          height: itemHeight,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? selectedColor.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(squircleRadius),
+          ),
+          child: Center(
+            child: Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? selectedColor : textMuted,
+              size: 22,
+            ),
           ),
         ),
       ),

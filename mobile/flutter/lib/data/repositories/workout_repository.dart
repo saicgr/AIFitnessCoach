@@ -1437,6 +1437,61 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     final completed = thisWeek.where((w) => w.isCompleted == true).length;
     return (completed, thisWeek.length);
   }
+
+  /// Get current workout streak (consecutive days with completed workouts)
+  int get currentStreak {
+    final workouts = state.valueOrNull ?? [];
+    if (workouts.isEmpty) return 0;
+
+    // Get completed workouts sorted by date (most recent first)
+    final completedWorkouts = workouts
+        .where((w) => w.isCompleted == true && w.scheduledDate != null)
+        .toList();
+
+    if (completedWorkouts.isEmpty) return 0;
+
+    // Sort by date descending
+    completedWorkouts.sort((a, b) {
+      final dateA = DateTime.tryParse(a.scheduledDate!) ?? DateTime(1970);
+      final dateB = DateTime.tryParse(b.scheduledDate!) ?? DateTime(1970);
+      return dateB.compareTo(dateA);
+    });
+
+    // Get unique dates of completed workouts
+    final completedDates = <DateTime>{};
+    for (final workout in completedWorkouts) {
+      final date = DateTime.tryParse(workout.scheduledDate!);
+      if (date != null) {
+        completedDates.add(DateTime(date.year, date.month, date.day));
+      }
+    }
+
+    final sortedDates = completedDates.toList()..sort((a, b) => b.compareTo(a));
+    if (sortedDates.isEmpty) return 0;
+
+    // Check if streak includes today or yesterday
+    final today = DateTime.now();
+    final todayNormalized = DateTime(today.year, today.month, today.day);
+    final yesterdayNormalized = todayNormalized.subtract(const Duration(days: 1));
+
+    // Streak must start from today or yesterday to be active
+    if (sortedDates.first != todayNormalized && sortedDates.first != yesterdayNormalized) {
+      return 0;
+    }
+
+    // Count consecutive days
+    int streak = 1;
+    for (int i = 1; i < sortedDates.length; i++) {
+      final diff = sortedDates[i - 1].difference(sortedDates[i]).inDays;
+      if (diff == 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
 }
 
 /// Program preferences model for customization

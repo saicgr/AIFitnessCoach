@@ -248,9 +248,8 @@ class _SeniorSocialScreenState extends ConsumerState<SeniorSocialScreen> {
             SeniorButton(
               onPressed: () => _handleCheer(),
               icon: hasCheered ? Icons.favorite : Icons.favorite_border,
-              label: hasCheered ? 'Cheered!' : 'Send Cheer',
-              variant: hasCheered ? 'secondary' : 'primary',
-              color: AppColors.pink,
+              text: hasCheered ? 'Cheered!' : 'Send Cheer',
+              backgroundColor: AppColors.pink,
             ),
           ],
         ),
@@ -520,7 +519,7 @@ class _SeniorSocialScreenState extends ConsumerState<SeniorSocialScreen> {
               const SizedBox(height: 20),
               SeniorButton(
                 onPressed: onAction,
-                label: actionLabel,
+                text: actionLabel,
                 icon: Icons.person_add_rounded,
               ),
             ],

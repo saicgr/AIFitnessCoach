@@ -17,3 +17,4 @@ export 'workout_type_selector.dart';
 export 'ai_suggestion_card.dart';
 export 'workout_days_selector.dart';
 export 'program_duration_selector.dart';
+export 'quick_actions_row.dart';

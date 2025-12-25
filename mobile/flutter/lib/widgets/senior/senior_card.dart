@@ -3,7 +3,7 @@ import '../../core/constants/app_colors.dart';
 
 /// Simplified card for Senior Mode with large text and easy tap targets
 class SeniorCard extends StatelessWidget {
-  final String title;
+  final String? title;
   final String? subtitle;
   final IconData? icon;
   final Color? iconColor;
@@ -14,7 +14,7 @@ class SeniorCard extends StatelessWidget {
 
   const SeniorCard({
     super.key,
-    required this.title,
+    this.title,
     this.subtitle,
     this.icon,
     this.iconColor,
@@ -67,16 +67,17 @@ class SeniorCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF1A1A1A),
+                        if (title != null)
+                          Text(
+                            title!,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF1A1A1A),
+                            ),
                           ),
-                        ),
                         if (subtitle != null) ...[
                           const SizedBox(height: 6),
                           Text(

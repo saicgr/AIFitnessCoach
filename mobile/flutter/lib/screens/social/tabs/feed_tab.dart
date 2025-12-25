@@ -115,6 +115,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: ActivityCard(
+                        activityId: activity['id'] as String? ?? '',
+                        currentUserId: _userId ?? '',
                         userName: activity['user_name'] as String? ?? 'User',
                         userAvatar: activity['user_avatar'] as String?,
                         activityType: activity['activity_type'] as String? ?? 'workout_completed',

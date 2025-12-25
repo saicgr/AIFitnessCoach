@@ -163,3 +163,166 @@ enum MealType {
     );
   }
 }
+
+/// Product nutrients from barcode lookup
+@JsonSerializable()
+class ProductNutrients {
+  @JsonKey(name: 'calories_per_100g')
+  final double caloriesPer100g;
+  @JsonKey(name: 'protein_per_100g')
+  final double proteinPer100g;
+  @JsonKey(name: 'carbs_per_100g')
+  final double carbsPer100g;
+  @JsonKey(name: 'fat_per_100g')
+  final double fatPer100g;
+  @JsonKey(name: 'fiber_per_100g')
+  final double fiberPer100g;
+  @JsonKey(name: 'sugar_per_100g')
+  final double? sugarPer100g;
+  @JsonKey(name: 'sodium_per_100g')
+  final double? sodiumPer100g;
+  @JsonKey(name: 'serving_size_g')
+  final double? servingSizeG;
+
+  const ProductNutrients({
+    this.caloriesPer100g = 0,
+    this.proteinPer100g = 0,
+    this.carbsPer100g = 0,
+    this.fatPer100g = 0,
+    this.fiberPer100g = 0,
+    this.sugarPer100g,
+    this.sodiumPer100g,
+    this.servingSizeG,
+  });
+
+  factory ProductNutrients.fromJson(Map<String, dynamic> json) =>
+      _$ProductNutrientsFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductNutrientsToJson(this);
+}
+
+/// Barcode product lookup response
+@JsonSerializable()
+class BarcodeProduct {
+  final String barcode;
+  @JsonKey(name: 'product_name')
+  final String productName;
+  final String? brand;
+  final String? categories;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'image_thumb_url')
+  final String? imageThumbUrl;
+  final Map<String, dynamic> nutrients;
+  @JsonKey(name: 'nutriscore_grade')
+  final String? nutriscoreGrade;
+  @JsonKey(name: 'nova_group')
+  final int? novaGroup;
+  @JsonKey(name: 'ingredients_text')
+  final String? ingredientsText;
+  final String? allergens;
+
+  const BarcodeProduct({
+    required this.barcode,
+    required this.productName,
+    this.brand,
+    this.categories,
+    this.imageUrl,
+    this.imageThumbUrl,
+    this.nutrients = const {},
+    this.nutriscoreGrade,
+    this.novaGroup,
+    this.ingredientsText,
+    this.allergens,
+  });
+
+  factory BarcodeProduct.fromJson(Map<String, dynamic> json) =>
+      _$BarcodeProductFromJson(json);
+  Map<String, dynamic> toJson() => _$BarcodeProductToJson(this);
+
+  /// Get calories per 100g from nutrients map
+  double get caloriesPer100g =>
+      (nutrients['calories_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get protein per 100g from nutrients map
+  double get proteinPer100g =>
+      (nutrients['protein_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get carbs per 100g from nutrients map
+  double get carbsPer100g =>
+      (nutrients['carbs_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get fat per 100g from nutrients map
+  double get fatPer100g =>
+      (nutrients['fat_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get serving size in grams
+  double? get servingSizeG =>
+      (nutrients['serving_size_g'] as num?)?.toDouble();
+}
+
+/// Response after logging food from barcode
+@JsonSerializable()
+class LogBarcodeResponse {
+  final bool success;
+  @JsonKey(name: 'food_log_id')
+  final String foodLogId;
+  @JsonKey(name: 'product_name')
+  final String productName;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'protein_g')
+  final double proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double carbsG;
+  @JsonKey(name: 'fat_g')
+  final double fatG;
+
+  const LogBarcodeResponse({
+    required this.success,
+    required this.foodLogId,
+    required this.productName,
+    required this.totalCalories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+  });
+
+  factory LogBarcodeResponse.fromJson(Map<String, dynamic> json) =>
+      _$LogBarcodeResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$LogBarcodeResponseToJson(this);
+}
+
+/// Response after logging food from image or text
+@JsonSerializable()
+class LogFoodResponse {
+  final bool success;
+  @JsonKey(name: 'food_log_id')
+  final String foodLogId;
+  @JsonKey(name: 'food_items')
+  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'protein_g')
+  final double proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double carbsG;
+  @JsonKey(name: 'fat_g')
+  final double fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+
+  const LogFoodResponse({
+    required this.success,
+    required this.foodLogId,
+    this.foodItems = const [],
+    required this.totalCalories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+    this.fiberG,
+  });
+
+  factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
+      _$LogFoodResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$LogFoodResponseToJson(this);
+}

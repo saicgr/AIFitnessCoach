@@ -2198,7 +2198,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           await socialService.autoPostWorkoutCompletion(
             userId: userId,
             workoutLogId: workoutLogId ?? '',
-            workoutName: widget.workout.name,
+            workoutName: widget.workout.name ?? 'Workout',
             durationMinutes: (_workoutSeconds / 60).round(),
             exercisesCount: exercisesWithSets,
             totalVolume: totalVolumeKg,
@@ -2605,7 +2605,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   /// Show Challenge Quit Dialog with psychological pressure!
   void _showChallengeQuitDialog() {
     final challengerName = widget.challengeData!['challenger_name'] ?? 'Someone';
-    final workoutName = widget.workout.name;
+    final workoutName = widget.workout.name ?? 'Workout';
 
     // Calculate partial stats
     int totalSets = 0;

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
-import '../api_client.dart';
-import '../../../core/constants/api_constants.dart';
+import 'package:flutter/foundation.dart';
+import 'api_client.dart';
+import '../../core/constants/api_constants.dart';
 
 /// Activity type enum for social posts
 enum SocialActivityType {
@@ -491,6 +492,3 @@ class SocialService {
     }
   }
 }
-
-// Import for debug print
-import 'package:flutter/foundation.dart';
