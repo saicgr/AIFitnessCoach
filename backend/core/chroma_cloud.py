@@ -30,18 +30,12 @@ class ChromaCloudClient:
 
     def get_or_create_collection(self, collection_name: str):
         """Get or create a collection in Chroma Cloud."""
-        try:
-            collection = self.client.get_collection(name=collection_name)
-            print(f"✅ Retrieved existing collection: {collection_name}")
-            return collection
-        except Exception:
-            # Collection doesn't exist, create it
-            collection = self.client.create_collection(
-                name=collection_name,
-                metadata={"hnsw:space": "cosine"}
-            )
-            print(f"✅ Created new collection: {collection_name}")
-            return collection
+        collection = self.client.get_or_create_collection(
+            name=collection_name,
+            metadata={"hnsw:space": "cosine"}
+        )
+        print(f"✅ Got or created collection: {collection_name}")
+        return collection
 
     def get_exercise_collection(self):
         """Get the exercise collection."""
