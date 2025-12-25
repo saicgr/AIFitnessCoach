@@ -7,7 +7,9 @@ python-multipart==0.0.6
 google-genai>=1.0.0
 
 # RAG & Vector Store
-chromadb>=0.4.0,<1.0.0
+# ChromaDB 1.0.7+ required for Chroma Cloud API v2 (fixes KeyError '_type' bug)
+# See: https://github.com/chroma-core/chroma/issues/4380
+chromadb>=1.0.7,<2.0.0
 langchain>=0.3.0
 langchain-core>=0.3.0
 langchain-community>=0.3.0
