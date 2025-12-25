@@ -226,7 +226,7 @@ def merge_extended_fields_into_preferences(
 
 @router.post("/", response_model=User)
 @limiter.limit("5/minute")
-async def create_user(http_request: Request, user: UserCreate):
+async def create_user(request: Request, user: UserCreate):
     """Create a new user."""
     logger.info(f"Creating user: level={user.fitness_level}")
 

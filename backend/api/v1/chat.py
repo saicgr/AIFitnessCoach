@@ -149,7 +149,7 @@ class ChatHistoryItem(BaseModel):
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
 @limiter.limit("30/minute")
-async def get_chat_history(http_request: Request, user_id: str, limit: int = 100):
+async def get_chat_history(request: Request, user_id: str, limit: int = 100):
     """
     Get chat history for a user.
 
