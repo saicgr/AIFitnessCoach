@@ -24,6 +24,12 @@ class SettingItemData {
   /// Whether this item controls the follow system theme toggle.
   final bool isFollowSystemToggle;
 
+  /// Whether this item is the theme selector (System/Light/Dark).
+  final bool isThemeSelector;
+
+  /// Whether this item is the timezone selector.
+  final bool isTimezoneSelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -32,6 +38,8 @@ class SettingItemData {
     this.trailing,
     this.isThemeToggle = false,
     this.isFollowSystemToggle = false,
+    this.isThemeSelector = false,
+    this.isTimezoneSelector = false,
   });
 }
 

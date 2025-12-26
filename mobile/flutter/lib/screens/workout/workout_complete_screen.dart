@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
+import 'widgets/share_workout_sheet.dart';
 
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -55,6 +57,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   bool _isSubmitting = false;
   String? _aiSummary;
   bool _isLoadingSummary = true;
+
+  // Per-exercise ratings (exercise index -> rating 1-5)
+  Map<int, int> _exerciseRatings = {};
+  // Per-exercise difficulty (exercise index -> difficulty)
+  Map<int, String> _exerciseDifficulties = {};
+  // Whether to show exercise feedback section
+  bool _showExerciseFeedback = false;
 
   // Achievements state
   Map<String, dynamic>? _achievements;
@@ -446,6 +455,44 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
+  /// Show the share workout bottom sheet
+  Future<void> _showShareSheet() async {
+    HapticFeedback.mediumImpact();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShareWorkoutSheet(
+        workoutName: widget.workout.name,
+        workoutLogId: widget.workoutLogId ?? '',
+        durationSeconds: widget.duration,
+        calories: widget.calories,
+        totalVolumeKg: widget.totalVolumeKg,
+        totalSets: widget.totalSets,
+        totalReps: widget.totalReps,
+        exercisesCount: widget.workout.exercises.length,
+        newPRs: _newPRs.isNotEmpty
+            ? _newPRs.map((pr) => {
+                'exercise': pr['exercise_name'],
+                'weight_kg': pr['weight_kg'],
+                'pr_type': 'weight',
+                'improvement': pr['previous_pr'] != null
+                    ? (pr['weight_kg'] as double) - (pr['previous_pr'] as double)
+                    : null,
+              }).toList()
+            : null,
+        achievements: _achievements != null
+            ? (_achievements!['new_achievements'] as List<dynamic>?)
+                ?.map((a) => Map<String, dynamic>.from(a as Map))
+                .toList()
+            : null,
+        currentStreak: _achievements?['streak_days'] as int?,
+        totalWorkouts: _achievements?['total_workouts'] as int?,
+      ),
+    );
+  }
+
   Future<void> _submitFeedback() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -460,8 +507,43 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Submit feedback to backend (would be an API call in real app)
-      await Future.delayed(const Duration(seconds: 1));
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null && widget.workout.id != null) {
+        // Build exercise feedback list
+        final exerciseFeedbackList = <Map<String, dynamic>>[];
+        for (int i = 0; i < widget.workout.exercises.length; i++) {
+          final exercise = widget.workout.exercises[i];
+          if (_exerciseRatings.containsKey(i)) {
+            exerciseFeedbackList.add({
+              'user_id': userId,
+              'workout_id': widget.workout.id,
+              'exercise_name': exercise.name,
+              'exercise_index': i,
+              'rating': _exerciseRatings[i],
+              'difficulty_felt': _exerciseDifficulties[i] ?? 'just_right',
+              'would_do_again': true,
+            });
+          }
+        }
+
+        // Submit workout feedback to backend
+        debugPrint('📤 [Feedback] Submitting workout feedback: rating=$_rating, difficulty=$_difficulty');
+        await apiClient.post(
+          '/v1/feedback/workout/${widget.workout.id}',
+          data: {
+            'user_id': userId,
+            'workout_id': widget.workout.id,
+            'overall_rating': _rating,
+            'overall_difficulty': _difficulty,
+            'energy_level': _getEnergyLevel(),
+            'would_recommend': _rating >= 3,
+            'exercise_feedback': exerciseFeedbackList,
+          },
+        );
+        debugPrint('✅ [Feedback] Workout feedback submitted successfully');
+      }
 
       // Refresh workouts
       await ref.read(workoutsProvider.notifier).refresh();
@@ -470,14 +552,29 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         context.go('/home');
       }
     } catch (e) {
+      debugPrint('❌ [Feedback] Failed to submit feedback: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to submit feedback'),
+        SnackBar(
+          content: Text('Failed to submit feedback: $e'),
           backgroundColor: AppColors.error,
         ),
       );
     } finally {
       setState(() => _isSubmitting = false);
+    }
+  }
+
+  /// Convert difficulty to energy level for backend
+  String _getEnergyLevel() {
+    switch (_difficulty) {
+      case 'too_easy':
+        return 'energized';
+      case 'just_right':
+        return 'good';
+      case 'too_hard':
+        return 'exhausted';
+      default:
+        return 'good';
     }
   }
 
@@ -639,11 +736,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 const SizedBox(height: 24),
 
                 // AI Summary
-                Container(
+                Builder(
+                  builder: (context) {
+                    final isDarkAI = Theme.of(context).brightness == Brightness.dark;
+                    final elevatedAI = isDarkAI ? AppColors.elevated : AppColorsLight.elevated;
+                    return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.elevated,
+                    color: elevatedAI,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
                   ),
@@ -694,7 +795,25 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             ),
                     ],
                   ),
+                );
+                  },
                 ).animate().fadeIn(delay: 500.ms),
+
+                // Share Workout Button
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _showShareSheet,
+                  icon: const Icon(Icons.share_rounded, size: 20),
+                  label: const Text('Share Workout'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.cyan,
+                    side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 520.ms),
 
                 // New PRs / Achievements Section
                 if (_newPRs.isNotEmpty) ...[
@@ -793,6 +912,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                 const SizedBox(height: 24),
 
+                // Per-Exercise Feedback Section (expandable)
+                _buildExerciseFeedbackSection(),
+
+                const SizedBox(height: 24),
+
                 // Challenge Friends Button
                 SizedBox(
                   width: double.infinity,
@@ -880,81 +1004,88 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   }
 
   Widget _buildNewPRsSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.success.withOpacity(0.2),
-            AppColors.orange.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.emoji_events,
-                  size: 20,
-                  color: AppColors.success,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'NEW PERSONAL RECORDS!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            ],
+    return Builder(
+      builder: (context) {
+        final isDarkPR = Theme.of(context).brightness == Brightness.dark;
+        final textPrimaryPR = isDarkPR ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.success.withOpacity(0.2),
+                AppColors.orange.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.success.withOpacity(0.5)),
           ),
-          const SizedBox(height: 16),
-          ..._newPRs.map((pr) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.star, color: AppColors.orange, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${pr['exercise_name']}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events,
+                      size: 20,
+                      color: AppColors.success,
                     ),
                   ),
-                ),
-                Text(
-                  '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                    fontSize: 16,
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'NEW PERSONAL RECORDS!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ..._newPRs.map((pr) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: AppColors.orange, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${pr['exercise_name']}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: textPrimaryPR,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.success,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )).toList(),
-        ],
-      ),
+              )).toList(),
+            ],
+          ),
+        );
+      },
     ).animate().fadeIn(delay: 550.ms).scale(
       begin: const Offset(0.9, 0.9),
       duration: 400.ms,
@@ -962,70 +1093,278 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     );
   }
 
-  Widget _buildExerciseProgressSection() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with expand/collapse toggle
-          InkWell(
-            onTap: () {
-              setState(() {
-                _showExerciseProgress = !_showExerciseProgress;
-              });
-            },
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.show_chart,
-                      size: 16,
-                      color: AppColors.purple,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Exercise Progress',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.purple,
+  /// Build the per-exercise feedback section (expandable)
+  Widget _buildExerciseFeedbackSection() {
+    return Builder(
+      builder: (context) {
+        final isDarkFeedback = Theme.of(context).brightness == Brightness.dark;
+        final elevatedFeedback = isDarkFeedback ? AppColors.elevated : AppColorsLight.elevated;
+        final cardBorderFeedback = isDarkFeedback ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        final textSecondaryFeedback = isDarkFeedback ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final textPrimaryFeedback = isDarkFeedback ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: elevatedFeedback,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorderFeedback),
+          ),
+          child: Column(
+            children: [
+              // Header with expand/collapse toggle
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _showExerciseFeedback = !_showExerciseFeedback;
+                  });
+                },
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.fitness_center,
+                          size: 16,
+                          color: AppColors.orange,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Rate Individual Exercises',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.orange,
+                              ),
+                            ),
+                            Text(
+                              _exerciseRatings.isEmpty
+                                  ? 'Optional - helps AI adapt workouts'
+                                  : '${_exerciseRatings.length} of ${widget.workout.exercises.length} rated',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textSecondaryFeedback,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _showExerciseFeedback ? Icons.expand_less : Icons.expand_more,
+                        color: textSecondaryFeedback,
+                      ),
+                    ],
                   ),
-                  Icon(
-                    _showExerciseProgress ? Icons.expand_less : Icons.expand_more,
-                    color: AppColors.textSecondary,
+                ),
+              ),
+              // Expandable content - exercise list
+              if (_showExerciseFeedback) ...[
+                Divider(height: 1, color: cardBorderFeedback),
+                ...widget.workout.exercises.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final exercise = entry.value;
+                  final rating = _exerciseRatings[index] ?? 0;
+                  final difficulty = _exerciseDifficulties[index] ?? 'just_right';
+
+                  return _buildExerciseRatingTile(
+                    index: index,
+                    exerciseName: exercise.name,
+                    rating: rating,
+                    difficulty: difficulty,
+                    textPrimary: textPrimaryFeedback,
+                    textSecondary: textSecondaryFeedback,
+                    cardBorder: cardBorderFeedback,
+                  );
+                }),
+              ],
+            ],
+          ),
+        );
+      },
+    ).animate().fadeIn(delay: 720.ms);
+  }
+
+  /// Build a single exercise rating tile
+  Widget _buildExerciseRatingTile({
+    required int index,
+    required String exerciseName,
+    required int rating,
+    required String difficulty,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color cardBorder,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Exercise name
+              Text(
+                exerciseName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Star rating row
+              Row(
+                children: [
+                  // Stars
+                  ...List.generate(5, (starIndex) {
+                    final starValue = starIndex + 1;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _exerciseRatings[index] = starValue;
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Icon(
+                          starValue <= rating ? Icons.star : Icons.star_border,
+                          size: 24,
+                          color: starValue <= rating
+                              ? AppColors.orange
+                              : textSecondary,
+                        ),
+                      ),
+                    );
+                  }),
+                  const Spacer(),
+                  // Quick difficulty buttons
+                  _MiniDifficultyButton(
+                    label: 'Easy',
+                    isSelected: difficulty == 'too_easy',
+                    color: AppColors.success,
+                    onTap: () {
+                      setState(() {
+                        _exerciseDifficulties[index] = 'too_easy';
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  _MiniDifficultyButton(
+                    label: 'OK',
+                    isSelected: difficulty == 'just_right',
+                    color: AppColors.cyan,
+                    onTap: () {
+                      setState(() {
+                        _exerciseDifficulties[index] = 'just_right';
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  _MiniDifficultyButton(
+                    label: 'Hard',
+                    isSelected: difficulty == 'too_hard',
+                    color: AppColors.error,
+                    onTap: () {
+                      setState(() {
+                        _exerciseDifficulties[index] = 'too_hard';
+                      });
+                    },
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-          // Expandable content
-          if (_showExerciseProgress) ...[
-            const Divider(height: 1, color: AppColors.cardBorder),
-            ...(_exerciseProgressData.entries.map((entry) => _buildExerciseProgressTile(
-              entry.key,
-              entry.value,
-            ))).toList(),
-          ],
-        ],
-      ),
+        ),
+        if (index < widget.workout.exercises.length - 1)
+          Divider(height: 1, color: cardBorder),
+      ],
+    );
+  }
+
+  Widget _buildExerciseProgressSection() {
+    return Builder(
+      builder: (context) {
+        final isDarkProgress = Theme.of(context).brightness == Brightness.dark;
+        final elevatedProgress = isDarkProgress ? AppColors.elevated : AppColorsLight.elevated;
+        final cardBorderProgress = isDarkProgress ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        final textSecondaryProgress = isDarkProgress ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: elevatedProgress,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorderProgress),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with expand/collapse toggle
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _showExerciseProgress = !_showExerciseProgress;
+                  });
+                },
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.show_chart,
+                          size: 16,
+                          color: AppColors.purple,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Exercise Progress',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.purple,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _showExerciseProgress ? Icons.expand_less : Icons.expand_more,
+                        color: textSecondaryProgress,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Expandable content
+              if (_showExerciseProgress) ...[
+                Divider(height: 1, color: cardBorderProgress),
+                ...(_exerciseProgressData.entries.map((entry) => _buildExerciseProgressTile(
+                  entry.key,
+                  entry.value,
+                ))).toList(),
+              ],
+            ],
+          ),
+        );
+      },
     ).animate().fadeIn(delay: 600.ms);
   }
 
@@ -1035,53 +1374,63 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       (item['weight_kg'] ?? 0.0).toDouble() > max ? (item['weight_kg'] ?? 0.0).toDouble() : max
     );
 
-    return Column(
-      children: [
-        InkWell(
-          onTap: () {
-            setState(() {
-              _expandedExercises[exerciseName] = !isExpanded;
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    exerciseName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+    return Builder(
+      builder: (context) {
+        final isDarkTile = Theme.of(context).brightness == Brightness.dark;
+        final textPrimaryTile = isDarkTile ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final textSecondaryTile = isDarkTile ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final textMutedTile = isDarkTile ? AppColors.textMuted : AppColorsLight.textMuted;
+        final cardBorderTile = isDarkTile ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+        return Column(
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _expandedExercises[exerciseName] = !isExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        exerciseName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: textPrimaryTile,
+                        ),
+                      ),
                     ),
-                  ),
+                    Text(
+                      'PR: ${maxWeight.toStringAsFixed(1)} kg',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondaryTile,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: textMutedTile,
+                    ),
+                  ],
                 ),
-                Text(
-                  'PR: ${maxWeight.toStringAsFixed(1)} kg',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                  size: 18,
-                  color: AppColors.textMuted,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        if (isExpanded && history.isNotEmpty) ...[
-          Container(
-            height: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: _buildSimpleProgressChart(history, maxWeight),
-          ),
-        ],
-        const Divider(height: 1, color: AppColors.cardBorder),
-      ],
+            if (isExpanded && history.isNotEmpty) ...[
+              Container(
+                height: 100,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildSimpleProgressChart(history, maxWeight),
+              ),
+            ],
+            Divider(height: 1, color: cardBorderTile),
+          ],
+        );
+      },
     );
   }
 
@@ -1089,41 +1438,48 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     final sortedHistory = List<Map<String, dynamic>>.from(history)
       ..sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
 
-    if (sortedHistory.isEmpty) {
-      return const Center(child: Text('No data', style: TextStyle(color: AppColors.textMuted)));
-    }
+    return Builder(
+      builder: (context) {
+        final isDarkChart = Theme.of(context).brightness == Brightness.dark;
+        final textMutedChart = isDarkChart ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: sortedHistory.take(7).map((item) {
-        final weight = (item['weight_kg'] ?? 0.0).toDouble();
-        final heightPercent = maxWeight > 0 ? (weight / maxWeight) : 0.0;
+        if (sortedHistory.isEmpty) {
+          return Center(child: Text('No data', style: TextStyle(color: textMutedChart)));
+        }
 
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  '${weight.toStringAsFixed(0)}',
-                  style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: sortedHistory.take(7).map((item) {
+            final weight = (item['weight_kg'] ?? 0.0).toDouble();
+            final heightPercent = maxWeight > 0 ? (weight / maxWeight) : 0.0;
+
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${weight.toStringAsFixed(0)}',
+                      style: TextStyle(fontSize: 9, color: textMutedChart),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: (60 * heightPercent).toDouble(),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withOpacity(0.7),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  height: (60 * heightPercent).toDouble(),
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.7),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }
@@ -1147,10 +1503,14 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: elevatedColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1169,9 +1529,9 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textMuted,
+              color: textMuted,
             ),
           ),
         ],
@@ -1201,16 +1561,22 @@ class _DifficultyOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.2) : AppColors.elevated,
+            color: isSelected ? color.withOpacity(0.2) : elevatedColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? color : AppColors.cardBorder,
+              color: isSelected ? color : cardBorder,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -1218,7 +1584,7 @@ class _DifficultyOption extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected ? color : AppColors.textMuted,
+                color: isSelected ? color : textMuted,
                 size: 28,
               ),
               const SizedBox(height: 8),
@@ -1227,11 +1593,59 @@ class _DifficultyOption extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? color : AppColors.textSecondary,
+                  color: isSelected ? color : textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Mini Difficulty Button (for per-exercise rating)
+// ─────────────────────────────────────────────────────────────────
+
+class _MiniDifficultyButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MiniDifficultyButton({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : elevatedColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? color : textMuted,
           ),
         ),
       ),

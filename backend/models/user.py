@@ -39,6 +39,8 @@ class UserCreate(BaseModel):
     workout_variety: Optional[str] = Field(default=None, max_length=100)
     health_conditions: Optional[str] = Field(default=None, max_length=2000)  # JSON array
     activity_level: Optional[str] = Field(default=None, max_length=50)
+    # Timezone field for per-user time consistency
+    timezone: Optional[str] = Field(default="UTC", max_length=50)  # IANA timezone identifier
 
 
 class NotificationPreferences(BaseModel):
@@ -91,6 +93,8 @@ class UserUpdate(BaseModel):
     workout_variety: Optional[str] = Field(default=None, max_length=100)
     health_conditions: Optional[str] = Field(default=None, max_length=2000)  # JSON array
     activity_level: Optional[str] = Field(default=None, max_length=50)
+    # Timezone field for per-user time consistency
+    timezone: Optional[str] = Field(default=None, max_length=50)  # IANA timezone identifier
     # Push notification fields
     fcm_token: Optional[str] = Field(default=None, max_length=500)  # Firebase Cloud Messaging token
     device_platform: Optional[str] = Field(default=None, max_length=20)  # 'android' or 'ios'
@@ -112,6 +116,8 @@ class User(BaseModel):
     preferences: str = Field(..., max_length=10000)
     active_injuries: str = Field(..., max_length=2000)
     created_at: datetime
+    # Timezone field for per-user time consistency
+    timezone: Optional[str] = Field(default="UTC", max_length=50)  # IANA timezone identifier
     # Personal info fields
     height_cm: Optional[float] = Field(default=None, ge=50, le=300)
     weight_kg: Optional[float] = Field(default=None, ge=20, le=500)

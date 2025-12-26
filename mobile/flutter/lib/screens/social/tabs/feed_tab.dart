@@ -6,6 +6,7 @@ import '../../../data/providers/social_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/create_post_sheet.dart';
 
 /// Activity Feed Tab - Shows recent workouts, achievements, and PRs from friends
 class FeedTab extends ConsumerStatefulWidget {
@@ -65,85 +66,122 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     // Use the activityFeedProvider to load feed data
     final activityFeedAsync = ref.watch(activityFeedProvider(_userId!));
 
-    return activityFeedAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) {
-        debugPrint('❌ [FeedTab] Error loading feed: $error');
-        return SocialEmptyState(
-          icon: Icons.cloud_off_rounded,
-          title: 'Failed to Load Feed',
-          description: 'Could not load your activity feed.\nPlease try again later.',
-          actionLabel: 'Retry',
-          onAction: () {
-            ref.invalidate(activityFeedProvider(_userId!));
+    return Stack(
+      children: [
+        activityFeedAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) {
+            debugPrint('❌ [FeedTab] Error loading feed: $error');
+            return SocialEmptyState(
+              icon: Icons.cloud_off_rounded,
+              title: 'Failed to Load Feed',
+              description: 'Could not load your activity feed.\nPlease try again later.',
+              actionLabel: 'Retry',
+              onAction: () {
+                ref.invalidate(activityFeedProvider(_userId!));
+              },
+            );
           },
-        );
-      },
-      data: (feedData) {
-        final activities = (feedData['activities'] as List?) ?? [];
-        final hasActivities = activities.isNotEmpty;
+          data: (feedData) {
+            final activities = (feedData['activities'] as List?) ?? [];
+            final hasActivities = activities.isNotEmpty;
 
-        if (!hasActivities) {
-          return SocialEmptyState(
-            icon: Icons.people_outline_rounded,
-            title: 'No Activity Yet',
-            description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
-            actionLabel: null,
-            onAction: null,
-          );
-        }
+            if (!hasActivities) {
+              return SocialEmptyState(
+                icon: Icons.people_outline_rounded,
+                title: 'No Activity Yet',
+                description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
+                actionLabel: 'Create Post',
+                onAction: _showCreatePostSheet,
+              );
+            }
 
-        return CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            // Quick Stats Summary
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildQuickStats(context, isDark, feedData),
-              ),
-            ),
-
-            // Activity Feed List
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final activity = activities[index] as Map<String, dynamic>;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ActivityCard(
-                        activityId: activity['id'] as String? ?? '',
-                        currentUserId: _userId ?? '',
-                        userName: activity['user_name'] as String? ?? 'User',
-                        userAvatar: activity['user_avatar'] as String?,
-                        activityType: activity['activity_type'] as String? ?? 'workout_completed',
-                        activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
-                        timestamp: _parseTimestamp(activity['created_at']),
-                        reactionCount: activity['reaction_count'] as int? ?? 0,
-                        commentCount: activity['comment_count'] as int? ?? 0,
-                        hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
-                        userReactionType: activity['user_reaction_type'] as String?,
-                        onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType),
-                        onComment: () => _handleComment(activity['id'] as String),
-                      ),
-                    );
-                  },
-                  childCount: activities.length,
+            return CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                // Quick Stats Summary
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: _buildQuickStats(context, isDark, feedData),
+                  ),
                 ),
-              ),
-            ),
 
-            // Bottom spacing for floating nav bar
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 100),
-            ),
-          ],
-        );
-      },
+                // Activity Feed List
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final activity = activities[index] as Map<String, dynamic>;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ActivityCard(
+                            activityId: activity['id'] as String? ?? '',
+                            currentUserId: _userId ?? '',
+                            userName: activity['user_name'] as String? ?? 'User',
+                            userAvatar: activity['user_avatar'] as String?,
+                            activityType: activity['activity_type'] as String? ?? 'workout_completed',
+                            activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
+                            timestamp: _parseTimestamp(activity['created_at']),
+                            reactionCount: activity['reaction_count'] as int? ?? 0,
+                            commentCount: activity['comment_count'] as int? ?? 0,
+                            hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
+                            userReactionType: activity['user_reaction_type'] as String?,
+                            onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType),
+                            onComment: () => _handleComment(activity['id'] as String),
+                          ),
+                        );
+                      },
+                      childCount: activities.length,
+                    ),
+                  ),
+                ),
+
+                // Bottom spacing for floating nav bar and FAB
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 120),
+                ),
+              ],
+            );
+          },
+        ),
+
+        // Floating Action Button for creating posts
+        Positioned(
+          bottom: 80, // Above the bottom nav bar
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: _showCreatePostSheet,
+            backgroundColor: AppColors.cyan,
+            foregroundColor: Colors.white,
+            elevation: 4,
+            child: const Icon(Icons.add_rounded, size: 28),
+          ),
+        ),
+      ],
     );
+  }
+
+  void _showCreatePostSheet() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => const CreatePostSheet(),
+      ),
+    ).then((result) {
+      // If post was created, refresh the feed
+      if (result == true && _userId != null) {
+        ref.invalidate(activityFeedProvider(_userId!));
+      }
+    });
   }
 
   DateTime _parseTimestamp(dynamic timestamp) {

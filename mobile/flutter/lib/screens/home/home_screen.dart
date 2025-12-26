@@ -198,6 +198,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ).animateSlideRotate(delay: const Duration(milliseconds: 50)),
               ),
 
+              // Weekly Goals Card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: WeeklyGoalsCard(isDark: isDark)
+                      .animateSlideRotate(delay: const Duration(milliseconds: 100)),
+                ),
+              ),
+
               // Section: UPCOMING
               if (upcomingWorkouts.isNotEmpty) ...[
                 SliverToBoxAdapter(

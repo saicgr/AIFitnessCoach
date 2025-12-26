@@ -380,6 +380,300 @@ Total Volume: {current_session.get('total_volume_kg', 0):.1f} kg
 
         return "\n".join(context_parts)
 
+    async def index_workout_feedback(
+        self,
+        user_id: str,
+        workout_id: str,
+        overall_rating: int,
+        overall_difficulty: str,
+        energy_level: str,
+        exercise_ratings: List[Dict[str, Any]],
+        feedback_at: str,
+    ) -> str:
+        """
+        Index user workout feedback (ratings & difficulty) for AI workout adaptation.
+
+        This data helps the AI:
+        1. Adjust exercise difficulty based on user feedback
+        2. Avoid exercises users rated poorly
+        3. Include more exercises users enjoyed
+        4. Personalize workout intensity based on energy levels
+
+        Args:
+            user_id: User ID
+            workout_id: Workout ID
+            overall_rating: Overall workout rating (1-5)
+            overall_difficulty: "too_easy", "just_right", "too_hard"
+            energy_level: "exhausted", "tired", "good", "energized"
+            exercise_ratings: List of {exercise_name, rating, difficulty_felt, would_do_again}
+            feedback_at: ISO timestamp
+
+        Returns:
+            Document ID
+        """
+        doc_id = f"feedback_{workout_id}_{user_id}"
+
+        # Build exercise feedback text for embedding
+        exercise_texts = []
+        for ex in exercise_ratings[:10]:  # Limit to 10 exercises
+            ex_name = ex.get("exercise_name", "Unknown")
+            ex_rating = ex.get("rating", 3)
+            ex_difficulty = ex.get("difficulty_felt", "just_right")
+            would_do = "yes" if ex.get("would_do_again", True) else "no"
+
+            rating_word = {1: "poor", 2: "fair", 3: "good", 4: "great", 5: "excellent"}.get(ex_rating, "good")
+            exercise_texts.append(
+                f"{ex_name}: rated {rating_word} ({ex_rating}/5), difficulty {ex_difficulty}, would do again: {would_do}"
+            )
+
+        exercises_text = "\n".join(exercise_texts) if exercise_texts else "No individual exercise ratings"
+
+        # Map difficulty to human-readable text
+        difficulty_text = {
+            "too_easy": "workout was too easy, user wants more challenge",
+            "just_right": "workout difficulty was appropriate",
+            "too_hard": "workout was too hard, user needs easier exercises"
+        }.get(overall_difficulty, "appropriate difficulty")
+
+        energy_text = {
+            "exhausted": "user felt exhausted after workout",
+            "tired": "user felt tired after workout",
+            "good": "user felt good after workout",
+            "energized": "user felt energized after workout"
+        }.get(energy_level, "good energy level")
+
+        # Create searchable text for embedding
+        feedback_text = (
+            f"Workout Feedback for user {user_id}\n"
+            f"Overall Rating: {overall_rating}/5 stars\n"
+            f"Difficulty: {difficulty_text}\n"
+            f"Energy Level: {energy_text}\n"
+            f"Exercise Feedback:\n{exercises_text}\n"
+            f"Date: {feedback_at}"
+        )
+
+        # Get embedding
+        embedding = await self.gemini_service.get_embedding_async(feedback_text)
+
+        # Delete existing feedback for this workout
+        try:
+            self.collection.delete(ids=[doc_id])
+        except Exception:
+            pass
+
+        # Store in ChromaDB
+        self.collection.add(
+            ids=[doc_id],
+            embeddings=[embedding],
+            documents=[feedback_text],
+            metadatas=[{
+                "doc_type": "workout_feedback",
+                "user_id": user_id,
+                "workout_id": workout_id,
+                "overall_rating": overall_rating,
+                "overall_difficulty": overall_difficulty,
+                "energy_level": energy_level,
+                "exercise_count": len(exercise_ratings),
+                "exercise_ratings_json": json.dumps(exercise_ratings[:10]),
+                "feedback_at": feedback_at,
+            }],
+        )
+
+        print(f"🎯 Indexed workout feedback: rating={overall_rating}, difficulty={overall_difficulty}")
+        return doc_id
+
+    async def get_user_exercise_feedback(
+        self,
+        user_id: str,
+        exercise_name: str,
+        n_results: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get user's feedback history for a specific exercise.
+
+        This helps the AI understand:
+        - Does the user generally like this exercise?
+        - Is it typically too easy/hard for them?
+        - Should we include it in future workouts?
+
+        Args:
+            user_id: User ID
+            exercise_name: Exercise name to search for
+            n_results: Number of results
+
+        Returns:
+            List of feedback entries for the exercise
+        """
+        if self.collection.count() == 0:
+            return []
+
+        # Search for feedback containing this exercise
+        query = f"Exercise feedback: {exercise_name}"
+        query_embedding = await self.gemini_service.get_embedding_async(query)
+
+        results = self.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=min(n_results * 2, self.collection.count()),  # Get more to filter
+            where={"$and": [
+                {"user_id": user_id},
+                {"doc_type": "workout_feedback"}
+            ]},
+            include=["documents", "metadatas", "distances"],
+        )
+
+        exercise_feedback = []
+        for i, doc_id in enumerate(results["ids"][0] if results["ids"] else []):
+            meta = results["metadatas"][0][i]
+
+            # Parse exercise ratings
+            try:
+                exercise_ratings = json.loads(meta.get("exercise_ratings_json", "[]"))
+            except json.JSONDecodeError:
+                exercise_ratings = []
+
+            # Find the specific exercise
+            for ex in exercise_ratings:
+                if exercise_name.lower() in ex.get("exercise_name", "").lower():
+                    exercise_feedback.append({
+                        "workout_id": meta.get("workout_id"),
+                        "feedback_at": meta.get("feedback_at"),
+                        "exercise_name": ex.get("exercise_name"),
+                        "rating": ex.get("rating"),
+                        "difficulty_felt": ex.get("difficulty_felt"),
+                        "would_do_again": ex.get("would_do_again"),
+                        "overall_workout_rating": meta.get("overall_rating"),
+                    })
+                    break  # Only one rating per workout
+
+        # Sort by date (most recent first)
+        exercise_feedback.sort(key=lambda x: x.get("feedback_at", ""), reverse=True)
+        return exercise_feedback[:n_results]
+
+    async def get_user_difficulty_preferences(
+        self,
+        user_id: str,
+        n_results: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Analyze user's difficulty preferences from feedback history.
+
+        Returns aggregated stats to help AI calibrate workout intensity.
+
+        Args:
+            user_id: User ID
+            n_results: Number of recent feedbacks to analyze
+
+        Returns:
+            Dict with difficulty preference analysis
+        """
+        if self.collection.count() == 0:
+            return {"status": "no_data"}
+
+        # Get recent feedback
+        results = self.collection.get(
+            where={"$and": [
+                {"user_id": user_id},
+                {"doc_type": "workout_feedback"}
+            ]},
+            include=["metadatas"],
+            limit=n_results,
+        )
+
+        if not results["ids"]:
+            return {"status": "no_data"}
+
+        # Aggregate difficulty feedback
+        difficulty_counts = {"too_easy": 0, "just_right": 0, "too_hard": 0}
+        energy_counts = {"exhausted": 0, "tired": 0, "good": 0, "energized": 0}
+        total_rating = 0
+        rating_count = 0
+
+        # Exercise-level aggregation
+        exercise_difficulties = {}  # {exercise_name: {too_easy: 0, just_right: 0, too_hard: 0}}
+
+        for meta in results["metadatas"]:
+            # Overall difficulty
+            diff = meta.get("overall_difficulty", "just_right")
+            if diff in difficulty_counts:
+                difficulty_counts[diff] += 1
+
+            # Energy level
+            energy = meta.get("energy_level", "good")
+            if energy in energy_counts:
+                energy_counts[energy] += 1
+
+            # Rating
+            if meta.get("overall_rating"):
+                total_rating += meta["overall_rating"]
+                rating_count += 1
+
+            # Exercise-level feedback
+            try:
+                exercise_ratings = json.loads(meta.get("exercise_ratings_json", "[]"))
+                for ex in exercise_ratings:
+                    ex_name = ex.get("exercise_name", "").lower()
+                    if ex_name:
+                        if ex_name not in exercise_difficulties:
+                            exercise_difficulties[ex_name] = {
+                                "too_easy": 0, "just_right": 0, "too_hard": 0,
+                                "total_rating": 0, "rating_count": 0, "would_do_again_yes": 0
+                            }
+
+                        ex_diff = ex.get("difficulty_felt", "just_right")
+                        if ex_diff in exercise_difficulties[ex_name]:
+                            exercise_difficulties[ex_name][ex_diff] += 1
+
+                        ex_rating = ex.get("rating", 3)
+                        exercise_difficulties[ex_name]["total_rating"] += ex_rating
+                        exercise_difficulties[ex_name]["rating_count"] += 1
+
+                        if ex.get("would_do_again", True):
+                            exercise_difficulties[ex_name]["would_do_again_yes"] += 1
+            except json.JSONDecodeError:
+                pass
+
+        # Calculate average rating
+        avg_rating = total_rating / rating_count if rating_count > 0 else 0
+
+        # Determine recommended intensity adjustment
+        if difficulty_counts["too_hard"] > difficulty_counts["too_easy"]:
+            intensity_recommendation = "decrease"
+        elif difficulty_counts["too_easy"] > difficulty_counts["too_hard"]:
+            intensity_recommendation = "increase"
+        else:
+            intensity_recommendation = "maintain"
+
+        # Identify problematic exercises (low ratings or "too_hard")
+        exercises_to_avoid = []
+        exercises_to_include = []
+
+        for ex_name, stats in exercise_difficulties.items():
+            avg_ex_rating = stats["total_rating"] / stats["rating_count"] if stats["rating_count"] > 0 else 3
+            would_do_ratio = stats["would_do_again_yes"] / stats["rating_count"] if stats["rating_count"] > 0 else 1
+
+            if avg_ex_rating < 2.5 or would_do_ratio < 0.5 or stats["too_hard"] > stats["rating_count"] / 2:
+                exercises_to_avoid.append({
+                    "exercise": ex_name,
+                    "avg_rating": round(avg_ex_rating, 1),
+                    "reason": "low rating" if avg_ex_rating < 2.5 else "too hard" if stats["too_hard"] > stats["rating_count"] / 2 else "user doesn't want to repeat"
+                })
+            elif avg_ex_rating >= 4 and would_do_ratio >= 0.8:
+                exercises_to_include.append({
+                    "exercise": ex_name,
+                    "avg_rating": round(avg_ex_rating, 1),
+                })
+
+        return {
+            "status": "success",
+            "feedback_count": len(results["ids"]),
+            "average_workout_rating": round(avg_rating, 1),
+            "difficulty_distribution": difficulty_counts,
+            "energy_distribution": energy_counts,
+            "intensity_recommendation": intensity_recommendation,
+            "exercises_to_avoid": exercises_to_avoid[:5],  # Top 5 to avoid
+            "exercises_user_enjoys": exercises_to_include[:5],  # Top 5 favorites
+        }
+
     def get_stats(self) -> Dict[str, Any]:
         """Get workout feedback RAG statistics."""
         return {

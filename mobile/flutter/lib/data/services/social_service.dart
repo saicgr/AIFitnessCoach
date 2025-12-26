@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 /// Activity type enum for social posts
 enum SocialActivityType {
@@ -9,7 +7,8 @@ enum SocialActivityType {
   achievementEarned('achievement_earned'),
   personalRecord('personal_record'),
   weightMilestone('weight_milestone'),
-  streakMilestone('streak_milestone');
+  streakMilestone('streak_milestone'),
+  manualPost('manual_post');
 
   final String value;
   const SocialActivityType(this.value);
@@ -48,7 +47,7 @@ class SocialService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/social/feed',
+        '/social/feed',
         queryParameters: {'user_id': userId},
         data: {
           'activity_type': activityType.value,
@@ -87,7 +86,7 @@ class SocialService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/social/feed/$userId',
+        '/social/feed/$userId',
         queryParameters: queryParams,
       );
 
@@ -109,7 +108,7 @@ class SocialService {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/social/feed/$activityId',
+        '/social/feed/$activityId',
         queryParameters: {'user_id': userId},
       );
 
@@ -136,7 +135,7 @@ class SocialService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/social/reactions',
+        '/social/reactions',
         queryParameters: {'user_id': userId},
         data: {
           'activity_id': activityId,
@@ -162,7 +161,7 @@ class SocialService {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/social/reactions/$activityId',
+        '/social/reactions/$activityId',
         queryParameters: {'user_id': userId},
       );
 
@@ -188,7 +187,7 @@ class SocialService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/social/reactions/$activityId',
+        '/social/reactions/$activityId',
         queryParameters: queryParams,
       );
 
@@ -211,7 +210,7 @@ class SocialService {
   Future<Map<String, dynamic>> getPrivacySettings(String userId) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/social/privacy/$userId',
+        '/social/privacy/$userId',
       );
 
       if (response.statusCode == 200) {
@@ -249,7 +248,7 @@ class SocialService {
       if (profileVisibility != null) data['profile_visibility'] = profileVisibility.value;
 
       final response = await _apiClient.put(
-        '${ApiConstants.baseUrl}/social/privacy/$userId',
+        '/social/privacy/$userId',
         data: data,
       );
 
@@ -287,6 +286,8 @@ class SocialService {
           return settings['show_weight_progress'] ?? false;
         case SocialActivityType.streakMilestone:
           return settings['show_achievements'] ?? true; // Grouped with achievements
+        case SocialActivityType.manualPost:
+          return true; // Manual posts are always allowed (user explicitly creates them)
       }
     } catch (e) {
       debugPrint('⚠️ [Social] Error checking privacy, defaulting to allow: $e');
@@ -489,6 +490,465 @@ class SocialService {
       debugPrint('⚖️ [Social] Auto-posted weight milestone: ${weightChange}lbs');
     } catch (e) {
       debugPrint('⚠️ [Social] Failed to auto-post weight: $e');
+    }
+  }
+
+  // ============================================================
+  // USER SEARCH
+  // ============================================================
+
+  /// Search users by name
+  Future<List<Map<String, dynamic>>> searchUsers({
+    required String userId,
+    required String query,
+    int limit = 20,
+  }) async {
+    if (query.trim().isEmpty) return [];
+
+    try {
+      final response = await _apiClient.get(
+        '/social/users/search',
+        queryParameters: {
+          'user_id': userId,
+          'query': query,
+          'limit': limit.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Found ${(response.data as List).length} users');
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to search users: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error searching users: $e');
+      rethrow;
+    }
+  }
+
+  /// Get friend suggestions
+  Future<List<Map<String, dynamic>>> getFriendSuggestions({
+    required String userId,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/users/suggestions',
+        queryParameters: {
+          'user_id': userId,
+          'limit': limit.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get suggestions: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting suggestions: $e');
+      rethrow;
+    }
+  }
+
+  /// Get user profile by ID
+  Future<Map<String, dynamic>> getUserProfile({
+    required String userId,
+    required String targetUserId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/users/$targetUserId/profile',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get user profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting user profile: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // FRIEND REQUESTS
+  // ============================================================
+
+  /// Send a friend request
+  Future<Map<String, dynamic>> sendFriendRequest({
+    required String userId,
+    required String toUserId,
+    String? message,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/friend-requests',
+        queryParameters: {'user_id': userId},
+        data: {
+          'to_user_id': toUserId,
+          if (message != null) 'message': message,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Friend request sent to $toUserId');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to send friend request: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error sending friend request: $e');
+      rethrow;
+    }
+  }
+
+  /// Get received friend requests
+  Future<List<Map<String, dynamic>>> getReceivedFriendRequests({
+    required String userId,
+    String? status,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'user_id': userId,
+      };
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final response = await _apiClient.get(
+        '/social/friend-requests/received',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get friend requests: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting friend requests: $e');
+      rethrow;
+    }
+  }
+
+  /// Get sent friend requests
+  Future<List<Map<String, dynamic>>> getSentFriendRequests({
+    required String userId,
+    String? status,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'user_id': userId,
+      };
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+
+      final response = await _apiClient.get(
+        '/social/friend-requests/sent',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Failed to get sent requests: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting sent requests: $e');
+      rethrow;
+    }
+  }
+
+  /// Get pending friend request count
+  Future<int> getPendingFriendRequestCount({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/friend-requests/pending-count',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['count'] as int;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting pending count: $e');
+      return 0;
+    }
+  }
+
+  /// Accept a friend request
+  Future<Map<String, dynamic>> acceptFriendRequest({
+    required String userId,
+    required String requestId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/friend-requests/$requestId/accept',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Friend request accepted');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to accept friend request: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error accepting friend request: $e');
+      rethrow;
+    }
+  }
+
+  /// Decline a friend request
+  Future<void> declineFriendRequest({
+    required String userId,
+    required String requestId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/social/friend-requests/$requestId/decline',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Friend request declined');
+      } else {
+        throw Exception('Failed to decline friend request: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error declining friend request: $e');
+      rethrow;
+    }
+  }
+
+  /// Cancel a sent friend request
+  Future<void> cancelFriendRequest({
+    required String userId,
+    required String requestId,
+  }) async {
+    try {
+      final response = await _apiClient.delete(
+        '/social/friend-requests/$requestId',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Friend request cancelled');
+      } else {
+        throw Exception('Failed to cancel friend request: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error cancelling friend request: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // SOCIAL NOTIFICATIONS
+  // ============================================================
+
+  /// Get social notifications
+  Future<Map<String, dynamic>> getSocialNotifications({
+    required String userId,
+    bool unreadOnly = false,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/notifications',
+        queryParameters: {
+          'user_id': userId,
+          'unread_only': unreadOnly.toString(),
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get notifications: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting notifications: $e');
+      rethrow;
+    }
+  }
+
+  /// Get unread notification count
+  Future<int> getUnreadNotificationCount({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/notifications/unread-count',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['count'] as int;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting unread count: $e');
+      return 0;
+    }
+  }
+
+  /// Mark notification as read
+  Future<void> markNotificationRead({
+    required String userId,
+    required String notificationId,
+  }) async {
+    try {
+      await _apiClient.put(
+        '/social/notifications/$notificationId/read',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Social] Notification marked as read');
+    } catch (e) {
+      debugPrint('❌ [Social] Error marking notification as read: $e');
+      rethrow;
+    }
+  }
+
+  /// Mark all notifications as read
+  Future<void> markAllNotificationsRead({
+    required String userId,
+  }) async {
+    try {
+      await _apiClient.put(
+        '/social/notifications/read-all',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Social] All notifications marked as read');
+    } catch (e) {
+      debugPrint('❌ [Social] Error marking all notifications as read: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a notification
+  Future<void> deleteNotification({
+    required String userId,
+    required String notificationId,
+  }) async {
+    try {
+      await _apiClient.delete(
+        '/social/notifications/$notificationId',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Social] Notification deleted');
+    } catch (e) {
+      debugPrint('❌ [Social] Error deleting notification: $e');
+      rethrow;
+    }
+  }
+
+  /// Clear all notifications
+  Future<void> clearAllNotifications({
+    required String userId,
+  }) async {
+    try {
+      await _apiClient.delete(
+        '/social/notifications/clear-all',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Social] All notifications cleared');
+    } catch (e) {
+      debugPrint('❌ [Social] Error clearing notifications: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // SOCIAL PRIVACY SETTINGS
+  // ============================================================
+
+  /// Get social privacy settings
+  Future<Map<String, dynamic>> getSocialPrivacySettings({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/social/notifications/settings',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get social settings: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error getting social settings: $e');
+      // Return defaults on error
+      return {
+        'notify_friend_requests': true,
+        'notify_reactions': true,
+        'notify_comments': true,
+        'notify_challenge_invites': true,
+        'notify_friend_activity': true,
+        'require_follow_approval': false,
+      };
+    }
+  }
+
+  /// Update social privacy settings
+  Future<Map<String, dynamic>> updateSocialPrivacySettings({
+    required String userId,
+    bool? notifyFriendRequests,
+    bool? notifyReactions,
+    bool? notifyComments,
+    bool? notifyChallengeInvites,
+    bool? notifyFriendActivity,
+    bool? requireFollowApproval,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (notifyFriendRequests != null) {
+        data['notify_friend_requests'] = notifyFriendRequests;
+      }
+      if (notifyReactions != null) {
+        data['notify_reactions'] = notifyReactions;
+      }
+      if (notifyComments != null) {
+        data['notify_comments'] = notifyComments;
+      }
+      if (notifyChallengeInvites != null) {
+        data['notify_challenge_invites'] = notifyChallengeInvites;
+      }
+      if (notifyFriendActivity != null) {
+        data['notify_friend_activity'] = notifyFriendActivity;
+      }
+      if (requireFollowApproval != null) {
+        data['require_follow_approval'] = requireFollowApproval;
+      }
+
+      final response = await _apiClient.put(
+        '/social/notifications/settings',
+        queryParameters: {'user_id': userId},
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Social] Social settings updated');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to update social settings: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Social] Error updating social settings: $e');
+      rethrow;
     }
   }
 }

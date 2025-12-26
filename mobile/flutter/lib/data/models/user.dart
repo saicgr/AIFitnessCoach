@@ -35,6 +35,7 @@ class User extends Equatable {
   final String? createdAt;
   @JsonKey(name: 'updated_at')
   final String? updatedAt;
+  final String? timezone; // IANA timezone identifier (e.g., America/New_York)
 
   const User({
     required this.id,
@@ -56,6 +57,7 @@ class User extends Equatable {
     this.onboardingCompleted,
     this.createdAt,
     this.updatedAt,
+    this.timezone,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -333,6 +335,7 @@ class User extends Equatable {
         goals,
         equipment,
         onboardingCompleted,
+        timezone,
       ];
 
   User copyWith({
@@ -355,6 +358,7 @@ class User extends Equatable {
     bool? onboardingCompleted,
     String? createdAt,
     String? updatedAt,
+    String? timezone,
   }) {
     return User(
       id: id ?? this.id,
@@ -376,6 +380,7 @@ class User extends Equatable {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      timezone: timezone ?? this.timezone,
     );
   }
 }

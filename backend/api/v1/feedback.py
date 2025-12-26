@@ -39,6 +39,8 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
 
     Includes overall rating (1-5 stars) and optional individual exercise feedback.
     This is called after a user completes or exits a workout.
+
+    Also stores exercise ratings in ChromaDB for AI workout adaptation.
     """
     logger.info(f"Submitting workout feedback: workout_id={workout_id}, rating={feedback.overall_rating}")
 
@@ -84,6 +86,8 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
 
         # Process individual exercise feedback if provided
         exercise_feedback_list = []
+        exercise_ratings_for_chromadb = []  # Collect for ChromaDB indexing
+
         if feedback.exercise_feedback:
             for ex_feedback in feedback.exercise_feedback:
                 ex_record = {
@@ -128,6 +132,30 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
                         would_do_again=ex_result.data[0].get("would_do_again", True),
                         created_at=ex_result.data[0].get("created_at") or datetime.utcnow()
                     ))
+
+                    # Collect for ChromaDB
+                    exercise_ratings_for_chromadb.append({
+                        "exercise_name": ex_feedback.exercise_name,
+                        "rating": ex_feedback.rating,
+                        "difficulty_felt": ex_feedback.difficulty_felt or "just_right",
+                        "would_do_again": ex_feedback.would_do_again,
+                    })
+
+        # Index feedback in ChromaDB for AI adaptation
+        try:
+            rag_service = get_feedback_rag_service()
+            await rag_service.index_workout_feedback(
+                user_id=feedback.user_id,
+                workout_id=workout_id,
+                overall_rating=feedback.overall_rating,
+                overall_difficulty=feedback.overall_difficulty or "just_right",
+                energy_level=feedback.energy_level or "good",
+                exercise_ratings=exercise_ratings_for_chromadb,
+                feedback_at=datetime.utcnow().isoformat(),
+            )
+            logger.info(f"🎯 Indexed workout feedback in ChromaDB for user {feedback.user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to index feedback in ChromaDB: {e}")
 
         # Get the updated workout feedback
         final_result = db.client.table("workout_feedback").select("*").eq(

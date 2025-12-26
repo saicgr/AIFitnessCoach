@@ -1,6 +1,5 @@
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-12. Swap exercise broken
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
 17. Add directly from library
 18. on the workout screen before beginning give an overview of the workouts for the day and the a let's go button.
@@ -8,24 +7,24 @@ ASAP:
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
 23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
 25. Demo of the whole app
-28. How Real AI Coach Notifications Would Work
-In production, the AI Coach would send notifications automatically via:
-Daily Scheduler (Guilt Notifications)
-Backend endpoint: POST /notifications/scheduler/check-inactive-users
-Should be called by a cron job at 6pm daily
-Sends "guilt" messages if you miss workouts
-Morning Scheduler (Workout Reminders)
-Backend endpoint: POST /notifications/scheduler/send-workout-reminders
-Should be called by a cron job at 8am daily
-Reminds you about scheduled workouts
-To make these automatic, you'd need to set up cron jobs on your hosting platform (Render cron, AWS CloudWatch Events, etc.) to call these endpoints daily. Would you like me to help you set up the cron jobs, or do you want to test the AI Coach notification button first?
-31. Timezone Consistency across per user
 32. Make it easy to add supersets
-33. Add sign in in first screen directly
 34. Shareable workout completion - Workout recap for Instagram	
 36. For theme have system, light, dark options instead
 37. Gemini 2.5 flash text to speech
 38. Posture video review
+39. The app overall is pretty good but I'm already sick of adjusting the weight values it's giving me. the AI doesn't understand what weight is possible with machines or dumbbells. It tells me to increase my bench press or curls by 2.5 pounds when you can't do less than 5 pound increments which is simply industry standard so it is pretty annoying.
+40. If I could add new equipment that the app doesn't come with, 5 stars across the board. Warmups are another thing that really be addressed
+41. it's a good app, but going up 10 or 15 pounds every week is not what I want I constantly have to make it to where I have a the same reps and weight for at least two weeks or a month. I hate how you can't pick cardio for one of your workouts. you have to manually add it. most apps you can include it. Doing 20 reps of something because you keep the same weight is crazy as well.
+42. No option to change to a home gym and detail the equipment available. If it isn't a known commercial gym forget about it. The app won't save daily photos anymore. You can try taking the photo or selecting it from the gallery . it will let you crop it and it will put the gavel logo in the gym stats in front of it but there is no save button anymore. Also You will do leg workouts 5 days a week and you'll be lucky to hit arms, shoulders, chest, back or abs maybe once a week.
+43. An otherwise excellent app, that seems to have often bizarre and contradictory support experiences. The lack of ability to create equipment yourself is odd -- and it does have coverage gaps if your gym uses Technogym, Hoist, or LifeFitness branded equipment. You are directed instead to reach out to support or post on reddit. Some support team members take the feedback, others give you responses like "just don't use that equipment" -- as if you can control equipment mix and availability.
+44. 3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend.
+45. I'd also like to see some widgets
+46. One annoying bug I've encountered: after completing a workout, you can attach an image with the workout summary, similar to Strava. However, the 'Save' and 'Share' buttons don't work. Clicking them does nothing. The image won't save to the gallery or share to any platform I've tried (Messenger, Facebook, etc.).
+47. The good: the app has a nice UX and is bug free. The bad: The “AI” constantly suggests new exercises with weird weights, even after I programmed in my own workouts so it could “learn” my strength level. The “consistent” setting, favoriting exercises, queuing exercises didn’t help - I had to customize around the AI’s suggestions so much, I turned it into a time consuming, paid version of the spreadsheet I was already using. I only wish I hadn’t paid for six months, this app is just not for me.
+48. I hope they add more exercises especially unilateral and mobility exercises.
+49. It keeps my workouts fresh by changing some of the exercises each week and they aren't disruptive changes, same muscle group different exercise. For me...definitely worth the subscription.
+50. I've been using this for about 2 months now, and it works great. I love that I can modify the weights, reps, sets, and have it give me drop sets or supersets. it also has a great list of exercises that give instructions and videos of how to do the exercises. I do have a couple complaints, though. It will calculate your estimate 1RM, but I would like for it to give the option to work out at a percentage of your 1RM; so, if I only wanted to do 70% of my max, I'd like for it to let me.
+51. Only one I could tell is that it doesn't allow you to make your own exercise; i.e. a combo dumbbell bench press & chest fly.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

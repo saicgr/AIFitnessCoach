@@ -9,3 +9,4 @@ export 'settings_card.dart';
 export 'editable_fitness_card.dart';
 export 'goal_banner.dart';
 export 'edit_personal_info_sheet.dart';
+export 'workout_gallery_section.dart';

@@ -295,11 +295,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showLogMealSheet(isDark),
-        backgroundColor: teal,
-        icon: const Icon(Icons.add),
-        label: const Text('Log Food'),
+      floatingActionButton: Padding(
+        // Add bottom padding to avoid overlap with MainShell's floating nav bar
+        padding: const EdgeInsets.only(bottom: 70),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showLogMealSheet(isDark),
+          backgroundColor: teal,
+          icon: const Icon(Icons.add),
+          label: const Text('Log Food'),
+        ),
       ),
     );
   }
@@ -1705,7 +1709,8 @@ class _RecipesTab extends StatelessWidget {
               isDark: isDark,
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              // Extra bottom padding for floating nav bar
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               itemCount: recipes.length + 1, // +1 for create button
               itemBuilder: (context, index) {
                 if (index == 0) {

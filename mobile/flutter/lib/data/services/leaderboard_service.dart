@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 /// Leaderboard type enum
 enum LeaderboardType {
@@ -57,7 +55,7 @@ class LeaderboardService {
       }
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/leaderboard/',
+        '/social/leaderboard/',
         queryParameters: queryParams,
       );
 
@@ -94,7 +92,7 @@ class LeaderboardService {
       }
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/leaderboard/rank',
+        '/social/leaderboard/rank',
         queryParameters: queryParams,
       );
 
@@ -119,7 +117,7 @@ class LeaderboardService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/leaderboard/unlock-status',
+        '/social/leaderboard/unlock-status',
         queryParameters: {'user_id': userId},
       );
 
@@ -142,7 +140,7 @@ class LeaderboardService {
   Future<Map<String, dynamic>> getLeaderboardStats() async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/leaderboard/stats',
+        '/social/leaderboard/stats',
       );
 
       if (response.statusCode == 200) {
@@ -169,7 +167,7 @@ class LeaderboardService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/leaderboard/async-challenge',
+        '/social/leaderboard/async-challenge',
         queryParameters: {'user_id': userId},
         data: {
           'target_user_id': targetUserId,

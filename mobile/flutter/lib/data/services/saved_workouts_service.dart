@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 /// Badge types for popular workouts
 enum WorkoutBadgeType {
@@ -44,7 +42,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/saved-workouts/save-from-activity',
+        '/social/saved-workouts/save-from-activity',
         queryParameters: {'user_id': userId},
         data: {
           'activity_id': activityId,
@@ -76,7 +74,7 @@ class SavedWorkoutsService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/saved-workouts/$userId',
+        '/social/saved-workouts/$userId',
         queryParameters: queryParams,
       );
 
@@ -98,7 +96,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/saved-workouts/$savedWorkoutId',
+        '/social/saved-workouts/$savedWorkoutId',
         queryParameters: {'user_id': userId},
       );
 
@@ -130,7 +128,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/saved-workouts/schedule',
+        '/social/saved-workouts/schedule',
         queryParameters: {'user_id': userId},
         data: {
           if (savedWorkoutId != null) 'saved_workout_id': savedWorkoutId,
@@ -171,7 +169,7 @@ class SavedWorkoutsService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/saved-workouts/scheduled/$userId',
+        '/social/saved-workouts/scheduled/$userId',
         queryParameters: queryParams,
       );
 
@@ -194,7 +192,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.put(
-        '${ApiConstants.baseUrl}/saved-workouts/scheduled/$scheduledWorkoutId',
+        '/social/saved-workouts/scheduled/$scheduledWorkoutId',
         queryParameters: {'user_id': userId},
         data: {
           'status': status.value,
@@ -225,7 +223,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/saved-workouts/challenge/$activityId',
+        '/social/saved-workouts/challenge/$activityId',
         queryParameters: {'user_id': userId},
       );
 
@@ -247,7 +245,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/saved-workouts/badges/$activityId',
+        '/social/saved-workouts/badges/$activityId',
       );
 
       if (response.statusCode == 200) {
@@ -278,7 +276,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/saved-workouts/do-now/$savedWorkoutId',
+        '/social/saved-workouts/do-now/$savedWorkoutId',
         queryParameters: {'user_id': userId},
       );
 

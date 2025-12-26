@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/widgets.dart';
 
-/// The preferences section containing theme and system settings.
+/// The preferences section containing theme and timezone settings.
 ///
-/// Allows users to toggle between light/dark mode and follow system theme.
+/// Allows users to choose between System, Light, or Dark theme.
+/// Timezone is auto-detected but can be overridden (e.g., when traveling).
 class PreferencesSection extends StatelessWidget {
   const PreferencesSection({super.key});
 
@@ -17,15 +18,16 @@ class PreferencesSection extends StatelessWidget {
         SettingsCard(
           items: [
             SettingItemData(
-              icon: Icons.smartphone_outlined,
-              title: 'Follow System',
-              subtitle: 'Match device theme',
-              isFollowSystemToggle: true,
+              icon: Icons.palette_outlined,
+              title: 'Theme',
+              subtitle: 'System, Light, or Dark',
+              isThemeSelector: true,
             ),
             SettingItemData(
-              icon: Icons.dark_mode_outlined,
-              title: 'Dark Mode',
-              isThemeToggle: true,
+              icon: Icons.travel_explore_outlined,
+              title: 'Timezone',
+              subtitle: 'Auto-detected, override if traveling',
+              isTimezoneSelector: true,
             ),
           ],
         ),

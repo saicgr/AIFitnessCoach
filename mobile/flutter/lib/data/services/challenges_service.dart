@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_client.dart';
-import '../../core/constants/api_constants.dart';
 
 /// Challenge status enum
 enum ChallengeStatus {
@@ -39,7 +37,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/challenges/send',
+        '/social/challenges/send',
         queryParameters: {'user_id': userId},
         data: {
           'to_user_ids': toUserIds,
@@ -84,7 +82,7 @@ class ChallengesService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/challenges/received',
+        '/social/challenges/received',
         queryParameters: {'user_id': userId, ...queryParams},
       );
 
@@ -114,7 +112,7 @@ class ChallengesService {
       };
 
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/challenges/sent',
+        '/social/challenges/sent',
         queryParameters: {'user_id': userId, ...queryParams},
       );
 
@@ -140,7 +138,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/challenges/accept/$challengeId',
+        '/social/challenges/accept/$challengeId',
         queryParameters: {'user_id': userId},
       );
 
@@ -163,7 +161,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/challenges/decline/$challengeId',
+        '/social/challenges/decline/$challengeId',
         queryParameters: {'user_id': userId},
       );
 
@@ -187,7 +185,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/challenges/complete/$challengeId',
+        '/social/challenges/complete/$challengeId',
         queryParameters: {'user_id': userId},
         data: {
           'challenge_id': challengeId,
@@ -217,7 +215,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/challenges/abandon/$challengeId',
+        '/social/challenges/abandon/$challengeId',
         queryParameters: {'user_id': userId},
         data: {
           'challenge_id': challengeId,
@@ -249,7 +247,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/challenges/notifications',
+        '/social/challenges/notifications',
         queryParameters: {
           'user_id': userId,
           'unread_only': unreadOnly.toString(),
@@ -274,7 +272,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.put(
-        '${ApiConstants.baseUrl}/challenges/notifications/$notificationId/read',
+        '/social/challenges/notifications/$notificationId/read',
         queryParameters: {'user_id': userId},
       );
 
@@ -299,7 +297,7 @@ class ChallengesService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/challenges/stats/$userId',
+        '/social/challenges/stats/$userId',
       );
 
       if (response.statusCode == 200) {

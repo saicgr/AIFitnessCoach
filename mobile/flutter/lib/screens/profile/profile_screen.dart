@@ -61,6 +61,8 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildQuickAccessSection(context),
           const SizedBox(height: 32),
+          const WorkoutGallerySection(),
+          const SizedBox(height: 32),
           _buildFitnessProfileSection(user),
           const SizedBox(height: 24),
           _buildEquipmentSection(user),

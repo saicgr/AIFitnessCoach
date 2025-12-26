@@ -205,6 +205,9 @@ class _OverviewTab extends ConsumerWidget {
             label: 'Weekly Summaries',
             onTap: () => context.push('/summaries'),
           ),
+
+          // Bottom padding for floating nav bar
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -244,6 +247,9 @@ class _ProgressTab extends StatelessWidget {
           _SectionHeader(title: 'Personal Records'),
           const SizedBox(height: 12),
           _PRList(),
+
+          // Bottom padding for floating nav bar
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -291,6 +297,9 @@ class _BodyTab extends StatelessWidget {
               minimumSize: const Size(double.infinity, 48),
             ),
           ),
+
+          // Bottom padding for floating nav bar
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -362,6 +371,9 @@ class _NutritionTab extends StatelessWidget {
               minimumSize: const Size(double.infinity, 48),
             ),
           ),
+
+          // Bottom padding for floating nav bar
+          const SizedBox(height: 80),
         ],
       ),
     );

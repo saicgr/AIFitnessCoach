@@ -49,5 +49,12 @@
 	<string>AI Fitness Coach needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>AI Fitness Coach needs access to save your workout data and body measurements to Apple Health.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+		<string>instagram</string>
+	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>AI Fitness Coach needs access to save workout recap images to your photo library.</string>
 </dict>
 </plist>

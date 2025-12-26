@@ -8,6 +8,7 @@ import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
 import 'tabs/friends_tab.dart';
 import 'senior/senior_social_screen.dart';
+import 'friend_search_screen.dart';
 
 /// Social screen - Shows activity feed, challenges, and friends
 /// Adapts UI based on accessibility mode (Normal vs Senior)
@@ -75,16 +76,26 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   IconButton(
                     icon: const Icon(Icons.search_rounded),
                     onPressed: () {
-                      // TODO: Implement search
                       HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FriendSearchScreen(),
+                        ),
+                      );
                     },
                   ),
                   // Add friend button
                   IconButton(
                     icon: const Icon(Icons.person_add_rounded),
                     onPressed: () {
-                      // TODO: Implement add friend
                       HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FriendSearchScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],

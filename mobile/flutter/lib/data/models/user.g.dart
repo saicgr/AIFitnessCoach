@@ -26,6 +26,7 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   onboardingCompleted: json['onboarding_completed'] as bool?,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
+  timezone: json['timezone'] as String?,
 );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -48,6 +49,7 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'onboarding_completed': instance.onboardingCompleted,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
+  'timezone': instance.timezone,
 };
 
 GoogleAuthRequest _$GoogleAuthRequestFromJson(Map<String, dynamic> json) =>

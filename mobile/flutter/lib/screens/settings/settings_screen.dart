@@ -13,6 +13,7 @@ import 'sections/sections.dart';
 /// - Accessibility options
 /// - Health sync integration
 /// - Notification preferences
+/// - Social & Privacy settings
 /// - Support links
 /// - App info
 /// - Data management (import/export)
@@ -73,6 +74,11 @@ class SettingsScreen extends ConsumerWidget {
 
               // Notifications section
               const NotificationsSection().animate().fadeIn(delay: 75.ms),
+
+              const SizedBox(height: 24),
+
+              // Social & Privacy section
+              const SocialPrivacySection().animate().fadeIn(delay: 85.ms),
 
               const SizedBox(height: 24),
 

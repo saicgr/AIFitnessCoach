@@ -10,6 +10,9 @@ from the following submodules:
 - challenges: Challenge operations
 - privacy: Privacy settings
 - summary: Social summary endpoints
+- users: User search and discovery
+- friend_requests: Friend request management
+- notifications: Social notifications
 """
 from fastapi import APIRouter
 
@@ -20,6 +23,9 @@ from .comments import router as comments_router
 from .challenges import router as challenges_router
 from .privacy import router as privacy_router
 from .summary import router as summary_router
+from .users import router as users_router
+from .friend_requests import router as friend_requests_router
+from .notifications import router as notifications_router
 
 # Create the combined router with /social prefix
 router = APIRouter(prefix="/social")
@@ -32,6 +38,9 @@ router.include_router(comments_router)
 router.include_router(challenges_router)
 router.include_router(privacy_router)
 router.include_router(summary_router)
+router.include_router(users_router)
+router.include_router(friend_requests_router)
+router.include_router(notifications_router)
 
 # Re-export utilities
 from .utils import get_supabase_client

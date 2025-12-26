@@ -33,9 +33,11 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
 import '../screens/glossary/glossary_screen.dart';
+import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
+import '../screens/profile/workout_gallery_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
@@ -549,6 +551,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/glossary',
         builder: (context, state) => const GlossaryScreen(),
+      ),
+
+      // Personal Goals (Weekly Challenges)
+      GoRoute(
+        path: '/personal-goals',
+        builder: (context, state) => const PersonalGoalsScreen(),
+      ),
+
+      // Workout Gallery (Shareable workout recaps)
+      GoRoute(
+        path: '/workout-gallery',
+        builder: (context, state) => const WorkoutGalleryScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
