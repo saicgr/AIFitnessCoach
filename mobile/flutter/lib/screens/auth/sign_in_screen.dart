@@ -115,54 +115,65 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                // Header with back button
-                _buildHeader(isDark, textSecondary),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          // Header with back button
+                          _buildHeader(isDark, textSecondary),
 
-                const Spacer(),
+                          const Spacer(),
 
-                // Main content
-                _buildMainContent(isDark, textPrimary, textSecondary),
+                          // Main content
+                          _buildMainContent(isDark, textPrimary, textSecondary),
 
-                const Spacer(),
+                          const Spacer(),
 
-                // Sign-in buttons
-                _buildSignInButtons(isDark),
+                          // Sign-in buttons
+                          _buildSignInButtons(isDark),
 
-                // Error message
-                if (authState.status == AuthStatus.error && authState.errorMessage != null)
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                          // Error message
+                          if (authState.status == AuthStatus.error && authState.errorMessage != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      authState.errorMessage!,
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppColors.error,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ).animate().fadeIn().shake(),
+
+                          const SizedBox(height: 24),
+
+                          // Terms text
+                          _buildTermsText(textSecondary),
+
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            authState.errorMessage!,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.error,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn().shake(),
-
-                const SizedBox(height: 24),
-
-                // Terms text
-                _buildTermsText(textSecondary),
-
-                const SizedBox(height: 24),
-              ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -255,20 +266,27 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  gradient: AppColors.cyanGradient,
+                  color: AppColors.teal,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cyan.withOpacity(0.3 + _pulseController.value * 0.1),
+                      color: AppColors.teal.withOpacity(0.3 + _pulseController.value * 0.1),
                       blurRadius: 24,
                       spreadRadius: 2,
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  color: Colors.white,
-                  size: 48,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.fitness_center,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
                 ),
               ),
             );

@@ -11,8 +11,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -20,32 +19,32 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App icon/logo
+            // App icon/logo - using actual app icon
             Container(
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    cyan,
-                    purple,
-                  ],
-                ),
+                color: teal,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: cyan.withOpacity(0.3),
+                    color: teal.withOpacity(0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.fitness_center,
-                size: 40,
-                color: Colors.white,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  'assets/images/app_icon.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.fitness_center,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -56,7 +55,7 @@ class SplashScreen extends StatelessWidget {
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  cyan.withOpacity(0.7),
+                  teal.withOpacity(0.7),
                 ),
               ),
             ),

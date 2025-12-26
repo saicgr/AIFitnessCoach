@@ -57,7 +57,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
       'description': 'personalize your fitness journey',
       'longDescription': 'From nutrition to recovery, our AI team covers every aspect of your health',
       'icon': Icons.auto_awesome,
-      'color': Color(0xFF9C27B0), // purple
+      'color': Color(0xFF14B8A6), // teal
     },
     {
       'headline': '<3s',
@@ -137,7 +137,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         SnackBar(
           content: Text('${language.name} support coming soon!'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.purple,
+          backgroundColor: AppColors.teal,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -182,39 +182,50 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
 
-                // Progress dots (individual fillable)
-                _buildProgressDots(isDark),
+                          // Progress dots (individual fillable)
+                          _buildProgressDots(isDark),
 
-                const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                // App branding (smaller)
-                _buildBranding(isDark),
+                          // App branding (smaller)
+                          _buildBranding(isDark),
 
-                const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                // Stats carousel - takes remaining space
-                Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(child: _buildStatsCarousel(isDark)),
-                      const SizedBox(height: 12),
-                      // Long description below carousel
-                      _buildStatDescription(isDark),
-                    ],
+                          // Stats carousel - takes remaining space
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Expanded(child: _buildStatsCarousel(isDark)),
+                                const SizedBox(height: 12),
+                                // Long description below carousel
+                                _buildStatDescription(isDark),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Bottom section: Language + buttons (fixed at bottom)
+                          _buildBottomSection(isDark),
+
+                          const SizedBox(height: 16),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Bottom section: Language + buttons (fixed at bottom)
-                _buildBottomSection(isDark),
-
-                const SizedBox(height: 16),
-              ],
+                );
+              },
             ),
           ),
         ),
@@ -235,7 +246,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
             // Gradient colors based on position
             final activeColor = Color.lerp(
               AppColors.cyan,
-              AppColors.purple,
+              AppColors.teal,
               index / (_stats.length - 1),
             )!;
             final inactiveColor = isDark ? Colors.white12 : Colors.black12;
@@ -271,42 +282,44 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   Widget _buildBranding(bool isDark) {
     return Column(
       children: [
-        // App icon
+        // App icon - using actual app icon image
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            gradient: AppColors.cyanGradient,
+            color: AppColors.teal,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.cyan.withOpacity(0.3),
+                color: AppColors.teal.withOpacity(0.3),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
             ],
           ),
-          child: const Icon(
-            Icons.fitness_center,
-            color: AppColors.pureBlack,
-            size: 40,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/app_icon.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.fitness_center,
+                color: AppColors.pureBlack,
+                size: 40,
+              ),
+            ),
           ),
         ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
 
         const SizedBox(height: 16),
 
-        // App name
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [AppColors.cyan, AppColors.purple],
-          ).createShader(bounds),
-          child: Text(
-            'AI Fitness Coach',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-          ),
+        // App name - single teal color instead of gradient
+        Text(
+          'AI Fitness Coach',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.teal,
+              ),
         ).animate().fadeIn(delay: 200.ms),
       ],
     );
@@ -709,7 +722,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.purple.withOpacity(0.15),
+                                          color: AppColors.teal.withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: const Text(
@@ -717,7 +730,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                                           style: TextStyle(
                                             fontSize: 8,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.purple,
+                                            color: AppColors.teal,
                                           ),
                                         ),
                                       ),

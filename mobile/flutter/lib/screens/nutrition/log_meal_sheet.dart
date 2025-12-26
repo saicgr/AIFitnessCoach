@@ -1194,7 +1194,7 @@ class _DescribeTabState extends State<_DescribeTab> {
     final response = _analyzedResponse!;
     final description = widget.controller.text.trim();
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1202,7 +1202,7 @@ class _DescribeTabState extends State<_DescribeTab> {
           // Header with edit option
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: const Color(0xFFFFD93D), size: 24),
+              const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -1244,85 +1244,76 @@ class _DescribeTabState extends State<_DescribeTab> {
           const SizedBox(height: 20),
 
           // Nutrition cards
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _RainbowNutritionCard(
-                    icon: Icons.local_fire_department,
-                    label: 'Calories',
-                    value: '${response.totalCalories}',
-                    unit: 'kcal',
-                    color: caloriesColor,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _RainbowNutritionCard(
-                          icon: Icons.fitness_center,
-                          label: 'Protein',
-                          value: response.proteinG.toStringAsFixed(1),
-                          unit: 'g',
-                          color: proteinColor,
-                          isDark: isDark,
-                          compact: true,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _RainbowNutritionCard(
-                          icon: Icons.grain,
-                          label: 'Carbs',
-                          value: response.carbsG.toStringAsFixed(1),
-                          unit: 'g',
-                          color: carbsColor,
-                          isDark: isDark,
-                          compact: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _RainbowNutritionCard(
-                          icon: Icons.opacity,
-                          label: 'Fat',
-                          value: response.fatG.toStringAsFixed(1),
-                          unit: 'g',
-                          color: fatColor,
-                          isDark: isDark,
-                          compact: true,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _RainbowNutritionCard(
-                          icon: Icons.eco,
-                          label: 'Fiber',
-                          value: (response.fiberG ?? 0).toStringAsFixed(1),
-                          unit: 'g',
-                          color: fiberColor,
-                          isDark: isDark,
-                          compact: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'These values are AI estimates based on your description.',
-                    style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+          _RainbowNutritionCard(
+            icon: Icons.local_fire_department,
+            label: 'Calories',
+            value: '${response.totalCalories}',
+            unit: 'kcal',
+            color: caloriesColor,
+            isDark: isDark,
           ),
-
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _RainbowNutritionCard(
+                  icon: Icons.fitness_center,
+                  label: 'Protein',
+                  value: response.proteinG.toStringAsFixed(1),
+                  unit: 'g',
+                  color: proteinColor,
+                  isDark: isDark,
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RainbowNutritionCard(
+                  icon: Icons.grain,
+                  label: 'Carbs',
+                  value: response.carbsG.toStringAsFixed(1),
+                  unit: 'g',
+                  color: carbsColor,
+                  isDark: isDark,
+                  compact: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _RainbowNutritionCard(
+                  icon: Icons.opacity,
+                  label: 'Fat',
+                  value: response.fatG.toStringAsFixed(1),
+                  unit: 'g',
+                  color: fatColor,
+                  isDark: isDark,
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _RainbowNutritionCard(
+                  icon: Icons.eco,
+                  label: 'Fiber',
+                  value: (response.fiberG ?? 0).toStringAsFixed(1),
+                  unit: 'g',
+                  color: fiberColor,
+                  isDark: isDark,
+                  compact: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'These values are AI estimates based on your description.',
+            style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
 
           // Log button
