@@ -10,7 +10,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from core.supabase import get_supabase_client
+from core.supabase_db import get_supabase_db
 from models.workout_gallery import (
     DeleteImageResponse,
     ShareToFeedRequest,
@@ -36,7 +36,7 @@ async def upload_gallery_image(
     The image is stored in Supabase Storage and metadata is saved to the database.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         # Decode base64 image
         try:
@@ -129,7 +129,7 @@ async def list_gallery_images(
     List gallery images for a user with pagination.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         # Build query
         query = supabase.table("workout_gallery_images") \
@@ -172,7 +172,7 @@ async def get_gallery_image(
     Get a specific gallery image by ID.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         result = supabase.table("workout_gallery_images") \
             .select("*") \
@@ -203,7 +203,7 @@ async def delete_gallery_image(
     Soft delete a gallery image.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         # Verify ownership
         check = supabase.table("workout_gallery_images") \
@@ -250,7 +250,7 @@ async def share_image_to_feed(
     Creates a new activity in the social feed with the gallery image.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         # Get the gallery image
         image_result = supabase.table("workout_gallery_images") \
@@ -323,7 +323,7 @@ async def track_external_share(
     Increments the external_shares_count and sets shared_externally to true.
     """
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase_db()
 
         # Get current count
         image = supabase.table("workout_gallery_images") \
