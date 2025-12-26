@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../models/nutrition.dart';
+import '../models/micronutrients.dart';
+import '../models/recipe.dart';
 import '../services/api_client.dart';
 
 /// Nutrition repository provider
@@ -400,6 +402,243 @@ class NutritionRepository {
       return LogFoodResponse.fromJson(response.data);
     } catch (e) {
       debugPrint('Error re-logging saved food: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Recipe Methods
+  // ============================================
+
+  /// Create a new recipe
+  Future<Recipe> createRecipe({
+    required String userId,
+    required RecipeCreate request,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/recipes',
+        queryParameters: {'user_id': userId},
+        data: request.toJson(),
+      );
+      return Recipe.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error creating recipe: $e');
+      rethrow;
+    }
+  }
+
+  /// Get list of user's recipes
+  Future<RecipesResponse> getRecipes({
+    required String userId,
+    int limit = 50,
+    int offset = 0,
+    String? category,
+    String? search,
+    String sortBy = 'created_at',
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'user_id': userId,
+        'limit': limit,
+        'offset': offset,
+        'sort_by': sortBy,
+      };
+      if (category != null) queryParams['category'] = category;
+      if (search != null) queryParams['search'] = search;
+
+      final response = await _client.get(
+        '/nutrition/recipes',
+        queryParameters: queryParams,
+      );
+      return RecipesResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting recipes: $e');
+      rethrow;
+    }
+  }
+
+  /// Get a specific recipe with ingredients
+  Future<Recipe> getRecipe({
+    required String userId,
+    required String recipeId,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/nutrition/recipes/$recipeId',
+        queryParameters: {'user_id': userId},
+      );
+      return Recipe.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting recipe: $e');
+      rethrow;
+    }
+  }
+
+  /// Update a recipe
+  Future<Recipe> updateRecipe({
+    required String userId,
+    required String recipeId,
+    required RecipeUpdate request,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/nutrition/recipes/$recipeId',
+        queryParameters: {'user_id': userId},
+        data: request.toJson(),
+      );
+      return Recipe.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error updating recipe: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a recipe
+  Future<void> deleteRecipe({
+    required String userId,
+    required String recipeId,
+  }) async {
+    try {
+      await _client.delete(
+        '/nutrition/recipes/$recipeId',
+        queryParameters: {'user_id': userId},
+      );
+    } catch (e) {
+      debugPrint('Error deleting recipe: $e');
+      rethrow;
+    }
+  }
+
+  /// Log a recipe as a meal
+  Future<LogRecipeResponse> logRecipe({
+    required String userId,
+    required String recipeId,
+    required String mealType,
+    double servings = 1.0,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/recipes/$recipeId/log',
+        queryParameters: {'user_id': userId},
+        data: {
+          'meal_type': mealType,
+          'servings': servings,
+        },
+      );
+      return LogRecipeResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error logging recipe: $e');
+      rethrow;
+    }
+  }
+
+  /// Add ingredient to a recipe
+  Future<RecipeIngredient> addIngredient({
+    required String userId,
+    required String recipeId,
+    required RecipeIngredientCreate ingredient,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/recipes/$recipeId/ingredients',
+        queryParameters: {'user_id': userId},
+        data: ingredient.toJson(),
+      );
+      return RecipeIngredient.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error adding ingredient: $e');
+      rethrow;
+    }
+  }
+
+  /// Remove ingredient from a recipe
+  Future<void> removeIngredient({
+    required String userId,
+    required String recipeId,
+    required String ingredientId,
+  }) async {
+    try {
+      await _client.delete(
+        '/nutrition/recipes/$recipeId/ingredients/$ingredientId',
+        queryParameters: {'user_id': userId},
+      );
+    } catch (e) {
+      debugPrint('Error removing ingredient: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Micronutrient Methods
+  // ============================================
+
+  /// Get daily micronutrient summary
+  Future<DailyMicronutrientSummary> getDailyMicronutrients({
+    required String userId,
+    String? date,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (date != null) queryParams['date'] = date;
+
+      final response = await _client.get(
+        '/nutrition/micronutrients/$userId',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      return DailyMicronutrientSummary.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting daily micronutrients: $e');
+      rethrow;
+    }
+  }
+
+  /// Get top contributors for a specific nutrient
+  Future<NutrientContributorsResponse> getNutrientContributors({
+    required String userId,
+    required String nutrientKey,
+    String? date,
+    int limit = 5,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{'limit': limit};
+      if (date != null) queryParams['date'] = date;
+
+      final response = await _client.get(
+        '/nutrition/micronutrients/$userId/contributors/$nutrientKey',
+        queryParameters: queryParams,
+      );
+      return NutrientContributorsResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting nutrient contributors: $e');
+      rethrow;
+    }
+  }
+
+  /// Get all RDA (Reference Daily Allowance) values
+  Future<List<NutrientRDA>> getAllRDAs() async {
+    try {
+      final response = await _client.get('/nutrition/rdas');
+      final data = response.data as List;
+      return data.map((json) => NutrientRDA.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('Error getting RDAs: $e');
+      rethrow;
+    }
+  }
+
+  /// Update user's pinned nutrients
+  Future<void> updatePinnedNutrients({
+    required String userId,
+    required List<String> pinnedNutrients,
+  }) async {
+    try {
+      await _client.put(
+        '/nutrition/pinned-nutrients/$userId',
+        data: {'pinned_nutrients': pinnedNutrients},
+      );
+    } catch (e) {
+      debugPrint('Error updating pinned nutrients: $e');
       rethrow;
     }
   }
