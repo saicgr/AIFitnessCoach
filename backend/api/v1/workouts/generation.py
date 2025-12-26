@@ -20,6 +20,7 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import (
     Workout, GenerateWorkoutRequest, SwapWorkoutsRequest, SwapExerciseRequest,
+    AddExerciseRequest,
     GenerateWeeklyRequest, GenerateWeeklyResponse,
     GenerateMonthlyRequest, GenerateMonthlyResponse,
 )
@@ -240,6 +241,91 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to swap exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/add-exercise", response_model=Workout)
+async def add_exercise_to_workout(request: AddExerciseRequest):
+    """Add a new exercise to an existing workout."""
+    logger.info(f"Adding exercise '{request.exercise_name}' to workout {request.workout_id}")
+    try:
+        db = get_supabase_db()
+
+        # Get the workout
+        workout = db.get_workout(request.workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Parse existing exercises
+        exercises_json = workout.get("exercises_json", "[]")
+        if isinstance(exercises_json, str):
+            exercises = json.loads(exercises_json)
+        else:
+            exercises = exercises_json
+
+        # Get exercise details from library
+        exercise_lib = get_exercise_library_service()
+        exercise_data = exercise_lib.search_exercises(request.exercise_name, limit=1)
+
+        if exercise_data:
+            new_ex = exercise_data[0]
+            new_exercise = {
+                "name": new_ex.get("name", request.exercise_name),
+                "sets": request.sets,
+                "reps": request.reps,
+                "rest_seconds": request.rest_seconds,
+                "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part"),
+                "equipment": new_ex.get("equipment"),
+                "notes": new_ex.get("instructions", ""),
+                "gif_url": new_ex.get("gif_url") or new_ex.get("video_url"),
+                "video_url": new_ex.get("video_url") or new_ex.get("gif_url"),
+                "library_id": new_ex.get("id"),
+            }
+        else:
+            # Create basic exercise entry if not found in library
+            new_exercise = {
+                "name": request.exercise_name,
+                "sets": request.sets,
+                "reps": request.reps,
+                "rest_seconds": request.rest_seconds,
+            }
+
+        # Append the new exercise
+        exercises.append(new_exercise)
+
+        # Update the workout
+        update_data = {
+            "exercises_json": json.dumps(exercises),
+            "last_modified_at": datetime.now().isoformat(),
+            "last_modified_method": "exercise_add"
+        }
+
+        updated = db.update_workout(request.workout_id, update_data)
+        if not updated:
+            raise HTTPException(status_code=500, detail="Failed to update workout")
+
+        # Log the change
+        log_workout_change(
+            request.workout_id,
+            workout.get("user_id"),
+            "exercise_add",
+            "exercises_json",
+            None,
+            request.exercise_name
+        )
+
+        updated_workout = row_to_workout(updated)
+        logger.info(f"Exercise '{request.exercise_name}' added successfully to workout {request.workout_id}")
+
+        # Re-index to RAG
+        await index_workout_to_rag(updated_workout)
+
+        return updated_workout
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

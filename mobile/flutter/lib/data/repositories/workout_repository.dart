@@ -636,6 +636,37 @@ class WorkoutRepository {
     }
   }
 
+  /// Add a new exercise to a workout
+  Future<Workout?> addExercise({
+    required String workoutId,
+    required String exerciseName,
+    int sets = 3,
+    String reps = '8-12',
+    int restSeconds = 60,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Adding exercise "$exerciseName" to workout $workoutId');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/add-exercise',
+        data: {
+          'workout_id': workoutId,
+          'exercise_name': exerciseName,
+          'sets': sets,
+          'reps': reps,
+          'rest_seconds': restSeconds,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Exercise added successfully');
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error adding exercise: $e');
+      return null;
+    }
+  }
+
   /// Get AI-generated workout summary
   Future<String?> getWorkoutSummary(String workoutId, {bool forceRegenerate = false}) async {
     try {

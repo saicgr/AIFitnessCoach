@@ -12,6 +12,7 @@ import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'package:flutter/services.dart';
 import '../../widgets/floating_chat/floating_chat_provider.dart';
@@ -388,14 +389,18 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                   const Spacer(),
                   // Add exercise button (+ icon)
                   GestureDetector(
-                    onTap: () {
-                      // TODO: Add exercise functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Add exercise feature coming soon!'),
-                          duration: Duration(seconds: 2),
-                        ),
+                    onTap: () async {
+                      final currentExerciseNames = exercises.map((e) => e.name).toList();
+                      final updatedWorkout = await showExerciseAddSheet(
+                        context,
+                        ref,
+                        workoutId: widget.workoutId,
+                        workoutType: _workout?.type ?? 'strength',
+                        currentExerciseNames: currentExerciseNames,
                       );
+                      if (updatedWorkout != null) {
+                        setState(() => _workout = updatedWorkout);
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),

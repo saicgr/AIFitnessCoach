@@ -15,6 +15,7 @@ from api.v1 import workouts  # Modular workouts package
 from api.v1 import social  # Modular social package
 from api.v1 import workout_gallery  # Shareable workout recap images
 from api.v1 import personal_goals  # Weekly personal challenges
+from api.v1 import goal_social  # Goal sharing and friend features
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -100,3 +101,6 @@ router.include_router(workout_gallery.router, prefix="/workout-gallery", tags=["
 
 # Weekly personal goals (Push it to the Limit challenges)
 router.include_router(personal_goals.router, prefix="/personal-goals", tags=["Personal Goals"])
+
+# Goal social features (friends on goals, invites, joining)
+router.include_router(goal_social.router, prefix="/goal-social", tags=["Goal Social"])

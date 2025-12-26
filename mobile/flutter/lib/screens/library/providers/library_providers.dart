@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../data/models/exercise.dart';
@@ -249,3 +250,63 @@ void clearSearchAndFilters(WidgetRef ref) {
   ref.read(exerciseSearchProvider.notifier).state = '';
   clearAllFilters(ref);
 }
+
+// ============================================================================
+// CATEGORY EXERCISES PROVIDER (for Netflix carousel)
+// ============================================================================
+
+/// Fetches exercises grouped by body part for Netflix-style carousel
+final categoryExercisesProvider =
+    FutureProvider.autoDispose<Map<String, List<LibraryExercise>>>((ref) async {
+  final apiClient = ref.read(apiClientProvider);
+
+  // Define categories to fetch
+  final categories = [
+    'Chest',
+    'Back',
+    'Shoulders',
+    'Arms',
+    'Legs',
+    'Core',
+    'Cardio',
+  ];
+
+  final result = <String, List<LibraryExercise>>{};
+
+  // Fetch "Popular" exercises first (no filter, just first page of all exercises)
+  try {
+    final popularResponse = await apiClient.get(
+      '${ApiConstants.library}/exercises?limit=15&offset=0',
+    );
+    if (popularResponse.statusCode == 200) {
+      final data = popularResponse.data as List;
+      result['Popular'] = data
+          .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+  } catch (e) {
+    debugPrint('Error loading popular exercises: $e');
+  }
+
+  // Fetch exercises for each category
+  for (final category in categories) {
+    try {
+      final response = await apiClient.get(
+        '${ApiConstants.library}/exercises?body_parts=${Uri.encodeComponent(category)}&limit=15&offset=0',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as List;
+        final exercises = data
+            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (exercises.isNotEmpty) {
+          result[category] = exercises;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading $category exercises: $e');
+    }
+  }
+
+  return result;
+});

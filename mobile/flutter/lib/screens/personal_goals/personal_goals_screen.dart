@@ -3,7 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/personal_goals_service.dart';
+import '../../data/providers/goal_suggestions_provider.dart';
 import 'widgets/goal_card.dart';
+import 'widgets/suggestion_carousel.dart';
+import 'widgets/suggestion_card.dart';
+import 'widgets/goal_leaderboard_sheet.dart';
 import 'create_goal_sheet.dart';
 import 'record_attempt_dialog.dart';
 
@@ -123,6 +127,109 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     );
   }
 
+  void _showSuggestionDetail(GoalSuggestionItem suggestion) {
+    // Determine accent color based on category
+    Color accentColor;
+    switch (suggestion.category) {
+      case SuggestionCategory.beatYourRecords:
+        accentColor = AppColors.orange;
+        break;
+      case SuggestionCategory.popularWithFriends:
+        accentColor = AppColors.purple;
+        break;
+      case SuggestionCategory.newChallenges:
+        accentColor = AppColors.cyan;
+        break;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ExpandedSuggestionCard(
+        suggestion: suggestion,
+        accentColor: accentColor,
+        onAccept: () {
+          Navigator.pop(context);
+          _acceptSuggestion(suggestion);
+        },
+        onDismiss: () {
+          Navigator.pop(context);
+          _dismissSuggestion(suggestion);
+        },
+      ),
+    );
+  }
+
+  Future<void> _acceptSuggestion(GoalSuggestionItem suggestion) async {
+    try {
+      await _goalsService.acceptSuggestion(
+        userId: _userId!,
+        suggestionId: suggestion.id,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Goal created: ${suggestion.exerciseName}'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        // Refresh data and invalidate suggestions
+        _loadData();
+        ref.invalidate(goalSuggestionsProvider(
+          GoalSuggestionsParams(userId: _userId!, forceRefresh: true),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create goal: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _dismissSuggestion(GoalSuggestionItem suggestion) async {
+    try {
+      await _goalsService.dismissSuggestion(
+        userId: _userId!,
+        suggestionId: suggestion.id,
+      );
+
+      if (mounted) {
+        // Invalidate suggestions to remove dismissed one
+        ref.invalidate(goalSuggestionsProvider(
+          GoalSuggestionsParams(userId: _userId!, forceRefresh: true),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to dismiss suggestion: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showLeaderboardSheet(Map<String, dynamic> goal) {
+    final goalType = PersonalGoalType.fromString(goal['goal_type'] ?? 'single_max');
+
+    showGoalLeaderboardSheet(
+      context,
+      userId: _userId!,
+      goalId: goal['id'],
+      exerciseName: goal['exercise_name'] ?? 'Exercise',
+      goalType: goalType,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -208,6 +315,15 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // AI-powered suggestion carousel
+            if (_userId != null)
+              SuggestionCarousel(
+                userId: _userId!,
+                onSuggestionTap: _showSuggestionDetail,
+                onAccept: _acceptSuggestion,
+                onDismiss: _dismissSuggestion,
+              ),
+
             // Summary stats
             if (goals.isNotEmpty || prsThisWeek > 0) ...[
               _buildSummaryCard(goals.length, prsThisWeek),
@@ -247,6 +363,10 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                       goal: goal,
                       onRecordAttempt: () => _showRecordAttemptDialog(goal),
                       onAddVolume: () => _showRecordAttemptDialog(goal),
+                      friendsCount: goal['friends_count'] ?? 0,
+                      onFriendsTap: (goal['friends_count'] ?? 0) > 0
+                          ? () => _showLeaderboardSheet(goal)
+                          : null,
                     ),
                   )),
 

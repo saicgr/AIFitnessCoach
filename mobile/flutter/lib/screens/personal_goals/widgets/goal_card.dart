@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/personal_goals_service.dart';
+import '../../../data/services/goal_social_service.dart';
+import 'friend_avatars_row.dart';
 
 /// A card displaying a personal weekly goal with progress
 class GoalCard extends StatelessWidget {
@@ -8,6 +10,9 @@ class GoalCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onRecordAttempt;
   final VoidCallback? onAddVolume;
+  final List<FriendGoalProgress>? friends;
+  final int friendsCount;
+  final VoidCallback? onFriendsTap;
 
   const GoalCard({
     super.key,
@@ -15,6 +20,9 @@ class GoalCard extends StatelessWidget {
     this.onTap,
     this.onRecordAttempt,
     this.onAddVolume,
+    this.friends,
+    this.friendsCount = 0,
+    this.onFriendsTap,
   });
 
   @override
@@ -233,6 +241,16 @@ class GoalCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
+
+            // Friends row (if any)
+            if (friendsCount > 0) ...[
+              FriendAvatarsRow(
+                friends: friends ?? [],
+                totalCount: friendsCount,
+                onTap: onFriendsTap,
+              ),
+              const SizedBox(height: 12),
+            ],
 
             // Footer row
             Row(

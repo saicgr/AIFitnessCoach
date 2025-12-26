@@ -506,17 +506,14 @@ IMPORTANT:
                 print("❌ [Gemini] Empty response from API")
                 return None
 
-            # Clean markdown if present
-            if content.startswith("```json"):
-                content = content[7:]
-            elif content.startswith("```"):
-                content = content[3:]
-            if content.endswith("```"):
-                content = content[:-3]
-
-            result = json.loads(content.strip())
-            print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
-            return result
+            # Parse with robust JSON extraction
+            result = self._extract_json_robust(content)
+            if result:
+                print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
+                return result
+            else:
+                print("❌ [Gemini] Failed to extract valid JSON from response")
+                return None
 
         except json.JSONDecodeError as e:
             print(f"❌ [Gemini] JSON parsing failed: {e}")
@@ -527,6 +524,120 @@ IMPORTANT:
             import traceback
             traceback.print_exc()
             return None
+
+    def _extract_json_robust(self, content: str) -> Optional[Dict]:
+        """
+        Robustly extract and parse JSON from Gemini response.
+        Handles various edge cases like markdown wrappers, trailing commas, and malformed responses.
+        """
+        import re
+
+        if not content:
+            return None
+
+        original_content = content
+
+        # Step 1: Remove markdown code blocks
+        if content.startswith("```json"):
+            content = content[7:]
+        elif content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
+
+        # Step 2: Try direct parse first
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+
+        # Step 3: Find JSON object boundaries (outermost { and })
+        first_brace = content.find('{')
+        last_brace = content.rfind('}')
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            json_str = content[first_brace:last_brace + 1]
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+
+            # Step 4: Fix common JSON issues
+            fixed_json = json_str
+
+            # Remove trailing commas before } or ]
+            fixed_json = re.sub(r',\s*([}\]])', r'\1', fixed_json)
+
+            # Fix reversed JSON format (where Gemini outputs properties in reverse)
+            # This handles the case where content looks like: "value": ..., "key"
+            # Try to detect and fix property order issues
+
+            try:
+                return json.loads(fixed_json)
+            except json.JSONDecodeError:
+                pass
+
+            # Step 5: Try to parse with Python's ast for more flexibility
+            try:
+                import ast
+                # Replace JSON literals with Python equivalents
+                python_str = fixed_json.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+                result = ast.literal_eval(python_str)
+                if isinstance(result, dict):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+        # Step 6: If all else fails, try regex extraction for key fields
+        print(f"⚠️ [Gemini] Attempting regex-based JSON recovery...")
+        try:
+            # Try to extract food_items array
+            food_items_match = re.search(r'"food_items"\s*:\s*\[(.*?)\]', content, re.DOTALL)
+            if food_items_match:
+                # Try to manually build a valid response
+                items_str = food_items_match.group(1)
+                # Extract individual food objects
+                food_objects = []
+                obj_pattern = r'\{[^{}]*\}'
+                for obj_match in re.finditer(obj_pattern, items_str):
+                    try:
+                        obj = json.loads(obj_match.group())
+                        food_objects.append(obj)
+                    except json.JSONDecodeError:
+                        # Try to fix the individual object
+                        obj_str = obj_match.group()
+                        obj_str = re.sub(r',\s*([}\]])', r'\1', obj_str)
+                        try:
+                            obj = json.loads(obj_str)
+                            food_objects.append(obj)
+                        except:
+                            pass
+
+                if food_objects:
+                    # Calculate totals from individual items
+                    total_calories = sum(item.get('calories', 0) for item in food_objects)
+                    total_protein = sum(item.get('protein_g', 0) for item in food_objects)
+                    total_carbs = sum(item.get('carbs_g', 0) for item in food_objects)
+                    total_fat = sum(item.get('fat_g', 0) for item in food_objects)
+                    total_fiber = sum(item.get('fiber_g', 0) for item in food_objects)
+
+                    recovered_result = {
+                        "food_items": food_objects,
+                        "total_calories": total_calories,
+                        "protein_g": total_protein,
+                        "carbs_g": total_carbs,
+                        "fat_g": total_fat,
+                        "fiber_g": total_fiber,
+                        "health_score": 5,  # Default neutral score
+                        "ai_suggestion": "Unable to fully parse AI response, nutritional values may be approximate."
+                    }
+                    print(f"✅ [Gemini] Recovered {len(food_objects)} food items via regex extraction")
+                    return recovered_result
+        except Exception as e:
+            print(f"⚠️ [Gemini] Regex recovery failed: {e}")
+
+        print(f"❌ [Gemini] All JSON parsing attempts failed. Content preview: {original_content[:200]}")
+        return None
 
     def _get_holiday_theme(self, workout_date: Optional[str] = None) -> Optional[str]:
         """

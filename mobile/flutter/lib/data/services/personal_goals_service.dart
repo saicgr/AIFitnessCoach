@@ -323,4 +323,335 @@ class PersonalGoalsService {
       rethrow;
     }
   }
+
+  // ============================================================
+  // GOAL SUGGESTIONS
+  // ============================================================
+
+  /// Get AI-generated goal suggestions organized by category
+  Future<GoalSuggestionsResponse> getGoalSuggestions({
+    required String userId,
+    bool forceRefresh = false,
+  }) async {
+    try {
+      debugPrint('🎯 [PersonalGoals] Getting suggestions for user: $userId');
+
+      final response = await _apiClient.get(
+        '/personal-goals/goals/suggestions',
+        queryParameters: {
+          'user_id': userId,
+          'force_refresh': forceRefresh.toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [PersonalGoals] Got ${data['total_suggestions']} suggestions');
+        return GoalSuggestionsResponse.fromJson(data);
+      } else {
+        throw Exception('Failed to get suggestions: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error getting suggestions: $e');
+      rethrow;
+    }
+  }
+
+  /// Dismiss a suggestion
+  Future<void> dismissSuggestion({
+    required String userId,
+    required String suggestionId,
+    String? reason,
+  }) async {
+    try {
+      debugPrint('🎯 [PersonalGoals] Dismissing suggestion: $suggestionId');
+
+      final response = await _apiClient.post(
+        '/personal-goals/goals/suggestions/$suggestionId/dismiss',
+        queryParameters: {'user_id': userId},
+        data: reason != null ? {'reason': reason} : null,
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [PersonalGoals] Suggestion dismissed');
+      } else {
+        throw Exception('Failed to dismiss suggestion: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error dismissing suggestion: $e');
+      rethrow;
+    }
+  }
+
+  /// Accept a suggestion and create a goal from it
+  Future<Map<String, dynamic>> acceptSuggestion({
+    required String userId,
+    required String suggestionId,
+    int? targetOverride,
+    GoalVisibility visibility = GoalVisibility.friends,
+  }) async {
+    try {
+      debugPrint('🎯 [PersonalGoals] Accepting suggestion: $suggestionId');
+
+      final response = await _apiClient.post(
+        '/personal-goals/goals/suggestions/$suggestionId/accept',
+        queryParameters: {'user_id': userId},
+        data: {
+          if (targetOverride != null) 'target_override': targetOverride,
+          'visibility': visibility.value,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [PersonalGoals] Suggestion accepted, goal created');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to accept suggestion: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error accepting suggestion: $e');
+      rethrow;
+    }
+  }
+
+  /// Get a quick summary of available suggestions
+  Future<GoalSuggestionsSummary> getSuggestionsSummary({
+    required String userId,
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/personal-goals/goals/suggestions/summary',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        return GoalSuggestionsSummary.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        throw Exception('Failed to get suggestions summary: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error getting suggestions summary: $e');
+      rethrow;
+    }
+  }
+}
+
+// ============================================================
+// GOAL SUGGESTION MODELS
+// ============================================================
+
+/// Suggestion type enum
+enum SuggestionType {
+  performanceBased('performance_based'),
+  scheduleBased('schedule_based'),
+  popularWithFriends('popular_with_friends'),
+  newChallenge('new_challenge');
+
+  final String value;
+  const SuggestionType(this.value);
+
+  static SuggestionType fromString(String value) {
+    return SuggestionType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => SuggestionType.performanceBased,
+    );
+  }
+}
+
+/// Suggestion category enum
+enum SuggestionCategory {
+  beatYourRecords('beat_your_records'),
+  popularWithFriends('popular_with_friends'),
+  newChallenges('new_challenges');
+
+  final String value;
+  const SuggestionCategory(this.value);
+
+  static SuggestionCategory fromString(String value) {
+    return SuggestionCategory.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => SuggestionCategory.newChallenges,
+    );
+  }
+}
+
+/// Goal visibility enum
+enum GoalVisibility {
+  private('private'),
+  friends('friends'),
+  public('public');
+
+  final String value;
+  const GoalVisibility(this.value);
+
+  static GoalVisibility fromString(String value) {
+    return GoalVisibility.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => GoalVisibility.friends,
+    );
+  }
+}
+
+/// Friend preview for suggestions
+class FriendPreview {
+  final String userId;
+  final String name;
+  final String? avatarUrl;
+
+  FriendPreview({
+    required this.userId,
+    required this.name,
+    this.avatarUrl,
+  });
+
+  factory FriendPreview.fromJson(Map<String, dynamic> json) {
+    return FriendPreview(
+      userId: json['user_id'] as String,
+      name: json['name'] as String,
+      avatarUrl: json['avatar_url'] as String?,
+    );
+  }
+}
+
+/// Individual goal suggestion
+class GoalSuggestionItem {
+  final String id;
+  final String exerciseName;
+  final PersonalGoalType goalType;
+  final int suggestedTarget;
+  final String reasoning;
+  final SuggestionType suggestionType;
+  final SuggestionCategory category;
+  final double confidenceScore;
+  final Map<String, dynamic>? sourceData;
+  final List<FriendPreview> friendsOnGoal;
+  final int friendsCount;
+  final DateTime createdAt;
+  final DateTime expiresAt;
+
+  GoalSuggestionItem({
+    required this.id,
+    required this.exerciseName,
+    required this.goalType,
+    required this.suggestedTarget,
+    required this.reasoning,
+    required this.suggestionType,
+    required this.category,
+    required this.confidenceScore,
+    this.sourceData,
+    this.friendsOnGoal = const [],
+    this.friendsCount = 0,
+    required this.createdAt,
+    required this.expiresAt,
+  });
+
+  factory GoalSuggestionItem.fromJson(Map<String, dynamic> json) {
+    return GoalSuggestionItem(
+      id: json['id'] as String,
+      exerciseName: json['exercise_name'] as String,
+      goalType: PersonalGoalType.fromString(json['goal_type'] as String),
+      suggestedTarget: json['suggested_target'] as int,
+      reasoning: json['reasoning'] as String,
+      suggestionType: SuggestionType.fromString(json['suggestion_type'] as String),
+      category: SuggestionCategory.fromString(json['category'] as String),
+      confidenceScore: (json['confidence_score'] as num).toDouble(),
+      sourceData: json['source_data'] as Map<String, dynamic>?,
+      friendsOnGoal: (json['friends_on_goal'] as List<dynamic>?)
+              ?.map((e) => FriendPreview.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      friendsCount: json['friends_count'] as int? ?? 0,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      expiresAt: DateTime.parse(json['expires_at'] as String),
+    );
+  }
+}
+
+/// Category group of suggestions
+class SuggestionCategoryGroup {
+  final String categoryId;
+  final String categoryTitle;
+  final String categoryIcon;
+  final String accentColor;
+  final List<GoalSuggestionItem> suggestions;
+
+  SuggestionCategoryGroup({
+    required this.categoryId,
+    required this.categoryTitle,
+    required this.categoryIcon,
+    required this.accentColor,
+    required this.suggestions,
+  });
+
+  factory SuggestionCategoryGroup.fromJson(Map<String, dynamic> json) {
+    return SuggestionCategoryGroup(
+      categoryId: json['category_id'] as String,
+      categoryTitle: json['category_title'] as String,
+      categoryIcon: json['category_icon'] as String,
+      accentColor: json['accent_color'] as String,
+      suggestions: (json['suggestions'] as List<dynamic>)
+          .map((e) => GoalSuggestionItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+/// Response containing all suggestions
+class GoalSuggestionsResponse {
+  final List<SuggestionCategoryGroup> categories;
+  final DateTime generatedAt;
+  final DateTime expiresAt;
+  final int totalSuggestions;
+
+  GoalSuggestionsResponse({
+    required this.categories,
+    required this.generatedAt,
+    required this.expiresAt,
+    required this.totalSuggestions,
+  });
+
+  factory GoalSuggestionsResponse.fromJson(Map<String, dynamic> json) {
+    return GoalSuggestionsResponse(
+      categories: (json['categories'] as List<dynamic>)
+          .map((e) => SuggestionCategoryGroup.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      generatedAt: DateTime.parse(json['generated_at'] as String),
+      expiresAt: DateTime.parse(json['expires_at'] as String),
+      totalSuggestions: json['total_suggestions'] as int,
+    );
+  }
+
+  bool get isEmpty => totalSuggestions == 0;
+  bool get hasRecordsSuggestions =>
+      categories.any((c) => c.categoryId == 'beat_your_records' && c.suggestions.isNotEmpty);
+  bool get hasFriendsSuggestions =>
+      categories.any((c) => c.categoryId == 'popular_with_friends' && c.suggestions.isNotEmpty);
+}
+
+/// Summary of suggestions
+class GoalSuggestionsSummary {
+  final int totalSuggestions;
+  final int categoriesWithSuggestions;
+  final bool hasFriendSuggestions;
+  final DateTime? suggestionsExpireAt;
+
+  GoalSuggestionsSummary({
+    required this.totalSuggestions,
+    required this.categoriesWithSuggestions,
+    required this.hasFriendSuggestions,
+    this.suggestionsExpireAt,
+  });
+
+  factory GoalSuggestionsSummary.fromJson(Map<String, dynamic> json) {
+    return GoalSuggestionsSummary(
+      totalSuggestions: json['total_suggestions'] as int,
+      categoriesWithSuggestions: json['categories_with_suggestions'] as int,
+      hasFriendSuggestions: json['has_friend_suggestions'] as bool,
+      suggestionsExpireAt: json['suggestions_expire_at'] != null
+          ? DateTime.parse(json['suggestions_expire_at'] as String)
+          : null,
+    );
+  }
 }

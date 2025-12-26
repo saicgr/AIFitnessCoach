@@ -15,10 +15,14 @@ Endpoints:
 - POST /goals/{id}/abandon - Abandon a goal
 - GET /records - Get all personal records
 - GET /summary - Get quick summary of current goals
+- GET /goals/suggestions - Get AI-generated goal suggestions
+- POST /goals/suggestions/{id}/dismiss - Dismiss a suggestion
+- POST /goals/suggestions/{id}/accept - Create goal from suggestion
 """
 
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, date, timedelta, timezone
+from typing import Optional
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -27,6 +31,12 @@ from models.weekly_personal_goals import (
     WeeklyPersonalGoal, GoalAttempt, PersonalGoalRecord,
     GoalsResponse, GoalHistoryResponse, PersonalRecordsResponse, GoalSummary,
     GoalType, GoalStatus,
+)
+from models.goal_suggestions import (
+    GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
+    SuggestionType, SuggestionCategory, GoalVisibility,
+    AcceptSuggestionRequest, DismissSuggestionRequest,
+    GoalSuggestionsSummary, FriendPreview,
 )
 
 router = APIRouter()
@@ -139,6 +149,20 @@ async def get_current_goals(user_id: str):
             "user_id", user_id
         ).eq("week_start", week_start.isoformat()).order("created_at", desc=True).execute()
 
+        # Get user's friends for friend count calculation
+        friends_result = db.client.table("user_connections").select(
+            "following_id, follower_id"
+        ).or_(
+            f"follower_id.eq.{user_id},following_id.eq.{user_id}"
+        ).eq("status", "active").execute()
+
+        friend_ids = set()
+        for conn in friends_result.data:
+            if conn["follower_id"] == user_id:
+                friend_ids.add(conn["following_id"])
+            else:
+                friend_ids.add(conn["follower_id"])
+
         goals = []
         prs_count = 0
 
@@ -154,6 +178,17 @@ async def get_current_goals(user_id: str):
                     "goal_id", str(goal.id)
                 ).order("attempted_at", desc=True).execute()
                 goal.attempts = [GoalAttempt(**a) for a in attempts_result.data]
+
+            # Count friends with same exercise/goal_type this week
+            if friend_ids:
+                friends_goals_result = db.client.table("weekly_personal_goals").select(
+                    "id"
+                ).in_("user_id", list(friend_ids)).eq(
+                    "exercise_name", goal.exercise_name
+                ).eq("goal_type", goal.goal_type.value).eq(
+                    "week_start", week_start.isoformat()
+                ).in_("visibility", ["friends", "public"]).execute()
+                goal.friends_count = len(friends_goals_result.data)
 
             goals.append(goal)
 
@@ -546,3 +581,586 @@ def _build_goal_response(row: dict, today: date) -> WeeklyPersonalGoal:
     goal.days_remaining = max(0, (week_end - today).days + 1)
 
     return goal
+
+
+# ============================================================
+# GOAL SUGGESTIONS
+# ============================================================
+
+@router.get("/goals/suggestions", response_model=GoalSuggestionsResponse)
+async def get_goal_suggestions(
+    user_id: str,
+    force_refresh: bool = Query(False, description="Force regenerate suggestions"),
+):
+    """
+    Get AI-generated goal suggestions organized by category.
+
+    Categories:
+    - beat_your_records: Performance-based suggestions from workout history
+    - popular_with_friends: Goals friends are currently doing
+    - new_challenges: Variety/discovery suggestions
+
+    Returns cached suggestions if fresh (<24h), otherwise generates new ones.
+    """
+    logger.info(f"Getting goal suggestions for user: {user_id}, force_refresh={force_refresh}")
+
+    try:
+        db = get_supabase_db()
+        now = datetime.now(timezone.utc)
+        today = date.today()
+        week_start, _ = get_iso_week_boundaries(today)
+
+        # Check for fresh cached suggestions
+        if not force_refresh:
+            cached = db.client.table("goal_suggestions").select("*").eq(
+                "user_id", user_id
+            ).eq("is_dismissed", False).gt(
+                "expires_at", now.isoformat()
+            ).order("category").order("priority_rank").execute()
+
+            if cached.data and len(cached.data) >= 3:  # Have at least a few suggestions
+                return _build_suggestions_response(cached.data, now)
+
+        # Generate new suggestions
+        logger.info(f"Generating new suggestions for user: {user_id}")
+
+        # Clear old suggestions
+        db.client.table("goal_suggestions").delete().eq("user_id", user_id).execute()
+
+        suggestions_to_insert = []
+        expires_at = now + timedelta(hours=24)
+
+        # 1. Performance-based suggestions (Beat Your Records)
+        performance_suggestions = await _generate_performance_suggestions(db, user_id, week_start)
+        for idx, s in enumerate(performance_suggestions[:4]):
+            suggestions_to_insert.append({
+                "user_id": user_id,
+                "suggestion_type": SuggestionType.PERFORMANCE_BASED.value,
+                "exercise_name": s["exercise_name"],
+                "goal_type": s["goal_type"],
+                "suggested_target": s["target"],
+                "reasoning": s["reasoning"],
+                "confidence_score": s.get("confidence", 0.8),
+                "source_data": s.get("source_data", {}),
+                "category": SuggestionCategory.BEAT_YOUR_RECORDS.value,
+                "priority_rank": idx,
+                "expires_at": expires_at.isoformat(),
+            })
+
+        # 2. Popular with friends suggestions
+        friends_suggestions = await _generate_friends_suggestions(db, user_id, week_start)
+        for idx, s in enumerate(friends_suggestions[:4]):
+            suggestions_to_insert.append({
+                "user_id": user_id,
+                "suggestion_type": SuggestionType.POPULAR_WITH_FRIENDS.value,
+                "exercise_name": s["exercise_name"],
+                "goal_type": s["goal_type"],
+                "suggested_target": s["target"],
+                "reasoning": s["reasoning"],
+                "confidence_score": s.get("confidence", 0.7),
+                "source_data": s.get("source_data", {}),
+                "category": SuggestionCategory.POPULAR_WITH_FRIENDS.value,
+                "priority_rank": idx,
+                "expires_at": expires_at.isoformat(),
+            })
+
+        # 3. New challenges suggestions
+        new_challenges = await _generate_new_challenge_suggestions(db, user_id, week_start)
+        for idx, s in enumerate(new_challenges[:4]):
+            suggestions_to_insert.append({
+                "user_id": user_id,
+                "suggestion_type": SuggestionType.NEW_CHALLENGE.value,
+                "exercise_name": s["exercise_name"],
+                "goal_type": s["goal_type"],
+                "suggested_target": s["target"],
+                "reasoning": s["reasoning"],
+                "confidence_score": s.get("confidence", 0.6),
+                "source_data": s.get("source_data", {}),
+                "category": SuggestionCategory.NEW_CHALLENGES.value,
+                "priority_rank": idx,
+                "expires_at": expires_at.isoformat(),
+            })
+
+        # Insert all suggestions
+        if suggestions_to_insert:
+            db.client.table("goal_suggestions").insert(suggestions_to_insert).execute()
+
+        # Fetch and return
+        result = db.client.table("goal_suggestions").select("*").eq(
+            "user_id", user_id
+        ).eq("is_dismissed", False).order("category").order("priority_rank").execute()
+
+        return _build_suggestions_response(result.data, now)
+
+    except Exception as e:
+        logger.error(f"Failed to get goal suggestions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/goals/suggestions/{suggestion_id}/dismiss")
+async def dismiss_suggestion(
+    user_id: str,
+    suggestion_id: str,
+    request: Optional[DismissSuggestionRequest] = None,
+):
+    """Mark a suggestion as dismissed so it won't appear again."""
+    logger.info(f"Dismissing suggestion: {suggestion_id} for user: {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify suggestion belongs to user
+        result = db.client.table("goal_suggestions").select("id").eq(
+            "id", suggestion_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Suggestion not found")
+
+        # Mark as dismissed
+        db.client.table("goal_suggestions").update({
+            "is_dismissed": True
+        }).eq("id", suggestion_id).execute()
+
+        logger.info(f"✅ Dismissed suggestion: {suggestion_id}")
+
+        return {"status": "dismissed", "suggestion_id": suggestion_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to dismiss suggestion: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/goals/suggestions/{suggestion_id}/accept", response_model=WeeklyPersonalGoal)
+async def accept_suggestion(
+    user_id: str,
+    suggestion_id: str,
+    request: Optional[AcceptSuggestionRequest] = None,
+):
+    """Create a new goal from a suggestion."""
+    logger.info(f"Accepting suggestion: {suggestion_id} for user: {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Fetch suggestion
+        suggestion_result = db.client.table("goal_suggestions").select("*").eq(
+            "id", suggestion_id
+        ).eq("user_id", user_id).execute()
+
+        if not suggestion_result.data:
+            raise HTTPException(status_code=404, detail="Suggestion not found")
+
+        suggestion = suggestion_result.data[0]
+
+        # Get week boundaries
+        today = date.today()
+        week_start, week_end = get_iso_week_boundaries(today)
+
+        # Check for existing goal
+        existing = db.client.table("weekly_personal_goals").select("id").eq(
+            "user_id", user_id
+        ).eq("exercise_name", suggestion["exercise_name"]).eq(
+            "goal_type", suggestion["goal_type"]
+        ).eq("week_start", week_start.isoformat()).execute()
+
+        if existing.data:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Goal for {suggestion['exercise_name']} already exists this week"
+            )
+
+        # Get personal best
+        pb_result = db.client.table("personal_goal_records").select("record_value").eq(
+            "user_id", user_id
+        ).eq("exercise_name", suggestion["exercise_name"]).eq(
+            "goal_type", suggestion["goal_type"]
+        ).execute()
+
+        personal_best = pb_result.data[0]["record_value"] if pb_result.data else None
+
+        # Determine target value
+        target_value = suggestion["suggested_target"]
+        if request and request.target_override:
+            target_value = request.target_override
+
+        # Determine visibility
+        visibility = GoalVisibility.FRIENDS.value
+        if request and request.visibility:
+            visibility = request.visibility.value
+
+        # Create goal
+        goal_data = {
+            "user_id": user_id,
+            "exercise_name": suggestion["exercise_name"],
+            "goal_type": suggestion["goal_type"],
+            "target_value": target_value,
+            "week_start": week_start.isoformat(),
+            "week_end": week_end.isoformat(),
+            "personal_best": personal_best,
+            "status": "active",
+            "current_value": 0,
+            "is_pr_beaten": False,
+            "source_suggestion_id": suggestion_id,
+            "visibility": visibility,
+        }
+
+        result = db.client.table("weekly_personal_goals").insert(goal_data).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create goal")
+
+        # Mark suggestion as used (dismissed)
+        db.client.table("goal_suggestions").update({
+            "is_dismissed": True
+        }).eq("id", suggestion_id).execute()
+
+        goal = result.data[0]
+        logger.info(f"✅ Created goal from suggestion: {goal['id']}")
+
+        return _build_goal_response(goal, today)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to accept suggestion: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/goals/suggestions/summary", response_model=GoalSuggestionsSummary)
+async def get_suggestions_summary(user_id: str):
+    """Get a quick summary of available suggestions."""
+    logger.info(f"Getting suggestions summary for user: {user_id}")
+
+    try:
+        db = get_supabase_db()
+        now = datetime.now(timezone.utc)
+
+        result = db.client.table("goal_suggestions").select("category, expires_at").eq(
+            "user_id", user_id
+        ).eq("is_dismissed", False).gt(
+            "expires_at", now.isoformat()
+        ).execute()
+
+        if not result.data:
+            return GoalSuggestionsSummary(
+                total_suggestions=0,
+                categories_with_suggestions=0,
+                has_friend_suggestions=False,
+                suggestions_expire_at=None,
+            )
+
+        categories = set(s["category"] for s in result.data)
+        has_friends = SuggestionCategory.POPULAR_WITH_FRIENDS.value in categories
+        min_expires = min(s["expires_at"] for s in result.data)
+
+        return GoalSuggestionsSummary(
+            total_suggestions=len(result.data),
+            categories_with_suggestions=len(categories),
+            has_friend_suggestions=has_friends,
+            suggestions_expire_at=datetime.fromisoformat(min_expires.replace("Z", "+00:00")) if min_expires else None,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get suggestions summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================
+# SUGGESTION GENERATION HELPERS
+# ============================================================
+
+async def _generate_performance_suggestions(db, user_id: str, week_start: date) -> list:
+    """
+    Generate performance-based suggestions from workout history.
+    Analyzes past goals and workout logs to suggest beatable targets.
+    """
+    suggestions = []
+
+    try:
+        # Get personal records
+        records = db.client.table("personal_goal_records").select("*").eq(
+            "user_id", user_id
+        ).execute()
+
+        # Get past completed goals
+        past_goals = db.client.table("weekly_personal_goals").select("*").eq(
+            "user_id", user_id
+        ).eq("status", "completed").order("week_end", desc=True).limit(20).execute()
+
+        # Create suggestions for exercises with history
+        exercises_with_history = {}
+
+        for record in records.data:
+            exercise = record["exercise_name"]
+            goal_type = record["goal_type"]
+            current_best = record["record_value"]
+
+            key = f"{exercise}_{goal_type}"
+            if key not in exercises_with_history:
+                exercises_with_history[key] = {
+                    "exercise_name": exercise,
+                    "goal_type": goal_type,
+                    "best": current_best,
+                    "recent_values": [],
+                }
+
+        # Add recent goal values
+        for goal in past_goals.data:
+            key = f"{goal['exercise_name']}_{goal['goal_type']}"
+            if key in exercises_with_history and goal["current_value"] > 0:
+                exercises_with_history[key]["recent_values"].append(goal["current_value"])
+
+        # Generate suggestions
+        for key, data in exercises_with_history.items():
+            best = data["best"]
+            recent = data["recent_values"][:3]
+
+            # Calculate suggested target (5-15% above best)
+            if best:
+                increase_pct = 0.10  # 10% increase
+                target = int(best * (1 + increase_pct))
+
+                suggestions.append({
+                    "exercise_name": data["exercise_name"],
+                    "goal_type": data["goal_type"],
+                    "target": target,
+                    "reasoning": f"Your best is {best} reps. Try to beat it with {target}!",
+                    "confidence": 0.85,
+                    "source_data": {
+                        "personal_best": best,
+                        "recent_values": recent,
+                        "increase_percentage": increase_pct * 100,
+                    },
+                })
+
+        # If no history, suggest common exercises
+        if not suggestions:
+            common_exercises = [
+                ("Push-ups", "single_max", 30, "Start with 30 push-ups and track your progress!"),
+                ("Squats", "weekly_volume", 100, "Do 100 squats this week for stronger legs!"),
+                ("Pull-ups", "single_max", 10, "Challenge yourself with 10 pull-ups!"),
+                ("Plank", "single_max", 60, "Hold a plank for 60 seconds!"),
+            ]
+            for exercise, goal_type, target, reasoning in common_exercises:
+                suggestions.append({
+                    "exercise_name": exercise,
+                    "goal_type": goal_type,
+                    "target": target,
+                    "reasoning": reasoning,
+                    "confidence": 0.6,
+                    "source_data": {"type": "default_suggestion"},
+                })
+
+    except Exception as e:
+        logger.error(f"Error generating performance suggestions: {e}")
+
+    return suggestions[:4]
+
+
+async def _generate_friends_suggestions(db, user_id: str, week_start: date) -> list:
+    """
+    Generate suggestions based on what friends are doing.
+    """
+    suggestions = []
+
+    try:
+        # Get user's friends
+        friends_result = db.client.table("user_connections").select(
+            "following_id, follower_id"
+        ).or_(
+            f"follower_id.eq.{user_id},following_id.eq.{user_id}"
+        ).eq("status", "active").execute()
+
+        friend_ids = set()
+        for conn in friends_result.data:
+            if conn["follower_id"] == user_id:
+                friend_ids.add(conn["following_id"])
+            else:
+                friend_ids.add(conn["follower_id"])
+
+        if not friend_ids:
+            return []
+
+        # Get friends' current goals
+        friends_goals = db.client.table("weekly_personal_goals").select(
+            "exercise_name, goal_type, target_value, user_id"
+        ).in_("user_id", list(friend_ids)).eq(
+            "week_start", week_start.isoformat()
+        ).eq("status", "active").eq("visibility", "friends").execute()
+
+        # Aggregate by exercise/type
+        goal_counts = {}
+        for goal in friends_goals.data:
+            key = f"{goal['exercise_name']}_{goal['goal_type']}"
+            if key not in goal_counts:
+                goal_counts[key] = {
+                    "exercise_name": goal["exercise_name"],
+                    "goal_type": goal["goal_type"],
+                    "count": 0,
+                    "targets": [],
+                    "friend_ids": [],
+                }
+            goal_counts[key]["count"] += 1
+            goal_counts[key]["targets"].append(goal["target_value"])
+            goal_counts[key]["friend_ids"].append(goal["user_id"])
+
+        # Sort by popularity
+        sorted_goals = sorted(goal_counts.values(), key=lambda x: x["count"], reverse=True)
+
+        for data in sorted_goals[:4]:
+            avg_target = int(sum(data["targets"]) / len(data["targets"]))
+            friend_count = data["count"]
+
+            suggestions.append({
+                "exercise_name": data["exercise_name"],
+                "goal_type": data["goal_type"],
+                "target": avg_target,
+                "reasoning": f"{friend_count} friend{'s' if friend_count > 1 else ''} doing this goal!",
+                "confidence": min(0.9, 0.5 + (friend_count * 0.1)),
+                "source_data": {
+                    "friend_count": friend_count,
+                    "average_target": avg_target,
+                    "friend_ids": data["friend_ids"][:5],
+                },
+            })
+
+    except Exception as e:
+        logger.error(f"Error generating friends suggestions: {e}")
+
+    return suggestions
+
+
+async def _generate_new_challenge_suggestions(db, user_id: str, week_start: date) -> list:
+    """
+    Generate new challenge suggestions for variety.
+    """
+    suggestions = []
+
+    try:
+        # Get exercises user has done before
+        past_exercises = db.client.table("weekly_personal_goals").select(
+            "exercise_name"
+        ).eq("user_id", user_id).execute()
+
+        done_exercises = set(g["exercise_name"] for g in past_exercises.data)
+
+        # Suggest exercises they haven't tried
+        new_challenges = [
+            ("Burpees", "weekly_volume", 50, "Try 50 burpees this week for full-body conditioning!"),
+            ("Lunges", "weekly_volume", 100, "100 lunges for stronger legs and balance!"),
+            ("Dips", "single_max", 20, "How many dips can you do? Start with 20!"),
+            ("Mountain Climbers", "weekly_volume", 200, "200 mountain climbers for cardio power!"),
+            ("Jumping Jacks", "weekly_volume", 300, "300 jumping jacks to boost your heart rate!"),
+            ("Sit-ups", "weekly_volume", 100, "100 sit-ups for core strength!"),
+            ("Calf Raises", "weekly_volume", 150, "150 calf raises for stronger calves!"),
+            ("Box Jumps", "weekly_volume", 50, "50 box jumps for explosive power!"),
+        ]
+
+        for exercise, goal_type, target, reasoning in new_challenges:
+            if exercise not in done_exercises:
+                suggestions.append({
+                    "exercise_name": exercise,
+                    "goal_type": goal_type,
+                    "target": target,
+                    "reasoning": reasoning,
+                    "confidence": 0.65,
+                    "source_data": {"type": "new_challenge"},
+                })
+
+        # If all exercises tried, suggest volume challenges
+        if len(suggestions) < 4:
+            for exercise, goal_type, target, reasoning in new_challenges[:4]:
+                if len(suggestions) >= 4:
+                    break
+                suggestions.append({
+                    "exercise_name": exercise,
+                    "goal_type": goal_type,
+                    "target": target,
+                    "reasoning": reasoning,
+                    "confidence": 0.5,
+                    "source_data": {"type": "variety_challenge"},
+                })
+
+    except Exception as e:
+        logger.error(f"Error generating new challenge suggestions: {e}")
+
+    return suggestions[:4]
+
+
+def _build_suggestions_response(data: list, now: datetime) -> GoalSuggestionsResponse:
+    """Build the categorized suggestions response."""
+    categories_map = {
+        SuggestionCategory.BEAT_YOUR_RECORDS.value: {
+            "category_id": "beat_your_records",
+            "category_title": "Beat Your Records",
+            "category_icon": "emoji_events",
+            "accent_color": "#FF9800",
+            "suggestions": [],
+        },
+        SuggestionCategory.POPULAR_WITH_FRIENDS.value: {
+            "category_id": "popular_with_friends",
+            "category_title": "Popular with Friends",
+            "category_icon": "people",
+            "accent_color": "#9C27B0",
+            "suggestions": [],
+        },
+        SuggestionCategory.NEW_CHALLENGES.value: {
+            "category_id": "new_challenges",
+            "category_title": "New Challenges",
+            "category_icon": "explore",
+            "accent_color": "#00BCD4",
+            "suggestions": [],
+        },
+    }
+
+    expires_at = now + timedelta(hours=24)
+    total = 0
+
+    for item in data:
+        category = item["category"]
+        if category in categories_map:
+            suggestion = GoalSuggestionItem(
+                id=item["id"],
+                exercise_name=item["exercise_name"],
+                goal_type=item["goal_type"],
+                suggested_target=item["suggested_target"],
+                reasoning=item["reasoning"],
+                suggestion_type=item["suggestion_type"],
+                category=item["category"],
+                confidence_score=item["confidence_score"],
+                source_data=item.get("source_data"),
+                friends_on_goal=_extract_friends_preview(item.get("source_data")),
+                friends_count=item.get("source_data", {}).get("friend_count", 0) if item.get("source_data") else 0,
+                created_at=datetime.fromisoformat(item["created_at"].replace("Z", "+00:00")),
+                expires_at=datetime.fromisoformat(item["expires_at"].replace("Z", "+00:00")),
+            )
+            categories_map[category]["suggestions"].append(suggestion)
+            expires_at = suggestion.expires_at
+            total += 1
+
+    # Build category list (only non-empty)
+    categories = [
+        SuggestionCategoryGroup(**cat_data)
+        for cat_data in categories_map.values()
+        if cat_data["suggestions"]
+    ]
+
+    return GoalSuggestionsResponse(
+        categories=categories,
+        generated_at=now,
+        expires_at=expires_at,
+        total_suggestions=total,
+    )
+
+
+def _extract_friends_preview(source_data: dict) -> list:
+    """Extract friend previews from source data if available."""
+    if not source_data or "friend_ids" not in source_data:
+        return []
+
+    # In a real implementation, we'd fetch friend details
+    # For now, return empty - the full data will come from goal_social endpoints
+    return []

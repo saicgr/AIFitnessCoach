@@ -2,10 +2,7 @@ ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
 17. Add directly from library
-18. on the workout screen before beginning give an overview of the workouts for the day and the a let's go button.
-19. Need to start with warm up before each workout with the option to skip for liability reasons.
-20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach. 
-23.5 Beside Fitness profile there should be "Edit Profile" currently "Edit Profile" is taking up space
+20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
 25. Demo of the whole app
 32. Make it easy to add supersets
 34. Shareable workout completion - Workout recap for Instagram	

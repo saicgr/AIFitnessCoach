@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
-import 'tabs/exercises_tab.dart';
+import 'tabs/netflix_exercises_tab.dart';
 import 'tabs/programs_tab.dart';
 
 // Export providers and models for external use
@@ -62,7 +62,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: const [
-                  ExercisesTab(),
+                  NetflixExercisesTab(),
                   ProgramsTab(),
                 ],
               ),

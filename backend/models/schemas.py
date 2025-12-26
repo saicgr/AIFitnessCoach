@@ -177,6 +177,15 @@ class SwapExerciseRequest(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=500)
 
 
+class AddExerciseRequest(BaseModel):
+    """Request to add an exercise to a workout."""
+    workout_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    sets: Optional[int] = Field(default=3, ge=1, le=10)
+    reps: Optional[str] = Field(default="8-12", max_length=20)
+    rest_seconds: Optional[int] = Field(default=60, ge=0, le=300)
+
+
 class RegenerateWorkoutRequest(BaseModel):
     workout_id: str = Field(..., max_length=100)
     user_id: str = Field(..., max_length=100)

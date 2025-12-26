@@ -88,6 +88,7 @@ class WeeklyPersonalGoal(BaseModel):
     # Computed fields (set by API)
     progress_percentage: float = 0.0
     days_remaining: int = 0
+    friends_count: int = 0  # Number of friends doing this goal
 
     # Optional: attempts for single_max goals
     attempts: Optional[List[GoalAttempt]] = None

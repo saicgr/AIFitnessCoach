@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/models/workout.dart';
+import '../../../data/repositories/workout_repository.dart';
+import '../../../data/services/haptic_service.dart';
 import 'info_badge.dart';
 import '../components/exercise_detail_sheet.dart';
 
 /// Card widget displaying exercise info in a list format
-class ExerciseCard extends StatelessWidget {
+class ExerciseCard extends ConsumerWidget {
   final LibraryExercise exercise;
 
   const ExerciseCard({
@@ -53,8 +57,19 @@ class ExerciseCard extends StatelessWidget {
     );
   }
 
+  void _showAddToWorkoutSheet(BuildContext context, WidgetRef ref) {
+    HapticService.light();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddToWorkoutSheet(
+        exerciseName: exercise.name,
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
@@ -176,17 +191,373 @@ class ExerciseCard extends StatelessWidget {
               ),
             ),
 
-            // Arrow
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Icon(
-                Icons.chevron_right,
-                color: textMuted,
-              ),
+            // Add to workout button + Arrow
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Add to workout button
+                GestureDetector(
+                  onTap: () => _showAddToWorkoutSheet(context, ref),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.add_circle_outline,
+                      color: AppColors.success,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Arrow
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                ),
+              ],
             ),
+            const SizedBox(width: 12),
           ],
         ),
       ),
     );
+  }
+}
+
+/// Bottom sheet to select which workout to add the exercise to
+class _AddToWorkoutSheet extends ConsumerStatefulWidget {
+  final String exerciseName;
+
+  const _AddToWorkoutSheet({
+    required this.exerciseName,
+  });
+
+  @override
+  ConsumerState<_AddToWorkoutSheet> createState() => _AddToWorkoutSheetState();
+}
+
+class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
+  bool _isAdding = false;
+  String? _selectedWorkoutId;
+
+  Future<void> _addToWorkout(Workout workout) async {
+    setState(() {
+      _isAdding = true;
+      _selectedWorkoutId = workout.id;
+    });
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await workoutRepo.addExercise(
+        workoutId: workout.id!,
+        exerciseName: widget.exerciseName,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (updatedWorkout != null) {
+          // Refresh workout list
+          ref.read(workoutsProvider.notifier).refresh();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added "${widget.exerciseName}" to ${workout.name}'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to add exercise'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAdding = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final workoutsAsync = ref.watch(workoutsProvider);
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: textMuted.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.add_circle, color: AppColors.success),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Add to Workout',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.exerciseName,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: textMuted),
+                ),
+              ],
+            ),
+          ),
+
+          // Workout list
+          Flexible(
+            child: workoutsAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(color: AppColors.success),
+                ),
+              ),
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text(
+                    'Failed to load workouts',
+                    style: TextStyle(color: textMuted),
+                  ),
+                ),
+              ),
+              data: (workouts) {
+                // Filter to upcoming/today's incomplete workouts
+                final today = DateTime.now().toIso8601String().split('T')[0];
+                final upcomingWorkouts = workouts.where((w) {
+                  final date = w.scheduledDate?.split('T')[0] ?? '';
+                  return !(w.isCompleted ?? false) && date.compareTo(today) >= 0;
+                }).take(5).toList();
+
+                if (upcomingWorkouts.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.fitness_center,
+                            size: 48,
+                            color: textMuted,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No upcoming workouts',
+                            style: TextStyle(color: textMuted),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Generate a workout plan first',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: upcomingWorkouts.length,
+                  itemBuilder: (context, index) {
+                    final workout = upcomingWorkouts[index];
+                    final isFirst = index == 0;
+                    final isLoading = _isAdding && _selectedWorkoutId == workout.id;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Material(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: _isAdding ? null : () => _addToWorkout(workout),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                // Workout icon
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: (isFirst ? AppColors.success : AppColors.cyan)
+                                        .withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.fitness_center,
+                                    color: isFirst ? AppColors.success : AppColors.cyan,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Workout info
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              workout.name ?? 'Workout',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: textPrimary,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isFirst)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 2,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.success.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'NEXT',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.success,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _formatDate(workout.scheduledDate),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Loading or add icon
+                                if (isLoading)
+                                  const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.success,
+                                    ),
+                                  )
+                                else
+                                  Icon(
+                                    Icons.add_circle,
+                                    color: isFirst ? AppColors.success : AppColors.cyan,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return 'No date';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final tomorrow = today.add(const Duration(days: 1));
+      final workoutDate = DateTime(date.year, date.month, date.day);
+
+      if (workoutDate == today) {
+        return 'Today';
+      } else if (workoutDate == tomorrow) {
+        return 'Tomorrow';
+      } else {
+        final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
+      }
+    } catch (e) {
+      return dateStr;
+    }
   }
 }
