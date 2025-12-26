@@ -351,23 +351,67 @@ IMPORTANT:
             print(f"Food image analysis failed: {e}")
             return None
 
-    async def parse_food_description(self, description: str) -> Optional[Dict]:
+    async def parse_food_description(
+        self,
+        description: str,
+        user_goals: Optional[List[str]] = None,
+        nutrition_targets: Optional[Dict] = None,
+        rag_context: Optional[str] = None
+    ) -> Optional[Dict]:
         """
-        Parse a text description of food and extract nutrition information.
+        Parse a text description of food and extract nutrition information with goal-based rankings.
 
         Args:
             description: Natural language description of food
                         (e.g., "2 eggs, toast with butter, and orange juice")
+            user_goals: List of user fitness goals (e.g., ["build_muscle", "lose_weight"])
+            nutrition_targets: Dict with daily_calorie_target, daily_protein_target_g, etc.
+            rag_context: Optional RAG context from ChromaDB for personalized feedback
 
         Returns:
-            Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
+            Dictionary with food_items (with rankings), total_calories, macros, ai_suggestion, etc.
         """
-        prompt = f'''Parse this food description and provide detailed nutrition information.
+        # Build user context section for goal-based scoring
+        user_context = ""
+        if user_goals or nutrition_targets:
+            user_context = "\nUSER FITNESS CONTEXT:\n"
+            if user_goals:
+                user_context += f"- Fitness Goals: {', '.join(user_goals)}\n"
+            if nutrition_targets:
+                if nutrition_targets.get('daily_calorie_target'):
+                    user_context += f"- Daily Calorie Target: {nutrition_targets['daily_calorie_target']} kcal\n"
+                if nutrition_targets.get('daily_protein_target_g'):
+                    user_context += f"- Daily Protein Target: {nutrition_targets['daily_protein_target_g']}g\n"
+                if nutrition_targets.get('daily_carbs_target_g'):
+                    user_context += f"- Daily Carbs Target: {nutrition_targets['daily_carbs_target_g']}g\n"
+                if nutrition_targets.get('daily_fat_target_g'):
+                    user_context += f"- Daily Fat Target: {nutrition_targets['daily_fat_target_g']}g\n"
 
-Food description: "{description}"
+        # Add RAG context if available
+        rag_section = ""
+        if rag_context:
+            rag_section = f"\nNUTRITION KNOWLEDGE CONTEXT:\n{rag_context}\n"
 
-Return ONLY valid JSON in this exact format (no markdown, no explanation):
-{{
+        # Build scoring criteria based on goals
+        scoring_criteria = """
+GOAL-BASED SCORING CRITERIA (score each food 1-10):
+- "build_muscle" / "gain_muscle": High score for high protein (>20g/serving), moderate carbs, quality proteins
+- "lose_weight" / "fat_loss": High score for low calorie density, high fiber, high protein, whole foods
+- "improve_endurance": High score for complex carbs, moderate protein, sustained energy foods
+- "general_fitness" / "stay_active": High score for balanced macros, whole foods, nutrient density
+- "maintain_weight": High score for appropriate calorie density, balanced nutrition
+
+HEALTH FLAGS TO DETECT:
+- High sodium (>500mg/serving): Flag as warning
+- High added sugar (>10g/serving): Flag as warning
+- Highly processed foods: Flag as warning
+- High protein content: Flag as positive for muscle building
+- High fiber content: Flag as positive for weight loss/health
+- Whole food/unprocessed: Flag as positive"""
+
+        # Choose response format based on whether we have user context
+        if user_goals or nutrition_targets:
+            response_format = '''{{
   "food_items": [
     {{
       "name": "Food item name",
@@ -375,7 +419,11 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
       "calories": 150,
       "protein_g": 10.0,
       "carbs_g": 15.0,
-      "fat_g": 5.0
+      "fat_g": 5.0,
+      "fiber_g": 2.0,
+      "goal_score": 8,
+      "goal_alignment": "excellent",
+      "reason": "High protein content supports your muscle building goal"
     }}
   ],
   "total_calories": 450,
@@ -383,8 +431,45 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
-  "feedback": "Brief nutritional feedback about the meal"
-}}
+  "overall_meal_score": 7,
+  "health_score": 8,
+  "goal_alignment_percentage": 75,
+  "ai_suggestion": "Great protein choice! Consider adding vegetables for more fiber and micronutrients.",
+  "encouragements": ["High protein intake - excellent for muscle building!", "Good portion control"],
+  "warnings": ["High sodium content - consider low-sodium alternatives"],
+  "recommended_swap": "Try brown rice instead of white rice for more fiber and sustained energy."
+}}'''
+        else:
+            response_format = '''{{
+  "food_items": [
+    {{
+      "name": "Food item name",
+      "amount": "Portion from description or reasonable default",
+      "calories": 150,
+      "protein_g": 10.0,
+      "carbs_g": 15.0,
+      "fat_g": 5.0,
+      "fiber_g": 2.0
+    }}
+  ],
+  "total_calories": 450,
+  "protein_g": 25.0,
+  "carbs_g": 40.0,
+  "fat_g": 15.0,
+  "fiber_g": 5.0,
+  "health_score": 7,
+  "ai_suggestion": "Brief nutritional feedback about the meal"
+}}'''
+
+        prompt = f'''Parse this food description and provide detailed nutrition information with goal-based analysis.
+
+Food description: "{description}"
+{user_context}
+{rag_section}
+{scoring_criteria if user_goals else ""}
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation):
+{response_format}
 
 IMPORTANT:
 - Extract ALL food items mentioned in the description
@@ -393,7 +478,14 @@ IMPORTANT:
 - Use standard USDA nutrition data for calorie/macro estimates
 - Total values should be the sum of individual items
 - Account for preparation methods mentioned (e.g., "fried" vs "boiled")
-- Provide helpful feedback about the nutritional quality'''
+- goal_score: 1-10 based on how well the food aligns with user's specific goals
+- goal_alignment: "excellent" (8-10), "good" (6-7), "neutral" (4-5), "poor" (1-3)
+- reason: Brief explanation of why the food scored that way for the user's goals
+- overall_meal_score: Weighted average of individual food scores
+- goal_alignment_percentage: 0-100% indicating overall meal alignment with goals
+- encouragements: Array of positive aspects (what's helping their goals)
+- warnings: Array of concerns (high sodium, sugar, processed, etc.)
+- recommended_swap: Specific healthier alternative suggestion'''
 
         try:
             print(f"🔍 [Gemini] Parsing food description: {description[:100]}...")

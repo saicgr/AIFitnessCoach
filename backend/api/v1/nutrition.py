@@ -130,8 +130,23 @@ class LogTextRequest(BaseModel):
     meal_type: str  # breakfast, lunch, dinner, snack
 
 
+class FoodItemRanking(BaseModel):
+    """Individual food item with goal-based ranking."""
+    name: str
+    amount: Optional[str] = None
+    calories: int = 0
+    protein_g: float = 0.0
+    carbs_g: float = 0.0
+    fat_g: float = 0.0
+    fiber_g: Optional[float] = None
+    # Ranking fields (optional for backward compatibility)
+    goal_score: Optional[int] = None  # 1-10 based on user goals
+    goal_alignment: Optional[str] = None  # "excellent", "good", "neutral", "poor"
+    reason: Optional[str] = None  # Brief explanation
+
+
 class LogFoodResponse(BaseModel):
-    """Response after logging food from image or text."""
+    """Response after logging food from image or text with goal-based analysis."""
     success: bool
     food_log_id: str
     food_items: List[dict]
@@ -140,6 +155,14 @@ class LogFoodResponse(BaseModel):
     carbs_g: float
     fat_g: float
     fiber_g: Optional[float] = None
+    # Enhanced fields for goal-based analysis
+    overall_meal_score: Optional[int] = None  # 1-10 weighted average
+    health_score: Optional[int] = None  # 1-10 general health score
+    goal_alignment_percentage: Optional[int] = None  # 0-100%
+    ai_suggestion: Optional[str] = None  # Personalized AI feedback
+    encouragements: Optional[List[str]] = None  # Positive aspects
+    warnings: Optional[List[str]] = None  # Concerns (high sodium, etc.)
+    recommended_swap: Optional[str] = None  # Healthier alternative
 
 
 @router.get("/food-logs/{user_id}", response_model=List[FoodLogResponse])
@@ -652,12 +675,13 @@ async def log_food_from_image(
 @router.post("/log-text", response_model=LogFoodResponse)
 async def log_food_from_text(request: LogTextRequest):
     """
-    Log food from a text description using Gemini.
+    Log food from a text description using Gemini with goal-based analysis.
 
     This endpoint:
-    1. Parses the text description with Gemini
-    2. Extracts food items and estimates nutrition
-    3. Creates a food log entry
+    1. Fetches user's fitness goals and nutrition targets
+    2. Parses the text description with Gemini (with goal context)
+    3. Extracts food items with per-item rankings
+    4. Creates a food log entry with AI suggestions
 
     Example descriptions:
     - "2 eggs, toast with butter, and orange juice"
@@ -667,9 +691,43 @@ async def log_food_from_text(request: LogTextRequest):
     logger.info(f"Logging food from text for user {request.user_id}: {request.description[:50]}...")
 
     try:
-        # Parse description with Gemini
+        db = get_supabase_db()
+
+        # Fetch user goals and nutrition targets for personalized analysis
+        user_goals = None
+        nutrition_targets = None
+        try:
+            user = db.get_user(request.user_id)
+            if user:
+                # Parse goals from JSON string
+                goals_str = user.get('goals', '[]')
+                if isinstance(goals_str, str):
+                    import json
+                    try:
+                        user_goals = json.loads(goals_str)
+                    except json.JSONDecodeError:
+                        user_goals = []
+                elif isinstance(goals_str, list):
+                    user_goals = goals_str
+
+                # Get nutrition targets
+                nutrition_targets = {
+                    'daily_calorie_target': user.get('daily_calorie_target'),
+                    'daily_protein_target_g': user.get('daily_protein_target_g'),
+                    'daily_carbs_target_g': user.get('daily_carbs_target_g'),
+                    'daily_fat_target_g': user.get('daily_fat_target_g'),
+                }
+                logger.info(f"User goals: {user_goals}, targets: {nutrition_targets}")
+        except Exception as e:
+            logger.warning(f"Could not fetch user goals/targets: {e}")
+
+        # Parse description with Gemini (with goal context)
         gemini_service = GeminiService()
-        food_analysis = await gemini_service.parse_food_description(request.description)
+        food_analysis = await gemini_service.parse_food_description(
+            description=request.description,
+            user_goals=user_goals,
+            nutrition_targets=nutrition_targets,
+        )
 
         if not food_analysis or not food_analysis.get('food_items'):
             raise HTTPException(
@@ -685,8 +743,14 @@ async def log_food_from_text(request: LogTextRequest):
         fat_g = food_analysis.get('fat_g', 0.0)
         fiber_g = food_analysis.get('fiber_g', 0.0)
 
-        # Create food log
-        db = get_supabase_db()
+        # Extract enhanced analysis fields
+        overall_meal_score = food_analysis.get('overall_meal_score')
+        health_score = food_analysis.get('health_score')
+        goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
+        ai_suggestion = food_analysis.get('ai_suggestion') or food_analysis.get('feedback')
+        encouragements = food_analysis.get('encouragements', [])
+        warnings = food_analysis.get('warnings', [])
+        recommended_swap = food_analysis.get('recommended_swap')
 
         # Save to database using positional arguments
         created_log = db.create_food_log(
@@ -698,8 +762,8 @@ async def log_food_from_text(request: LogTextRequest):
             carbs_g=carbs_g,
             fat_g=fat_g,
             fiber_g=fiber_g,
-            ai_feedback=food_analysis.get('feedback'),
-            health_score=None,
+            ai_feedback=ai_suggestion,
+            health_score=health_score,
         )
 
         # Get the food log ID from the created record
@@ -716,6 +780,13 @@ async def log_food_from_text(request: LogTextRequest):
             carbs_g=carbs_g,
             fat_g=fat_g,
             fiber_g=fiber_g,
+            overall_meal_score=overall_meal_score,
+            health_score=health_score,
+            goal_alignment_percentage=goal_alignment_percentage,
+            ai_suggestion=ai_suggestion,
+            encouragements=encouragements,
+            warnings=warnings,
+            recommended_swap=recommended_swap,
         )
 
     except HTTPException:
