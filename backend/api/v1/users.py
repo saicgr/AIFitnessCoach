@@ -130,7 +130,7 @@ def row_to_user(row: dict) -> User:
 
 @router.post("/auth/google", response_model=User)
 @limiter.limit("5/minute")
-async def google_auth(http_request: Request, request: GoogleAuthRequest):
+async def google_auth(request: Request, body: GoogleAuthRequest):
     """
     Authenticate with Google OAuth via Supabase.
 
@@ -146,7 +146,7 @@ async def google_auth(http_request: Request, request: GoogleAuthRequest):
         supabase_client = supabase_manager.client
 
         # Get user from Supabase using the access token
-        user_response = supabase_client.auth.get_user(request.access_token)
+        user_response = supabase_client.auth.get_user(body.access_token)
 
         if not user_response or not user_response.user:
             logger.warning("Invalid or expired access token")
