@@ -169,11 +169,14 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     ]
     is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
 
-    if is_completion_message:
-        logger.info(f"[Onboarding Agent] Completion message detected - no quick replies")
-    elif "selected_days" in missing and collected.get("days_per_week"):
+    # CRITICAL: selected_days check takes priority over completion message
+    # Even if AI says "building your plan", we still need to collect selected_days
+    if "selected_days" in missing and collected.get("days_per_week"):
         component = "day_picker"
         logger.info(f"[Onboarding Agent] selected_days missing - showing day_picker")
+    elif is_completion_message and not missing:
+        # Only skip quick replies if completion message AND no missing fields
+        logger.info(f"[Onboarding Agent] Completion message detected - no quick replies")
     else:
         # Detect field from AI response
         detected_field = detect_field_from_response(response_content)
