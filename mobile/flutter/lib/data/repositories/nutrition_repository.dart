@@ -303,4 +303,104 @@ class NutritionRepository {
       rethrow;
     }
   }
+
+  // ============================================
+  // Saved Foods (Favorite Recipes) Methods
+  // ============================================
+
+  /// Save a food as favorite
+  Future<SavedFood> saveFood({
+    required String userId,
+    required SaveFoodRequest request,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/saved-foods/save',
+        queryParameters: {'user_id': userId},
+        data: request.toJson(),
+      );
+      return SavedFood.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error saving food: $e');
+      rethrow;
+    }
+  }
+
+  /// Get list of saved foods
+  Future<SavedFoodsResponse> getSavedFoods({
+    required String userId,
+    int limit = 50,
+    int offset = 0,
+    String? sourceType,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'user_id': userId,
+        'limit': limit,
+        'offset': offset,
+      };
+      if (sourceType != null) queryParams['source_type'] = sourceType;
+
+      final response = await _client.get(
+        '/nutrition/saved-foods',
+        queryParameters: queryParams,
+      );
+      return SavedFoodsResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting saved foods: $e');
+      rethrow;
+    }
+  }
+
+  /// Get a specific saved food
+  Future<SavedFood> getSavedFood({
+    required String userId,
+    required String savedFoodId,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/nutrition/saved-foods/$savedFoodId',
+        queryParameters: {'user_id': userId},
+      );
+      return SavedFood.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error getting saved food: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a saved food
+  Future<void> deleteSavedFood({
+    required String userId,
+    required String savedFoodId,
+  }) async {
+    try {
+      await _client.delete(
+        '/nutrition/saved-foods/$savedFoodId',
+        queryParameters: {'user_id': userId},
+      );
+    } catch (e) {
+      debugPrint('Error deleting saved food: $e');
+      rethrow;
+    }
+  }
+
+  /// Re-log a saved food
+  Future<LogFoodResponse> relogSavedFood({
+    required String userId,
+    required String savedFoodId,
+    required String mealType,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/saved-foods/$savedFoodId/log',
+        queryParameters: {'user_id': userId},
+        data: {'meal_type': mealType},
+      );
+      return LogFoodResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error re-logging saved food: $e');
+      rethrow;
+    }
+  }
 }

@@ -650,6 +650,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                     onAnalyze: _analyzeFood,
                     onLog: _logAnalyzedFood,
                     isDark: isDark,
+                    userId: widget.userId,
+                    sourceType: 'text',
                   ),
                   _PhotoTab(onPickImage: _pickImage, isDark: isDark),
                   _VoiceTab(
@@ -1041,26 +1043,36 @@ class _VoiceTabState extends State<_VoiceTab> {
 // Describe Tab - Two-step flow: Analyze → Preview → Log
 // ─────────────────────────────────────────────────────────────────
 
-class _DescribeTab extends StatefulWidget {
+class _DescribeTab extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final Future<LogFoodResponse?> Function() onAnalyze;
   final void Function(LogFoodResponse) onLog;
   final bool isDark;
+  final String userId;
+  final String sourceType;
+  final String? barcode;
+  final String? imageUrl;
 
   const _DescribeTab({
     required this.controller,
     required this.onAnalyze,
     required this.onLog,
     required this.isDark,
+    required this.userId,
+    this.sourceType = 'text',
+    this.barcode,
+    this.imageUrl,
   });
 
   @override
-  State<_DescribeTab> createState() => _DescribeTabState();
+  ConsumerState<_DescribeTab> createState() => _DescribeTabState();
 }
 
-class _DescribeTabState extends State<_DescribeTab> {
+class _DescribeTabState extends ConsumerState<_DescribeTab> {
   LogFoodResponse? _analyzedResponse;
   bool _isAnalyzing = false;
+  bool _isSaved = false;
+  bool _isSaving = false;
 
   // Rainbow colors for nutrition values
   static const caloriesColor = Color(0xFFFF6B6B);
@@ -1094,6 +1106,63 @@ class _DescribeTabState extends State<_DescribeTab> {
   void _handleLog() {
     if (_analyzedResponse != null) {
       widget.onLog(_analyzedResponse!);
+    }
+  }
+
+  Future<void> _handleSaveAsFavorite() async {
+    if (_analyzedResponse == null || _isSaving) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final description = widget.controller.text.trim();
+
+      final request = SaveFoodRequest.fromLogResponse(
+        _analyzedResponse!,
+        description.length > 50 ? '${description.substring(0, 50)}...' : description,
+        description: description,
+        sourceType: widget.sourceType,
+        barcode: widget.barcode,
+        imageUrl: widget.imageUrl,
+      );
+
+      await repository.saveFood(
+        userId: widget.userId,
+        request: request,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isSaved = true;
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.star, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text('Saved to favorites!'),
+              ],
+            ),
+            backgroundColor: const Color(0xFF6BCB77),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving food: $e');
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -1202,7 +1271,7 @@ class _DescribeTabState extends State<_DescribeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with edit option
+          // Header with star and edit options
           Row(
             children: [
               const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 24),
@@ -1212,6 +1281,27 @@ class _DescribeTabState extends State<_DescribeTab> {
                   'AI Estimated Nutrition',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
                 ),
+              ),
+              // Star button to save as favorite
+              IconButton(
+                onPressed: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
+                icon: _isSaving
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: const Color(0xFFFFD93D),
+                        ),
+                      )
+                    : Icon(
+                        _isSaved ? Icons.star : Icons.star_border,
+                        size: 24,
+                        color: _isSaved
+                            ? const Color(0xFFFFD93D)
+                            : textMuted,
+                      ),
+                tooltip: _isSaved ? 'Saved to favorites' : 'Save as favorite',
               ),
               TextButton.icon(
                 onPressed: _handleEdit,

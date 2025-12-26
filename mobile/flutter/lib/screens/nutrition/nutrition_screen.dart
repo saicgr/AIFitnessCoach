@@ -2262,7 +2262,7 @@ class _ScanTabState extends State<_ScanTab> {
 // Quick Tab (Recent/Favorites)
 // ─────────────────────────────────────────────────────────────────
 
-class _QuickTab extends ConsumerWidget {
+class _QuickTab extends ConsumerStatefulWidget {
   final String userId;
   final MealType mealType;
   final VoidCallback onLogged;
@@ -2276,15 +2276,102 @@ class _QuickTab extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuickTab> createState() => _QuickTabState();
+}
+
+class _QuickTabState extends ConsumerState<_QuickTab> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  List<SavedFood> _savedFoods = [];
+  bool _isLoadingSavedFoods = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadSavedFoods();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSavedFoods() async {
+    if (widget.userId.isEmpty) return;
+
+    setState(() => _isLoadingSavedFoods = true);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final response = await repository.getSavedFoods(
+        userId: widget.userId,
+        limit: 20,
+      );
+      if (mounted) {
+        setState(() {
+          _savedFoods = response.items;
+          _isLoadingSavedFoods = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading saved foods: $e');
+      if (mounted) {
+        setState(() => _isLoadingSavedFoods = false);
+      }
+    }
+  }
+
+  Future<void> _relogSavedFood(SavedFood food) async {
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.relogSavedFood(
+        userId: widget.userId,
+        savedFoodId: food.id,
+        mealType: widget.mealType.value,
+      );
+      widget.onLogged();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to log: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteSavedFood(SavedFood food) async {
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.deleteSavedFood(
+        userId: widget.userId,
+        savedFoodId: food.id,
+      );
+      if (mounted) {
+        setState(() => _savedFoods.remove(food));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Removed from favorites')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
     final state = ref.watch(nutritionProvider);
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Get recent unique food items
     final recentItems = <String, Map<String, dynamic>>{};
@@ -2302,6 +2389,61 @@ class _QuickTab extends ConsumerWidget {
       }
     }
 
+    return Column(
+      children: [
+        // Tab bar for Recent / Favorites
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(
+              color: teal,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelColor: Colors.white,
+            unselectedLabelColor: textMuted,
+            labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            dividerColor: Colors.transparent,
+            tabs: const [
+              Tab(text: 'Recent'),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.star, size: 16),
+                    SizedBox(width: 4),
+                    Text('Favorites'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              // Recent tab
+              _buildRecentTab(recentItems, textMuted, textSecondary),
+              // Favorites tab
+              _buildFavoritesTab(textMuted, textSecondary, teal, elevated),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentTab(
+    Map<String, Map<String, dynamic>> recentItems,
+    Color textMuted,
+    Color textSecondary,
+  ) {
     if (recentItems.isEmpty) {
       return Center(
         child: Column(
@@ -2344,26 +2486,196 @@ class _QuickTab extends ConsumerWidget {
               name: item['name'] as String,
               calories: item['calories'] as int,
               onTap: () async {
-                // Log using text description
                 final repository = ref.read(nutritionRepositoryProvider);
                 try {
                   await repository.logFoodFromText(
-                    userId: userId,
+                    userId: widget.userId,
                     description: item['name'] as String,
-                    mealType: mealType.value,
+                    mealType: widget.mealType.value,
                   );
-                  onLogged();
+                  widget.onLogged();
                 } catch (e) {
-                  if (context.mounted) {
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Failed to log: $e')),
                     );
                   }
                 }
               },
-              isDark: isDark,
+              isDark: widget.isDark,
             )),
       ],
+    );
+  }
+
+  Widget _buildFavoritesTab(
+    Color textMuted,
+    Color textSecondary,
+    Color teal,
+    Color elevated,
+  ) {
+    if (_isLoadingSavedFoods) {
+      return Center(
+        child: CircularProgressIndicator(color: teal),
+      );
+    }
+
+    if (_savedFoods.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.star_border, size: 64, color: textMuted),
+            const SizedBox(height: 16),
+            Text(
+              'No favorites yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Save meals with the star icon to quick-log them later',
+              style: TextStyle(fontSize: 14, color: textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'SAVED FAVORITES',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ..._savedFoods.map((food) => _SavedFoodItem(
+              food: food,
+              onTap: () => _relogSavedFood(food),
+              onDelete: () => _deleteSavedFood(food),
+              isDark: widget.isDark,
+            )),
+      ],
+    );
+  }
+}
+
+class _SavedFoodItem extends StatelessWidget {
+  final SavedFood food;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+  final bool isDark;
+
+  const _SavedFoodItem({
+    required this.food,
+    required this.onTap,
+    required this.onDelete,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Star icon
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD93D).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.star,
+                    size: 20,
+                    color: Color(0xFFFFD93D),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        food.name,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            '${food.totalCalories ?? 0} kcal',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: teal,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (food.timesLogged > 0) ...[
+                            Icon(Icons.repeat, size: 12, color: textMuted),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${food.timesLogged}x',
+                              style: TextStyle(fontSize: 11, color: textMuted),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Add button
+                IconButton(
+                  onPressed: onTap,
+                  icon: Icon(Icons.add_circle, color: teal, size: 28),
+                  tooltip: 'Log this meal',
+                ),
+                // Delete button
+                IconButton(
+                  onPressed: onDelete,
+                  icon: Icon(Icons.close, color: textMuted, size: 20),
+                  tooltip: 'Remove from favorites',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

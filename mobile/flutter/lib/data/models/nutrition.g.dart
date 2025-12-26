@@ -260,3 +260,148 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'warnings': instance.warnings,
       'recommended_swap': instance.recommendedSwap,
     };
+
+SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>
+    SavedFoodItem(
+      name: json['name'] as String,
+      amount: json['amount'] as String?,
+      calories: (json['calories'] as num?)?.toInt(),
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      goalScore: (json['goal_score'] as num?)?.toInt(),
+      goalAlignment: json['goal_alignment'] as String?,
+    );
+
+Map<String, dynamic> _$SavedFoodItemToJson(SavedFoodItem instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'amount': instance.amount,
+      'calories': instance.calories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'fiber_g': instance.fiberG,
+      'goal_score': instance.goalScore,
+      'goal_alignment': instance.goalAlignment,
+    };
+
+SavedFood _$SavedFoodFromJson(Map<String, dynamic> json) => SavedFood(
+  id: json['id'] as String,
+  userId: json['user_id'] as String,
+  name: json['name'] as String,
+  description: json['description'] as String?,
+  sourceType: json['source_type'] as String? ?? 'text',
+  barcode: json['barcode'] as String?,
+  imageUrl: json['image_url'] as String?,
+  totalCalories: (json['total_calories'] as num?)?.toInt(),
+  totalProteinG: (json['total_protein_g'] as num?)?.toDouble(),
+  totalCarbsG: (json['total_carbs_g'] as num?)?.toDouble(),
+  totalFatG: (json['total_fat_g'] as num?)?.toDouble(),
+  totalFiberG: (json['total_fiber_g'] as num?)?.toDouble(),
+  foodItems:
+      (json['food_items'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList() ??
+      const [],
+  overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
+  goalAlignmentPercentage: (json['goal_alignment_percentage'] as num?)?.toInt(),
+  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  notes: json['notes'] as String?,
+  timesLogged: (json['times_logged'] as num?)?.toInt() ?? 0,
+  lastLoggedAt: json['last_logged_at'] == null
+      ? null
+      : DateTime.parse(json['last_logged_at'] as String),
+  createdAt: DateTime.parse(json['created_at'] as String),
+  updatedAt: DateTime.parse(json['updated_at'] as String),
+);
+
+Map<String, dynamic> _$SavedFoodToJson(SavedFood instance) => <String, dynamic>{
+  'id': instance.id,
+  'user_id': instance.userId,
+  'name': instance.name,
+  'description': instance.description,
+  'source_type': instance.sourceType,
+  'barcode': instance.barcode,
+  'image_url': instance.imageUrl,
+  'total_calories': instance.totalCalories,
+  'total_protein_g': instance.totalProteinG,
+  'total_carbs_g': instance.totalCarbsG,
+  'total_fat_g': instance.totalFatG,
+  'total_fiber_g': instance.totalFiberG,
+  'food_items': instance.foodItems,
+  'overall_meal_score': instance.overallMealScore,
+  'goal_alignment_percentage': instance.goalAlignmentPercentage,
+  'tags': instance.tags,
+  'notes': instance.notes,
+  'times_logged': instance.timesLogged,
+  'last_logged_at': instance.lastLoggedAt?.toIso8601String(),
+  'created_at': instance.createdAt.toIso8601String(),
+  'updated_at': instance.updatedAt.toIso8601String(),
+};
+
+SavedFoodsResponse _$SavedFoodsResponseFromJson(Map<String, dynamic> json) =>
+    SavedFoodsResponse(
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => SavedFood.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      totalCount: (json['total_count'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$SavedFoodsResponseToJson(SavedFoodsResponse instance) =>
+    <String, dynamic>{
+      'items': instance.items,
+      'total_count': instance.totalCount,
+    };
+
+SaveFoodRequest _$SaveFoodRequestFromJson(Map<String, dynamic> json) =>
+    SaveFoodRequest(
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      sourceType: json['source_type'] as String? ?? 'text',
+      barcode: json['barcode'] as String?,
+      imageUrl: json['image_url'] as String?,
+      totalCalories: (json['total_calories'] as num?)?.toInt(),
+      totalProteinG: (json['total_protein_g'] as num?)?.toDouble(),
+      totalCarbsG: (json['total_carbs_g'] as num?)?.toDouble(),
+      totalFatG: (json['total_fat_g'] as num?)?.toDouble(),
+      totalFiberG: (json['total_fiber_g'] as num?)?.toDouble(),
+      foodItems:
+          (json['food_items'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
+              .toList() ??
+          const [],
+      overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
+      goalAlignmentPercentage: (json['goal_alignment_percentage'] as num?)
+          ?.toInt(),
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+    );
+
+Map<String, dynamic> _$SaveFoodRequestToJson(SaveFoodRequest instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'description': instance.description,
+      'source_type': instance.sourceType,
+      'barcode': instance.barcode,
+      'image_url': instance.imageUrl,
+      'total_calories': instance.totalCalories,
+      'total_protein_g': instance.totalProteinG,
+      'total_carbs_g': instance.totalCarbsG,
+      'total_fat_g': instance.totalFatG,
+      'total_fiber_g': instance.totalFiberG,
+      'food_items': instance.foodItems,
+      'overall_meal_score': instance.overallMealScore,
+      'goal_alignment_percentage': instance.goalAlignmentPercentage,
+      'tags': instance.tags,
+    };
+
+RelogSavedFoodRequest _$RelogSavedFoodRequestFromJson(
+  Map<String, dynamic> json,
+) => RelogSavedFoodRequest(mealType: json['meal_type'] as String);
+
+Map<String, dynamic> _$RelogSavedFoodRequestToJson(
+  RelogSavedFoodRequest instance,
+) => <String, dynamic>{'meal_type': instance.mealType};

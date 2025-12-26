@@ -406,3 +406,263 @@ class LogFoodResponse {
     return 'red';
   }
 }
+
+/// Source type for saved foods
+enum FoodSourceType {
+  text('text'),
+  barcode('barcode'),
+  image('image');
+
+  final String value;
+  const FoodSourceType(this.value);
+
+  static FoodSourceType fromValue(String value) {
+    return FoodSourceType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => FoodSourceType.text,
+    );
+  }
+}
+
+/// Saved food item with goal-based ranking
+@JsonSerializable()
+class SavedFoodItem {
+  final String name;
+  final String? amount;
+  final int? calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  @JsonKey(name: 'goal_score')
+  final int? goalScore;
+  @JsonKey(name: 'goal_alignment')
+  final String? goalAlignment;
+
+  const SavedFoodItem({
+    required this.name,
+    this.amount,
+    this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.goalScore,
+    this.goalAlignment,
+  });
+
+  factory SavedFoodItem.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodItemFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodItemToJson(this);
+}
+
+/// Saved food (favorite recipe)
+@JsonSerializable()
+class SavedFood {
+  final String id;
+  @JsonKey(name: 'user_id')
+  final String userId;
+  final String name;
+  final String? description;
+  @JsonKey(name: 'source_type')
+  final String sourceType;
+  final String? barcode;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'total_calories')
+  final int? totalCalories;
+  @JsonKey(name: 'total_protein_g')
+  final double? totalProteinG;
+  @JsonKey(name: 'total_carbs_g')
+  final double? totalCarbsG;
+  @JsonKey(name: 'total_fat_g')
+  final double? totalFatG;
+  @JsonKey(name: 'total_fiber_g')
+  final double? totalFiberG;
+  @JsonKey(name: 'food_items')
+  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'overall_meal_score')
+  final int? overallMealScore;
+  @JsonKey(name: 'goal_alignment_percentage')
+  final int? goalAlignmentPercentage;
+  final List<String>? tags;
+  final String? notes;
+  @JsonKey(name: 'times_logged')
+  final int timesLogged;
+  @JsonKey(name: 'last_logged_at')
+  final DateTime? lastLoggedAt;
+  @JsonKey(name: 'created_at')
+  final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime updatedAt;
+
+  const SavedFood({
+    required this.id,
+    required this.userId,
+    required this.name,
+    this.description,
+    this.sourceType = 'text',
+    this.barcode,
+    this.imageUrl,
+    this.totalCalories,
+    this.totalProteinG,
+    this.totalCarbsG,
+    this.totalFatG,
+    this.totalFiberG,
+    this.foodItems = const [],
+    this.overallMealScore,
+    this.goalAlignmentPercentage,
+    this.tags,
+    this.notes,
+    this.timesLogged = 0,
+    this.lastLoggedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory SavedFood.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodToJson(this);
+
+  /// Get typed food items with rankings
+  List<SavedFoodItem> get foodItemsTyped {
+    return foodItems.map((item) => SavedFoodItem.fromJson(item)).toList();
+  }
+
+  /// Get source type as enum
+  FoodSourceType get sourceTypeEnum => FoodSourceType.fromValue(sourceType);
+
+  /// Get icon for source type
+  String get sourceIcon {
+    switch (sourceTypeEnum) {
+      case FoodSourceType.text:
+        return '📝';
+      case FoodSourceType.barcode:
+        return '📷';
+      case FoodSourceType.image:
+        return '🖼️';
+    }
+  }
+
+  /// Get color for meal score
+  String get scoreColor {
+    if (overallMealScore == null) return 'neutral';
+    if (overallMealScore! >= 8) return 'green';
+    if (overallMealScore! >= 5) return 'yellow';
+    return 'red';
+  }
+}
+
+/// Response for saved foods list
+@JsonSerializable()
+class SavedFoodsResponse {
+  final List<SavedFood> items;
+  @JsonKey(name: 'total_count')
+  final int totalCount;
+
+  const SavedFoodsResponse({
+    this.items = const [],
+    this.totalCount = 0,
+  });
+
+  factory SavedFoodsResponse.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodsResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodsResponseToJson(this);
+}
+
+/// Request to save a food from log
+@JsonSerializable()
+class SaveFoodRequest {
+  final String name;
+  final String? description;
+  @JsonKey(name: 'source_type')
+  final String sourceType;
+  final String? barcode;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'total_calories')
+  final int? totalCalories;
+  @JsonKey(name: 'total_protein_g')
+  final double? totalProteinG;
+  @JsonKey(name: 'total_carbs_g')
+  final double? totalCarbsG;
+  @JsonKey(name: 'total_fat_g')
+  final double? totalFatG;
+  @JsonKey(name: 'total_fiber_g')
+  final double? totalFiberG;
+  @JsonKey(name: 'food_items')
+  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'overall_meal_score')
+  final int? overallMealScore;
+  @JsonKey(name: 'goal_alignment_percentage')
+  final int? goalAlignmentPercentage;
+  final List<String>? tags;
+
+  const SaveFoodRequest({
+    required this.name,
+    this.description,
+    this.sourceType = 'text',
+    this.barcode,
+    this.imageUrl,
+    this.totalCalories,
+    this.totalProteinG,
+    this.totalCarbsG,
+    this.totalFatG,
+    this.totalFiberG,
+    this.foodItems = const [],
+    this.overallMealScore,
+    this.goalAlignmentPercentage,
+    this.tags,
+  });
+
+  factory SaveFoodRequest.fromJson(Map<String, dynamic> json) =>
+      _$SaveFoodRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$SaveFoodRequestToJson(this);
+
+  /// Create from LogFoodResponse
+  factory SaveFoodRequest.fromLogResponse(
+    LogFoodResponse response,
+    String name, {
+    String? description,
+    String sourceType = 'text',
+    String? barcode,
+    String? imageUrl,
+    List<String>? tags,
+  }) {
+    return SaveFoodRequest(
+      name: name,
+      description: description,
+      sourceType: sourceType,
+      barcode: barcode,
+      imageUrl: imageUrl,
+      totalCalories: response.totalCalories,
+      totalProteinG: response.proteinG,
+      totalCarbsG: response.carbsG,
+      totalFatG: response.fatG,
+      totalFiberG: response.fiberG,
+      foodItems: response.foodItems,
+      overallMealScore: response.overallMealScore,
+      goalAlignmentPercentage: response.goalAlignmentPercentage,
+      tags: tags,
+    );
+  }
+}
+
+/// Request to re-log a saved food
+@JsonSerializable()
+class RelogSavedFoodRequest {
+  @JsonKey(name: 'meal_type')
+  final String mealType;
+
+  const RelogSavedFoodRequest({
+    required this.mealType,
+  });
+
+  factory RelogSavedFoodRequest.fromJson(Map<String, dynamic> json) =>
+      _$RelogSavedFoodRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$RelogSavedFoodRequestToJson(this);
+}
