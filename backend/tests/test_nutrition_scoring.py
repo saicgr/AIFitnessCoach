@@ -3,6 +3,7 @@ Tests for Goal-Based Food Scoring in Nutrition API.
 
 Tests the enhanced Gemini food parsing with goal-based scoring,
 AI suggestions, encouragements, warnings, and recommended swaps.
+Also tests ChromaDB RAG integration for nutrition knowledge.
 """
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
@@ -402,3 +403,215 @@ class TestScoringCriteria:
         assert "sodium" in source.lower()
         assert "sugar" in source.lower()
         assert "processed" in source.lower()
+
+
+class TestNutritionRAGService:
+    """Tests for the Nutrition RAG Service (ChromaDB integration)."""
+
+    def test_nutrition_rag_service_initializes(self):
+        """Test NutritionRAGService can be imported and has required methods."""
+        from services.nutrition_rag_service import NutritionRAGService
+
+        # Verify class has required methods
+        assert hasattr(NutritionRAGService, 'add_knowledge')
+        assert hasattr(NutritionRAGService, 'get_context_for_goals')
+        assert hasattr(NutritionRAGService, 'get_collection_count')
+
+    def test_nutrition_knowledge_data_exists(self):
+        """Test that nutrition knowledge data is defined."""
+        from services.nutrition_rag_service import NUTRITION_KNOWLEDGE_DATA
+
+        # Should have knowledge entries
+        assert len(NUTRITION_KNOWLEDGE_DATA) > 0
+
+        # Each entry should have required fields
+        for item in NUTRITION_KNOWLEDGE_DATA:
+            assert "content" in item
+            assert "goals" in item
+            assert "category" in item
+            assert isinstance(item["goals"], list)
+
+    def test_nutrition_knowledge_covers_all_goals(self):
+        """Test that nutrition knowledge covers all major fitness goals."""
+        from services.nutrition_rag_service import NUTRITION_KNOWLEDGE_DATA
+
+        # Extract all goals from knowledge data
+        all_goals = set()
+        for item in NUTRITION_KNOWLEDGE_DATA:
+            all_goals.update(item["goals"])
+
+        # Should cover these major goals
+        expected_goals = ["build_muscle", "lose_weight", "improve_endurance", "general"]
+        for goal in expected_goals:
+            assert any(goal in g for g in all_goals), f"Missing knowledge for goal: {goal}"
+
+    def test_nutrition_knowledge_has_categories(self):
+        """Test that nutrition knowledge has diverse categories."""
+        from services.nutrition_rag_service import NUTRITION_KNOWLEDGE_DATA
+
+        categories = set(item["category"] for item in NUTRITION_KNOWLEDGE_DATA)
+
+        # Should have these categories
+        assert "protein" in categories
+        assert "warnings" in categories
+        assert "tips" in categories
+
+    @pytest.mark.asyncio
+    @patch('services.nutrition_rag_service.get_chroma_cloud_client')
+    @patch('services.nutrition_rag_service.GeminiService')
+    async def test_get_context_for_goals_returns_string(self, mock_gemini_class, mock_chroma):
+        """Test get_context_for_goals returns formatted string."""
+        from services.nutrition_rag_service import NutritionRAGService
+
+        # Mock ChromaDB collection
+        mock_collection = MagicMock()
+        mock_collection.count.return_value = 10
+        mock_collection.query.return_value = {
+            "documents": [["[PROTEIN] High protein content...", "[TIPS] Eat slowly..."]],
+            "metadatas": [[{"goals": "build_muscle", "category": "protein"}, {"goals": "general", "category": "tips"}]],
+            "distances": [[0.1, 0.2]]
+        }
+        mock_chroma.return_value.get_or_create_collection.return_value = mock_collection
+
+        # Mock Gemini embedding
+        mock_gemini = MagicMock()
+        mock_gemini.get_embedding_async = AsyncMock(return_value=[0.1] * 768)
+        mock_gemini_class.return_value = mock_gemini
+
+        service = NutritionRAGService(mock_gemini)
+        context = await service.get_context_for_goals(
+            food_description="grilled chicken",
+            user_goals=["build_muscle"],
+            n_results=3
+        )
+
+        # Should return a string
+        assert isinstance(context, str)
+
+    @pytest.mark.asyncio
+    @patch('services.nutrition_rag_service.get_chroma_cloud_client')
+    @patch('services.nutrition_rag_service.GeminiService')
+    async def test_get_context_for_empty_goals_returns_empty(self, mock_gemini_class, mock_chroma):
+        """Test get_context_for_goals returns empty string for no goals."""
+        from services.nutrition_rag_service import NutritionRAGService
+
+        mock_collection = MagicMock()
+        mock_collection.count.return_value = 10
+        mock_chroma.return_value.get_or_create_collection.return_value = mock_collection
+
+        mock_gemini = MagicMock()
+        mock_gemini_class.return_value = mock_gemini
+
+        service = NutritionRAGService(mock_gemini)
+        context = await service.get_context_for_goals(
+            food_description="pizza",
+            user_goals=[],  # Empty goals
+            n_results=3
+        )
+
+        # Should return empty string for no goals
+        assert context == ""
+
+
+class TestLogTextWithRAG:
+    """Tests for /log-text endpoint with RAG integration."""
+
+    @patch('api.v1.nutrition.get_supabase_db')
+    @patch('api.v1.nutrition.get_nutrition_rag_service')
+    @patch('api.v1.nutrition.GeminiService')
+    def test_log_text_calls_rag_service_when_goals_exist(self, mock_gemini_class, mock_rag, mock_db, client):
+        """Test that /log-text calls RAG service when user has goals."""
+        # Mock database with user having goals
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = {
+            "id": "test-user",
+            "goals": '["build_muscle"]',
+            "daily_calorie_target": 2500,
+        }
+        mock_db_instance.create_food_log.return_value = {"id": "log-123"}
+        mock_db.return_value = mock_db_instance
+
+        # Mock RAG service
+        mock_rag_instance = MagicMock()
+        mock_rag_instance.get_context_for_goals = AsyncMock(return_value="[PROTEIN] High protein is good...")
+        mock_rag.return_value = mock_rag_instance
+
+        # Mock Gemini service
+        mock_gemini = MagicMock()
+        mock_gemini.parse_food_description = AsyncMock(return_value={
+            "food_items": [{"name": "Chicken", "calories": 200, "protein_g": 30, "carbs_g": 0, "fat_g": 5}],
+            "total_calories": 200,
+            "protein_g": 30.0,
+            "carbs_g": 0.0,
+            "fat_g": 5.0,
+            "fiber_g": 0.0,
+            "overall_meal_score": 9,
+            "health_score": 8,
+        })
+        mock_gemini_class.return_value = mock_gemini
+
+        response = client.post(
+            "/api/v1/nutrition/log-text",
+            json={
+                "user_id": "test-user",
+                "description": "grilled chicken breast",
+                "meal_type": "lunch"
+            }
+        )
+
+        # Verify RAG service was called
+        mock_rag_instance.get_context_for_goals.assert_called_once()
+        call_args = mock_rag_instance.get_context_for_goals.call_args
+        assert call_args[1]["food_description"] == "grilled chicken breast"
+        assert "build_muscle" in call_args[1]["user_goals"]
+
+        # Verify Gemini was called with RAG context
+        gemini_call = mock_gemini.parse_food_description.call_args[1]
+        assert gemini_call["rag_context"] == "[PROTEIN] High protein is good..."
+
+    @patch('api.v1.nutrition.get_supabase_db')
+    @patch('api.v1.nutrition.get_nutrition_rag_service')
+    @patch('api.v1.nutrition.GeminiService')
+    def test_log_text_skips_rag_when_no_goals(self, mock_gemini_class, mock_rag, mock_db, client):
+        """Test that /log-text skips RAG service when user has no goals."""
+        # Mock database with user having no goals
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = {
+            "id": "new-user",
+            "goals": "[]",
+        }
+        mock_db_instance.create_food_log.return_value = {"id": "log-456"}
+        mock_db.return_value = mock_db_instance
+
+        # Mock RAG service
+        mock_rag_instance = MagicMock()
+        mock_rag_instance.get_context_for_goals = AsyncMock(return_value="")
+        mock_rag.return_value = mock_rag_instance
+
+        # Mock Gemini service
+        mock_gemini = MagicMock()
+        mock_gemini.parse_food_description = AsyncMock(return_value={
+            "food_items": [{"name": "Toast", "calories": 75, "protein_g": 2, "carbs_g": 14, "fat_g": 1}],
+            "total_calories": 75,
+            "protein_g": 2.0,
+            "carbs_g": 14.0,
+            "fat_g": 1.0,
+            "fiber_g": 1.0,
+        })
+        mock_gemini_class.return_value = mock_gemini
+
+        response = client.post(
+            "/api/v1/nutrition/log-text",
+            json={
+                "user_id": "new-user",
+                "description": "toast",
+                "meal_type": "breakfast"
+            }
+        )
+
+        # RAG service should NOT be called (empty goals)
+        mock_rag_instance.get_context_for_goals.assert_not_called()
+
+        # Gemini should be called with rag_context=None
+        gemini_call = mock_gemini.parse_food_description.call_args[1]
+        assert gemini_call["rag_context"] is None

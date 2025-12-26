@@ -34,6 +34,7 @@ from models.schemas import (
 
 from services.food_database_service import get_food_database_service
 from services.gemini_service import GeminiService
+from services.nutrition_rag_service import get_nutrition_rag_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -721,12 +722,28 @@ async def log_food_from_text(request: LogTextRequest):
         except Exception as e:
             logger.warning(f"Could not fetch user goals/targets: {e}")
 
-        # Parse description with Gemini (with goal context)
+        # Get RAG context from nutrition knowledge base (if user has goals)
+        rag_context = None
+        if user_goals:
+            try:
+                nutrition_rag = get_nutrition_rag_service()
+                rag_context = await nutrition_rag.get_context_for_goals(
+                    food_description=request.description,
+                    user_goals=user_goals,
+                    n_results=5,
+                )
+                if rag_context:
+                    logger.info(f"Retrieved RAG context ({len(rag_context)} chars) for goals: {user_goals}")
+            except Exception as e:
+                logger.warning(f"Could not fetch RAG context: {e}")
+
+        # Parse description with Gemini (with goal context + RAG)
         gemini_service = GeminiService()
         food_analysis = await gemini_service.parse_food_description(
             description=request.description,
             user_goals=user_goals,
             nutrition_targets=nutrition_targets,
+            rag_context=rag_context,
         )
 
         if not food_analysis or not food_analysis.get('food_items'):
