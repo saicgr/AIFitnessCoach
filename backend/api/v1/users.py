@@ -169,16 +169,18 @@ async def google_auth(http_request: Request, request: GoogleAuthRequest):
             return row_to_user(existing)
 
         # Create new user
+        # Note: goals and equipment are VARCHAR columns, not JSONB,
+        # so we need to pass them as JSON strings
         new_user_data = {
             "auth_id": supabase_user_id,
             "email": email,
             "name": full_name,
             "onboarding_completed": False,
             "fitness_level": "beginner",
-            "goals": [],
-            "equipment": [],
-            "preferences": {"name": full_name, "email": email},
-            "active_injuries": [],
+            "goals": "[]",  # VARCHAR column - needs JSON string
+            "equipment": "[]",  # VARCHAR column - needs JSON string
+            "preferences": {"name": full_name, "email": email},  # JSONB - can be dict
+            "active_injuries": [],  # JSONB - can be list
         }
 
         created = db.create_user(new_user_data)
@@ -189,8 +191,11 @@ async def google_auth(http_request: Request, request: GoogleAuthRequest):
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        full_traceback = traceback.format_exc()
         logger.error(f"Google auth failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Full traceback: {full_traceback}")
+        raise HTTPException(status_code=500, detail=f"Google auth error: {str(e)}")
 
 
 def merge_extended_fields_into_preferences(
