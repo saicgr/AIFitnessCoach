@@ -186,6 +186,34 @@ Map<String, dynamic> _$LogBarcodeResponseToJson(LogBarcodeResponse instance) =>
       'fat_g': instance.fatG,
     };
 
+FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
+    FoodItemRanking(
+      name: json['name'] as String,
+      amount: json['amount'] as String?,
+      calories: (json['calories'] as num?)?.toInt(),
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      goalScore: (json['goal_score'] as num?)?.toInt(),
+      goalAlignment: json['goal_alignment'] as String?,
+      reason: json['reason'] as String?,
+    );
+
+Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'amount': instance.amount,
+      'calories': instance.calories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'fiber_g': instance.fiberG,
+      'goal_score': instance.goalScore,
+      'goal_alignment': instance.goalAlignment,
+      'reason': instance.reason,
+    };
+
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
     LogFoodResponse(
       success: json['success'] as bool,
@@ -200,6 +228,18 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       carbsG: (json['carbs_g'] as num).toDouble(),
       fatG: (json['fat_g'] as num).toDouble(),
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
+      healthScore: (json['health_score'] as num?)?.toInt(),
+      goalAlignmentPercentage: (json['goal_alignment_percentage'] as num?)
+          ?.toInt(),
+      aiSuggestion: json['ai_suggestion'] as String?,
+      encouragements: (json['encouragements'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      warnings: (json['warnings'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      recommendedSwap: json['recommended_swap'] as String?,
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -212,4 +252,11 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'carbs_g': instance.carbsG,
       'fat_g': instance.fatG,
       'fiber_g': instance.fiberG,
+      'overall_meal_score': instance.overallMealScore,
+      'health_score': instance.healthScore,
+      'goal_alignment_percentage': instance.goalAlignmentPercentage,
+      'ai_suggestion': instance.aiSuggestion,
+      'encouragements': instance.encouragements,
+      'warnings': instance.warnings,
+      'recommended_swap': instance.recommendedSwap,
     };

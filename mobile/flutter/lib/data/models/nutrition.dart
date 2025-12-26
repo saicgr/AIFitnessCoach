@@ -292,7 +292,54 @@ class LogBarcodeResponse {
   Map<String, dynamic> toJson() => _$LogBarcodeResponseToJson(this);
 }
 
-/// Response after logging food from image or text
+/// Individual food item with goal-based ranking
+@JsonSerializable()
+class FoodItemRanking {
+  final String name;
+  final String? amount;
+  final int? calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  // Goal-based ranking fields
+  @JsonKey(name: 'goal_score')
+  final int? goalScore;  // 1-10 based on user goals
+  @JsonKey(name: 'goal_alignment')
+  final String? goalAlignment;  // "excellent", "good", "neutral", "poor"
+  final String? reason;  // Brief explanation
+
+  const FoodItemRanking({
+    required this.name,
+    this.amount,
+    this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.goalScore,
+    this.goalAlignment,
+    this.reason,
+  });
+
+  factory FoodItemRanking.fromJson(Map<String, dynamic> json) =>
+      _$FoodItemRankingFromJson(json);
+  Map<String, dynamic> toJson() => _$FoodItemRankingToJson(this);
+
+  /// Get color for goal score
+  String get scoreColor {
+    if (goalScore == null) return 'neutral';
+    if (goalScore! >= 8) return 'green';
+    if (goalScore! >= 5) return 'yellow';
+    return 'red';
+  }
+}
+
+/// Response after logging food from image or text with goal-based analysis
 @JsonSerializable()
 class LogFoodResponse {
   final bool success;
@@ -310,6 +357,19 @@ class LogFoodResponse {
   final double fatG;
   @JsonKey(name: 'fiber_g')
   final double? fiberG;
+  // Enhanced goal-based analysis fields
+  @JsonKey(name: 'overall_meal_score')
+  final int? overallMealScore;  // 1-10 weighted average
+  @JsonKey(name: 'health_score')
+  final int? healthScore;  // 1-10 general health score
+  @JsonKey(name: 'goal_alignment_percentage')
+  final int? goalAlignmentPercentage;  // 0-100%
+  @JsonKey(name: 'ai_suggestion')
+  final String? aiSuggestion;  // Personalized AI feedback
+  final List<String>? encouragements;  // Positive aspects
+  final List<String>? warnings;  // Concerns (high sodium, etc.)
+  @JsonKey(name: 'recommended_swap')
+  final String? recommendedSwap;  // Healthier alternative
 
   const LogFoodResponse({
     required this.success,
@@ -320,9 +380,29 @@ class LogFoodResponse {
     required this.carbsG,
     required this.fatG,
     this.fiberG,
+    this.overallMealScore,
+    this.healthScore,
+    this.goalAlignmentPercentage,
+    this.aiSuggestion,
+    this.encouragements,
+    this.warnings,
+    this.recommendedSwap,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
       _$LogFoodResponseFromJson(json);
   Map<String, dynamic> toJson() => _$LogFoodResponseToJson(this);
+
+  /// Get typed food items with rankings
+  List<FoodItemRanking> get foodItemsRanked {
+    return foodItems.map((item) => FoodItemRanking.fromJson(item)).toList();
+  }
+
+  /// Get color for overall meal score
+  String get mealScoreColor {
+    if (overallMealScore == null) return 'neutral';
+    if (overallMealScore! >= 8) return 'green';
+    if (overallMealScore! >= 5) return 'yellow';
+    return 'red';
+  }
 }

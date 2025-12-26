@@ -148,12 +148,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   }
 
   /// Analyze food from text and return the response for preview
+  /// NOTE: This method does NOT set _isLoading to avoid rebuilding and losing _DescribeTab state
   Future<LogFoodResponse?> _analyzeFood() async {
     final description = _descriptionController.text.trim();
     if (description.isEmpty) return null;
 
+    // Don't set _isLoading here - let _DescribeTab manage its own loading state
+    // to avoid being unmounted and losing _analyzedResponse
     setState(() {
-      _isLoading = true;
       _error = null;
     });
 
@@ -165,13 +167,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         mealType: _selectedMealType.value,
       );
 
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
       return response;
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _error = e.toString();
       });
       return null;
@@ -1074,13 +1072,18 @@ class _DescribeTabState extends State<_DescribeTab> {
   Future<void> _handleAnalyze() async {
     if (widget.controller.text.trim().isEmpty) return;
 
+    debugPrint('🍎 [LogMeal] Starting analysis...');
     setState(() => _isAnalyzing = true);
     final response = await widget.onAnalyze();
+    debugPrint('🍎 [LogMeal] Analyze response: $response');
+    debugPrint('🍎 [LogMeal] Calories: ${response?.totalCalories}, Protein: ${response?.proteinG}, Carbs: ${response?.carbsG}, Fat: ${response?.fatG}');
+    debugPrint('🍎 [LogMeal] mounted: $mounted, setting _analyzedResponse');
     if (mounted) {
       setState(() {
         _isAnalyzing = false;
         _analyzedResponse = response;
       });
+      debugPrint('🍎 [LogMeal] _analyzedResponse set to: $_analyzedResponse');
     }
   }
 
@@ -1241,7 +1244,26 @@ class _DescribeTabState extends State<_DescribeTab> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Overall Meal Score Card (if available)
+          if (response.overallMealScore != null || response.goalAlignmentPercentage != null)
+            _OverallMealScoreCard(
+              score: response.overallMealScore,
+              alignmentPercentage: response.goalAlignmentPercentage,
+              isDark: isDark,
+            ),
+          if (response.overallMealScore != null || response.goalAlignmentPercentage != null)
+            const SizedBox(height: 16),
+
+          // Collapsible Food Items Section
+          if (response.foodItems.isNotEmpty)
+            _CollapsibleFoodItemsSection(
+              foodItems: response.foodItemsRanked,
+              isDark: isDark,
+            ),
+          if (response.foodItems.isNotEmpty)
+            const SizedBox(height: 16),
 
           // Nutrition cards
           _RainbowNutritionCard(
@@ -1309,6 +1331,23 @@ class _DescribeTabState extends State<_DescribeTab> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // AI Suggestion Card (if available)
+          if (response.aiSuggestion != null ||
+              (response.encouragements != null && response.encouragements!.isNotEmpty) ||
+              (response.warnings != null && response.warnings!.isNotEmpty))
+            _AISuggestionCard(
+              suggestion: response.aiSuggestion,
+              encouragements: response.encouragements,
+              warnings: response.warnings,
+              recommendedSwap: response.recommendedSwap,
+              isDark: isDark,
+            ),
+          if (response.aiSuggestion != null ||
+              (response.encouragements != null && response.encouragements!.isNotEmpty) ||
+              (response.warnings != null && response.warnings!.isNotEmpty))
+            const SizedBox(height: 16),
+
           Text(
             'These values are AI estimates based on your description.',
             style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
@@ -1754,6 +1793,515 @@ class _RainbowNutritionCard extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Overall Meal Score Card
+// ─────────────────────────────────────────────────────────────────
+
+class _OverallMealScoreCard extends StatelessWidget {
+  final int? score;
+  final int? alignmentPercentage;
+  final bool isDark;
+
+  const _OverallMealScoreCard({
+    this.score,
+    this.alignmentPercentage,
+    required this.isDark,
+  });
+
+  Color _getScoreColor() {
+    if (score == null) return Colors.grey;
+    if (score! >= 8) return const Color(0xFF6BCB77);  // Green
+    if (score! >= 5) return const Color(0xFFFFD93D);  // Yellow
+    return const Color(0xFFFF6B6B);  // Red
+  }
+
+  String _getScoreLabel() {
+    if (score == null) return 'N/A';
+    if (score! >= 8) return 'Excellent';
+    if (score! >= 6) return 'Good';
+    if (score! >= 4) return 'Neutral';
+    return 'Poor';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final scoreColor = _getScoreColor();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          // Circular score indicator
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scoreColor.withValues(alpha: 0.15),
+              border: Border.all(color: scoreColor, width: 3),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    score?.toString() ?? '-',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: scoreColor,
+                    ),
+                  ),
+                  Text(
+                    '/10',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: scoreColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.stars, size: 18, color: scoreColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Goal Score',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${_getScoreLabel()} - ${score ?? 0}/10',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scoreColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (alignmentPercentage != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: alignmentPercentage! / 100,
+                            backgroundColor: textMuted.withValues(alpha: 0.2),
+                            valueColor: AlwaysStoppedAnimation(scoreColor),
+                            minHeight: 6,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$alignmentPercentage%',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: scoreColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Goal alignment',
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Collapsible Food Items Section
+// ─────────────────────────────────────────────────────────────────
+
+class _CollapsibleFoodItemsSection extends StatefulWidget {
+  final List<FoodItemRanking> foodItems;
+  final bool isDark;
+
+  const _CollapsibleFoodItemsSection({
+    required this.foodItems,
+    required this.isDark,
+  });
+
+  @override
+  State<_CollapsibleFoodItemsSection> createState() => _CollapsibleFoodItemsSectionState();
+}
+
+class _CollapsibleFoodItemsSectionState extends State<_CollapsibleFoodItemsSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Header (always visible)
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.list_alt, size: 20, color: teal),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.foodItems.length} Food Items',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Tap to ${_isExpanded ? 'hide' : 'see'} details',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.expand_more, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expanded content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              children: [
+                Divider(height: 1, color: cardBorder),
+                ...widget.foodItems.map((item) => _FoodItemRankingCard(
+                  item: item,
+                  isDark: widget.isDark,
+                )),
+              ],
+            ),
+            crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FoodItemRankingCard extends StatelessWidget {
+  final FoodItemRanking item;
+  final bool isDark;
+
+  const _FoodItemRankingCard({required this.item, required this.isDark});
+
+  Color _getScoreColor() {
+    if (item.goalScore == null) return Colors.grey;
+    if (item.goalScore! >= 8) return const Color(0xFF6BCB77);  // Green
+    if (item.goalScore! >= 5) return const Color(0xFFFFD93D);  // Yellow
+    return const Color(0xFFFF6B6B);  // Red
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final scoreColor = _getScoreColor();
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          // Score badge
+          if (item.goalScore != null)
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: scoreColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+              ),
+              child: Center(
+                child: Text(
+                  '${item.goalScore}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: scoreColor,
+                  ),
+                ),
+              ),
+            )
+          else
+            const SizedBox(width: 36),
+          const SizedBox(width: 12),
+          // Food info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                if (item.amount != null)
+                  Text(
+                    item.amount!,
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                if (item.reason != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      item.reason!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: scoreColor,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Calories
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${item.calories ?? 0}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+              Text(
+                'kcal',
+                style: TextStyle(fontSize: 10, color: textMuted),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// AI Suggestion Card
+// ─────────────────────────────────────────────────────────────────
+
+class _AISuggestionCard extends StatelessWidget {
+  final String? suggestion;
+  final List<String>? encouragements;
+  final List<String>? warnings;
+  final String? recommendedSwap;
+  final bool isDark;
+
+  const _AISuggestionCard({
+    this.suggestion,
+    this.encouragements,
+    this.warnings,
+    this.recommendedSwap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    const encourageColor = Color(0xFF6BCB77);  // Green
+    const warningColor = Color(0xFFFF6B6B);    // Red
+    const swapColor = Color(0xFF4D96FF);       // Blue
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            teal.withValues(alpha: 0.1),
+            teal.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: teal.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: teal.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.psychology, size: 20, color: teal),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Coach Tip',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+
+          // Encouragements
+          if (encouragements != null && encouragements!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...encouragements!.map((e) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.thumb_up, size: 14, color: encourageColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      e,
+                      style: TextStyle(fontSize: 13, color: encourageColor),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          // Warnings
+          if (warnings != null && warnings!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...warnings!.map((w) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber, size: 14, color: warningColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      w,
+                      style: TextStyle(fontSize: 13, color: warningColor),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          // General suggestion
+          if (suggestion != null && suggestion!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              suggestion!,
+              style: TextStyle(fontSize: 13, color: textPrimary),
+            ),
+          ],
+
+          // Recommended swap
+          if (recommendedSwap != null && recommendedSwap!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: swapColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: swapColor.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.swap_horiz, size: 18, color: swapColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      recommendedSwap!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: swapColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
