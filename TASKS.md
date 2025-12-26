@@ -25,6 +25,7 @@ ASAP:
 49. It keeps my workouts fresh by changing some of the exercises each week and they aren't disruptive changes, same muscle group different exercise. For me...definitely worth the subscription.
 50. I've been using this for about 2 months now, and it works great. I love that I can modify the weights, reps, sets, and have it give me drop sets or supersets. it also has a great list of exercises that give instructions and videos of how to do the exercises. I do have a couple complaints, though. It will calculate your estimate 1RM, but I would like for it to give the option to work out at a percentage of your 1RM; so, if I only wanted to do 70% of my max, I'd like for it to let me.
 51. Only one I could tell is that it doesn't allow you to make your own exercise; i.e. a combo dumbbell bench press & chest fly.
+52. Suggest Recipes based on food, culture, body type and diet.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

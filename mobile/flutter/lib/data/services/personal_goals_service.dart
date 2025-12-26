@@ -56,7 +56,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Creating goal: $exerciseName ($goalType)');
 
       final response = await _apiClient.post(
-        '/v1/personal-goals/goals',
+        '/personal-goals/goals',
         queryParameters: {'user_id': userId},
         data: {
           'exercise_name': exerciseName,
@@ -90,7 +90,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Getting current goals for user: $userId');
 
       final response = await _apiClient.get(
-        '/v1/personal-goals/goals/current',
+        '/personal-goals/goals/current',
         queryParameters: {'user_id': userId},
       );
 
@@ -123,7 +123,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Recording attempt: $attemptValue reps');
 
       final response = await _apiClient.post(
-        '/v1/personal-goals/goals/$goalId/attempt',
+        '/personal-goals/goals/$goalId/attempt',
         queryParameters: {'user_id': userId},
         data: {
           'attempt_value': attemptValue,
@@ -159,7 +159,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Adding volume: $volumeToAdd reps');
 
       final response = await _apiClient.post(
-        '/v1/personal-goals/goals/$goalId/volume',
+        '/personal-goals/goals/$goalId/volume',
         queryParameters: {'user_id': userId},
         data: {
           'volume_to_add': volumeToAdd,
@@ -192,7 +192,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Completing goal: $goalId');
 
       final response = await _apiClient.post(
-        '/v1/personal-goals/goals/$goalId/complete',
+        '/personal-goals/goals/$goalId/complete',
         queryParameters: {'user_id': userId},
       );
 
@@ -221,7 +221,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Abandoning goal: $goalId');
 
       final response = await _apiClient.post(
-        '/v1/personal-goals/goals/$goalId/abandon',
+        '/personal-goals/goals/$goalId/abandon',
         queryParameters: {'user_id': userId},
       );
 
@@ -252,7 +252,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Getting history for: $exerciseName ($goalType)');
 
       final response = await _apiClient.get(
-        '/v1/personal-goals/goals/history',
+        '/personal-goals/goals/history',
         queryParameters: {
           'user_id': userId,
           'exercise_name': exerciseName,
@@ -284,7 +284,7 @@ class PersonalGoalsService {
       debugPrint('🎯 [PersonalGoals] Getting personal records for: $userId');
 
       final response = await _apiClient.get(
-        '/v1/personal-goals/records',
+        '/personal-goals/records',
         queryParameters: {'user_id': userId},
       );
 
@@ -309,7 +309,7 @@ class PersonalGoalsService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/v1/personal-goals/summary',
+        '/personal-goals/summary',
         queryParameters: {'user_id': userId},
       );
 

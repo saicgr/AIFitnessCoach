@@ -464,7 +464,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => ShareWorkoutSheet(
-        workoutName: widget.workout.name,
+        workoutName: widget.workout.name ?? 'Workout',
         workoutLogId: widget.workoutLogId ?? '',
         durationSeconds: widget.duration,
         calories: widget.calories,

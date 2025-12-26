@@ -425,15 +425,18 @@ AVAILABLE EXERCISES:
 SELECTION CRITERIA:
 1. {"SAFETY FIRST: Exclude any exercises that could aggravate the user's injuries" if injuries else "Choose exercises that best target the focus area"}
 2. Choose exercises that best target the focus area ({focus_area})
-3. Ensure variety - different exercises for balanced muscle development
-4. Progress from compound to isolation exercises
-5. Consider the fitness level - {fitness_level}
-6. Align with goals: {', '.join(goals) if goals else 'General fitness'}
+3. CRITICAL: Each exercise number must be UNIQUE - do NOT repeat any numbers
+4. Ensure variety - select DIFFERENT exercises for balanced muscle development
+5. Progress from compound to isolation exercises
+6. Consider the fitness level - {fitness_level}
+7. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 
-Return ONLY a JSON array of the exercise numbers you select (1-indexed), in the order they should be performed.
-Example: [1, 5, 3, 8, 2, 6]
+IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
-Select exactly {count} exercises that are SAFE for this user."""
+Return ONLY a JSON array of {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.
+Example: [1, 5, 3, 8, 2, 6] - notice all numbers are different
+
+Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
         try:
             system_content = "You are a fitness expert"
@@ -464,14 +467,43 @@ Select exactly {count} exercises that are SAFE for this user."""
 
             selected_indices = json.loads(content.strip())
 
-            # Get selected exercises
+            # Get selected exercises - ensure no duplicates
             selected = []
+            seen_indices = set()
+            seen_names = set()
             for idx in selected_indices:
                 if 1 <= idx <= len(candidates):
+                    # Skip if we've already selected this index
+                    if idx in seen_indices:
+                        logger.warning(f"AI returned duplicate index {idx}, skipping")
+                        continue
+
                     ex = candidates[idx - 1]
+                    exercise_name = ex.get('name', '').lower().strip()
+
+                    # Skip if we've already selected an exercise with the same name
+                    if exercise_name in seen_names:
+                        logger.warning(f"AI returned duplicate exercise '{ex.get('name')}', skipping")
+                        continue
+
+                    seen_indices.add(idx)
+                    seen_names.add(exercise_name)
                     selected.append(self._format_exercise_for_workout(ex, fitness_level, workout_params))
 
-            logger.info(f"AI selected {len(selected)} exercises: {[e['name'] for e in selected]}")
+            # If we don't have enough exercises due to duplicates, try to fill from remaining candidates
+            if len(selected) < count:
+                logger.warning(f"Only got {len(selected)}/{count} unique exercises, filling from remaining candidates")
+                for i, candidate in enumerate(candidates):
+                    if len(selected) >= count:
+                        break
+                    if (i + 1) not in seen_indices:
+                        exercise_name = candidate.get('name', '').lower().strip()
+                        if exercise_name not in seen_names:
+                            seen_indices.add(i + 1)
+                            seen_names.add(exercise_name)
+                            selected.append(self._format_exercise_for_workout(candidate, fitness_level, workout_params))
+
+            logger.info(f"AI selected {len(selected)} unique exercises: {[e['name'] for e in selected]}")
             return selected
 
         except Exception as e:
