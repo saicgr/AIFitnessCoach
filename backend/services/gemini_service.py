@@ -487,43 +487,55 @@ IMPORTANT:
 - warnings: Array of concerns (high sodium, sugar, processed, etc.)
 - recommended_swap: Specific healthier alternative suggestion'''
 
-        try:
-            print(f"🔍 [Gemini] Parsing food description: {description[:100]}...")
-            response = await client.aio.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    max_output_tokens=2000,
-                    temperature=0.3,
-                ),
-            )
+        # Retry logic for intermittent Gemini failures
+        max_retries = 3
+        last_error = None
+        content = ""
 
-            content = response.text.strip() if response.text else ""
-            print(f"🔍 [Gemini] Raw response: {content[:500]}...")
+        for attempt in range(max_retries):
+            try:
+                print(f"🔍 [Gemini] Parsing food description (attempt {attempt + 1}/{max_retries}): {description[:100]}...")
+                response = await client.aio.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        max_output_tokens=2000,
+                        temperature=0.3,
+                    ),
+                )
 
-            if not content:
-                print("❌ [Gemini] Empty response from API")
-                return None
+                content = response.text.strip() if response.text else ""
+                print(f"🔍 [Gemini] Raw response: {content[:500]}...")
 
-            # Parse with robust JSON extraction
-            result = self._extract_json_robust(content)
-            if result:
-                print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
-                return result
-            else:
-                print("❌ [Gemini] Failed to extract valid JSON from response")
-                return None
+                if not content:
+                    print(f"⚠️ [Gemini] Empty response from API (attempt {attempt + 1})")
+                    last_error = "Empty response"
+                    continue
 
-        except json.JSONDecodeError as e:
-            print(f"❌ [Gemini] JSON parsing failed: {e}")
-            print(f"❌ [Gemini] Content was: {content[:500] if content else 'empty'}")
-            return None
-        except Exception as e:
-            print(f"❌ [Gemini] Food description parsing failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+                # Parse with robust JSON extraction
+                result = self._extract_json_robust(content)
+                if result and result.get('food_items'):
+                    print(f"✅ [Gemini] Parsed {len(result.get('food_items', []))} food items")
+                    return result
+                else:
+                    print(f"⚠️ [Gemini] Failed to extract valid JSON with food_items (attempt {attempt + 1})")
+                    last_error = "No food_items in response"
+                    continue
+
+            except json.JSONDecodeError as e:
+                print(f"⚠️ [Gemini] JSON parsing failed (attempt {attempt + 1}): {e}")
+                last_error = str(e)
+                continue
+            except Exception as e:
+                print(f"⚠️ [Gemini] Food description parsing failed (attempt {attempt + 1}): {e}")
+                last_error = str(e)
+                continue
+
+        # All retries exhausted
+        print(f"❌ [Gemini] All {max_retries} attempts failed. Last error: {last_error}")
+        print(f"❌ [Gemini] Last content was: {content[:500] if content else 'empty'}")
+        return None
 
     def _extract_json_robust(self, content: str) -> Optional[Dict]:
         """
