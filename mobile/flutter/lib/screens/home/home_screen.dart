@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
@@ -50,11 +51,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
-    // Only check regeneration once per session
-    final hasChecked = ref.read(hasCheckedRegenerationProvider);
-    if (hasChecked) {
+    // Check if we've already checked today (persisted across app restarts)
+    final prefs = await SharedPreferences.getInstance();
+    final lastCheckDate = prefs.getString('last_workout_check_date');
+    final today = DateTime.now().toIso8601String().split('T')[0];
+
+    // Also check session-level flag (for tab switching within same session)
+    final hasCheckedSession = ref.read(hasCheckedRegenerationProvider);
+
+    if (lastCheckDate == today || hasCheckedSession) {
       debugPrint(
-        'Debug: [HomeScreen] Skipping regeneration check - already done this session',
+        'Debug: [HomeScreen] Skipping regeneration check - already done today ($lastCheckDate)',
       );
       return;
     }
@@ -68,8 +75,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           'Debug: [HomeScreen] Workout check result: ${result['message']}',
         );
 
-        // Mark as checked for this session
+        // Mark as checked for this session AND persist today's date
         ref.read(hasCheckedRegenerationProvider.notifier).state = true;
+        await prefs.setString('last_workout_check_date', today);
 
         // If generation was triggered, store details for display
         if (result['needs_generation'] == true && mounted) {

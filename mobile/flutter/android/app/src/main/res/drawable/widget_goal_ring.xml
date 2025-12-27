@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer glow -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#336366F1"
+                android:endColor="#006366F1"
+                android:type="radial"
+                android:gradientRadius="24dp" />
+        </shape>
+    </item>
+    <!-- Ring background -->
+    <item
+        android:top="6dp"
+        android:left="6dp"
+        android:right="6dp"
+        android:bottom="6dp">
+        <shape android:shape="oval">
+            <stroke
+                android:width="4dp"
+                android:color="#334155" />
+            <solid android:color="#00000000" />
+        </shape>
+    </item>
+    <!-- Progress ring (static preview) -->
+    <item
+        android:top="6dp"
+        android:left="6dp"
+        android:right="6dp"
+        android:bottom="6dp">
+        <rotate
+            android:fromDegrees="-90"
+            android:toDegrees="144">
+            <shape android:shape="ring"
+                android:thickness="4dp"
+                android:useLevel="false">
+                <gradient
+                    android:startColor="#6366F1"
+                    android:centerColor="#8B5CF6"
+                    android:endColor="#A855F7"
+                    android:type="sweep" />
+            </shape>
+        </rotate>
+    </item>
+</layer-list>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background"
+    android:gravity="center">
+
+    <!-- Goal Ring with percentage -->
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="8dp">
+
+        <!-- Ring background -->
+        <View
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:background="@drawable/widget_goal_ring" />
+
+        <!-- Percentage in center -->
+        <TextView
+            android:id="@+id/goal_progress_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="65%"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium" />
+    </FrameLayout>
+
+    <!-- Goal Name -->
+    <TextView
+        android:id="@+id/goal_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lose 5kg"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center" />
+
+    <!-- Target indicator -->
+    <TextView
+        android:id="@+id/goal_target"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Target: Jan 15"
+        android:textSize="11sp"
+        android:textColor="#94A3B8"
+        android:layout_marginTop="4dp" />
+</LinearLayout>

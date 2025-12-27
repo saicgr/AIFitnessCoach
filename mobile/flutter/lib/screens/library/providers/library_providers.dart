@@ -260,52 +260,76 @@ final categoryExercisesProvider =
     FutureProvider.autoDispose<Map<String, List<LibraryExercise>>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
 
-  // Define categories to fetch
-  final categories = [
-    'Chest',
-    'Back',
-    'Shoulders',
-    'Arms',
-    'Legs',
-    'Core',
-    'Cardio',
-  ];
-
   final result = <String, List<LibraryExercise>>{};
 
-  // Fetch "Popular" exercises first (no filter, just first page of all exercises)
+  // Fetch ALL exercises first (the API returns normalized body parts)
   try {
-    final popularResponse = await apiClient.get(
-      '${ApiConstants.library}/exercises?limit=15&offset=0',
+    debugPrint('🎬 [Netflix] Fetching all exercises for categorization...');
+    final allResponse = await apiClient.get(
+      '${ApiConstants.library}/exercises?limit=500&offset=0',
     );
-    if (popularResponse.statusCode == 200) {
-      final data = popularResponse.data as List;
-      result['Popular'] = data
+
+    if (allResponse.statusCode == 200) {
+      final data = allResponse.data as List;
+      final allExercises = data
           .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
           .toList();
+
+      debugPrint('🎬 [Netflix] Loaded ${allExercises.length} total exercises');
+
+      // Popular = first 20 exercises
+      result['Popular'] = allExercises.take(20).toList();
+
+      // Group by body part (the API returns normalized body_part field)
+      final Map<String, List<LibraryExercise>> byBodyPart = {};
+      for (final exercise in allExercises) {
+        final bodyPart = exercise.bodyPart ?? 'Other';
+        byBodyPart.putIfAbsent(bodyPart, () => []);
+        byBodyPart[bodyPart]!.add(exercise);
+      }
+
+      debugPrint('🎬 [Netflix] Body parts found: ${byBodyPart.keys.toList()}');
+
+      // Map to display categories
+      // Combine arm muscles into "Arms"
+      final armExercises = <LibraryExercise>[];
+      for (final key in ['Biceps', 'Triceps', 'Forearms']) {
+        armExercises.addAll(byBodyPart[key] ?? []);
+      }
+      if (armExercises.isNotEmpty) {
+        result['Arms'] = armExercises.take(20).toList();
+      }
+
+      // Combine leg muscles into "Legs"
+      final legExercises = <LibraryExercise>[];
+      for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
+        legExercises.addAll(byBodyPart[key] ?? []);
+      }
+      if (legExercises.isNotEmpty) {
+        result['Legs'] = legExercises.take(20).toList();
+      }
+
+      // Direct mappings for other categories
+      if (byBodyPart['Chest']?.isNotEmpty == true) {
+        result['Chest'] = byBodyPart['Chest']!.take(20).toList();
+      }
+      if (byBodyPart['Back']?.isNotEmpty == true) {
+        result['Back'] = byBodyPart['Back']!.take(20).toList();
+      }
+      if (byBodyPart['Shoulders']?.isNotEmpty == true) {
+        result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
+      }
+      if (byBodyPart['Core']?.isNotEmpty == true) {
+        result['Core'] = byBodyPart['Core']!.take(20).toList();
+      }
+
+      debugPrint('🎬 [Netflix] Categories built: ${result.keys.toList()}');
+      for (final entry in result.entries) {
+        debugPrint('🎬 [Netflix]   ${entry.key}: ${entry.value.length} exercises');
+      }
     }
   } catch (e) {
-    debugPrint('Error loading popular exercises: $e');
-  }
-
-  // Fetch exercises for each category
-  for (final category in categories) {
-    try {
-      final response = await apiClient.get(
-        '${ApiConstants.library}/exercises?body_parts=${Uri.encodeComponent(category)}&limit=15&offset=0',
-      );
-      if (response.statusCode == 200) {
-        final data = response.data as List;
-        final exercises = data
-            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
-            .toList();
-        if (exercises.isNotEmpty) {
-          result[category] = exercises;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading $category exercises: $e');
-    }
+    debugPrint('❌ [Netflix] Error loading exercises: $e');
   }
 
   return result;

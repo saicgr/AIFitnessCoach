@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/language_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 
 /// Stats welcome screen with Rootd-style social proof, language selection, and sign-in
 class StatsWelcomeScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,17 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isDropdownOpen = false;
+
+  // Sign-in state
+  bool _showSignInButtons = false;
+  bool _isSigningIn = false;
+  String? _loadingMessage;
+  final List<String> _loadingMessages = [
+    'Connecting to server...',
+    'Waking up backend (cold start)...',
+    'Almost there...',
+    'Verifying credentials...',
+  ];
 
 
   // Stats data (hardcoded)
@@ -150,6 +162,48 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
       _searchQuery = '';
       _searchController.clear();
     });
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isSigningIn = true;
+      _loadingMessage = _loadingMessages[0];
+    });
+
+    int messageIndex = 0;
+    final messageTimer = Stream.periodic(
+      const Duration(seconds: 3),
+      (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
+    ).listen((message) {
+      if (mounted && _isSigningIn) {
+        setState(() => _loadingMessage = message);
+      }
+    });
+
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+      // Navigation happens automatically via router redirect
+    } finally {
+      messageTimer.cancel();
+      if (mounted) {
+        setState(() {
+          _isSigningIn = false;
+          _loadingMessage = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Apple Sign-In coming soon!'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.purple,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
 
@@ -471,25 +525,189 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         const SizedBox(height: 20),
 
-        // Get Started button (goes to pre-auth quiz)
-        _buildGetStartedButton(isDark),
+        // Get Started button (goes to pre-auth quiz) - hide when sign-in buttons shown
+        if (!_showSignInButtons) ...[
+          _buildGetStartedButton(isDark),
+          const SizedBox(height: 12),
+        ],
 
-        const SizedBox(height: 12),
+        // Already have account - sign in section
+        if (!_showSignInButtons)
+          TextButton(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              setState(() => _showSignInButtons = true);
+            },
+            child: Text(
+              'Already have an account? Sign in',
+              style: TextStyle(
+                fontSize: 14,
+                color: textSecondary,
+              ),
+            ),
+          ).animate().fadeIn(delay: 700.ms),
 
-        // Already have account - sign in link
+        // Sign-in buttons (shown when user clicks "Sign in")
+        if (_showSignInButtons) ...[
+          _buildSignInButtons(isDark, textSecondary),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSignInButtons(bool isDark, Color textSecondary) {
+    final authState = ref.watch(authStateProvider);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Google Sign In button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isSigningIn ? null : _signInWithGoogle,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black87,
+              elevation: isDark ? 0 : 2,
+              disabledBackgroundColor: Colors.white.withOpacity(0.6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            child: _isSigningIn
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _loadingMessage ?? 'Signing in...',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.network(
+                        'https://www.google.com/favicon.ico',
+                        width: 18,
+                        height: 18,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.g_mobiledata,
+                          size: 22,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Continue with Google',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1),
+
+        const SizedBox(height: 10),
+
+        // Apple Sign In button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: _isSigningIn ? null : _signInWithApple,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? Colors.white : Colors.black,
+              foregroundColor: isDark ? Colors.black : Colors.white,
+              elevation: isDark ? 0 : 2,
+              disabledBackgroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.apple,
+                  size: 22,
+                  color: isDark ? Colors.black : Colors.white,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Continue with Apple',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.black : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideY(begin: 0.1),
+
+        // Error message
+        if (authState.status == AuthStatus.error && authState.errorMessage != null)
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.error.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    authState.errorMessage!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn().shake(),
+
+        const SizedBox(height: 8),
+
+        // Cancel/back to get started
         TextButton(
           onPressed: () {
             HapticFeedback.lightImpact();
-            context.go('/sign-in');
+            setState(() => _showSignInButtons = false);
           },
           child: Text(
-            'Already have an account? Sign in',
+            'Back to Get Started',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: textSecondary,
             ),
           ),
-        ).animate().fadeIn(delay: 700.ms),
+        ).animate().fadeIn(delay: 200.ms),
       ],
     );
   }

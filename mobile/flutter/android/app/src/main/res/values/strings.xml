@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Fitness Coach</string>
+
+    <!-- Widget Names -->
+    <string name="workout_widget_name">Today\'s Workout</string>
+    <string name="streak_widget_name">Streak &amp; Motivation</string>
+    <string name="water_widget_name">Quick Water Log</string>
+    <string name="food_widget_name">Quick Food Log</string>
+    <string name="stats_widget_name">Stats Dashboard</string>
+    <string name="social_widget_name">Quick Social Post</string>
+    <string name="challenges_widget_name">Active Challenges</string>
+    <string name="achievements_widget_name">Achievements</string>
+    <string name="goals_widget_name">Personal Goals</string>
+    <string name="calendar_widget_name">Weekly Calendar</string>
+    <string name="ai_coach_widget_name">AI Coach Chat</string>
+
+    <!-- Widget Descriptions -->
+    <string name="workout_widget_description">View and start your scheduled workout for today.</string>
+    <string name="streak_widget_description">Track your workout streak and stay motivated.</string>
+    <string name="water_widget_description">Quickly log your water intake throughout the day.</string>
+    <string name="food_widget_description">Log meals quickly with text, photo, barcode, or saved foods.</string>
+    <string name="stats_widget_description">View your fitness stats at a glance.</string>
+    <string name="social_widget_description">Share your workouts and achievements with friends.</string>
+    <string name="challenges_widget_description">Track your active challenges and competitions.</string>
+    <string name="achievements_widget_description">View your earned badges and achievements.</string>
+    <string name="goals_widget_description">Track progress towards your personal goals.</string>
+    <string name="calendar_widget_description">View your weekly workout schedule.</string>
+    <string name="ai_coach_widget_description">Quick access to your AI fitness coach for tips and advice.</string>
+
+    <!-- Widget Content Labels -->
+    <string name="start_workout">Start</string>
+    <string name="start_workout_full">Start Workout</string>
+    <string name="rest_day">Rest Day</string>
+    <string name="recovery_time">Recovery time</string>
+    <string name="day_streak">day streak</string>
+    <string name="days">days</string>
+    <string name="longest_record">Longest:</string>
+    <string name="add_water">+ Add</string>
+    <string name="log_meal">Log Meal</string>
+    <string name="ask_coach">Ask</string>
+    <string name="calories">cal</string>
+    <string name="protein">P</string>
+    <string name="carbs">C</string>
+    <string name="fats">F</string>
+
+    <!-- Meal Types -->
+    <string name="breakfast">Breakfast</string>
+    <string name="lunch">Lunch</string>
+    <string name="dinner">Dinner</string>
+    <string name="snack">Snack</string>
+
+    <!-- Input Methods -->
+    <string name="input_text">Text</string>
+    <string name="input_photo">Photo</string>
+    <string name="input_barcode">Scan</string>
+    <string name="input_saved">Saved</string>
+</resources>

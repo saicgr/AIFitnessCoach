@@ -73,12 +73,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
     Color textMuted,
     bool isDark,
   ) {
-    // Trigger search when in search mode
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (searchQuery.isNotEmpty) {
-        ref.read(exercisesNotifierProvider.notifier).loadExercises(refresh: true);
-      }
-    });
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     if (exercisesState.isLoading && exercisesState.exercises.isEmpty) {
       return Center(
@@ -96,7 +91,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             Icon(
               Icons.search_off,
               size: 64,
-              color: textMuted.withOpacity(0.5),
+              color: textMuted.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -119,27 +114,60 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       );
     }
 
+    // Group search results by body part for Netflix-style display
+    final Map<String, List<LibraryExercise>> groupedResults = {};
+    for (final exercise in results) {
+      final bodyPart = exercise.bodyPart ?? 'Other';
+      groupedResults.putIfAbsent(bodyPart, () => []);
+      groupedResults[bodyPart]!.add(exercise);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Search results header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            '${results.length} exercises found',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: textMuted,
-            ),
+          child: Row(
+            children: [
+              Text(
+                'Results for "$searchQuery"',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: cyan.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${results.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: cyan,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+
+        // Display results grouped by body part using Netflix carousels
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: results.length,
-            itemBuilder: (context, index) {
-              return ExerciseCard(exercise: results[index]);
-            },
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 100),
+            children: groupedResults.entries.map((entry) {
+              return NetflixExerciseCarousel(
+                categoryTitle: entry.key,
+                exercises: entry.value,
+              );
+            }).toList(),
           ),
         ),
       ],
@@ -164,7 +192,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
               size: 48,
             ),
             const SizedBox(height: 16),
-            Text('Failed to load exercises'),
+            const Text('Failed to load exercises'),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => ref.invalidate(categoryExercisesProvider),
@@ -180,7 +208,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           );
         }
 
-        // Define category order with "Popular" first as hero
+        // Define category order
         final categoryOrder = [
           'Popular',
           'Chest',
@@ -189,13 +217,14 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           'Arms',
           'Legs',
           'Core',
-          'Cardio',
         ];
 
-        // Build ordered list of categories
+        // Build ordered list of categories (excluding Popular for hero)
         final orderedCategories = <MapEntry<String, List<LibraryExercise>>>[];
+        final popularExercises = categoryData['Popular'] ?? [];
 
         for (final category in categoryOrder) {
+          if (category == 'Popular') continue; // Skip - used for hero
           final exercises = categoryData[category];
           if (exercises != null && exercises.isNotEmpty) {
             orderedCategories.add(MapEntry(category, exercises));
@@ -209,18 +238,20 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
           }
         }
 
-        return ListView.builder(
+        return ListView(
           controller: _scrollController,
           padding: const EdgeInsets.only(bottom: 100),
-          itemCount: orderedCategories.length,
-          itemBuilder: (context, index) {
-            final entry = orderedCategories[index];
-            return NetflixExerciseCarousel(
+          children: [
+            // Featured Hero Section at top
+            if (popularExercises.isNotEmpty)
+              NetflixHeroSection(exercises: popularExercises.take(8).toList()),
+
+            // Category rows (Netflix style with multiple cards per row)
+            ...orderedCategories.map((entry) => NetflixExerciseCarousel(
               categoryTitle: entry.key,
               exercises: entry.value,
-              isHeroRow: index == 0, // First row is hero
-            );
-          },
+            )),
+          ],
         );
       },
     );

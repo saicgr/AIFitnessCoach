@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Glow effect -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#33F97316"
+                android:endColor="#00F97316"
+                android:type="radial"
+                android:gradientRadius="24dp" />
+        </shape>
+    </item>
+    <!-- Badge circle -->
+    <item
+        android:top="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:bottom="8dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#F97316"
+                android:centerColor="#EA580C"
+                android:endColor="#DC2626"
+                android:angle="135" />
+        </shape>
+    </item>
+</layer-list>

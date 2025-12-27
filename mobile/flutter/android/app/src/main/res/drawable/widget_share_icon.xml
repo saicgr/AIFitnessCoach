@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Glow effect -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#336366F1"
+                android:endColor="#006366F1"
+                android:type="radial"
+                android:gradientRadius="20dp" />
+        </shape>
+    </item>
+    <!-- Icon circle -->
+    <item
+        android:top="6dp"
+        android:left="6dp"
+        android:right="6dp"
+        android:bottom="6dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#6366F1"
+                android:centerColor="#8B5CF6"
+                android:endColor="#A855F7"
+                android:angle="135" />
+        </shape>
+    </item>
+</layer-list>

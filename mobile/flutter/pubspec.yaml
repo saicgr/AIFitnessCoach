@@ -71,11 +71,14 @@ dependencies:
   package_info_plus: ^8.0.0
 
   # Barcode Scanning
-  mobile_scanner: ^5.1.1
+  mobile_scanner: ^7.0.0
 
   # Image Picker (for food photos)
   image_picker: ^1.1.2
   speech_to_text: ^7.3.0
+
+  # Home Screen Widgets
+  home_widget: ^0.7.0
 
 dev_dependencies:
   flutter_test:

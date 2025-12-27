@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Glow effect -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#33FFD700"
+                android:endColor="#00FFD700"
+                android:type="radial"
+                android:gradientRadius="24dp" />
+        </shape>
+    </item>
+    <!-- Trophy circle -->
+    <item
+        android:top="8dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:bottom="8dp">
+        <shape android:shape="oval">
+            <gradient
+                android:startColor="#FFD700"
+                android:centerColor="#FFA500"
+                android:endColor="#FF8C00"
+                android:angle="135" />
+        </shape>
+    </item>
+</layer-list>

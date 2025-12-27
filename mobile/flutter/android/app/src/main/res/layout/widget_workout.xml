@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="20dp"
+    android:gravity="center">
+
+    <!-- Dumbbell Icon -->
+    <ImageView
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@android:drawable/ic_menu_compass"
+        android:tint="#818CF8"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Workout Name -->
+    <TextView
+        android:id="@+id/workout_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upper Body"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Muscle Group -->
+    <TextView
+        android:id="@+id/workout_muscle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chest, Shoulders"
+        android:textColor="#94A3B8"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp"
+        android:gravity="center" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Stats Row -->
+    <LinearLayout
+        android:id="@+id/stats_row"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/workout_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="45 min"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:layout_marginEnd="16dp" />
+
+        <TextView
+            android:id="@+id/workout_exercises"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="8 exercises"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Start Button -->
+    <TextView
+        android:id="@+id/workout_start_button"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="Start"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:fontFamily="sans-serif-medium"
+        android:background="@drawable/widget_button_primary"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>
