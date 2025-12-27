@@ -500,7 +500,7 @@ IMPORTANT:
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
-                        max_output_tokens=2000,
+                        max_output_tokens=4096,  # Increased from 2000 to prevent truncation
                         temperature=0.3,
                     ),
                 )
