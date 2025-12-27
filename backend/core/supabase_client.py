@@ -3,11 +3,13 @@ Supabase client wrapper for AI Fitness Coach.
 Provides database and auth functionality via Supabase.
 """
 from supabase import create_client, Client
+from supabase.lib.client_options import ClientOptions
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from functools import lru_cache
 from typing import Optional
 import os
+import httpx
 
 from core.config import get_settings
 
@@ -35,8 +37,16 @@ class SupabaseManager:
             # Initialize Supabase client (for Auth and Realtime)
             self._supabase = create_client(
                 settings.supabase_url,
-                settings.supabase_key
+                settings.supabase_key,
             )
+
+            # Configure auth client with longer timeout (10s instead of default 5s)
+            # This prevents ReadTimeout errors on cold starts or slow network
+            auth_http_client = httpx.Client(
+                timeout=httpx.Timeout(10.0),
+                follow_redirects=True,
+            )
+            self._supabase.auth._http_client = auth_http_client
 
             # Initialize SQLAlchemy engine for Postgres
             # Lambda-optimized connection pooling:
