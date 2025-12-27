@@ -37,18 +37,18 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   static const int _totalSteps = 3;
 
   bool _isUpdating = false;
-  bool _isLoading = true;
+  bool _isLoading = false;
   String _updateStatus = '';
 
   // Step 1: Schedule
-  final Set<int> _selectedDays = {};
+  final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
   int _programWeeks = 4;
 
   // Step 2: Workout Type & Focus
   String? _selectedWorkoutType;
-  final Set<String> _selectedFocusAreas = {};
+  final Set<String> _selectedFocusAreas = {'Full Body'};
   final Set<String> _selectedEquipment = {};
 
   // Step 3: Health (optional)
@@ -334,16 +334,25 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           ),
           child: SafeArea(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildHeader(colors),
                 Divider(height: 1, color: colors.cardBorder),
                 _buildProgressIndicator(colors),
                 Expanded(
-                  child: _isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(color: colors.cyan))
-                      : _buildCurrentStep(colors),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                          maxHeight: constraints.maxHeight,
+                        ),
+                        child: _isLoading
+                            ? Center(
+                                child: CircularProgressIndicator(color: colors.cyan))
+                            : _buildCurrentStep(colors),
+                      );
+                    },
+                  ),
                 ),
                 _buildNavigationButtons(colors),
               ],
@@ -435,39 +444,33 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildScheduleStep(SheetColors colors) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          WorkoutDaysSelector(
-            selectedDays: _selectedDays,
-            onSelectionChanged: (days) =>
-                setState(() => _selectedDays
-                  ..clear()
-                  ..addAll(days)),
-            disabled: _isUpdating,
+          Text(
+            'Workout Days',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 32),
-          DifficultySelector(
-            selectedDifficulty: _selectedDifficulty,
-            onSelectionChanged: (d) =>
-                setState(() => _selectedDifficulty = d),
-            disabled: _isUpdating,
+          const SizedBox(height: 16),
+          Text(
+            'Selected: ${_selectedDays.length} days',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
-          const SizedBox(height: 12),
-          DurationSlider(
-            duration: _selectedDuration,
-            onChanged: (d) => setState(() => _selectedDuration = d),
-            disabled: _isUpdating,
-            accentColor: colors.success,
+          const SizedBox(height: 16),
+          Text(
+            'Difficulty: $_selectedDifficulty',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
-          const SizedBox(height: 32),
-          ProgramDurationSelector(
-            selectedWeeks: _programWeeks,
-            onSelectionChanged: (weeks) =>
-                setState(() => _programWeeks = weeks),
-            disabled: _isUpdating,
+          const SizedBox(height: 16),
+          Text(
+            'Duration: ${_selectedDuration.toInt()} min',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
         ],
       ),
@@ -477,8 +480,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   Widget _buildWorkoutTypeStep(SheetColors colors) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -625,7 +630,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
