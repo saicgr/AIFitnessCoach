@@ -17,6 +17,7 @@ Future<bool?> showEditProgramSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    useRootNavigator: true,
     builder: (sheetContext) => Theme(
       data: parentTheme,
       child: const _EditProgramSheet(),
@@ -339,20 +340,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                 Divider(height: 1, color: colors.cardBorder),
                 _buildProgressIndicator(colors),
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                          maxHeight: constraints.maxHeight,
-                        ),
-                        child: _isLoading
-                            ? Center(
-                                child: CircularProgressIndicator(color: colors.cyan))
-                            : _buildCurrentStep(colors),
-                      );
-                    },
-                  ),
+                  child: _isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(color: colors.cyan))
+                      : _buildCurrentStep(colors),
                 ),
                 _buildNavigationButtons(colors),
               ],
@@ -462,14 +453,46 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             'Selected: ${_selectedDays.length} days',
             style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            'Difficulty: $_selectedDifficulty',
+            'Difficulty',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_selectedDifficulty',
             style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            'Duration: ${_selectedDuration.toInt()} min',
+            'Duration',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${_selectedDuration.toInt()} minutes',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Program Length',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_programWeeks weeks',
             style: TextStyle(fontSize: 16, color: colors.textSecondary),
           ),
         ],
@@ -767,7 +790,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildNavigationButtons(SheetColors colors) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom + 88;
+    final bottomPadding = MediaQuery.of(context).padding.bottom + 16;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
