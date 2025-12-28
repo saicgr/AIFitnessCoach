@@ -14,6 +14,7 @@ export 'injuries_selector.dart';
 export 'difficulty_selector.dart';
 export 'duration_slider.dart';
 export 'workout_type_selector.dart';
+export 'training_program_selector.dart';
 export 'ai_suggestion_card.dart';
 export 'workout_days_selector.dart';
 export 'program_duration_selector.dart';

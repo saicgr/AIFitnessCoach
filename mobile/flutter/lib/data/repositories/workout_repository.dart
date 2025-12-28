@@ -1615,6 +1615,7 @@ class ProgramPreferences {
   final String? difficulty;
   final int? durationMinutes;
   final String? workoutType;
+  final String? trainingSplit; // Training program ID (full_body, ppl, etc.)
   final List<String> workoutDays;
   final List<String> equipment;
   final List<String> focusAreas;
@@ -1625,6 +1626,7 @@ class ProgramPreferences {
     this.difficulty,
     this.durationMinutes,
     this.workoutType,
+    this.trainingSplit,
     this.workoutDays = const [],
     this.equipment = const [],
     this.focusAreas = const [],
@@ -1637,6 +1639,7 @@ class ProgramPreferences {
       difficulty: json['difficulty'] as String?,
       durationMinutes: json['duration_minutes'] as int?,
       workoutType: json['workout_type'] as String?,
+      trainingSplit: json['training_split'] as String?,
       workoutDays: (json['workout_days'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??

@@ -48,8 +48,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   double _selectedDuration = 45;
   // Program weeks removed - using automatic 2-week generation with auto-regeneration
 
-  // Step 2: Workout Type & Focus
-  String? _selectedWorkoutType;
+  // Step 2: Training Program & Equipment
+  String? _selectedProgramId;
   final Set<String> _selectedFocusAreas = {'Full Body'};
   final Set<String> _selectedEquipment = {};
 
@@ -57,10 +57,8 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   final Set<String> _selectedInjuries = {};
 
   // Custom inputs
-  String _customWorkoutType = '';
   String _customFocusArea = '';
   String _customInjury = '';
-  bool _showWorkoutTypeInput = false;
   bool _showFocusAreaInput = false;
   bool _showInjuryInput = false;
 
@@ -68,7 +66,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
 
-  final TextEditingController _workoutTypeController = TextEditingController();
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
 
@@ -80,7 +77,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   @override
   void dispose() {
-    _workoutTypeController.dispose();
     _focusAreaController.dispose();
     _injuryController.dispose();
     super.dispose();
@@ -114,14 +110,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   prefs.durationMinutes!.toDouble().clamp(15, 90);
             }
 
-            if (prefs.workoutType != null && prefs.workoutType!.isNotEmpty) {
-              final normalizedType = defaultWorkoutTypes.firstWhere(
-                (t) => t.toLowerCase() == prefs.workoutType!.toLowerCase(),
-                orElse: () => '',
-              );
-              if (normalizedType.isNotEmpty) {
-                _selectedWorkoutType = normalizedType;
-              }
+            // Load training split as program ID
+            if (prefs.trainingSplit != null && prefs.trainingSplit!.isNotEmpty) {
+              _selectedProgramId = prefs.trainingSplit;
             }
 
             _selectedDays.clear();
@@ -226,7 +217,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         injuries: _selectedInjuries.toList(),
         equipment:
             _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
-        workoutType: _selectedWorkoutType,
+        workoutType: _selectedProgramId, // Send training program ID
         workoutDays: selectedDayNames,
         dumbbellCount:
             _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
@@ -363,7 +354,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildHeader(SheetColors colors) {
-    final stepTitles = ['Schedule', 'Workout Type', 'Health'];
+    final stepTitles = ['Schedule', 'Training Program', 'Health'];
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -502,99 +493,13 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SectionTitle(
-                  icon: Icons.category,
-                  title: 'Workout Type',
-                  badge: 'Optional',
-                  iconColor: colors.purple,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Leave unselected for variety',
-                  style: TextStyle(fontSize: 13, color: colors.textMuted),
-                ),
-              ],
-            ),
+          // Training Program Selector (horizontal scrolling cards)
+          TrainingProgramSelector(
+            selectedProgramId: _selectedProgramId,
+            onSelectionChanged: (programId) =>
+                setState(() => _selectedProgramId = programId),
+            disabled: _isUpdating,
           ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ...defaultWorkoutTypes.map((type) {
-                  final isSelected = _selectedWorkoutType == type;
-                  return SelectableChip(
-                    label: type,
-                    isSelected: isSelected,
-                    accentColor: colors.purple,
-                    disabled: _isUpdating,
-                    showCheckIcon: false,
-                    onTap: () => setState(
-                      () => _selectedWorkoutType = isSelected ? null : type,
-                    ),
-                  );
-                }),
-                OtherInputChip(
-                  isInputShown: _showWorkoutTypeInput,
-                  customValue: _customWorkoutType,
-                  accentColor: colors.purple,
-                  onTap: () => setState(
-                    () => _showWorkoutTypeInput = !_showWorkoutTypeInput,
-                  ),
-                  disabled: _isUpdating,
-                ),
-              ],
-            ),
-          ),
-          if (_showWorkoutTypeInput) ...[
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _workoutTypeController,
-                decoration: InputDecoration(
-                  hintText: 'Enter custom workout type (e.g., "Boxing")',
-                  hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
-                  filled: true,
-                  fillColor: colors.glassSurface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: colors.cardBorder),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.check, color: colors.purple),
-                    onPressed: () {
-                      setState(() {
-                        _customWorkoutType = _workoutTypeController.text.trim();
-                        _selectedWorkoutType = _customWorkoutType.isNotEmpty
-                            ? _customWorkoutType
-                            : null;
-                        _showWorkoutTypeInput = false;
-                      });
-                    },
-                  ),
-                ),
-                style: TextStyle(color: colors.textPrimary),
-                onSubmitted: (value) {
-                  setState(() {
-                    _customWorkoutType = value.trim();
-                    _selectedWorkoutType =
-                        _customWorkoutType.isNotEmpty ? _customWorkoutType : null;
-                    _showWorkoutTypeInput = false;
-                  });
-                },
-              ),
-            ),
-          ],
           const SizedBox(height: 32),
           EquipmentSelector(
             selectedEquipment: _selectedEquipment,
@@ -741,8 +646,17 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   '${_selectedDuration.round()} minutes',
                 ),
                 // Program duration removed from summary - using automatic regeneration
-                if (_selectedWorkoutType != null)
-                  _buildSummaryRow(colors, 'Type', _selectedWorkoutType!),
+                if (_selectedProgramId != null)
+                  _buildSummaryRow(
+                    colors,
+                    'Program',
+                    defaultTrainingPrograms
+                        .firstWhere(
+                          (p) => p.id == _selectedProgramId,
+                          orElse: () => defaultTrainingPrograms.first,
+                        )
+                        .name,
+                  ),
                 if (_selectedEquipment.isNotEmpty)
                   _buildSummaryRow(
                     colors,
