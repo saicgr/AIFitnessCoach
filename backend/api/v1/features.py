@@ -65,15 +65,15 @@ class VoteRequest(BaseModel):
 def row_to_feature_response(
     row: dict,
     user_id: Optional[str] = None,
-    db=None
+    client=None
 ) -> FeatureRequestResponse:
     """Convert database row to FeatureRequestResponse."""
 
     # Check if user has voted for this feature
     user_has_voted = False
-    if user_id and db:
+    if user_id and client:
         try:
-            vote_result = db.table("feature_votes").select("id").eq(
+            vote_result = client.table("feature_votes").select("id").eq(
                 "user_id", user_id
             ).eq("feature_id", row["id"]).execute()
             user_has_voted = len(vote_result.data) > 0
@@ -115,9 +115,10 @@ async def get_feature_requests(
     """
     try:
         db = get_supabase_db()
+        client = db.client
 
         # Build query
-        query = db.table("feature_requests").select("*")
+        query = client.table("feature_requests").select("*")
 
         if status:
             query = query.eq("status", status)
@@ -132,7 +133,7 @@ async def get_feature_requests(
 
         # Convert to response models
         features = [
-            row_to_feature_response(row, user_id, db)
+            row_to_feature_response(row, user_id, client)
             for row in result.data
         ]
 
@@ -166,6 +167,7 @@ async def create_feature_request(
     """
     try:
         db = get_supabase_db()
+        client = db.client
 
         # Validate category
         valid_categories = ['workout', 'social', 'analytics', 'nutrition',
@@ -177,7 +179,7 @@ async def create_feature_request(
             )
 
         # Check current submission count (database trigger will also enforce this)
-        count_result = db.table("feature_requests").select(
+        count_result = client.table("feature_requests").select(
             "id", count="exact"
         ).eq("created_by", feature.user_id).execute()
 
@@ -189,7 +191,7 @@ async def create_feature_request(
             )
 
         # Insert feature request
-        insert_result = db.table("feature_requests").insert({
+        insert_result = client.table("feature_requests").insert({
             "title": feature.title,
             "description": feature.description,
             "category": feature.category,
@@ -205,7 +207,7 @@ async def create_feature_request(
 
         logger.info(f"Created feature request: {created_feature['id']} by user {feature.user_id}")
 
-        return row_to_feature_response(created_feature, feature.user_id, db)
+        return row_to_feature_response(created_feature, feature.user_id, client)
 
     except HTTPException:
         raise
@@ -235,22 +237,23 @@ async def vote_for_feature(request: Request, vote: VoteRequest):
     """
     try:
         db = get_supabase_db()
+        client = db.client
 
         # Check if user has already voted
-        existing_vote = db.table("feature_votes").select("id").eq(
+        existing_vote = client.table("feature_votes").select("id").eq(
             "user_id", vote.user_id
         ).eq("feature_id", vote.feature_id).execute()
 
         if existing_vote.data:
             # User already voted - remove vote (unvote)
             vote_id = existing_vote.data[0]["id"]
-            db.table("feature_votes").delete().eq("id", vote_id).execute()
+            client.table("feature_votes").delete().eq("id", vote_id).execute()
 
             action = "unvoted"
             logger.info(f"User {vote.user_id} unvoted for feature {vote.feature_id}")
         else:
             # User hasn't voted - add vote
-            db.table("feature_votes").insert({
+            client.table("feature_votes").insert({
                 "user_id": vote.user_id,
                 "feature_id": vote.feature_id
             }).execute()
@@ -259,7 +262,7 @@ async def vote_for_feature(request: Request, vote: VoteRequest):
             logger.info(f"User {vote.user_id} voted for feature {vote.feature_id}")
 
         # Get updated vote count
-        feature = db.table("feature_requests").select("vote_count").eq(
+        feature = client.table("feature_requests").select("vote_count").eq(
             "id", vote.feature_id
         ).single().execute()
 
@@ -287,13 +290,14 @@ async def get_feature_details(feature_id: str, user_id: Optional[str] = None) ->
     """
     try:
         db = get_supabase_db()
+        client = db.client
 
-        result = db.table("feature_requests").select("*").eq("id", feature_id).single().execute()
+        result = client.table("feature_requests").select("*").eq("id", feature_id).single().execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Feature request not found")
 
-        return row_to_feature_response(result.data, user_id, db)
+        return row_to_feature_response(result.data, user_id, client)
 
     except HTTPException:
         raise
@@ -315,8 +319,9 @@ async def get_remaining_submissions(user_id: str):
     """
     try:
         db = get_supabase_db()
+        client = db.client
 
-        result = db.table("feature_requests").select(
+        result = client.table("feature_requests").select(
             "id", count="exact"
         ).eq("created_by", user_id).execute()
 
