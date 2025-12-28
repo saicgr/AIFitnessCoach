@@ -211,6 +211,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
 
+              // Upcoming Features Card (Robinhood-style)
+              const SliverToBoxAdapter(
+                child: UpcomingFeaturesCard(),
+              ),
+
               // Section: YOUR WEEK
               const SliverToBoxAdapter(
                 child: SectionHeader(title: 'YOUR WEEK'),

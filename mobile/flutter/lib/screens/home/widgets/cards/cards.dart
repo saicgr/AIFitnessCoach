@@ -8,3 +8,4 @@ export 'upcoming_workout_card.dart';
 export 'workout_state_cards.dart';
 export 'library_quick_access_card.dart';
 export 'exercise_image_thumbnail.dart';
+export 'upcoming_features_card.dart';

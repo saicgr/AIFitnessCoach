@@ -7,6 +7,7 @@ import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/chat/chat_screen.dart';
+import '../screens/features/feature_voting_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
@@ -514,6 +515,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/achievements',
         builder: (context, state) => const AchievementsScreen(),
+      ),
+
+      // Feature Voting (Robinhood-style)
+      GoRoute(
+        path: '/features',
+        builder: (context, state) => const FeatureVotingScreen(),
       ),
 
       // Library (Exercise database, programs) - Full screen outside shell
