@@ -1625,6 +1625,8 @@ class ProgramPreferences {
   final List<String> focusAreas;
   final List<String> injuries;
   final String? lastUpdated;
+  final int? dumbbellCount;
+  final int? kettlebellCount;
 
   ProgramPreferences({
     this.difficulty,
@@ -1636,6 +1638,8 @@ class ProgramPreferences {
     this.focusAreas = const [],
     this.injuries = const [],
     this.lastUpdated,
+    this.dumbbellCount,
+    this.kettlebellCount,
   });
 
   factory ProgramPreferences.fromJson(Map<String, dynamic> json) {
@@ -1661,6 +1665,8 @@ class ProgramPreferences {
               .toList() ??
           [],
       lastUpdated: json['last_updated'] as String?,
+      dumbbellCount: json['dumbbell_count'] as int?,
+      kettlebellCount: json['kettlebell_count'] as int?,
     );
   }
 }

@@ -67,7 +67,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   // Equipment quantities
   int _dumbbellCount = 2;
-  int _kettlebellCount = 1;
+  int _kettlebellCount = 2;
 
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
@@ -159,6 +159,14 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               if (defaultInjuries.contains(injury)) {
                 _selectedInjuries.add(injury);
               }
+            }
+
+            // Load equipment quantities
+            if (prefs.dumbbellCount != null) {
+              _dumbbellCount = prefs.dumbbellCount!;
+            }
+            if (prefs.kettlebellCount != null) {
+              _kettlebellCount = prefs.kettlebellCount!;
             }
           } else {
             _selectedDays.addAll([0, 2, 4]);

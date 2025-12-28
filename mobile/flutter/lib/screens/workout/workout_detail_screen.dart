@@ -10,6 +10,8 @@ import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../home/widgets/components/training_program_selector.dart';
 import 'widgets/workout_actions_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
@@ -34,6 +36,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   bool _isLoadingSummary = true;  // Start as true to show loading immediately
   bool _isWarmupExpanded = false;  // For warmup section
   bool _isStretchesExpanded = false;  // For stretches section
+  String? _trainingSplit;  // Training program type from user preferences
 
   @override
   void initState() {
@@ -54,13 +57,32 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         _workout = workout;
         _isLoading = false;
       });
-      // Load workout summary after workout loads
+      // Load workout summary and training split after workout loads
       _loadWorkoutSummary();
+      _loadTrainingSplit();
     } catch (e) {
       setState(() {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadTrainingSplit() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId == null) return;
+
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final prefs = await workoutRepo.getProgramPreferences(userId);
+      if (mounted && prefs?.trainingSplit != null) {
+        setState(() {
+          _trainingSplit = prefs!.trainingSplit;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Failed to load training split: $e');
     }
   }
 
@@ -91,6 +113,22 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         setState(() => _isLoadingSummary = false);
       }
     }
+  }
+
+  /// Convert training split ID to display name
+  String _getTrainingProgramName(String splitId) {
+    // Find the program in the default list
+    final program = defaultTrainingPrograms.firstWhere(
+      (p) => p.id == splitId,
+      orElse: () => TrainingProgram(
+        id: splitId,
+        name: splitId.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' '),
+        description: '',
+        daysPerWeek: '',
+        icon: Icons.fitness_center,
+      ),
+    );
+    return program.name;
   }
 
   @override
@@ -206,6 +244,28 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                           ),
                         ),
                       ),
+                      // Training Program Badge
+                      if (_trainingSplit != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _getTrainingProgramName(_trainingSplit!),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

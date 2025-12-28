@@ -47,11 +47,14 @@ class ProgramPreferences(BaseModel):
     difficulty: Optional[str] = None
     duration_minutes: Optional[int] = None
     workout_type: Optional[str] = None
+    training_split: Optional[str] = None
     workout_days: List[str] = []
     equipment: List[str] = []
     focus_areas: List[str] = []
     injuries: List[str] = []
     last_updated: Optional[str] = None
+    dumbbell_count: Optional[int] = None
+    kettlebell_count: Optional[int] = None
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -376,11 +379,14 @@ async def get_program_preferences(user_id: str):
             difficulty=latest_regen.get("selected_difficulty") if latest_regen else base_prefs.get("intensity_preference"),
             duration_minutes=latest_regen.get("selected_duration_minutes") if latest_regen else base_prefs.get("workout_duration"),
             workout_type=latest_regen.get("selected_workout_type") if latest_regen else base_prefs.get("training_split"),
+            training_split=base_prefs.get("training_split"),
             workout_days=_get_workout_days(base_prefs, latest_regen),
             equipment=safe_list(latest_regen.get("selected_equipment")) if latest_regen else user_equipment,
             focus_areas=safe_list(latest_regen.get("selected_focus_areas")) if latest_regen else [],
             injuries=safe_list(latest_regen.get("selected_injuries")) if latest_regen else user_injuries,
             last_updated=latest_regen.get("created_at") if latest_regen else user_row.get("updated_at"),
+            dumbbell_count=base_prefs.get("dumbbell_count", 2),
+            kettlebell_count=base_prefs.get("kettlebell_count", 2),
         )
 
         logger.info(f"Program preferences fetched for user {user_id}")
