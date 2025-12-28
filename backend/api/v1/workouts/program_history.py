@@ -13,7 +13,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from core.supabase_db import get_supabase_db
-from core.logger import logger
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/program-history", tags=["program-history"])
 
