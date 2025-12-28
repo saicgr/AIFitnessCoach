@@ -729,6 +729,12 @@ IMPORTANT:
         # Use intensity_preference if provided, otherwise derive from fitness_level
         if intensity_preference:
             difficulty = intensity_preference
+
+            # Warn about potentially dangerous combinations
+            if fitness_level == "beginner" and intensity_preference == "hard":
+                print(f"⚠️ [Gemini] WARNING: Beginner fitness level with hard intensity preference - ensure exercises are scaled appropriately")
+            elif fitness_level == "intermediate" and intensity_preference == "hard":
+                print(f"🔍 [Gemini] Note: Intermediate fitness level with hard intensity - will challenge the user")
         else:
             difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
@@ -763,11 +769,16 @@ IMPORTANT:
             activity_desc = activity_descriptions.get(activity_level, activity_level)
             age_activity_context += f"\n- Activity Level: {activity_desc}"
 
+        # Add safety instruction if there's a mismatch between fitness level and intensity
+        safety_instruction = ""
+        if fitness_level == "beginner" and difficulty == "hard":
+            safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Choose challenging exercises but ensure proper form is achievable. Include more rest periods and focus on compound movements with moderate weights rather than advanced techniques."
+
         prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}
+- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{safety_instruction}
 
 Return a valid JSON object with this exact structure:
 {{
@@ -916,7 +927,17 @@ Requirements:
         if not exercises:
             raise ValueError("No exercises provided")
 
-        difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
+        # Use intensity_preference if provided, otherwise derive from fitness_level
+        if intensity_preference:
+            difficulty = intensity_preference
+
+            # Warn about potentially dangerous combinations
+            if fitness_level == "beginner" and intensity_preference == "hard":
+                print(f"⚠️ [Gemini] WARNING: Beginner fitness level with hard intensity preference - ensure exercises are scaled appropriately")
+            elif fitness_level == "intermediate" and intensity_preference == "hard":
+                print(f"🔍 [Gemini] Note: Intermediate fitness level with hard intensity - will challenge the user")
+        else:
+            difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
         # Build avoid words instruction
         avoid_instruction = ""
@@ -926,6 +947,11 @@ Requirements:
         # Check for holiday theming
         holiday_theme = self._get_holiday_theme(workout_date)
         holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
+
+        # Add safety instruction if there's a mismatch between fitness level and intensity
+        safety_instruction = ""
+        if fitness_level == "beginner" and difficulty == "hard":
+            safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Structure exercises with more rest periods and ensure reps/sets are achievable with proper form. Focus on compound movements rather than advanced techniques."
 
         # Format exercises for the prompt
         exercise_list = "\n".join([
@@ -939,7 +965,7 @@ Requirements:
 
 User profile:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}
+- Goals: {', '.join(goals) if goals else 'General fitness'}{safety_instruction}
 
 Create a CREATIVE and MOTIVATING workout name (3-4 words) that ends with the body part focus.
 
