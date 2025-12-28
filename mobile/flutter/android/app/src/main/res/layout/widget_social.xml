@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/social_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -7,25 +8,13 @@
     android:background="@drawable/widget_background"
     android:gravity="center">
 
-    <!-- Share Icon with glow -->
-    <FrameLayout
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginBottom="12dp">
-
-        <View
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/widget_share_icon" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="📤"
-            android:textSize="20sp"
-            android:includeFontPadding="false" />
-    </FrameLayout>
+    <!-- Share Icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📤"
+        android:textSize="36sp"
+        android:layout_marginBottom="12dp" />
 
     <!-- Share Workout Button -->
     <TextView
@@ -37,12 +26,9 @@
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:fontFamily="sans-serif-medium"
         android:background="@drawable/widget_button_primary"
         android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:clickable="true"
-        android:focusable="true" />
+        android:paddingEnd="24dp" />
 
     <!-- Quick tip -->
     <TextView

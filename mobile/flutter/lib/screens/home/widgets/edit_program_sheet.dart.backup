@@ -5,7 +5,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import 'components/components.dart';
-// import 'program_history_screen.dart';
 
 /// Shows a bottom sheet for editing program preferences
 Future<bool?> showEditProgramSheet(
@@ -309,12 +308,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  void _showProgramHistory() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Program history coming soon!')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -326,7 +319,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.95,
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
           decoration: BoxDecoration(
             color: isDark
@@ -341,14 +334,12 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             ),
           ),
           child: SafeArea(
-            bottom: false,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildHeader(colors),
                 Divider(height: 1, color: colors.cardBorder),
                 _buildProgressIndicator(colors),
-                Flexible(
+                Expanded(
                   child: _isLoading
                       ? Center(
                           child: CircularProgressIndicator(color: colors.cyan))
@@ -401,11 +392,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             ),
           ),
           IconButton(
-            onPressed: _isUpdating ? null : _showProgramHistory,
-            icon: Icon(Icons.history, color: colors.cyan),
-            tooltip: 'Program History',
-          ),
-          IconButton(
             onPressed: _isUpdating ? null : () => Navigator.pop(context),
             icon: Icon(Icons.close, color: colors.textSecondary),
           ),
@@ -449,55 +435,68 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildScheduleStep(SheetColors colors) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: constraints.maxWidth,
-              maxWidth: constraints.maxWidth,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  WorkoutDaysSelector(
-                    selectedDays: _selectedDays,
-                    onSelectionChanged: (days) => setState(() {
-                      _selectedDays.clear();
-                      _selectedDays.addAll(days);
-                    }),
-                    disabled: _isUpdating,
-                  ),
-                  const SizedBox(height: 16),
-                  DifficultySelector(
-                    selectedDifficulty: _selectedDifficulty,
-                    onSelectionChanged: (d) =>
-                        setState(() => _selectedDifficulty = d),
-                    disabled: _isUpdating,
-                  ),
-                  const SizedBox(height: 16),
-                  DurationSlider(
-                    duration: _selectedDuration,
-                    onChanged: (d) => setState(() => _selectedDuration = d),
-                    disabled: _isUpdating,
-                    accentColor: colors.success,
-                  ),
-                  const SizedBox(height: 16),
-                  ProgramDurationSelector(
-                    selectedWeeks: _programWeeks,
-                    onSelectionChanged: (weeks) =>
-                        setState(() => _programWeeks = weeks),
-                    disabled: _isUpdating,
-                  ),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Workout Days',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
             ),
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          Text(
+            'Selected: ${_selectedDays.length} days',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Difficulty',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_selectedDifficulty',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Duration',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${_selectedDuration.toInt()} minutes',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Program Length',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$_programWeeks weeks',
+            style: TextStyle(fontSize: 16, color: colors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 
@@ -605,19 +604,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
           const SizedBox(height: 32),
           EquipmentSelector(
             selectedEquipment: _selectedEquipment,
-            onSelectionChanged: (eq) {
-              setState(() {
-                _selectedEquipment
+            onSelectionChanged: (eq) =>
+                setState(() => _selectedEquipment
                   ..clear()
-                  ..addAll(eq);
-
-                // When Full Gym is selected, set both counts to 2
-                if (eq.contains('Full Gym')) {
-                  _dumbbellCount = 2;
-                  _kettlebellCount = 2;
-                }
-              });
-            },
+                  ..addAll(eq)),
             customEquipment: '',
             showCustomInput: false,
             onToggleCustomInput: () {},
@@ -747,11 +737,6 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   'Duration',
                   '${_selectedDuration.round()} minutes',
                 ),
-                _buildSummaryRow(
-                  colors,
-                  'Program',
-                  '$_programWeeks weeks',
-                ),
                 if (_selectedWorkoutType != null)
                   _buildSummaryRow(colors, 'Type', _selectedWorkoutType!),
                 if (_selectedEquipment.isNotEmpty)
@@ -805,8 +790,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   }
 
   Widget _buildNavigationButtons(SheetColors colors) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom + 16;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPadding),
       child: Row(
         children: [
           if (_currentStep > 0)

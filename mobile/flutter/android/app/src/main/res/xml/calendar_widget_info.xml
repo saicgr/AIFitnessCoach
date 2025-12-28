@@ -6,11 +6,11 @@
     android:targetCellHeight="2"
     android:minResizeWidth="110dp"
     android:minResizeHeight="110dp"
-    android:maxResizeWidth="250dp"
-    android:maxResizeHeight="250dp"
-    android:updatePeriodMillis="3600000"
-    android:initialLayout="@layout/widget_calendar"
+    android:maxResizeWidth="300dp"
+    android:maxResizeHeight="300dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:previewImage="@mipmap/ic_launcher"
-    android:description="@string/calendar_widget_description" />
+    android:initialLayout="@layout/widget_calendar"
+    android:previewLayout="@layout/widget_calendar"
+    android:description="@string/widget_calendar_description"
+    android:updatePeriodMillis="3600000" />

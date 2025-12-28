@@ -57,6 +57,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             fitness_level = request.fitness_level
             goals = request.goals
             equipment = request.equipment
+            intensity_preference = "medium"  # Default when no user data
         else:
             user = db.get_user(request.user_id)
             if not user:
@@ -65,6 +66,8 @@ async def generate_workout(request: GenerateWorkoutRequest):
             fitness_level = request.fitness_level or user.get("fitness_level")
             goals = request.goals or user.get("goals", [])
             equipment = request.equipment or user.get("equipment", [])
+            preferences = parse_json_field(user.get("preferences"), {})
+            intensity_preference = preferences.get("intensity_preference", "medium")
 
         gemini_service = GeminiService()
 
@@ -80,7 +83,7 @@ async def generate_workout(request: GenerateWorkoutRequest):
             exercises = workout_data.get("exercises", [])
             workout_name = workout_data.get("name", "Generated Workout")
             workout_type = workout_data.get("type", request.workout_type or "strength")
-            difficulty = workout_data.get("difficulty", "medium")
+            difficulty = workout_data.get("difficulty", intensity_preference)
 
         except Exception as ai_error:
             logger.error(f"AI workout generation failed: {ai_error}")
@@ -441,14 +444,14 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 exercises = workout_data.get("exercises", [])
                 workout_name = workout_data.get("name", f"{focus.title()} Workout")
                 workout_type = workout_data.get("type", "strength")
-                difficulty = workout_data.get("difficulty", "medium")
+                difficulty = workout_data.get("difficulty", intensity_preference)
 
             except Exception as e:
                 logger.error(f"Error generating workout: {e}")
                 exercises = [{"name": "Push-ups", "sets": 3, "reps": 12}, {"name": "Squats", "sets": 3, "reps": 15}]
                 workout_name = f"{focus.title()} Workout"
                 workout_type = "strength"
-                difficulty = "medium"
+                difficulty = intensity_preference
 
             workout_db_data = {
                 "user_id": request.user_id,
@@ -493,6 +496,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        intensity_preference = preferences.get("intensity_preference", "medium")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)

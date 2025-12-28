@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/calendar_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -25,13 +26,7 @@
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:fontFamily="sans-serif-medium" />
-
-    <!-- Spacer -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_marginBottom="16dp" />
 
     <!-- Week Strip -->
     <LinearLayout
@@ -40,145 +35,68 @@
         android:orientation="horizontal"
         android:gravity="center">
 
-        <!-- Sunday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="S"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_completed" />
-        </LinearLayout>
+            android:text="S\n✓"
+            android:textSize="10sp"
+            android:textColor="#22C55E"
+            android:gravity="center" />
 
-        <!-- Monday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="M"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_completed" />
-        </LinearLayout>
+            android:text="M\n✓"
+            android:textSize="10sp"
+            android:textColor="#22C55E"
+            android:gravity="center" />
 
-        <!-- Tuesday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="T"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_completed" />
-        </LinearLayout>
+            android:text="T\n✓"
+            android:textSize="10sp"
+            android:textColor="#22C55E"
+            android:gravity="center" />
 
-        <!-- Wednesday (Today - highlighted) -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="W"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-            <View
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_today" />
-        </LinearLayout>
+            android:text="W\n●"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:textColor="#6366F1"
+            android:gravity="center" />
 
-        <!-- Thursday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="T"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_upcoming" />
-        </LinearLayout>
+            android:text="T\n○"
+            android:textSize="10sp"
+            android:textColor="#64748B"
+            android:gravity="center" />
 
-        <!-- Friday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="F"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_rest" />
-        </LinearLayout>
+            android:text="F\n−"
+            android:textSize="10sp"
+            android:textColor="#64748B"
+            android:gravity="center" />
 
-        <!-- Saturday -->
-        <LinearLayout
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="S"
-                android:textSize="10sp"
-                android:textColor="#64748B" />
-            <View
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/widget_day_upcoming" />
-        </LinearLayout>
+            android:text="S\n○"
+            android:textSize="10sp"
+            android:textColor="#64748B"
+            android:gravity="center" />
     </LinearLayout>
 </LinearLayout>

@@ -12,14 +12,21 @@ import '../../widgets/main_shell.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
+  debugPrint('showLogMealSheet: Starting...');
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final userId = await ref.read(apiClientProvider).getUserId();
 
-  if (userId == null || !context.mounted) return;
+  debugPrint('showLogMealSheet: userId=$userId, context.mounted=${context.mounted}');
+
+  if (userId == null || !context.mounted) {
+    debugPrint('showLogMealSheet: Aborting - userId is null or context not mounted');
+    return;
+  }
 
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
+  debugPrint('showLogMealSheet: About to show modal bottom sheet');
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -27,6 +34,7 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
     builder: (context) => LogMealSheet(userId: userId, isDark: isDark),
   );
 
+  debugPrint('showLogMealSheet: Bottom sheet closed');
   // Show nav bar when sheet is closed
   ref.read(floatingNavBarVisibleProvider.notifier).state = true;
 }

@@ -8,6 +8,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/deep_link_service.dart';
+import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
@@ -32,7 +34,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWorkouts();
+      _checkPendingWidgetAction();
     });
+  }
+
+  void _checkPendingWidgetAction() {
+    final pendingAction = ref.read(pendingWidgetActionProvider);
+    debugPrint('HomeScreen: Checking pending action: $pendingAction');
+    if (pendingAction == PendingWidgetAction.showLogMealSheet) {
+      // Clear the pending action
+      ref.read(pendingWidgetActionProvider.notifier).state = PendingWidgetAction.none;
+      // Show the meal log sheet after a short delay to ensure screen is ready
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          debugPrint('HomeScreen: Showing log meal sheet');
+          showLogMealSheet(context, ref);
+        }
+      });
+    }
   }
 
   Future<void> _initializeWorkouts() async {

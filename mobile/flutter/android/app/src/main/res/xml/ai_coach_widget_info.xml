@@ -6,11 +6,11 @@
     android:targetCellHeight="2"
     android:minResizeWidth="110dp"
     android:minResizeHeight="110dp"
-    android:maxResizeWidth="250dp"
-    android:maxResizeHeight="250dp"
-    android:updatePeriodMillis="7200000"
-    android:initialLayout="@layout/widget_ai_coach"
+    android:maxResizeWidth="300dp"
+    android:maxResizeHeight="300dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:previewImage="@mipmap/ic_launcher"
-    android:description="@string/ai_coach_widget_description" />
+    android:initialLayout="@layout/widget_ai_coach"
+    android:previewLayout="@layout/widget_ai_coach"
+    android:description="@string/widget_ai_coach_description"
+    android:updatePeriodMillis="3600000" />

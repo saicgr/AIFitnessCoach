@@ -67,6 +67,9 @@ class DeepLinkService {
         break;
 
       case 'workout':
+      case 'workout/start':
+        // Widget clicked "Start" button without specific workout ID
+        // Go to home screen where user can see today's workout
         router.go('/home');
         break;
 
@@ -192,3 +195,14 @@ final deepLinkServiceProvider = Provider<void>((ref) {
   // This is intentionally empty - initialization happens in main.dart
   return;
 });
+
+/// Enum for pending widget actions that need UI interaction
+enum PendingWidgetAction {
+  none,
+  showLogMealSheet,
+  showAddWaterSheet,
+  showShareSheet,
+}
+
+/// Provider to track pending widget actions that require showing a sheet/dialog
+final pendingWidgetActionProvider = StateProvider<PendingWidgetAction>((ref) => PendingWidgetAction.none);

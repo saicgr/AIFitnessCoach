@@ -28,6 +28,19 @@
     <string name="calendar_widget_description">View your weekly workout schedule.</string>
     <string name="ai_coach_widget_description">Quick access to your AI fitness coach for tips and advice.</string>
 
+    <!-- Widget Descriptions (with widget_ prefix for appwidget-provider) -->
+    <string name="widget_workout_description">View and start your scheduled workout for today.</string>
+    <string name="widget_streak_description">Track your workout streak and stay motivated.</string>
+    <string name="widget_water_description">Quickly log your water intake throughout the day.</string>
+    <string name="widget_food_description">Log meals quickly with text, photo, barcode, or saved foods.</string>
+    <string name="widget_stats_description">View your fitness stats at a glance.</string>
+    <string name="widget_social_description">Share your workouts and achievements with friends.</string>
+    <string name="widget_challenges_description">Track your active challenges and competitions.</string>
+    <string name="widget_achievements_description">View your earned badges and achievements.</string>
+    <string name="widget_goals_description">Track progress towards your personal goals.</string>
+    <string name="widget_calendar_description">View your weekly workout schedule.</string>
+    <string name="widget_ai_coach_description">Quick access to your AI fitness coach for tips and advice.</string>
+
     <!-- Widget Content Labels -->
     <string name="start_workout">Start</string>
     <string name="start_workout_full">Start Workout</string>

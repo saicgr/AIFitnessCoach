@@ -4,15 +4,15 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="20dp"
+    android:padding="16dp"
     android:gravity="center">
 
-    <!-- Dumbbell Icon -->
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:src="@android:drawable/ic_menu_compass"
-        android:tint="#818CF8"
+    <!-- Workout Icon -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🏋️"
+        android:textSize="32sp"
         android:layout_marginBottom="8dp" />
 
     <!-- Workout Name -->
@@ -24,7 +24,6 @@
         android:textColor="#FFFFFF"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:fontFamily="sans-serif-medium"
         android:gravity="center"
         android:maxLines="2"
         android:ellipsize="end" />
@@ -38,40 +37,8 @@
         android:textColor="#94A3B8"
         android:textSize="12sp"
         android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp"
         android:gravity="center" />
-
-    <!-- Spacer -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <!-- Stats Row -->
-    <LinearLayout
-        android:id="@+id/stats_row"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="12dp">
-
-        <TextView
-            android:id="@+id/workout_duration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="45 min"
-            android:textColor="#94A3B8"
-            android:textSize="12sp"
-            android:layout_marginEnd="16dp" />
-
-        <TextView
-            android:id="@+id/workout_exercises"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="8 exercises"
-            android:textColor="#94A3B8"
-            android:textSize="12sp" />
-    </LinearLayout>
 
     <!-- Start Button -->
     <TextView
@@ -83,11 +50,8 @@
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:fontFamily="sans-serif-medium"
         android:background="@drawable/widget_button_primary"
         android:paddingStart="32dp"
-        android:paddingEnd="32dp"
-        android:clickable="true"
-        android:focusable="true" />
+        android:paddingEnd="32dp" />
 
 </LinearLayout>

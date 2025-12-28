@@ -6,11 +6,11 @@
     android:targetCellHeight="2"
     android:minResizeWidth="110dp"
     android:minResizeHeight="110dp"
-    android:maxResizeWidth="250dp"
-    android:maxResizeHeight="250dp"
-    android:updatePeriodMillis="7200000"
-    android:initialLayout="@layout/widget_challenges"
+    android:maxResizeWidth="300dp"
+    android:maxResizeHeight="300dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:previewImage="@mipmap/ic_launcher"
-    android:description="@string/challenges_widget_description" />
+    android:initialLayout="@layout/widget_challenges"
+    android:previewLayout="@layout/widget_challenges"
+    android:description="@string/widget_challenges_description"
+    android:updatePeriodMillis="7200000" />

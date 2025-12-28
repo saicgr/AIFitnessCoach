@@ -42,6 +42,8 @@ import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
+import '../data/services/deep_link_service.dart';
+import '../screens/nutrition/widget_log_trigger_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -77,6 +79,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);
       final accessibilitySettings = ref.read(accessibilityProvider);
+
+      // Handle widget deep links (aifitnesscoach://) that come through as path only
+      // The full URI gets parsed and only the path portion reaches go_router
+      final fullUri = state.uri;
+      debugPrint('Router redirect - uri: $fullUri, matchedLocation: ${state.matchedLocation}');
+
+      // Handle other widget deep links that need simple redirects
+      if (state.matchedLocation == '/add') {
+        debugPrint('Router: Widget deep link /add -> /hydration');
+        return '/hydration';
+      }
+
+      if (state.matchedLocation == '/share') {
+        debugPrint('Router: Widget deep link /share -> /social');
+        return '/social';
+      }
+
+      if (state.matchedLocation == '/start') {
+        debugPrint('Router: Widget deep link /start -> /home');
+        return '/home';
+      }
 
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isOnSplash = state.matchedLocation == '/splash';
@@ -563,6 +586,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout-gallery',
         builder: (context, state) => const WorkoutGalleryScreen(),
+      ),
+
+      // Widget deep link trigger - shows overlay then pops
+      GoRoute(
+        path: '/log',
+        builder: (context, state) => const WidgetLogTriggerScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
+import '../../models/program_history.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../services/api_client.dart';
@@ -1522,6 +1523,90 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     }
 
     return streak;
+  }
+
+  // ==================== Program History Methods ====================
+
+  /// Get program history for a user
+  Future<List<ProgramHistory>> getProgramHistory(
+    String userId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching program history for user $userId');
+
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/program-history/list/$userId',
+        queryParameters: {
+          'limit': limit,
+          'offset': offset,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final List<dynamic> programsData = data['programs'] as List? ?? [];
+        final programs = programsData
+            .map((json) => ProgramHistory.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        debugPrint('✅ [Workout] Fetched ${programs.length} program snapshots');
+        return programs;
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching program history: $e');
+      rethrow;
+    }
+  }
+
+  /// Restore a previous program configuration
+  Future<void> restoreProgram(String userId, String programId) async {
+    try {
+      debugPrint('🔍 [Workout] Restoring program $programId for user $userId');
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/program-history/restore',
+        data: {
+          'user_id': userId,
+          'program_id': programId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Program restored successfully');
+      } else {
+        throw Exception('Failed to restore program: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error restoring program: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a program snapshot
+  Future<void> deleteProgramSnapshot(String programId, String userId) async {
+    try {
+      debugPrint('🔍 [Workout] Deleting program $programId');
+
+      final response = await _apiClient.delete(
+        '${ApiConstants.workouts}/program-history/$programId',
+        queryParameters: {
+          'user_id': userId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Program deleted successfully');
+      } else {
+        throw Exception('Failed to delete program: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error deleting program: $e');
+      rethrow;
+    }
   }
 }
 

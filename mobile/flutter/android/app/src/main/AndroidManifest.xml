@@ -70,6 +70,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Transparent activity for quick log overlay from widgets -->
+        <activity
+            android:name=".QuickLogDialogActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+        </activity>
+
         <!-- Health Connect permissions rationale activity -->
         <activity
             android:name="androidx.health.connect.client.HealthConnectClient$PermissionRationaleActivity"

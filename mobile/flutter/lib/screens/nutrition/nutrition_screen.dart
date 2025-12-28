@@ -10,6 +10,7 @@ import '../../data/models/micronutrients.dart';
 import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/deep_link_service.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
 import 'recipe_builder_sheet.dart';

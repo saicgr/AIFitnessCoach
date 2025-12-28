@@ -12,6 +12,7 @@ from the following submodules:
 - exercises: Exercise modifications
 - exit_tracking: Workout exit/quit tracking
 - program: Program customization
+- program_history: Program history and snapshots
 """
 from fastapi import APIRouter
 
@@ -24,6 +25,7 @@ from .background import router as background_router
 from .exercises import router as exercises_router
 from .exit_tracking import router as exit_tracking_router
 from .program import router as program_router
+from .program_history import router as program_history_router
 
 # Create the combined router
 router = APIRouter()
@@ -55,6 +57,9 @@ router.include_router(exit_tracking_router)
 
 # Program customization endpoints
 router.include_router(program_router)
+
+# Program history endpoints
+router.include_router(program_history_router)
 
 # Re-export commonly used utilities
 from .utils import (

@@ -5,7 +5,7 @@ This module handles workout program customization:
 - POST /update-program - Update program preferences and delete future workouts
 """
 import json
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, HTTPException
 
@@ -143,6 +143,31 @@ async def update_program(request: UpdateProgramRequest):
             logger.info(f"Indexed program preferences to RAG for user {request.user_id}")
         except Exception as e:
             logger.warning(f"Could not index preferences to RAG: {e}")
+
+        # Save program snapshot to history
+        try:
+            snapshot_data = {
+                "user_id": request.user_id,
+                "preferences": updated_prefs,
+                "equipment": request.equipment or [],
+                "injuries": request.injuries or [],
+                "focus_areas": request.focus_areas or [],
+                "program_name": None,  # Auto-generated name could be added
+                "description": f"Updated via Customize Program on {date.today().isoformat()}",
+                "is_current": True,
+                "applied_at": datetime.now().isoformat(),
+            }
+
+            # Mark all other programs as not current first
+            db.supabase.table("program_history").update({
+                "is_current": False
+            }).eq("user_id", request.user_id).eq("is_current", True).execute()
+
+            # Save new snapshot
+            db.supabase.table("program_history").insert(snapshot_data).execute()
+            logger.info(f"Saved program snapshot to history for user {request.user_id}")
+        except Exception as e:
+            logger.warning(f"Could not save program snapshot: {e}")
 
         return UpdateProgramResponse(
             success=True,

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_provider.dart';
+import '../data/services/deep_link_service.dart';
+import '../screens/nutrition/quick_log_overlay.dart';
 import 'floating_chat/floating_chat_provider.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
@@ -48,6 +50,24 @@ class MainShell extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
+
+    // Listen for pending widget actions (from home screen widget deep links)
+    ref.listen<PendingWidgetAction>(pendingWidgetActionProvider, (previous, next) {
+      debugPrint('MainShell: Pending action changed from $previous to $next');
+      if (next == PendingWidgetAction.showLogMealSheet) {
+        // Clear the action immediately
+        ref.read(pendingWidgetActionProvider.notifier).state = PendingWidgetAction.none;
+        // Show the quick log overlay after screen is fully built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (context.mounted) {
+              debugPrint('MainShell: Showing quick log overlay');
+              showQuickLogOverlay(context, ref);
+            }
+          });
+        });
+      }
+    });
 
     // Use ValueKey to avoid GlobalKey conflicts when theme changes
     return Material(

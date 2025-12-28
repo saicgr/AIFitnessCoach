@@ -41,7 +41,7 @@ class SectionTitle extends StatelessWidget {
           ),
         ),
         if (badge != null) ...[
-          const Spacer(),
+          const SizedBox(width: 6),
           Text(
             badge!,
             style: TextStyle(color: colors.cyan, fontSize: 12),
