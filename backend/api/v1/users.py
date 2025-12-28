@@ -355,15 +355,31 @@ async def get_program_preferences(user_id: str):
         # Get most recent regeneration for latest selections
         latest_regen = db.get_latest_user_regeneration(user_id)
 
+        # Helper to safely parse list fields (may be JSON strings or actual lists)
+        def safe_list(value, default=None):
+            if default is None:
+                default = []
+            if value is None:
+                return default
+            if isinstance(value, list):
+                return value
+            if isinstance(value, str):
+                try:
+                    parsed = json.loads(value)
+                    return parsed if isinstance(parsed, list) else default
+                except json.JSONDecodeError:
+                    return default
+            return default
+
         # Build response - latest regeneration takes precedence
         result = ProgramPreferences(
             difficulty=latest_regen.get("selected_difficulty") if latest_regen else base_prefs.get("intensity_preference"),
             duration_minutes=latest_regen.get("selected_duration_minutes") if latest_regen else base_prefs.get("workout_duration"),
             workout_type=latest_regen.get("selected_workout_type") if latest_regen else base_prefs.get("training_split"),
             workout_days=_get_workout_days(base_prefs, latest_regen),
-            equipment=latest_regen.get("selected_equipment", []) if latest_regen else user_equipment,
-            focus_areas=latest_regen.get("selected_focus_areas", []) if latest_regen else [],
-            injuries=latest_regen.get("selected_injuries", []) if latest_regen else user_injuries,
+            equipment=safe_list(latest_regen.get("selected_equipment")) if latest_regen else user_equipment,
+            focus_areas=safe_list(latest_regen.get("selected_focus_areas")) if latest_regen else [],
+            injuries=safe_list(latest_regen.get("selected_injuries")) if latest_regen else user_injuries,
             last_updated=latest_regen.get("created_at") if latest_regen else user_row.get("updated_at"),
         )
 
