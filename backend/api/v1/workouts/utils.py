@@ -198,6 +198,16 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
 
     For full_body split, we rotate through different emphasis areas to ensure variety
     while still targeting the whole body.
+
+    Supported training programs:
+    - full_body: 3-4 days, all muscle groups with rotating emphasis
+    - upper_lower: 4 days, alternating upper/lower body
+    - push_pull_legs: 3-6 days, classic PPL split
+    - phul: 4 days, Power Hypertrophy Upper Lower
+    - arnold_split: 6 days, chest/back, shoulders/arms, legs
+    - hyrox: 4-5 days, hybrid running + functional fitness
+    - bro_split: 5-6 days, one muscle group per day
+    - body_part: Legacy support for bro split
     """
     num_days = len(selected_days)
 
@@ -214,16 +224,64 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
             "full_body_power",  # Power/explosive movements
         ]
         return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+
     elif split == "upper_lower":
         focuses = ["upper", "lower"] * (num_days // 2 + 1)
         return {day: focuses[i] for i, day in enumerate(selected_days)}
+
     elif split == "push_pull_legs":
         focuses = ["push", "pull", "legs"] * (num_days // 3 + 1)
         return {day: focuses[i] for i, day in enumerate(selected_days)}
-    elif split == "body_part":
-        body_parts = ["chest", "back", "shoulders", "legs", "arms", "core"]
+
+    elif split == "phul":
+        # PHUL: Power Hypertrophy Upper Lower (4 days)
+        # Day 1: Upper Power, Day 2: Lower Power, Day 3: Upper Hypertrophy, Day 4: Lower Hypertrophy
+        phul_focuses = [
+            "upper_power",       # Heavy compound upper (bench, rows, OHP)
+            "lower_power",       # Heavy compound lower (squats, deadlifts)
+            "upper_hypertrophy", # Higher rep upper body isolation
+            "lower_hypertrophy", # Higher rep leg work
+        ]
+        return {day: phul_focuses[i % len(phul_focuses)] for i, day in enumerate(selected_days)}
+
+    elif split == "arnold_split":
+        # Arnold Split: 6 days, training each muscle group twice
+        # Chest/Back, Shoulders/Arms, Legs (repeat)
+        arnold_focuses = [
+            "chest_back",      # Chest and back together (antagonist pairing)
+            "shoulders_arms",  # Shoulders, biceps, triceps
+            "legs",            # Full leg day
+            "chest_back",      # Second chest/back session
+            "shoulders_arms",  # Second shoulders/arms session
+            "legs",            # Second leg day
+        ]
+        return {day: arnold_focuses[i % len(arnold_focuses)] for i, day in enumerate(selected_days)}
+
+    elif split == "hyrox":
+        # HYROX: Hybrid fitness racing (running + 8 functional stations)
+        # Stations: Ski Erg, Sled Push, Sled Pull, Burpee Broad Jumps, Rowing, Farmers Carry, Sandbag Lunges, Wall Balls
+        hyrox_focuses = [
+            "hyrox_strength",    # Sled work, farmers carry, sandbag exercises
+            "hyrox_running",     # Running intervals + compromised running practice
+            "hyrox_stations",    # Station practice (ski erg, rowing, wall balls)
+            "hyrox_endurance",   # Long aerobic work + functional conditioning
+            "hyrox_simulation",  # Race simulation (run + station + run)
+        ]
+        return {day: hyrox_focuses[i % len(hyrox_focuses)] for i, day in enumerate(selected_days)}
+
+    elif split == "bro_split" or split == "body_part":
+        # Bro Split: One muscle group per day (5-6 days)
+        body_parts = [
+            "chest",      # Chest day
+            "back",       # Back day
+            "shoulders",  # Shoulders day
+            "legs",       # Leg day
+            "arms",       # Biceps and triceps
+            "core_cardio" # Core work and light cardio
+        ]
         return {day: body_parts[i % len(body_parts)] for i, day in enumerate(selected_days)}
 
+    # Default to full body if unknown split
     return {day: "full_body" for day in selected_days}
 
 
