@@ -46,9 +46,13 @@ class PhotoOverlayTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate responsive height based on available space
+    final screenHeight = MediaQuery.of(context).size.height;
+    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+
     return Container(
-      width: 360,
-      height: 640,
+      width: 320,
+      height: templateHeight,
       decoration: BoxDecoration(
         color: AppColors.nearBlack,
         borderRadius: BorderRadius.circular(24),
@@ -358,7 +362,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'AI Fitness Coach',
+                'FitWiz',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 12,

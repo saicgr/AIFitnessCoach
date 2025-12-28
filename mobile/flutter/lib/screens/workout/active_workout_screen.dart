@@ -2063,7 +2063,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   void _finishStretchesAndComplete() {
-    setState(() => _isInStretchPhase = false);
+    // Set _isComplete FIRST to show loading screen, then clear stretch phase
+    setState(() {
+      _isComplete = true;
+      _isInStretchPhase = false;
+    });
     _finalizeWorkoutCompletion();
   }
 
@@ -3409,6 +3413,29 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    // Show loading screen while completing workout (prevents flash back to exercise screen)
+    if (_isComplete) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: AppColors.cyan),
+              const SizedBox(height: 24),
+              Text(
+                'Saving workout...',
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     // Show warmup screen if in warmup phase
     if (_isInWarmupPhase) {

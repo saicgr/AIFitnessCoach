@@ -142,7 +142,7 @@ Future<void> _exportData(
       // Share the file
       await Share.shareXFiles(
         [XFile(filePath)],
-        subject: 'AI Fitness Coach Data Export',
+        subject: 'FitWiz Data Export',
         text: 'My fitness data exported on $timestamp',
       );
 

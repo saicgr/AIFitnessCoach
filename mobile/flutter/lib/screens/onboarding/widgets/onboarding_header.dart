@@ -69,7 +69,7 @@ class OnboardingHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'AI Fitness Coach',
+                  'FitWiz',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

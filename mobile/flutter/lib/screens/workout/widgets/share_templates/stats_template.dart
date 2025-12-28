@@ -62,9 +62,13 @@ class StatsTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate responsive height based on available space
+    final screenHeight = MediaQuery.of(context).size.height;
+    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+
     return Container(
-      width: 360,
-      height: 640,
+      width: 320,
+      height: templateHeight,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -88,7 +92,7 @@ class StatsTemplate extends StatelessWidget {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -112,14 +116,14 @@ class StatsTemplate extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Workout name
                 Text(
                   workoutName,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     height: 1.1,
                   ),
@@ -127,13 +131,13 @@ class StatsTemplate extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 Text(
                   'WORKOUT COMPLETE',
                   style: TextStyle(
                     color: AppColors.cyan,
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 2,
                   ),
@@ -169,7 +173,7 @@ class StatsTemplate extends StatelessWidget {
                 color: AppColors.cyan,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.fitness_center,
@@ -180,7 +184,7 @@ class StatsTemplate extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -191,7 +195,7 @@ class StatsTemplate extends StatelessWidget {
                 color: AppColors.orange,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.local_fire_department_outlined,
@@ -202,30 +206,6 @@ class StatsTemplate extends StatelessWidget {
             ),
           ],
         ),
-        if (totalSets != null && totalReps != null) ...[
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.repeat_rounded,
-                  value: '$totalSets',
-                  label: 'Sets',
-                  color: AppColors.teal,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.numbers_rounded,
-                  value: '$totalReps',
-                  label: 'Reps',
-                  color: AppColors.green,
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
     );
   }
@@ -237,10 +217,10 @@ class StatsTemplate extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: color.withValues(alpha: 0.3),
         ),
@@ -251,23 +231,23 @@ class StatsTemplate extends StatelessWidget {
           Icon(
             icon,
             color: color,
-            size: 24,
+            size: 20,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 14,
+              fontSize: 12,
             ),
           ),
         ],
@@ -305,7 +285,7 @@ class StatsTemplate extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'AI Fitness Coach',
+                'FitWiz',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 12,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -265,7 +266,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   }
 
   Future<void> _saveToGallery() async {
-    if (_isSaving || _userId == null) return;
+    if (_isSaving) return;
     HapticFeedback.mediumImpact();
 
     setState(() => _isSaving = true);
@@ -277,14 +278,30 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
         return;
       }
 
-      await _saveToGalleryInternal(bytes);
+      // Save to device gallery/storage
+      final saveResult = await ShareService.saveToGallery(bytes);
+
+      if (!saveResult.success) {
+        _showError(saveResult.error ?? 'Failed to save image');
+        return;
+      }
+
+      // Also upload to backend gallery if user is logged in
+      if (_userId != null) {
+        try {
+          await _saveToGalleryInternal(bytes);
+        } catch (e) {
+          // Don't fail the whole save if backend upload fails
+          debugPrint('Backend gallery upload failed: $e');
+        }
+      }
 
       if (mounted) {
         Navigator.pop(context);
-        _showSuccess('Saved to gallery!');
+        _showSuccess('Saved to device!');
       }
     } catch (e) {
-      _showError('Failed to save');
+      _showError('Failed to save: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

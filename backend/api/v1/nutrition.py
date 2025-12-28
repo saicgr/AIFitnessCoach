@@ -349,11 +349,13 @@ async def get_daily_summary(
         # Get summary
         summary = db.get_daily_nutrition_summary(user_id, date)
 
-        # Get meals for the day
+        # Get meals for the day - use full timestamp range to include all meals
+        start_of_day = f"{date}T00:00:00"
+        end_of_day = f"{date}T23:59:59"
         meals = db.list_food_logs(
             user_id=user_id,
-            from_date=date,
-            to_date=date,
+            from_date=start_of_day,
+            to_date=end_of_day,
             limit=20
         )
 
@@ -662,13 +664,16 @@ async def log_food_from_image(
         content_type = image.content_type or 'image/jpeg'
 
         # Analyze image with Gemini
+        logger.info(f"Analyzing image: size={len(image_bytes)} bytes, mime_type={content_type}")
         gemini_service = GeminiService()
         food_analysis = await gemini_service.analyze_food_image(
             image_base64=image_base64,
             mime_type=content_type,
         )
+        logger.info(f"Gemini analysis result: {food_analysis}")
 
         if not food_analysis or not food_analysis.get('food_items'):
+            logger.warning(f"No food items identified in image. Analysis result: {food_analysis}")
             raise HTTPException(
                 status_code=400,
                 detail="Could not identify any food items in the image"

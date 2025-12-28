@@ -72,9 +72,13 @@ class MotivationalTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate responsive height based on available space
+    final screenHeight = MediaQuery.of(context).size.height;
+    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+
     return Container(
-      width: 360,
-      height: 640,
+      width: 320,
+      height: templateHeight,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -99,7 +103,7 @@ class MotivationalTemplate extends StatelessWidget {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 // Top section with date
@@ -108,7 +112,7 @@ class MotivationalTemplate extends StatelessWidget {
                   children: [
                     _buildDateBadge(),
                     if (currentStreak != null && currentStreak! > 0)
-                      _buildStreakBadge(),
+                      Flexible(child: _buildStreakBadge()),
                   ],
                 ),
 
@@ -123,23 +127,23 @@ class MotivationalTemplate extends StatelessWidget {
                     _motivationalQuote,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 48,
+                      fontSize: 40,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
+                      letterSpacing: 3,
                       height: 1.0,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Workout name
                 Text(
                   workoutName,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
@@ -147,26 +151,12 @@ class MotivationalTemplate extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Stats row
                 _buildQuickStats(),
 
                 const Spacer(flex: 3),
-
-                // Bottom motivation
-                if (totalWorkouts > 1)
-                  Text(
-                    'WORKOUT #$totalWorkouts',
-                    style: TextStyle(
-                      color: _gradientColors.first,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2,
-                    ),
-                  ),
-
-                const SizedBox(height: 32),
 
                 // Watermark
                 _buildWatermark(),
@@ -252,50 +242,51 @@ class MotivationalTemplate extends StatelessWidget {
 
   Widget _buildQuickStats() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.check_circle_rounded,
             color: _gradientColors.first,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'COMPLETED',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
-            width: 1,
-            height: 20,
-            color: Colors.white.withValues(alpha: 0.3),
-          ),
-          const SizedBox(width: 16),
-          Icon(
-            Icons.timer_outlined,
-            color: Colors.white.withValues(alpha: 0.7),
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
+            'COMPLETED',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 1,
+            height: 16,
+            color: Colors.white.withValues(alpha: 0.3),
+          ),
+          const SizedBox(width: 12),
+          Icon(
+            Icons.timer_outlined,
+            color: Colors.white.withValues(alpha: 0.7),
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+          Text(
             _formattedDuration,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -334,7 +325,7 @@ class MotivationalTemplate extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'AI Fitness Coach',
+                'FitWiz',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 12,

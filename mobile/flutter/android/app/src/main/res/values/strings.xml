@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AI Fitness Coach</string>
+    <string name="app_name">FitWiz</string>
 
     <!-- Widget Names -->
     <string name="workout_widget_name">Today\'s Workout</string>

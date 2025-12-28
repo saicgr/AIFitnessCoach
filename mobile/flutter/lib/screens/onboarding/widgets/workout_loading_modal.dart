@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/lottie_animations.dart';
 
 /// Modal overlay shown while generating workout plan.
 class WorkoutLoadingModal extends StatelessWidget {
@@ -55,34 +56,21 @@ class WorkoutLoadingModal extends StatelessWidget {
 
   Widget _buildIcon(ThemeColors colors) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 100,
+      height: 100,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: colors.cyanGradient.colors.map((c) => c.withOpacity(0.2)).toList(),
+          colors: colors.cyanGradient.colors.map((c) => c.withOpacity(0.15)).toList(),
           begin: colors.cyanGradient.begin,
           end: colors.cyanGradient.end,
         ),
         shape: BoxShape.circle,
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.science,
-            size: 40,
-            color: colors.cyan,
-          ),
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: CircularProgressIndicator(
-              value: null,
-              strokeWidth: 4,
-              color: colors.cyan,
-            ),
-          ),
-        ],
+      child: Center(
+        child: LottieLoading(
+          size: 70,
+          color: colors.cyan,
+        ),
       ),
     );
   }

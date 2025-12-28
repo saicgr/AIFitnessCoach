@@ -472,7 +472,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       // Show helpful message about granting permissions manually
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Open Health Connect and grant permissions for AI Fitness Coach'),
+          content: const Text('Open Health Connect and grant permissions for FitWiz'),
           backgroundColor: AppColors.orange,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(
@@ -501,7 +501,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           content: Text(
             '1. Open Health Connect app\n'
             '2. Go to "App permissions"\n'
-            '3. Find "AI Fitness Coach"\n'
+            '3. Find "FitWiz"\n'
             '4. Enable all permissions\n'
             '5. Return here and try again',
             style: TextStyle(

@@ -720,32 +720,38 @@ class _PhotoTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: teal.withValues(alpha: 0.3)),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: teal.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.camera_alt, size: 48, color: teal),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: teal.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.camera_alt, size: 40, color: teal),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Take a Photo',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'AI will identify and estimate nutrition',
+                          style: TextStyle(fontSize: 13, color: textMuted),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Take a Photo',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'AI will identify and estimate nutrition',
-                      style: TextStyle(fontSize: 14, color: textMuted),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

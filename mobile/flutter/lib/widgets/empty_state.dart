@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_provider.dart';
+import 'lottie_animations.dart';
 
 /// Reusable empty state widget with illustration and message
 class EmptyState extends StatelessWidget {
@@ -10,6 +11,7 @@ class EmptyState extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final Color? iconColor;
+  final bool useLottie;
 
   const EmptyState({
     super.key,
@@ -19,6 +21,7 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.iconColor,
+    this.useLottie = true,
   });
 
   // Pre-defined empty states for common scenarios
@@ -86,35 +89,41 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Illustrated icon with background
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: effectiveIconColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Background ring
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: effectiveIconColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
+            // Illustrated icon with background or Lottie animation
+            if (useLottie)
+              LottieEmpty(
+                size: 120,
+                color: effectiveIconColor,
+              )
+            else
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: effectiveIconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Background ring
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: effectiveIconColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  // Icon
-                  Icon(
-                    icon,
-                    size: 48,
-                    color: effectiveIconColor.withOpacity(0.7),
-                  ),
-                ],
+                    // Icon
+                    Icon(
+                      icon,
+                      size: 48,
+                      color: effectiveIconColor.withOpacity(0.7),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 24),
 
             // Title

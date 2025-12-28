@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/lottie_animations.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -188,19 +189,19 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         return;
       }
 
-      // Fetch friends list
+      // Fetch friends list (mutual friends who follow each other)
       debugPrint('🔍 [Challenge] Fetching friends list...');
       final response = await apiClient.get(
-        '/v1/social/connections?user_id=$userId&status=accepted',
+        '/social/connections/friends/$userId',
       );
 
-      final connections = (response.data['connections'] as List?) ?? [];
-      final friends = connections.map((c) {
-        final friend = c['connected_user'] ?? c['requester'];
+      // Backend returns list of UserProfile objects directly
+      final friendsList = (response.data as List?) ?? [];
+      final friends = friendsList.map((f) {
         return {
-          'id': friend['id'],
-          'name': friend['name'] ?? 'Unknown',
-          'avatar_url': friend['avatar_url'],
+          'id': f['id'],
+          'name': f['name'] ?? 'Unknown',
+          'avatar_url': f['avatar_url'],
         };
       }).toList();
 
@@ -636,14 +637,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.celebration,
-                    size: 48,
+                  child: const LottieSuccess(
+                    size: 64,
                     color: AppColors.success,
                   ),
-                ).animate().scale(
-                  duration: 500.ms,
-                  curve: Curves.elasticOut,
                 ),
 
                 const SizedBox(height: 24),
@@ -780,9 +777,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       _isLoadingSummary
                           ? const Center(
                               child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                                padding: EdgeInsets.all(8),
+                                child: LottieLoading(
+                                  size: 48,
                                   color: AppColors.cyan,
                                 ),
                               ),
@@ -950,11 +947,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                     child: _isSubmitting
                         ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.pureBlack,
+                            width: 24,
+                            height: 24,
+                            child: LottieLoading(
+                              size: 24,
+                              useDots: true,
                             ),
                           )
                         : const Text(

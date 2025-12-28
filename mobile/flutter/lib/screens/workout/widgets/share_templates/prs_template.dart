@@ -19,9 +19,13 @@ class PrsTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate responsive height based on available space
+    final screenHeight = MediaQuery.of(context).size.height;
+    final templateHeight = (screenHeight * 0.55).clamp(400.0, 580.0);
+
     return Container(
-      width: 360,
-      height: 640,
+      width: 320,
+      height: templateHeight,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
@@ -45,32 +49,32 @@ class PrsTemplate extends StatelessWidget {
 
           // Main content
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             child: Column(
               children: [
                 // Trophy icon
                 _buildTrophyHeader(),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Title
                 const Text(
                   'NEW PERSONAL RECORDS',
                   style: TextStyle(
                     color: Color(0xFFFFD700),
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 3,
+                    letterSpacing: 2,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 Text(
                   workoutName,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -78,7 +82,7 @@ class PrsTemplate extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
                 // PRs list
                 Expanded(
@@ -89,7 +93,7 @@ class PrsTemplate extends StatelessWidget {
                 if (achievementsData != null && achievementsData!.isNotEmpty)
                   _buildAchievementsRow(),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Watermark
                 _buildWatermark(),
@@ -103,8 +107,8 @@ class PrsTemplate extends StatelessWidget {
 
   Widget _buildTrophyHeader() {
     return Container(
-      width: 80,
-      height: 80,
+      width: 64,
+      height: 64,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -119,14 +123,14 @@ class PrsTemplate extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFFD700).withValues(alpha: 0.4),
-            blurRadius: 30,
-            spreadRadius: 5,
+            blurRadius: 20,
+            spreadRadius: 3,
           ),
         ],
       ),
       child: const Icon(
         Icons.emoji_events_rounded,
-        size: 44,
+        size: 36,
         color: Colors.white,
       ),
     );
@@ -334,7 +338,7 @@ class PrsTemplate extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'AI Fitness Coach',
+                'FitWiz',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 12,

@@ -109,7 +109,7 @@ class SettingsScreen extends ConsumerWidget {
 
               // Version
               Text(
-                'AI Fitness Coach v1.0.0',
+                'FitWiz v1.0.0',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: textMuted,
                     ),

@@ -369,7 +369,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
         // App name - single teal color instead of gradient
         Text(
-          'AI Fitness Coach',
+          'FitWiz',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: AppColors.teal,

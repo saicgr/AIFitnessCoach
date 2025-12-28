@@ -31,6 +31,7 @@ class ActivityType(str, Enum):
     PERSONAL_RECORD = "personal_record"
     WEIGHT_MILESTONE = "weight_milestone"
     STREAK_MILESTONE = "streak_milestone"
+    MANUAL_POST = "manual_post"
 
 
 class Visibility(str, Enum):

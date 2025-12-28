@@ -7,6 +7,7 @@ import '../../data/models/achievement.dart';
 import '../../data/repositories/achievements_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/lottie_animations.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
   const AchievementsScreen({super.key});
@@ -71,7 +72,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
       ),
       body: state.isLoading
           ? Center(
-              child: CircularProgressIndicator(color: cyan),
+              child: LottieLoading(size: 80, color: cyan),
             )
           : TabBarView(
               controller: _tabController,
@@ -286,12 +287,11 @@ class _PointsCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.emoji_events,
-            size: 48,
+          LottieAchievement(
+            size: 80,
             color: orange,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             '$totalPoints',
             style: TextStyle(
@@ -883,12 +883,13 @@ class _EmptyState extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: textMuted),
+          LottieEmpty(size: 120, color: cyan),
           const SizedBox(height: 16),
           Text(
             title,
@@ -905,6 +906,7 @@ class _EmptyState extends StatelessWidget {
               fontSize: 14,
               color: textMuted,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

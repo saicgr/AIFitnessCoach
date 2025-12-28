@@ -43,7 +43,7 @@ class _AiFitnessCoachAppState extends ConsumerState<AiFitnessCoachApp> {
       // Use a key that changes with theme to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
       key: ValueKey('app_${themeMode.name}'),
-      title: 'AI Fitness Coach',
+      title: 'FitWiz',
       debugShowCheckedModeBanner: false,
       theme: AppThemeLight.theme,
       darkTheme: AppTheme.darkTheme,

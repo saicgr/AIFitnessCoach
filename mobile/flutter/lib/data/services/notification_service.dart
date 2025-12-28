@@ -233,7 +233,7 @@ class NotificationService {
     'ai_coach': _ChannelConfig(
       id: 'ai_coach',
       name: 'AI Coach',
-      description: 'General messages from your AI Fitness Coach',
+      description: 'General messages from your FitWiz coach',
       color: Color(0xFF00D9FF), // Cyan
     ),
     'test': _ChannelConfig(
@@ -246,9 +246,9 @@ class NotificationService {
 
   /// Default channel for unknown types
   static const _defaultChannel = _ChannelConfig(
-    id: 'ai_fitness_coach_notifications',
-    name: 'AI Fitness Coach',
-    description: 'Notifications from your AI Fitness Coach',
+    id: 'fitwiz_notifications',
+    name: 'FitWiz',
+    description: 'Notifications from your FitWiz coach',
     color: Color(0xFF00D9FF),
   );
 

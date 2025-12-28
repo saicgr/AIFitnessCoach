@@ -68,7 +68,7 @@ class AppInfoSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('AI Fitness Coach'),
+            const Text('FitWiz'),
           ],
         ),
         content: Column(

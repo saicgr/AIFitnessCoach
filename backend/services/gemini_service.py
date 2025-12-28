@@ -350,7 +350,8 @@ IMPORTANT:
             return json.loads(content.strip())
 
         except Exception as e:
-            print(f"Food image analysis failed: {e}")
+            logger.error(f"Food image analysis failed: {e}")
+            logger.exception("Full traceback:")
             return None
 
     async def parse_food_description(

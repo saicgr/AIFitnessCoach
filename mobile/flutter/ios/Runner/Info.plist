@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Ai Fitness Coach</string>
+	<string>FitWiz</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ai_fitness_coach</string>
+	<string>FitWiz</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -46,20 +46,20 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>AI Fitness Coach needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
+	<string>FitWiz needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>AI Fitness Coach needs access to save your workout data and body measurements to Apple Health.</string>
+	<string>FitWiz needs access to save your workout data and body measurements to Apple Health.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>instagram-stories</string>
 		<string>instagram</string>
 	</array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>AI Fitness Coach needs access to save workout recap images to your photo library.</string>
+	<string>FitWiz needs access to save workout recap images to your photo library.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>AI Fitness Coach needs access to the microphone for voice-to-text food logging.</string>
+	<string>FitWiz needs access to the microphone for voice-to-text food logging.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>AI Fitness Coach needs camera access to take food photos for AI nutrition analysis and barcode scanning.</string>
+	<string>FitWiz needs camera access to take food photos for AI nutrition analysis and barcode scanning.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

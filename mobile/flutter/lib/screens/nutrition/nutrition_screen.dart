@@ -11,6 +11,7 @@ import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/deep_link_service.dart';
+import '../../widgets/main_shell.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
 import 'recipe_builder_sheet.dart';
@@ -296,27 +297,24 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
         ],
       ),
-      floatingActionButton: Padding(
-        // Add bottom padding to avoid overlap with MainShell's floating nav bar
-        padding: const EdgeInsets.only(bottom: 70),
-        child: FloatingActionButton.extended(
-          onPressed: () => _showLogMealSheet(isDark),
-          backgroundColor: teal,
-          icon: const Icon(Icons.add),
-          label: const Text('Log Food'),
-        ),
-      ),
     );
   }
 
   void _showLogMealSheet(bool isDark) {
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
           LogMealSheet(userId: _userId ?? '', isDark: isDark),
-    ).then((_) => _loadData());
+    ).then((_) {
+      // Show nav bar when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      _loadData();
+    });
   }
 
   void _showRecipeBuilder(BuildContext context, bool isDark) {
@@ -699,6 +697,14 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
 
             const SizedBox(height: 16),
 
+            // Quick Log Button
+            _QuickLogButton(
+              onTap: widget.onLogMeal,
+              isDark: widget.isDark,
+            ).animate().fadeIn(delay: 125.ms),
+
+            const SizedBox(height: 16),
+
             // Pinned Micronutrients (if available)
             if (widget.micronutrients != null &&
                 widget.micronutrients!.pinned.isNotEmpty) ...[
@@ -730,6 +736,57 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
 
             const SizedBox(height: 100),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Quick Log Button - Prominent button to log food
+// ─────────────────────────────────────────────────────────────────
+
+class _QuickLogButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _QuickLogButton({
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Material(
+      color: teal,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.add_circle_outline,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Log Food',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

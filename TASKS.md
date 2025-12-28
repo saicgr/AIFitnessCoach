@@ -5,8 +5,6 @@ ASAP:
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
 25. Demo of the whole app
 32. Make it easy to add supersets
-34. Shareable workout completion - Workout recap for Instagram	
-36. For theme have system, light, dark options instead
 37. Gemini 2.5 flash text to speech
 38. Posture video review
 39. The app overall is pretty good but I'm already sick of adjusting the weight values it's giving me. the AI doesn't understand what weight is possible with machines or dumbbells. It tells me to increase my bench press or curls by 2.5 pounds when you can't do less than 5 pound increments which is simply industry standard so it is pretty annoying.
