@@ -1,10 +1,15 @@
 """
 Search query building for exercise RAG.
+
+Includes support for custom user goals with AI-generated keywords.
 """
 
-from typing import List
+from typing import List, Optional
 
+from core.logger import get_logger
 from services.training_program_service import get_training_program_keywords_sync
+
+logger = get_logger(__name__)
 
 
 # Focus area keywords for semantic search
@@ -85,3 +90,53 @@ def build_search_query(
             query_parts.append(training_program_keywords[goal])
 
     return " ".join(query_parts)
+
+
+async def build_search_query_with_custom_goals(
+    focus_area: str,
+    equipment: List[str],
+    fitness_level: str,
+    goals: List[str],
+    user_id: Optional[str] = None,
+) -> str:
+    """
+    Build a semantic search query incorporating user's custom goals.
+
+    This extends build_search_query to include user's custom goal keywords
+    for personalized exercise selection.
+
+    Args:
+        focus_area: Target body area or workout type
+        equipment: Available equipment
+        fitness_level: User's fitness level
+        goals: User's fitness goals
+        user_id: User ID for fetching custom goal keywords (optional)
+
+    Returns:
+        Enhanced semantic search query with custom goal keywords
+    """
+    # Start with the base query
+    base_query = build_search_query(focus_area, equipment, fitness_level, goals)
+
+    # If no user_id, just return base query
+    if not user_id:
+        return base_query
+
+    # Get custom goal keywords (no Gemini call - reads from DB cache)
+    try:
+        from services.custom_goal_service import get_custom_goal_service
+        custom_goal_service = get_custom_goal_service()
+        custom_keywords = await custom_goal_service.get_combined_keywords(user_id)
+
+        if custom_keywords:
+            # Take top 10 keywords (weighted by priority, already sorted)
+            top_keywords = custom_keywords[:10]
+            custom_section = f"Custom training focus: {' '.join(top_keywords)}"
+            enhanced_query = f"{base_query} {custom_section}"
+            logger.debug(f"Enhanced query with {len(top_keywords)} custom keywords for user {user_id}")
+            return enhanced_query
+
+    except Exception as e:
+        logger.warning(f"Failed to get custom goal keywords for user {user_id}: {e}")
+
+    return base_query

@@ -397,6 +397,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
+                    user_id=request.user_id,  # For custom goal keywords
                 )
 
                 if rag_exercises:
@@ -588,6 +589,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
+                    user_id=request.user_id,  # For custom goal keywords
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
@@ -855,6 +857,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
+                    user_id=request.user_id,  # For custom goal keywords
                 )
 
                 exercises_used = []

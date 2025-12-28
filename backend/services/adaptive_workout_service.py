@@ -70,6 +70,25 @@ class AdaptiveWorkoutService:
             "allow_supersets": True,   # Perfect for HIIT
             "allow_amrap": True,
         },
+        "skill": {
+            "sets": (3, 5),      # 3-5 quality sets
+            "reps": (3, 5),      # Low reps, high quality
+            "rest_seconds": (120, 180),  # Full recovery between attempts
+            "rpe_target": (7, 8),
+            "description": "Technique focus - quality over quantity, stop when form degrades",
+            "allow_supersets": False,  # Need full focus per movement
+            "allow_amrap": False,      # Skill work shouldn't be to failure
+            "progression_type": "technique_first",
+        },
+        "plyometric": {
+            "sets": (3, 4),      # 3-4 explosive sets
+            "reps": (5, 8),      # Low-moderate reps to maintain explosiveness
+            "rest_seconds": (90, 120),  # Adequate recovery for power output
+            "rpe_target": (8, 9),
+            "description": "Explosive movements for power development",
+            "allow_supersets": False,  # Need explosive power each rep
+            "allow_amrap": False,
+        },
     }
 
     # Intensity modifier thresholds
@@ -87,16 +106,20 @@ class AdaptiveWorkoutService:
         Map workout focus areas to workout structure types based on goals.
 
         Focus areas: full_body, upper, lower, push, pull, legs, chest, back, shoulders, arms, core
-        Workout types: strength, hypertrophy, endurance, power, hiit
+        Workout types: strength, hypertrophy, endurance, power, hiit, skill, plyometric
         """
         user_goals = user_goals or []
         goals_lower = [g.lower() for g in user_goals]
 
         # Direct mappings for specific workout types
-        if focus in ["strength", "hypertrophy", "endurance", "power", "hiit"]:
+        if focus in ["strength", "hypertrophy", "endurance", "power", "hiit", "skill", "plyometric"]:
             return focus
 
-        # Map based on user goals
+        # Map based on user goals (check skill-based goals first)
+        if any(g in goals_lower for g in ["skill", "technique", "form", "learn", "progression"]):
+            return "skill"
+        if any(g in goals_lower for g in ["plyometric", "jump", "explosive power", "vertical leap", "box jump"]):
+            return "plyometric"
         if any(g in goals_lower for g in ["strength", "increase strength", "build strength", "get stronger"]):
             return "strength"
         if any(g in goals_lower for g in ["muscle", "muscle_gain", "build muscle", "hypertrophy", "get bigger"]):

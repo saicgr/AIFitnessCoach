@@ -17,6 +17,7 @@ from api.v1 import workout_gallery  # Shareable workout recap images
 from api.v1 import personal_goals  # Weekly personal challenges
 from api.v1 import goal_social  # Goal sharing and friend features
 from api.v1 import features  # Feature voting system (Robinhood-style)
+from api.v1 import custom_goals  # Custom training goals with AI keywords
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -108,3 +109,6 @@ router.include_router(goal_social.router, prefix="/goal-social", tags=["Goal Soc
 
 # Feature voting system (user suggestions and voting)
 router.include_router(features.router, tags=["Features"])
+
+# Custom training goals with AI-generated keywords
+router.include_router(custom_goals.router, prefix="/custom-goals", tags=["Custom Goals"])

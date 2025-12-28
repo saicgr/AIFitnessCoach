@@ -22,7 +22,7 @@ from .filters import (
     is_similar_exercise,
     pre_filter_by_injuries,
 )
-from .search import build_search_query
+from .search import build_search_query, build_search_query_with_custom_goals
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -227,6 +227,7 @@ class ExerciseRAGService:
         dumbbell_count: int = 2,
         kettlebell_count: int = 1,
         workout_params: Optional[Dict] = None,
+        user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -242,6 +243,7 @@ class ExerciseRAGService:
             dumbbell_count: Number of dumbbells user has (1 or 2)
             kettlebell_count: Number of kettlebells user has (1 or 2)
             workout_params: Optional adaptive parameters (sets, reps, rest_seconds)
+            user_id: User ID for fetching custom goal keywords (optional)
 
         Returns:
             List of selected exercises with full details
@@ -251,8 +253,13 @@ class ExerciseRAGService:
         if injuries:
             logger.info(f"User has injuries/conditions: {injuries}")
 
-        # Build search query
-        search_query = build_search_query(focus_area, equipment, fitness_level, goals)
+        # Build search query (with custom goals if user_id provided)
+        if user_id:
+            search_query = await build_search_query_with_custom_goals(
+                focus_area, equipment, fitness_level, goals, user_id
+            )
+        else:
+            search_query = build_search_query(focus_area, equipment, fitness_level, goals)
 
         # Get embedding for the search query
         query_embedding = await self.gemini_service.get_embedding_async(search_query)
