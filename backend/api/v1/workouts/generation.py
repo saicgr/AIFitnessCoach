@@ -350,6 +350,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        intensity_preference = preferences.get("intensity_preference", "medium")
+        # Get custom program description for custom training goals
+        custom_program_description = preferences.get("custom_program_description")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -432,7 +435,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         workout_date=workout_date.isoformat(),
                         age=user_age,
                         activity_level=user_activity_level,
-                        intensity_preference=intensity_preference
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -444,7 +448,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         workout_date=workout_date.isoformat(),
                         age=user_age,
                         activity_level=user_activity_level,
-                        intensity_preference=intensity_preference
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
                     )
 
                 exercises = workout_data.get("exercises", [])
@@ -503,6 +508,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
+        # Get custom program description for custom training goals
+        custom_program_description = preferences.get("custom_program_description")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -631,7 +638,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         workout_date=workout_date.isoformat(),
                         age=user_age,
                         activity_level=user_activity_level,
-                        intensity_preference=intensity_preference
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
                     )
                 else:
                     # No fallback - RAG must return exercises
@@ -760,6 +768,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
+        # Get custom program description for custom training goals
+        custom_program_description = preferences.get("custom_program_description")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -900,7 +910,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         workout_date=workout_date.isoformat(),
                         age=user_age,
                         activity_level=user_activity_level,
-                        intensity_preference=intensity_preference
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -913,7 +924,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         workout_date=workout_date.isoformat(),
                         age=user_age,
                         activity_level=user_activity_level,
-                        intensity_preference=intensity_preference
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
                     )
 
                 return {

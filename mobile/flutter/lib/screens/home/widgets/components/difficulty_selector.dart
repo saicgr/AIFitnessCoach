@@ -76,29 +76,37 @@ class DifficultySelector extends StatelessWidget {
                           width: isSelected ? 2 : 1,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (showIcons) ...[
-                            _buildDifficultyIcon(
-                              icon: icon,
-                              color: isSelected ? color : colors.textSecondary,
-                              isSelected: isSelected,
-                              difficulty: difficulty,
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Text(
-                            difficulty[0].toUpperCase() +
-                                difficulty.substring(1),
-                            style: TextStyle(
-                              color: isSelected ? color : colors.textSecondary,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (showIcons) ...[
+                                _buildDifficultyIcon(
+                                  icon: icon,
+                                  color: isSelected ? color : colors.textSecondary,
+                                  isSelected: isSelected,
+                                  difficulty: difficulty,
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                difficulty[0].toUpperCase() +
+                                    difficulty.substring(1),
+                                style: TextStyle(
+                                  color: isSelected ? color : colors.textSecondary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

@@ -706,7 +706,8 @@ IMPORTANT:
         workout_date: Optional[str] = None,
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
-        intensity_preference: Optional[str] = None
+        intensity_preference: Optional[str] = None,
+        custom_program_description: Optional[str] = None
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -722,6 +723,7 @@ IMPORTANT:
             age: Optional user's age for age-appropriate exercise selection
             activity_level: Optional activity level (sedentary, lightly_active, moderately_active, very_active)
             intensity_preference: Optional intensity preference (easy, medium, hard) - overrides fitness_level for difficulty
+            custom_program_description: Optional user's custom program description (e.g., "Train for HYROX", "Improve box jump height")
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -774,11 +776,31 @@ IMPORTANT:
         if fitness_level == "beginner" and difficulty == "hard":
             safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Choose challenging exercises but ensure proper form is achievable. Include more rest periods and focus on compound movements with moderate weights rather than advanced techniques."
 
+        # Build custom program instruction if user has specified a custom training goal
+        custom_program_instruction = ""
+        if custom_program_description and custom_program_description.strip():
+            custom_program_instruction = f"""
+
+🎯 CRITICAL - CUSTOM TRAINING PROGRAM:
+The user has specified a custom training goal: "{custom_program_description}"
+
+This is the user's PRIMARY training focus. You MUST:
+1. Select exercises that directly support this goal
+2. Structure sets/reps/rest to match this training style
+3. Include skill-specific progressions where applicable
+4. Name the workout to reflect this training focus
+
+Examples:
+- "Train for HYROX" → Include sled-style pushes, farmer carries, rowing, running intervals
+- "Improve box jump height" → Plyometrics, power movements, explosive leg work
+- "Prepare for marathon" → Running-focused, leg endurance, core stability
+- "Get better at pull-ups" → Back strengthening, lat work, grip training, assisted progressions"""
+
         prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{safety_instruction}
+- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{safety_instruction}{custom_program_instruction}
 
 Return a valid JSON object with this exact structure:
 {{
@@ -900,7 +922,8 @@ Requirements:
         workout_date: Optional[str] = None,
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
-        intensity_preference: Optional[str] = None
+        intensity_preference: Optional[str] = None,
+        custom_program_description: Optional[str] = None
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -920,6 +943,7 @@ Requirements:
             age: Optional user's age for age-appropriate adjustments
             activity_level: Optional activity level
             intensity_preference: Optional intensity preference (easy, medium, hard)
+            custom_program_description: Optional user's custom program description (e.g., "Train for HYROX")
 
         Returns:
             Dict with workout structure
@@ -953,6 +977,11 @@ Requirements:
         if fitness_level == "beginner" and difficulty == "hard":
             safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Structure exercises with more rest periods and ensure reps/sets are achievable with proper form. Focus on compound movements rather than advanced techniques."
 
+        # Build custom program context if user has specified a custom training goal
+        custom_program_context = ""
+        if custom_program_description and custom_program_description.strip():
+            custom_program_context = f"\n- Custom Training Goal: {custom_program_description}"
+
         # Format exercises for the prompt
         exercise_list = "\n".join([
             f"- {ex.get('name', 'Unknown')}: targets {ex.get('muscle_group', 'unknown')}, equipment: {ex.get('equipment', 'bodyweight')}"
@@ -965,9 +994,9 @@ Requirements:
 
 User profile:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}{safety_instruction}
+- Goals: {', '.join(goals) if goals else 'General fitness'}{custom_program_context}{safety_instruction}
 
-Create a CREATIVE and MOTIVATING workout name (3-4 words) that ends with the body part focus.
+Create a CREATIVE and MOTIVATING workout name (3-4 words) that reflects the user's training focus.
 
 Examples of good names:
 - "Thunder Strike Legs"

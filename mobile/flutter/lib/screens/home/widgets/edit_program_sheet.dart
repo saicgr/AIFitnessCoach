@@ -50,6 +50,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
   // Step 2: Training Program & Equipment
   String? _selectedProgramId;
+  String _customProgramDescription = ''; // For custom training program
   final Set<String> _selectedFocusAreas = {'Full Body'};
   final Set<String> _selectedEquipment = {};
 
@@ -223,6 +224,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
         kettlebellCount:
             _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
+        customProgramDescription: _selectedProgramId == 'custom'
+            ? _customProgramDescription
+            : null,
       );
 
       if (mounted) {
@@ -498,6 +502,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             selectedProgramId: _selectedProgramId,
             onSelectionChanged: (programId) =>
                 setState(() => _selectedProgramId = programId),
+            customProgramDescription: _customProgramDescription,
+            onCustomDescriptionChanged: (description) =>
+                setState(() => _customProgramDescription = description),
             disabled: _isUpdating,
           ),
           const SizedBox(height: 32),
@@ -650,12 +657,14 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   _buildSummaryRow(
                     colors,
                     'Program',
-                    defaultTrainingPrograms
-                        .firstWhere(
-                          (p) => p.id == _selectedProgramId,
-                          orElse: () => defaultTrainingPrograms.first,
-                        )
-                        .name,
+                    _selectedProgramId == 'custom' && _customProgramDescription.isNotEmpty
+                        ? 'Custom: $_customProgramDescription'
+                        : defaultTrainingPrograms
+                            .firstWhere(
+                              (p) => p.id == _selectedProgramId,
+                              orElse: () => defaultTrainingPrograms.first,
+                            )
+                            .name,
                   ),
                 if (_selectedEquipment.isNotEmpty)
                   _buildSummaryRow(

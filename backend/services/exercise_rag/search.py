@@ -102,8 +102,9 @@ async def build_search_query_with_custom_goals(
     """
     Build a semantic search query incorporating user's custom goals.
 
-    This extends build_search_query to include user's custom goal keywords
-    for personalized exercise selection.
+    This extends build_search_query to include:
+    1. User's custom goal keywords from custom_goals table
+    2. User's custom_program_description from preferences
 
     Args:
         focus_area: Target body area or workout type
@@ -122,6 +123,30 @@ async def build_search_query_with_custom_goals(
     if not user_id:
         return base_query
 
+    enhanced_parts = [base_query]
+
+    # Get custom program description from user preferences
+    try:
+        from core.supabase_db import get_supabase_db
+        db = get_supabase_db()
+        user = db.get_user(user_id)
+        if user:
+            preferences = user.get("preferences", {})
+            if isinstance(preferences, str):
+                import json
+                try:
+                    preferences = json.loads(preferences)
+                except json.JSONDecodeError:
+                    preferences = {}
+
+            custom_program_description = preferences.get("custom_program_description")
+            if custom_program_description and custom_program_description.strip():
+                enhanced_parts.append(f"Custom training goal: {custom_program_description}")
+                logger.debug(f"Added custom program description to query for user {user_id}")
+
+    except Exception as e:
+        logger.warning(f"Failed to get custom program description for user {user_id}: {e}")
+
     # Get custom goal keywords (no Gemini call - reads from DB cache)
     try:
         from services.custom_goal_service import get_custom_goal_service
@@ -131,12 +156,10 @@ async def build_search_query_with_custom_goals(
         if custom_keywords:
             # Take top 10 keywords (weighted by priority, already sorted)
             top_keywords = custom_keywords[:10]
-            custom_section = f"Custom training focus: {' '.join(top_keywords)}"
-            enhanced_query = f"{base_query} {custom_section}"
+            enhanced_parts.append(f"Custom focus: {' '.join(top_keywords)}")
             logger.debug(f"Enhanced query with {len(top_keywords)} custom keywords for user {user_id}")
-            return enhanced_query
 
     except Exception as e:
         logger.warning(f"Failed to get custom goal keywords for user {user_id}: {e}")
 
-    return base_query
+    return " ".join(enhanced_parts)

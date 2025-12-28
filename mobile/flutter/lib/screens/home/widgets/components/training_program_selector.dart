@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
@@ -18,6 +19,16 @@ class TrainingProgram {
     required this.icon,
   });
 }
+
+/// Example custom program prompts
+const List<String> customProgramExamples = [
+  'Train for HYROX competition',
+  'Improve my box jump height',
+  'Build explosive power for basketball',
+  'Train for a marathon',
+  'Get better at pull-ups',
+  'Prepare for obstacle course racing',
+];
 
 /// Default list of training programs
 const List<TrainingProgram> defaultTrainingPrograms = [
@@ -93,17 +104,43 @@ class TrainingProgramSelector extends StatelessWidget {
   /// List of training programs (defaults to standard options)
   final List<TrainingProgram> programs;
 
+  /// Custom program description (when 'custom' is selected)
+  final String? customProgramDescription;
+
+  /// Callback when custom program description changes
+  final ValueChanged<String>? onCustomDescriptionChanged;
+
   const TrainingProgramSelector({
     super.key,
     required this.selectedProgramId,
     required this.onSelectionChanged,
     this.disabled = false,
     this.programs = defaultTrainingPrograms,
+    this.customProgramDescription,
+    this.onCustomDescriptionChanged,
   });
+
+  void _showCustomProgramSheet(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CustomProgramSheet(
+        initialDescription: customProgramDescription,
+        onSave: (description) {
+          onCustomDescriptionChanged?.call(description);
+          onSelectionChanged('custom');
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.sheetColors;
+    final hasCustomDescription =
+        customProgramDescription != null && customProgramDescription!.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,15 +173,27 @@ class TrainingProgramSelector extends StatelessWidget {
             itemBuilder: (context, index) {
               final program = programs[index];
               final isSelected = selectedProgramId == program.id;
+              final isCustom = program.id == 'custom';
+
+              // For custom, show the description if set
+              String displayDescription = program.description;
+              if (isCustom && hasCustomDescription) {
+                displayDescription = customProgramDescription!;
+              }
 
               return Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: GestureDetector(
                   onTap: disabled
                       ? null
-                      : () => onSelectionChanged(
-                            isSelected ? null : program.id,
-                          ),
+                      : () {
+                          if (isCustom) {
+                            // Show custom program input sheet
+                            _showCustomProgramSheet(context);
+                          } else {
+                            onSelectionChanged(isSelected ? null : program.id);
+                          }
+                        },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 140,
@@ -192,11 +241,16 @@ class TrainingProgramSelector extends StatelessWidget {
                         const SizedBox(height: 6),
                         Expanded(
                           child: Text(
-                            program.description,
+                            displayDescription,
                             style: TextStyle(
                               fontSize: 11,
-                              color: colors.textMuted,
+                              color: isCustom && hasCustomDescription && isSelected
+                                  ? colors.purple.withOpacity(0.8)
+                                  : colors.textMuted,
                               height: 1.3,
+                              fontStyle: isCustom && hasCustomDescription
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -222,6 +276,207 @@ class TrainingProgramSelector extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Bottom sheet for entering custom program description
+class _CustomProgramSheet extends StatefulWidget {
+  final String? initialDescription;
+  final ValueChanged<String> onSave;
+
+  const _CustomProgramSheet({
+    this.initialDescription,
+    required this.onSave,
+  });
+
+  @override
+  State<_CustomProgramSheet> createState() => _CustomProgramSheetState();
+}
+
+class _CustomProgramSheetState extends State<_CustomProgramSheet> {
+  late TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialDescription);
+    // Auto-focus the text field
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _saveAndClose() {
+    if (_controller.text.trim().isNotEmpty) {
+      widget.onSave(_controller.text.trim());
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.sheetColors;
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.elevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.textMuted.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Header
+              Row(
+                children: [
+                  Icon(Icons.tune, color: colors.purple, size: 24),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Custom Program',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Describe what you want to train for and AI will create a personalized program.',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Text input
+              TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                style: TextStyle(color: colors.textPrimary, fontSize: 16),
+                maxLines: 2,
+                maxLength: 200,
+                decoration: InputDecoration(
+                  hintText: 'e.g., "Train for HYROX competition"',
+                  hintStyle: TextStyle(color: colors.textMuted),
+                  filled: true,
+                  fillColor: colors.glassSurface,
+                  counterStyle: TextStyle(color: colors.textMuted),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.purple, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                onSubmitted: (_) => _saveAndClose(),
+              ),
+              const SizedBox(height: 16),
+
+              // Examples
+              Text(
+                'Examples',
+                style: TextStyle(
+                  color: colors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: customProgramExamples.map((example) {
+                  return GestureDetector(
+                    onTap: () {
+                      _controller.text = example;
+                      _controller.selection = TextSelection.fromPosition(
+                        TextPosition(offset: example.length),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.glassSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: colors.cardBorder),
+                      ),
+                      child: Text(
+                        example,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+
+              // Save button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _controller.text.trim().isEmpty ? null : _saveAndClose,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.purple,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: colors.purple.withOpacity(0.3),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save Custom Program',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

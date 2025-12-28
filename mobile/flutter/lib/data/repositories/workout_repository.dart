@@ -254,6 +254,7 @@ class WorkoutRepository {
     List<String>? workoutDays,
     int? dumbbellCount,
     int? kettlebellCount,
+    String? customProgramDescription,
   }) async {
     try {
       debugPrint('🔍 [Workout] Updating program and regenerating all workouts');
@@ -266,6 +267,7 @@ class WorkoutRepository {
       debugPrint('  - workoutDays: $workoutDays');
       debugPrint('  - dumbbellCount: $dumbbellCount');
       debugPrint('  - kettlebellCount: $kettlebellCount');
+      debugPrint('  - customProgramDescription: $customProgramDescription');
 
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/update-program',
@@ -280,6 +282,8 @@ class WorkoutRepository {
           if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
           if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
           if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+          if (customProgramDescription != null && customProgramDescription.isNotEmpty)
+            'custom_program_description': customProgramDescription,
         },
         options: Options(
           sendTimeout: const Duration(seconds: 30),

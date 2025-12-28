@@ -71,6 +71,8 @@ async def update_program(request: UpdateProgramRequest):
             updated_prefs["dumbbell_count"] = request.dumbbell_count
         if request.kettlebell_count is not None:
             updated_prefs["kettlebell_count"] = request.kettlebell_count
+        if request.custom_program_description is not None:
+            updated_prefs["custom_program_description"] = request.custom_program_description
 
         # Update user preferences and equipment/injuries
         update_data = {"preferences": updated_prefs}

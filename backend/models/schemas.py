@@ -214,6 +214,7 @@ class UpdateProgramRequest(BaseModel):
     injuries: Optional[List[str]] = Field(default=None, max_length=20)
     dumbbell_count: Optional[int] = Field(default=2, ge=1, le=10)  # 1 or 2 dumbbells
     kettlebell_count: Optional[int] = Field(default=1, ge=1, le=10)  # 1 or 2 kettlebells
+    custom_program_description: Optional[str] = Field(default=None, max_length=500)  # For custom programs
 
 
 class UpdateProgramResponse(BaseModel):
