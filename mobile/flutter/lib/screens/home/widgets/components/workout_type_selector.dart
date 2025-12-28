@@ -13,6 +13,9 @@ const List<String> defaultWorkoutTypes = [
   'Upper Body',
   'Lower Body',
   'Core',
+  'Push',
+  'Pull',
+  'Legs',
 ];
 
 /// A widget for selecting workout type

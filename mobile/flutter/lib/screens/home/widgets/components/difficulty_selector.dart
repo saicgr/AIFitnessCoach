@@ -3,7 +3,7 @@ import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
 /// Default list of difficulty levels
-const List<String> defaultDifficulties = ['easy', 'medium', 'hard'];
+const List<String> defaultDifficulties = ['easy', 'medium', 'hard', 'hell'];
 
 /// A widget for selecting workout difficulty
 class DifficultySelector extends StatelessWidget {

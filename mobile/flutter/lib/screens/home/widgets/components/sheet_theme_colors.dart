@@ -91,6 +91,8 @@ Color getDifficultyColor(String difficulty) {
       return AppColors.orange;
     case 'hard':
       return AppColors.error;
+    case 'hell':
+      return AppColors.purple;
     default:
       return AppColors.cyan;
   }
@@ -120,6 +122,8 @@ IconData getDifficultyIcon(String difficulty) {
       return Icons.change_history;
     case 'hard':
       return Icons.star_outline;
+    case 'hell':
+      return Icons.local_fire_department;
     default:
       return Icons.circle_outlined;
   }

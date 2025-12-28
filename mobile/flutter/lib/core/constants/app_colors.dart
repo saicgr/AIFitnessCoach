@@ -94,6 +94,8 @@ class AppColors {
       case 'hard':
       case 'advanced':
         return error;
+      case 'hell':
+        return purple;
       default:
         return textSecondary;
     }
