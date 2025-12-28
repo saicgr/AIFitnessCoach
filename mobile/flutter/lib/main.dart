@@ -11,6 +11,7 @@ import 'core/providers/subscription_provider.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/widget_action_headless_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,16 +67,29 @@ void main() async {
   // Enable edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
+  // Create ProviderContainer for widget actions
+  final container = ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      notificationServiceProvider.overrideWithValue(notificationService),
+      notificationPreferencesProvider.overrideWith(
+        (ref) => NotificationPreferencesNotifier(sharedPreferences, notificationService),
+      ),
+    ],
+  );
+
+  // Pre-warm headless widget service for native widget actions
+  try {
+    final headlessService = container.read(widgetActionHeadlessServiceProvider);
+    headlessService.initialize();
+    debugPrint('✅ Widget action headless service initialized');
+  } catch (e) {
+    debugPrint('⚠️ Widget action headless service initialization failed: $e');
+  }
+
   runApp(
-    ProviderScope(
-      overrides: [
-        // Provide SharedPreferences instance for accessibility and notification providers
-        sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-        notificationServiceProvider.overrideWithValue(notificationService),
-        notificationPreferencesProvider.overrideWith(
-          (ref) => NotificationPreferencesNotifier(sharedPreferences, notificationService),
-        ),
-      ],
+    UncontrolledProviderScope(
+      container: container,
       child: const AiFitnessCoachApp(),
     ),
   );

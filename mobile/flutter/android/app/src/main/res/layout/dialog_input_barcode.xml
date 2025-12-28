@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/btn_start_scanner"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="📊 Start Barcode Scanner"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:backgroundTint="#6366F1"
+        android:textColor="#FFFFFF" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Point your camera at a product barcode to scan"
+        android:textSize="12sp"
+        android:textColor="#808080"
+        android:gravity="center"
+        android:paddingTop="8dp" />
+</LinearLayout>

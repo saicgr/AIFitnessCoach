@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/et_meal_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="What did you eat? (e.g., pizza slice, salad)"
+        android:textColorHint="#808080"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:padding="12dp"
+        android:background="@drawable/dialog_button_background"
+        android:inputType="textCapSentences|textAutoCorrect"
+        android:maxLines="3"
+        android:minHeight="80dp"
+        android:gravity="top|start" />
+
+    <Button
+        android:id="@+id/btn_analyze"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Analyze Meal"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#6366F1"
+        android:textColor="#FFFFFF" />
+</LinearLayout>

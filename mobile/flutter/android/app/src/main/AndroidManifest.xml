@@ -10,6 +10,9 @@
     <!-- Speech recognition permission -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
+    <!-- Camera permission for food photo logging and barcode scanning -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>
@@ -78,6 +81,20 @@
             android:excludeFromRecents="true"
             android:taskAffinity="">
         </activity>
+
+        <!-- Photo Capture Activity -->
+        <activity
+            android:name=".PhotoCaptureActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:screenOrientation="portrait" />
+
+        <!-- Barcode Scanner Activity -->
+        <activity
+            android:name=".BarcodeScannerActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:screenOrientation="portrait" />
 
         <!-- Health Connect permissions rationale activity -->
         <activity

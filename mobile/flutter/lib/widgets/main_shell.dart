@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/theme_provider.dart';
 import '../data/services/deep_link_service.dart';
+import '../data/services/widget_action_service.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import 'floating_chat/floating_chat_provider.dart';
 import 'floating_chat/floating_chat_overlay.dart';
@@ -50,6 +51,15 @@ class MainShell extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final isNavBarVisible = ref.watch(floatingNavBarVisibleProvider);
+
+    // Initialize widget action service (MethodChannel listener)
+    // This allows Android widgets to trigger UI actions without navigation
+    final widgetActionService = ref.read(widgetActionServiceProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        widgetActionService.initialize(context, ref);
+      }
+    });
 
     // Listen for pending widget actions (from home screen widget deep links)
     ref.listen<PendingWidgetAction>(pendingWidgetActionProvider, (previous, next) {
@@ -139,7 +149,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           // Nav bar
           Container(
             height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 240), // 4 items
+            constraints: const BoxConstraints(maxWidth: 300), // Increased from 240 to accommodate labels
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -168,11 +178,11 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  // Nutrition - Green
+                  // Food - Green
                   _NavItem(
                     icon: Icons.restaurant_outlined,
                     selectedIcon: Icons.restaurant,
-                    label: 'Nutrition',
+                    label: 'Food',
                     isSelected: selectedIndex == 1,
                     onTap: () => onItemTapped(1),
                     itemHeight: itemHeight,
@@ -299,21 +309,57 @@ class _NavItem extends StatelessWidget {
           onTap();
         },
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
+        child: AnimatedSize(
           duration: const Duration(milliseconds: 200),
-          width: itemHeight, // Square for even borders
-          height: itemHeight,
-          decoration: BoxDecoration(
-            color: isSelected
-                ? selectedColor.withValues(alpha: 0.15)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(squircleRadius),
-          ),
-          child: Center(
-            child: Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? selectedColor : textMuted,
-              size: 22,
+          curve: Curves.easeInOut,
+          clipBehavior: Clip.none,
+          child: Container(
+            height: itemHeight,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 12 : 9,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColor.withValues(alpha: 0.15)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(squircleRadius),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isSelected ? selectedIcon : icon,
+                  color: isSelected ? selectedColor : textMuted,
+                  size: 22,
+                ),
+                // Animated label - clips to prevent overflow during transition
+                ClipRect(
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: isSelected ? null : 0,
+                      child: isSelected
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 6),
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color: selectedColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.clip,
+                                softWrap: false,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

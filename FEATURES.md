@@ -376,7 +376,7 @@
 | 7 | Access Checking | Verify feature access | [ ] |
 | 8 | Usage Tracking | Track feature usage | [ ] |
 
-### 21. Home Screen Widgets (11 Widgets, 33 Sizes)
+### 21. Home Screen Widgets (11 Widgets, 33 Sizes) -- Needs more implementation and testing
 
 > All widgets are **resizable** (Small 2×2, Medium 4×2, Large 4×4) with glassmorphic design
 

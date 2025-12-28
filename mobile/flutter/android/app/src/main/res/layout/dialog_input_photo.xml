@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <Button
+        android:id="@+id/btn_take_photo"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="📷 Take Photo"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:backgroundTint="#6366F1"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btn_choose_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="🖼️ Choose from Gallery"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:backgroundTint="#3A3A3A"
+        android:textColor="#FFFFFF" />
+</LinearLayout>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/dialog_button_background">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Quick Log Meal"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:paddingBottom="20dp" />
+
+    <!-- Meal Type Section -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Meal Type:"
+        android:textSize="14sp"
+        android:textColor="#B0B0B0"
+        android:paddingBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="12dp">
+
+        <Button
+            android:id="@+id/btn_breakfast"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="🌅 Breakfast"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_lunch"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="☀️ Lunch"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="20dp">
+
+        <Button
+            android:id="@+id/btn_dinner"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="🌙 Dinner"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_snack"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="🍎 Snack"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- Input Method Section -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="How to log:"
+        android:textSize="14sp"
+        android:textColor="#B0B0B0"
+        android:paddingBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingBottom="20dp">
+
+        <Button
+            android:id="@+id/btn_describe"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="📝 Describe"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#6366F1"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_photo"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="📷 Photo"
+            android:textSize="12sp"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_barcode"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="📊 Barcode"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- Dynamic Content Container -->
+    <FrameLayout
+        android:id="@+id/content_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Cancel"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="#3A3A3A"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_go_to_app"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Go to App"
+            android:textSize="14sp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="#6366F1"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</LinearLayout>

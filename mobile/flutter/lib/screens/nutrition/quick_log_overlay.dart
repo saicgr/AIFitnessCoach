@@ -7,12 +7,26 @@ import 'log_meal_sheet.dart';
 /// Shows a quick log meal overlay that appears immediately from widgets
 /// Has a "Go to App" button to navigate to full nutrition screen
 void showQuickLogOverlay(BuildContext context, WidgetRef ref) {
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    barrierColor: Colors.black87,
-    builder: (context) => const QuickLogOverlay(),
-  );
+  debugPrint('🎯 [QuickLogOverlay] showQuickLogOverlay called, about to show dialog');
+
+  try {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black87,
+      builder: (context) {
+        debugPrint('🎯 [QuickLogOverlay] Dialog builder called, creating overlay widget');
+        return const QuickLogOverlay();
+      },
+    ).then((value) {
+      debugPrint('🎯 [QuickLogOverlay] Dialog dismissed with value: $value');
+    });
+
+    debugPrint('🎯 [QuickLogOverlay] showDialog called successfully');
+  } catch (e, stack) {
+    debugPrint('❌ [QuickLogOverlay] Error showing dialog: $e');
+    debugPrint('Stack: $stack');
+  }
 }
 
 class QuickLogOverlay extends ConsumerWidget {
