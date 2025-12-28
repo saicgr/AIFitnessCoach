@@ -356,8 +356,10 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         # Get age and activity level for personalized workouts
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
+        # Get focus areas for custom programs
+        focus_areas = parse_json_field(user.get("focus_areas"), [])
 
-        workout_focus_map = get_workout_focus(training_split, request.selected_days)
+        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
         generated_workouts = []
         gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
@@ -513,6 +515,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
 
+        # Get focus areas for custom programs
+        focus_areas = parse_json_field(user.get("focus_areas"), [])
+
         logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}, dumbbell_count: {dumbbell_count}, kettlebell_count: {kettlebell_count}")
         if active_injuries or health_conditions:
             logger.info(f"User health info - injuries: {active_injuries}, conditions: {health_conditions}")
@@ -536,7 +541,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             logger.warning("No workout dates calculated - returning empty response")
             return GenerateMonthlyResponse(workouts=[], total_generated=0)
 
-        workout_focus_map = get_workout_focus(training_split, request.selected_days)
+        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
 
         used_name_words: List[str] = []
         generated_workouts = []
@@ -763,6 +768,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         user_age = user.get("age")
         user_activity_level = user.get("activity_level")
 
+        # Get focus areas for custom programs
+        focus_areas = parse_json_field(user.get("focus_areas"), [])
+
         # Extract active injuries for safety filtering
         injuries_data = parse_json_field(user.get("injuries"), [])
         active_injuries = [
@@ -802,7 +810,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if not workout_dates:
             return GenerateMonthlyResponse(workouts=[], total_generated=0)
 
-        workout_focus_map = get_workout_focus(training_split, request.selected_days)
+        workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
 
         # Get existing workout names for variety
         existing_names = [w.get("name", "") for w in existing_workouts]

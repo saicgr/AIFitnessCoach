@@ -193,7 +193,7 @@ async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
         return []
 
 
-def get_workout_focus(split: str, selected_days: List[int]) -> dict:
+def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[str] = None) -> dict:
     """Return workout focus for each day based on training split.
 
     For full_body split, we rotate through different emphasis areas to ensure variety
@@ -208,6 +208,12 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
     - hyrox: 4-5 days, hybrid running + functional fitness
     - bro_split: 5-6 days, one muscle group per day
     - body_part: Legacy support for bro split
+    - custom: User-defined focus areas (rotates through selected focus_areas)
+
+    Args:
+        split: The training split/program type
+        selected_days: List of day indices (0=Monday, 6=Sunday)
+        focus_areas: Optional list of focus areas for 'custom' split
     """
     num_days = len(selected_days)
 
@@ -280,6 +286,25 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
             "core_cardio" # Core work and light cardio
         ]
         return {day: body_parts[i % len(body_parts)] for i, day in enumerate(selected_days)}
+
+    elif split == "custom":
+        # Custom: User defines their own focus areas
+        # Rotates through the user's selected focus areas
+        if focus_areas and len(focus_areas) > 0:
+            # Normalize focus area names to match FOCUS_AREA_KEYWORDS format
+            normalized = []
+            for fa in focus_areas:
+                # Convert "Full Body" -> "full_body", "Chest" -> "chest", etc.
+                norm = fa.lower().replace(" ", "_")
+                normalized.append(norm)
+
+            # Rotate through user's selected focus areas
+            return {day: normalized[i % len(normalized)] for i, day in enumerate(selected_days)}
+        else:
+            # No focus areas selected - fall back to balanced full body rotation
+            logger.warning("Custom split selected but no focus_areas provided, using balanced rotation")
+            balanced = ["upper", "lower", "full_body", "push", "pull", "legs"]
+            return {day: balanced[i % len(balanced)] for i, day in enumerate(selected_days)}
 
     # Default to full body if unknown split
     return {day: "full_body" for day in selected_days}
