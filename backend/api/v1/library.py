@@ -31,9 +31,9 @@ class LibraryExercise(BaseModel):
     body_part: str
     equipment: Optional[str] = None  # Can be null in database
     target_muscle: Optional[str] = None
-    secondary_muscles: Optional[str] = None
+    secondary_muscles: Optional[List[str]] = None  # JSONB array in database
     instructions: Optional[str] = None
-    difficulty_level: Optional[int] = None
+    difficulty_level: Optional[str] = None  # Can be string like 'Beginner' or int
     category: Optional[str] = None
     gif_url: Optional[str] = None
     video_url: Optional[str] = None
