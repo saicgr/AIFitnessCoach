@@ -261,7 +261,7 @@ class AdaptiveWorkoutService:
             week_ago = (datetime.now() - timedelta(days=7)).isoformat()
             prs_response = self.supabase.table("strength_records").select(
                 "id"
-            ).eq("user_id", user_id).eq("is_pr", True).gte("recorded_at", week_ago).execute()
+            ).eq("user_id", user_id).eq("is_pr", True).gte("achieved_at", week_ago).execute()
 
             recent_prs = len(prs_response.data) if prs_response.data else 0
 
