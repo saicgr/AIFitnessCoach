@@ -90,9 +90,9 @@ Color getDifficultyColor(String difficulty) {
     case 'medium':
       return AppColors.orange;
     case 'hard':
-      return AppColors.error;
+      return AppColors.purple; // Purple for hard
     case 'hell':
-      return AppColors.purple;
+      return AppColors.error; // Red for hell (most intense)
     default:
       return AppColors.cyan;
   }

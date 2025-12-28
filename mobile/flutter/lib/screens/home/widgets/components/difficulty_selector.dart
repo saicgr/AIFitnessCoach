@@ -23,6 +23,9 @@ class DifficultySelector extends StatelessWidget {
   /// Whether to show difficulty icons
   final bool showIcons;
 
+  /// User's fitness level for showing warnings (e.g., 'beginner', 'intermediate', 'advanced')
+  final String? fitnessLevel;
+
   const DifficultySelector({
     super.key,
     required this.selectedDifficulty,
@@ -30,7 +33,85 @@ class DifficultySelector extends StatelessWidget {
     this.disabled = false,
     this.difficulties = defaultDifficulties,
     this.showIcons = true,
+    this.fitnessLevel,
   });
+
+  /// Check if the user is a beginner
+  bool get _isBeginner {
+    if (fitnessLevel == null) return false;
+    final level = fitnessLevel!.toLowerCase();
+    return level == 'beginner' || level == 'new' || level == 'novice';
+  }
+
+  /// Check if selected difficulty warrants a warning for beginners
+  bool get _shouldShowWarning {
+    if (!_isBeginner) return false;
+    final diff = selectedDifficulty.toLowerCase();
+    return diff == 'hard' || diff == 'hell';
+  }
+
+  /// Show warning dialog for beginners selecting hard difficulties
+  void _showBeginnerWarning(BuildContext context, String difficulty, SheetColors colors) {
+    final isHell = difficulty.toLowerCase() == 'hell';
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: colors.orange,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isHell ? 'Extreme Difficulty' : 'High Difficulty',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isHell
+              ? 'Hell mode is designed for advanced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Easy or Medium difficulty.'
+              : 'Hard mode may be challenging for beginners. Consider starting with Easy or Medium difficulty and progressing as you build strength and endurance.',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Choose Another',
+              style: TextStyle(color: colors.textMuted),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onSelectionChanged(difficulty);
+            },
+            child: Text(
+              'Continue Anyway',
+              style: TextStyle(
+                color: isHell ? colors.error : colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +142,15 @@ class DifficultySelector extends StatelessWidget {
                   child: GestureDetector(
                     onTap: disabled
                         ? null
-                        : () => onSelectionChanged(difficulty),
+                        : () {
+                            final diff = difficulty.toLowerCase();
+                            // Show warning for beginners selecting hard/hell
+                            if (_isBeginner && (diff == 'hard' || diff == 'hell')) {
+                              _showBeginnerWarning(context, difficulty, colors);
+                            } else {
+                              onSelectionChanged(difficulty);
+                            }
+                          },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -114,6 +203,42 @@ class DifficultySelector extends StatelessWidget {
               );
             }).toList(),
           ),
+          // Warning message for beginners with hard/hell selected
+          if (_shouldShowWarning) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.orange.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: colors.orange.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: colors.orange,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      selectedDifficulty.toLowerCase() == 'hell'
+                          ? 'Hell mode is very intense for beginners'
+                          : 'Hard mode may be challenging for beginners',
+                      style: TextStyle(
+                        color: colors.orange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -128,31 +253,37 @@ class DifficultySelector extends StatelessWidget {
   }) {
     final baseIcon = Icon(icon, size: 16, color: color);
 
-    // Only animate when Hell is selected
+    // Only animate when Hell is selected - flickering fire effect
     if (isSelected && difficulty.toLowerCase() == 'hell') {
       return baseIcon
           .animate(onPlay: (controller) => controller.repeat())
           .scale(
             begin: const Offset(1.0, 1.0),
-            end: const Offset(1.2, 1.2),
-            duration: 400.ms,
+            end: const Offset(1.3, 1.3),
+            duration: 300.ms,
             curve: Curves.easeOut,
           )
           .then()
           .scale(
-            end: const Offset(0.9, 0.9),
-            duration: 300.ms,
+            end: const Offset(0.85, 0.85),
+            duration: 250.ms,
             curve: Curves.easeIn,
           )
           .then()
           .scale(
-            end: const Offset(1.0, 1.0),
+            end: const Offset(1.15, 1.15),
             duration: 200.ms,
             curve: Curves.easeOut,
           )
+          .then()
+          .scale(
+            end: const Offset(1.0, 1.0),
+            duration: 150.ms,
+            curve: Curves.easeInOut,
+          )
           .shimmer(
-            color: Colors.orange.withValues(alpha: 0.6),
-            duration: 1500.ms,
+            color: Colors.red.withValues(alpha: 0.8),
+            duration: 800.ms,
           );
     }
 

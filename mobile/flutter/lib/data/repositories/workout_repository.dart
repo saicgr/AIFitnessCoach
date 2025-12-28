@@ -276,8 +276,8 @@ class WorkoutRepository {
           if (difficulty != null) 'difficulty': difficulty,
           if (durationMinutes != null) 'duration_minutes': durationMinutes,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
-          if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
-          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+          if (injuries != null) 'injuries': injuries,  // Send even if empty to clear injuries
+          if (equipment != null) 'equipment': equipment,  // Send even if empty to clear equipment
           if (workoutType != null) 'workout_type': workoutType,
           if (workoutDays != null && workoutDays.isNotEmpty) 'workout_days': workoutDays,
           if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,

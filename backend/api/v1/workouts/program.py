@@ -161,12 +161,12 @@ async def update_program(request: UpdateProgramRequest):
             }
 
             # Mark all other programs as not current first
-            db.supabase.table("program_history").update({
+            db.client.table("program_history").update({
                 "is_current": False
             }).eq("user_id", request.user_id).eq("is_current", True).execute()
 
             # Save new snapshot
-            db.supabase.table("program_history").insert(snapshot_data).execute()
+            db.client.table("program_history").insert(snapshot_data).execute()
             logger.info(f"Saved program snapshot to history for user {request.user_id}")
         except Exception as e:
             logger.warning(f"Could not save program snapshot: {e}")

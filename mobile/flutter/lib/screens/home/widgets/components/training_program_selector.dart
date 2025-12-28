@@ -297,19 +297,31 @@ class _CustomProgramSheet extends StatefulWidget {
 class _CustomProgramSheetState extends State<_CustomProgramSheet> {
   late TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
+  bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialDescription);
+    _hasText = _controller.text.trim().isNotEmpty;
+    // Listen for text changes to update button state
+    _controller.addListener(_onTextChanged);
     // Auto-focus the text field
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
   }
 
+  void _onTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -457,7 +469,7 @@ class _CustomProgramSheetState extends State<_CustomProgramSheet> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _controller.text.trim().isEmpty ? null : _saveAndClose,
+                  onPressed: _hasText ? _saveAndClose : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.purple,
                     foregroundColor: Colors.white,

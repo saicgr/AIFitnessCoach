@@ -3,7 +3,8 @@ Node implementations for the Workout Insights LangGraph agent.
 Generates structured, easy-to-read insights with formatting.
 """
 import json
-from typing import Dict, Any, List
+import re
+from typing import Dict, Any, List, Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -14,6 +15,91 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+def repair_json_string(content: str) -> Optional[str]:
+    """
+    Attempt to repair common JSON issues from AI responses.
+    Returns repaired JSON string or None if repair fails.
+    """
+    if not content:
+        return None
+
+    original = content
+
+    try:
+        # First try parsing as-is
+        json.loads(content)
+        return content
+    except json.JSONDecodeError:
+        pass
+
+    # Try simple repairs first
+    repaired = content
+
+    # Remove trailing commas before closing brackets/braces
+    repaired = re.sub(r',(\s*[}\]])', r'\1', repaired)
+
+    try:
+        json.loads(repaired)
+        logger.info("[JSON Repair] Fixed trailing commas")
+        return repaired
+    except json.JSONDecodeError:
+        pass
+
+    # Try to find and extract just the JSON object from surrounding text
+    json_match = re.search(r'\{[\s\S]*\}', original)
+    if json_match:
+        extracted = json_match.group(0)
+        try:
+            json.loads(extracted)
+            logger.info("[JSON Repair] Extracted JSON from text")
+            return extracted
+        except json.JSONDecodeError:
+            # Try trailing comma fix on extracted
+            extracted_fixed = re.sub(r',(\s*[}\]])', r'\1', extracted)
+            try:
+                json.loads(extracted_fixed)
+                logger.info("[JSON Repair] Extracted and fixed trailing commas")
+                return extracted_fixed
+            except json.JSONDecodeError:
+                pass
+
+    # Last resort: try to complete truncated JSON
+    repaired = original
+
+    # Count braces and brackets
+    open_braces = repaired.count('{') - repaired.count('}')
+    open_brackets = repaired.count('[') - repaired.count(']')
+
+    # Check for unterminated string
+    in_string = False
+    i = 0
+    while i < len(repaired):
+        char = repaired[i]
+        if char == '\\' and i + 1 < len(repaired):
+            i += 2  # Skip escaped character
+            continue
+        if char == '"':
+            in_string = not in_string
+        i += 1
+
+    if in_string:
+        repaired += '"'
+
+    # Close any open brackets/braces
+    repaired += ']' * max(0, open_brackets)
+    repaired += '}' * max(0, open_braces)
+
+    try:
+        json.loads(repaired)
+        logger.info("[JSON Repair] Completed truncated JSON")
+        return repaired
+    except json.JSONDecodeError as e:
+        logger.warning(f"[JSON Repair] Could not repair JSON: {e}")
+        return None
+
+
 
 
 def categorize_muscle_group(muscle: str) -> str:
@@ -200,23 +286,46 @@ Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivat
         ])
 
         content = response.content.strip()
+        logger.debug(f"[Generate Node] Raw AI response: {content[:500]}...")
 
         # Extract JSON from response (handle markdown code blocks)
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0].strip()
         elif "```" in content:
-            content = content.split("```")[1].split("```")[0].strip()
+            parts = content.split("```")
+            if len(parts) >= 2:
+                content = parts[1].strip()
+                # Remove language identifier if present (e.g., "json\n{...")
+                if content.startswith(("json", "JSON")):
+                    content = content[4:].strip()
 
-        # Parse JSON
-        insights = json.loads(content)
+        # Try to parse JSON, with repair if needed
+        insights = None
+        try:
+            insights = json.loads(content)
+        except json.JSONDecodeError as parse_error:
+            logger.warning(f"[Generate Node] Initial JSON parse failed: {parse_error}")
+
+            # Attempt to repair the JSON
+            repaired = repair_json_string(content)
+            if repaired:
+                try:
+                    insights = json.loads(repaired)
+                    logger.info("[Generate Node] Successfully parsed repaired JSON")
+                except json.JSONDecodeError:
+                    logger.warning("[Generate Node] Repaired JSON still invalid")
+
+        # If parsing failed, raise error - fail fast rather than show wrong content
+        if insights is None:
+            raise ValueError("Failed to parse AI response as valid JSON after repair attempts")
 
         # Validate structure
         headline = insights.get("headline", "Let's crush this workout!")
         sections = insights.get("sections", [])
 
-        # Ensure we have valid sections
+        # Ensure we have valid sections - fail if structure is invalid
         if not sections or len(sections) < 2:
-            raise ValueError("AI returned invalid workout insights structure (missing sections)")
+            raise ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
 
         # Truncate headline if too long (max 7 words)
         if len(headline.split()) > 7:
@@ -240,5 +349,5 @@ Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivat
         }
 
     except Exception as e:
-        logger.error(f"[Generate Node] Error: {e}")
-        raise  # No fallback - let errors propagate
+        logger.error(f"[Generate Node] Error generating insights: {e}")
+        raise  # Fail fast - propagate error rather than show incorrect content

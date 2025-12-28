@@ -35,6 +35,13 @@ FOCUS_AREA_KEYWORDS = {
     "flexibility": "flexibility stretching yoga mobility range of motion static stretches dynamic stretches",
     "mobility": "mobility joint health functional movement dynamic stretching foam rolling warm-up activation",
 
+    # Power and Plyometric training
+    "plyometrics": "plyometric exercises explosive power jump training box jumps squat jumps depth jumps bounding hops reactive strength power development",
+    "power": "explosive power training Olympic lifts power cleans snatches jump squats medicine ball throws plyometrics speed strength rate of force development",
+    "vertical_jump": "vertical jump training box jumps depth jumps squat jumps countermovement jumps plyometrics leg power explosive strength calf raises",
+    "speed": "speed training sprints acceleration agility drills quick feet ladder drills explosive movements fast twitch muscle development",
+    "explosiveness": "explosive movement training power plyometrics jumps medicine ball throws olympic lifts rapid force production athletic performance",
+
     # Ball sports
     "cricket": "cricket training rotational power batting bowling throwing shoulder stability agility sprints lateral movement core strength explosive power conditioning",
     "football": "football soccer training sprinting agility change direction lower body power endurance conditioning kicks",
@@ -51,6 +58,79 @@ GOAL_KEYWORDS = {
     "Flexibility": "stretching mobility flexibility exercises",
     "General Fitness": "functional fitness full body exercises",
 }
+
+# Custom program description keyword mappings
+# Maps keywords in custom descriptions to focus areas for better RAG matching
+CUSTOM_PROGRAM_KEYWORDS = {
+    # Jump/Plyometric related
+    "box jump": "plyometrics vertical_jump",
+    "jump": "plyometrics vertical_jump power",
+    "vertical jump": "vertical_jump plyometrics",
+    "plyometric": "plyometrics power explosiveness",
+    "explosive": "explosiveness power plyometrics",
+    "power": "power explosiveness strength",
+
+    # Sport-specific
+    "hyrox": "hyrox",
+    "marathon": "endurance",
+    "running": "endurance speed",
+    "sprint": "speed power explosiveness",
+    "basketball": "basketball vertical_jump",
+    "football": "football speed power",
+    "soccer": "football endurance speed",
+    "boxing": "boxing",
+    "mma": "martial_arts",
+    "tennis": "tennis",
+    "cricket": "cricket",
+    "crossfit": "crossfit",
+
+    # Skill-specific
+    "pull-up": "full_body_pull strength",
+    "pullup": "full_body_pull strength",
+    "pushup": "full_body_push strength",
+    "push-up": "full_body_push strength",
+    "deadlift": "strength full_body_pull",
+    "squat": "strength full_body_legs",
+    "bench": "strength full_body_push",
+
+    # General
+    "strength": "strength",
+    "muscle": "strength",
+    "endurance": "endurance",
+    "speed": "speed",
+    "agility": "speed",
+    "flexibility": "flexibility mobility",
+    "mobility": "mobility flexibility",
+}
+
+
+def extract_focus_areas_from_description(description: str) -> List[str]:
+    """
+    Extract relevant focus areas from a custom program description.
+
+    Args:
+        description: Custom program description like "Improve box jump height"
+
+    Returns:
+        List of focus area keywords to enhance RAG search
+    """
+    if not description:
+        return []
+
+    description_lower = description.lower()
+    found_focuses = set()
+
+    # Check for keyword matches (longer phrases first)
+    sorted_keywords = sorted(CUSTOM_PROGRAM_KEYWORDS.keys(), key=len, reverse=True)
+
+    for keyword in sorted_keywords:
+        if keyword in description_lower:
+            focus_areas = CUSTOM_PROGRAM_KEYWORDS[keyword].split()
+            for focus in focus_areas:
+                if focus in FOCUS_AREA_KEYWORDS:
+                    found_focuses.add(focus)
+
+    return list(found_focuses)
 
 
 def build_search_query(
@@ -141,6 +221,17 @@ async def build_search_query_with_custom_goals(
 
             custom_program_description = preferences.get("custom_program_description")
             if custom_program_description and custom_program_description.strip():
+                # Extract relevant focus areas from the description
+                extracted_focuses = extract_focus_areas_from_description(custom_program_description)
+
+                if extracted_focuses:
+                    # Add the focus area keywords to strongly influence RAG results
+                    for focus in extracted_focuses:
+                        if focus in FOCUS_AREA_KEYWORDS:
+                            enhanced_parts.append(FOCUS_AREA_KEYWORDS[focus])
+                    logger.info(f"Extracted focus areas from custom program: {extracted_focuses}")
+
+                # Also add the raw description for semantic matching
                 enhanced_parts.append(f"Custom training goal: {custom_program_description}")
                 logger.debug(f"Added custom program description to query for user {user_id}")
 
@@ -162,4 +253,13 @@ async def build_search_query_with_custom_goals(
     except Exception as e:
         logger.warning(f"Failed to get custom goal keywords for user {user_id}: {e}")
 
-    return " ".join(enhanced_parts)
+    final_query = " ".join(enhanced_parts)
+
+    # Log the final RAG search query for debugging custom programs
+    logger.info("=" * 60)
+    logger.info(f"[RAG SEARCH QUERY] User: {user_id}")
+    logger.info(f"Base focus area: {focus_area}")
+    logger.info(f"FINAL QUERY: {final_query}")
+    logger.info("=" * 60)
+
+    return final_query

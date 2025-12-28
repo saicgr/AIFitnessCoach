@@ -12,10 +12,12 @@ from google import genai
 from google.genai import types
 from typing import List, Dict, Optional
 import json
+import logging
 from core.config import get_settings
 from models.chat import IntentExtraction, CoachIntent
 
 settings = get_settings()
+logger = logging.getLogger("gemini")
 
 # Initialize the Gemini client
 client = genai.Client(api_key=settings.gemini_api_key)
@@ -875,6 +877,17 @@ Requirements:
 - Include variety - don't repeat the same movement pattern
 - Each exercise should have helpful form notes"""
 
+        # Log the full prompt for debugging
+        logger.info("=" * 80)
+        logger.info("[GEMINI PROMPT - generate_workout_plan]")
+        logger.info(f"Parameters: fitness_level={fitness_level}, goals={goals}, equipment={equipment}, duration={duration_minutes}min")
+        logger.info(f"Focus areas: {focus_areas}, intensity_preference={intensity_preference}")
+        logger.info(f"Custom program description: {custom_program_description}")
+        logger.info(f"Age: {age}, Activity level: {activity_level}")
+        logger.info("-" * 40)
+        logger.info(f"FULL PROMPT:\n{prompt}")
+        logger.info("=" * 80)
+
         try:
             response = await client.aio.models.generate_content(
                 model=self.model,
@@ -1012,6 +1025,18 @@ Return a JSON object with:
   "difficulty": "{difficulty}",
   "notes": "A brief motivational tip for this workout (1-2 sentences)"
 }}"""
+
+        # Log the full prompt for debugging
+        logger.info("=" * 80)
+        logger.info("[GEMINI PROMPT - generate_workout_from_library]")
+        logger.info(f"Parameters: fitness_level={fitness_level}, goals={goals}, duration={duration_minutes}min")
+        logger.info(f"Focus areas: {focus_areas}, intensity_preference={intensity_preference}")
+        logger.info(f"Custom program description: {custom_program_description}")
+        logger.info(f"Exercise count: {len(exercises)}")
+        logger.info(f"Exercise names: {[ex.get('name') for ex in exercises]}")
+        logger.info("-" * 40)
+        logger.info(f"FULL PROMPT:\n{prompt}")
+        logger.info("=" * 80)
 
         try:
             response = await client.aio.models.generate_content(
