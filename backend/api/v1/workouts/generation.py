@@ -77,7 +77,8 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 goals=goals if isinstance(goals, list) else [],
                 equipment=equipment if isinstance(equipment, list) else [],
                 duration_minutes=request.duration_minutes or 45,
-                focus_areas=request.focus_areas
+                focus_areas=request.focus_areas,
+                intensity_preference=intensity_preference
             )
 
             exercises = workout_data.get("exercises", [])
@@ -427,7 +428,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         focus_areas=[focus],
                         workout_date=workout_date.isoformat(),
                         age=user_age,
-                        activity_level=user_activity_level
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -438,7 +440,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         focus_areas=[focus],
                         workout_date=workout_date.isoformat(),
                         age=user_age,
-                        activity_level=user_activity_level
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference
                     )
 
                 exercises = workout_data.get("exercises", [])

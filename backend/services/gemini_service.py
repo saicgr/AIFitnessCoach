@@ -705,7 +705,8 @@ IMPORTANT:
         avoid_name_words: Optional[List[str]] = None,
         workout_date: Optional[str] = None,
         age: Optional[int] = None,
-        activity_level: Optional[str] = None
+        activity_level: Optional[str] = None,
+        intensity_preference: Optional[str] = None
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -720,12 +721,16 @@ IMPORTANT:
             workout_date: Optional date for the workout (ISO format) to enable holiday theming
             age: Optional user's age for age-appropriate exercise selection
             activity_level: Optional activity level (sedentary, lightly_active, moderately_active, very_active)
+            intensity_preference: Optional intensity preference (easy, medium, hard) - overrides fitness_level for difficulty
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
         """
-        # Determine difficulty based on fitness level
-        difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
+        # Use intensity_preference if provided, otherwise derive from fitness_level
+        if intensity_preference:
+            difficulty = intensity_preference
+        else:
+            difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
         # Build avoid words instruction if provided
         avoid_instruction = ""
@@ -883,7 +888,8 @@ Requirements:
         avoid_name_words: Optional[List[str]] = None,
         workout_date: Optional[str] = None,
         age: Optional[int] = None,
-        activity_level: Optional[str] = None
+        activity_level: Optional[str] = None,
+        intensity_preference: Optional[str] = None
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -902,6 +908,7 @@ Requirements:
             workout_date: Optional date for holiday theming
             age: Optional user's age for age-appropriate adjustments
             activity_level: Optional activity level
+            intensity_preference: Optional intensity preference (easy, medium, hard)
 
         Returns:
             Dict with workout structure
