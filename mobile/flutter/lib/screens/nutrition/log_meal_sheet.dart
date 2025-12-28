@@ -57,6 +57,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   bool _isLoading = false;
   String? _error;
 
+  // Streaming progress state
+  int _currentStep = 0;
+  int _totalSteps = 4;
+  String _progressMessage = '';
+  String? _progressDetail;
+
   final _descriptionController = TextEditingController();
   bool _hasScanned = false;
 
@@ -98,19 +104,43 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       setState(() {
         _isLoading = true;
         _error = null;
+        _currentStep = 0;
+        _progressMessage = 'Preparing image...';
+        _progressDetail = null;
       });
 
       final repository = ref.read(nutritionRepositoryProvider);
-      final response = await repository.logFoodFromImage(
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repository.logFoodFromImageStreaming(
         userId: widget.userId,
         mealType: _selectedMealType.value,
         imageFile: File(image.path),
-      );
+      )) {
+        if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pop(context);
-        _showSuccessSnackbar(response.totalCalories);
-        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+        if (progress.hasError) {
+          setState(() {
+            _isLoading = false;
+            _error = progress.message;
+          });
+          return;
+        }
+
+        if (progress.isCompleted && progress.foodLog != null) {
+          Navigator.pop(context);
+          _showSuccessSnackbar(progress.foodLog!.totalCalories);
+          ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+          return;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
       }
     } catch (e) {
       setState(() {
@@ -127,17 +157,46 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     setState(() {
       _isLoading = true;
       _error = null;
+      _currentStep = 0;
+      _progressMessage = 'Starting analysis...';
+      _progressDetail = null;
     });
 
     try {
       final repository = ref.read(nutritionRepositoryProvider);
-      final response = await repository.logFoodFromText(
+      LogFoodResponse? response;
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repository.logFoodFromTextStreaming(
         userId: widget.userId,
         description: description,
         mealType: _selectedMealType.value,
-      );
+      )) {
+        if (!mounted) return;
 
-      if (mounted) {
+        if (progress.hasError) {
+          setState(() {
+            _isLoading = false;
+            _error = progress.message;
+          });
+          return;
+        }
+
+        if (progress.isCompleted && progress.foodLog != null) {
+          response = progress.foodLog;
+          break;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+
+      if (mounted && response != null) {
         setState(() => _isLoading = false);
         // Show rainbow confirmation dialog
         final confirmed = await _showRainbowNutritionConfirmation(response, description);
@@ -634,17 +693,92 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               ),
             ),
 
-          // Loading indicator
+          // Loading indicator with streaming progress
           if (_isLoading)
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: teal),
-                    const SizedBox(height: 16),
-                    Text('Analyzing your food...', style: TextStyle(color: textSecondary)),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Animated progress indicator with smooth transitions
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                        builder: (context, value, child) {
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: CircularProgressIndicator(
+                                  value: value > 0 ? value : null,
+                                  strokeWidth: 6,
+                                  color: teal,
+                                  backgroundColor: teal.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              Text(
+                                '$_currentStep/$_totalSteps',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: teal,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Text(
+                          _progressMessage.isNotEmpty ? _progressMessage : 'Analyzing your food...',
+                          key: ValueKey(_progressMessage),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      if (_progressDetail != null) ...[
+                        const SizedBox(height: 8),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: Text(
+                            _progressDetail!,
+                            key: ValueKey(_progressDetail),
+                            style: TextStyle(fontSize: 13, color: textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      // Animated progress bar
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOut,
+                        builder: (context, value, child) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: value > 0 ? value : null,
+                              backgroundColor: teal.withValues(alpha: 0.2),
+                              valueColor: AlwaysStoppedAnimation(teal),
+                              minHeight: 6,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
@@ -659,6 +793,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                     onLog: _logAnalyzedFood,
                     isDark: isDark,
                     userId: widget.userId,
+                    mealType: _selectedMealType.value,
                     sourceType: 'text',
                   ),
                   _PhotoTab(onPickImage: _pickImage, isDark: isDark),
@@ -1063,6 +1198,7 @@ class _DescribeTab extends ConsumerStatefulWidget {
   final void Function(LogFoodResponse) onLog;
   final bool isDark;
   final String userId;
+  final String mealType;
   final String sourceType;
   final String? barcode;
   final String? imageUrl;
@@ -1073,6 +1209,7 @@ class _DescribeTab extends ConsumerStatefulWidget {
     required this.onLog,
     required this.isDark,
     required this.userId,
+    required this.mealType,
     this.sourceType = 'text',
     this.barcode,
     this.imageUrl,
@@ -1088,6 +1225,12 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   bool _isSaved = false;
   bool _isSaving = false;
 
+  // Streaming progress state
+  int _currentStep = 0;
+  int _totalSteps = 4;
+  String _progressMessage = '';
+  String? _progressDetail;
+
   // Rainbow colors for nutrition values
   static const caloriesColor = Color(0xFFFF6B6B);
   static const proteinColor = Color(0xFFFFD93D);
@@ -1098,18 +1241,74 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   Future<void> _handleAnalyze() async {
     if (widget.controller.text.trim().isEmpty) return;
 
-    debugPrint('🍎 [LogMeal] Starting analysis...');
-    setState(() => _isAnalyzing = true);
-    final response = await widget.onAnalyze();
-    debugPrint('🍎 [LogMeal] Analyze response: $response');
-    debugPrint('🍎 [LogMeal] Calories: ${response?.totalCalories}, Protein: ${response?.proteinG}, Carbs: ${response?.carbsG}, Fat: ${response?.fatG}');
-    debugPrint('🍎 [LogMeal] mounted: $mounted, setting _analyzedResponse');
-    if (mounted) {
-      setState(() {
-        _isAnalyzing = false;
-        _analyzedResponse = response;
-      });
-      debugPrint('🍎 [LogMeal] _analyzedResponse set to: $_analyzedResponse');
+    debugPrint('🍎 [LogMeal] Starting analysis with streaming...');
+    setState(() {
+      _isAnalyzing = true;
+      _currentStep = 0;
+      _progressMessage = 'Starting analysis...';
+      _progressDetail = null;
+    });
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      LogFoodResponse? response;
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repository.logFoodFromTextStreaming(
+        userId: widget.userId,
+        description: widget.controller.text.trim(),
+        mealType: widget.mealType,
+      )) {
+        if (!mounted) return;
+
+        if (progress.hasError) {
+          setState(() {
+            _isAnalyzing = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${progress.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        if (progress.isCompleted && progress.foodLog != null) {
+          response = progress.foodLog;
+          break;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+
+      debugPrint('🍎 [LogMeal] Streaming complete, response: $response');
+      if (mounted && response != null) {
+        setState(() {
+          _isAnalyzing = false;
+          _analyzedResponse = response;
+        });
+        debugPrint('🍎 [LogMeal] _analyzedResponse set to: $_analyzedResponse');
+      } else if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
+    } catch (e) {
+      debugPrint('🍎 [LogMeal] Streaming error: $e');
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -1201,6 +1400,98 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       return _buildNutritionPreview(isDark, textPrimary, textMuted, textSecondary, elevated, teal);
     }
 
+    // Show streaming progress when analyzing
+    if (_isAnalyzing) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Animated progress indicator with smooth transitions
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+                builder: (context, value, child) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CircularProgressIndicator(
+                          value: value > 0 ? value : null,
+                          strokeWidth: 6,
+                          color: teal,
+                          backgroundColor: teal.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      Text(
+                        '$_currentStep/$_totalSteps',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: teal,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  _progressMessage.isNotEmpty ? _progressMessage : 'Analyzing your food...',
+                  key: ValueKey(_progressMessage),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              if (_progressDetail != null) ...[
+                const SizedBox(height: 8),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _progressDetail!,
+                    key: ValueKey(_progressDetail),
+                    style: TextStyle(fontSize: 13, color: textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              // Animated progress bar
+              SizedBox(
+                width: 200,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: value > 0 ? value : null,
+                        backgroundColor: teal.withValues(alpha: 0.2),
+                        valueColor: AlwaysStoppedAnimation(teal),
+                        minHeight: 6,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // Otherwise show the input form
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -1244,21 +1535,14 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _isAnalyzing ? null : _handleAnalyze,
-              icon: _isAnalyzing
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.send, size: 18),
-              label: Text(
-                _isAnalyzing ? 'Analyzing...' : 'Analyze with AI',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              onPressed: _handleAnalyze,
+              icon: const Icon(Icons.send, size: 18),
+              label: const Text(
+                'Analyze with AI',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: teal,
-                disabledBackgroundColor: teal.withValues(alpha: 0.5),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

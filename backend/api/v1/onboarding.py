@@ -20,19 +20,15 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 import json
 
 from services.langgraph_onboarding_service import LangGraphOnboardingService
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.rate_limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
-
-# Rate limiter instance
-limiter = Limiter(key_func=get_remote_address)
 
 # Initialize LangGraph onboarding service
 # This replaces the old hardcoded question service

@@ -19,15 +19,15 @@ RATE LIMITS:
 - Other endpoints: default global limit
 """
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Request
-from typing import List, Optional
+from fastapi.responses import StreamingResponse
+from typing import List, Optional, AsyncGenerator
 from datetime import datetime, timedelta
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 import json
 import asyncio
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.rate_limiter import limiter
 from models.schemas import (
     Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
     SwapWorkoutsRequest, SwapExerciseRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
@@ -47,9 +47,6 @@ from services.warmup_stretch_service import get_warmup_stretch_service
 
 router = APIRouter()
 logger = get_logger(__name__)
-
-# Rate limiter instance
-limiter = Limiter(key_func=get_remote_address)
 
 
 async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
@@ -520,6 +517,131 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
     except Exception as e:
         logger.error(f"Failed to generate workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-stream")
+@limiter.limit("5/minute")
+async def generate_workout_streaming(http_request: Request, request: GenerateWorkoutRequest):
+    """
+    Generate a workout with streaming response for faster perceived performance.
+
+    Returns Server-Sent Events (SSE) stream:
+    - 'chunk' events with partial JSON as it generates
+    - 'done' event with the complete workout object when finished
+    - 'error' event if something fails
+
+    The client can start displaying exercises as they arrive instead of
+    waiting for the full response (3-8 seconds faster perceived time).
+    """
+    logger.info(f"[Streaming] Generating workout for user {request.user_id}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        try:
+            db = get_supabase_db()
+
+            # Get user data if not provided
+            if request.fitness_level and request.goals and request.equipment:
+                fitness_level = request.fitness_level
+                goals = request.goals
+                equipment = request.equipment
+            else:
+                user = db.get_user(request.user_id)
+                if not user:
+                    yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
+                    return
+
+                fitness_level = request.fitness_level or user.get("fitness_level")
+                goals = request.goals or user.get("goals", [])
+                equipment = request.equipment or user.get("equipment", [])
+
+            gemini_service = GeminiService()
+            full_content = ""
+
+            # Stream the generation
+            async for chunk in gemini_service.generate_workout_plan_streaming(
+                fitness_level=fitness_level or "intermediate",
+                goals=goals if isinstance(goals, list) else [],
+                equipment=equipment if isinstance(equipment, list) else [],
+                duration_minutes=request.duration_minutes or 45,
+                focus_areas=request.focus_areas
+            ):
+                full_content += chunk
+                # Send chunk event
+                yield f"event: chunk\ndata: {json.dumps({'chunk': chunk})}\n\n"
+
+            # Parse the complete response
+            content = full_content.strip()
+            if content.startswith("```json"):
+                content = content[7:]
+            elif content.startswith("```"):
+                content = content[3:]
+            if content.endswith("```"):
+                content = content[:-3]
+
+            workout_data = json.loads(content.strip())
+
+            if "exercises" not in workout_data or not workout_data["exercises"]:
+                yield f"event: error\ndata: {json.dumps({'error': 'AI response missing exercises'})}\n\n"
+                return
+
+            # Save to database
+            workout_db_data = {
+                "user_id": request.user_id,
+                "name": workout_data.get("name", "Generated Workout"),
+                "type": workout_data.get("type", request.workout_type or "strength"),
+                "difficulty": workout_data.get("difficulty", "medium"),
+                "scheduled_date": datetime.now().isoformat(),
+                "exercises_json": workout_data.get("exercises", []),
+                "duration_minutes": request.duration_minutes or 45,
+                "generation_method": "ai",
+                "generation_source": "gemini_streaming",
+            }
+
+            created = db.create_workout(workout_db_data)
+            logger.info(f"[Streaming] Workout generated: id={created['id']}")
+
+            log_workout_change(
+                workout_id=created['id'],
+                user_id=request.user_id,
+                change_type="generated",
+                change_source="ai_streaming",
+                new_value={"name": workout_data.get("name"), "exercises_count": len(workout_data.get("exercises", []))}
+            )
+
+            # Index to RAG in background (don't await)
+            generated_workout = row_to_workout(created)
+            asyncio.create_task(index_workout_to_rag(generated_workout))
+
+            # Send final workout
+            workout_response = {
+                "id": created["id"],
+                "user_id": created["user_id"],
+                "name": created["name"],
+                "type": created["type"],
+                "difficulty": created["difficulty"],
+                "scheduled_date": created["scheduled_date"],
+                "exercises_json": created.get("exercises_json"),
+                "duration_minutes": created.get("duration_minutes"),
+                "is_completed": created.get("is_completed", False),
+            }
+            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+
+        except json.JSONDecodeError as e:
+            logger.error(f"[Streaming] JSON parse error: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': f'Failed to parse AI response: {str(e)}'})}\n\n"
+        except Exception as e:
+            logger.error(f"[Streaming] Error: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        }
+    )
 
 
 @router.post("/swap")

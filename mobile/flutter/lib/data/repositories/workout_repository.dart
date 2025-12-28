@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,6 +145,163 @@ class WorkoutRepository {
     }
   }
 
+  /// Generate monthly workouts with streaming progress updates
+  ///
+  /// Returns a Stream that emits progress as each workout is generated.
+  /// Always generates exactly 2 weeks of workouts.
+  ///
+  /// Each progress event contains:
+  /// - currentWorkout/totalWorkouts: Progress through the batch
+  /// - message: "Generating next workout..."
+  /// - detail: "Day X of Y"
+  /// - workout: The just-generated workout (when available)
+  Stream<ProgramGenerationProgress> generateMonthlyWorkoutsStreaming({
+    required String userId,
+    required List<int> selectedDays,
+    int durationMinutes = 45,
+    String? monthStartDate,
+  }) async* {
+    debugPrint('🚀 [Workout] Starting streaming program generation for $userId');
+    final startTime = DateTime.now();
+    final List<Workout> generatedWorkouts = [];
+
+    try {
+      // Emit initial status
+      yield ProgramGenerationProgress(
+        currentWorkout: 0,
+        totalWorkouts: 0,
+        message: 'Starting workout generation...',
+        elapsedMs: 0,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _apiClient.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 5),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _apiClient.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
+
+      final response = await streamingDio.post(
+        '${ApiConstants.workouts}/generate-monthly-stream',
+        data: {
+          'user_id': userId,
+          'month_start_date': startDate,
+          'selected_days': selectedDays,
+          'duration_minutes': durationMinutes,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'progress') {
+                  // Progress update - generating next workout
+                  yield ProgramGenerationProgress(
+                    currentWorkout: data['current'] as int? ?? 0,
+                    totalWorkouts: data['total'] as int? ?? 0,
+                    message: data['message'] as String? ?? 'Generating next workout...',
+                    detail: data['detail'] as String?,
+                    elapsedMs: elapsedMs,
+                    workouts: List.unmodifiable(generatedWorkouts),
+                  );
+                } else if (eventType == 'workout') {
+                  // A workout was generated
+                  final workoutData = data['workout'] as Map<String, dynamic>?;
+                  if (workoutData != null) {
+                    final workout = Workout.fromJson(workoutData);
+                    generatedWorkouts.add(workout);
+                    yield ProgramGenerationProgress(
+                      currentWorkout: data['current'] as int? ?? generatedWorkouts.length,
+                      totalWorkouts: data['total'] as int? ?? 0,
+                      message: 'Workout generated!',
+                      detail: workout.name,
+                      elapsedMs: elapsedMs,
+                      workout: workout,
+                      workouts: List.unmodifiable(generatedWorkouts),
+                    );
+                  }
+                } else if (eventType == 'done') {
+                  // All workouts generated
+                  yield ProgramGenerationProgress(
+                    currentWorkout: data['total_generated'] as int? ?? generatedWorkouts.length,
+                    totalWorkouts: data['total_generated'] as int? ?? generatedWorkouts.length,
+                    message: 'All workouts ready!',
+                    elapsedMs: elapsedMs,
+                    workouts: List.unmodifiable(generatedWorkouts),
+                    isCompleted: true,
+                  );
+                } else if (eventType == 'error') {
+                  yield ProgramGenerationProgress(
+                    currentWorkout: 0,
+                    totalWorkouts: 0,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                    workouts: List.unmodifiable(generatedWorkouts),
+                    hasError: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Streaming program generation error: $e');
+      yield ProgramGenerationProgress(
+        currentWorkout: 0,
+        totalWorkouts: 0,
+        message: 'Failed to generate workouts: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        workouts: List.unmodifiable(generatedWorkouts),
+        hasError: true,
+      );
+    }
+  }
+
   /// Regenerate a workout with modifications
   Future<Workout?> regenerateWorkout({
     required String workoutId,
@@ -201,6 +360,294 @@ class WorkoutRepository {
     } catch (e) {
       debugPrint('❌ [Workout] Error regenerating workout: $e');
       rethrow;
+    }
+  }
+
+  /// Regenerate a workout with streaming progress updates
+  ///
+  /// Returns a Stream that emits progress updates at each step:
+  /// - Step 1: Loading user profile
+  /// - Step 2: Selecting exercises via RAG
+  /// - Step 3: Creating workout with AI
+  /// - Step 4: Saving workout
+  ///
+  /// Each progress event contains:
+  /// - step/total_steps: Current step number and total steps
+  /// - message: Human-readable status
+  /// - detail: Additional context
+  /// - elapsed_ms: Time elapsed since start
+  Stream<RegenerateProgress> regenerateWorkoutStreaming({
+    required String workoutId,
+    required String userId,
+    String? difficulty,
+    int? durationMinutes,
+    List<String>? focusAreas,
+    List<String>? injuries,
+    List<String>? equipment,
+    String? workoutType,
+    String? aiPrompt,
+    String? workoutName,
+    int? dumbbellCount,
+    int? kettlebellCount,
+  }) async* {
+    debugPrint('🚀 [Workout] Starting streaming regeneration for workout $workoutId');
+    final startTime = DateTime.now();
+
+    try {
+      // Emit initial status
+      yield RegenerateProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Starting regeneration...',
+        elapsedMs: 0,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _apiClient.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 3),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _apiClient.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final response = await streamingDio.post(
+        '${ApiConstants.workouts}/regenerate-stream',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
+          if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
+          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+          if (workoutType != null) 'workout_type': workoutType,
+          if (aiPrompt != null && aiPrompt.isNotEmpty) 'ai_prompt': aiPrompt,
+          if (workoutName != null && workoutName.isNotEmpty) 'workout_name': workoutName,
+          if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
+          if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'progress') {
+                  // Progress update
+                  yield RegenerateProgress(
+                    step: data['step'] as int? ?? 0,
+                    totalSteps: data['total_steps'] as int? ?? 4,
+                    message: data['message'] as String? ?? 'Processing...',
+                    detail: data['detail'] as String?,
+                    elapsedMs: elapsedMs,
+                  );
+                } else if (eventType == 'done') {
+                  // Workout complete
+                  final workout = Workout.fromJson(data);
+                  yield RegenerateProgress(
+                    step: 4,
+                    totalSteps: 4,
+                    message: 'Workout ready!',
+                    elapsedMs: elapsedMs,
+                    workout: workout,
+                    totalTimeMs: data['total_time_ms'] as int?,
+                    isCompleted: true,
+                  );
+                } else if (eventType == 'error') {
+                  yield RegenerateProgress(
+                    step: 0,
+                    totalSteps: 4,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                    hasError: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Streaming regeneration error: $e');
+      yield RegenerateProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Failed to regenerate workout: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        hasError: true,
+      );
+    }
+  }
+
+  /// Generate a workout with streaming for faster perceived performance
+  ///
+  /// Returns a Stream that emits progress updates:
+  /// - WorkoutGenerationProgress.started: Generation has begun
+  /// - WorkoutGenerationProgress.progress: Generation is in progress with elapsed time
+  /// - WorkoutGenerationProgress.completed: Workout is ready
+  /// - WorkoutGenerationProgress.error: An error occurred
+  Stream<WorkoutGenerationProgress> generateWorkoutStreaming({
+    required String userId,
+    String? fitnessLevel,
+    List<String>? goals,
+    List<String>? equipment,
+    int durationMinutes = 45,
+    List<String>? focusAreas,
+  }) async* {
+    debugPrint('🚀 [Workout] Starting streaming workout generation for $userId');
+    final startTime = DateTime.now();
+
+    try {
+      // First, emit started status
+      yield WorkoutGenerationProgress(
+        status: WorkoutGenerationStatus.started,
+        message: 'Generating workout...',
+        elapsedMs: 0,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _apiClient.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _apiClient.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final response = await streamingDio.post(
+        '${ApiConstants.workouts}/generate-stream',
+        data: {
+          'user_id': userId,
+          if (fitnessLevel != null) 'fitness_level': fitnessLevel,
+          if (goals != null && goals.isNotEmpty) 'goals': goals,
+          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
+          'duration_minutes': durationMinutes,
+          if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'chunk') {
+                  // Progress update
+                  yield WorkoutGenerationProgress(
+                    status: WorkoutGenerationStatus.progress,
+                    message: data['status'] == 'started'
+                        ? 'AI is generating your workout...'
+                        : 'Building exercises (${data['progress'] ?? 0} chars)...',
+                    elapsedMs: elapsedMs,
+                  );
+                } else if (eventType == 'done') {
+                  // Workout complete
+                  final workout = Workout.fromJson(data);
+                  yield WorkoutGenerationProgress(
+                    status: WorkoutGenerationStatus.completed,
+                    message: 'Workout ready!',
+                    elapsedMs: elapsedMs,
+                    workout: workout,
+                    totalTimeMs: data['total_time_ms'] as int?,
+                    chunkCount: data['chunk_count'] as int?,
+                  );
+                } else if (eventType == 'error') {
+                  yield WorkoutGenerationProgress(
+                    status: WorkoutGenerationStatus.error,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Streaming generation error: $e');
+      yield WorkoutGenerationProgress(
+        status: WorkoutGenerationStatus.error,
+        message: 'Failed to generate workout: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+      );
     }
   }
 
@@ -1669,4 +2116,165 @@ class ProgramPreferences {
       kettlebellCount: json['kettlebell_count'] as int?,
     );
   }
+}
+
+/// Status of streaming workout generation
+enum WorkoutGenerationStatus {
+  /// Generation has started, waiting for AI response
+  started,
+
+  /// Generation is in progress, receiving chunks
+  progress,
+
+  /// Generation completed successfully
+  completed,
+
+  /// An error occurred during generation
+  error,
+}
+
+/// Progress event for streaming workout generation
+class WorkoutGenerationProgress {
+  /// Current status of the generation
+  final WorkoutGenerationStatus status;
+
+  /// Human-readable status message
+  final String message;
+
+  /// Time elapsed since start in milliseconds
+  final int elapsedMs;
+
+  /// The generated workout (only available when status is completed)
+  final Workout? workout;
+
+  /// Total time for generation (server-side, only available when status is completed)
+  final int? totalTimeMs;
+
+  /// Number of chunks received (only available when status is completed)
+  final int? chunkCount;
+
+  WorkoutGenerationProgress({
+    required this.status,
+    required this.message,
+    required this.elapsedMs,
+    this.workout,
+    this.totalTimeMs,
+    this.chunkCount,
+  });
+
+  /// Whether the generation is still in progress
+  bool get isLoading =>
+      status == WorkoutGenerationStatus.started ||
+      status == WorkoutGenerationStatus.progress;
+
+  /// Whether the generation completed successfully
+  bool get isCompleted => status == WorkoutGenerationStatus.completed;
+
+  /// Whether an error occurred
+  bool get hasError => status == WorkoutGenerationStatus.error;
+
+  @override
+  String toString() => 'WorkoutGenerationProgress(status: $status, message: $message, elapsedMs: $elapsedMs)';
+}
+
+/// Progress event for streaming program generation (multiple workouts)
+class ProgramGenerationProgress {
+  /// Current workout number being generated
+  final int currentWorkout;
+
+  /// Total number of workouts to generate
+  final int totalWorkouts;
+
+  /// Human-readable status message
+  final String message;
+
+  /// Additional detail about the current step
+  final String? detail;
+
+  /// Time elapsed since start in milliseconds
+  final int elapsedMs;
+
+  /// A workout that was just generated (streamed one at a time)
+  final Workout? workout;
+
+  /// All workouts generated so far
+  final List<Workout> workouts;
+
+  /// Whether generation completed successfully
+  final bool isCompleted;
+
+  /// Whether an error occurred
+  final bool hasError;
+
+  ProgramGenerationProgress({
+    required this.currentWorkout,
+    required this.totalWorkouts,
+    required this.message,
+    this.detail,
+    required this.elapsedMs,
+    this.workout,
+    this.workouts = const [],
+    this.isCompleted = false,
+    this.hasError = false,
+  });
+
+  /// Progress as a percentage (0.0 to 1.0)
+  double get progress => totalWorkouts > 0 ? currentWorkout / totalWorkouts : 0;
+
+  /// Whether generation is still in progress
+  bool get isLoading => !isCompleted && !hasError;
+
+  @override
+  String toString() => 'ProgramGenerationProgress(workout: $currentWorkout/$totalWorkouts, message: $message, elapsedMs: $elapsedMs)';
+}
+
+/// Progress event for streaming workout regeneration
+class RegenerateProgress {
+  /// Current step number (1-indexed)
+  final int step;
+
+  /// Total number of steps
+  final int totalSteps;
+
+  /// Human-readable status message
+  final String message;
+
+  /// Additional detail about the current step
+  final String? detail;
+
+  /// Time elapsed since start in milliseconds
+  final int elapsedMs;
+
+  /// The regenerated workout (only available when completed)
+  final Workout? workout;
+
+  /// Total time for regeneration (server-side, only available when completed)
+  final int? totalTimeMs;
+
+  /// Whether regeneration completed successfully
+  final bool isCompleted;
+
+  /// Whether an error occurred
+  final bool hasError;
+
+  RegenerateProgress({
+    required this.step,
+    required this.totalSteps,
+    required this.message,
+    this.detail,
+    required this.elapsedMs,
+    this.workout,
+    this.totalTimeMs,
+    this.isCompleted = false,
+    this.hasError = false,
+  });
+
+  /// Progress as a percentage (0.0 to 1.0)
+  double get progress => totalSteps > 0 ? step / totalSteps : 0;
+
+  /// Whether regeneration is still in progress
+  bool get isLoading => !isCompleted && !hasError;
+
+  @override
+  String toString() => 'RegenerateProgress(step: $step/$totalSteps, message: $message, elapsedMs: $elapsedMs)';
 }

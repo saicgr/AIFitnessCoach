@@ -12,20 +12,16 @@ Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from services.langgraph_agents.exercise_suggestion import (
     ExerciseSuggestionState,
     build_exercise_suggestion_graph,
 )
 from core.logger import get_logger
+from core.rate_limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
-
-# Rate limiter instance
-limiter = Limiter(key_func=get_remote_address)
 
 # Build the graph once at module load
 exercise_suggestion_graph = None

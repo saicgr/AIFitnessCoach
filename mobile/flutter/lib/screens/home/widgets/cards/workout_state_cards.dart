@@ -281,3 +281,178 @@ class MoreWorkoutsLoadingBanner extends StatelessWidget {
     );
   }
 }
+
+/// Streaming workout generation card with animated progress
+/// Shows real-time progress when generating workouts for first-time users
+class StreamingWorkoutGenerationCard extends StatelessWidget {
+  /// Whether the current theme is dark
+  final bool isDark;
+
+  /// Current workout number being generated
+  final int currentWorkout;
+
+  /// Total number of workouts to generate
+  final int totalWorkouts;
+
+  /// Status message
+  final String message;
+
+  /// Additional detail about current step
+  final String? detail;
+
+  const StreamingWorkoutGenerationCard({
+    super.key,
+    required this.isDark,
+    required this.currentWorkout,
+    required this.totalWorkouts,
+    required this.message,
+    this.detail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isDark
+        ? AppColors.cyan.withOpacity(0.1)
+        : AppColors.cyan.withOpacity(0.08);
+    final borderColor = AppColors.cyan.withOpacity(0.3);
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final progress = totalWorkouts > 0 ? currentWorkout / totalWorkouts : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with icon and title
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyan.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.fitness_center,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Creating Your Workouts',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'AI-powered personalized program',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Progress indicator
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator(
+                            value: value > 0 ? value : null,
+                            strokeWidth: 4,
+                            backgroundColor: AppColors.cyan.withOpacity(0.2),
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                          ),
+                        ),
+                        if (totalWorkouts > 0)
+                          Text(
+                            '$currentWorkout/$totalWorkouts',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.cyan,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Message with animation
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                message,
+                key: ValueKey(message),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            if (detail != null) ...[
+              const SizedBox(height: 4),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  detail!,
+                  key: ValueKey(detail),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            // Animated progress bar
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              builder: (context, value, child) {
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: value > 0 ? value : null,
+                    backgroundColor: AppColors.cyan.withOpacity(0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                    minHeight: 6,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

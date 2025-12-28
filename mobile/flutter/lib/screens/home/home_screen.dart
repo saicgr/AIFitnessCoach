@@ -24,10 +24,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isCheckingWorkouts = false;
+  bool _isStreamingGeneration = false;
   String? _generationStartDate;
   int _generationWeeks = 0;
   int _totalExpected = 0;
   int _totalGenerated = 0;
+  String _generationMessage = '';
+  String? _generationDetail;
 
   @override
   void initState() {
@@ -67,7 +70,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _generationWeeks = 0;
         _totalExpected = 0;
         _totalGenerated = 0;
+        _isStreamingGeneration = false;
       });
+      return; // Don't check for generation if we already have workouts
     }
 
     // Check if we've already checked today (persisted across app restarts)
@@ -85,40 +90,142 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    // Check if we need to generate more (runs in background)
-    if (!_isCheckingWorkouts) {
+    // Check if we need to generate workouts and use streaming for real-time progress
+    if (!_isCheckingWorkouts && !_isStreamingGeneration) {
       setState(() => _isCheckingWorkouts = true);
       try {
-        final result = await notifier.checkAndRegenerateIfNeeded();
-        debugPrint(
-          'Debug: [HomeScreen] Workout check result: ${result['message']}',
-        );
+        // If user has NO workouts at all, use streaming for immediate feedback
+        final hasNoWorkouts = notifier.nextWorkout == null &&
+            (notifier.state.valueOrNull?.isEmpty ?? true);
+
+        if (hasNoWorkouts) {
+          // Use streaming generation for first-time users
+          await _generateWorkoutsWithStreaming();
+        } else {
+          // Use background check for users with existing workouts
+          final result = await notifier.checkAndRegenerateIfNeeded();
+          debugPrint(
+            'Debug: [HomeScreen] Workout check result: ${result['message']}',
+          );
+
+          // If generation was triggered in background, show banner
+          if (result['needs_generation'] == true && mounted) {
+            setState(() {
+              _generationStartDate = result['start_date'] as String?;
+              _generationWeeks = (result['weeks'] as int?) ?? 4;
+              _totalExpected = (result['total_expected'] as int?) ?? 0;
+              _totalGenerated = (result['total_generated'] as int?) ?? 0;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Generating your upcoming workouts...'),
+                backgroundColor: AppColors.elevated,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
 
         // Mark as checked for this session AND persist today's date
         ref.read(hasCheckedRegenerationProvider.notifier).state = true;
         await prefs.setString('last_workout_check_date', today);
-
-        // If generation was triggered, store details for display
-        if (result['needs_generation'] == true && mounted) {
-          setState(() {
-            _generationStartDate = result['start_date'] as String?;
-            _generationWeeks = (result['weeks'] as int?) ?? 4;
-            _totalExpected = (result['total_expected'] as int?) ?? 0;
-            _totalGenerated = (result['total_generated'] as int?) ?? 0;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Generating your upcoming workouts...'),
-              backgroundColor: AppColors.elevated,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
       } finally {
         if (mounted) {
           setState(() => _isCheckingWorkouts = false);
         }
+      }
+    }
+  }
+
+  /// Generate workouts with streaming progress for first-time users
+  Future<void> _generateWorkoutsWithStreaming() async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null) return;
+
+    // Get user preferences for workout days
+    final repo = ref.read(workoutRepositoryProvider);
+    final prefs = await repo.getProgramPreferences(userId);
+
+    // Convert day names to indices (0=Mon, 6=Sun)
+    const dayNameToIndex = {
+      'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
+      'Friday': 4, 'Saturday': 5, 'Sunday': 6,
+    };
+    List<int> selectedDays;
+    if (prefs?.workoutDays.isNotEmpty == true) {
+      selectedDays = prefs!.workoutDays
+          .map((name) => dayNameToIndex[name] ?? 0)
+          .toList();
+    } else {
+      selectedDays = [0, 2, 4]; // Mon, Wed, Fri default
+    }
+    final durationMinutes = prefs?.durationMinutes ?? 45;
+
+    setState(() {
+      _isStreamingGeneration = true;
+      _generationStartDate = DateTime.now().toIso8601String().split('T')[0];
+      _totalExpected = 0;
+      _totalGenerated = 0;
+      _generationMessage = 'Starting workout generation...';
+      _generationDetail = null;
+    });
+
+    try {
+      await for (final progress in repo.generateMonthlyWorkoutsStreaming(
+        userId: userId,
+        selectedDays: selectedDays,
+        durationMinutes: durationMinutes,
+      )) {
+        if (!mounted) return;
+
+        if (progress.hasError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${progress.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          break;
+        }
+
+        if (progress.isCompleted) {
+          // Generation complete - refresh workouts and clear generation state
+          await ref.read(workoutsProvider.notifier).refresh();
+          setState(() {
+            _isStreamingGeneration = false;
+            _generationStartDate = null;
+            _totalExpected = 0;
+            _totalGenerated = 0;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${progress.workouts.length} workouts ready!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          break;
+        }
+
+        // Update progress UI
+        setState(() {
+          _totalExpected = progress.totalWorkouts;
+          _totalGenerated = progress.currentWorkout;
+          _generationMessage = progress.message;
+          _generationDetail = progress.detail;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error during streaming generation: $e');
+      if (mounted) {
+        setState(() => _isStreamingGeneration = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate workouts: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -168,8 +275,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
 
-              // Generation Banner
-              if (_generationStartDate != null &&
+              // Streaming Generation Banner (for first-time users with real-time progress)
+              if (_isStreamingGeneration && nextWorkout == null)
+                SliverToBoxAdapter(
+                  child: StreamingWorkoutGenerationCard(
+                    isDark: isDark,
+                    currentWorkout: _totalGenerated,
+                    totalWorkouts: _totalExpected,
+                    message: _generationMessage,
+                    detail: _generationDetail,
+                  ),
+                ),
+
+              // Legacy Generation Banner (for background generation)
+              if (!_isStreamingGeneration &&
+                  _generationStartDate != null &&
                   _generationWeeks > 0 &&
                   nextWorkout == null)
                 SliverToBoxAdapter(
@@ -182,9 +302,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-              // Section: TODAY
-              const SliverToBoxAdapter(
-                child: SectionHeader(title: 'TODAY'),
+              // Section: TODAY with Customize button
+              SliverToBoxAdapter(
+                child: _buildTodaySectionHeader(isDark),
               ),
 
               // Daily Activity Card
@@ -324,7 +444,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(width: 4),
           NotificationBellButton(isDark: isDark),
           const SizedBox(width: 4),
-          ProgramMenuButton(isDark: isDark),
+          SettingsButton(isDark: isDark),
         ],
       ),
     );
@@ -376,6 +496,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         }
                       },
                     ),
+    );
+  }
+
+  Widget _buildTodaySectionHeader(bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: Row(
+        children: [
+          Text(
+            'TODAY',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const Spacer(),
+          CustomizeProgramButton(isDark: isDark),
+        ],
+      ),
     );
   }
 }

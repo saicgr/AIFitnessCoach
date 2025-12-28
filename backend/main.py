@@ -12,8 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import uvicorn
 import time
@@ -21,6 +20,7 @@ import traceback
 
 from core.config import get_settings
 from core.logger import get_logger
+from core.rate_limiter import limiter
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
 from services.gemini_service import GeminiService
@@ -31,11 +31,6 @@ from services.job_queue_service import get_job_queue_service
 
 settings = get_settings()
 logger = get_logger(__name__)
-
-# Initialize rate limiter
-# Uses client IP address for rate limiting by default
-# Default global limit: 100 requests per minute
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

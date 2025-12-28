@@ -491,6 +491,98 @@ Requirements:
             print(f"Workout generation failed: {e}")
             raise
 
+    async def generate_workout_plan_streaming(
+        self,
+        fitness_level: str,
+        goals: List[str],
+        equipment: List[str],
+        duration_minutes: int = 45,
+        focus_areas: Optional[List[str]] = None,
+        avoid_name_words: Optional[List[str]] = None,
+        workout_date: Optional[str] = None,
+        age: Optional[int] = None,
+        activity_level: Optional[str] = None
+    ):
+        """
+        Generate a workout plan using streaming for faster perceived response.
+
+        Yields chunks of JSON as they're generated, allowing the client to
+        display exercises incrementally.
+
+        Yields:
+            str: JSON chunks as they arrive from Gemini
+        """
+        difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
+
+        avoid_instruction = ""
+        if avoid_name_words and len(avoid_name_words) > 0:
+            avoid_instruction = f"\n\n⚠️ IMPORTANT: Do NOT use these words in the workout name: {', '.join(avoid_name_words)}"
+
+        holiday_theme = self._get_holiday_theme(workout_date)
+        holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
+
+        age_activity_context = ""
+        if age:
+            if age < 25:
+                age_activity_context += f"\n- Age: {age} (young adult)"
+            elif age < 40:
+                age_activity_context += f"\n- Age: {age} (adult)"
+            elif age < 55:
+                age_activity_context += f"\n- Age: {age} (middle-aged - joint-friendly exercises)"
+            else:
+                age_activity_context += f"\n- Age: {age} (senior - low-impact)"
+
+        if activity_level:
+            activity_descriptions = {
+                'sedentary': 'sedentary (start slow)',
+                'lightly_active': 'lightly active (moderate intensity)',
+                'moderately_active': 'moderately active (challenging workouts)',
+                'very_active': 'very active (high intensity)'
+            }
+            activity_desc = activity_descriptions.get(activity_level, activity_level)
+            age_activity_context += f"\n- Activity Level: {activity_desc}"
+
+        prompt = f"""Generate a {duration_minutes}-minute workout for:
+- Fitness Level: {fitness_level}
+- Goals: {', '.join(goals) if goals else 'General fitness'}
+- Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
+- Focus: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}
+
+Return ONLY valid JSON (no markdown):
+{{
+  "name": "Creative 3-4 word name ending with body part",
+  "type": "strength",
+  "difficulty": "{difficulty}",
+  "duration_minutes": {duration_minutes},
+  "target_muscles": ["muscle1", "muscle2"],
+  "exercises": [
+    {{"name": "Exercise", "sets": 3, "reps": 12, "rest_seconds": 60, "equipment": "equipment", "muscle_group": "muscle", "notes": "tips"}}
+  ],
+  "notes": "Overall tips"
+}}
+
+Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
+{holiday_instruction}{avoid_instruction}"""
+
+        try:
+            # Use streaming API
+            stream = await client.aio.models.generate_content_stream(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=4000
+                ),
+            )
+
+            async for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
+
+        except Exception as e:
+            print(f"Streaming workout generation failed: {e}")
+            raise
+
     async def generate_workout_from_library(
         self,
         exercises: List[Dict],

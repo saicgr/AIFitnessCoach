@@ -44,6 +44,11 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   bool _isLoading = false;
   String _updateStatus = '';
 
+  // Streaming progress state
+  int _generatingWorkout = 0;
+  int _totalWorkoutsToGenerate = 0;
+  String? _generatingDetail;
+
   // Step 1: Schedule
   final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
   String _selectedDifficulty = 'medium';
@@ -200,6 +205,9 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
     setState(() {
       _isUpdating = true;
       _updateStatus = 'Saving preferences...';
+      _generatingWorkout = 0;
+      _totalWorkoutsToGenerate = 0;
+      _generatingDetail = null;
     });
 
     final authState = ref.read(authStateProvider);
@@ -240,35 +248,49 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
       );
 
       if (mounted) {
-        setState(() => _updateStatus = 'Generating first week...');
+        setState(() => _updateStatus = 'Generating workouts...');
       }
 
-      // Step 2: Generate just 1 week immediately for fast response
+      // Step 2: Generate 2 weeks with streaming for real-time progress
       final today = DateTime.now().toIso8601String().split('T')[0];
-      await repo.generateMonthlyWorkouts(
+
+      await for (final progress in repo.generateMonthlyWorkoutsStreaming(
         userId: userId,
         selectedDays: _selectedDays.toList(),
         durationMinutes: _selectedDuration.round(),
-        weeks: 1,
         monthStartDate: today,
-      );
+      )) {
+        if (!mounted) return;
 
-      // Step 3: Schedule background generation for second week
-      // Auto-regeneration system will handle ongoing workout creation beyond 2 weeks
-      await repo.scheduleRemainingWorkouts(
-        userId: userId,
-        selectedDays: _selectedDays.toList(),
-        durationMinutes: _selectedDuration.round(),
-        totalWeeks: 2, // Always generate 2 weeks initially
-        weeksGenerated: 1,
-      );
+        if (progress.hasError) {
+          throw Exception(progress.message);
+        }
 
+        if (progress.isCompleted) {
+          // All workouts generated successfully
+          Navigator.pop(context, true);
+          return;
+        }
+
+        // Update UI with streaming progress
+        setState(() {
+          _generatingWorkout = progress.currentWorkout;
+          _totalWorkoutsToGenerate = progress.totalWorkouts;
+          _updateStatus = progress.message;
+          _generatingDetail = progress.detail;
+        });
+      }
+
+      // If we get here without completion, something went wrong
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() {
           _isUpdating = false;
           _updateStatus = '';
+          _generatingWorkout = 0;
+          _totalWorkoutsToGenerate = 0;
+          _generatingDetail = null;
         });
 
         String errorMessage = 'Failed to update program';
@@ -960,71 +982,112 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   Widget _buildNavigationButtons(SheetColors colors) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (_currentStep > 0)
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _isUpdating ? null : _previousStep,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: colors.cardBorder),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          // Progress bar when generating workouts
+          if (_isUpdating && _totalWorkoutsToGenerate > 0) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: _generatingWorkout / _totalWorkoutsToGenerate,
+                backgroundColor: colors.glassSurface,
+                valueColor: AlwaysStoppedAnimation<Color>(colors.cyan),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _generatingDetail ?? _updateStatus,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
                   ),
                 ),
-                child:
-                    Text('Back', style: TextStyle(color: colors.textSecondary)),
-              ),
+                Text(
+                  '$_generatingWorkout of $_totalWorkoutsToGenerate',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.cyan,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          if (_currentStep > 0) const SizedBox(width: 12),
-          Expanded(
-            flex: _currentStep == 0 ? 1 : 2,
-            child: ElevatedButton(
-              onPressed: _isUpdating ? null : _nextStep,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.cyan,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              if (_currentStep > 0)
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isUpdating ? null : _previousStep,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: colors.cardBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child:
+                        Text('Back', style: TextStyle(color: colors.textSecondary)),
+                  ),
+                ),
+              if (_currentStep > 0) const SizedBox(width: 12),
+              Expanded(
+                flex: _currentStep == 0 ? 1 : 2,
+                child: ElevatedButton(
+                  onPressed: _isUpdating ? null : _nextStep,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.cyan,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isUpdating
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                _totalWorkoutsToGenerate > 0
+                                    ? _updateStatus
+                                    : (_updateStatus.isNotEmpty
+                                        ? _updateStatus
+                                        : 'Updating...'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          _currentStep < _totalSteps - 1
+                              ? 'Continue'
+                              : 'Update & Regenerate',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
-              child: _isUpdating
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            _updateStatus.isNotEmpty
-                                ? _updateStatus
-                                : 'Updating...',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      _currentStep < _totalSteps - 1
-                          ? 'Continue'
-                          : 'Update & Regenerate',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-            ),
+            ],
           ),
         ],
       ),

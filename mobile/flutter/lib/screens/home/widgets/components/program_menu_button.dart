@@ -3,91 +3,92 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/repositories/workout_repository.dart';
+import '../../../../data/services/haptic_service.dart';
 import '../edit_program_sheet.dart';
 
-/// Three-dot menu button for program options
-/// Used in the home screen header
-class ProgramMenuButton extends ConsumerWidget {
+/// Settings icon button for the home screen header
+/// Navigates directly to settings screen
+class SettingsButton extends StatelessWidget {
   /// Whether the current theme is dark
   final bool isDark;
 
-  const ProgramMenuButton({
+  const SettingsButton({
+    super.key,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return IconButton(
+      onPressed: () {
+        HapticService.light();
+        context.push('/settings');
+      },
+      icon: Icon(
+        Icons.settings_outlined,
+        color: textMuted,
+        size: 24,
+      ),
+      tooltip: 'Settings',
+    );
+  }
+}
+
+/// Customize Program button for the TODAY section
+/// Opens the edit program sheet
+class CustomizeProgramButton extends ConsumerWidget {
+  /// Whether the current theme is dark
+  final bool isDark;
+
+  const CustomizeProgramButton({
     super.key,
     required this.isDark,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_vert,
-        color: textMuted,
-        size: 24,
-      ),
+    return Material(
       color: elevatedColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-      ),
-      offset: const Offset(0, 40),
-      onSelected: (value) {
-        if (value == 'edit_program') {
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
           _showEditProgramSheet(context, ref);
-        } else if (value == 'settings') {
-          context.push('/settings');
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem<String>(
-          value: 'edit_program',
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.cyan.withOpacity(0.3),
+            ),
+          ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.tune,
-                size: 20,
+                size: 14,
                 color: AppColors.cyan,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Text(
-                'Customize Program',
+                'Customize',
                 style: TextStyle(
-                  color: isDark
-                      ? AppColors.textPrimary
-                      : AppColorsLight.textPrimary,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.cyan,
                 ),
               ),
             ],
           ),
         ),
-        PopupMenuItem<String>(
-          value: 'settings',
-          child: Row(
-            children: [
-              Icon(
-                Icons.settings_outlined,
-                size: 20,
-                color: textMuted,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Settings',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textPrimary
-                      : AppColorsLight.textPrimary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -112,3 +113,7 @@ class ProgramMenuButton extends ConsumerWidget {
     }
   }
 }
+
+/// @deprecated Use [SettingsButton] and [CustomizeProgramButton] instead
+/// Kept for backwards compatibility
+typedef ProgramMenuButton = SettingsButton;

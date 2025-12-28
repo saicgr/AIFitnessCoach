@@ -3,16 +3,20 @@ Workout versioning API endpoints (SCD2).
 
 This module handles workout version management:
 - POST /regenerate - Regenerate a workout with new settings
+- POST /regenerate-stream - Regenerate with streaming progress
 - GET /{workout_id}/versions - Get version history
 - POST /revert - Revert to a previous version
 """
 import json
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+from core.rate_limiter import limiter
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -310,6 +314,242 @@ async def regenerate_workout(request: RegenerateWorkoutRequest):
     except Exception as e:
         logger.error(f"Failed to regenerate workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/regenerate-stream")
+@limiter.limit("5/minute")
+async def regenerate_workout_streaming(request: Request, body: RegenerateWorkoutRequest):
+    """
+    Regenerate a workout with streaming progress updates via SSE.
+
+    This provides real-time feedback during workout regeneration:
+    - Step 1: Loading user data
+    - Step 2: Selecting exercises via RAG
+    - Step 3: Generating workout with AI
+    - Step 4: Saving to database
+
+    Returns SSE events with progress updates and final workout.
+    """
+    logger.info(f"[STREAM] Regenerating workout {body.workout_id} for user {body.user_id}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = time.time()
+
+        def elapsed_ms() -> int:
+            return int((time.time() - start_time) * 1000)
+
+        def send_progress(step: int, total: int, message: str, detail: str = None):
+            data = {
+                "type": "progress",
+                "step": step,
+                "total_steps": total,
+                "message": message,
+                "detail": detail,
+                "elapsed_ms": elapsed_ms()
+            }
+            return f"event: progress\ndata: {json.dumps(data)}\n\n"
+
+        def send_error(error: str):
+            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
+            return f"event: error\ndata: {json.dumps(data)}\n\n"
+
+        try:
+            # Step 1: Load user and workout data
+            yield send_progress(1, 4, "Loading your profile...", "Fetching workout settings")
+
+            db = get_supabase_db()
+
+            existing = db.get_workout(body.workout_id)
+            if not existing:
+                yield send_error("Workout not found")
+                return
+
+            user = db.get_user(body.user_id)
+            if not user:
+                yield send_error("User not found")
+                return
+
+            # Parse user data
+            fitness_level = body.fitness_level or user.get("fitness_level") or "intermediate"
+            equipment = body.equipment if body.equipment is not None else parse_json_field(user.get("equipment"), [])
+            goals = parse_json_field(user.get("goals"), [])
+            preferences = parse_json_field(user.get("preferences"), {})
+            dumbbell_count = body.dumbbell_count if body.dumbbell_count is not None else preferences.get("dumbbell_count", 2)
+            kettlebell_count = body.kettlebell_count if body.kettlebell_count is not None else preferences.get("kettlebell_count", 1)
+            user_age = user.get("age")
+            user_activity_level = user.get("activity_level")
+            user_difficulty = body.difficulty
+
+            # Get injuries
+            injuries = body.injuries or []
+            if not injuries:
+                user_injuries = parse_json_field(user.get("active_injuries"), [])
+                if user_injuries:
+                    injuries = user_injuries
+
+            workout_type_override = body.workout_type
+            focus_areas = body.focus_areas or []
+
+            # Step 2: Select exercises using RAG
+            yield send_progress(2, 4, "Selecting exercises...", "Finding the best exercises for you")
+
+            gemini_service = GeminiService()
+            exercise_rag = get_exercise_rag_service()
+
+            if not focus_areas:
+                existing_exercises = parse_json_field(existing.get("exercises_json") or existing.get("exercises"), [])
+                if existing_exercises:
+                    target_muscles = set()
+                    for ex in existing_exercises:
+                        if isinstance(ex, dict) and ex.get("target_muscles"):
+                            muscles = ex.get("target_muscles")
+                            if isinstance(muscles, list):
+                                target_muscles.update(muscles)
+                            elif isinstance(muscles, str):
+                                target_muscles.add(muscles)
+                    if target_muscles:
+                        focus_areas = list(target_muscles)[:2]
+
+            focus_area = focus_areas[0] if focus_areas else "full_body"
+            target_duration = body.duration_minutes or 45
+            exercise_count = max(3, min(10, target_duration // 7))
+
+            rag_exercises = await exercise_rag.select_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=equipment if isinstance(equipment, list) else [],
+                fitness_level=fitness_level,
+                goals=goals if isinstance(goals, list) else [],
+                count=exercise_count,
+                avoid_exercises=[],
+                injuries=injuries if injuries else None,
+                dumbbell_count=dumbbell_count,
+                kettlebell_count=kettlebell_count,
+            )
+
+            if not rag_exercises:
+                yield send_error(f"No exercises found for focus area: {focus_area}")
+                return
+
+            # Step 3: Generate workout with AI
+            yield send_progress(3, 4, "Creating your workout...", f"Selected {len(rag_exercises)} exercises")
+
+            workout_data = await gemini_service.generate_workout_from_library(
+                exercises=rag_exercises,
+                fitness_level=fitness_level,
+                goals=goals if isinstance(goals, list) else [],
+                duration_minutes=target_duration,
+                focus_areas=focus_areas if focus_areas else [focus_area],
+                age=user_age,
+                activity_level=user_activity_level
+            )
+
+            exercises = workout_data.get("exercises", [])
+            workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
+            workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
+            difficulty = user_difficulty or workout_data.get("difficulty", "medium")
+
+            # Step 4: Save to database
+            yield send_progress(4, 4, "Saving workout...", "Finalizing your new workout")
+
+            used_rag = rag_exercises is not None and len(rag_exercises) > 0
+
+            new_workout_data = {
+                "user_id": body.user_id,
+                "name": workout_name,
+                "type": workout_type,
+                "difficulty": difficulty,
+                "scheduled_date": existing.get("scheduled_date"),
+                "exercises_json": exercises,
+                "duration_minutes": target_duration,
+                "equipment": json.dumps(equipment) if equipment else "[]",
+                "is_completed": False,
+                "generation_method": "rag_regenerate_stream" if used_rag else "ai_regenerate_stream",
+                "generation_source": "regenerate_stream_endpoint",
+                "generation_metadata": json.dumps({
+                    "regenerated_from": body.workout_id,
+                    "previous_version": existing.get("version_number", 1),
+                    "fitness_level": fitness_level,
+                    "equipment": equipment,
+                    "difficulty": difficulty,
+                    "workout_type": workout_type,
+                    "workout_type_override": workout_type_override,
+                    "used_rag": used_rag,
+                    "focus_area": focus_area,
+                    "injuries_considered": injuries if injuries else [],
+                    "streaming": True,
+                }),
+            }
+
+            new_workout = db.supersede_workout(body.workout_id, new_workout_data)
+            logger.info(f"[STREAM] Workout regenerated: old_id={body.workout_id}, new_id={new_workout['id']}")
+
+            log_workout_change(
+                workout_id=new_workout["id"],
+                user_id=body.user_id,
+                change_type="regenerated",
+                change_source="regenerate_stream_endpoint",
+                new_value={
+                    "name": workout_name,
+                    "exercises_count": len(exercises),
+                    "previous_workout_id": body.workout_id
+                }
+            )
+
+            regenerated = row_to_workout(new_workout)
+            await index_workout_to_rag(regenerated)
+
+            # Record analytics (fire-and-forget)
+            try:
+                db.record_workout_regeneration(
+                    user_id=body.user_id,
+                    original_workout_id=body.workout_id,
+                    new_workout_id=new_workout["id"],
+                    difficulty=user_difficulty,
+                    duration_minutes=body.duration_minutes,
+                    workout_type=workout_type_override,
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    focus_areas=focus_areas if focus_areas else [],
+                    injuries=injuries if injuries else [],
+                    custom_focus_area=None,
+                    custom_injury=None,
+                    generation_method="rag_regenerate_stream" if used_rag else "ai_regenerate_stream",
+                    used_rag=used_rag,
+                    generation_time_ms=elapsed_ms(),
+                )
+            except Exception as analytics_error:
+                logger.warning(f"[STREAM] Failed to record analytics: {analytics_error}")
+
+            # Send the completed workout
+            workout_response = {
+                "id": str(regenerated.id),
+                "user_id": str(regenerated.user_id),
+                "name": regenerated.name,
+                "type": regenerated.type,
+                "difficulty": regenerated.difficulty,
+                "duration_minutes": regenerated.duration_minutes,
+                "scheduled_date": str(regenerated.scheduled_date) if regenerated.scheduled_date else None,
+                "exercises_json": json.loads(regenerated.exercises_json) if isinstance(regenerated.exercises_json, str) else regenerated.exercises_json,
+                "equipment_needed": regenerated.equipment_needed,
+                "is_completed": regenerated.is_completed,
+                "generation_method": regenerated.generation_method,
+                "version_number": regenerated.version_number,
+                "total_time_ms": elapsed_ms(),
+            }
+            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+
+        except Exception as e:
+            logger.error(f"[STREAM] Regeneration error: {e}")
+            yield send_error(str(e))
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @router.get("/{workout_id}/versions", response_model=List[WorkoutVersionInfo])

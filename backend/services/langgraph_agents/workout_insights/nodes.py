@@ -218,7 +218,7 @@ async def generate_structured_insights_node(state: WorkoutInsightsState) -> Dict
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         temperature=0.85,  # Higher for more variety
-        max_tokens=400,
+        max_tokens=800,  # Increased from 400 to prevent truncation
         google_api_key=settings.gemini_api_key,
     )
 
@@ -279,75 +279,102 @@ User Goals: {', '.join(user_goals[:2]) if user_goals else 'general fitness'}
 
 Make each insight SPECIFIC to these exercises and muscles. Avoid generic motivational phrases."""
 
-    try:
-        response = await llm.ainvoke([
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt),
-        ])
+    max_retries = 2
+    last_error = None
 
-        content = response.content.strip()
-        logger.debug(f"[Generate Node] Raw AI response: {content[:500]}...")
-
-        # Extract JSON from response (handle markdown code blocks)
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif "```" in content:
-            parts = content.split("```")
-            if len(parts) >= 2:
-                content = parts[1].strip()
-                # Remove language identifier if present (e.g., "json\n{...")
-                if content.startswith(("json", "JSON")):
-                    content = content[4:].strip()
-
-        # Try to parse JSON, with repair if needed
-        insights = None
+    for attempt in range(max_retries + 1):
         try:
-            insights = json.loads(content)
-        except json.JSONDecodeError as parse_error:
-            logger.warning(f"[Generate Node] Initial JSON parse failed: {parse_error}")
+            if attempt > 0:
+                logger.info(f"[Generate Node] Retry attempt {attempt}/{max_retries}")
 
-            # Attempt to repair the JSON
-            repaired = repair_json_string(content)
-            if repaired:
-                try:
-                    insights = json.loads(repaired)
-                    logger.info("[Generate Node] Successfully parsed repaired JSON")
-                except json.JSONDecodeError:
-                    logger.warning("[Generate Node] Repaired JSON still invalid")
+            response = await llm.ainvoke([
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_prompt),
+            ])
 
-        # If parsing failed, raise error - fail fast rather than show wrong content
-        if insights is None:
-            raise ValueError("Failed to parse AI response as valid JSON after repair attempts")
+            content = response.content.strip()
+            logger.debug(f"[Generate Node] Raw AI response (attempt {attempt}): {content[:500]}...")
 
-        # Validate structure
-        headline = insights.get("headline", "Let's crush this workout!")
-        sections = insights.get("sections", [])
+            # Extract JSON from response (handle markdown code blocks)
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1].strip()
+                    # Remove language identifier if present (e.g., "json\n{...")
+                    if content.startswith(("json", "JSON")):
+                        content = content[4:].strip()
 
-        # Ensure we have valid sections - fail if structure is invalid
-        if not sections or len(sections) < 2:
-            raise ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
+            # Try to parse JSON, with repair if needed
+            insights = None
+            was_repaired = False
+            try:
+                insights = json.loads(content)
+            except json.JSONDecodeError as parse_error:
+                logger.warning(f"[Generate Node] Initial JSON parse failed: {parse_error}")
 
-        # Truncate headline if too long (max 7 words)
-        if len(headline.split()) > 7:
-            headline = " ".join(headline.split()[:7])
-            if not headline.endswith(("!", "?")):
-                headline += "!"
+                # Attempt to repair the JSON
+                repaired = repair_json_string(content)
+                if repaired:
+                    try:
+                        insights = json.loads(repaired)
+                        was_repaired = True
+                        logger.info("[Generate Node] Successfully parsed repaired JSON")
+                    except json.JSONDecodeError:
+                        logger.warning("[Generate Node] Repaired JSON still invalid")
 
-        # Truncate section content if too long (max 20 words)
-        for section in sections:
-            words = section.get("content", "").split()
-            if len(words) > 20:
-                section["content"] = " ".join(words[:20]) + "..."
+            # If parsing failed, retry or raise error
+            if insights is None:
+                last_error = ValueError("Failed to parse AI response as valid JSON after repair attempts")
+                if attempt < max_retries:
+                    continue  # Retry
+                raise last_error
 
-        logger.info(f"[Generate Node] Generated {len(sections)} sections")
+            # Validate structure
+            headline = insights.get("headline", "Let's crush this workout!")
+            sections = insights.get("sections", [])
 
-        # Return both structured data and JSON string for API
-        return {
-            "headline": headline,
-            "sections": sections,
-            "summary": json.dumps({"headline": headline, "sections": sections}),
-        }
+            # If sections are empty/insufficient, this likely means truncation - retry
+            if not sections or len(sections) < 2:
+                last_error = ValueError(f"AI returned invalid structure: expected 2+ sections, got {len(sections)}")
+                if was_repaired:
+                    logger.warning(f"[Generate Node] Repaired JSON had {len(sections)} sections (likely truncated response)")
+                if attempt < max_retries:
+                    logger.info("[Generate Node] Retrying due to insufficient sections...")
+                    continue  # Retry
+                raise last_error
 
-    except Exception as e:
-        logger.error(f"[Generate Node] Error generating insights: {e}")
-        raise  # Fail fast - propagate error rather than show incorrect content
+            # Truncate headline if too long (max 7 words)
+            if len(headline.split()) > 7:
+                headline = " ".join(headline.split()[:7])
+                if not headline.endswith(("!", "?")):
+                    headline += "!"
+
+            # Truncate section content if too long (max 20 words)
+            for section in sections:
+                words = section.get("content", "").split()
+                if len(words) > 20:
+                    section["content"] = " ".join(words[:20]) + "..."
+
+            logger.info(f"[Generate Node] Generated {len(sections)} sections (attempt {attempt})")
+
+            # Return both structured data and JSON string for API
+            return {
+                "headline": headline,
+                "sections": sections,
+                "summary": json.dumps({"headline": headline, "sections": sections}),
+            }
+
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries:
+                logger.warning(f"[Generate Node] Attempt {attempt} failed: {e}, retrying...")
+                continue
+            logger.error(f"[Generate Node] Error generating insights after {max_retries + 1} attempts: {e}")
+            raise  # Fail fast - propagate error rather than show incorrect content
+
+    # Should not reach here, but just in case
+    if last_error:
+        raise last_error
+    raise ValueError("Unknown error in insight generation")

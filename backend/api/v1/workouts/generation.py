@@ -12,9 +12,10 @@ This module handles AI-powered workout generation:
 import json
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -28,6 +29,7 @@ from services.gemini_service import GeminiService
 from services.exercise_library_service import get_exercise_library_service
 from services.exercise_rag_service import get_exercise_rag_service
 from services.warmup_stretch_service import get_warmup_stretch_service
+from core.rate_limiter import limiter
 
 from .utils import (
     row_to_workout,
@@ -126,6 +128,163 @@ async def generate_workout(request: GenerateWorkoutRequest):
     except Exception as e:
         logger.error(f"Failed to generate workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-stream")
+@limiter.limit("5/minute")
+async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest):
+    """
+    Generate a workout with streaming response for faster perceived performance.
+
+    Returns Server-Sent Events (SSE) with:
+    - event: chunk - Partial workout data as it's generated
+    - event: done - Final complete workout data
+    - event: error - Error message if generation fails
+
+    Time to first content is typically <500ms vs 3-8s for full generation.
+    """
+    logger.info(f"🚀 Streaming workout generation for user {body.user_id}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = datetime.now()
+
+        try:
+            db = get_supabase_db()
+
+            # Get user data
+            if body.fitness_level and body.goals and body.equipment:
+                fitness_level = body.fitness_level
+                goals = body.goals
+                equipment = body.equipment
+                intensity_preference = "medium"
+            else:
+                user = db.get_user(body.user_id)
+                if not user:
+                    yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
+                    return
+
+                fitness_level = body.fitness_level or user.get("fitness_level")
+                goals = body.goals or user.get("goals", [])
+                equipment = body.equipment or user.get("equipment", [])
+                preferences = parse_json_field(user.get("preferences"), {})
+                intensity_preference = preferences.get("intensity_preference", "medium")
+
+            gemini_service = GeminiService()
+
+            # Send initial acknowledgment (time to first byte)
+            first_chunk_time = (datetime.now() - start_time).total_seconds() * 1000
+            yield f"event: chunk\ndata: {json.dumps({'status': 'started', 'ttfb_ms': first_chunk_time})}\n\n"
+
+            # Stream the workout generation
+            accumulated_text = ""
+            chunk_count = 0
+
+            async for chunk in gemini_service.generate_workout_plan_streaming(
+                fitness_level=fitness_level or "intermediate",
+                goals=goals if isinstance(goals, list) else [],
+                equipment=equipment if isinstance(equipment, list) else [],
+                duration_minutes=body.duration_minutes or 45,
+                focus_areas=body.focus_areas,
+                intensity_preference=intensity_preference
+            ):
+                accumulated_text += chunk
+                chunk_count += 1
+
+                # Send progress updates every few chunks
+                if chunk_count % 3 == 0:
+                    elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
+                    yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+
+            # Parse the complete response
+            try:
+                # Extract JSON from potential markdown code blocks
+                content = accumulated_text.strip()
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    parts = content.split("```")
+                    if len(parts) >= 2:
+                        content = parts[1].strip()
+                        if content.startswith(("json", "JSON")):
+                            content = content[4:].strip()
+
+                workout_data = json.loads(content)
+                exercises = workout_data.get("exercises", [])
+                workout_name = workout_data.get("name", "Generated Workout")
+                workout_type = workout_data.get("type", body.workout_type or "strength")
+                difficulty = workout_data.get("difficulty", intensity_preference)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse streaming response: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
+                return
+
+            # Save to database
+            workout_db_data = {
+                "user_id": body.user_id,
+                "name": workout_name,
+                "type": workout_type,
+                "difficulty": difficulty,
+                "scheduled_date": datetime.now().isoformat(),
+                "exercises_json": exercises,
+                "duration_minutes": body.duration_minutes or 45,
+                "generation_method": "ai",
+                "generation_source": "streaming_generation",
+            }
+
+            created = db.create_workout(workout_db_data)
+            total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+
+            logger.info(f"✅ Streaming workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms")
+
+            # Log the change
+            log_workout_change(
+                workout_id=created['id'],
+                user_id=body.user_id,
+                change_type="generated",
+                change_source="streaming_generation",
+                new_value={"name": workout_name, "exercises_count": len(exercises)}
+            )
+
+            # Convert to Workout model
+            generated_workout = row_to_workout(created)
+
+            # Index to RAG asynchronously (don't wait)
+            asyncio.create_task(index_workout_to_rag(generated_workout))
+
+            # Send final complete response
+            # Parse exercises from exercises_json (which is a string)
+            exercises_list = json.loads(generated_workout.exercises_json) if generated_workout.exercises_json else []
+
+            workout_response = {
+                "id": generated_workout.id,
+                "user_id": generated_workout.user_id,
+                "name": generated_workout.name,
+                "type": generated_workout.type,
+                "difficulty": generated_workout.difficulty,
+                "scheduled_date": generated_workout.scheduled_date.isoformat() if generated_workout.scheduled_date else None,
+                "exercises": exercises_list,
+                "exercises_json": generated_workout.exercises_json,
+                "duration_minutes": generated_workout.duration_minutes,
+                "total_time_ms": total_time_ms,
+                "chunk_count": chunk_count,
+            }
+
+            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+
+        except Exception as e:
+            logger.error(f"❌ Streaming workout generation failed: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable nginx buffering
+        }
+    )
 
 
 @router.post("/swap")
@@ -748,6 +907,250 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
     except Exception as e:
         logger.error(f"Failed to generate monthly workouts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/generate-monthly-stream")
+@limiter.limit("3/minute")
+async def generate_monthly_workouts_streaming(request: Request, body: GenerateMonthlyRequest):
+    """
+    Generate workouts for 2 weeks with streaming progress updates via SSE.
+
+    Sends real-time progress as each workout is generated:
+    - event: progress - "Generating next workout..." with step count
+    - event: workout - Individual workout created (can be used to update UI immediately)
+    - event: done - All workouts complete
+    - event: error - Error during generation
+    """
+    import time
+    logger.info(f"[STREAM] Generating monthly workouts for user {body.user_id}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = time.time()
+
+        def elapsed_ms() -> int:
+            return int((time.time() - start_time) * 1000)
+
+        def send_progress(current: int, total: int, message: str, detail: str = None):
+            data = {
+                "type": "progress",
+                "current": current,
+                "total": total,
+                "message": message,
+                "detail": detail,
+                "elapsed_ms": elapsed_ms()
+            }
+            return f"event: progress\ndata: {json.dumps(data)}\n\n"
+
+        def send_workout(workout_data: dict, current: int, total: int):
+            data = {
+                "type": "workout",
+                "workout": workout_data,
+                "current": current,
+                "total": total,
+                "elapsed_ms": elapsed_ms()
+            }
+            return f"event: workout\ndata: {json.dumps(data)}\n\n"
+
+        def send_error(error: str):
+            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
+            return f"event: error\ndata: {json.dumps(data)}\n\n"
+
+        try:
+            yield send_progress(0, 1, "Loading your profile...", "Fetching preferences")
+
+            db = get_supabase_db()
+
+            user = db.get_user(body.user_id)
+            if not user:
+                yield send_error("User not found")
+                return
+
+            fitness_level = user.get("fitness_level") or "intermediate"
+            goals = parse_json_field(user.get("goals"), [])
+            equipment = parse_json_field(user.get("equipment"), [])
+            preferences = parse_json_field(user.get("preferences"), {})
+            training_split = preferences.get("training_split", "full_body")
+            intensity_preference = preferences.get("intensity_preference", "medium")
+            custom_program_description = preferences.get("custom_program_description")
+            dumbbell_count = preferences.get("dumbbell_count", 2)
+            kettlebell_count = preferences.get("kettlebell_count", 1)
+            active_injuries = parse_json_field(user.get("active_injuries"), [])
+            user_age = user.get("age")
+            user_activity_level = user.get("activity_level")
+            focus_areas = parse_json_field(user.get("focus_areas"), [])
+
+            # Always generate exactly 2 weeks
+            weeks = 2
+            today = datetime.now().date()
+            max_horizon = today + timedelta(days=14)
+
+            workout_dates = calculate_monthly_dates(body.month_start_date, body.selected_days, weeks)
+            workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
+
+            if not workout_dates:
+                yield send_error("No workout dates calculated")
+                return
+
+            total_workouts = len(workout_dates)
+            logger.info(f"[STREAM] Will generate {total_workouts} workouts for 2 weeks")
+
+            yield send_progress(0, total_workouts, "Planning your workouts...", f"{total_workouts} workouts to generate")
+
+            workout_focus_map = get_workout_focus(training_split, body.selected_days, focus_areas)
+            used_name_words: List[str] = []
+            generated_workouts = []
+            gemini_service = GeminiService()
+            exercise_rag = get_exercise_rag_service()
+
+            from services.adaptive_workout_service import get_adaptive_workout_service
+            adaptive_service = get_adaptive_workout_service(db.client)
+
+            used_exercises: List[str] = await get_recently_used_exercises(body.user_id, days=7)
+
+            # Generate workouts one at a time with progress updates
+            for idx, workout_date in enumerate(workout_dates):
+                current = idx + 1
+                weekday = workout_date.weekday()
+                focus = workout_focus_map.get(weekday, "full_body")
+
+                yield send_progress(current, total_workouts, "Generating next workout...", f"Day {current} of {total_workouts}")
+
+                try:
+                    # Get adaptive parameters
+                    adaptive_params = None
+                    try:
+                        adaptive_params = await adaptive_service.get_adaptive_parameters(
+                            user_id=body.user_id,
+                            workout_type=focus,
+                            user_goals=goals if isinstance(goals, list) else [],
+                        )
+                    except Exception:
+                        pass
+
+                    # Select exercises via RAG
+                    avoid_list = used_exercises[-30:].copy() if used_exercises else []
+                    rag_exercises = await exercise_rag.select_exercises_for_workout(
+                        focus_area=focus,
+                        equipment=equipment if isinstance(equipment, list) else [],
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        count=6,
+                        avoid_exercises=avoid_list,
+                        injuries=active_injuries if active_injuries else None,
+                        workout_params=adaptive_params,
+                        dumbbell_count=dumbbell_count,
+                        kettlebell_count=kettlebell_count,
+                        user_id=body.user_id,
+                    )
+
+                    if not rag_exercises:
+                        logger.error(f"[STREAM] RAG returned no exercises for {focus}")
+                        continue
+
+                    exercises_used = [ex.get("name", "") for ex in rag_exercises]
+                    used_exercises.extend(exercises_used)
+
+                    # Generate workout name with AI
+                    workout_data = await gemini_service.generate_workout_from_library(
+                        exercises=rag_exercises,
+                        fitness_level=fitness_level or "intermediate",
+                        goals=goals if isinstance(goals, list) else [],
+                        duration_minutes=body.duration_minutes or 45,
+                        focus_areas=[focus],
+                        avoid_name_words=used_name_words[:20],
+                        workout_date=workout_date.isoformat(),
+                        age=user_age,
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference,
+                        custom_program_description=custom_program_description
+                    )
+
+                    name_words = extract_name_words(workout_data.get("name", ""))
+                    used_name_words.extend(name_words)
+
+                    # Save to database
+                    workout_db_data = {
+                        "user_id": body.user_id,
+                        "name": workout_data.get("name", f"{focus.title()} Workout"),
+                        "type": workout_data.get("type", "strength"),
+                        "difficulty": workout_data.get("difficulty", intensity_preference),
+                        "scheduled_date": workout_date.isoformat(),
+                        "exercises_json": workout_data.get("exercises", []),
+                        "duration_minutes": body.duration_minutes or 45,
+                        "generation_method": "ai",
+                        "generation_source": "streaming_monthly_generation",
+                    }
+
+                    created = db.create_workout(workout_db_data)
+                    workout = row_to_workout(created)
+                    asyncio.create_task(index_workout_to_rag(workout))
+                    generated_workouts.append(workout)
+
+                    # Generate warmup/stretches (fire-and-forget)
+                    try:
+                        warmup_stretch_service = get_warmup_stretch_service()
+                        asyncio.create_task(warmup_stretch_service.create_warmup_for_workout(
+                            workout_id=workout.id,
+                            exercises=workout_data.get("exercises", []),
+                            duration_minutes=5,
+                            injuries=active_injuries if active_injuries else None,
+                            user_id=body.user_id
+                        ))
+                        asyncio.create_task(warmup_stretch_service.create_stretches_for_workout(
+                            workout_id=workout.id,
+                            exercises=workout_data.get("exercises", []),
+                            duration_minutes=5,
+                            injuries=active_injuries if active_injuries else None,
+                            user_id=body.user_id
+                        ))
+                    except Exception:
+                        pass
+
+                    # Send the workout that was just created
+                    workout_response = {
+                        "id": workout.id,
+                        "name": workout.name,
+                        "type": workout.type,
+                        "difficulty": workout.difficulty,
+                        "scheduled_date": workout.scheduled_date.isoformat() if workout.scheduled_date else None,
+                        "duration_minutes": workout.duration_minutes,
+                    }
+                    yield send_workout(workout_response, current, total_workouts)
+
+                except Exception as e:
+                    logger.error(f"[STREAM] Error generating workout {current}: {e}")
+                    # Continue with next workout instead of failing entirely
+                    continue
+
+            # Send completion
+            done_data = {
+                "type": "done",
+                "total_generated": len(generated_workouts),
+                "total_time_ms": elapsed_ms(),
+                "workouts": [
+                    {
+                        "id": w.id,
+                        "name": w.name,
+                        "scheduled_date": w.scheduled_date.isoformat() if w.scheduled_date else None,
+                    }
+                    for w in generated_workouts
+                ]
+            }
+            yield f"event: done\ndata: {json.dumps(done_data)}\n\n"
+
+        except Exception as e:
+            logger.error(f"[STREAM] Monthly generation error: {e}")
+            yield send_error(str(e))
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @router.post("/generate-remaining", response_model=GenerateMonthlyResponse)

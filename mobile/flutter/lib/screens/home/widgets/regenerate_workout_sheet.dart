@@ -49,6 +49,12 @@ class _RegenerateWorkoutSheetState
   final Set<String> _selectedInjuries = {};
   final Set<String> _selectedEquipment = {};
 
+  // Streaming progress state
+  int _currentStep = 0;
+  int _totalSteps = 4;
+  String _progressMessage = '';
+  String? _progressDetail;
+
   // Custom inputs
   String _customFocusArea = '';
   String _customInjury = '';
@@ -160,7 +166,12 @@ class _RegenerateWorkoutSheetState
   }
 
   Future<void> _regenerate() async {
-    setState(() => _isRegenerating = true);
+    setState(() {
+      _isRegenerating = true;
+      _currentStep = 0;
+      _progressMessage = 'Starting...';
+      _progressDetail = null;
+    });
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
@@ -191,7 +202,9 @@ class _RegenerateWorkoutSheetState
           : _selectedWorkoutType;
 
       final repo = ref.read(workoutRepositoryProvider);
-      final newWorkout = await repo.regenerateWorkout(
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repo.regenerateWorkoutStreaming(
         workoutId: widget.workout.id!,
         userId: userId,
         difficulty: _selectedDifficulty,
@@ -204,10 +217,32 @@ class _RegenerateWorkoutSheetState
             _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
         kettlebellCount:
             _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
-      );
+      )) {
+        if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pop(context, newWorkout);
+        if (progress.hasError) {
+          setState(() => _isRegenerating = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to regenerate: ${progress.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        if (progress.isCompleted && progress.workout != null) {
+          Navigator.pop(context, progress.workout);
+          return;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -228,7 +263,12 @@ class _RegenerateWorkoutSheetState
       return;
     }
 
-    setState(() => _isRegenerating = true);
+    setState(() {
+      _isRegenerating = true;
+      _currentStep = 0;
+      _progressMessage = 'Applying suggestion...';
+      _progressDetail = null;
+    });
 
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
@@ -242,7 +282,8 @@ class _RegenerateWorkoutSheetState
       final suggestion = _aiSuggestions[_selectedSuggestionIndex!];
       final repo = ref.read(workoutRepositoryProvider);
 
-      final newWorkout = await repo.regenerateWorkout(
+      // Use streaming for real-time progress updates
+      await for (final progress in repo.regenerateWorkoutStreaming(
         workoutId: widget.workout.id!,
         userId: userId,
         difficulty: suggestion['difficulty'] ?? _selectedDifficulty,
@@ -255,10 +296,32 @@ class _RegenerateWorkoutSheetState
             ? null
             : _aiPromptController.text.trim(),
         workoutName: suggestion['name'] as String?,
-      );
+      )) {
+        if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pop(context, newWorkout);
+        if (progress.hasError) {
+          setState(() => _isRegenerating = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to apply suggestion: ${progress.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        if (progress.isCompleted && progress.workout != null) {
+          Navigator.pop(context, progress.workout);
+          return;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -699,51 +762,88 @@ class _RegenerateWorkoutSheetState
   Widget _buildRegenerateButton(SheetColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isRegenerating ? null : _regenerate,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.purple,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+      child: Column(
+        children: [
+          // Progress indicator when regenerating
+          if (_isRegenerating) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
+                backgroundColor: colors.glassSurface,
+                valueColor: AlwaysStoppedAnimation<Color>(colors.purple),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _progressMessage,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
+            if (_progressDetail != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _progressDetail!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isRegenerating ? null : _regenerate,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.purple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                disabledBackgroundColor: colors.purple.withOpacity(0.6),
+              ),
+              child: _isRegenerating
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Step $_currentStep of $_totalSteps',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.auto_awesome, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Regenerate Workout',
+                          style:
+                              TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
             ),
           ),
-          child: _isRegenerating
-              ? const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Generating...',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.auto_awesome, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Regenerate Workout',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                ),
-        ),
+        ],
       ),
     );
   }
@@ -755,51 +855,89 @@ class _RegenerateWorkoutSheetState
         color: colors.elevated,
         border: Border(top: BorderSide(color: colors.cardBorder)),
       ),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isRegenerating ? null : _applyAISuggestion,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colors.cyan,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Progress indicator when applying
+          if (_isRegenerating) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
+                backgroundColor: colors.glassSurface,
+                valueColor: AlwaysStoppedAnimation<Color>(colors.cyan),
+                minHeight: 6,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _progressMessage,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
+            if (_progressDetail != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _progressDetail!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isRegenerating ? null : _applyAISuggestion,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.cyan,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                disabledBackgroundColor: colors.cyan.withOpacity(0.6),
+              ),
+              child: _isRegenerating
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Step $_currentStep of $_totalSteps',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Apply This Workout',
+                          style:
+                              TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ],
+                    ),
             ),
           ),
-          child: _isRegenerating
-              ? const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Applying...',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Apply This Workout',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                  ],
-                ),
-        ),
+        ],
       ),
     );
   }

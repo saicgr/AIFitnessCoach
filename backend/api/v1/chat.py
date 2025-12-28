@@ -18,8 +18,6 @@ import time
 from fastapi import APIRouter, HTTPException, Depends, Request
 from typing import List, Optional
 from pydantic import BaseModel
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
@@ -27,12 +25,10 @@ from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
+from core.rate_limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
-
-# Rate limiter instance - uses the same key function as main app
-limiter = Limiter(key_func=get_remote_address)
 
 # Service instances (will be initialized on startup)
 gemini_service: Optional[GeminiService] = None

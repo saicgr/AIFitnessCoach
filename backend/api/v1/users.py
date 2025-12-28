@@ -24,17 +24,13 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from fastapi.responses import StreamingResponse
 from typing import Optional, List
 from pydantic import BaseModel
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 import io
 
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.rate_limiter import limiter
 from models.schemas import User, UserCreate, UserUpdate
-
-# Rate limiter instance
-limiter = Limiter(key_func=get_remote_address)
 
 
 class GoogleAuthRequest(BaseModel):

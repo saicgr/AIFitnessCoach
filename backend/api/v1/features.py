@@ -17,14 +17,10 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Request
 from typing import Optional, List
 from pydantic import BaseModel
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-
-# Rate limiter instance
-limiter = Limiter(key_func=get_remote_address)
+from core.rate_limiter import limiter
 
 router = APIRouter(prefix="/features", tags=["features"])
 logger = get_logger(__name__)

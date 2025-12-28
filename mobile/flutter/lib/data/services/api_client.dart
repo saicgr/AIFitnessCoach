@@ -80,6 +80,18 @@ class ApiClient {
   /// Get the Dio instance
   Dio get dio => _dio;
 
+  /// Get the base URL
+  String get baseUrl => ApiConstants.apiBaseUrl;
+
+  /// Get auth headers for manual requests (e.g., streaming)
+  Future<Map<String, String>> getAuthHeaders() async {
+    final token = await _storage.read(key: _tokenKey);
+    if (token != null) {
+      return {'Authorization': 'Bearer $token'};
+    }
+    return {};
+  }
+
   /// Save auth token
   Future<void> setAuthToken(String token) async {
     await _storage.write(key: _tokenKey, value: token);
