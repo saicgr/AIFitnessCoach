@@ -623,7 +623,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                         avoid_name_words=avoid_words[:20],
                         workout_date=workout_date.isoformat(),
                         age=user_age,
-                        activity_level=user_activity_level
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference
                     )
                 else:
                     # No fallback - RAG must return exercises
@@ -636,7 +637,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "focus": focus,
                     "name": workout_data.get("name", f"{focus.title()} Workout"),
                     "type": workout_data.get("type", "strength"),
-                    "difficulty": workout_data.get("difficulty", "medium"),
+                    "difficulty": workout_data.get("difficulty", intensity_preference),
                     "exercises": workout_data.get("exercises", []),
                     "exercises_used": exercises_used,
                 }
@@ -743,6 +744,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        intensity_preference = preferences.get("intensity_preference", "medium")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -878,7 +880,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         avoid_name_words=avoid_words[:20],
                         workout_date=workout_date.isoformat(),
                         age=user_age,
-                        activity_level=user_activity_level
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -890,7 +893,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         avoid_name_words=avoid_words[:20],
                         workout_date=workout_date.isoformat(),
                         age=user_age,
-                        activity_level=user_activity_level
+                        activity_level=user_activity_level,
+                        intensity_preference=intensity_preference
                     )
 
                 return {
@@ -898,7 +902,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "focus": focus,
                     "name": workout_data.get("name", f"{focus.title()} Workout"),
                     "type": workout_data.get("type", "strength"),
-                    "difficulty": workout_data.get("difficulty", "medium"),
+                    "difficulty": workout_data.get("difficulty", intensity_preference),
                     "exercises": workout_data.get("exercises", []),
                     "exercises_used": exercises_used,
                 }
@@ -910,7 +914,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "focus": focus,
                     "name": f"{focus.title()} Workout",
                     "type": "strength",
-                    "difficulty": "medium",
+                    "difficulty": intensity_preference,
                     "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
                     "exercises_used": ["Push-ups"],
                 }
