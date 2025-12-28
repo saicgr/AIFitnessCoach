@@ -650,10 +650,18 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
             batch_dates = workout_dates[batch_start:batch_end]
 
-            # Create unique avoid lists for each workout in the batch
+            # Create STAGGERED avoid lists for each workout in the batch
+            # Each concurrent workout gets a different offset of exercises to avoid
+            # This ensures variety even when workouts are generated in parallel
             tasks = []
             for i, date in enumerate(batch_dates):
-                avoid_list = used_exercises[-30:].copy() if used_exercises else []
+                # Stagger by 8 exercises per workout in the batch
+                # Workout 0: last 30 exercises, Workout 1: last 38, Workout 2: last 46, etc.
+                offset = i * 8
+                if used_exercises:
+                    avoid_list = used_exercises[-(30 + offset):].copy()
+                else:
+                    avoid_list = []
                 tasks.append(generate_single_workout(
                     date,
                     batch_start + i,
@@ -923,10 +931,17 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             batch_end = min(batch_start + BATCH_SIZE, len(workout_dates))
             batch_dates = workout_dates[batch_start:batch_end]
 
-            # Create unique avoid lists for each workout in the batch
+            # Create STAGGERED avoid lists for each workout in the batch
+            # Each concurrent workout gets a different offset of exercises to avoid
+            # This ensures variety even when workouts are generated in parallel
             tasks = []
-            for date in batch_dates:
-                avoid_list = used_exercises[-30:].copy() if used_exercises else []
+            for i, date in enumerate(batch_dates):
+                # Stagger by 8 exercises per workout in the batch
+                offset = i * 8
+                if used_exercises:
+                    avoid_list = used_exercises[-(30 + offset):].copy()
+                else:
+                    avoid_list = []
                 tasks.append(generate_single_workout(
                     date,
                     used_name_words.copy(),
