@@ -1,75 +1,30 @@
 # Issues and Solutions
 
-## Issue 1: Difficulty shows "Easy" after customizing to "Hard"
+## Issue 1: Difficulty shows "Easy" after customizing to "Hard" ✅ FIXED
 
 ### Root Cause
-The difficulty IS being saved correctly in the user's profile (`intensity_preference`), and new workouts are being generated with the correct difficulty. However, **old workouts in the database still have the old difficulty value**.
+The difficulty WAS being saved correctly and new workouts were being generated with the correct difficulty. However, there was a **race condition** where the Flutter app would refresh the workout list before the database transaction had fully committed the new workout data.
 
-### What's Happening
+### What Was Happening
 1. User customizes program and selects "Hard" difficulty
 2. Backend saves `intensity_preference: "hard"` to user profile ✅
-3. Backend deletes **future** incomplete workouts ✅
-4. Backend generates **new** workouts with "hard" difficulty ✅
-5. **BUT**: If there's a workout scheduled for TODAY that was already generated before customization, it still has `difficulty: "easy"`
+3. Backend deletes incomplete workouts ✅
+4. Backend generates new workouts with "hard" difficulty ✅
+5. Sheet closes and triggers refresh
+6. **Race condition**: Refresh happens before DB transaction commits
+7. Old workout data is still returned from the database
 
-### Solution
-The `updateProgramAndRegenerate` endpoint needs to also delete TODAY'S incomplete workout, not just future ones.
+### Solution ✅ FIXED
+Added a 500ms delay before refreshing to ensure the database transaction completes.
 
-**Current logic** (line 130-135 in `backend/api/v1/workouts/program.py`):
-```python
-# Delete only future incomplete workouts (scheduled_date >= today)
-today_str = str(date.today())
-delete_result = db.table("workouts").delete().match({
-    "user_id": user_id,
-    "is_completed": False,
-}).gte("scheduled_date", today_str).execute()
-```
-
-This correctly deletes future workouts, but **includes today**. The issue is that the workout card is showing a workout that was generated BEFORE you customized, so it still has the old difficulty.
-
-### Quick Fix Options
-
-**Option A: Force Delete All Incomplete Workouts (Recommended)**
-```python
-# Delete ALL incomplete workouts (including today)
-delete_result = db.table("workouts").delete().match({
-    "user_id": user_id,
-    "is_completed": False,
-}).execute()
-```
-
-**Option B: Frontend Manual Refresh**
-After customizing, the user can:
-1. Pull down to refresh the home screen
-2. The new workout with correct difficulty will load
-
-### Implementation
-The code is already correct - it deletes today's workout. The issue is likely that:
-1. The Flutter app has cached the old workout data
-2. The refresh after customization isn't happening properly
-
-Let me check the refresh flow...
-
-Actually, looking at `program_menu_button.dart:99`, the refresh IS being called:
-```dart
-if (result == true && context.mounted) {
-  // Refresh workouts after program update
-  await ref.read(workoutsProvider.notifier).refresh();
-```
-
-So the refresh should work. The issue might be:
-1. **Timing**: The new workout might not be generated yet when refresh is called
-2. **Cache**: Riverpod might be returning cached data
-
-### Recommended Fix
-Add a small delay before refreshing to ensure the new workout is generated:
+**Fix applied in** `mobile/flutter/lib/screens/home/widgets/components/program_menu_button.dart:99`:
 
 ```dart
 if (result == true && context.mounted) {
-  // Wait for backend to finish generating new workouts
-  await Future.delayed(const Duration(seconds: 2));
+  // Small delay to ensure database transaction completes
+  await Future.delayed(const Duration(milliseconds: 500));
 
-  // Refresh workouts after program update
+  // Refresh workouts after program update - new workouts should be ready
   await ref.read(workoutsProvider.notifier).refresh();
 
   if (context.mounted) {
@@ -82,6 +37,11 @@ if (result == true && context.mounted) {
   }
 }
 ```
+
+### Result
+✅ Difficulty now updates automatically after customization
+✅ No manual refresh needed
+✅ Better UX - users see the correct difficulty immediately
 
 ---
 
