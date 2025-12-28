@@ -95,6 +95,9 @@ class ProgramMenuButton extends ConsumerWidget {
     final result = await showEditProgramSheet(context, ref);
 
     if (result == true && context.mounted) {
+      // Small delay to ensure database transaction completes
+      await Future.delayed(const Duration(milliseconds: 500));
+
       // Refresh workouts after program update - new workouts should be ready
       await ref.read(workoutsProvider.notifier).refresh();
 
