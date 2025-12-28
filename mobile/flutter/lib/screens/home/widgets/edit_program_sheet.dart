@@ -46,7 +46,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   final Set<int> _selectedDays = {0, 2, 4}; // Default: Mon, Wed, Fri
   String _selectedDifficulty = 'medium';
   double _selectedDuration = 45;
-  int _programWeeks = 4;
+  // Program weeks removed - using automatic 2-week generation with auto-regeneration
 
   // Step 2: Workout Type & Focus
   String? _selectedWorkoutType;
@@ -248,16 +248,15 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
         monthStartDate: today,
       );
 
-      // Step 3: If user wants more than 1 week, schedule background generation
-      if (_programWeeks > 1) {
-        await repo.scheduleRemainingWorkouts(
-          userId: userId,
-          selectedDays: _selectedDays.toList(),
-          durationMinutes: _selectedDuration.round(),
-          totalWeeks: _programWeeks,
-          weeksGenerated: 1,
-        );
-      }
+      // Step 3: Schedule background generation for second week
+      // Auto-regeneration system will handle ongoing workout creation beyond 2 weeks
+      await repo.scheduleRemainingWorkouts(
+        userId: userId,
+        selectedDays: _selectedDays.toList(),
+        durationMinutes: _selectedDuration.round(),
+        totalWeeks: 2, // Always generate 2 weeks initially
+        weeksGenerated: 1,
+      );
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -485,13 +484,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                     disabled: _isUpdating,
                     accentColor: colors.success,
                   ),
-                  const SizedBox(height: 16),
-                  ProgramDurationSelector(
-                    selectedWeeks: _programWeeks,
-                    onSelectionChanged: (weeks) =>
-                        setState(() => _programWeeks = weeks),
-                    disabled: _isUpdating,
-                  ),
+                  // Program duration selector removed - using automatic 2-week generation
                 ],
               ),
             ),
@@ -747,11 +740,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
                   'Duration',
                   '${_selectedDuration.round()} minutes',
                 ),
-                _buildSummaryRow(
-                  colors,
-                  'Program',
-                  '$_programWeeks weeks',
-                ),
+                // Program duration removed from summary - using automatic regeneration
                 if (_selectedWorkoutType != null)
                   _buildSummaryRow(colors, 'Type', _selectedWorkoutType!),
                 if (_selectedEquipment.isNotEmpty)
