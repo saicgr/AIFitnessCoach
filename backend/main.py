@@ -17,9 +17,11 @@ from slowapi.errors import RateLimitExceeded
 import uvicorn
 import time
 import traceback
+import uuid
+import json
 
 from core.config import get_settings
-from core.logger import get_logger
+from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
@@ -61,7 +63,16 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-    """Middleware to log all requests and responses."""
+    """
+    Middleware to log all requests and responses with user context.
+
+    Extracts user_id from:
+    1. Query parameters (?user_id=xxx)
+    2. Request body (for POST requests with user_id field)
+    3. Authorization header (future: JWT token)
+
+    Sets request_id for tracing a single request through the system.
+    """
 
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
@@ -69,8 +80,36 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         query = str(request.query_params) if request.query_params else ""
 
-        # Log request
-        log_msg = f"Request: {method} {path}"
+        # Generate unique request ID for tracing
+        request_id = str(uuid.uuid4())[:8]
+
+        # Try to extract user_id from various sources
+        user_id = None
+
+        # 1. Check query parameters
+        user_id = request.query_params.get("user_id")
+
+        # 2. For POST/PUT/PATCH, try to peek at body (cache it for later)
+        if not user_id and method in ("POST", "PUT", "PATCH"):
+            try:
+                # Read body and cache it
+                body = await request.body()
+                if body:
+                    # Store body for later use by the actual endpoint
+                    request.state._body = body
+                    try:
+                        body_json = json.loads(body)
+                        user_id = body_json.get("user_id")
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        pass
+            except Exception:
+                pass
+
+        # Set logging context for this request
+        set_log_context(user_id=user_id, request_id=request_id)
+
+        # Log request with context
+        log_msg = f"{method} {path}"
         if query:
             log_msg += f"?{query}"
         logger.info(log_msg)
@@ -80,7 +119,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             duration = (time.time() - start_time) * 1000
 
-            # Log response
+            # Log response with context
             if response.status_code < 400:
                 logger.info(f"Response: {response.status_code} ({duration:.0f}ms)")
             else:
@@ -92,6 +131,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             duration = (time.time() - start_time) * 1000
             logger.error(f"Request failed: {type(e).__name__}: {str(e)} ({duration:.0f}ms)")
             raise
+        finally:
+            # Clear context after request completes
+            clear_log_context()
 
 
 @asynccontextmanager
