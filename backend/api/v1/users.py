@@ -205,6 +205,8 @@ def merge_extended_fields_into_preferences(
     training_split: Optional[str],
     intensity_preference: Optional[str],
     preferred_time: Optional[str],
+    progression_pace: Optional[str] = None,
+    workout_type_preference: Optional[str] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -225,6 +227,11 @@ def merge_extended_fields_into_preferences(
         prefs["intensity_preference"] = intensity_preference
     if preferred_time is not None:
         prefs["preferred_time"] = preferred_time
+    # New preferences for competitor feedback fixes
+    if progression_pace is not None:
+        prefs["progression_pace"] = progression_pace
+    if workout_type_preference is not None:
+        prefs["workout_type_preference"] = workout_type_preference
 
     return prefs
 
@@ -251,6 +258,8 @@ async def create_user(request: Request, user: UserCreate):
             user.training_split,
             user.intensity_preference,
             user.preferred_time,
+            user.progression_pace,
+            user.workout_type_preference,
         )
         logger.debug(f"User preferences: {final_preferences}")
 
@@ -490,7 +499,8 @@ async def update_user(user_id: str, user: UserUpdate):
         # Handle extended onboarding fields - merge into preferences
         has_extended_fields = any([
             user.days_per_week, user.workout_duration, user.training_split,
-            user.intensity_preference, user.preferred_time
+            user.intensity_preference, user.preferred_time,
+            user.progression_pace, user.workout_type_preference
         ])
 
         if user.preferences is not None or has_extended_fields:
@@ -502,6 +512,8 @@ async def update_user(user_id: str, user: UserUpdate):
                 user.training_split,
                 user.intensity_preference,
                 user.preferred_time,
+                user.progression_pace,
+                user.workout_type_preference,
             )
             update_data["preferences"] = final_preferences
 

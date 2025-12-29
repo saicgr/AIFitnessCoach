@@ -11,10 +11,12 @@ from core.exercise_data import (
     STANDARD_DUMBBELL_WEIGHTS,
     STANDARD_KETTLEBELL_WEIGHTS,
     STANDARD_BARBELL_PLATES,
+    REP_LIMITS,
     EXERCISE_SUBSTITUTES,
     EXERCISE_TIME_ESTIMATES,
     get_exercise_type,
     get_exercise_priority,
+    get_rep_limits,
 )
 from core.muscle_groups import (
     WEEKLY_SET_TARGETS,
@@ -49,10 +51,12 @@ __all__ = [
     "STANDARD_DUMBBELL_WEIGHTS",
     "STANDARD_KETTLEBELL_WEIGHTS",
     "STANDARD_BARBELL_PLATES",
+    "REP_LIMITS",
     "EXERCISE_SUBSTITUTES",
     "EXERCISE_TIME_ESTIMATES",
     "get_exercise_type",
     "get_exercise_priority",
+    "get_rep_limits",
     # Weight utilities
     "get_equipment_increment",
     "round_to_equipment_increment",

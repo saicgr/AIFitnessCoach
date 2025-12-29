@@ -35,6 +35,10 @@ class OnboardingData {
   String? workoutVariety;
   int dumbbellCount = 2; // 1 or 2 dumbbells
   int kettlebellCount = 1; // 1 or 2 kettlebells
+  // New: Progression pace control (slow, medium, fast)
+  String progressionPace = 'medium';
+  // New: Workout type preference (strength, cardio, mixed)
+  String workoutTypePreference = 'strength';
 
   // Step 6: Health & Limitations
   List<String> injuries = [];
@@ -103,6 +107,8 @@ class OnboardingData {
       'workout_variety': workoutVariety,
       'dumbbell_count': dumbbellCount,
       'kettlebell_count': kettlebellCount,
+      'progression_pace': progressionPace,
+      'workout_type_preference': workoutTypePreference,
       'preferences': {
         'training_split': trainingSplit,
         'intensity_preference': intensityLevel,
@@ -112,6 +118,8 @@ class OnboardingData {
         'preferred_time': preferredTime,
         'dumbbell_count': dumbbellCount,
         'kettlebell_count': kettlebellCount,
+        'progression_pace': progressionPace,
+        'workout_type_preference': workoutTypePreference,
       },
 
       // Health

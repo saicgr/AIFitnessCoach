@@ -510,6 +510,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
+        # Get workout type preference (strength, cardio, mixed) - addresses competitor feedback
+        workout_type_preference = preferences.get("workout_type_preference", "strength")
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
         # Get equipment counts for single dumbbell/kettlebell filtering
@@ -595,7 +597,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        workout_type_preference=workout_type_preference
                     )
                 else:
                     workout_data = await gemini_service.generate_workout_plan(
@@ -608,7 +611,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        workout_type_preference=workout_type_preference
                     )
 
                 exercises = workout_data.get("exercises", [])

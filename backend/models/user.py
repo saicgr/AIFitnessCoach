@@ -12,6 +12,10 @@ class UserPreferences(BaseModel):
     training_split: str = Field(default="full_body", max_length=50)  # full_body, upper_lower, push_pull_legs, body_part
     intensity_preference: str = Field(default="moderate", max_length=50)  # light, moderate, intense
     preferred_time: str = Field(default="morning", max_length=50)  # morning, afternoon, evening
+    # Progression pace control - addresses competitor feedback about too-fast weight increases
+    progression_pace: str = Field(default="medium", max_length=20)  # slow, medium, fast
+    # Workout type preference - addresses competitor feedback about no cardio selection
+    workout_type_preference: str = Field(default="strength", max_length=20)  # strength, cardio, mixed
 
 
 class UserCreate(BaseModel):
@@ -41,6 +45,9 @@ class UserCreate(BaseModel):
     activity_level: Optional[str] = Field(default=None, max_length=50)
     # Timezone field for per-user time consistency
     timezone: Optional[str] = Field(default="UTC", max_length=50)  # IANA timezone identifier
+    # Progression and workout type preferences
+    progression_pace: Optional[str] = Field(default=None, max_length=20)  # slow, medium, fast
+    workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
 
 
 class NotificationPreferences(BaseModel):
@@ -104,6 +111,9 @@ class UserUpdate(BaseModel):
     # Accessibility settings
     accessibility_mode: Optional[str] = Field(default=None, max_length=20)  # 'normal', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings (font_scale, etc.)
+    # Progression and workout type preferences
+    progression_pace: Optional[str] = Field(default=None, max_length=20)  # slow, medium, fast
+    workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
 
 
 class User(BaseModel):

@@ -15,6 +15,7 @@ from models.performance import (
 from core import (
     PROGRESSION_INCREMENTS,
     get_exercise_type,
+    get_rep_limits,
     get_equipment_increment,
     round_to_equipment_increment,
     snap_to_available_weights,
@@ -29,6 +30,14 @@ RPE_THRESHOLDS = {
     "deload": 9.5,
 }
 
+# Progression pace thresholds - how many consecutive "ready" sessions before weight increase
+# Addresses competitor feedback: "going up 10 or 15 pounds every week is not what I want"
+PROGRESSION_PACE_THRESHOLDS = {
+    "slow": 4,    # Require 4 consecutive "ready" sessions (~3-4 weeks)
+    "medium": 2,  # Require 2 consecutive "ready" sessions (~1-2 weeks)
+    "fast": 1,    # Progress immediately when ready (every session)
+}
+
 
 class ProgressionService:
     """Generates weight/rep progression recommendations."""
@@ -39,13 +48,33 @@ class ProgressionService:
         exercise_name: str,
         last_performance: Optional[ExercisePerformance],
         performance_history: List[ExercisePerformance],
+        progression_pace: str = "medium",
     ) -> ProgressionRecommendation:
-        """Generate a progression recommendation for an exercise."""
+        """
+        Generate a progression recommendation for an exercise.
+
+        Args:
+            exercise_id: Unique exercise identifier
+            exercise_name: Name of the exercise
+            last_performance: Most recent performance data
+            performance_history: List of previous performances
+            progression_pace: User's preferred pace - "slow", "medium", or "fast"
+                - slow: 3-4 weeks same weight before increase
+                - medium: 1-2 weeks same weight before increase
+                - fast: increase every session when ready
+
+        Returns:
+            ProgressionRecommendation with weight/rep suggestions
+        """
         if not last_performance:
             return self._get_initial_recommendation(exercise_id, exercise_name)
 
         avg_rpe = self._calculate_average_rpe(performance_history[-3:])
         is_plateau = self._detect_plateau(performance_history)
+
+        # Count consecutive "ready to progress" sessions for pace-aware logic
+        consecutive_ready = self._count_consecutive_ready_sessions(performance_history)
+        pace_threshold = PROGRESSION_PACE_THRESHOLDS.get(progression_pace, 2)
 
         # Determine strategy
         if is_plateau:
@@ -55,8 +84,15 @@ class ProgressionService:
             strategy = ProgressionStrategy.DELOAD
             reason = "High fatigue detected - recommending deload"
         elif avg_rpe and avg_rpe <= RPE_THRESHOLDS["ready_to_progress"]:
-            strategy = ProgressionStrategy.LINEAR
-            reason = "Strong performance - ready for progression"
+            # Check if user meets pace threshold for progression
+            if consecutive_ready >= pace_threshold:
+                strategy = ProgressionStrategy.LINEAR
+                reason = f"Strong performance for {consecutive_ready} sessions - ready for progression"
+            else:
+                # User is ready but hasn't met pace threshold yet
+                strategy = ProgressionStrategy.DOUBLE_PROGRESSION
+                sessions_needed = pace_threshold - consecutive_ready
+                reason = f"Building consistency ({consecutive_ready}/{pace_threshold} sessions before weight increase)"
         else:
             strategy = ProgressionStrategy.DOUBLE_PROGRESSION
             reason = "Building consistency before weight increase"
@@ -172,20 +208,39 @@ class ProgressionService:
             confidence = 0.85
 
         elif strategy == ProgressionStrategy.DOUBLE_PROGRESSION:
-            if self._hit_rep_target(last_performance):
+            # Get exercise-specific rep limits to prevent rep creep
+            exercise_type = get_exercise_type(exercise_name)
+            min_reps, max_reps = get_rep_limits(exercise_type)
+
+            # Check if user hit the rep ceiling
+            if last_reps >= max_reps:
+                # At ceiling - FORCE weight increase to prevent 20+ rep sets
                 new_weight = last_weight + increment
-                new_reps = last_reps - 2
+                new_reps = min_reps + 2  # Reset to comfortable range (e.g., 8 for compounds)
+                new_sets = last_sets
+                confidence = 0.85
+                reason = f"Hit {max_reps} rep ceiling - time to increase weight!"
+            elif self._hit_rep_target(last_performance):
+                # Hit rep target - normal progression
+                new_weight = last_weight + increment
+                new_reps = max(min_reps, last_reps - 2)  # Ensure we don't go below min
                 new_sets = last_sets
                 confidence = 0.80
             else:
+                # Still building - increase reps but cap at max
                 new_weight = last_weight
-                new_reps = last_reps + 1
+                new_reps = min(last_reps + 1, max_reps)  # CAP AT CEILING
                 new_sets = last_sets
                 confidence = 0.75
 
         elif strategy == ProgressionStrategy.WAVE:
+            # Get exercise-specific rep limits
+            exercise_type = get_exercise_type(exercise_name)
+            min_reps, max_reps = get_rep_limits(exercise_type)
+
             new_weight = last_weight * 0.9
-            new_reps = last_reps + 2
+            # Cap wave loading reps at the ceiling
+            new_reps = min(last_reps + 2, max_reps)
             new_sets = last_sets
             confidence = 0.70
 
@@ -244,6 +299,39 @@ class ProgressionService:
             s.reps_completed >= performance.target_reps
             for s in performance.sets if s.completed
         )
+
+    def _count_consecutive_ready_sessions(
+        self, history: List[ExercisePerformance]
+    ) -> int:
+        """
+        Count consecutive sessions where user was "ready to progress" (RPE <= 7.5).
+
+        This enables pace-aware progression:
+        - slow pace: requires 4 consecutive ready sessions
+        - medium pace: requires 2 consecutive ready sessions
+        - fast pace: requires 1 session (immediate)
+
+        Args:
+            history: List of performance history (most recent last)
+
+        Returns:
+            Number of consecutive sessions at or below ready_to_progress threshold
+        """
+        if not history:
+            return 0
+
+        consecutive = 0
+        threshold = RPE_THRESHOLDS["ready_to_progress"]
+
+        # Iterate from most recent to oldest
+        for perf in reversed(history):
+            if perf.average_rpe is not None and perf.average_rpe <= threshold:
+                consecutive += 1
+            else:
+                # Break on first non-ready session
+                break
+
+        return consecutive
 
     def should_deload(
         self,

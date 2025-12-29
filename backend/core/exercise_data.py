@@ -60,6 +60,25 @@ PROGRESSION_INCREMENTS: Dict[str, float] = {
     "bodyweight": 0,
 }
 
+# =====================================================
+# REP LIMITS BY EXERCISE TYPE
+# =====================================================
+# Sensible rep ranges to prevent rep creep (e.g., doing 20+ reps)
+# When reps hit the ceiling, weight should increase and reps reset.
+# Format: (min_reps, max_reps)
+
+REP_LIMITS: Dict[str, Tuple[int, int]] = {
+    "compound_upper": (6, 12),   # Bench press, rows, overhead press - heavy focus
+    "compound_lower": (6, 12),   # Squats, deadlifts, leg press - heavy focus
+    "isolation": (8, 15),        # Curls, extensions, raises - higher rep range
+    "bodyweight": (5, 20),       # Push-ups, pull-ups, dips - wider range acceptable
+}
+
+
+def get_rep_limits(exercise_type: str) -> Tuple[int, int]:
+    """Get min/max rep limits for an exercise type."""
+    return REP_LIMITS.get(exercise_type, (8, 15))
+
 # Exercise substitutes for adaptation
 EXERCISE_SUBSTITUTES: Dict[str, List[str]] = {
     # Chest

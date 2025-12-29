@@ -154,6 +154,79 @@ class _PreferencesStepState extends State<PreferencesStep> {
             },
             showDescriptions: true,
           ),
+          const SizedBox(height: 32),
+
+          // Workout Type Preference
+          _buildLabel('Workout Type'),
+          const SizedBox(height: 12),
+          SingleSelectGroup(
+            options: const [
+              SelectionOption(
+                label: 'Strength',
+                value: 'strength',
+                description: 'Focus on weight training and muscle building',
+                icon: Icons.fitness_center,
+              ),
+              SelectionOption(
+                label: 'Cardio',
+                value: 'cardio',
+                description: 'Focus on heart health and endurance',
+                icon: Icons.directions_run,
+              ),
+              SelectionOption(
+                label: 'Mixed',
+                value: 'mixed',
+                description: 'Combine strength training with cardio',
+                icon: Icons.sports_gymnastics,
+              ),
+            ],
+            selectedValue: widget.data.workoutTypePreference,
+            onChanged: (value) {
+              widget.data.workoutTypePreference = value;
+              widget.onDataChanged();
+            },
+            showDescriptions: true,
+          ),
+          const SizedBox(height: 32),
+
+          // Progression Pace
+          _buildLabel('Progression Pace'),
+          const Text(
+            'How fast should weights increase?',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleSelectGroup(
+            options: const [
+              SelectionOption(
+                label: 'Slow',
+                value: 'slow',
+                description: 'Same weight for 3-4 weeks before increasing',
+                icon: Icons.slow_motion_video,
+              ),
+              SelectionOption(
+                label: 'Medium',
+                value: 'medium',
+                description: 'Increase weight every 1-2 weeks',
+                icon: Icons.speed,
+              ),
+              SelectionOption(
+                label: 'Fast',
+                value: 'fast',
+                description: 'Increase weight every session when ready',
+                icon: Icons.flash_on,
+              ),
+            ],
+            selectedValue: widget.data.progressionPace,
+            onChanged: (value) {
+              widget.data.progressionPace = value;
+              widget.onDataChanged();
+            },
+            showDescriptions: true,
+          ),
         ],
       ),
     );

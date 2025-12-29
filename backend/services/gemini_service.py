@@ -710,7 +710,8 @@ IMPORTANT:
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
         intensity_preference: Optional[str] = None,
-        custom_program_description: Optional[str] = None
+        custom_program_description: Optional[str] = None,
+        workout_type_preference: Optional[str] = None
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -727,6 +728,7 @@ IMPORTANT:
             activity_level: Optional activity level (sedentary, lightly_active, moderately_active, very_active)
             intensity_preference: Optional intensity preference (easy, medium, hard) - overrides fitness_level for difficulty
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX", "Improve box jump height")
+            workout_type_preference: Optional workout type preference (strength, cardio, mixed) - affects exercise selection
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -779,6 +781,45 @@ IMPORTANT:
         if fitness_level == "beginner" and difficulty == "hard":
             safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Choose challenging exercises but ensure proper form is achievable. Include more rest periods and focus on compound movements with moderate weights rather than advanced techniques."
 
+        # Determine workout type (strength, cardio, or mixed)
+        # Addresses competitor feedback: "I hate how you can't pick cardio for one of your workouts"
+        workout_type = workout_type_preference if workout_type_preference else "strength"
+        workout_type_instruction = ""
+        if workout_type == "cardio":
+            workout_type_instruction = """
+
+🏃 CARDIO WORKOUT TYPE:
+This is a CARDIO-focused workout. You MUST:
+1. Include time-based exercises (running, cycling, rowing, jump rope)
+2. Use duration_seconds instead of reps for cardio exercises (e.g., "30 seconds jump rope")
+3. Focus on heart rate elevation and endurance
+4. Include intervals if appropriate (e.g., 30s work / 15s rest)
+5. Minimize rest periods between exercises (30-45 seconds max)
+6. For cardio exercises, use sets=1 and reps=1, with duration_seconds for the work period
+
+CARDIO EXERCISE EXAMPLES:
+- Jumping Jacks: 45 duration_seconds, sets=1, reps=1
+- High Knees: 30 duration_seconds, sets=3
+- Burpees: 20 duration_seconds, sets=4
+- Mountain Climbers: 30 duration_seconds, sets=3
+- Running in Place: 60 duration_seconds, sets=1
+- Jump Rope: 45 duration_seconds, sets=4"""
+        elif workout_type == "mixed":
+            workout_type_instruction = """
+
+🔥 MIXED WORKOUT TYPE:
+This is a MIXED workout combining strength AND cardio. You MUST:
+1. Alternate between strength and cardio exercises
+2. Include 2-3 cardio bursts between strength sets
+3. Use circuit-style training where possible
+4. Keep rest periods shorter than pure strength workouts (45-60 seconds)
+5. Include both weighted exercises AND time-based cardio movements
+
+STRUCTURE SUGGESTION:
+- Start with compound strength movement
+- Follow with cardio burst (30-45 seconds)
+- Repeat pattern for full workout"""
+
         # Build custom program instruction if user has specified a custom training goal
         custom_program_instruction = ""
         if custom_program_description and custom_program_description.strip():
@@ -803,12 +844,13 @@ Examples:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{safety_instruction}{custom_program_instruction}
+- Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
+- Workout Type: {workout_type}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}
 
 Return a valid JSON object with this exact structure:
 {{
   "name": "A CREATIVE, UNIQUE workout name ENDING with body part focus (e.g., 'Thunder Legs', 'Phoenix Chest', 'Cobra Back')",
-  "type": "strength",
+  "type": "{workout_type}",
   "difficulty": "{difficulty}",
   "duration_minutes": {duration_minutes},
   "target_muscles": ["Primary muscle 1", "Primary muscle 2"],
@@ -819,6 +861,7 @@ Return a valid JSON object with this exact structure:
       "reps": 12,
       "weight_kg": 10,
       "rest_seconds": 60,
+      "duration_seconds": null,
       "equipment": "equipment used or bodyweight",
       "muscle_group": "primary muscle targeted",
       "notes": "Form tips or modifications"
@@ -826,6 +869,9 @@ Return a valid JSON object with this exact structure:
   ],
   "notes": "Overall workout tips including warm-up and cool-down recommendations"
 }}
+
+NOTE: For cardio exercises, use duration_seconds (e.g., 30) instead of reps (set reps to 1).
+For strength exercises, set duration_seconds to null and use reps normally.
 
 ⚠️ CRITICAL - REALISTIC WEIGHT RECOMMENDATIONS:
 For each exercise, include a starting weight_kg that follows industry-standard equipment increments:
@@ -1051,7 +1097,8 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
         intensity_preference: Optional[str] = None,
-        custom_program_description: Optional[str] = None
+        custom_program_description: Optional[str] = None,
+        workout_type_preference: Optional[str] = None
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -1072,6 +1119,7 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
             activity_level: Optional activity level
             intensity_preference: Optional intensity preference (easy, medium, hard)
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX")
+            workout_type_preference: Optional workout type preference (strength, cardio, mixed)
 
         Returns:
             Dict with workout structure
@@ -1110,6 +1158,9 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
         if custom_program_description and custom_program_description.strip():
             custom_program_context = f"\n- Custom Training Goal: {custom_program_description}"
 
+        # Determine workout type
+        workout_type = workout_type_preference if workout_type_preference else "strength"
+
         # Format exercises for the prompt
         exercise_list = "\n".join([
             f"- {ex.get('name', 'Unknown')}: targets {ex.get('muscle_group', 'unknown')}, equipment: {ex.get('equipment', 'bodyweight')}"
@@ -1136,7 +1187,7 @@ Examples of good names:
 Return a JSON object with:
 {{
   "name": "Your creative workout name here",
-  "type": "strength",
+  "type": "{workout_type}",
   "difficulty": "{difficulty}",
   "notes": "A brief motivational tip for this workout (1-2 sentences)"
 }}"""
