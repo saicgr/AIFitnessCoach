@@ -833,6 +833,19 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
     elif split == "body_part":
         body_parts = ["chest", "back", "shoulders", "legs", "arms", "core"]
         return {day: body_parts[i % len(body_parts)] for i, day in enumerate(selected_days)}
+    elif split == "dont_know" or split is None:
+        # User selected "Don't know" - auto-pick best split based on days per week
+        if num_days <= 3:
+            full_body_emphases = ["full_body_push", "full_body_pull", "full_body_legs"]
+            return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+        elif num_days == 4:
+            focuses = ["upper", "lower", "upper", "lower"]
+            return {day: focuses[i] for i, day in enumerate(selected_days)}
+        elif num_days <= 6:
+            focuses = ["push", "pull", "legs"] * 2
+            return {day: focuses[i] for i, day in enumerate(selected_days)}
+        else:
+            return {day: "full_body" for day in selected_days}
 
     return {day: "full_body" for day in selected_days}
 

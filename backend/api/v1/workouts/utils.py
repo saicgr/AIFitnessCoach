@@ -306,6 +306,29 @@ def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[st
             balanced = ["upper", "lower", "full_body", "push", "pull", "legs"]
             return {day: balanced[i % len(balanced)] for i, day in enumerate(selected_days)}
 
+    elif split == "dont_know" or split is None:
+        # User selected "Don't know" - auto-pick best split based on days per week
+        # This addresses the "I'll let AI decide" option
+        if num_days <= 3:
+            # 3 or fewer days: Full body is most efficient
+            full_body_emphases = [
+                "full_body_push",
+                "full_body_pull",
+                "full_body_legs",
+            ]
+            return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+        elif num_days == 4:
+            # 4 days: Upper/Lower is ideal balance
+            focuses = ["upper", "lower", "upper", "lower"]
+            return {day: focuses[i] for i, day in enumerate(selected_days)}
+        elif num_days <= 6:
+            # 5-6 days: Push/Pull/Legs works well
+            focuses = ["push", "pull", "legs"] * 2
+            return {day: focuses[i] for i, day in enumerate(selected_days)}
+        else:
+            # 7 days: Full body with variety
+            return {day: "full_body" for day in selected_days}
+
     # Default to full body if unknown split
     return {day: "full_body" for day in selected_days}
 
