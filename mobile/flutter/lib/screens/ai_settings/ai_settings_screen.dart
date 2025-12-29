@@ -194,6 +194,28 @@ class AISettings {
       enabledAgents: parseEnabledAgents(json['enabled_agents']),
     );
   }
+
+  /// Get the current coach persona from settings
+  CoachPersona getCurrentCoach() {
+    // If there's a coach persona ID, try to find the predefined coach
+    if (coachPersonaId != null && !isCustomCoach) {
+      final predefined = CoachPersona.findById(coachPersonaId);
+      if (predefined != null) return predefined;
+    }
+
+    // Custom coach or fallback
+    if (isCustomCoach || coachPersonaId == 'custom') {
+      return CoachPersona.custom(
+        name: coachName ?? 'My Coach',
+        coachingStyle: coachingStyle,
+        communicationTone: communicationTone,
+        encouragementLevel: encouragementLevel,
+      );
+    }
+
+    // Default to Coach Mike
+    return CoachPersona.defaultCoach;
+  }
 }
 
 /// AI Settings state notifier with API persistence

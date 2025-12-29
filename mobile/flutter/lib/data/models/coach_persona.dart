@@ -231,6 +231,78 @@ class CoachPersona {
 
   @override
   int get hashCode => id.hashCode;
+
+  /// Get the coach's greeting intro based on personality
+  String get greetingIntro {
+    switch (id) {
+      case 'coach_mike':
+        return "Hey champ! 💪 I'm Coach Mike, your personal hype machine!";
+      case 'dr_sarah':
+        return "Hello! I'm Dr. Sarah. Let's take a scientific approach to your fitness journey.";
+      case 'sergeant_max':
+        return "Listen up, recruit! I'm Sergeant Max. We're gonna build you into a machine!";
+      case 'zen_maya':
+        return "Namaste 🧘 I'm Maya. Let's find balance and strength on your journey.";
+      case 'hype_danny':
+        return "YOOO what's good fam!! 🔥🔥 Danny here and WE'RE ABOUT TO GO CRAZY!!";
+      default:
+        return "Hey! I'm your AI fitness coach. Let's get started!";
+    }
+  }
+
+  /// Get the coach's summary connector phrase based on personality
+  String get summaryConnector {
+    switch (id) {
+      case 'coach_mike':
+        return "Awesome! So you want to";
+      case 'dr_sarah':
+        return "Excellent. Based on your input, your goals are to";
+      case 'sergeant_max':
+        return "Alright soldier! Your mission is to";
+      case 'zen_maya':
+        return "Beautiful. Your path includes";
+      case 'hype_danny':
+        return "BRO that's FIRE!! 🔥 You're tryna";
+      default:
+        return "Great! You want to";
+    }
+  }
+
+  /// Get the coach's call to action for the form based on personality
+  String get formCallToAction {
+    switch (id) {
+      case 'coach_mike':
+        return "Let's finalize your game plan - just need a few quick details! 🎯";
+      case 'dr_sarah':
+        return "Please provide these additional data points for optimal program design.";
+      case 'sergeant_max':
+        return "Give me your stats below - NO EXCUSES! 💥";
+      case 'zen_maya':
+        return "Share a bit more about yourself so we can craft your perfect journey. ✨";
+      case 'hype_danny':
+        return "Drop your deets below and LET'S GET THIS BREAD!! 🍞💪";
+      default:
+        return "Just need a few more details below! 💪";
+    }
+  }
+
+  /// Get emoji for this coach
+  String get emoji {
+    switch (id) {
+      case 'coach_mike':
+        return '💪';
+      case 'dr_sarah':
+        return '🔬';
+      case 'sergeant_max':
+        return '💥';
+      case 'zen_maya':
+        return '🧘';
+      case 'hype_danny':
+        return '🔥';
+      default:
+        return '💪';
+    }
+  }
 }
 
 /// Available coaching styles for custom coach

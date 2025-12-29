@@ -82,17 +82,19 @@ class _ConversationalOnboardingScreenState
     if (state.messages.isEmpty) {
       ref.read(onboardingStateProvider.notifier).setActive(true);
 
-      // Show typing indicator first for realistic feel
-      setState(() => _showInitialTyping = true);
-
       // Wait for quiz data to load from SharedPreferences
       final preAuthData = await ref.read(preAuthQuizProvider.notifier).ensureLoaded();
       final greeting = _buildPersonalizedGreeting(preAuthData);
+      final coach = ref.read(aiSettingsProvider).getCurrentCoach();
 
       debugPrint('🎯 Quiz data for greeting: goals=${preAuthData.goals}, days=${preAuthData.daysPerWeek}, level=${preAuthData.fitnessLevel}');
+      debugPrint('🤖 Selected coach: ${coach.name} (${coach.id})');
 
-      // After a delay, hide typing and show the actual message
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      // Show typing indicator briefly for realistic feel, then show greeting immediately
+      setState(() => _showInitialTyping = true);
+
+      // Shorter delay (500ms) for snappier UX while still showing typing
+      Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           setState(() => _showInitialTyping = false);
           ref.read(onboardingStateProvider.notifier).addMessage(
@@ -106,8 +108,12 @@ class _ConversationalOnboardingScreenState
     }
   }
 
-  /// Build a personalized greeting that acknowledges quiz answers
+  /// Build a personalized greeting that acknowledges quiz answers and uses coach personality
   String _buildPersonalizedGreeting(PreAuthQuizData quizData) {
+    // Get the selected coach persona
+    final aiSettings = ref.read(aiSettingsProvider);
+    final coach = aiSettings.getCurrentCoach();
+
     final parts = <String>[];
 
     // Goals acknowledgment (multi-select)
@@ -152,12 +158,13 @@ class _ConversationalOnboardingScreenState
       parts.add(levelText);
     }
 
+    // Build greeting with coach personality
     if (parts.isEmpty) {
-      return "Hey! I'm your AI fitness coach. Welcome to Aevo! Can you please help me with a few details below?";
+      return "${coach.greetingIntro} ${coach.formCallToAction}";
     }
 
     final summary = parts.join(', ');
-    return "Awesome! You want to $summary. Let's finalize your plan - just need a few more details below! 💪";
+    return "${coach.summaryConnector} $summary. ${coach.formCallToAction}";
   }
 
   String? _getGoalText(String? goal) {

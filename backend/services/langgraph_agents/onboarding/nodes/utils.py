@@ -130,16 +130,26 @@ def detect_field_from_response(response: str) -> Optional[str]:
     response_lower = response.lower()
 
     # Map keywords to fields - order matters (more specific patterns first)
+    # NOTE: Put more specific multi-word patterns before generic single words
     field_patterns = {
-        "workout_duration": ["how long", "30, 45, 60", "30, 45", "minutes", "per workout", "session length", "90 min"],
+        # Past programs - check first since AI may reference duration in same message
+        "past_programs": ["ever followed a program", "followed a program", "ppl", "bro split", "tried before", "starting strength", "stronglifts", "5x5", "push pull legs"],
+        # Selected days
         "selected_days": ["which days", "what days", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "days of the week"],
-        "past_programs": ["program", "ppl", "bro split", "followed", "tried before", "starting strength", "stronglifts"],
-        "focus_areas": ["prioritize", "focus area", "target", "full body", "muscle group", "any muscles"],
-        "workout_variety": ["same exercises", "mix it up", "variety", "consistent", "fresh", "each week"],
+        # Workout duration - only match when specifically asking about duration
+        "workout_duration": ["how long per workout", "how long are your workouts", "workout length", "session length", "30, 45, 60", "30, 45, 60, 90"],
+        # Focus areas
+        "focus_areas": ["prioritize", "focus area", "target", "full body", "muscle group", "any muscles", "focus on"],
+        # Workout variety
+        "workout_variety": ["same exercises", "mix it up", "variety", "consistent routine", "fresh each week", "each week"],
+        # Biggest obstacle
         "biggest_obstacle": ["obstacle", "barrier", "consistency", "struggle", "challenge", "biggest"],
-        "equipment": ["equipment", "gym access", "what do you have", "access to"],
-        "goals": ["goal", "achieve", "want to", "looking to"],
-        "fitness_level": ["experience level", "fitness level", "beginner", "intermediate", "advanced"],
+        # Equipment
+        "equipment": ["equipment", "gym access", "what do you have", "access to", "what gear"],
+        # Goals
+        "goals": ["goal", "achieve", "want to", "looking to", "aiming for"],
+        # Fitness level
+        "fitness_level": ["experience level", "fitness level", "beginner", "intermediate", "advanced", "how experienced"],
     }
 
     for field, keywords in field_patterns.items():
