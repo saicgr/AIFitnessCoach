@@ -308,6 +308,16 @@ class _ConversationalOnboardingScreenState
         prePopulatedData['motivation'] = preAuthData.motivation;
       }
 
+      // Workout type preference (strength, cardio, mixed)
+      if (preAuthData.workoutTypePreference != null) {
+        prePopulatedData['workoutTypePreference'] = preAuthData.workoutTypePreference;
+      }
+
+      // Progression pace (slow, medium, fast)
+      if (preAuthData.progressionPace != null) {
+        prePopulatedData['progressionPace'] = preAuthData.progressionPace;
+      }
+
       // Update collected data with pre-auth answers
       if (prePopulatedData.isNotEmpty) {
         ref.read(onboardingStateProvider.notifier).updateCollectedData(prePopulatedData);
@@ -443,6 +453,9 @@ class _ConversationalOnboardingScreenState
       'biggest_obstacle': 'biggestObstacle',
       'workout_environment': 'workoutEnvironment',
       'focus_areas': 'focusAreas',
+      // Workout type and progression preferences
+      'workout_type_preference': 'workoutTypePreference',
+      'progression_pace': 'progressionPace',
     };
 
     final normalized = <String, dynamic>{};
@@ -677,6 +690,9 @@ class _ConversationalOnboardingScreenState
         'biggest_obstacle': finalData['biggestObstacle'],  // Main barrier to consistency
         'workout_environment': finalData['workoutEnvironment'],  // Where they train
         'focus_areas': finalData['focusAreas'],  // Priority muscle groups
+        // Workout type preference (strength, cardio, mixed) and progression pace (slow, medium, fast)
+        'workout_type_preference': finalData['workoutTypePreference'] ?? 'strength',
+        'progression_pace': finalData['progressionPace'] ?? 'medium',
       });
 
       final userData = {

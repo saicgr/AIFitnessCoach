@@ -213,9 +213,9 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     if "selected_days" in missing and collected.get("days_per_week"):
         component = "day_picker"
         logger.info(f"[Onboarding Agent] selected_days missing - showing day_picker")
-    elif is_completion_message and not missing:
-        # Only skip quick replies if completion message AND no missing fields
-        logger.info(f"[Onboarding Agent] Completion message detected - no quick replies")
+    elif is_completion_message:
+        # Completion message detected - NO quick replies, let user proceed
+        logger.info(f"[Onboarding Agent] Completion message detected - no quick replies (missing: {missing})")
     else:
         # Detect field from AI response
         detected_field = detect_field_from_response(response_content)

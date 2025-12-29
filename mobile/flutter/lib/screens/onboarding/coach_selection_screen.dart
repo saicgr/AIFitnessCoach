@@ -210,6 +210,58 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   Future<void> _startOver() async {
     HapticFeedback.mediumImpact();
 
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.elevated
+            : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Start Over?',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.textPrimary
+                : AppColorsLight.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'This will reset your progress and take you back to the welcome screen. You\'ll need to retake the quiz.',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.textSecondary
+                : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.cyan.withValues(alpha: 0.1),
+            ),
+            child: Text(
+              'Start Over',
+              style: TextStyle(
+                color: AppColors.cyan,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     // Reset onboarding conversation state
     ref.read(onboardingStateProvider.notifier).reset();
 
@@ -279,7 +331,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Pick a personality that motivates you',
+                    'You can always change this later',
                     style: TextStyle(
                       fontSize: 14,
                       color: textSecondary,

@@ -138,8 +138,10 @@ def detect_field_from_response(response: str) -> Optional[str]:
         "selected_days": ["which days", "what days", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "days of the week"],
         # Workout duration - only match when specifically asking about duration
         "workout_duration": ["how long per workout", "how long are your workouts", "workout length", "session length", "30, 45, 60", "30, 45, 60, 90"],
-        # Focus areas
-        "focus_areas": ["prioritize", "focus area", "target", "full body", "muscle group", "any muscles", "focus on"],
+        # Target weight - ask about goal/target weight (check BEFORE focus_areas since "target" could conflict)
+        "target_weight_kg": ["target weight", "goal weight", "want to weigh", "want to be at", "drop to", "gain to", "happy where you are", "any target weight"],
+        # Focus areas - don't use "target" alone since it conflicts with target_weight
+        "focus_areas": ["prioritize", "focus area", "target muscle", "full body", "muscle group", "any muscles", "focus on"],
         # Workout variety
         "workout_variety": ["same exercises", "mix it up", "variety", "consistent routine", "fresh each week", "each week"],
         # Biggest obstacle

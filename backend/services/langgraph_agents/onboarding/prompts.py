@@ -17,19 +17,22 @@ STILL NEED: {missing_fields}
 
 📋 QUESTIONS TO ASK (in order, skip if already collected):
 1. workout_duration → "How long per workout - 30, 45, 60, or 90 min?"
-2. past_programs → "What workout programs have you tried before?" (Skip if trainingSplit is in COLLECTED - they already indicated experience)
-3. focus_areas → "Any muscles to prioritize, or full body?"
-4. workout_variety → "Prefer same exercises each week or mix it up?"
-5. biggest_obstacle → "What's been your biggest barrier to consistency?"
+2. target_weight_kg → "Any target weight in mind, or happy where you are?" (ONLY ask if goals include "Lose Weight" or "Build Muscle" - skip for general fitness)
+3. past_programs → "What workout programs have you tried before?" (Skip if trainingSplit is in COLLECTED - they already indicated experience)
+4. focus_areas → "Any muscles to prioritize, or full body?"
+5. workout_variety → "Prefer same exercises each week or mix it up?"
+6. biggest_obstacle → "What's been your biggest barrier to consistency?"
 
 🧠 SMART SKIPPING:
 - If trainingSplit is in COLLECTED (e.g., "push_pull_legs", "bro_split"), SKIP asking about past_programs - they already told us their preferred split!
 - Instead acknowledge: "Nice, you're into [split name]!" and move to focus_areas
+- target_weight_kg: ONLY ask if goals include "Lose Weight" or "Build Muscle". Skip for "General Fitness", "Improve Endurance", etc.
 
 ⚠️ MUST ask ALL remaining questions before closing. Check STILL NEED - if biggest_obstacle is there, ASK IT!
 
 🎯 QUICK ACKNOWLEDGMENTS (one sentence max):
 - Duration picked → "Got it!"
+- Target weight → "Got it, we'll work towards that!" or "No worries, we'll focus on getting stronger!"
 - Past programs → "Nice!" or "No worries!"
 - Focus areas → "On it!"
 - Variety → "Perfect!"
@@ -149,16 +152,24 @@ EXTRACTION RULES:
 6. Convert units to metric:
    - Height: feet/inches → cm
    - Weight: lbs → kg
+   - Target weight: same conversion (e.g., "160 lbs" → target_weight_kg: 72.6)
 
-6. Normalize values:
+7. TARGET WEIGHT extraction:
+   - "want to be 160" → target_weight_kg: 72.6 (assuming lbs)
+   - "goal is 70kg" → target_weight_kg: 70
+   - "drop to 150" → target_weight_kg: 68.0
+   - "gain to 180" → target_weight_kg: 81.6
+   - "not sure" or "happy where I am" → target_weight_kg: null (skip)
+
+8. Normalize values:
    - Goals: Use exact labels like "Build Muscle", "Lose Weight", "Increase Strength"
    - Equipment: Use standard labels like "Barbell", "Dumbbells", "Bodyweight Only"
    - Fitness level: "beginner", "intermediate", or "advanced"
    - Days: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
 
-7. For lists (goals, equipment), merge with existing data, don't replace
+9. For lists (goals, equipment), merge with existing data, don't replace
 
-8. If the user's message is just a greeting or doesn't contain extractable data, return empty dict {{}}
+10. If the user's message is just a greeting or doesn't contain extractable data, return empty dict {{}}
 
 Return JSON object with ONLY the new/updated fields.
 
@@ -188,6 +199,7 @@ FIELD_ORDER = [
     # AI asks these (personalization questions that affect workout generation):
     "selected_days",  # Only asked if workoutDays not pre-filled
     "workout_duration",
+    "target_weight_kg",  # Goal weight - asked if goals include Lose Weight or Build Muscle
     "past_programs",  # What they've tried - avoid repetition
     "focus_areas",  # Priority muscle groups - personalizes programming
     "workout_variety",  # Prefer consistency or variety in exercises
@@ -391,5 +403,16 @@ QUICK_REPLIES = {
         {"label": "190 lbs (86kg)", "value": "86"},
         {"label": "210 lbs (95kg)", "value": "95"},
         {"label": "230+ lbs (104kg)", "value": "104"},
+    ],
+    # Target weight - for weight loss/gain goals
+    "target_weight_kg": [
+        {"label": "110 lbs (50kg)", "value": "50"},
+        {"label": "130 lbs (59kg)", "value": "59"},
+        {"label": "150 lbs (68kg)", "value": "68"},
+        {"label": "170 lbs (77kg)", "value": "77"},
+        {"label": "190 lbs (86kg)", "value": "86"},
+        {"label": "210 lbs (95kg)", "value": "95"},
+        {"label": "230+ lbs (104kg)", "value": "104"},
+        {"label": "Not sure yet 🤔", "value": "__skip__"},
     ],
 }
