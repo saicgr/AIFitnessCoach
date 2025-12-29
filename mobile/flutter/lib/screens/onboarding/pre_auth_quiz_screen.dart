@@ -15,6 +15,7 @@ import 'widgets/quiz_multi_select.dart';
 import 'widgets/quiz_fitness_level.dart';
 import 'widgets/quiz_days_selector.dart';
 import 'widgets/quiz_equipment.dart';
+import 'widgets/quiz_training_split.dart';
 import 'widgets/quiz_motivation.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
@@ -26,6 +27,7 @@ class PreAuthQuizData {
   final List<int>? workoutDays;
   final List<String>? equipment;
   final String? workoutEnvironment;
+  final String? trainingSplit;
   final List<String>? motivations;
   final int? dumbbellCount;
   final int? kettlebellCount;
@@ -38,6 +40,7 @@ class PreAuthQuizData {
     this.workoutDays,
     this.equipment,
     this.workoutEnvironment,
+    this.trainingSplit,
     this.motivations,
     this.dumbbellCount,
     this.kettlebellCount,
@@ -56,6 +59,7 @@ class PreAuthQuizData {
       workoutDays!.isNotEmpty &&
       equipment != null &&
       equipment!.isNotEmpty &&
+      // trainingSplit is optional - defaults to push_pull_legs if not set
       motivations != null &&
       motivations!.isNotEmpty;
 
@@ -68,6 +72,7 @@ class PreAuthQuizData {
         'workoutDays': workoutDays,
         'equipment': equipment,
         'workoutEnvironment': workoutEnvironment,
+        'trainingSplit': trainingSplit,
         'motivations': motivations,
         'motivation': motivation,
         'dumbbellCount': dumbbellCount,
@@ -83,6 +88,7 @@ class PreAuthQuizData {
         workoutDays: (json['workoutDays'] as List<dynamic>?)?.cast<int>(),
         equipment: (json['equipment'] as List<dynamic>?)?.cast<String>(),
         workoutEnvironment: json['workoutEnvironment'] as String?,
+        trainingSplit: json['trainingSplit'] as String?,
         motivations: (json['motivations'] as List<dynamic>?)?.cast<String>() ??
             (json['motivation'] != null ? [json['motivation'] as String] : null),
         dumbbellCount: json['dumbbellCount'] as int?,
@@ -113,6 +119,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final workoutDays = workoutDaysStr?.map((s) => int.tryParse(s) ?? 0).toList();
     final equipmentStr = prefs.getStringList('preAuth_equipment');
     final workoutEnv = prefs.getString('preAuth_workoutEnvironment');
+    final trainingSplit = prefs.getString('preAuth_trainingSplit');
     final motivations = prefs.getStringList('preAuth_motivations');
     final dumbbellCount = prefs.getInt('preAuth_dumbbellCount');
     final kettlebellCount = prefs.getInt('preAuth_kettlebellCount');
@@ -125,6 +132,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: workoutDays,
       equipment: equipmentStr,
       workoutEnvironment: workoutEnv,
+      trainingSplit: trainingSplit,
       motivations: motivations,
       dumbbellCount: dumbbellCount,
       kettlebellCount: kettlebellCount,
@@ -150,6 +158,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -167,6 +176,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -184,6 +194,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -201,6 +212,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -218,6 +230,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -255,9 +268,28 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: equipment,
       workoutEnvironment: workoutEnv,
+      trainingSplit: state.trainingSplit,
       motivations: state.motivations,
       dumbbellCount: dumbbellCount ?? state.dumbbellCount,
       kettlebellCount: kettlebellCount ?? state.kettlebellCount,
+    );
+  }
+
+  Future<void> setTrainingSplit(String split) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_trainingSplit', split);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: split,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
     );
   }
 
@@ -272,6 +304,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       workoutDays: state.workoutDays,
       equipment: state.equipment,
       workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
       motivations: motivations,
       dumbbellCount: state.dumbbellCount,
       kettlebellCount: state.kettlebellCount,
@@ -287,6 +320,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_workoutDays');
     await prefs.remove('preAuth_equipment');
     await prefs.remove('preAuth_workoutEnvironment');
+    await prefs.remove('preAuth_trainingSplit');
     await prefs.remove('preAuth_motivations');
     await prefs.remove('preAuth_dumbbellCount');
     await prefs.remove('preAuth_kettlebellCount');
@@ -294,7 +328,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   }
 }
 
-/// Pre-auth quiz screen with 5 animated questions
+/// Pre-auth quiz screen with 6 animated questions
 class PreAuthQuizScreen extends ConsumerStatefulWidget {
   const PreAuthQuizScreen({super.key});
 
@@ -305,7 +339,7 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
-  static const int _totalQuestions = 5;
+  static const int _totalQuestions = 6;
 
   // Question 1: Goals (multi-select)
   final Set<String> _selectedGoals = {};
@@ -319,7 +353,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final Set<String> _selectedEquipment = {};
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
-  // Question 5: Motivations
+  // Question 5: Training Split
+  String? _selectedTrainingSplit;
+  // Question 6: Motivations
   final Set<String> _selectedMotivations = {};
 
   late AnimationController _progressController;
@@ -407,6 +443,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
       case 4:
+        if (_selectedTrainingSplit != null) {
+          await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(_selectedTrainingSplit!);
+        }
+        break;
+      case 5:
         if (_selectedMotivations.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setMotivations(_selectedMotivations.toList());
         }
@@ -443,6 +484,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 3:
         return _selectedEquipment.isNotEmpty;
       case 4:
+        return true; // Training split is optional
+      case 5:
         return _selectedMotivations.isNotEmpty;
       default:
         return false;
@@ -561,6 +604,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onInfoTap: _showEquipmentInfo,
         );
       case 4:
+        return QuizTrainingSplit(
+          key: const ValueKey('training_split'),
+          selectedSplit: _selectedTrainingSplit,
+          onSplitChanged: (split) => setState(() => _selectedTrainingSplit = split),
+          onSkip: _nextQuestion,
+        );
+      case 5:
         return QuizMotivation(
           key: const ValueKey('motivation'),
           selectedMotivations: _selectedMotivations,

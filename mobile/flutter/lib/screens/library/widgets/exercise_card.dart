@@ -259,15 +259,17 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
       if (mounted) {
         Navigator.pop(context);
         if (updatedWorkout != null) {
-          // Refresh workout list
-          ref.read(workoutsProvider.notifier).refresh();
+          // Refresh workout list and wait for it to complete
+          await ref.read(workoutsProvider.notifier).refresh();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Added "${widget.exerciseName}" to ${workout.name}'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Added "${widget.exerciseName}" to ${workout.name}'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

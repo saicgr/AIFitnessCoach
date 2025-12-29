@@ -98,53 +98,6 @@ class WorkoutRepository {
     }
   }
 
-  /// Generate monthly workouts
-  Future<List<Workout>> generateMonthlyWorkouts({
-    required String userId,
-    required List<int> selectedDays,
-    int durationMinutes = 45,
-    int weeks = 4,
-    String? monthStartDate,
-  }) async {
-    try {
-      debugPrint('🔍 [Workout] Generating monthly workouts for $weeks weeks...');
-      final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
-
-      // Use longer timeout for workout generation (AI generation + server cold start can take time)
-      // Scale timeout based on number of weeks being generated
-      final timeoutMinutes = weeks <= 2 ? 3 : (weeks <= 4 ? 5 : 8);
-
-      final response = await _apiClient.post(
-        '${ApiConstants.workouts}/generate-monthly',
-        data: {
-          'user_id': userId,
-          'month_start_date': startDate,
-          'selected_days': selectedDays,
-          'duration_minutes': durationMinutes,
-          'weeks': weeks,
-        },
-        options: Options(
-          sendTimeout: const Duration(seconds: 30),
-          receiveTimeout: Duration(minutes: timeoutMinutes),
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        final List<dynamic> workoutsData = data['workouts'] as List? ?? [];
-        final workouts = workoutsData
-            .map((json) => Workout.fromJson(json as Map<String, dynamic>))
-            .toList();
-        debugPrint('✅ [Workout] Generated ${workouts.length} workouts');
-        return workouts;
-      }
-      return [];
-    } catch (e) {
-      debugPrint('❌ [Workout] Error generating workouts: $e');
-      rethrow;
-    }
-  }
-
   /// Generate monthly workouts with streaming progress updates
   ///
   /// Returns a Stream that emits progress as each workout is generated.
@@ -299,67 +252,6 @@ class WorkoutRepository {
         workouts: List.unmodifiable(generatedWorkouts),
         hasError: true,
       );
-    }
-  }
-
-  /// Regenerate a workout with modifications
-  Future<Workout?> regenerateWorkout({
-    required String workoutId,
-    required String userId,
-    String? difficulty,
-    int? durationMinutes,
-    List<String>? focusAreas,
-    List<String>? injuries,
-    List<String>? equipment,
-    String? workoutType,
-    String? aiPrompt,
-    String? workoutName,
-    int? dumbbellCount,
-    int? kettlebellCount,
-  }) async {
-    try {
-      debugPrint('🔍 [Workout] Regenerating workout $workoutId with:');
-      debugPrint('  - difficulty: $difficulty');
-      debugPrint('  - durationMinutes: $durationMinutes');
-      debugPrint('  - focusAreas: $focusAreas');
-      debugPrint('  - injuries: $injuries');
-      debugPrint('  - equipment: $equipment');
-      debugPrint('  - workoutType: $workoutType');
-      debugPrint('  - aiPrompt: $aiPrompt');
-      debugPrint('  - workoutName: $workoutName');
-      debugPrint('  - dumbbellCount: $dumbbellCount');
-      debugPrint('  - kettlebellCount: $kettlebellCount');
-
-      // Use longer timeout for regeneration (AI generation can take time + server cold start)
-      final response = await _apiClient.post(
-        '${ApiConstants.workouts}/regenerate',
-        data: {
-          'workout_id': workoutId,
-          'user_id': userId,
-          if (difficulty != null) 'difficulty': difficulty,
-          if (durationMinutes != null) 'duration_minutes': durationMinutes,
-          if (focusAreas != null) 'focus_areas': focusAreas,
-          if (injuries != null && injuries.isNotEmpty) 'injuries': injuries,
-          if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
-          if (workoutType != null) 'workout_type': workoutType,
-          if (aiPrompt != null && aiPrompt.isNotEmpty) 'ai_prompt': aiPrompt,
-          if (workoutName != null && workoutName.isNotEmpty) 'workout_name': workoutName,
-          if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
-          if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
-        },
-        options: Options(
-          sendTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(minutes: 5), // Longer timeout for AI generation + cold start
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        return Workout.fromJson(response.data as Map<String, dynamic>);
-      }
-      return null;
-    } catch (e) {
-      debugPrint('❌ [Workout] Error regenerating workout: $e');
-      rethrow;
     }
   }
 

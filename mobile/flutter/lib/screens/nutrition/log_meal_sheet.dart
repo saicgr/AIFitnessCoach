@@ -214,35 +214,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     }
   }
 
-  /// Analyze food from text and return the response for preview
-  /// NOTE: This method does NOT set _isLoading to avoid rebuilding and losing _DescribeTab state
-  Future<LogFoodResponse?> _analyzeFood() async {
-    final description = _descriptionController.text.trim();
-    if (description.isEmpty) return null;
-
-    // Don't set _isLoading here - let _DescribeTab manage its own loading state
-    // to avoid being unmounted and losing _analyzedResponse
-    setState(() {
-      _error = null;
-    });
-
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
-      final response = await repository.logFoodFromText(
-        userId: widget.userId,
-        description: description,
-        mealType: _selectedMealType.value,
-      );
-
-      return response;
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-      return null;
-    }
-  }
-
   /// Log an already analyzed food response
   void _logAnalyzedFood(LogFoodResponse response) {
     Navigator.pop(context);
@@ -789,7 +760,6 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                 children: [
                   _DescribeTab(
                     controller: _descriptionController,
-                    onAnalyze: _analyzeFood,
                     onLog: _logAnalyzedFood,
                     isDark: isDark,
                     userId: widget.userId,
@@ -1194,7 +1164,6 @@ class _VoiceTabState extends State<_VoiceTab> {
 
 class _DescribeTab extends ConsumerStatefulWidget {
   final TextEditingController controller;
-  final Future<LogFoodResponse?> Function() onAnalyze;
   final void Function(LogFoodResponse) onLog;
   final bool isDark;
   final String userId;
@@ -1205,7 +1174,6 @@ class _DescribeTab extends ConsumerStatefulWidget {
 
   const _DescribeTab({
     required this.controller,
-    required this.onAnalyze,
     required this.onLog,
     required this.isDark,
     required this.userId,

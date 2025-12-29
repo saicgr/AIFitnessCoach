@@ -37,6 +37,11 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   bool _isLoading = false;
   String? _loadingAction;
 
+  // Streaming progress state for regeneration
+  int _regenerateStep = 0;
+  int _regenerateTotalSteps = 4;
+  String _regenerateMessage = '';
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -109,7 +114,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   _ActionTile(
                     icon: Icons.refresh,
                     title: 'Regenerate',
-                    subtitle: 'Create a new workout for this day',
+                    subtitle: _loadingAction == 'regenerate' && _regenerateMessage.isNotEmpty
+                        ? '$_regenerateMessage ($_regenerateStep/$_regenerateTotalSteps)'
+                        : 'Create a new workout for this day',
                     isLoading: _loadingAction == 'regenerate',
                     onTap: () => _handleRegenerate(context),
                   ),
@@ -238,14 +245,48 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       setState(() {
         _isLoading = true;
         _loadingAction = 'regenerate';
+        _regenerateStep = 0;
+        _regenerateMessage = 'Starting regeneration...';
       });
 
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
-      final workout = await repo.regenerateWorkout(
+      Workout? generatedWorkout;
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repo.regenerateWorkoutStreaming(
         workoutId: widget.workout.id!,
         userId: userId!,
-      );
+      )) {
+        if (!mounted) break;
+
+        if (progress.hasError) {
+          setState(() {
+            _isLoading = false;
+            _loadingAction = null;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${progress.message}'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _regenerateStep = progress.step;
+          _regenerateTotalSteps = progress.totalSteps;
+          _regenerateMessage = progress.message;
+        });
+
+        if (progress.isCompleted && progress.workout != null) {
+          generatedWorkout = progress.workout;
+          break;
+        }
+      }
 
       setState(() {
         _isLoading = false;
@@ -254,7 +295,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        if (workout != null) {
+        if (generatedWorkout != null) {
           widget.onRefresh?.call();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

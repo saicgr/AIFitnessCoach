@@ -287,6 +287,11 @@ class _ConversationalOnboardingScreenState
         prePopulatedData['workoutEnvironment'] = preAuthData.workoutEnvironment;
       }
 
+      // Training split preference
+      if (preAuthData.trainingSplit != null) {
+        prePopulatedData['trainingSplit'] = preAuthData.trainingSplit;
+      }
+
       // Motivations (multi-select, store for later use in coaching)
       if (preAuthData.motivations != null && preAuthData.motivations!.isNotEmpty) {
         prePopulatedData['motivations'] = preAuthData.motivations;
@@ -645,7 +650,7 @@ class _ConversationalOnboardingScreenState
         'workout_days': workoutDayIndices,  // Use workout_days with indices
         'workout_duration': finalData['workoutDuration'] ?? 45,
         'preferred_time': finalData['preferredTime'] ?? 'morning',
-        'training_split': finalData['trainingSplit'] ?? 'full_body',
+        'training_split': finalData['trainingSplit'] ?? 'push_pull_legs',
         'intensity_preference': finalData['intensityPreference'] ?? 'moderate',
         'workout_variety': finalData['workoutVariety'] ?? 'varied',
         'activity_level': finalData['activityLevel'] ?? 'lightly_active',

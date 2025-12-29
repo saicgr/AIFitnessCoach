@@ -67,13 +67,15 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
 
     // If a new workout was returned, refresh the list
     if (newWorkout != null && mounted) {
-      ref.read(workoutsProvider.notifier).refresh();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Workout regenerated!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      await ref.read(workoutsProvider.notifier).refresh();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Workout regenerated!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
     }
   }
 
@@ -111,13 +113,15 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
       final success = await repo.deleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        ref.read(workoutsProvider.notifier).refresh();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout skipped'),
-            backgroundColor: AppColors.textMuted,
-          ),
-        );
+        await ref.read(workoutsProvider.notifier).refresh();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout skipped'),
+              backgroundColor: AppColors.textMuted,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

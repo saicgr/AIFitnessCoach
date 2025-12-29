@@ -1,3 +1,6 @@
+FUTURE in voting:
+1. Posture video review
+
 ASAP:
 4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
 14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
@@ -5,8 +8,7 @@ ASAP:
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
 25. Demo of the whole app
 32. Make it easy to add supersets
-37. Gemini 2.5 flash text to speech
-38. Posture video review
+37. Gemini 2.5 flash text to speech for video audio AI generated
 39. The app overall is pretty good but I'm already sick of adjusting the weight values it's giving me. the AI doesn't understand what weight is possible with machines or dumbbells. It tells me to increase my bench press or curls by 2.5 pounds when you can't do less than 5 pound increments which is simply industry standard so it is pretty annoying.
 40. If I could add new equipment that the app doesn't come with, 5 stars across the board. Warmups are another thing that really be addressed
 41. it's a good app, but going up 10 or 15 pounds every week is not what I want I constantly have to make it to where I have a the same reps and weight for at least two weeks or a month. I hate how you can't pick cardio for one of your workouts. you have to manually add it. most apps you can include it. Doing 20 reps of something because you keep the same weight is crazy as well.
@@ -24,6 +26,7 @@ ASAP:
 53. Add mood based workout - like might have to add how does your mood feel today and the user selects and option and then a pop up would show up do you want to work it out, like if the user is angry, then it would generate a workout for anger etc.
 54. Test and check for offline mode
 55. Finish Senior Mode
+56. Premium Subscriptionwork
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.
@@ -137,7 +140,7 @@ The final response must include the detailed image prompt, the generated image, 
 
 Can you review and resrarch them all and think for scenarios if this app AIFitnessCoach has any use cases you would have review code and everything and then create a document to document if this app can be an app in chatgpt
 
-FUTURE
+FUTURE MAYBE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
 3. Multi agent add a supervisor pattern where one agent routes to specialists:
 NutritionAgent - meal planning, macros
