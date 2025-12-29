@@ -140,10 +140,10 @@ def detect_field_from_response(response: str) -> Optional[str]:
         "workout_duration": ["how long per workout", "how long are your workouts", "workout length", "session length", "30, 45, 60", "30, 45, 60, 90"],
         # Target weight - ask about goal/target weight (check BEFORE focus_areas since "target" could conflict)
         "target_weight_kg": ["target weight", "goal weight", "want to weigh", "want to be at", "drop to", "gain to", "happy where you are", "any target weight"],
-        # Focus areas - don't use "target" alone since it conflicts with target_weight
-        "focus_areas": ["prioritize", "focus area", "target muscle", "full body", "muscle group", "any muscles", "focus on"],
-        # Workout variety
-        "workout_variety": ["same exercises", "mix it up", "variety", "consistent routine", "fresh each week", "each week"],
+        # Workout variety - check BEFORE focus_areas because AI may say "full-body" when asking about variety
+        "workout_variety": ["same exercises", "mix it up", "for some variety", "stick with the same", "consistent routine", "fresh each week", "each week or"],
+        # Focus areas - use specific patterns, NOT just "full body" which can appear in other contexts
+        "focus_areas": ["muscles you'd like to prioritize", "prioritize", "focus area", "target muscle", "muscle group", "any muscles to", "focus on which"],
         # Biggest obstacle
         "biggest_obstacle": ["obstacle", "barrier", "consistency", "struggle", "challenge", "biggest"],
         # Equipment

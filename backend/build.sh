@@ -21,7 +21,8 @@ else
     echo "Running tests..."
     echo "============================================"
     pip install pytest pytest-asyncio
-    python -m pytest tests/test_onboarding.py -v --tb=short -x
+    # Run fast tests only (exclude slow API tests)
+    python -m pytest tests/test_onboarding.py tests/test_quick_replies_e2e.py -v --tb=short -x -m "not slow"
 fi
 
 echo ""
