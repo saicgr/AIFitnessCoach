@@ -269,4 +269,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
       debugPrint('✅ [Auth] Marking onboarding complete');
     }
   }
+
+  /// Mark coach as selected
+  Future<void> markCoachSelected() async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(coachSelected: true);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Marked coach as selected');
+    }
+  }
+
+  /// Mark paywall as completed
+  Future<void> markPaywallComplete() async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(paywallCompleted: true);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Marked paywall as completed');
+    }
+  }
 }

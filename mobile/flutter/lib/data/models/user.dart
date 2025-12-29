@@ -31,6 +31,10 @@ class User extends Equatable {
   final String? activityLevel;
   @JsonKey(name: 'onboarding_completed')
   final bool? onboardingCompleted;
+  @JsonKey(name: 'coach_selected')
+  final bool? coachSelected;
+  @JsonKey(name: 'paywall_completed')
+  final bool? paywallCompleted;
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -55,6 +59,8 @@ class User extends Equatable {
     this.gender,
     this.activityLevel,
     this.onboardingCompleted,
+    this.coachSelected,
+    this.paywallCompleted,
     this.createdAt,
     this.updatedAt,
     this.timezone,
@@ -115,6 +121,12 @@ class User extends Equatable {
 
   /// Check if onboarding is done
   bool get isOnboardingComplete => onboardingCompleted == true;
+
+  /// Check if coach has been selected
+  bool get isCoachSelected => coachSelected == true;
+
+  /// Check if paywall has been completed (shown/dismissed)
+  bool get isPaywallComplete => paywallCompleted == true;
 
   /// Get photo URL (placeholder for now - would come from auth provider)
   String? get photoUrl => null;
@@ -335,6 +347,8 @@ class User extends Equatable {
         goals,
         equipment,
         onboardingCompleted,
+        coachSelected,
+        paywallCompleted,
         timezone,
       ];
 
@@ -356,6 +370,8 @@ class User extends Equatable {
     String? gender,
     String? activityLevel,
     bool? onboardingCompleted,
+    bool? coachSelected,
+    bool? paywallCompleted,
     String? createdAt,
     String? updatedAt,
     String? timezone,
@@ -378,6 +394,8 @@ class User extends Equatable {
       gender: gender ?? this.gender,
       activityLevel: activityLevel ?? this.activityLevel,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      coachSelected: coachSelected ?? this.coachSelected,
+      paywallCompleted: paywallCompleted ?? this.paywallCompleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       timezone: timezone ?? this.timezone,

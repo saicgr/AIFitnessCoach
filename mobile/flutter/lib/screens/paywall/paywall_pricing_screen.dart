@@ -7,6 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/subscription_provider.dart';
+import '../../core/constants/api_constants.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/services/api_client.dart';
 
 /// Paywall/Membership Screen
 /// Shows current plan status and upgrade/downgrade options
@@ -395,6 +398,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // User accepted the discount - purchase lifetime at discounted price
         final success = await ref.read(subscriptionProvider.notifier).purchase('lifetime_discount');
         if (success && context.mounted) {
+          await _markPaywallComplete(ref);
           context.go('/home');
         }
         return;
@@ -403,8 +407,25 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
 
     await ref.read(subscriptionProvider.notifier).skipToFree();
+    await _markPaywallComplete(ref);
     if (context.mounted) {
       context.go('/home');
+    }
+  }
+
+  Future<void> _markPaywallComplete(WidgetRef ref) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId != null) {
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {'paywall_completed': true},
+        );
+      }
+      ref.read(authStateProvider.notifier).markPaywallComplete();
+    } catch (e) {
+      debugPrint('❌ [Paywall] Failed to update paywall_completed flag: $e');
     }
   }
 
@@ -428,6 +449,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
         );
       }
+      await _markPaywallComplete(ref);
       context.go('/home');
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/models/workout.dart';
+import '../data/models/user.dart' as app_user;
 import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
@@ -134,14 +135,36 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
       final isOnCoachSelection = state.matchedLocation == '/coach-selection';
+      final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
+      final isOnPaywallTimeline = state.matchedLocation == '/paywall-timeline';
+      final isOnPaywallPricing = state.matchedLocation == '/paywall-pricing';
+      final isOnPaywall = isOnPaywallFeatures || isOnPaywallTimeline || isOnPaywallPricing;
+
+      // Helper to get the next step in onboarding flow for logged-in users
+      String? getNextOnboardingStep(app_user.User user) {
+        // Step 1: Coach selection
+        if (!user.isCoachSelected) {
+          return '/coach-selection';
+        }
+        // Step 2: Onboarding conversation
+        if (!user.isOnboardingComplete) {
+          return '/onboarding';
+        }
+        // Step 3: Paywall (after onboarding)
+        if (!user.isPaywallComplete) {
+          return '/paywall-features';
+        }
+        // All steps complete - go home
+        return null;
+      }
 
       // Auth is resolved - redirect from splash to appropriate destination
       if (isOnSplash) {
         if (isLoggedIn) {
           final user = authState.user;
-          if (user != null && !user.isOnboardingComplete) {
-            // Go to coach selection first (then onboarding) for logged-in users with incomplete onboarding
-            return '/coach-selection';
+          if (user != null) {
+            final nextStep = getNextOnboardingStep(user);
+            if (nextStep != null) return nextStep;
           }
           return getHomeRoute();
         } else {
@@ -150,34 +173,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // On stats-welcome - allow it if not logged in, redirect to home if logged in
+      // On stats-welcome - allow it if not logged in, redirect appropriately if logged in
       if (isOnStatsWelcome) {
         if (isLoggedIn) {
           final user = authState.user;
-          if (user != null && !user.isOnboardingComplete) {
-            // Go to coach selection first for logged-in users with incomplete onboarding
-            return '/coach-selection';
+          if (user != null) {
+            final nextStep = getNextOnboardingStep(user);
+            if (nextStep != null) return nextStep;
           }
           return getHomeRoute();
         }
         return null; // Stay on stats welcome
       }
 
-      // Allow pre-auth quiz, preview, sign-in, and coach-selection screens
-      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnCoachSelection) {
+      // Allow pre-auth quiz, preview, sign-in screens for non-logged-in users
+      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
         if (isLoggedIn) {
           final user = authState.user;
-          if (user != null && !user.isOnboardingComplete) {
-            // If on coach selection, allow it - user is selecting their coach
-            if (isOnCoachSelection) {
-              return null;
-            }
-            // After sign-in, go to coach selection (not directly to onboarding)
-            return '/coach-selection';
+          if (user != null) {
+            final nextStep = getNextOnboardingStep(user);
+            if (nextStep != null) return nextStep;
           }
           return getHomeRoute();
         }
         return null; // Allow these screens for non-logged-in users
+      }
+
+      // Coach selection screen - allow if user hasn't selected coach yet
+      if (isOnCoachSelection) {
+        if (isLoggedIn) {
+          final user = authState.user;
+          if (user != null && !user.isCoachSelected) {
+            return null; // Allow - user is selecting coach
+          }
+          // Coach already selected, go to next step
+          if (user != null) {
+            if (!user.isOnboardingComplete) return '/onboarding';
+            if (!user.isPaywallComplete) return '/paywall-features';
+          }
+          return getHomeRoute();
+        }
+        return '/stats-welcome'; // Not logged in, go to start
+      }
+
+      // Paywall screens - allow if user hasn't completed paywall yet
+      if (isOnPaywall) {
+        if (isLoggedIn) {
+          final user = authState.user;
+          if (user != null && !user.isPaywallComplete) {
+            return null; // Allow - user is going through paywall
+          }
+          return getHomeRoute();
+        }
+        return '/stats-welcome'; // Not logged in, go to start
       }
 
       // Allow onboarding-related routes

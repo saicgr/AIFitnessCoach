@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/coach_persona.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../core/constants/api_constants.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/coach_card.dart';
 import 'widgets/custom_coach_form.dart';
@@ -72,17 +75,33 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     HapticFeedback.mediumImpact();
 
     // Save selected coach to AI settings
-    final notifier = ref.read(aiSettingsProvider.notifier);
+    final aiNotifier = ref.read(aiSettingsProvider.notifier);
 
     if (_isCustomMode) {
-      notifier.setCustomCoach(
+      aiNotifier.setCustomCoach(
         name: _customName.isEmpty ? 'My Coach' : _customName,
         coachingStyle: _customStyle,
         communicationTone: _customTone,
         encouragementLevel: _customEncouragement,
       );
     } else if (_selectedCoach != null) {
-      notifier.setCoachPersona(_selectedCoach!);
+      aiNotifier.setCoachPersona(_selectedCoach!);
+    }
+
+    // Mark coach as selected in user profile (backend + local state)
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId != null) {
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {'coach_selected': true},
+        );
+      }
+      // Update local auth state
+      ref.read(authStateProvider.notifier).markCoachSelected();
+    } catch (e) {
+      debugPrint('❌ [CoachSelection] Failed to update coach_selected flag: $e');
     }
 
     // Navigate to conversational onboarding

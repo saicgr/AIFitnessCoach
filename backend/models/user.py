@@ -74,6 +74,8 @@ class UserUpdate(BaseModel):
     preferences: Optional[str] = Field(default=None, max_length=10000)
     active_injuries: Optional[str] = Field(default=None, max_length=2000)
     onboarding_completed: Optional[bool] = None  # Set to True after onboarding
+    coach_selected: Optional[bool] = None  # Set to True after coach selection
+    paywall_completed: Optional[bool] = None  # Set to True after paywall flow
     # Extended onboarding fields
     days_per_week: Optional[int] = Field(default=None, ge=1, le=7)
     workout_duration: Optional[int] = Field(default=None, ge=1, le=480)
@@ -110,6 +112,8 @@ class User(BaseModel):
     name: Optional[str] = Field(default=None, max_length=200)
     email: Optional[str] = Field(default=None, max_length=320)  # User's email address
     onboarding_completed: bool = False
+    coach_selected: bool = False  # Whether user has selected their AI coach
+    paywall_completed: bool = False  # Whether user has completed paywall flow
     fitness_level: str = Field(..., max_length=50)
     goals: str = Field(..., max_length=2000)
     equipment: str = Field(..., max_length=2000)
