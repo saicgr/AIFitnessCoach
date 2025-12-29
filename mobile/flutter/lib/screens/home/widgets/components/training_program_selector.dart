@@ -187,10 +187,12 @@ class TrainingProgramSelector extends StatelessWidget {
                   onTap: disabled
                       ? null
                       : () {
-                          if (isCustom) {
-                            // Show custom program input sheet
+                          HapticFeedback.selectionClick();
+                          if (isCustom && !isSelected) {
+                            // Show custom program input sheet when selecting custom
                             _showCustomProgramSheet(context);
                           } else {
+                            // Toggle selection (including custom)
                             onSelectionChanged(isSelected ? null : program.id);
                           }
                         },
@@ -212,22 +214,23 @@ class TrainingProgramSelector extends StatelessWidget {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
                           children: [
                             Icon(
                               program.icon,
-                              size: 18,
+                              size: 16,
                               color: isSelected
                                   ? colors.purple
                                   : colors.textSecondary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 program.name,
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: isSelected
                                       ? colors.purple
@@ -238,16 +241,16 @@ class TrainingProgramSelector extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Expanded(
                           child: Text(
                             displayDescription,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               color: isCustom && hasCustomDescription && isSelected
                                   ? colors.purple.withOpacity(0.8)
                                   : colors.textMuted,
-                              height: 1.3,
+                              height: 1.2,
                               fontStyle: isCustom && hasCustomDescription
                                   ? FontStyle.italic
                                   : FontStyle.normal,
@@ -256,11 +259,10 @@ class TrainingProgramSelector extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 4),
                         Text(
                           program.daysPerWeek,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 9,
                             color: isSelected
                                 ? colors.purple
                                 : colors.textSecondary,

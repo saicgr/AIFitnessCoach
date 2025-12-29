@@ -80,7 +80,7 @@ class SaveConversationRequest(BaseModel):
 
 @router.post("/parse-response", response_model=ParseOnboardingResponse)
 @limiter.limit("10/minute")
-async def parse_onboarding_response(http_request: Request, request: ParseOnboardingRequest):
+async def parse_onboarding_response(request: Request, body: ParseOnboardingRequest):
     """
     Parse user's natural language response and extract onboarding data.
 
@@ -99,10 +99,10 @@ async def parse_onboarding_response(http_request: Request, request: ParseOnboard
     Returns:
         Extracted data, AI-generated question, completion status, and missing fields
     """
-    logger.info(f"🔍 [LangGraph] Processing onboarding message for user {request.user_id}")
+    logger.info(f"🔍 [LangGraph] Processing onboarding message for user {body.user_id}")
 
     # Ensure message is a string (handle potential list/dict from malformed request)
-    message = request.message
+    message = body.message
     if isinstance(message, list):
         logger.warning(f"⚠️ [LangGraph] Message was a list, converting: {message}")
         message = " ".join(str(m) for m in message) if message else ""
@@ -116,7 +116,7 @@ async def parse_onboarding_response(http_request: Request, request: ParseOnboard
     if not message or not message.strip():
         logger.info("⚠️ [LangGraph] Empty message received, returning empty response")
         return ParseOnboardingResponse(
-            extracted_data=request.current_data,
+            extracted_data=body.current_data,
             next_question={"question": "", "quick_replies": None, "component": None},
             is_complete=False,
             missing_fields=[],
@@ -124,10 +124,10 @@ async def parse_onboarding_response(http_request: Request, request: ParseOnboard
 
     try:
         result = await onboarding_service.process_message(
-            user_id=request.user_id,
+            user_id=body.user_id,
             message=message,  # Use the cleaned message
-            collected_data=request.current_data,
-            conversation_history=request.conversation_history,
+            collected_data=body.current_data,
+            conversation_history=body.conversation_history,
         )
 
         logger.info(f"✅ [LangGraph] Processed successfully. Complete: {result['is_complete']}")
@@ -146,14 +146,14 @@ async def parse_onboarding_response(http_request: Request, request: ParseOnboard
 
 @router.post("/validate-data", response_model=ValidateDataResponse)
 @limiter.limit("20/minute")
-async def validate_onboarding_data(http_request: Request, request: ValidateDataRequest):
+async def validate_onboarding_data(request: Request, body: ValidateDataRequest):
     """
     Validate partial or complete onboarding data.
 
     NOW USING LANGGRAPH SERVICE VALIDATION.
 
     Args:
-        request: Contains data to validate
+        body: Contains data to validate
 
     Returns:
         Validation result with errors and missing fields
@@ -162,7 +162,7 @@ async def validate_onboarding_data(http_request: Request, request: ValidateDataR
 
     try:
         # Use LangGraph service validation
-        validation_result = await onboarding_service.validate_data(request.data)
+        validation_result = await onboarding_service.validate_data(body.data)
 
         errors = validation_result.get("errors", {})
         is_valid = validation_result.get("is_valid", False)
@@ -172,7 +172,7 @@ async def validate_onboarding_data(http_request: Request, request: ValidateDataR
             "name", "goals", "equipment", "days_per_week", "selected_days",
             "workout_duration", "fitness_level", "age", "gender", "heightCm", "weightKg"
         ]
-        missing = [f for f in required_fields if f not in request.data or not request.data[f]]
+        missing = [f for f in required_fields if f not in body.data or not body.data[f]]
 
         logger.info(f"✅ [LangGraph] Validation complete. Valid: {is_valid}, Complete: {len(missing) == 0}")
 
@@ -190,7 +190,7 @@ async def validate_onboarding_data(http_request: Request, request: ValidateDataR
 
 @router.post("/save-conversation")
 @limiter.limit("10/minute")
-async def save_conversation(http_request: Request, request: SaveConversationRequest):
+async def save_conversation(request: Request, body: SaveConversationRequest):
     """
     Save the entire onboarding conversation to the database.
 
@@ -201,12 +201,12 @@ async def save_conversation(http_request: Request, request: SaveConversationRequ
     - Improving the AI prompts
 
     Args:
-        request: Contains user_id and conversation messages
+        body: Contains user_id and conversation messages
 
     Returns:
         Success status
     """
-    logger.info(f"💾 Saving onboarding conversation for user {request.user_id}")
+    logger.info(f"💾 Saving onboarding conversation for user {body.user_id}")
 
     try:
         db = get_supabase_db()
@@ -219,7 +219,7 @@ async def save_conversation(http_request: Request, request: SaveConversationRequ
                 "timestamp": msg.timestamp,
                 "extracted_data": msg.extracted_data,
             }
-            for msg in request.conversation
+            for msg in body.conversation
         ]
 
         # Update user record with conversation history
@@ -228,10 +228,10 @@ async def save_conversation(http_request: Request, request: SaveConversationRequ
             result = db.client.table("users").update({
                 "onboarding_conversation": conversation_data,
                 "onboarding_conversation_completed_at": datetime.utcnow().isoformat(),
-            }).eq("id", request.user_id).execute()
+            }).eq("id", body.user_id).execute()
 
             if not result.data:
-                logger.warning(f"⚠️ No rows updated for user {request.user_id} - user may not exist or columns missing")
+                logger.warning(f"⚠️ No rows updated for user {body.user_id} - user may not exist or columns missing")
             else:
                 logger.info(f"✅ Saved {len(conversation_data)} messages to database")
         except Exception as save_error:
