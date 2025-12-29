@@ -13,6 +13,7 @@ from typing import Optional
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.notification_service import get_notification_service
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -111,6 +112,15 @@ async def register_fcm_token(request: RegisterTokenRequest):
         db.update_user(request.user_id, {"fcm_token": request.fcm_token})
         logger.info(f"✅ FCM token registered for user {request.user_id}")
 
+        # Log FCM registration
+        await log_user_activity(
+            user_id=request.user_id,
+            action="fcm_token_registered",
+            endpoint="/api/v1/notifications/register",
+            message="FCM token registered",
+            status_code=200
+        )
+
         return {
             "success": True,
             "message": "FCM token registered successfully",
@@ -121,6 +131,13 @@ async def register_fcm_token(request: RegisterTokenRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Error registering FCM token: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="fcm_token_registered",
+            error=e,
+            endpoint="/api/v1/notifications/register",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -162,6 +179,17 @@ async def send_notification(request: SendNotificationRequest):
 
         if success:
             logger.info(f"✅ Notification sent to user {request.user_id}")
+
+            # Log notification sent
+            await log_user_activity(
+                user_id=request.user_id,
+                action="notification_sent",
+                endpoint="/api/v1/notifications/send",
+                message=f"Sent notification: {request.title}",
+                metadata={"title": request.title, "notification_type": request.notification_type},
+                status_code=200
+            )
+
             return {
                 "success": True,
                 "message": "Notification sent successfully",
@@ -178,6 +206,13 @@ async def send_notification(request: SendNotificationRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Error sending notification: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="notification_sent",
+            error=e,
+            endpoint="/api/v1/notifications/send",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

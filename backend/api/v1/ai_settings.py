@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/ai-settings", tags=["AI Settings"])
@@ -22,6 +23,12 @@ router = APIRouter(prefix="/ai-settings", tags=["AI Settings"])
 
 class AISettingsBase(BaseModel):
     """Base AI settings model."""
+    # Coach Persona
+    coach_persona_id: Optional[str] = Field(default=None, description="Selected coach persona ID (e.g., 'coach_mike', 'custom')")
+    coach_name: Optional[str] = Field(default=None, description="Display name for the coach")
+    is_custom_coach: Optional[bool] = Field(default=False, description="Whether using a custom coach configuration")
+
+    # Personality & Tone
     coaching_style: Optional[str] = Field(default="motivational", description="Coaching personality style")
     communication_tone: Optional[str] = Field(default="encouraging", description="Communication tone")
     encouragement_level: Optional[float] = Field(default=0.7, ge=0.0, le=1.0, description="Encouragement level 0-1")
@@ -216,6 +223,15 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate):
                     supabase.table("ai_settings_history").insert(history_record).execute()
 
         if result.data:
+            # Log AI settings update
+            await log_user_activity(
+                user_id=user_id,
+                action="ai_settings_updated",
+                endpoint=f"/api/v1/ai-settings/{user_id}",
+                message=f"Updated AI coach settings",
+                metadata={"changed_fields": list(settings_dict.keys())},
+                status_code=200
+            )
             return AISettingsResponse(**result.data[0])
 
         raise HTTPException(status_code=500, detail="Failed to update settings")
@@ -224,6 +240,13 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating AI settings for user {user_id}: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="ai_settings_update",
+            error=e,
+            endpoint=f"/api/v1/ai-settings/{user_id}",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -287,10 +310,27 @@ async def reset_ai_settings(user_id: str):
             supabase.table("ai_settings_history").insert(history_record).execute()
 
         logger.info(f"Reset AI settings to defaults for user {user_id}")
+
+        # Log AI settings reset
+        await log_user_activity(
+            user_id=user_id,
+            action="ai_settings_reset",
+            endpoint=f"/api/v1/ai-settings/{user_id}",
+            message="Reset AI coach settings to defaults",
+            status_code=200
+        )
+
         return {"success": True, "message": "AI settings reset to defaults"}
 
     except Exception as e:
         logger.error(f"Error resetting AI settings for user {user_id}: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="ai_settings_reset",
+            error=e,
+            endpoint=f"/api/v1/ai-settings/{user_id}",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

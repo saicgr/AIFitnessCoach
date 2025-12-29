@@ -14,6 +14,7 @@ from datetime import datetime, date, timedelta
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     AchievementType, UserAchievement, UserStreak, PersonalRecord,
     AchievementsSummary, NewAchievementNotification
@@ -423,10 +424,27 @@ async def update_streak(user_id: str, streak_type: str):
                 "streak_start_date": str(today)
             }).execute()
 
+        # Log streak update
+        await log_user_activity(
+            user_id=user_id,
+            action="streak_updated",
+            endpoint=f"/api/v1/achievements/user/{user_id}/streaks/{streak_type}/update",
+            message=f"Updated {streak_type} streak",
+            metadata={"streak_type": streak_type, "new_achievements_count": len(new_achievements)},
+            status_code=200
+        )
+
         return {"success": True, "new_achievements": new_achievements}
 
     except Exception as e:
         logger.error(f"Failed to update streak: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="streak_updated",
+            error=e,
+            endpoint=f"/api/v1/achievements/user/{user_id}/streaks/{streak_type}/update",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

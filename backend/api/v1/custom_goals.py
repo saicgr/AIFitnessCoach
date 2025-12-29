@@ -15,6 +15,7 @@ from typing import List, Optional, Dict, Any
 import json
 
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from services.custom_goal_service import get_custom_goal_service
 
 router = APIRouter()
@@ -133,10 +134,33 @@ async def create_custom_goal(request: CreateGoalRequest):
         )
 
         logger.info(f"Created goal {goal['id']} with {len(goal.get('search_keywords', []))} keywords")
+
+        # Log custom goal creation
+        await log_user_activity(
+            user_id=request.user_id,
+            action="custom_goal_created",
+            endpoint="/api/v1/custom-goals/",
+            message=f"Created custom goal: {request.goal_text[:50]}",
+            metadata={
+                "goal_id": goal["id"],
+                "priority": request.priority,
+                "keywords_count": len(goal.get("search_keywords", []))
+            },
+            status_code=200
+        )
+
         return _goal_to_response(goal)
 
     except Exception as e:
         logger.error(f"Failed to create custom goal: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="custom_goal_creation",
+            error=e,
+            endpoint="/api/v1/custom-goals/",
+            metadata={"goal_text": request.goal_text[:50]},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

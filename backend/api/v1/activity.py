@@ -11,6 +11,7 @@ from datetime import date, datetime
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter(prefix="/activity", tags=["Activity"])
 logger = get_logger(__name__)
@@ -117,6 +118,22 @@ async def sync_daily_activity(input: DailyActivityInput):
         raise HTTPException(status_code=500, detail="Failed to sync activity data")
 
     logger.info(f"Successfully synced activity for {input.activity_date}")
+
+    # Log activity sync
+    await log_user_activity(
+        user_id=input.user_id,
+        action="activity_synced",
+        endpoint="/api/v1/activity/sync",
+        message=f"Synced activity for {input.activity_date}",
+        metadata={
+            "date": str(input.activity_date),
+            "steps": input.steps,
+            "calories": input.calories_burned,
+            "source": input.source
+        },
+        status_code=200
+    )
+
     return row_to_activity_response(result)
 
 
@@ -209,6 +226,16 @@ async def delete_activity(user_id: str, activity_date: date):
     if not deleted:
         raise HTTPException(status_code=404, detail="Activity record not found")
 
+    # Log activity deletion
+    await log_user_activity(
+        user_id=user_id,
+        action="activity_deleted",
+        endpoint=f"/api/v1/activity/{user_id}/{activity_date}",
+        message=f"Deleted activity for {activity_date}",
+        metadata={"date": str(activity_date)},
+        status_code=200
+    )
+
     return {"message": "Activity deleted successfully"}
 
 
@@ -265,5 +292,15 @@ async def sync_batch_activity(activities: List[DailyActivityInput]):
 
     synced = len([r for r in results if r["status"] == "success"])
     logger.info(f"Batch sync complete: {synced}/{len(activities)} records synced")
+
+    # Log batch sync
+    await log_user_activity(
+        user_id=user_id,
+        action="activity_batch_synced",
+        endpoint="/api/v1/activity/sync-batch",
+        message=f"Batch synced {synced}/{len(activities)} activity records",
+        metadata={"synced": synced, "total": len(activities)},
+        status_code=200
+    )
 
     return {"synced": synced, "total": len(activities), "results": results}

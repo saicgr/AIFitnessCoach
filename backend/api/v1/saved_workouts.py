@@ -14,6 +14,10 @@ from models.saved_workouts import (
 )
 from core.supabase_client import get_supabase
 from services.social_rag_service import get_social_rag_service
+from core.activity_logger import log_user_activity, log_user_error
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_supabase_client():
@@ -99,6 +103,16 @@ async def track_challenge_click(
         print(f"⚠️ [Challenge] Failed to log to ChromaDB: {e}")
 
     print(f"✅ [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
+
+    # Log challenge click
+    await log_user_activity(
+        user_id=user_id,
+        action="challenge_accepted",
+        endpoint=f"/api/v1/saved-workouts/challenge/{activity_id}",
+        message=f"Accepted workout challenge",
+        metadata={"activity_id": activity_id, "challenge_count": new_count},
+        status_code=200
+    )
 
     return {
         "challenge_count": new_count,
@@ -298,6 +312,16 @@ async def save_workout_from_activity(
 
     print(f"✅ [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
 
+    # Log workout save
+    await log_user_activity(
+        user_id=user_id,
+        action="workout_saved",
+        endpoint="/api/v1/saved-workouts/save-from-activity",
+        message=f"Saved workout: {workout_name}",
+        metadata={"saved_workout_id": saved_workout.id, "source_activity_id": request.activity_id, "workout_name": workout_name},
+        status_code=200
+    )
+
     return saved_workout
 
 
@@ -418,6 +442,16 @@ async def delete_saved_workout(
 
     supabase.table("saved_workouts").delete().eq("id", workout_id).execute()
 
+    # Log workout deletion
+    await log_user_activity(
+        user_id=user_id,
+        action="workout_deleted",
+        endpoint=f"/api/v1/saved-workouts/{workout_id}",
+        message=f"Deleted saved workout",
+        metadata={"workout_id": workout_id},
+        status_code=200
+    )
+
     return {"message": "Saved workout deleted successfully"}
 
 
@@ -467,6 +501,16 @@ async def do_workout_now(
     }
 
     print(f"✅ [Saved Workouts] User {user_id} starting workout {saved_workout_id}")
+
+    # Log workout start
+    await log_user_activity(
+        user_id=user_id,
+        action="saved_workout_started",
+        endpoint=f"/api/v1/saved-workouts/do-now/{saved_workout_id}",
+        message=f"Started saved workout: {saved_workout['workout_name']}",
+        metadata={"saved_workout_id": saved_workout_id, "workout_name": saved_workout["workout_name"]},
+        status_code=200
+    )
 
     return workout_data
 
@@ -557,6 +601,16 @@ async def schedule_workout(
         raise HTTPException(status_code=500, detail="Failed to schedule workout")
 
     print(f"✅ [Scheduled Workouts] User {user_id} scheduled workout for {request.scheduled_date}")
+
+    # Log workout scheduling
+    await log_user_activity(
+        user_id=user_id,
+        action="workout_scheduled",
+        endpoint="/api/v1/saved-workouts/schedule",
+        message=f"Scheduled workout: {workout_name} for {request.scheduled_date}",
+        metadata={"scheduled_workout_id": result.data[0]["id"], "workout_name": workout_name, "scheduled_date": str(request.scheduled_date)},
+        status_code=200
+    )
 
     return ScheduledWorkout(**result.data[0])
 

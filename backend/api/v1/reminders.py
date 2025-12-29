@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from services.email_service import get_email_service
 
 router = APIRouter()
@@ -165,6 +166,16 @@ async def send_daily_reminders(target_date: Optional[str] = None):
                     "email_id": result.get("id")
                 })
                 logger.info(f"✅ Sent reminder to {email} for workout {workout_name}")
+
+                # Log successful reminder
+                await log_user_activity(
+                    user_id=user_id,
+                    action="reminder_sent",
+                    endpoint="/api/v1/reminders/send-daily",
+                    message=f"Workout reminder sent for {workout_name}",
+                    metadata={"workout_id": workout.get("id"), "email": email},
+                    status_code=200
+                )
             else:
                 failed_count += 1
                 details.append({
@@ -174,6 +185,17 @@ async def send_daily_reminders(target_date: Optional[str] = None):
                     "error": result.get("error")
                 })
                 logger.error(f"❌ Failed to send reminder to {email}: {result.get('error')}")
+
+                # Log failed reminder
+                await log_user_activity(
+                    user_id=user_id,
+                    action="reminder_failed",
+                    endpoint="/api/v1/reminders/send-daily",
+                    message=f"Failed to send workout reminder: {result.get('error')}",
+                    metadata={"workout_id": workout.get("id"), "email": email},
+                    status_code=500,
+                    level="ERROR"
+                )
 
     logger.info(f"Daily reminders complete: {sent_count} sent, {failed_count} failed")
 
@@ -279,12 +301,31 @@ async def send_user_reminder(user_id: str, target_date: Optional[str] = None):
     )
 
     if result.get("success"):
+        # Log successful single user reminder
+        await log_user_activity(
+            user_id=user_id,
+            action="reminder_sent",
+            endpoint=f"/api/v1/reminders/send-user/{user_id}",
+            message=f"Workout reminder sent for {workout_name}",
+            metadata={"email": email, "target_date": date_str},
+            status_code=200
+        )
         return SingleReminderResponse(
             success=True,
             message=f"Reminder sent to {email}",
             email_id=result.get("id")
         )
     else:
+        # Log failed reminder
+        await log_user_activity(
+            user_id=user_id,
+            action="reminder_failed",
+            endpoint=f"/api/v1/reminders/send-user/{user_id}",
+            message=f"Failed to send workout reminder: {result.get('error')}",
+            metadata={"email": email, "target_date": date_str},
+            status_code=500,
+            level="ERROR"
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Failed to send email: {result.get('error')}"

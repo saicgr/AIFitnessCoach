@@ -30,6 +30,10 @@ from models.social import (
 )
 from core.supabase_client import get_supabase
 from services.social_rag_service import get_social_rag_service
+from core.activity_logger import log_user_activity, log_user_error
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_supabase_client():
@@ -87,6 +91,16 @@ async def create_connection(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create connection")
 
+    # Log connection creation
+    await log_user_activity(
+        user_id=user_id,
+        action="social_follow",
+        endpoint="/api/v1/social/connections",
+        message=f"Followed user {connection.following_id}",
+        metadata={"following_id": connection.following_id, "connection_type": connection.connection_type.value},
+        status_code=200
+    )
+
     return UserConnection(**result.data[0])
 
 
@@ -113,6 +127,16 @@ async def delete_connection(
 
     if not result.data:
         raise HTTPException(status_code=404, detail="Connection not found")
+
+    # Log unfollow
+    await log_user_activity(
+        user_id=user_id,
+        action="social_unfollow",
+        endpoint=f"/api/v1/social/connections/{following_id}",
+        message=f"Unfollowed user {following_id}",
+        metadata={"following_id": following_id},
+        status_code=200
+    )
 
     return {"message": "Connection deleted successfully"}
 
@@ -327,6 +351,16 @@ async def create_activity(
 
     activity_item = ActivityFeedItem(**result.data[0])
 
+    # Log activity creation
+    await log_user_activity(
+        user_id=user_id,
+        action="social_activity_created",
+        endpoint="/api/v1/social/feed",
+        message=f"Created {activity.activity_type.value} activity",
+        metadata={"activity_id": activity_item.id, "activity_type": activity.activity_type.value},
+        status_code=200
+    )
+
     # Store in ChromaDB for AI context
     try:
         # Get user name
@@ -383,6 +417,16 @@ async def delete_activity(
         social_rag.delete_activity_from_rag(activity_id)
     except Exception as e:
         print(f"⚠️ [Social] Failed to remove activity from ChromaDB: {e}")
+
+    # Log activity deletion
+    await log_user_activity(
+        user_id=user_id,
+        action="social_activity_deleted",
+        endpoint=f"/api/v1/social/feed/{activity_id}",
+        message=f"Deleted activity {activity_id}",
+        metadata={"activity_id": activity_id},
+        status_code=200
+    )
 
     return {"message": "Activity deleted successfully"}
 
@@ -457,6 +501,16 @@ async def add_reaction(
     except Exception as e:
         print(f"⚠️ [Social] Failed to save reaction to ChromaDB: {e}")
 
+    # Log reaction
+    await log_user_activity(
+        user_id=user_id,
+        action="social_reaction",
+        endpoint="/api/v1/social/reactions",
+        message=f"Reacted with {reaction.reaction_type.value} on activity",
+        metadata={"activity_id": reaction.activity_id, "reaction_type": reaction.reaction_type.value},
+        status_code=200
+    )
+
     return reaction_obj
 
 
@@ -500,6 +554,16 @@ async def remove_reaction(
         social_rag.remove_reaction_from_rag(reaction_id)
     except Exception as e:
         print(f"⚠️ [Social] Failed to remove reaction from ChromaDB: {e}")
+
+    # Log reaction removal
+    await log_user_activity(
+        user_id=user_id,
+        action="social_reaction_removed",
+        endpoint=f"/api/v1/social/reactions/{activity_id}",
+        message=f"Removed reaction from activity",
+        metadata={"activity_id": activity_id},
+        status_code=200
+    )
 
     return {"message": "Reaction removed successfully"}
 
@@ -574,6 +638,16 @@ async def add_comment(
 
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to add comment")
+
+    # Log comment creation
+    await log_user_activity(
+        user_id=user_id,
+        action="social_comment",
+        endpoint="/api/v1/social/comments",
+        message=f"Commented on activity",
+        metadata={"activity_id": comment.activity_id, "comment_id": result.data[0]["id"]},
+        status_code=200
+    )
 
     return ActivityComment(**result.data[0])
 
@@ -726,6 +800,16 @@ async def create_challenge(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create challenge")
 
+    # Log challenge creation
+    await log_user_activity(
+        user_id=user_id,
+        action="challenge_created",
+        endpoint="/api/v1/social/challenges",
+        message=f"Created challenge: {challenge.title}",
+        metadata={"challenge_id": result.data[0]["id"], "challenge_type": challenge.challenge_type.value},
+        status_code=200
+    )
+
     return Challenge(**result.data[0])
 
 
@@ -835,6 +919,16 @@ async def join_challenge(
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to join challenge")
 
+    # Log challenge join
+    await log_user_activity(
+        user_id=user_id,
+        action="challenge_joined",
+        endpoint="/api/v1/social/challenges/participate",
+        message=f"Joined challenge {participation.challenge_id}",
+        metadata={"challenge_id": participation.challenge_id},
+        status_code=200
+    )
+
     return ChallengeParticipant(**result.data[0])
 
 
@@ -881,6 +975,16 @@ async def update_challenge_progress(
 
     if not result.data:
         raise HTTPException(status_code=404, detail="Participation not found")
+
+    # Log challenge progress update
+    await log_user_activity(
+        user_id=user_id,
+        action="challenge_progress_updated",
+        endpoint=f"/api/v1/social/challenges/participate/{challenge_id}",
+        message=f"Updated challenge progress to {update.current_value}",
+        metadata={"challenge_id": challenge_id, "current_value": update.current_value, "progress_percentage": progress_percentage, "status": status},
+        status_code=200
+    )
 
     return ChallengeParticipant(**result.data[0])
 
