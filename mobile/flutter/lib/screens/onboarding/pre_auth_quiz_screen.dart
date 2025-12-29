@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../core/constants/api_constants.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
 import 'widgets/quiz_continue_button.dart';
@@ -393,9 +394,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
       try {
         final apiClient = ref.read(apiClientProvider);
-        await apiClient.post('/api/v1/users/${authState.user!.id}/reset-onboarding');
+        await apiClient.post('${ApiConstants.users}/${authState.user!.id}/reset-onboarding');
       } catch (e) {
         debugPrint('Failed to reset backend onboarding: $e');
+        // Don't navigate away on failure - the user is already on the quiz
       }
     }
   }
@@ -523,7 +525,16 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 totalQuestions: _totalQuestions,
                 canGoBack: _currentQuestion > 0,
                 onBack: _previousQuestion,
-                onSkip: () => context.go('/sign-in'),
+                onSkip: () {
+                  // If user is already logged in (e.g., came from Start Over),
+                  // skip to coach selection instead of sign-in
+                  final authState = ref.read(authStateProvider);
+                  if (authState.user != null) {
+                    context.go('/coach-selection');
+                  } else {
+                    context.go('/sign-in');
+                  }
+                },
               ),
               QuizProgressBar(progress: _progress),
               const SizedBox(height: 32),

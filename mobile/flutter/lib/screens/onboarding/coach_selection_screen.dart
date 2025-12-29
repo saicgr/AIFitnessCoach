@@ -239,8 +239,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     }
 
     // Navigate to welcome screen (pre-auth quiz)
+    // Use post-frame callback to ensure state has propagated before navigation
     if (mounted) {
-      context.go('/pre-auth-quiz');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/pre-auth-quiz');
+        }
+      });
     }
   }
 

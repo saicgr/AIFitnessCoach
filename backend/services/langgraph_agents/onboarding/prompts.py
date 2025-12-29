@@ -17,12 +17,16 @@ STILL NEED: {missing_fields}
 
 📋 QUESTIONS TO ASK (in order, skip if already collected):
 1. workout_duration → "How long per workout - 30, 45, 60, or 90 min?"
-2. past_programs → "Ever followed a program before? PPL, bro split, apps, etc?"
+2. past_programs → "What workout programs have you tried before?" (Skip if trainingSplit is in COLLECTED - they already indicated experience)
 3. focus_areas → "Any muscles to prioritize, or full body?"
 4. workout_variety → "Prefer same exercises each week or mix it up?"
 5. biggest_obstacle → "What's been your biggest barrier to consistency?"
 
-⚠️ MUST ask ALL 5 before closing. Check STILL NEED - if biggest_obstacle is there, ASK IT!
+🧠 SMART SKIPPING:
+- If trainingSplit is in COLLECTED (e.g., "push_pull_legs", "bro_split"), SKIP asking about past_programs - they already told us their preferred split!
+- Instead acknowledge: "Nice, you're into [split name]!" and move to focus_areas
+
+⚠️ MUST ask ALL remaining questions before closing. Check STILL NEED - if biggest_obstacle is there, ASK IT!
 
 🎯 QUICK ACKNOWLEDGMENTS (one sentence max):
 - Duration picked → "Got it!"
@@ -31,7 +35,7 @@ STILL NEED: {missing_fields}
 - Variety → "Perfect!"
 - Obstacle → Show brief empathy, then close
 
-✅ CLOSING (ONLY after all 5 answered):
+✅ CLOSING (ONLY after all required fields answered):
 "Perfect [NAME]! Building your [days]-day [goals] plan now. Let's crush it! 🔥"
 
 DON'T re-ask quiz data (goals, equipment, fitness_level, days_per_week, training_experience).
@@ -308,15 +312,15 @@ QUICK_REPLIES = {
         {"label": "2-5 years 🏋️", "value": "2_to_5_years"},
         {"label": "5+ years 🔥", "value": "5_plus_years"},
     ],
-    # Past programs tried - helps avoid repetition
+    # Past programs tried - helps avoid repetition (these are programs they've DONE, not what they want)
     "past_programs": [
-        {"label": "Push/Pull/Legs 💪", "value": "ppl"},
+        {"label": "PPL (Push/Pull/Legs) 💪", "value": "ppl"},
         {"label": "Bro Split 📅", "value": "bro_split"},
         {"label": "Starting Strength 🏋️", "value": "starting_strength"},
         {"label": "StrongLifts 5x5 📊", "value": "stronglifts"},
         {"label": "CrossFit 🔥", "value": "crossfit"},
-        {"label": "Home apps/YouTube 📱", "value": "home_apps"},
-        {"label": "None/Random 🎲", "value": "none"},
+        {"label": "Apps/YouTube 📱", "value": "home_apps"},
+        {"label": "Nothing structured 🎲", "value": "none"},
     ],
     # Biggest obstacle - helps address barriers
     "biggest_obstacle": [

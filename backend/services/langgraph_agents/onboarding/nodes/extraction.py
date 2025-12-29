@@ -453,6 +453,25 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     user_message = ensure_string(state.get("user_message", ""))
     collected_data = state.get("collected_data", {})
 
+    # Auto-fill past_programs from trainingSplit if available
+    # If user selected a specific training split in the quiz, they have experience with it
+    training_split = get_field_value(collected_data, "trainingSplit") or get_field_value(collected_data, "training_split")
+    past_programs = get_field_value(collected_data, "past_programs")
+
+    if training_split and not past_programs:
+        split_to_program_map = {
+            "push_pull_legs": ["ppl"],
+            "ppl": ["ppl"],
+            "bro_split": ["bro_split"],
+            "upper_lower": ["upper_lower"],
+            "full_body": ["full_body"],
+            "body_part": ["bro_split"],
+        }
+        inferred_program = split_to_program_map.get(training_split.lower())
+        if inferred_program:
+            collected_data["past_programs"] = inferred_program
+            logger.info(f"[Extract Data] Auto-filled past_programs={inferred_program} from trainingSplit={training_split}")
+
     # Calculate what's missing
     missing = []
     for field in REQUIRED_FIELDS:
