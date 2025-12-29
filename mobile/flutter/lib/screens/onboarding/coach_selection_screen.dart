@@ -6,9 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/onboarding_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_card.dart';
 import 'widgets/custom_coach_form.dart';
 
@@ -103,6 +105,9 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     } catch (e) {
       debugPrint('❌ [CoachSelection] Failed to update coach_selected flag: $e');
     }
+
+    // Reset onboarding state so the new coach personality takes effect from the start
+    ref.read(onboardingStateProvider.notifier).reset();
 
     // Navigate to conversational onboarding
     if (mounted) {
@@ -202,6 +207,43 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     );
   }
 
+  Future<void> _startOver() async {
+    HapticFeedback.mediumImpact();
+
+    // Reset onboarding conversation state
+    ref.read(onboardingStateProvider.notifier).reset();
+
+    // Clear pre-auth quiz local storage data
+    await ref.read(preAuthQuizProvider.notifier).clear();
+
+    // Reset ALL flags in backend (Supabase)
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId != null) {
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {
+            'coach_selected': false,
+            'onboarding_completed': false,
+            'paywall_completed': false,
+          },
+        );
+      }
+      // Update local auth state - must happen before navigation
+      await ref.read(authStateProvider.notifier).markCoachNotSelected();
+      await ref.read(authStateProvider.notifier).markOnboardingIncomplete();
+      await ref.read(authStateProvider.notifier).markPaywallIncomplete();
+    } catch (e) {
+      debugPrint('❌ [CoachSelection] Failed to reset flags: $e');
+    }
+
+    // Navigate to welcome screen (pre-auth quiz)
+    if (mounted) {
+      context.go('/pre-auth-quiz');
+    }
+  }
+
   Widget _buildHeader(Color textPrimary, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,6 +281,39 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            // Start Over button
+            GestureDetector(
+              onTap: _startOver,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.cyan.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.refresh,
+                      size: 14,
+                      color: AppColors.cyan,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Start Over',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

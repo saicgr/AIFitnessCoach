@@ -9,7 +9,6 @@ ASAP:
 25. Demo of the whole app
 32. Make it easy to add supersets
 37. Gemini 2.5 flash text to speech for video audio AI generated
-39. The app overall is pretty good but I'm already sick of adjusting the weight values it's giving me. the AI doesn't understand what weight is possible with machines or dumbbells. It tells me to increase my bench press or curls by 2.5 pounds when you can't do less than 5 pound increments which is simply industry standard so it is pretty annoying.
 40. If I could add new equipment that the app doesn't come with, 5 stars across the board. Warmups are another thing that really be addressed
 41. it's a good app, but going up 10 or 15 pounds every week is not what I want I constantly have to make it to where I have a the same reps and weight for at least two weeks or a month. I hate how you can't pick cardio for one of your workouts. you have to manually add it. most apps you can include it. Doing 20 reps of something because you keep the same weight is crazy as well.
 42. No option to change to a home gym and detail the equipment available. If it isn't a known commercial gym forget about it. The app won't save daily photos anymore. You can try taking the photo or selecting it from the gallery . it will let you crop it and it will put the gavel logo in the gym stats in front of it but there is no save button anymore. Also You will do leg workouts 5 days a week and you'll be lucky to hit arms, shoulders, chest, back or abs maybe once a week.
@@ -26,6 +25,7 @@ ASAP:
 53. Add mood based workout - like might have to add how does your mood feel today and the user selects and option and then a pop up would show up do you want to work it out, like if the user is angry, then it would generate a workout for anger etc.
 54. Test and check for offline mode
 55. Finish Senior Mode
+55.5 Offline mode aka Tracker Only Mode
 56. Premium Subscriptionwork
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach

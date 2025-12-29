@@ -17,6 +17,7 @@ import 'widgets/quiz_days_selector.dart';
 import 'widgets/quiz_equipment.dart';
 import 'widgets/quiz_training_split.dart';
 import 'widgets/quiz_motivation.dart';
+import 'widgets/equipment_search_sheet.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
 class PreAuthQuizData {
@@ -351,6 +352,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final Set<int> _selectedWorkoutDays = {};
   // Question 4: Equipment
   final Set<String> _selectedEquipment = {};
+  final Set<String> _otherSelectedEquipment = {};
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
   // Question 5: Training Split
@@ -433,10 +435,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
         break;
       case 3:
-        if (_selectedEquipment.isNotEmpty) {
+        if (_selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty) {
           final hasFullGym = _selectedEquipment.contains('full_gym');
+          // Combine main equipment and other equipment selections
+          final allEquipment = {..._selectedEquipment, ..._otherSelectedEquipment}.toList();
           await ref.read(preAuthQuizProvider.notifier).setEquipment(
-            _selectedEquipment.toList(),
+            allEquipment,
             dumbbellCount: _selectedEquipment.contains('dumbbells') ? (hasFullGym ? 2 : _dumbbellCount) : null,
             kettlebellCount: _selectedEquipment.contains('kettlebell') ? (hasFullGym ? 2 : _kettlebellCount) : null,
           );
@@ -482,7 +486,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 2:
         return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
       case 3:
-        return _selectedEquipment.isNotEmpty;
+        return _selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty;
       case 4:
         return true; // Training split is optional
       case 5:
@@ -602,6 +606,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onDumbbellCountChanged: (count) => setState(() => _dumbbellCount = count),
           onKettlebellCountChanged: (count) => setState(() => _kettlebellCount = count),
           onInfoTap: _showEquipmentInfo,
+          onOtherTap: _showOtherEquipmentSheet,
+          otherSelectedEquipment: _otherSelectedEquipment,
         );
       case 4:
         return QuizTrainingSplit(
@@ -684,6 +690,26 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         }
       }
     });
+  }
+
+  void _showOtherEquipmentSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => EquipmentSearchSheet(
+        selectedEquipment: _otherSelectedEquipment,
+        allEquipment: EquipmentSearchSheet.databaseEquipment,
+        onSelectionChanged: (selected) {
+          setState(() {
+            _otherSelectedEquipment.clear();
+            _otherSelectedEquipment.addAll(selected);
+          });
+        },
+      ),
+    );
   }
 
   void _showEquipmentInfo(BuildContext context, String equipmentId, bool isDark) {

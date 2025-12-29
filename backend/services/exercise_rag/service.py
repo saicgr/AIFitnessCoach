@@ -5,6 +5,7 @@ This service:
 1. Indexes all exercises from exercise_library with embeddings
 2. Uses AI to select the best exercises based on user profile, goals, equipment
 3. Considers exercise variety, muscle balance, and progression
+4. Provides equipment-aware weight recommendations
 """
 
 from typing import List, Dict, Any, Optional
@@ -14,6 +15,7 @@ from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.weight_utils import get_starting_weight, detect_equipment_type
 from services.gemini_service import GeminiService
 
 from .utils import clean_exercise_name_for_display, infer_equipment_from_name
@@ -523,7 +525,22 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         fitness_level: str,
         workout_params: Optional[Dict] = None
     ) -> Dict:
-        """Format an exercise for inclusion in a workout."""
+        """
+        Format an exercise for inclusion in a workout.
+
+        Includes equipment-aware starting weight recommendations based on:
+        - Exercise type (compound vs isolation)
+        - Equipment type (dumbbell, barbell, machine, etc.)
+        - User's fitness level
+
+        Args:
+            exercise: Raw exercise data from the database
+            fitness_level: User's fitness level (beginner, intermediate, advanced)
+            workout_params: Optional adaptive parameters (sets, reps, rest_seconds)
+
+        Returns:
+            Formatted exercise dict with realistic weight recommendations
+        """
         if workout_params:
             sets = workout_params.get("sets", 3)
             reps = workout_params.get("reps", 12)
@@ -542,12 +559,27 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         else:
             equipment = raw_equipment
 
+        # Get equipment type for weight calculations
+        equipment_type = detect_equipment_type(exercise_name, [equipment] if equipment else None)
+
+        # Calculate starting weight based on exercise, equipment, and fitness level
+        # Returns 0 for bodyweight exercises
+        starting_weight = 0.0
+        if equipment_type != "bodyweight" and equipment.lower() not in ["bodyweight", "body weight", "none", ""]:
+            starting_weight = get_starting_weight(
+                exercise_name=exercise_name,
+                equipment_type=equipment_type,
+                fitness_level=fitness_level,
+            )
+
         return {
             "name": exercise_name,
             "sets": sets,
             "reps": reps,
             "rest_seconds": rest,
             "equipment": equipment,
+            "equipment_type": equipment_type,  # New: normalized equipment type for weight utilities
+            "weight_kg": starting_weight,      # New: recommended starting weight
             "muscle_group": exercise.get("target_muscle", exercise.get("body_part", "")),
             "body_part": exercise.get("body_part", ""),
             "notes": exercise.get("instructions", "Focus on proper form"),

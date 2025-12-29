@@ -12,6 +12,8 @@ class QuizEquipment extends StatelessWidget {
   final ValueChanged<int> onDumbbellCountChanged;
   final ValueChanged<int> onKettlebellCountChanged;
   final Function(BuildContext, String, bool) onInfoTap;
+  final VoidCallback? onOtherTap;
+  final Set<String> otherSelectedEquipment;
 
   const QuizEquipment({
     super.key,
@@ -22,6 +24,8 @@ class QuizEquipment extends StatelessWidget {
     required this.onDumbbellCountChanged,
     required this.onKettlebellCountChanged,
     required this.onInfoTap,
+    this.onOtherTap,
+    this.otherSelectedEquipment = const {},
   });
 
   static const _allEquipmentIds = [
@@ -55,6 +59,9 @@ class QuizEquipment extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
+    // Total items = equipment list + "Other" option
+    final totalItems = _equipment.length + 1;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -66,8 +73,12 @@ class QuizEquipment extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: ListView.builder(
-              itemCount: _equipment.length,
+              itemCount: totalItems,
               itemBuilder: (context, index) {
+                // Last item is "Other"
+                if (index == _equipment.length) {
+                  return _buildOtherCard(context, index, isDark, textPrimary, textSecondary);
+                }
                 final item = _equipment[index];
                 return _buildEquipmentCard(context, item, index, isDark, textPrimary, textSecondary);
               },
@@ -300,6 +311,80 @@ class QuizEquipment extends StatelessWidget {
               ),
       ),
       child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+    );
+  }
+
+  Widget _buildOtherCard(
+    BuildContext context,
+    int index,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final hasOtherSelected = otherSelectedEquipment.isNotEmpty;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onOtherTap?.call();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: hasOtherSelected ? AppColors.cyanGradient : null,
+            color: hasOtherSelected
+                ? null
+                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasOtherSelected ? AppColors.cyan : cardBorder,
+              width: hasOtherSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.more_horiz,
+                color: hasOtherSelected ? Colors.white : textSecondary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Other Equipment',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: hasOtherSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                    if (hasOtherSelected)
+                      Text(
+                        '${otherSelectedEquipment.length} selected',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.search,
+                color: hasOtherSelected ? Colors.white70 : textSecondary,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ).animate(delay: (100 + index * 50).ms).fadeIn().slideX(begin: 0.05),
     );
   }
 }

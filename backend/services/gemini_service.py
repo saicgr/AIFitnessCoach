@@ -817,6 +817,7 @@ Return a valid JSON object with this exact structure:
       "name": "Exercise name",
       "sets": 3,
       "reps": 12,
+      "weight_kg": 10,
       "rest_seconds": 60,
       "equipment": "equipment used or bodyweight",
       "muscle_group": "primary muscle targeted",
@@ -825,6 +826,21 @@ Return a valid JSON object with this exact structure:
   ],
   "notes": "Overall workout tips including warm-up and cool-down recommendations"
 }}
+
+⚠️ CRITICAL - REALISTIC WEIGHT RECOMMENDATIONS:
+For each exercise, include a starting weight_kg that follows industry-standard equipment increments:
+- Dumbbell exercises: Use weights in 2.5kg (5lb) increments (2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20...)
+- Barbell exercises: Use weights in 2.5kg (5lb) increments
+- Machine exercises: Use weights in 5kg (10lb) increments (5, 10, 15, 20, 25...)
+- Kettlebell exercises: Use weights in 4kg (8lb) increments (4, 8, 12, 16, 20, 24...)
+- Bodyweight exercises: Use weight_kg: 0
+
+Starting weight guidelines by fitness level:
+- Beginner: Compound exercises 5-10kg, Isolation exercises 2.5-5kg
+- Intermediate: Compound exercises 15-25kg, Isolation exercises 7.5-12.5kg
+- Advanced: Compound exercises 30-50kg, Isolation exercises 15-20kg
+
+NEVER recommend unrealistic increments like 2.5 lbs for dumbbells - the minimum is 5 lbs (2.5 kg)!
 
 🎯 WORKOUT NAME - BE EXTREMELY CREATIVE:
 Create a name that makes users PUMPED to work out! Use diverse vocabulary:

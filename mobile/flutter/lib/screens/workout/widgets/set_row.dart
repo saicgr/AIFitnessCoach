@@ -2,6 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Equipment-specific weight increments (in kg)
+/// Industry standard increments for realistic gym equipment
+class WeightIncrements {
+  static const double dumbbell = 2.5;    // 5 lb - standard dumbbell jumps
+  static const double barbell = 2.5;     // 5 lb - smallest common plates
+  static const double machine = 5.0;     // 10 lb - pin-select increments
+  static const double kettlebell = 4.0;  // 8 lb - standard KB progression
+  static const double cable = 2.5;       // 5 lb - cable stack increments
+  static const double bodyweight = 0;    // no external weight
+
+  /// Get the appropriate weight increment based on equipment type
+  static double getIncrement(String? equipmentType) {
+    if (equipmentType == null) return dumbbell; // Default to dumbbell (most conservative)
+
+    final eq = equipmentType.toLowerCase();
+
+    if (eq.contains('dumbbell') || eq.contains('db')) return dumbbell;
+    if (eq.contains('barbell') || eq.contains('bb')) return barbell;
+    if (eq.contains('kettlebell') || eq.contains('kb')) return kettlebell;
+    if (eq.contains('machine') || eq.contains('press machine')) return machine;
+    if (eq.contains('cable')) return cable;
+    if (eq.contains('bodyweight') || eq.contains('body weight')) return bodyweight;
+
+    return dumbbell; // Default fallback
+  }
+}
+
 /// Represents a single set's data during an active workout
 class ActiveSetData {
   final int setNumber;
@@ -17,6 +44,7 @@ class ActiveSetData {
   int? previousReps;
   DateTime? completedAt;
   int? durationSeconds;
+  String? equipmentType; // Equipment type for weight increment calculations
 
   ActiveSetData({
     required this.setNumber,
@@ -32,8 +60,12 @@ class ActiveSetData {
     this.previousReps,
     this.completedAt,
     this.durationSeconds,
+    this.equipmentType,
   })  : actualWeight = actualWeight ?? targetWeight,
         actualReps = actualReps ?? targetReps;
+
+  /// Get the weight increment for this set based on equipment type
+  double get weightIncrement => WeightIncrements.getIncrement(equipmentType);
 
   ActiveSetData copyWith({
     int? setNumber,
@@ -49,6 +81,7 @@ class ActiveSetData {
     int? previousReps,
     DateTime? completedAt,
     int? durationSeconds,
+    String? equipmentType,
   }) {
     return ActiveSetData(
       setNumber: setNumber ?? this.setNumber,
@@ -64,6 +97,7 @@ class ActiveSetData {
       previousReps: previousReps ?? this.previousReps,
       completedAt: completedAt ?? this.completedAt,
       durationSeconds: durationSeconds ?? this.durationSeconds,
+      equipmentType: equipmentType ?? this.equipmentType,
     );
   }
 }
@@ -142,13 +176,17 @@ class _SetRowState extends State<SetRow> {
   }
 
   void _incrementWeight() {
-    final newWeight = widget.setData.actualWeight + 2.5;
+    // Use equipment-aware increment (e.g., 2.5kg for dumbbells, 5kg for machines)
+    final increment = widget.setData.weightIncrement;
+    final newWeight = widget.setData.actualWeight + increment;
     _weightController.text = newWeight.toStringAsFixed(1);
     widget.onDataChanged(widget.setData.copyWith(actualWeight: newWeight));
   }
 
   void _decrementWeight() {
-    final newWeight = (widget.setData.actualWeight - 2.5).clamp(0.0, 999.0);
+    // Use equipment-aware increment (e.g., 2.5kg for dumbbells, 5kg for machines)
+    final increment = widget.setData.weightIncrement;
+    final newWeight = (widget.setData.actualWeight - increment).clamp(0.0, 999.0);
     _weightController.text = newWeight.toStringAsFixed(1);
     widget.onDataChanged(widget.setData.copyWith(actualWeight: newWeight.toDouble()));
   }

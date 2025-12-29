@@ -5,13 +5,22 @@ Handles:
 - Generating progression recommendations
 - Deload detection
 - Strategy selection (linear, wave, double progression)
+- Equipment-aware weight recommendations (industry standard increments)
 """
 from typing import List, Optional, Tuple
 from models.performance import (
     ExercisePerformance, WorkoutPerformance,
     ProgressionRecommendation, ProgressionStrategy
 )
-from core import PROGRESSION_INCREMENTS, get_exercise_type
+from core import (
+    PROGRESSION_INCREMENTS,
+    get_exercise_type,
+    get_equipment_increment,
+    round_to_equipment_increment,
+    snap_to_available_weights,
+    detect_equipment_type,
+    get_starting_weight,
+)
 
 # RPE thresholds for progression decisions
 RPE_THRESHOLDS = {
@@ -60,16 +69,57 @@ class ProgressionService:
         self,
         exercise_id: str,
         exercise_name: str,
+        equipment_type: Optional[str] = None,
+        fitness_level: str = "beginner",
     ) -> ProgressionRecommendation:
-        """Get recommendation for first-time exercise."""
+        """
+        Get recommendation for first-time exercise.
+
+        Uses equipment-aware starting weights instead of hardcoded values.
+        For example:
+        - Beginner + Dumbbell Bench Press = 10 kg
+        - Intermediate + Barbell Squat = 20 kg
+        - Advanced + Machine Chest Press = 50 kg
+
+        Args:
+            exercise_id: Unique exercise identifier
+            exercise_name: Name of the exercise
+            equipment_type: Equipment type (detected from name if not provided)
+            fitness_level: User's fitness level
+
+        Returns:
+            ProgressionRecommendation with appropriate starting weight
+        """
+        # Detect equipment if not provided
+        if not equipment_type:
+            equipment_type = detect_equipment_type(exercise_name)
+
+        # Get smart starting weight based on exercise, equipment, and fitness level
+        starting_weight = get_starting_weight(
+            exercise_name=exercise_name,
+            equipment_type=equipment_type,
+            fitness_level=fitness_level,
+        )
+
+        # Adjust reps based on fitness level
+        if fitness_level == "beginner":
+            reps = 10
+            sets = 2
+        elif fitness_level == "advanced":
+            reps = 8
+            sets = 4
+        else:  # intermediate
+            reps = 10
+            sets = 3
+
         return ProgressionRecommendation(
             exercise_id=exercise_id,
             exercise_name=exercise_name,
             current_weight_kg=0,
             current_reps=0,
-            recommended_weight_kg=20.0,
-            recommended_reps=10,
-            recommended_sets=3,
+            recommended_weight_kg=starting_weight,
+            recommended_reps=reps,
+            recommended_sets=sets,
             strategy=ProgressionStrategy.LINEAR,
             reason="First time - start light to learn form",
             confidence=0.5,
@@ -82,10 +132,34 @@ class ProgressionService:
         last_performance: ExercisePerformance,
         strategy: ProgressionStrategy,
         reason: str,
+        equipment_type: Optional[str] = None,
     ) -> ProgressionRecommendation:
-        """Calculate specific weight/rep recommendations."""
-        exercise_type = get_exercise_type(exercise_name)
-        increment = PROGRESSION_INCREMENTS.get(exercise_type, 2.5)
+        """
+        Calculate specific weight/rep recommendations using equipment-aware increments.
+
+        Uses realistic weight increments based on equipment type:
+        - Dumbbells: 2.5 kg (5 lb) minimum jumps
+        - Barbells: 2.5 kg (5 lb)
+        - Machines: 5.0 kg (10 lb)
+        - Kettlebells: 4.0 kg (8 lb)
+
+        Args:
+            exercise_id: Unique exercise identifier
+            exercise_name: Name of the exercise
+            last_performance: Previous performance data
+            strategy: Progression strategy to use
+            reason: Reason for the recommendation
+            equipment_type: Equipment type (detected from name if not provided)
+
+        Returns:
+            ProgressionRecommendation with valid weight increments
+        """
+        # Detect equipment type if not provided
+        if not equipment_type:
+            equipment_type = detect_equipment_type(exercise_name)
+
+        # Get equipment-aware increment (instead of exercise-type based)
+        increment = get_equipment_increment(equipment_type)
 
         last_weight = max(s.weight_kg for s in last_performance.sets if s.completed)
         last_reps = last_performance.target_reps
@@ -127,12 +201,15 @@ class ProgressionService:
             new_sets = last_sets
             confidence = 0.60
 
+        # Snap to valid equipment weights (e.g., standard dumbbell increments)
+        final_weight = snap_to_available_weights(new_weight, equipment_type)
+
         return ProgressionRecommendation(
             exercise_id=exercise_id,
             exercise_name=exercise_name,
             current_weight_kg=last_weight,
             current_reps=last_reps,
-            recommended_weight_kg=round(new_weight, 1),
+            recommended_weight_kg=final_weight,
             recommended_reps=new_reps,
             recommended_sets=new_sets,
             strategy=strategy,

@@ -287,4 +287,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
       debugPrint('✅ [Auth] Marked paywall as completed');
     }
   }
+
+  /// Reset coach selection (for start over)
+  Future<void> markCoachNotSelected() async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(coachSelected: false);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Reset coach selection');
+    }
+  }
+
+  /// Reset onboarding (for start over)
+  Future<void> markOnboardingIncomplete() async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(onboardingCompleted: false);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Reset onboarding status');
+    }
+  }
+
+  /// Reset paywall (for start over)
+  Future<void> markPaywallIncomplete() async {
+    if (state.user != null) {
+      final updatedUser = state.user!.copyWith(paywallCompleted: false);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Reset paywall status');
+    }
+  }
 }

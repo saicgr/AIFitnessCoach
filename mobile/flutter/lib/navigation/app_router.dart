@@ -187,9 +187,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // Allow pre-auth quiz, preview, sign-in screens for non-logged-in users
+      // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
       if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
         if (isLoggedIn) {
           final user = authState.user;
+          // Allow pre-auth quiz if user is starting over (coach not selected)
+          if (isOnPreAuthQuiz && user != null && !user.isCoachSelected) {
+            return null; // Allow - user is starting over
+          }
           if (user != null) {
             final nextStep = getNextOnboardingStep(user);
             if (nextStep != null) return nextStep;
