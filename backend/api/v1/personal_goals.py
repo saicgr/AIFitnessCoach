@@ -26,6 +26,7 @@ from typing import Optional
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from models.weekly_personal_goals import (
     CreateGoalRequest, RecordAttemptRequest, AddVolumeRequest,
     WeeklyPersonalGoal, GoalAttempt, PersonalGoalRecord,
@@ -120,12 +121,34 @@ async def create_goal(user_id: str, request: CreateGoalRequest):
         goal = result.data[0]
         logger.info(f"✅ Created goal: {goal['id']} - {request.exercise_name} ({request.goal_type.value})")
 
+        # Log goal creation
+        await log_user_activity(
+            user_id=user_id,
+            action="goal_created",
+            endpoint="/api/v1/personal-goals/goals",
+            message=f"Created goal: {request.exercise_name} ({request.goal_type.value})",
+            metadata={
+                "goal_id": goal['id'],
+                "exercise_name": request.exercise_name,
+                "goal_type": request.goal_type.value,
+                "target_value": request.target_value,
+            },
+            status_code=200
+        )
+
         return _build_goal_response(goal, date.today())
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to create goal: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="goal_created",
+            error=e,
+            endpoint="/api/v1/personal-goals/goals",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

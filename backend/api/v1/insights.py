@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
+from core.activity_logger import log_user_activity, log_user_error
 from services.gemini_service import GeminiService
 
 logger = logging.getLogger(__name__)

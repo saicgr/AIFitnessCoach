@@ -20,6 +20,7 @@ import hashlib
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.config import get_settings
+from core.activity_logger import log_user_activity, log_user_error
 
 
 class SubscriptionTier(str, Enum):
@@ -364,6 +365,21 @@ async def track_paywall_impression(user_id: str, request: PaywallImpressionReque
             "experiment_id": request.experiment_id,
             "variant": request.variant,
         }).execute()
+
+        # Log paywall interaction for conversion tracking
+        await log_user_activity(
+            user_id=user_id,
+            action="paywall_impression",
+            endpoint=f"/api/v1/subscriptions/{user_id}/paywall-impression",
+            message=f"Paywall {request.action} on {request.screen}",
+            metadata={
+                "screen": request.screen,
+                "action": request.action,
+                "source": request.source,
+                "selected_product": request.selected_product,
+            },
+            status_code=200
+        )
 
         return {"status": "tracked"}
 

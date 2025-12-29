@@ -16,6 +16,7 @@ import uuid
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     HydrationLog, HydrationLogCreate,
     DailyHydrationSummary, HydrationGoalUpdate,
@@ -70,12 +71,32 @@ async def log_hydration(data: HydrationLogCreate):
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create hydration log")
 
+        # Log hydration entry
+        await log_user_activity(
+            user_id=data.user_id,
+            action="hydration_log",
+            endpoint="/api/v1/hydration/log",
+            message=f"Logged {data.amount_ml}ml {data.drink_type}",
+            metadata={
+                "amount_ml": data.amount_ml,
+                "drink_type": data.drink_type,
+            },
+            status_code=200
+        )
+
         return row_to_hydration_log(result.data[0])
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error logging hydration: {e}")
+        await log_user_error(
+            user_id=data.user_id,
+            action="hydration_log",
+            error=e,
+            endpoint="/api/v1/hydration/log",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

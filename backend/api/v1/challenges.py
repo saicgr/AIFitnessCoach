@@ -25,7 +25,11 @@ from models.workout_challenges import (
     ChallengeStats, ChallengeStatus,
 )
 from core.supabase_client import get_supabase
+from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from services.social_rag_service import get_social_rag_service
+
+logger = get_logger(__name__)
 
 
 def get_supabase_client():
@@ -137,7 +141,22 @@ async def send_challenges(
             except Exception as e:
                 print(f"⚠️ [Challenges] Failed to log to ChromaDB: {e}")
 
-    print(f"✅ [Challenges] User {user_id} sent {len(challenge_ids)} challenges")
+    logger.info(f"✅ [Challenges] User {user_id} sent {len(challenge_ids)} challenges")
+
+    # Log challenge sent activity
+    await log_user_activity(
+        user_id=user_id,
+        action="challenge_sent",
+        endpoint="/api/v1/challenges/send",
+        message=f"Sent {len(challenge_ids)} challenge(s) for '{request.workout_name}'",
+        metadata={
+            "challenges_sent": len(challenge_ids),
+            "workout_name": request.workout_name,
+            "to_user_ids": request.to_user_ids,
+            "is_retry": request.is_retry,
+        },
+        status_code=200
+    )
 
     return SendChallengeResponse(
         message=f"Challenge sent to {len(challenge_ids)} friend(s)",

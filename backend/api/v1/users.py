@@ -30,6 +30,7 @@ from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import User, UserCreate, UserUpdate
 
 
@@ -263,6 +264,16 @@ async def create_user(request: Request, user: UserCreate):
 
         created = db.create_user(user_data)
         logger.info(f"User created: id={created['id']}")
+
+        # Log user creation
+        await log_user_activity(
+            user_id=created['id'],
+            action="user_created",
+            endpoint="/api/v1/users/",
+            message=f"New user created (fitness_level: {user.fitness_level})",
+            metadata={"fitness_level": user.fitness_level},
+            status_code=200
+        )
 
         return row_to_user(created)
 
@@ -589,12 +600,30 @@ async def update_user(user_id: str, user: UserUpdate):
             updated = existing
 
         logger.info(f"User updated: id={user_id}")
+
+        # Log user update
+        await log_user_activity(
+            user_id=user_id,
+            action="user_updated",
+            endpoint=f"/api/v1/users/{user_id}",
+            message="User profile updated",
+            metadata={"fields_updated": list(update_data.keys())},
+            status_code=200
+        )
+
         return row_to_user(updated)
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to update user: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="user_updated",
+            error=e,
+            endpoint=f"/api/v1/users/{user_id}",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -614,12 +643,28 @@ async def delete_user(user_id: str):
         db.delete_user(user_id)
         logger.info(f"User deleted: id={user_id}")
 
+        # Log user deletion
+        await log_user_activity(
+            user_id=user_id,
+            action="user_deleted",
+            endpoint=f"/api/v1/users/{user_id}",
+            message="User account deleted",
+            status_code=200
+        )
+
         return {"message": "User deleted successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to delete user: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="user_deleted",
+            error=e,
+            endpoint=f"/api/v1/users/{user_id}",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

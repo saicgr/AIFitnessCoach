@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     ExerciseFeedbackCreate, ExerciseFeedback,
     WorkoutFeedbackCreate, WorkoutFeedback, WorkoutFeedbackWithExercises
@@ -168,6 +169,22 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
         wf = final_result.data[0]
         logger.info(f"Workout feedback submitted: id={workout_feedback_id}")
 
+        # Log workout feedback submission
+        await log_user_activity(
+            user_id=feedback.user_id,
+            action="workout_feedback",
+            endpoint=f"/api/v1/feedback/workout/{workout_id}",
+            message=f"Submitted feedback: {feedback.overall_rating}/5 stars",
+            metadata={
+                "workout_id": workout_id,
+                "overall_rating": feedback.overall_rating,
+                "energy_level": feedback.energy_level,
+                "overall_difficulty": feedback.overall_difficulty,
+                "exercise_count": len(exercise_feedback_list),
+            },
+            status_code=200
+        )
+
         return WorkoutFeedbackWithExercises(
             id=str(wf["id"]),
             user_id=wf["user_id"],
@@ -186,6 +203,14 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
         raise
     except Exception as e:
         logger.error(f"Failed to submit workout feedback: {e}")
+        await log_user_error(
+            user_id=feedback.user_id,
+            action="workout_feedback",
+            error=e,
+            endpoint=f"/api/v1/feedback/workout/{workout_id}",
+            metadata={"workout_id": workout_id},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter(prefix="/features", tags=["features"])
 logger = get_logger(__name__)
@@ -207,6 +208,20 @@ async def create_feature_request(
 
         logger.info(f"Created feature request: {created_feature['id']} by user {feature.user_id}")
 
+        # Log feature creation
+        await log_user_activity(
+            user_id=feature.user_id,
+            action="feature_created",
+            endpoint="/api/v1/features/create",
+            message=f"Created feature request: {feature.title}",
+            metadata={
+                "feature_id": created_feature['id'],
+                "category": feature.category,
+                "title": feature.title,
+            },
+            status_code=200
+        )
+
         return row_to_feature_response(created_feature, feature.user_id, client)
 
     except HTTPException:
@@ -220,6 +235,13 @@ async def create_feature_request(
                 detail="You have reached the maximum of 2 feature suggestions"
             )
         logger.error(f"Error creating feature request: {e}")
+        await log_user_error(
+            user_id=feature.user_id,
+            action="feature_created",
+            error=e,
+            endpoint="/api/v1/features/create",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -266,13 +288,37 @@ async def vote_for_feature(request: Request, vote: VoteRequest):
             "id", vote.feature_id
         ).single().execute()
 
+        vote_count = feature.data.get("vote_count", 0) if feature.data else 0
+
+        # Log vote action
+        await log_user_activity(
+            user_id=vote.user_id,
+            action="feature_vote",
+            endpoint="/api/v1/features/vote",
+            message=f"{action.capitalize()} for feature {vote.feature_id}",
+            metadata={
+                "feature_id": vote.feature_id,
+                "action": action,
+                "new_vote_count": vote_count,
+            },
+            status_code=200
+        )
+
         return {
             "action": action,
-            "vote_count": feature.data.get("vote_count", 0) if feature.data else 0
+            "vote_count": vote_count
         }
 
     except Exception as e:
         logger.error(f"Error toggling vote: {e}")
+        await log_user_error(
+            user_id=vote.user_id,
+            action="feature_vote",
+            error=e,
+            endpoint="/api/v1/features/vote",
+            metadata={"feature_id": vote.feature_id},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
