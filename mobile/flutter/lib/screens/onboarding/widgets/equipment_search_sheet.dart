@@ -7,12 +7,18 @@ class EquipmentSearchSheet extends StatefulWidget {
   final Set<String> selectedEquipment;
   final List<String> allEquipment;
   final Function(Set<String>) onSelectionChanged;
+  /// Optional callback for custom equipment changes (separate list for backend)
+  final Function(List<String>)? onCustomEquipmentChanged;
+  /// Initial custom equipment (for edit mode)
+  final List<String> initialCustomEquipment;
 
   const EquipmentSearchSheet({
     super.key,
     required this.selectedEquipment,
     required this.allEquipment,
     required this.onSelectionChanged,
+    this.onCustomEquipmentChanged,
+    this.initialCustomEquipment = const [],
   });
 
   /// All equipment available in the database (excluding basic ones shown in main list)
@@ -77,11 +83,14 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
   late Set<String> _selected;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  late List<String> _customEquipment; // User-added custom equipment
 
   @override
   void initState() {
     super.initState();
     _selected = Set.from(widget.selectedEquipment);
+    // Initialize with any existing custom equipment
+    _customEquipment = List.from(widget.initialCustomEquipment);
   }
 
   @override
@@ -91,9 +100,11 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
   }
 
   List<String> get _filteredEquipment {
-    final equipmentList = widget.allEquipment.isNotEmpty
+    // Combine standard equipment with user's custom equipment
+    final baseList = widget.allEquipment.isNotEmpty
         ? widget.allEquipment
         : EquipmentSearchSheet.databaseEquipment;
+    final equipmentList = [..._customEquipment, ...baseList];
 
     if (_searchQuery.isEmpty) {
       return equipmentList;
@@ -101,6 +112,92 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     return equipmentList
         .where((e) => e.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
+  }
+
+  void _showAddCustomEquipmentDialog() {
+    _showAddCustomEquipmentDialogWithText('');
+  }
+
+  void _showAddCustomEquipmentDialogWithText(String prefillText) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final controller = TextEditingController(text: prefillText);
+    // Position cursor at end
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: controller.text.length),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text(
+          'Add Custom Equipment',
+          style: TextStyle(color: textPrimary),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          style: TextStyle(color: textPrimary),
+          decoration: InputDecoration(
+            hintText: 'e.g., Homemade pull-up bar',
+            hintStyle: TextStyle(
+              color: (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+            ),
+            filled: true,
+            fillColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cyan),
+            ),
+          ),
+          onSubmitted: (value) {
+            if (value.trim().isNotEmpty) {
+              _addCustomEquipment(value.trim());
+              Navigator.of(ctx).pop();
+            }
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.trim().isNotEmpty) {
+                _addCustomEquipment(controller.text.trim());
+                Navigator.of(ctx).pop();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addCustomEquipment(String equipment) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _customEquipment.add(equipment);
+      _selected.add(equipment);
+    });
+    widget.onSelectionChanged(_selected);
+    // Also notify about custom equipment changes (for separate backend tracking)
+    widget.onCustomEquipmentChanged?.call(List.from(_customEquipment));
   }
 
   void _toggleEquipment(String equipment) {
@@ -230,6 +327,18 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
 
           const SizedBox(height: 16),
 
+          // "Add Custom" button at TOP (always visible, no scrolling needed)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _buildAddCustomButton(
+              isDark: isDark,
+              textSecondary: textSecondary,
+              cardBorder: cardBorder,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
           // Equipment list
           Expanded(
             child: _filteredEquipment.isEmpty
@@ -250,12 +359,16 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                             color: textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Try a different search term',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textSecondary.withValues(alpha: 0.7),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () {
+                            // Pre-fill with search query
+                            _showAddCustomEquipmentDialogWithText(_searchQuery);
+                          },
+                          icon: const Icon(Icons.add_circle_outline, color: AppColors.cyan),
+                          label: Text(
+                            'Add "$_searchQuery"',
+                            style: const TextStyle(color: AppColors.cyan),
                           ),
                         ),
                       ],
@@ -267,6 +380,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                     itemBuilder: (context, index) {
                       final equipment = _filteredEquipment[index];
                       final isSelected = _selected.contains(equipment);
+                      final isCustom = _customEquipment.contains(equipment);
 
                       return _buildEquipmentItem(
                         equipment: equipment,
@@ -275,6 +389,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         textPrimary: textPrimary,
                         textSecondary: textSecondary,
                         cardBorder: cardBorder,
+                        isCustom: isCustom,
                       );
                     },
                   ),
@@ -314,6 +429,76 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     );
   }
 
+  Widget _buildAddCustomButton({
+    required bool isDark,
+    required Color textSecondary,
+    required Color cardBorder,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 8),
+      child: GestureDetector(
+        onTap: _showAddCustomEquipmentDialog,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.cyan.withValues(alpha: 0.5),
+              width: 1,
+              style: BorderStyle.solid,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: AppColors.cyan,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Can't find your equipment?",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                    Text(
+                      'Add custom equipment',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.cyan.withValues(alpha: 0.7),
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEquipmentItem({
     required String equipment,
     required bool isSelected,
@@ -321,6 +506,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     required Color textPrimary,
     required Color textSecondary,
     required Color cardBorder,
+    bool isCustom = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -343,19 +529,45 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
           child: Row(
             children: [
               Icon(
-                _getEquipmentIcon(equipment),
+                isCustom ? Icons.handyman : _getEquipmentIcon(equipment),
                 color: isSelected ? Colors.white : textSecondary,
                 size: 22,
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  _formatEquipmentName(equipment),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : textPrimary,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _formatEquipmentName(equipment),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected ? Colors.white : textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (isCustom) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : AppColors.cyan.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'CUSTOM',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : AppColors.cyan,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               Container(

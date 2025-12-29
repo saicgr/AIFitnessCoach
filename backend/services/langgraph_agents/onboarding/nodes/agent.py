@@ -225,6 +225,9 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
 
             if detected_field == "selected_days":
                 component = "day_picker"
+            elif detected_field == "target_weight_kg":
+                component = "weight_goal_input"
+                logger.info(f"[Onboarding Agent] target_weight_kg - showing weight goal input")
             elif detected_field in free_text_fields:
                 logger.info(f"[Onboarding Agent] Free text field ({detected_field})")
             elif detected_field in QUICK_REPLIES:
@@ -248,6 +251,8 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
                 logger.info(f"[Onboarding Agent] Fallback to missing field: {next_field}")
                 if next_field == "selected_days":
                     component = "day_picker"
+                elif next_field == "target_weight_kg":
+                    component = "weight_goal_input"
                 elif next_field not in free_text_fields and next_field in QUICK_REPLIES:
                     quick_replies = QUICK_REPLIES[next_field]
                     is_multi_select = next_field in multi_select_fields

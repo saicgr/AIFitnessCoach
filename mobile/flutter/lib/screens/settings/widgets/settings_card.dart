@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/timezone_provider.dart';
@@ -16,90 +17,6 @@ class SettingsCard extends ConsumerWidget {
     super.key,
     required this.items,
   });
-
-  String _getThemeLabel(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.system:
-        return 'System';
-      case ThemeMode.light:
-        return 'Light';
-      case ThemeMode.dark:
-        return 'Dark';
-    }
-  }
-
-  void _showThemeSelector(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.read(themeModeProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Choose Theme',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _ThemeOptionTile(
-              icon: Icons.smartphone_outlined,
-              title: 'System',
-              subtitle: 'Follow device settings',
-              isSelected: themeMode == ThemeMode.system,
-              onTap: () {
-                ref.read(themeModeProvider.notifier).setTheme(ThemeMode.system);
-                Navigator.pop(context);
-              },
-            ),
-            _ThemeOptionTile(
-              icon: Icons.light_mode_outlined,
-              title: 'Light',
-              subtitle: 'Always use light theme',
-              isSelected: themeMode == ThemeMode.light,
-              onTap: () {
-                ref.read(themeModeProvider.notifier).setTheme(ThemeMode.light);
-                Navigator.pop(context);
-              },
-            ),
-            _ThemeOptionTile(
-              icon: Icons.dark_mode_outlined,
-              title: 'Dark',
-              subtitle: 'Always use dark theme',
-              isSelected: themeMode == ThemeMode.dark,
-              onTap: () {
-                ref.read(themeModeProvider.notifier).setTheme(ThemeMode.dark);
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showTimezoneSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -193,25 +110,15 @@ class SettingsCard extends ConsumerWidget {
           VoidCallback? onTap = item.onTap;
 
           if (item.isThemeSelector) {
-            trailing = Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _getThemeLabel(themeMode),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textMuted,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right,
-                  color: textMuted,
-                  size: 20,
-                ),
-              ],
+            // Inline theme selector buttons for better UX - one tap to change
+            trailing = _InlineThemeSelector(
+              currentMode: themeMode,
+              onChanged: (mode) {
+                HapticFeedback.selectionClick();
+                ref.read(themeModeProvider.notifier).setTheme(mode);
+              },
             );
-            onTap = () => _showThemeSelector(context, ref);
+            onTap = null; // Disable row tap since buttons handle selection
           } else if (item.isTimezoneSelector) {
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
@@ -294,75 +201,6 @@ class SettingsCard extends ConsumerWidget {
   }
 }
 
-/// A tile for theme selection in the bottom sheet.
-class _ThemeOptionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ThemeOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.cyan : textSecondary,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: AppColors.cyan,
-                size: 24,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// A tile for timezone selection in the bottom sheet.
 class _TimezoneOptionTile extends StatelessWidget {
   final TimezoneData timezone;
@@ -414,6 +252,132 @@ class _TimezoneOptionTile extends StatelessWidget {
                 color: AppColors.cyan,
                 size: 24,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline theme selector with 3 buttons: System, Light, Dark
+/// Provides immediate feedback without requiring a bottom sheet
+class _InlineThemeSelector extends StatelessWidget {
+  final ThemeMode currentMode;
+  final ValueChanged<ThemeMode> onChanged;
+
+  const _InlineThemeSelector({
+    required this.currentMode,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack.withValues(alpha: 0.5)
+        : AppColorsLight.cardBorder.withValues(alpha: 0.5);
+    final selectedColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ThemeButton(
+            icon: Icons.smartphone_outlined,
+            label: 'Auto',
+            isSelected: currentMode == ThemeMode.system,
+            selectedColor: selectedColor,
+            textMuted: textMuted,
+            onTap: () => onChanged(ThemeMode.system),
+          ),
+          _ThemeButton(
+            icon: Icons.light_mode_outlined,
+            label: 'Light',
+            isSelected: currentMode == ThemeMode.light,
+            selectedColor: selectedColor,
+            textMuted: textMuted,
+            onTap: () => onChanged(ThemeMode.light),
+          ),
+          _ThemeButton(
+            icon: Icons.dark_mode_outlined,
+            label: 'Dark',
+            isSelected: currentMode == ThemeMode.dark,
+            selectedColor: selectedColor,
+            textMuted: textMuted,
+            onTap: () => onChanged(ThemeMode.dark),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Individual theme button for the inline selector
+class _ThemeButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final Color selectedColor;
+  final Color textMuted;
+  final VoidCallback onTap;
+
+  const _ThemeButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.textMuted,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final buttonColor = isSelected
+        ? (isDark ? AppColors.elevated : Colors.white)
+        : Colors.transparent;
+    final iconColor = isSelected ? selectedColor : textMuted;
+    final textColor = isSelected
+        ? (isDark ? Colors.white : AppColorsLight.textPrimary)
+        : textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: buttonColor,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: iconColor),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: textColor,
+              ),
+            ),
           ],
         ),
       ),

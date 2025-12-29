@@ -150,6 +150,60 @@ class TestFocusAreaKeywords:
         assert "hyrox" in FOCUS_AREA_KEYWORDS
         assert "crossfit" in FOCUS_AREA_KEYWORDS
 
+    def test_contains_upper_lower_split(self):
+        """Test that upper/lower split focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "upper" in FOCUS_AREA_KEYWORDS
+        assert "lower" in FOCUS_AREA_KEYWORDS
+        assert "upper body" in FOCUS_AREA_KEYWORDS["upper"].lower()
+        assert "lower body" in FOCUS_AREA_KEYWORDS["lower"].lower()
+
+    def test_contains_ppl_split(self):
+        """Test that push/pull/legs split focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "push" in FOCUS_AREA_KEYWORDS
+        assert "pull" in FOCUS_AREA_KEYWORDS
+        assert "legs" in FOCUS_AREA_KEYWORDS
+        assert "chest" in FOCUS_AREA_KEYWORDS["push"].lower()
+        assert "back" in FOCUS_AREA_KEYWORDS["pull"].lower()
+
+    def test_contains_phul_focus_areas(self):
+        """Test that PHUL focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "upper_power" in FOCUS_AREA_KEYWORDS
+        assert "lower_power" in FOCUS_AREA_KEYWORDS
+        assert "upper_hypertrophy" in FOCUS_AREA_KEYWORDS
+        assert "lower_hypertrophy" in FOCUS_AREA_KEYWORDS
+
+    def test_contains_arnold_split(self):
+        """Test that Arnold split focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "chest_back" in FOCUS_AREA_KEYWORDS
+        assert "shoulders_arms" in FOCUS_AREA_KEYWORDS
+
+    def test_contains_bro_split(self):
+        """Test that bro split / body part focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "chest" in FOCUS_AREA_KEYWORDS
+        assert "back" in FOCUS_AREA_KEYWORDS
+        assert "shoulders" in FOCUS_AREA_KEYWORDS
+        assert "arms" in FOCUS_AREA_KEYWORDS
+
+    def test_contains_hyrox_variants(self):
+        """Test that HYROX-specific focus areas are included."""
+        from services.exercise_rag.search import FOCUS_AREA_KEYWORDS
+
+        assert "hyrox_strength" in FOCUS_AREA_KEYWORDS
+        assert "hyrox_running" in FOCUS_AREA_KEYWORDS
+        assert "hyrox_stations" in FOCUS_AREA_KEYWORDS
+        assert "hyrox_endurance" in FOCUS_AREA_KEYWORDS
+        assert "hyrox_simulation" in FOCUS_AREA_KEYWORDS
+
 
 class TestGoalKeywords:
     """Tests for GOAL_KEYWORDS constant."""

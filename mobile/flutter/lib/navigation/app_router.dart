@@ -14,6 +14,7 @@ import '../screens/home/senior_home_screen.dart';
 import '../screens/hydration/hydration_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
+import '../screens/fasting/fasting_screen.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
@@ -462,6 +463,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/nutrition',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: NutritionScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/fasting',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: FastingScreen(),
             ),
           ),
           GoRoute(

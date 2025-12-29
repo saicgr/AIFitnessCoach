@@ -480,48 +480,65 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
   Widget _buildHeader(SheetColors colors) {
     final stepTitles = ['Schedule', 'Training Program', 'Equipment', 'Health'];
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 12, 12, 12),
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.cyan.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.tune, color: colors.cyan, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Customize Program',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Step ${_currentStep + 1} of $_totalSteps: ${stepTitles[_currentStep]}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: colors.textMuted),
-                ),
-              ],
+          // Handle bar for draggable appearance
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.textMuted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
-          IconButton(
-            onPressed: _isUpdating ? null : _showProgramHistory,
-            icon: Icon(Icons.history, color: colors.cyan),
-            tooltip: 'Program History',
-          ),
-          IconButton(
-            onPressed: _isUpdating ? null : () => Navigator.pop(context),
-            icon: Icon(Icons.close, color: colors.textSecondary),
+          const SizedBox(height: 16),
+          // Header row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.purple.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.auto_awesome, color: colors.purple, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Customize Program',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Step ${_currentStep + 1} of $_totalSteps: ${stepTitles[_currentStep]}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: colors.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: _isUpdating ? null : _showProgramHistory,
+                icon: Icon(Icons.history, color: colors.cyan),
+                tooltip: 'Program History',
+              ),
+              IconButton(
+                onPressed: _isUpdating ? null : () => Navigator.pop(context),
+                icon: Icon(Icons.close, color: colors.textSecondary),
+              ),
+            ],
           ),
         ],
       ),

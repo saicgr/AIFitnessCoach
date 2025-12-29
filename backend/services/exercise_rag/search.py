@@ -24,6 +24,39 @@ FOCUS_AREA_KEYWORDS = {
     "full_body_power": "full body workout power explosive movements plyometrics jumps",
     "full_body": "full body balanced workout compound exercises",
 
+    # Upper/Lower split focus areas
+    "upper": "upper body workout chest back shoulders arms biceps triceps pressing pulling rows",
+    "lower": "lower body workout legs glutes quadriceps hamstrings calves squats lunges deadlifts",
+
+    # Push/Pull/Legs (PPL) split focus areas
+    "push": "push workout chest shoulders triceps bench press overhead press dips pushing movements",
+    "pull": "pull workout back biceps rows pull-ups chin-ups lat pulldown pulling movements",
+    "legs": "legs workout quadriceps hamstrings glutes calves squats lunges leg press deadlifts",
+
+    # PHUL (Power Hypertrophy Upper Lower) focus areas
+    "upper_power": "upper body power heavy compound movements bench press barbell rows overhead press weighted dips strength",
+    "lower_power": "lower body power heavy compound movements squats deadlifts power cleans leg press strength",
+    "upper_hypertrophy": "upper body hypertrophy higher reps muscle building chest back shoulders arms isolation exercises",
+    "lower_hypertrophy": "lower body hypertrophy higher reps muscle building legs glutes quad hamstring isolation exercises",
+
+    # Arnold Split focus areas
+    "chest_back": "chest and back workout antagonist pairing bench press rows flyes pulldowns compound movements",
+    "shoulders_arms": "shoulders and arms workout deltoids biceps triceps overhead press curls extensions",
+
+    # Bro Split / Body Part focus areas
+    "chest": "chest workout pectorals bench press incline decline flyes dips pressing movements",
+    "back": "back workout lats rhomboids traps rows pulldowns pull-ups deadlifts pulling movements",
+    "shoulders": "shoulders workout deltoids front side rear overhead press lateral raises face pulls",
+    "arms": "arms workout biceps triceps curls extensions dips chin-ups isolation movements",
+    "core_cardio": "core and cardio workout abs obliques planks crunches conditioning metabolic",
+
+    # HYROX focus areas
+    "hyrox_strength": "hyrox strength training sled push sled pull farmers carry sandbag exercises functional strength",
+    "hyrox_running": "hyrox running intervals zone 2 compromised running aerobic base building endurance",
+    "hyrox_stations": "hyrox stations ski erg rowing wall balls burpee broad jumps functional fitness conditioning",
+    "hyrox_endurance": "hyrox endurance long aerobic work functional conditioning sustained effort stamina",
+    "hyrox_simulation": "hyrox race simulation run station transitions competition preparation race pace",
+
     # Sport-specific workout types
     "boxing": "boxing workout punching power jab cross hook uppercut footwork conditioning cardio core rotation speed agility combat",
     "hyrox": "hyrox workout functional fitness running lunges burpees rowing sled push farmer carry wall balls ski erg endurance strength hybrid competition",

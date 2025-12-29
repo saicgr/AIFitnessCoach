@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import 'components/components.dart';
+import 'workout_review_sheet.dart';
 
 /// Shows a bottom sheet for regenerating workout with customization options
 Future<Workout?> showRegenerateWorkoutSheet(
@@ -232,7 +233,26 @@ class _RegenerateWorkoutSheetState
         }
 
         if (progress.isCompleted && progress.workout != null) {
-          Navigator.pop(context, progress.workout);
+          // Update progress to show we're loading the review
+          setState(() {
+            _progressMessage = 'Loading review...';
+            _progressDetail = 'Preparing your workout';
+          });
+
+          // Show review sheet for user to approve
+          final approvedWorkout = await showWorkoutReviewSheet(
+            context,
+            ref,
+            progress.workout!,
+          );
+
+          if (approvedWorkout != null && mounted) {
+            // User approved - close everything
+            Navigator.pop(context, approvedWorkout);
+          } else if (mounted) {
+            // User pressed Back - return to customize with form preserved
+            setState(() => _isRegenerating = false);
+          }
           return;
         }
 
@@ -311,7 +331,26 @@ class _RegenerateWorkoutSheetState
         }
 
         if (progress.isCompleted && progress.workout != null) {
-          Navigator.pop(context, progress.workout);
+          // Update progress to show we're loading the review
+          setState(() {
+            _progressMessage = 'Loading review...';
+            _progressDetail = 'Preparing your workout';
+          });
+
+          // Show review sheet for user to approve
+          final approvedWorkout = await showWorkoutReviewSheet(
+            context,
+            ref,
+            progress.workout!,
+          );
+
+          if (approvedWorkout != null && mounted) {
+            // User approved - close everything
+            Navigator.pop(context, approvedWorkout);
+          } else if (mounted) {
+            // User pressed Back - return to customize with form preserved
+            setState(() => _isRegenerating = false);
+          }
           return;
         }
 
@@ -422,7 +461,7 @@ class _RegenerateWorkoutSheetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Regenerate Workout',
+                      'Regenerate Current Workout',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colors.textPrimary,

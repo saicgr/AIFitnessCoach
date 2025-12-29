@@ -36,6 +36,7 @@ from .utils import (
     log_workout_change,
     index_workout_to_rag,
     parse_json_field,
+    get_all_equipment,
     get_recently_used_exercises,
     get_workout_focus,
     calculate_workout_date,
@@ -71,6 +72,22 @@ async def generate_workout(request: GenerateWorkoutRequest):
             preferences = parse_json_field(user.get("preferences"), {})
             intensity_preference = preferences.get("intensity_preference", "medium")
 
+        # Fetch user's custom exercises
+        logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {request.user_id}")
+        custom_exercises = []
+        try:
+            custom_result = db.client.table("exercises").select(
+                "name", "primary_muscle", "equipment", "default_sets", "default_reps"
+            ).eq("is_custom", True).eq("created_by_user_id", request.user_id).execute()
+            if custom_result.data:
+                custom_exercises = custom_result.data
+                exercise_names = [ex.get("name") for ex in custom_exercises]
+                logger.info(f"✅ [Workout Generation] Found {len(custom_exercises)} custom exercises: {exercise_names}")
+            else:
+                logger.info(f"🏋️ [Workout Generation] No custom exercises found for user {request.user_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ [Workout Generation] Failed to fetch custom exercises: {e}")
+
         gemini_service = GeminiService()
 
         try:
@@ -80,7 +97,8 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 equipment=equipment if isinstance(equipment, list) else [],
                 duration_minutes=request.duration_minutes or 45,
                 focus_areas=request.focus_areas,
-                intensity_preference=intensity_preference
+                intensity_preference=intensity_preference,
+                custom_exercises=custom_exercises if custom_exercises else None
             )
 
             exercises = workout_data.get("exercises", [])
@@ -506,7 +524,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
 
         fitness_level = user.get("fitness_level") or "intermediate"
         goals = parse_json_field(user.get("goals"), [])
-        equipment = parse_json_field(user.get("equipment"), [])
+        # Get all equipment including custom user-added equipment
+        equipment = get_all_equipment(user)
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
@@ -522,6 +541,22 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         user_activity_level = user.get("activity_level")
         # Get focus areas for custom programs
         focus_areas = parse_json_field(user.get("focus_areas"), [])
+
+        # Fetch user's custom exercises for weekly generation
+        logger.info(f"🏋️ [Weekly Generation] Fetching custom exercises for user: {request.user_id}")
+        custom_exercises = []
+        try:
+            custom_result = db.client.table("exercises").select(
+                "name", "primary_muscle", "equipment", "default_sets", "default_reps"
+            ).eq("is_custom", True).eq("created_by_user_id", request.user_id).execute()
+            if custom_result.data:
+                custom_exercises = custom_result.data
+                exercise_names = [ex.get("name") for ex in custom_exercises]
+                logger.info(f"✅ [Weekly Generation] Found {len(custom_exercises)} custom exercises: {exercise_names}")
+            else:
+                logger.info(f"🏋️ [Weekly Generation] No custom exercises found for user {request.user_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ [Weekly Generation] Failed to fetch custom exercises: {e}")
 
         workout_focus_map = get_workout_focus(training_split, request.selected_days, focus_areas)
         generated_workouts = []
@@ -612,7 +647,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
                         custom_program_description=custom_program_description,
-                        workout_type_preference=workout_type_preference
+                        workout_type_preference=workout_type_preference,
+                        custom_exercises=custom_exercises if custom_exercises else None
                     )
 
                 exercises = workout_data.get("exercises", [])
@@ -667,7 +703,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
         fitness_level = user.get("fitness_level") or "intermediate"
         goals = parse_json_field(user.get("goals"), [])
-        equipment = parse_json_field(user.get("equipment"), [])
+        equipment = get_all_equipment(user)  # Includes custom equipment
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
@@ -687,6 +723,22 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
 
         # Get focus areas for custom programs
         focus_areas = parse_json_field(user.get("focus_areas"), [])
+
+        # Fetch user's custom exercises for monthly generation
+        logger.info(f"🏋️ [Monthly Generation] Fetching custom exercises for user: {request.user_id}")
+        custom_exercises = []
+        try:
+            custom_result = db.client.table("exercises").select(
+                "name", "primary_muscle", "equipment", "default_sets", "default_reps"
+            ).eq("is_custom", True).eq("created_by_user_id", request.user_id).execute()
+            if custom_result.data:
+                custom_exercises = custom_result.data
+                exercise_names = [ex.get("name") for ex in custom_exercises]
+                logger.info(f"✅ [Monthly Generation] Found {len(custom_exercises)} custom exercises: {exercise_names}")
+            else:
+                logger.info(f"🏋️ [Monthly Generation] No custom exercises found for user {request.user_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ [Monthly Generation] Failed to fetch custom exercises: {e}")
 
         logger.info(f"User data - fitness_level: {fitness_level}, goals: {goals}, equipment: {equipment}, dumbbell_count: {dumbbell_count}, kettlebell_count: {kettlebell_count}")
         if active_injuries or health_conditions:
@@ -971,7 +1023,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
 
             fitness_level = user.get("fitness_level") or "intermediate"
             goals = parse_json_field(user.get("goals"), [])
-            equipment = parse_json_field(user.get("equipment"), [])
+            equipment = get_all_equipment(user)  # Includes custom equipment
             preferences = parse_json_field(user.get("preferences"), {})
             training_split = preferences.get("training_split", "full_body")
             intensity_preference = preferences.get("intensity_preference", "medium")
@@ -1171,7 +1223,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
         fitness_level = user.get("fitness_level") or "intermediate"
         goals = parse_json_field(user.get("goals"), [])
-        equipment = parse_json_field(user.get("equipment"), [])
+        equipment = get_all_equipment(user)  # Includes custom equipment
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
         intensity_preference = preferences.get("intensity_preference", "medium")
@@ -1332,7 +1384,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         age=user_age,
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
-                        custom_program_description=custom_program_description
+                        custom_program_description=custom_program_description,
+                        custom_exercises=custom_exercises if custom_exercises else None
                     )
 
                 return {

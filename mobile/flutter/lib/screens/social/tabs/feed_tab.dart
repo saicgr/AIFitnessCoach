@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/main_shell.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/create_post_sheet.dart';
@@ -166,6 +167,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   void _showCreatePostSheet() {
     HapticFeedback.mediumImpact();
+    // Hide the floating nav bar when sheet opens
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -177,6 +180,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         builder: (context, scrollController) => const CreatePostSheet(),
       ),
     ).then((result) {
+      // Show the floating nav bar again when sheet closes
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
       // If post was created, refresh the feed
       if (result == true && _userId != null) {
         ref.invalidate(activityFeedProvider(_userId!));

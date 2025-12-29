@@ -22,6 +22,7 @@ class UserCreate(BaseModel):
     fitness_level: str = Field(..., max_length=50)
     goals: str = Field(..., max_length=2000)
     equipment: str = Field(..., max_length=2000)
+    custom_equipment: str = Field(default="[]", max_length=2000)  # User-added equipment not in predefined list
     preferences: str = Field(default="{}", max_length=10000)
     active_injuries: str = Field(default="[]", max_length=2000)
     # Extended onboarding fields - merged into preferences on save
@@ -78,6 +79,7 @@ class UserUpdate(BaseModel):
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     goals: Optional[str] = Field(default=None, max_length=2000)
     equipment: Optional[str] = Field(default=None, max_length=2000)
+    custom_equipment: Optional[str] = Field(default=None, max_length=2000)  # User-added equipment
     preferences: Optional[str] = Field(default=None, max_length=10000)
     active_injuries: Optional[str] = Field(default=None, max_length=2000)
     onboarding_completed: Optional[bool] = None  # Set to True after onboarding
@@ -127,6 +129,7 @@ class User(BaseModel):
     fitness_level: str = Field(..., max_length=50)
     goals: str = Field(..., max_length=2000)
     equipment: str = Field(..., max_length=2000)
+    custom_equipment: str = Field(default="[]", max_length=2000)  # User-added equipment
     preferences: str = Field(..., max_length=10000)
     active_injuries: str = Field(..., max_length=2000)
     created_at: datetime

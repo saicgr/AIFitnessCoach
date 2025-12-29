@@ -5,6 +5,7 @@ library;
 
 export 'accessibility_section.dart';
 export 'app_info_section.dart';
+export 'custom_content_section.dart';
 export 'danger_zone_section.dart';
 export 'data_management_section.dart';
 export 'haptics_section.dart';

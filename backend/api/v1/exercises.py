@@ -9,9 +9,16 @@ ENDPOINTS:
 - DELETE /api/v1/exercises/{id} - Delete exercise
 - POST /api/v1/exercises/index - Index all exercises for RAG search
 - GET  /api/v1/exercises/rag/stats - Get RAG index statistics
+
+CUSTOM EXERCISE ENDPOINTS:
+- GET  /api/v1/exercises/custom/{user_id} - Get user's custom exercises
+- POST /api/v1/exercises/custom/{user_id} - Create a custom exercise for user
+- DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
+from pydantic import BaseModel, Field
+import uuid
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -280,4 +287,205 @@ async def get_exercise_from_library_by_name(name: str):
         raise
     except Exception as e:
         logger.error(f"Error getting exercise from library: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# CUSTOM EXERCISE ENDPOINTS
+# ============================================================================
+
+class CustomExerciseCreate(BaseModel):
+    """Simplified model for creating a custom exercise."""
+    name: str = Field(..., min_length=1, max_length=200)
+    primary_muscle: str = Field(..., max_length=100)  # e.g., "chest", "back", "legs"
+    equipment: str = Field(default="bodyweight", max_length=200)  # e.g., "dumbbell", "barbell", "none"
+    instructions: str = Field(default="", max_length=5000)  # Optional instructions
+    default_sets: int = Field(default=3, ge=1, le=10)
+    default_reps: Optional[int] = Field(default=10, ge=1, le=100)
+    is_compound: bool = Field(default=False)  # Targets multiple muscle groups?
+
+
+class CustomExerciseResponse(BaseModel):
+    """Response model for custom exercises."""
+    id: str
+    name: str
+    primary_muscle: str
+    equipment: str
+    instructions: str
+    default_sets: int
+    default_reps: Optional[int]
+    is_compound: bool
+    created_at: str
+
+
+@router.get("/custom/{user_id}", response_model=List[CustomExerciseResponse])
+async def get_user_custom_exercises(user_id: str):
+    """Get all custom exercises created by a user."""
+    logger.info(f"🏋️ [Custom Exercises] GET request - Fetching custom exercises for user: {user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Query exercises where is_custom=true and created_by_user_id=user_id
+        result = db.client.table("exercises").select("*").eq(
+            "is_custom", True
+        ).eq(
+            "created_by_user_id", user_id
+        ).order("created_at", desc=True).execute()
+
+        exercises = []
+        for row in result.data:
+            exercises.append(CustomExerciseResponse(
+                id=row["id"],
+                name=row["name"],
+                primary_muscle=row["primary_muscle"],
+                equipment=row["equipment"],
+                instructions=row.get("instructions", ""),
+                default_sets=row.get("default_sets", 3),
+                default_reps=row.get("default_reps"),
+                is_compound=row.get("is_compound", False),
+                created_at=row["created_at"],
+            ))
+
+        logger.info(f"✅ [Custom Exercises] Found {len(exercises)} custom exercises for user {user_id}")
+        if exercises:
+            exercise_names = [ex.name for ex in exercises]
+            logger.info(f"🏋️ [Custom Exercises] Exercise names: {exercise_names}")
+        return exercises
+
+    except Exception as e:
+        logger.error(f"❌ [Custom Exercises] Error getting custom exercises for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/custom/{user_id}", response_model=CustomExerciseResponse)
+async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate):
+    """Create a new custom exercise for a user."""
+    logger.info(f"🏋️ [Custom Exercises] POST request - Creating custom exercise for user: {user_id}")
+    logger.info(f"🏋️ [Custom Exercises] Exercise details - name: {exercise.name}, muscle: {exercise.primary_muscle}, equipment: {exercise.equipment}")
+    logger.info(f"🏋️ [Custom Exercises] Exercise params - sets: {exercise.default_sets}, reps: {exercise.default_reps}, compound: {exercise.is_compound}")
+
+    try:
+        db = get_supabase_db()
+
+        # Generate a unique external_id for the custom exercise
+        external_id = f"custom_{user_id[:8]}_{uuid.uuid4().hex[:8]}"
+        logger.info(f"🏋️ [Custom Exercises] Generated external_id: {external_id}")
+
+        # Map primary_muscle to body_part
+        muscle_to_body_part = {
+            "chest": "chest",
+            "back": "back",
+            "shoulders": "shoulders",
+            "biceps": "upper arms",
+            "triceps": "upper arms",
+            "forearms": "lower arms",
+            "abs": "waist",
+            "core": "waist",
+            "quadriceps": "upper legs",
+            "quads": "upper legs",
+            "hamstrings": "upper legs",
+            "glutes": "upper legs",
+            "calves": "lower legs",
+            "legs": "upper legs",
+            "full body": "full body",
+        }
+        body_part = muscle_to_body_part.get(
+            exercise.primary_muscle.lower(), exercise.primary_muscle.lower()
+        )
+        logger.info(f"🏋️ [Custom Exercises] Mapped body_part: {body_part}")
+
+        exercise_data = {
+            "external_id": external_id,
+            "name": exercise.name,
+            "category": "strength",
+            "subcategory": "compound" if exercise.is_compound else "isolation",
+            "difficulty_level": 5,  # Default medium difficulty
+            "primary_muscle": exercise.primary_muscle,
+            "secondary_muscles": "[]",
+            "equipment_required": f'["{exercise.equipment}"]' if exercise.equipment != "bodyweight" else "[]",
+            "body_part": body_part,
+            "equipment": exercise.equipment,
+            "target": exercise.primary_muscle,
+            "default_sets": exercise.default_sets,
+            "default_reps": exercise.default_reps,
+            "default_rest_seconds": 60,
+            "calories_per_minute": 5.0,
+            "instructions": exercise.instructions or f"Perform {exercise.name} with proper form.",
+            "tips": "[]",
+            "contraindicated_injuries": "[]",
+            "is_compound": exercise.is_compound,
+            "is_unilateral": False,
+            "tags": '["custom"]',
+            "is_custom": True,
+            "created_by_user_id": user_id,
+        }
+
+        # Insert into exercises table
+        logger.info(f"🏋️ [Custom Exercises] Inserting exercise into database...")
+        result = db.client.table("exercises").insert(exercise_data).execute()
+
+        if not result.data:
+            logger.error(f"❌ [Custom Exercises] Database insert returned no data")
+            raise HTTPException(status_code=500, detail="Failed to create exercise")
+
+        created = result.data[0]
+        logger.info(f"✅ [Custom Exercises] Created custom exercise '{exercise.name}' (ID: {created['id']}) for user {user_id}")
+
+        return CustomExerciseResponse(
+            id=created["id"],
+            name=created["name"],
+            primary_muscle=created["primary_muscle"],
+            equipment=created["equipment"],
+            instructions=created.get("instructions", ""),
+            default_sets=created.get("default_sets", 3),
+            default_reps=created.get("default_reps"),
+            is_compound=created.get("is_compound", False),
+            created_at=created["created_at"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [Custom Exercises] Error creating custom exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/custom/{user_id}/{exercise_id}")
+async def delete_custom_exercise(user_id: str, exercise_id: str):
+    """Delete a user's custom exercise."""
+    logger.info(f"🏋️ [Custom Exercises] DELETE request - Deleting exercise {exercise_id} for user: {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify the exercise exists and belongs to this user
+        logger.info(f"🏋️ [Custom Exercises] Verifying exercise ownership...")
+        result = db.client.table("exercises").select("*").eq(
+            "id", exercise_id
+        ).eq(
+            "created_by_user_id", user_id
+        ).eq(
+            "is_custom", True
+        ).execute()
+
+        if not result.data:
+            logger.warning(f"⚠️ [Custom Exercises] Exercise {exercise_id} not found or doesn't belong to user {user_id}")
+            raise HTTPException(
+                status_code=404,
+                detail="Custom exercise not found or doesn't belong to this user"
+            )
+
+        exercise_name = result.data[0].get("name", "Unknown")
+        logger.info(f"🏋️ [Custom Exercises] Found exercise: '{exercise_name}' - proceeding with deletion")
+
+        # Delete the exercise
+        db.client.table("exercises").delete().eq("id", exercise_id).execute()
+        logger.info(f"✅ [Custom Exercises] Deleted custom exercise '{exercise_name}' (ID: {exercise_id}) for user {user_id}")
+
+        return {"message": "Custom exercise deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [Custom Exercises] Error deleting custom exercise: {e}")
         raise HTTPException(status_code=500, detail=str(e))

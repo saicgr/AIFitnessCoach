@@ -552,5 +552,36 @@ class TestRegressions:
         # The agent checks is_completion_message BEFORE detect_field_from_response
 
 
+class TestTargetWeightExtraction:
+    """
+    Tests for target weight extraction with contextual quick replies.
+    """
+
+    def test_target_weight_quick_replies_have_relative_options(self):
+        """Target weight quick replies should have lose/gain options."""
+        labels = [qr["label"].lower() for qr in QUICK_REPLIES["target_weight_kg"]]
+        has_lose = any("lose" in label for label in labels)
+        has_gain = any("gain" in label for label in labels)
+        has_happy = any("happy" in label for label in labels)
+        assert has_lose, "Should have 'lose' option"
+        assert has_gain, "Should have 'gain' option"
+        assert has_happy, "Should have 'happy where I am' option"
+
+    def test_target_weight_values_are_relative(self):
+        """Target weight values should be relative (lose_10, gain_10, etc.)."""
+        values = [qr["value"] for qr in QUICK_REPLIES["target_weight_kg"]]
+        has_lose_value = any("lose" in str(v) for v in values)
+        has_gain_value = any("gain" in str(v) for v in values)
+        assert has_lose_value, "Should have 'lose_X' value"
+        assert has_gain_value, "Should have 'gain_X' value"
+
+    def test_target_weight_no_absolute_values(self):
+        """Target weight should NOT have absolute weight values anymore."""
+        values = [qr["value"] for qr in QUICK_REPLIES["target_weight_kg"]]
+        # Should not have values like "50", "68", "77" (absolute kg values)
+        absolute_values = [v for v in values if isinstance(v, str) and v.isdigit()]
+        assert len(absolute_values) == 0, f"Found absolute values: {absolute_values}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

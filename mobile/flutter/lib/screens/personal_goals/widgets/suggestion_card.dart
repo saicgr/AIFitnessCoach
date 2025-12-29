@@ -111,18 +111,20 @@ class SuggestionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             // Reasoning
-            Text(
-              suggestion.reasoning,
-              style: TextStyle(
-                fontSize: 11,
-                color: textSecondary,
+            Expanded(
+              child: Text(
+                suggestion.reasoning,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textSecondary,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(),
+            const SizedBox(height: 4),
             // Action button
             SizedBox(
               width: double.infinity,

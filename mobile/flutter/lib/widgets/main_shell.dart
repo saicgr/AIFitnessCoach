@@ -24,8 +24,9 @@ class MainShell extends ConsumerWidget {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/nutrition')) return 1;
-    if (location.startsWith('/social')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/fasting')) return 2;
+    if (location.startsWith('/social')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -38,9 +39,12 @@ class MainShell extends ConsumerWidget {
         context.go('/nutrition');
         break;
       case 2:
-        context.go('/social');
+        context.go('/fasting');
         break;
       case 3:
+        context.go('/social');
+        break;
+      case 4:
         context.go('/profile');
         break;
     }
@@ -150,7 +154,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           // Nav bar
           Container(
             height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 300), // Increased from 240 to accommodate labels
+            constraints: const BoxConstraints(maxWidth: 340), // Increased to accommodate 5 nav items
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -189,13 +193,23 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFF34C759),
                   ),
-                  // Social - Orange (trophy icon for leaderboard/challenges)
+                  // Fasting - Purple
                   _NavItem(
-                    icon: Icons.emoji_events_outlined,
-                    selectedIcon: Icons.emoji_events,
-                    label: 'Social',
+                    icon: Icons.timer_outlined,
+                    selectedIcon: Icons.timer,
+                    label: 'Fasting',
                     isSelected: selectedIndex == 2,
                     onTap: () => onItemTapped(2),
+                    itemHeight: itemHeight,
+                    selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
+                  ),
+                  // Social - Orange (people/community icon)
+                  _NavItem(
+                    icon: Icons.people_outline,
+                    selectedIcon: Icons.people,
+                    label: 'Social',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
                   ),
@@ -204,8 +218,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     icon: Icons.person_outline_rounded,
                     selectedIcon: Icons.person_rounded,
                     label: 'Profile',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
+                    isSelected: selectedIndex == 4,
+                    onTap: () => onItemTapped(4),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF2D55),
                   ),
@@ -243,8 +257,8 @@ class _AICoachButton extends ConsumerWidget {
     final aiSettings = ref.watch(aiSettingsProvider);
     final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
 
-    // Use coach's colors and icon, or defaults
-    final coachIcon = coach?.icon ?? Icons.auto_awesome;
+    // Always use chat bubble for AI coach button (cleaner look)
+    const coachIcon = Icons.chat_bubble_rounded;
     final primaryColor = coach?.primaryColor ?? AppColors.purple;
     final accentColor = coach?.accentColor ?? AppColors.cyan;
 

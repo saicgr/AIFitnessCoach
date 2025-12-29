@@ -137,7 +137,7 @@ class SuggestionCarousel extends ConsumerWidget {
         const SizedBox(height: 12),
         // Horizontal scroll of cards
         SizedBox(
-          height: 140,
+          height: 155,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: category.suggestions.length,
@@ -165,7 +165,7 @@ class SuggestionCarousel extends ConsumerWidget {
         _buildHeader(context),
         const SizedBox(height: 16),
         SizedBox(
-          height: 140,
+          height: 155,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: 3,
@@ -183,7 +183,7 @@ class SuggestionCarousel extends ConsumerWidget {
 
     return Container(
       width: 200,
-      height: 140,
+      height: 155,
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(12),

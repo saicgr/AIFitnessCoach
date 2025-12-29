@@ -432,6 +432,122 @@ def _extract_biggest_obstacle(user_message: str) -> str:
     return None
 
 
+def _extract_target_weight(user_message: str, current_weight_kg: float = None) -> dict:
+    """
+    Extract target weight from user message.
+
+    Returns a dict that can contain:
+    - target_weight_delta: relative change like "lose_10", "gain_20"
+    - target_weight_kg: absolute target weight in kg
+
+    If user selects a relative option and we know current weight, we calculate the absolute.
+    """
+    user_lower = user_message.strip().lower()
+    result = {}
+
+    # Check for skip/happy where I am
+    skip_patterns = ['happy where i am', 'happy where you are', 'not sure', '__skip__', 'skip']
+    for pattern in skip_patterns:
+        if pattern in user_lower:
+            result["target_weight_delta"] = "__skip__"
+            return result
+
+    # Check for relative weight changes (quick reply values)
+    relative_patterns = {
+        'lose_10': ('lose', 10, -1),
+        'lose_20': ('lose', 20, -1),
+        'lose_30': ('lose', 30, -1),
+        'gain_10': ('gain', 10, 1),
+        'gain_20': ('gain', 20, 1),
+    }
+
+    # Direct quick reply value match
+    for delta_key in relative_patterns.keys():
+        if delta_key in user_lower:
+            result["target_weight_delta"] = delta_key
+            if current_weight_kg:
+                _, lbs, direction = relative_patterns[delta_key]
+                kg_change = lbs * 0.453592 * direction
+                result["target_weight_kg"] = round(current_weight_kg + kg_change, 1)
+            return result
+
+    # Natural language patterns for relative changes
+    lose_match = re.search(r'lose\s+(\d+)\s*(?:lbs?|pounds?|kg|kilos?)?', user_lower)
+    gain_match = re.search(r'gain\s+(\d+)\s*(?:lbs?|pounds?|kg|kilos?)?', user_lower)
+
+    if lose_match:
+        amount = int(lose_match.group(1))
+        is_kg = 'kg' in user_lower or 'kilo' in user_lower
+
+        if amount <= 15:
+            result["target_weight_delta"] = "lose_10"
+        elif amount <= 25:
+            result["target_weight_delta"] = "lose_20"
+        else:
+            result["target_weight_delta"] = "lose_30"
+
+        if current_weight_kg:
+            kg_change = amount if is_kg else amount * 0.453592
+            result["target_weight_kg"] = round(current_weight_kg - kg_change, 1)
+        return result
+
+    if gain_match:
+        amount = int(gain_match.group(1))
+        is_kg = 'kg' in user_lower or 'kilo' in user_lower
+
+        if amount <= 15:
+            result["target_weight_delta"] = "gain_10"
+        else:
+            result["target_weight_delta"] = "gain_20"
+
+        if current_weight_kg:
+            kg_change = amount if is_kg else amount * 0.453592
+            result["target_weight_kg"] = round(current_weight_kg + kg_change, 1)
+        return result
+
+    # Absolute target weight patterns
+    # "want to be 160 lbs", "goal is 70kg", "drop to 150"
+    absolute_patterns = [
+        r'(?:want to (?:be|weigh)|goal (?:is|weight)|target (?:is|weight)|drop to|get to|aim for)\s*(\d{2,3})\s*(?:lbs?|pounds?)?',
+        r'(\d{2,3})\s*(?:lbs?|pounds?|kg|kilos?)\s*(?:goal|target)?',
+    ]
+
+    for pattern in absolute_patterns:
+        match = re.search(pattern, user_lower)
+        if match:
+            target = float(match.group(1))
+            is_kg = 'kg' in user_lower or 'kilo' in user_lower
+
+            if not is_kg:
+                # Convert lbs to kg
+                target = round(target * 0.453592, 1)
+
+            if 30 <= target <= 200:  # Reasonable weight range in kg
+                result["target_weight_kg"] = target
+
+                # Calculate delta if we know current weight
+                if current_weight_kg:
+                    diff_kg = target - current_weight_kg
+                    diff_lbs = diff_kg / 0.453592
+
+                    if diff_lbs < -25:
+                        result["target_weight_delta"] = "lose_30"
+                    elif diff_lbs < -15:
+                        result["target_weight_delta"] = "lose_20"
+                    elif diff_lbs < -5:
+                        result["target_weight_delta"] = "lose_10"
+                    elif diff_lbs > 15:
+                        result["target_weight_delta"] = "gain_20"
+                    elif diff_lbs > 5:
+                        result["target_weight_delta"] = "gain_10"
+                    else:
+                        result["target_weight_delta"] = "__skip__"  # Very close to current weight
+
+                return result
+
+    return result
+
+
 async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
     """
     Extract structured data from user's message using AI.
@@ -609,6 +725,20 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         if obstacle:
             extracted["biggest_obstacle"] = obstacle
             logger.info(f"[Extract Data] Pre-processed: biggest_obstacle = {obstacle}")
+
+    # Target weight extraction - needs current weight to calculate absolute value
+    existing_target_weight = get_field_value(collected_data, "target_weight_kg")
+    if "target_weight_kg" in missing or not existing_target_weight:
+        current_weight = get_field_value(collected_data, "weightKg")
+        target_data = _extract_target_weight(user_message, current_weight)
+        if target_data:
+            # Store both delta and calculated absolute weight if available
+            if "target_weight_delta" in target_data:
+                extracted["target_weight_delta"] = target_data["target_weight_delta"]
+                logger.info(f"[Extract Data] Pre-processed: target_weight_delta = {target_data['target_weight_delta']}")
+            if "target_weight_kg" in target_data:
+                extracted["target_weight_kg"] = target_data["target_weight_kg"]
+                logger.info(f"[Extract Data] Pre-processed: target_weight_kg = {target_data['target_weight_kg']}")
 
     # Merge extracted data
     if extracted:

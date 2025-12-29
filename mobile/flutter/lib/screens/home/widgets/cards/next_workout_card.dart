@@ -352,7 +352,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Customize icon button
+                      // Regenerate icon button
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(
@@ -365,9 +365,9 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                             HapticService.light();
                             _regenerateWorkout();
                           },
-                          icon: const Icon(Icons.auto_awesome, size: 20),
+                          icon: const Icon(Icons.refresh, size: 20),
                           color: AppColors.purple,
-                          tooltip: 'Customize',
+                          tooltip: 'Regenerate',
                         ),
                       ),
                       const SizedBox(width: 8),

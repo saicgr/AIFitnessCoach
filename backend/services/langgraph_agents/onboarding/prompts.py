@@ -154,12 +154,15 @@ EXTRACTION RULES:
    - Weight: lbs → kg
    - Target weight: same conversion (e.g., "160 lbs" → target_weight_kg: 72.6)
 
-7. TARGET WEIGHT extraction:
-   - "want to be 160" → target_weight_kg: 72.6 (assuming lbs)
-   - "goal is 70kg" → target_weight_kg: 70
-   - "drop to 150" → target_weight_kg: 68.0
-   - "gain to 180" → target_weight_kg: 81.6
-   - "not sure" or "happy where I am" → target_weight_kg: null (skip)
+7. TARGET WEIGHT extraction (relative to current weight):
+   - "lose 10 lbs" or "Lose 10 lbs (4.5kg)" → target_weight_delta: "lose_10"
+   - "lose 20 lbs" or "Lose 20 lbs (9kg)" → target_weight_delta: "lose_20"
+   - "lose 30 lbs" or "Lose 30+ lbs (14kg)" → target_weight_delta: "lose_30"
+   - "gain 10 lbs" or "Gain 10 lbs (4.5kg)" → target_weight_delta: "gain_10"
+   - "gain 20 lbs" or "Gain 20 lbs (9kg)" → target_weight_delta: "gain_20"
+   - "want to be 160" → target_weight_kg: 72.6 (assuming lbs, direct value)
+   - "goal is 70kg" → target_weight_kg: 70 (direct value)
+   - "not sure" or "happy where I am" → target_weight_delta: null (skip)
 
 8. Normalize values:
    - Goals: Use exact labels like "Build Muscle", "Lose Weight", "Increase Strength"
@@ -404,15 +407,7 @@ QUICK_REPLIES = {
         {"label": "210 lbs (95kg)", "value": "95"},
         {"label": "230+ lbs (104kg)", "value": "104"},
     ],
-    # Target weight - for weight loss/gain goals
-    "target_weight_kg": [
-        {"label": "110 lbs (50kg)", "value": "50"},
-        {"label": "130 lbs (59kg)", "value": "59"},
-        {"label": "150 lbs (68kg)", "value": "68"},
-        {"label": "170 lbs (77kg)", "value": "77"},
-        {"label": "190 lbs (86kg)", "value": "86"},
-        {"label": "210 lbs (95kg)", "value": "95"},
-        {"label": "230+ lbs (104kg)", "value": "104"},
-        {"label": "Not sure yet 🤔", "value": "__skip__"},
-    ],
+    # NOTE: target_weight_kg uses custom component "weight_goal_input" instead of quick replies
+    # The Flutter component handles the two-step flow: direction selection -> amount input
 }
+

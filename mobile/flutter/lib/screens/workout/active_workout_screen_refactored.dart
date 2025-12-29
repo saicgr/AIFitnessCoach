@@ -124,10 +124,16 @@ class _ActiveWorkoutScreenRefactoredState
   bool _isLoadingHistory = true;
   final Map<String, double> _exerciseMaxWeights = {};
 
+  // Warmup/stretch state (fetched from API)
+  List<WarmupExerciseData>? _warmupExercises;
+  List<StretchExerciseData>? _stretchExercises;
+  bool _isLoadingWarmup = true;
+
   @override
   void initState() {
     super.initState();
     _initializeWorkout();
+    _loadWarmupAndStretches();
   }
 
   void _initializeWorkout() {
@@ -164,6 +170,104 @@ class _ActiveWorkoutScreenRefactoredState
     // Initialize time tracking
     _currentExerciseStartTime = DateTime.now();
     _lastExerciseStartedAt = DateTime.now();
+  }
+
+  /// Load personalized warmup and stretch exercises from API
+  Future<void> _loadWarmupAndStretches() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null) {
+      setState(() => _isLoadingWarmup = false);
+      return;
+    }
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final data = await workoutRepo.generateWarmupAndStretches(workoutId);
+
+      if (!mounted) return;
+
+      final warmupData = data['warmup'] ?? [];
+      final stretchData = data['stretches'] ?? [];
+
+      setState(() {
+        if (warmupData.isNotEmpty) {
+          _warmupExercises = warmupData.map<WarmupExerciseData>((e) => WarmupExerciseData(
+            name: e['name']?.toString() ?? 'Exercise',
+            duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
+            icon: _getIconForExercise(e['name']?.toString() ?? ''),
+          )).toList();
+        }
+
+        if (stretchData.isNotEmpty) {
+          _stretchExercises = stretchData.map<StretchExerciseData>((e) => StretchExerciseData(
+            name: e['name']?.toString() ?? 'Stretch',
+            duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
+            icon: _getIconForStretch(e['name']?.toString() ?? ''),
+          )).toList();
+        }
+
+        _isLoadingWarmup = false;
+      });
+
+      debugPrint('✅ [Warmup] Loaded ${_warmupExercises?.length ?? 0} warmup exercises');
+      debugPrint('✅ [Stretch] Loaded ${_stretchExercises?.length ?? 0} stretch exercises');
+    } catch (e) {
+      debugPrint('❌ [Warmup] Error loading warmup/stretches: $e');
+      if (mounted) {
+        setState(() => _isLoadingWarmup = false);
+      }
+    }
+  }
+
+  /// Map exercise name to appropriate icon for warmup
+  IconData _getIconForExercise(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('jump') || lower.contains('jack') || lower.contains('cardio') || lower.contains('run')) {
+      return Icons.directions_run;
+    }
+    if (lower.contains('circle') || lower.contains('rotation') || lower.contains('twist')) {
+      return Icons.loop;
+    }
+    if (lower.contains('swing') || lower.contains('lunge') || lower.contains('step')) {
+      return Icons.swap_horiz;
+    }
+    if (lower.contains('squat') || lower.contains('leg')) {
+      return Icons.airline_seat_legroom_extra;
+    }
+    if (lower.contains('arm') || lower.contains('shoulder') || lower.contains('push')) {
+      return Icons.fitness_center;
+    }
+    if (lower.contains('cat') || lower.contains('cow') || lower.contains('spine')) {
+      return Icons.pets;
+    }
+    if (lower.contains('hip') || lower.contains('glute')) {
+      return Icons.sports_gymnastics;
+    }
+    return Icons.whatshot; // Default warmup icon
+  }
+
+  /// Map exercise name to appropriate icon for stretches
+  IconData _getIconForStretch(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('quad') || lower.contains('leg') || lower.contains('hamstring')) {
+      return Icons.airline_seat_legroom_extra;
+    }
+    if (lower.contains('chest') || lower.contains('pec')) {
+      return Icons.open_with;
+    }
+    if (lower.contains('back') || lower.contains('lat') || lower.contains('spine')) {
+      return Icons.accessibility_new;
+    }
+    if (lower.contains('shoulder') || lower.contains('arm') || lower.contains('tricep')) {
+      return Icons.fitness_center;
+    }
+    if (lower.contains('hip') || lower.contains('glute') || lower.contains('piriformis')) {
+      return Icons.sports_gymnastics;
+    }
+    if (lower.contains('calf') || lower.contains('ankle')) {
+      return Icons.directions_walk;
+    }
+    return Icons.self_improvement; // Default stretch icon
   }
 
   @override
@@ -594,16 +698,20 @@ class _ActiveWorkoutScreenRefactoredState
     // Route to appropriate phase screen
     switch (_currentPhase) {
       case WorkoutPhase.warmup:
+        // Use personalized warmups from API if available, otherwise defaults
         return WarmupPhaseScreen(
           workoutSeconds: _timerController.workoutSeconds,
+          exercises: _warmupExercises ?? defaultWarmupExercises,
           onSkipWarmup: _handleSkipWarmup,
           onWarmupComplete: _handleWarmupComplete,
           onQuitRequested: _showQuitDialog,
         );
 
       case WorkoutPhase.stretch:
+        // Use personalized stretches from API if available, otherwise defaults
         return StretchPhaseScreen(
           workoutSeconds: _timerController.workoutSeconds,
+          exercises: _stretchExercises ?? defaultStretchExercises,
           onSkipAll: _handleSkipStretch,
           onStretchComplete: _handleStretchComplete,
         );

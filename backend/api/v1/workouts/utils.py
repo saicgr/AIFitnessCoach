@@ -45,6 +45,36 @@ def parse_json_field(value, default):
     return value if isinstance(value, (list, dict)) else default
 
 
+def get_all_equipment(user: dict) -> List[str]:
+    """
+    Get combined list of standard and custom equipment for a user.
+
+    This merges the predefined equipment the user selected with any custom
+    equipment they added (e.g., "homemade pull-up bar", "yoga wheel").
+
+    Args:
+        user: User data dict from database
+
+    Returns:
+        Combined list of all equipment names (deduplicated)
+    """
+    standard = parse_json_field(user.get("equipment"), [])
+    custom = parse_json_field(user.get("custom_equipment"), [])
+
+    if not isinstance(standard, list):
+        standard = []
+    if not isinstance(custom, list):
+        custom = []
+
+    # Combine and deduplicate (preserve order, standard first)
+    all_equipment = list(standard)
+    for item in custom:
+        if item and item not in all_equipment:
+            all_equipment.append(item)
+
+    return all_equipment
+
+
 def row_to_workout(row: dict) -> Workout:
     """Convert a Supabase row dict to Workout model."""
     exercises_json = row.get("exercises_json") or row.get("exercises")

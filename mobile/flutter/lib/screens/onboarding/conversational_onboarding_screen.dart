@@ -17,6 +17,7 @@ import 'widgets/message_bubble.dart';
 import 'widgets/quick_reply_buttons.dart';
 import 'widgets/basic_info_form.dart';
 import 'widgets/day_picker.dart';
+import 'widgets/weight_goal_input.dart';
 import 'widgets/health_checklist_modal.dart';
 import 'pre_auth_quiz_screen.dart';
 
@@ -41,6 +42,7 @@ class _ConversationalOnboardingScreenState
   bool _isLoading = false;
   bool _showHealthChecklist = false;
   bool _showDayPicker = false;
+  bool _showWeightGoalInput = false;
   int _daysPerWeek = 3;
   String? _error;
   bool _showWorkoutLoading = false;
@@ -407,6 +409,19 @@ class _ConversationalOnboardingScreenState
                 component: 'day_picker',
               ),
             );
+      } else if (response.nextQuestion.component == 'weight_goal_input') {
+        // Weight goal input component for target weight selection
+        setState(() {
+          _showWeightGoalInput = true;
+        });
+
+        ref.read(onboardingStateProvider.notifier).addMessage(
+              ChatMessage(
+                role: 'assistant',
+                content: response.nextQuestion.question ?? '',
+                component: 'weight_goal_input',
+              ),
+            );
       } else {
         // Regular question
         ref.read(onboardingStateProvider.notifier).addMessage(
@@ -511,6 +526,29 @@ class _ConversationalOnboardingScreenState
     _sendMessage(daysMessage);
   }
 
+  void _handleWeightGoalSelection(Map<String, dynamic> data) {
+    setState(() => _showWeightGoalInput = false);
+
+    // Handle "Happy where I am" selection (skip target weight)
+    if (data['direction'] == '__skip__') {
+      _sendMessage("Happy where I am");
+      return;
+    }
+
+    final direction = data['direction'] as String; // "lose" or "gain"
+    final amount = data['amount'] as double;
+    final unit = data['unit'] as String; // "lbs" or "kg"
+    final targetKg = data['targetKg'] as double;
+
+    // Store the target weight in collected data
+    ref.read(onboardingStateProvider.notifier).updateCollectedData({
+      'targetWeightKg': targetKg,
+    });
+
+    // Send a natural language message that the backend can extract from
+    _sendMessage("I want to $direction ${amount.round()} $unit");
+  }
+
   void _handleBasicInfoSubmit({
     required String name,
     required DateTime dateOfBirth,
@@ -580,8 +618,9 @@ class _ConversationalOnboardingScreenState
       "ready to make some progress",
       "i'll prepare a workout plan",
       "prepare a workout plan",
-      // Additional completion phrases
+      // Additional completion phrases (must match backend agent.py)
       "ready to crush it",
+      "let's crush it",  // The actual phrase used by the AI
       "here's what i'm building",
       "here's what i'm building for you",
       "ready to get started",
@@ -589,6 +628,12 @@ class _ConversationalOnboardingScreenState
       "let's do this",
       "we're ready",
       "your plan is ready",
+      "building your",  // "Building your X-day plan now"
+      "plan now",  // "Building your plan now"
+      "i'm building your",  // "I'm building your plan"
+      "all set to build",
+      "ready to create your",
+      "ready to build your",
     ];
     return phrases.any((p) => lowerContent.contains(p));
   }
@@ -960,6 +1005,15 @@ class _ConversationalOnboardingScreenState
                               onSelect: _handleDaySelection,
                             ),
 
+                          // Weight goal input (two-step: direction → amount)
+                          if (isLatest &&
+                              message.component == 'weight_goal_input' &&
+                              _showWeightGoalInput)
+                            WeightGoalInput(
+                              currentWeightKg: (state.collectedData['weightKg'] as num?)?.toDouble() ?? 70.0,
+                              onComplete: _handleWeightGoalSelection,
+                            ),
+
                           // Basic info form
                           if (isLatest && showBasicInfoForm)
                             BasicInfoForm(
@@ -1224,7 +1278,7 @@ class _ConversationalOnboardingScreenState
             child: TextField(
               controller: _inputController,
               focusNode: _inputFocusNode,
-              enabled: !_isLoading && !_showDayPicker,
+              enabled: !_isLoading && !_showDayPicker && !_showWeightGoalInput,
               style: TextStyle(
                 fontSize: 14,
                 color: colors.textPrimary,

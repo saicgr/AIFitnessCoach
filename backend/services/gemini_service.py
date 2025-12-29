@@ -711,7 +711,8 @@ IMPORTANT:
         activity_level: Optional[str] = None,
         intensity_preference: Optional[str] = None,
         custom_program_description: Optional[str] = None,
-        workout_type_preference: Optional[str] = None
+        workout_type_preference: Optional[str] = None,
+        custom_exercises: Optional[List[Dict]] = None
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -729,6 +730,7 @@ IMPORTANT:
             intensity_preference: Optional intensity preference (easy, medium, hard) - overrides fitness_level for difficulty
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX", "Improve box jump height")
             workout_type_preference: Optional workout type preference (strength, cardio, mixed) - affects exercise selection
+            custom_exercises: Optional list of user's custom exercises to potentially include
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -840,12 +842,35 @@ Examples:
 - "Prepare for marathon" → Running-focused, leg endurance, core stability
 - "Get better at pull-ups" → Back strengthening, lat work, grip training, assisted progressions"""
 
+        # Build custom exercises instruction if user has custom exercises
+        custom_exercises_instruction = ""
+        if custom_exercises and len(custom_exercises) > 0:
+            logger.info(f"🏋️ [Gemini Service] Including {len(custom_exercises)} custom exercises in prompt")
+            exercise_list = []
+            for ex in custom_exercises:
+                name = ex.get("name", "")
+                muscle = ex.get("primary_muscle", "")
+                equip = ex.get("equipment", "")
+                sets = ex.get("default_sets", 3)
+                reps = ex.get("default_reps", 10)
+                exercise_list.append(f"  - {name} (targets: {muscle}, equipment: {equip}, default: {sets}x{reps})")
+                logger.info(f"🏋️ [Gemini Service] Custom exercise: {name} - {muscle}/{equip}")
+            custom_exercises_instruction = f"""
+
+🏋️ USER'S CUSTOM EXERCISES:
+The user has created these custom exercises. You SHOULD include 1-2 of them if they match the workout focus:
+{chr(10).join(exercise_list)}
+
+When including custom exercises, use the user's default sets/reps as a starting point."""
+        else:
+            logger.info(f"🏋️ [Gemini Service] No custom exercises to include in prompt")
+
         prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
-- Workout Type: {workout_type}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}
+- Workout Type: {workout_type}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}
 
 Return a valid JSON object with this exact structure:
 {{
