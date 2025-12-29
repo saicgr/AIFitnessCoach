@@ -44,6 +44,7 @@ from core.rate_limiter import limiter
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     FoodLog,
     FoodItem,
@@ -712,6 +713,21 @@ async def log_food_from_image(
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food from image as {food_log_id}")
 
+        # Log successful image food logging
+        await log_user_activity(
+            user_id=user_id,
+            action="food_log_image",
+            endpoint="/api/v1/nutrition/log-image",
+            message=f"Logged {len(food_items)} food items from image ({total_calories} cal)",
+            metadata={
+                "food_log_id": food_log_id,
+                "meal_type": meal_type,
+                "total_calories": total_calories,
+                "food_items_count": len(food_items),
+            },
+            status_code=200
+        )
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -727,6 +743,15 @@ async def log_food_from_image(
         raise
     except Exception as e:
         logger.error(f"Failed to log food from image: {e}")
+        # Log error
+        await log_user_error(
+            user_id=user_id,
+            action="food_log_image",
+            error=e,
+            endpoint="/api/v1/nutrition/log-image",
+            metadata={"meal_type": meal_type},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -845,6 +870,22 @@ async def log_food_from_text(request: LogTextRequest):
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
 
+        # Log successful text food logging
+        await log_user_activity(
+            user_id=request.user_id,
+            action="food_log_text",
+            endpoint="/api/v1/nutrition/log-text",
+            message=f"Logged {len(food_items)} food items from text ({total_calories} cal)",
+            metadata={
+                "food_log_id": food_log_id,
+                "meal_type": request.meal_type,
+                "total_calories": total_calories,
+                "food_items_count": len(food_items),
+                "health_score": health_score,
+            },
+            status_code=200
+        )
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -867,6 +908,18 @@ async def log_food_from_text(request: LogTextRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to log food from text: {e}")
+        # Log error
+        await log_user_error(
+            user_id=request.user_id,
+            action="food_log_text",
+            error=e,
+            endpoint="/api/v1/nutrition/log-text",
+            metadata={
+                "meal_type": request.meal_type,
+                "description": request.description[:100] if request.description else None,
+            },
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

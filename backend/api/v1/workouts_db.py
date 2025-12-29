@@ -28,6 +28,7 @@ import asyncio
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     Workout, WorkoutCreate, WorkoutUpdate, GenerateWorkoutRequest,
     SwapWorkoutsRequest, SwapExerciseRequest, GenerateWeeklyRequest, GenerateWeeklyResponse,
@@ -510,12 +511,36 @@ async def generate_workout(http_request: Request, request: GenerateWorkoutReques
         generated_workout = row_to_workout(created)
         await index_workout_to_rag(generated_workout)
 
+        # Log successful workout generation
+        await log_user_activity(
+            user_id=request.user_id,
+            action="workout_generation",
+            endpoint="/api/v1/workouts-db/generate",
+            message=f"Generated workout: {workout_name}",
+            metadata={
+                "workout_id": created['id'],
+                "workout_type": workout_type,
+                "exercises_count": len(exercises),
+                "duration_minutes": request.duration_minutes or 45,
+            },
+            status_code=200
+        )
+
         return generated_workout
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to generate workout: {e}")
+        # Log error
+        await log_user_error(
+            user_id=request.user_id,
+            action="workout_generation",
+            error=e,
+            endpoint="/api/v1/workouts-db/generate",
+            metadata={"workout_type": request.workout_type},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1222,12 +1247,39 @@ async def generate_monthly_workouts(http_request: Request, request: GenerateMont
                 except Exception as ws_error:
                     logger.warning(f"⚠️ Failed to generate warmup/stretches for workout {workout.id}: {ws_error}")
 
+        # Log successful monthly generation
+        await log_user_activity(
+            user_id=request.user_id,
+            action="monthly_workout_generation",
+            endpoint="/api/v1/workouts-db/generate-monthly",
+            message=f"Generated {len(generated_workouts)} workouts for {weeks} weeks",
+            metadata={
+                "total_generated": len(generated_workouts),
+                "weeks": weeks,
+                "selected_days": request.selected_days,
+                "training_split": training_split,
+            },
+            status_code=200
+        )
+
         return GenerateMonthlyResponse(workouts=generated_workouts, total_generated=len(generated_workouts))
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to generate monthly workouts: {e}")
+        # Log error
+        await log_user_error(
+            user_id=request.user_id,
+            action="monthly_workout_generation",
+            error=e,
+            endpoint="/api/v1/workouts-db/generate-monthly",
+            metadata={
+                "selected_days": request.selected_days,
+                "month_start_date": request.month_start_date,
+            },
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

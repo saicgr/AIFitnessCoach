@@ -26,6 +26,7 @@ from services.langgraph_onboarding_service import LangGraphOnboardingService
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -132,6 +133,19 @@ async def parse_onboarding_response(request: Request, body: ParseOnboardingReque
 
         logger.info(f"✅ [LangGraph] Processed successfully. Complete: {result['is_complete']}")
 
+        # Log successful activity
+        await log_user_activity(
+            user_id=body.user_id,
+            action="onboarding",
+            endpoint="/api/v1/onboarding/parse-response",
+            message=f"Onboarding step (complete: {result['is_complete']})",
+            metadata={
+                "is_complete": result["is_complete"],
+                "missing_fields": result["missing_fields"],
+            },
+            status_code=200
+        )
+
         return ParseOnboardingResponse(
             extracted_data=result["extracted_data"],
             next_question=result["next_question"],
@@ -141,6 +155,15 @@ async def parse_onboarding_response(request: Request, body: ParseOnboardingReque
 
     except Exception as e:
         logger.error(f"❌ [LangGraph] Onboarding parse failed: {e}")
+        # Log error with webhook alert
+        await log_user_error(
+            user_id=body.user_id,
+            action="onboarding",
+            error=e,
+            endpoint="/api/v1/onboarding/parse-response",
+            metadata={"message": message[:200] if message else None},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 

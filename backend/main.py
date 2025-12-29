@@ -119,6 +119,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             duration = (time.time() - start_time) * 1000
 
+            # Add request_id to response headers for Flutter correlation
+            response.headers["X-Request-ID"] = request_id
+
             # Log response with context
             if response.status_code < 400:
                 logger.info(f"Response: {response.status_code} ({duration:.0f}ms)")

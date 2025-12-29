@@ -26,6 +26,7 @@ from core.logger import get_logger
 from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -127,9 +128,34 @@ async def send_message(
             # Log but don't fail the request if analytics save fails
             logger.warning(f"Failed to save chat analytics: {analytics_error}")
 
+        # Log successful chat activity
+        await log_user_activity(
+            user_id=request.user_id,
+            action="chat",
+            endpoint="/api/v1/chat/send",
+            message=f"Chat: {response.intent.value if hasattr(response.intent, 'value') else str(response.intent)}",
+            metadata={
+                "intent": str(response.intent),
+                "agent_type": str(response.agent_type),
+                "rag_used": response.rag_context_used,
+            },
+            duration_ms=response_time_ms,
+            status_code=200
+        )
+
         return response
     except Exception as e:
         logger.error(f"Failed to process message: {e}")
+        # Log error to database with webhook alert
+        await log_user_error(
+            user_id=request.user_id,
+            action="chat",
+            error=e,
+            endpoint="/api/v1/chat/send",
+            metadata={"message": request.message[:200]},
+            duration_ms=int((time.time() - start_time) * 1000),
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
