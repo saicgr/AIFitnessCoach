@@ -11,6 +11,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/models/coach_persona.dart';
+import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/quick_reply_buttons.dart';
 import 'widgets/basic_info_form.dart';
@@ -338,6 +340,7 @@ class _ConversationalOnboardingScreenState
       final state = ref.read(onboardingStateProvider);
       final authState = ref.read(authStateProvider);
       final onboardingRepo = ref.read(onboardingRepositoryProvider);
+      final aiSettings = ref.read(aiSettingsProvider);
 
       debugPrint('🤖 [Onboarding] Sending message: $message');
 
@@ -348,6 +351,7 @@ class _ConversationalOnboardingScreenState
         conversationHistory: state.messages
             .map((m) => {'role': m.role, 'content': m.content})
             .toList(),
+        aiSettings: aiSettings.toJson(),
       );
 
       debugPrint('✅ [Onboarding] AI response received');
@@ -978,6 +982,16 @@ class _ConversationalOnboardingScreenState
   }
 
   Widget _buildHeader(ThemeColors colors) {
+    // Get the selected coach persona from AI settings
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+
+    // Use coach's colors and info, or defaults if no coach selected
+    final coachName = coach?.name ?? aiSettings.coachName ?? 'FitWiz';
+    final coachIcon = coach?.icon ?? Icons.auto_awesome;
+    final coachColor = coach?.primaryColor ?? colors.cyan;
+    final coachAccentColor = coach?.accentColor ?? colors.purple;
+
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 8,
@@ -1007,18 +1021,22 @@ class _ConversationalOnboardingScreenState
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              gradient: colors.cyanGradient,
+              gradient: LinearGradient(
+                colors: [coachColor, coachAccentColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colors.cyan.withOpacity(0.4),
+                  color: coachColor.withOpacity(0.4),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
               ],
             ),
-            child: const Center(
-              child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+            child: Center(
+              child: Icon(coachIcon, color: Colors.white, size: 20),
             ),
           ),
           const SizedBox(width: 12),
@@ -1027,7 +1045,7 @@ class _ConversationalOnboardingScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'FitWiz',
+                  coachName,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

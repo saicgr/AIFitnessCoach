@@ -6,6 +6,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
 
@@ -22,6 +23,11 @@ final aiSettingsProvider = StateNotifierProvider<AISettingsNotifier, AISettings>
 
 /// AI Settings model
 class AISettings {
+  // Coach Persona
+  final String? coachPersonaId; // 'coach_mike', 'dr_sarah', 'custom', etc.
+  final String? coachName; // Display name for the coach
+  final bool isCustomCoach; // Whether using custom coach configuration
+
   // Personality & Tone
   final String coachingStyle; // "motivational", "professional", "friendly", "tough-love"
   final String communicationTone; // "casual", "formal", "encouraging"
@@ -47,6 +53,9 @@ class AISettings {
   final bool useRAG;
 
   const AISettings({
+    this.coachPersonaId,
+    this.coachName,
+    this.isCustomCoach = false,
     this.coachingStyle = 'motivational',
     this.communicationTone = 'encouraging',
     this.encouragementLevel = 0.7,
@@ -70,6 +79,9 @@ class AISettings {
   });
 
   AISettings copyWith({
+    String? coachPersonaId,
+    String? coachName,
+    bool? isCustomCoach,
     String? coachingStyle,
     String? communicationTone,
     double? encouragementLevel,
@@ -86,6 +98,9 @@ class AISettings {
     bool? useRAG,
   }) {
     return AISettings(
+      coachPersonaId: coachPersonaId ?? this.coachPersonaId,
+      coachName: coachName ?? this.coachName,
+      isCustomCoach: isCustomCoach ?? this.isCustomCoach,
       coachingStyle: coachingStyle ?? this.coachingStyle,
       communicationTone: communicationTone ?? this.communicationTone,
       encouragementLevel: encouragementLevel ?? this.encouragementLevel,
@@ -106,6 +121,9 @@ class AISettings {
   /// Convert to JSON for API requests (matches backend AISettings model)
   Map<String, dynamic> toJson() {
     return {
+      'coach_persona_id': coachPersonaId,
+      'coach_name': coachName,
+      'is_custom_coach': isCustomCoach,
       'coaching_style': coachingStyle,
       'communication_tone': communicationTone,
       'encouragement_level': encouragementLevel,
@@ -157,6 +175,9 @@ class AISettings {
     }
 
     return AISettings(
+      coachPersonaId: json['coach_persona_id'] as String?,
+      coachName: json['coach_name'] as String?,
+      isCustomCoach: json['is_custom_coach'] as bool? ?? false,
       coachingStyle: json['coaching_style'] as String? ?? 'motivational',
       communicationTone: json['communication_tone'] as String? ?? 'encouraging',
       encouragementLevel: (json['encouragement_level'] as num?)?.toDouble() ?? 0.7,
@@ -312,6 +333,59 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     state = state.copyWith(useRAG: !state.useRAG);
     _saveSettings();
   }
+
+  /// Set a predefined coach persona
+  void setCoachPersona(CoachPersona coach) {
+    state = state.copyWith(
+      coachPersonaId: coach.id,
+      coachName: coach.name,
+      isCustomCoach: coach.isCustom,
+      coachingStyle: coach.coachingStyle,
+      communicationTone: coach.communicationTone,
+      encouragementLevel: coach.encouragementLevel,
+    );
+    _saveSettings();
+  }
+
+  /// Set a custom coach with user-defined settings
+  void setCustomCoach({
+    required String name,
+    required String coachingStyle,
+    required String communicationTone,
+    double encouragementLevel = 0.7,
+  }) {
+    state = state.copyWith(
+      coachPersonaId: 'custom',
+      coachName: name.isEmpty ? 'My Coach' : name,
+      isCustomCoach: true,
+      coachingStyle: coachingStyle,
+      communicationTone: communicationTone,
+      encouragementLevel: encouragementLevel,
+    );
+    _saveSettings();
+  }
+
+  /// Get the current coach persona (reconstructs from settings)
+  CoachPersona? getCurrentCoach() {
+    final personaId = state.coachPersonaId;
+    if (personaId == null) return null;
+
+    // Check if it's a predefined coach
+    final predefined = CoachPersona.findById(personaId);
+    if (predefined != null) return predefined;
+
+    // Otherwise, reconstruct custom coach from settings
+    if (personaId == 'custom' || state.isCustomCoach) {
+      return CoachPersona.custom(
+        name: state.coachName ?? 'My Coach',
+        coachingStyle: state.coachingStyle,
+        communicationTone: state.communicationTone,
+        encouragementLevel: state.encouragementLevel,
+      );
+    }
+
+    return null;
+  }
 }
 
 /// AI Settings Screen
@@ -366,6 +440,14 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
             children: [
               // Header card
               _AIHeaderCard().animate().fadeIn().slideY(begin: 0.1),
+
+              const SizedBox(height: 24),
+
+              // Coach Persona
+              _SectionHeader(title: 'YOUR COACH'),
+              const SizedBox(height: 12),
+              _CoachPersonaSection(settings: settings, ref: ref)
+                  .animate().fadeIn(delay: 50.ms),
 
               const SizedBox(height: 24),
 
@@ -478,6 +560,125 @@ class _AIHeaderCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Coach Persona Section - Shows current coach with option to change
+class _CoachPersonaSection extends StatelessWidget {
+  final AISettings settings;
+  final WidgetRef ref;
+
+  const _CoachPersonaSection({required this.settings, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Get current coach
+    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    final coachName = coach?.name ?? settings.coachName ?? 'No Coach Selected';
+    final coachIcon = coach?.icon ?? Icons.smart_toy;
+    final coachColor = coach?.primaryColor ?? AppColors.cyan;
+    final coachAccentColor = coach?.accentColor ?? AppColors.purple;
+    final personalityBadge = coach?.personalityBadge ?? 'Default';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            // Navigate to coach selection screen
+            context.push('/coach-selection');
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Coach avatar
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [coachColor, coachAccentColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(coachIcon, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 14),
+
+                // Coach info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              coachName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: coachColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              personalityBadge,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: coachColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to change your coach',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Arrow
+                Icon(
+                  Icons.chevron_right,
+                  color: textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

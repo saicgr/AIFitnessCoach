@@ -14,6 +14,8 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from ..state import OnboardingState
 from ..prompts import ONBOARDING_AGENT_SYSTEM_PROMPT, FIELD_ORDER, QUICK_REPLIES
 from .utils import ensure_string, detect_field_from_response
+from ...personality import build_personality_prompt
+from models.chat import AISettings
 from core.config import get_settings
 from core.logger import get_logger
 
@@ -42,19 +44,56 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     collected = state.get("collected_data", {})
     missing = state.get("missing_fields", [])
     history = state.get("conversation_history", [])
+    ai_settings_dict = state.get("ai_settings")
 
     logger.info(f"[Onboarding Agent] Collected fields: {list(collected.keys())}")
     logger.info(f"[Onboarding Agent] Missing fields: {missing}")
     logger.info(f"[Onboarding Agent] History length: {len(history)}")
+    logger.info(f"[Onboarding Agent] AI Settings: {ai_settings_dict is not None}")
 
     # Ensure user_message is a string
     user_message = ensure_string(state.get("user_message", ""))
 
-    # Build system prompt with context
-    system_prompt = ONBOARDING_AGENT_SYSTEM_PROMPT.format(
+    # Build base system prompt with context
+    base_system_prompt = ONBOARDING_AGENT_SYSTEM_PROMPT.format(
         collected_data=json.dumps(collected, indent=2) if collected else "{}",
         missing_fields=", ".join(missing) if missing else "Nothing - ready to complete!",
     )
+
+    # Build personality prompt from AI settings
+    personality_prompt = ""
+    if ai_settings_dict:
+        try:
+            # Get coach name from settings
+            coach_name = ai_settings_dict.get("coach_name", "Coach")
+
+            # Create AISettings model from dict
+            ai_settings_model = AISettings(
+                coaching_style=ai_settings_dict.get("coaching_style", "motivational"),
+                communication_tone=ai_settings_dict.get("communication_tone", "encouraging"),
+                encouragement_level=ai_settings_dict.get("encouragement_level", 0.7),
+                response_length=ai_settings_dict.get("response_length", "balanced"),
+                use_emojis=ai_settings_dict.get("use_emojis", True),
+                include_tips=ai_settings_dict.get("include_tips", True),
+                form_reminders=ai_settings_dict.get("form_reminders", True),
+                rest_day_suggestions=ai_settings_dict.get("rest_day_suggestions", True),
+                nutrition_mentions=ai_settings_dict.get("nutrition_mentions", True),
+                injury_sensitivity=ai_settings_dict.get("injury_sensitivity", True),
+            )
+
+            personality_prompt = build_personality_prompt(
+                ai_settings=ai_settings_model,
+                agent_name=coach_name if coach_name else "Coach",
+                agent_specialty="onboarding and fitness planning"
+            )
+            logger.info(f"[Onboarding Agent] Applied personality: {ai_settings_dict.get('coaching_style')} + {ai_settings_dict.get('communication_tone')}")
+        except Exception as e:
+            logger.warning(f"[Onboarding Agent] Could not build personality prompt: {e}")
+
+    # Combine base prompt with personality
+    system_prompt = base_system_prompt
+    if personality_prompt:
+        system_prompt = f"{base_system_prompt}\n\n{personality_prompt}"
 
     # Log the full prompt for debugging
     logger.info("=" * 60)

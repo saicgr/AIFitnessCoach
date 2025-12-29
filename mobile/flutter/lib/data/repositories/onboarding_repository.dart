@@ -197,9 +197,13 @@ class OnboardingRepository {
     required String message,
     required Map<String, dynamic> currentData,
     List<Map<String, String>>? conversationHistory,
+    Map<String, dynamic>? aiSettings,
   }) async {
     try {
       debugPrint('🤖 [Onboarding] Sending message to AI: $message');
+      if (aiSettings != null) {
+        debugPrint('🎭 [Onboarding] With personality: ${aiSettings['coaching_style']} + ${aiSettings['communication_tone']}');
+      }
 
       final response = await _apiClient.post(
         '${ApiConstants.onboarding}/parse-response',
@@ -209,6 +213,8 @@ class OnboardingRepository {
           'current_data': currentData,
           if (conversationHistory != null)
             'conversation_history': conversationHistory,
+          if (aiSettings != null)
+            'ai_settings': aiSettings,
         },
       ).timeout(
         const Duration(seconds: 60),

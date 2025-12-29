@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
-import '../core/theme/theme_provider.dart';
+import '../data/models/coach_persona.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/widget_action_service.dart';
+import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
 import 'floating_chat/floating_chat_provider.dart';
 import 'floating_chat/floating_chat_overlay.dart';
@@ -230,38 +231,47 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
   }
 }
 
-/// AI Coach button with gradient and glow
-class _AICoachButton extends StatelessWidget {
+/// AI Coach button with gradient and glow - reactive to coach persona
+class _AICoachButton extends ConsumerWidget {
   final VoidCallback onTap;
 
   const _AICoachButton({required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch AI settings to reactively update when coach changes
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+
+    // Use coach's colors and icon, or defaults
+    final coachIcon = coach?.icon ?? Icons.auto_awesome;
+    final primaryColor = coach?.primaryColor ?? AppColors.purple;
+    final accentColor = coach?.accentColor ?? AppColors.cyan;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.purple, AppColors.cyan],
+            colors: [primaryColor, accentColor],
           ),
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: AppColors.cyan.withOpacity(0.4),
+              color: accentColor.withOpacity(0.4),
               blurRadius: 12,
               offset: const Offset(0, 3),
               spreadRadius: 1,
             ),
           ],
         ),
-        child: const Center(
+        child: Center(
           child: Icon(
-            Icons.auto_awesome,
+            coachIcon,
             color: Colors.white,
             size: 22,
           ),

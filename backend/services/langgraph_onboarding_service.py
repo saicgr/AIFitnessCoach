@@ -30,6 +30,7 @@ class LangGraphOnboardingService:
         message: str,
         collected_data: Dict[str, Any],
         conversation_history: List[Dict[str, str]],
+        ai_settings: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Process a user message in the onboarding conversation.
@@ -39,6 +40,7 @@ class LangGraphOnboardingService:
             message: User's message
             collected_data: Data collected so far
             conversation_history: Previous messages
+            ai_settings: Optional AI settings for personality customization
 
         Returns:
             Dict with:
@@ -61,6 +63,7 @@ class LangGraphOnboardingService:
             "user_message": message,
             "user_id": user_id,
             "conversation_history": conversation_history,
+            "ai_settings": ai_settings,  # Pass AI settings for personality
             "collected_data": collected_data,
             "messages": [],
             "next_question": None,

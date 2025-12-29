@@ -19,6 +19,7 @@ import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/personalized_preview_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
+import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
@@ -29,6 +30,7 @@ import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/settings/help_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
@@ -131,14 +133,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
+      final isOnCoachSelection = state.matchedLocation == '/coach-selection';
 
       // Auth is resolved - redirect from splash to appropriate destination
       if (isOnSplash) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
-            // Go to conversational onboarding for logged-in users with incomplete onboarding
-            return '/onboarding';
+            // Go to coach selection first (then onboarding) for logged-in users with incomplete onboarding
+            return '/coach-selection';
           }
           return getHomeRoute();
         } else {
@@ -152,21 +155,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
-            // Go to conversational onboarding for logged-in users with incomplete onboarding
-            return '/onboarding';
+            // Go to coach selection first for logged-in users with incomplete onboarding
+            return '/coach-selection';
           }
           return getHomeRoute();
         }
         return null; // Stay on stats welcome
       }
 
-      // Allow pre-auth quiz, preview, and sign-in screens for logged-in users with incomplete onboarding
-      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
+      // Allow pre-auth quiz, preview, sign-in, and coach-selection screens
+      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnCoachSelection) {
         if (isLoggedIn) {
           final user = authState.user;
           if (user != null && !user.isOnboardingComplete) {
-            // After sign-in, go to conversational onboarding
-            return '/onboarding';
+            // If on coach selection, allow it - user is selecting their coach
+            if (isOnCoachSelection) {
+              return null;
+            }
+            // After sign-in, go to coach selection (not directly to onboarding)
+            return '/coach-selection';
           }
           return getHomeRoute();
         }
@@ -270,6 +277,32 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(0, 0.05),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Coach Selection - pick your AI coach personality before onboarding
+      GoRoute(
+        path: '/coach-selection',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const CoachSelectionScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
                   end: Offset.zero,
                 ).animate(CurvedAnimation(
                   parent: animation,
@@ -557,6 +590,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Help & Support
+      GoRoute(
+        path: '/help',
+        builder: (context, state) => const HelpScreen(),
       ),
 
       // AI Settings

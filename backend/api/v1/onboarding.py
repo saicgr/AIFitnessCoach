@@ -42,6 +42,7 @@ class ParseOnboardingRequest(BaseModel):
     message: str
     current_data: Dict[str, Any]
     conversation_history: Optional[List[Dict[str, str]]] = []
+    ai_settings: Optional[Dict[str, Any]] = None  # User's AI settings for personality customization
 
 
 class ParseOnboardingResponse(BaseModel):
@@ -129,6 +130,7 @@ async def parse_onboarding_response(request: Request, body: ParseOnboardingReque
             message=message,  # Use the cleaned message
             collected_data=body.current_data,
             conversation_history=body.conversation_history,
+            ai_settings=body.ai_settings,  # Pass AI settings for personality
         )
 
         logger.info(f"✅ [LangGraph] Processed successfully. Complete: {result['is_complete']}")

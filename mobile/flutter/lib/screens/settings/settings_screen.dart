@@ -46,6 +46,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline, color: textPrimary),
+            onPressed: () => context.push('/help'),
+            tooltip: 'Help',
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -59,6 +66,11 @@ class SettingsScreen extends ConsumerWidget {
 
               // Haptics section
               const HapticsSection().animate().fadeIn(delay: 55.ms),
+
+              const SizedBox(height: 24),
+
+              // App Mode section (Normal, Senior, Kids)
+              const AppModeSection().animate().fadeIn(delay: 56.ms),
 
               const SizedBox(height: 24),
 

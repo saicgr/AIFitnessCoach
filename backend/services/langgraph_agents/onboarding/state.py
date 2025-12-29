@@ -19,6 +19,9 @@ class OnboardingState(TypedDict):
     user_id: str
     conversation_history: List[Dict[str, str]]
 
+    # AI Settings (for personality customization)
+    ai_settings: Optional[Dict[str, Any]]  # User's AI settings for personality
+
     # Collected Data
     collected_data: Dict[str, Any]  # {name, goals, equipment, etc.}
 
