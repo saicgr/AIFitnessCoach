@@ -430,6 +430,20 @@ async def complete_workout(workout_id: str):
             change_source="user"
         )
 
+        # Log workout completion
+        await log_user_activity(
+            user_id=workout.user_id,
+            action="workout_completed",
+            endpoint=f"/api/v1/workouts-db/{workout_id}/complete",
+            message=f"Completed workout: {workout.name}",
+            metadata={
+                "workout_id": workout_id,
+                "workout_name": workout.name,
+                "workout_type": workout.type,
+            },
+            status_code=200
+        )
+
         await index_workout_to_rag(workout)
         return workout
 
@@ -1831,12 +1845,38 @@ async def regenerate_workout(http_request: Request, request: RegenerateWorkoutRe
             # Don't fail the regeneration if analytics recording fails
             logger.warning(f"⚠️ Failed to record regeneration analytics: {analytics_error}")
 
+        # Log workout regeneration
+        await log_user_activity(
+            user_id=request.user_id,
+            action="workout_regeneration",
+            endpoint="/api/v1/workouts-db/regenerate",
+            message=f"Regenerated workout: {workout_name}",
+            metadata={
+                "original_workout_id": request.workout_id,
+                "new_workout_id": new_workout["id"],
+                "difficulty": user_difficulty,
+                "duration_minutes": request.duration_minutes,
+                "workout_type": workout_type_override,
+                "exercises_count": len(exercises),
+                "used_rag": used_rag,
+            },
+            status_code=200
+        )
+
         return regenerated
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to regenerate workout: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="workout_regeneration",
+            error=e,
+            endpoint="/api/v1/workouts-db/regenerate",
+            metadata={"workout_id": request.workout_id},
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -3194,6 +3234,22 @@ async def update_program(http_request: Request, request: UpdateProgramRequest):
         except Exception as e:
             logger.warning(f"Could not index preferences to RAG: {e}")
 
+        # Log program customization
+        await log_user_activity(
+            user_id=request.user_id,
+            action="program_customization",
+            endpoint="/api/v1/workouts-db/update-program",
+            message=f"Updated program, deleted {deleted_count} future workouts",
+            metadata={
+                "difficulty": request.difficulty,
+                "duration_minutes": request.duration_minutes,
+                "workout_type": request.workout_type,
+                "workout_days": request.workout_days,
+                "workouts_deleted": deleted_count,
+            },
+            status_code=200
+        )
+
         return UpdateProgramResponse(
             success=True,
             message=f"Program updated. {deleted_count} future workouts deleted for regeneration.",
@@ -3205,4 +3261,11 @@ async def update_program(http_request: Request, request: UpdateProgramRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update program: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="program_customization",
+            error=e,
+            endpoint="/api/v1/workouts-db/update-program",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
