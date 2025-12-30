@@ -174,3 +174,77 @@ class Workout extends Equatable {
     );
   }
 }
+
+/// Personal Record info returned from workout completion API
+class PersonalRecordInfo {
+  final String exerciseName;
+  final double weightKg;
+  final int reps;
+  final double estimated1rmKg;
+  final double? previous1rmKg;
+  final double? improvementKg;
+  final double? improvementPercent;
+  final bool isAllTimePr;
+  final String? celebrationMessage;
+
+  const PersonalRecordInfo({
+    required this.exerciseName,
+    required this.weightKg,
+    required this.reps,
+    required this.estimated1rmKg,
+    this.previous1rmKg,
+    this.improvementKg,
+    this.improvementPercent,
+    this.isAllTimePr = true,
+    this.celebrationMessage,
+  });
+
+  factory PersonalRecordInfo.fromJson(Map<String, dynamic> json) {
+    return PersonalRecordInfo(
+      exerciseName: json['exercise_name'] as String? ?? '',
+      weightKg: (json['weight_kg'] as num?)?.toDouble() ?? 0.0,
+      reps: json['reps'] as int? ?? 0,
+      estimated1rmKg: (json['estimated_1rm_kg'] as num?)?.toDouble() ?? 0.0,
+      previous1rmKg: (json['previous_1rm_kg'] as num?)?.toDouble(),
+      improvementKg: (json['improvement_kg'] as num?)?.toDouble(),
+      improvementPercent: (json['improvement_percent'] as num?)?.toDouble(),
+      isAllTimePr: json['is_all_time_pr'] as bool? ?? true,
+      celebrationMessage: json['celebration_message'] as String?,
+    );
+  }
+}
+
+/// Response from workout completion API including PRs
+class WorkoutCompletionResponse {
+  final Workout workout;
+  final List<PersonalRecordInfo> personalRecords;
+  final bool strengthScoresUpdated;
+  final String message;
+
+  const WorkoutCompletionResponse({
+    required this.workout,
+    this.personalRecords = const [],
+    this.strengthScoresUpdated = false,
+    this.message = 'Workout completed successfully',
+  });
+
+  factory WorkoutCompletionResponse.fromJson(Map<String, dynamic> json) {
+    final workoutData = json['workout'] as Map<String, dynamic>? ?? json;
+    final prsData = json['personal_records'] as List<dynamic>? ?? [];
+
+    return WorkoutCompletionResponse(
+      workout: Workout.fromJson(workoutData),
+      personalRecords: prsData
+          .map((pr) => PersonalRecordInfo.fromJson(pr as Map<String, dynamic>))
+          .toList(),
+      strengthScoresUpdated: json['strength_scores_updated'] as bool? ?? false,
+      message: json['message'] as String? ?? 'Workout completed successfully',
+    );
+  }
+
+  /// Check if any PRs were achieved
+  bool get hasPRs => personalRecords.isNotEmpty;
+
+  /// Get count of PRs
+  int get prCount => personalRecords.length;
+}

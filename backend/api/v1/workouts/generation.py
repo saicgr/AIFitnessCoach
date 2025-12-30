@@ -42,6 +42,11 @@ from .utils import (
     calculate_workout_date,
     calculate_monthly_dates,
     extract_name_words,
+    get_user_strength_history,
+    get_user_favorite_exercises,
+    get_user_consistency_mode,
+    get_user_exercise_queue,
+    mark_queued_exercises_used,
 )
 
 router = APIRouter()
@@ -571,13 +576,37 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
 
-        # Start with exercises from recent days to ensure cross-week variety
-        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
-        logger.info(f"Starting weekly generation with {len(used_exercises)} recently used exercises")
+        # Check user's consistency mode preference
+        consistency_mode = await get_user_consistency_mode(request.user_id)
+        logger.info(f"User consistency mode: {consistency_mode}")
+
+        # Get recently used exercises
+        used_exercises: List[str] = []
+        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
+
+        if consistency_mode == "vary":
+            # Vary mode: avoid recently used exercises for variety
+            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
+            logger.info(f"Starting weekly generation with {len(used_exercises)} exercises to avoid (vary mode)")
+        else:
+            # Consistent mode: prefer recently used exercises
+            # Get recent exercises for POSITIVE boost (not avoidance)
+            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
+            logger.info(f"Starting weekly generation in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
 
         # Get adaptive workout service for varied parameters
         from services.adaptive_workout_service import get_adaptive_workout_service
         adaptive_service = get_adaptive_workout_service(db.client)
+
+        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
+        strength_history = await get_user_strength_history(request.user_id)
+        if strength_history:
+            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
+
+        # Fetch user's favorite exercises for prioritization
+        favorite_exercises = await get_user_favorite_exercises(request.user_id)
+        if favorite_exercises:
+            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
@@ -594,6 +623,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 logger.warning(f"Adaptive params failed for weekly: {adapt_err}, using defaults")
                 adaptive_params = None
 
+            # Get queued exercises for this focus area
+            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
+
             try:
                 # Use RAG to intelligently select exercises with adaptive params
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
@@ -607,6 +639,11 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
                     user_id=request.user_id,  # For custom goal keywords
+                    strength_history=strength_history,  # Use historical weights
+                    favorite_exercises=favorite_exercises,  # Prioritize favorites
+                    queued_exercises=queued_exercises,  # Include queued exercises
+                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
+                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
                 )
 
                 if rag_exercises:
@@ -688,6 +725,12 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
             workout = row_to_workout(created)
             await index_workout_to_rag(workout)
             generated_workouts.append(workout)
+
+            # Mark any queued exercises as used
+            if rag_exercises:
+                queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
+                if queued_used:
+                    await mark_queued_exercises_used(request.user_id, queued_used)
 
         return GenerateWeeklyResponse(workouts=generated_workouts)
 
@@ -789,9 +832,31 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         from services.adaptive_workout_service import get_adaptive_workout_service
         adaptive_service = get_adaptive_workout_service(db.client)
 
+        # Check user's consistency mode preference
+        consistency_mode = await get_user_consistency_mode(request.user_id)
+        logger.info(f"User consistency mode: {consistency_mode}")
+
         # Track used exercises for variety - use a thread-safe approach
-        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
-        logger.info(f"Starting with {len(used_exercises)} recently used exercises to ensure variety")
+        used_exercises: List[str] = []
+        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
+
+        if consistency_mode == "vary":
+            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
+            logger.info(f"Starting with {len(used_exercises)} recently used exercises to ensure variety")
+        else:
+            # Consistent mode: get recent exercises for POSITIVE boost
+            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
+            logger.info(f"Starting in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
+
+        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
+        strength_history = await get_user_strength_history(request.user_id)
+        if strength_history:
+            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
+
+        # Fetch user's favorite exercises for prioritization
+        favorite_exercises = await get_user_favorite_exercises(request.user_id)
+        if favorite_exercises:
+            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
         async def generate_single_workout(
             workout_date: datetime,
@@ -814,6 +879,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 logger.warning(f"Adaptive params failed: {adapt_err}, using defaults")
                 adaptive_params = None
 
+            # Get queued exercises for this focus area
+            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
+
             try:
                 # Use RAG to intelligently select exercises from ChromaDB/Supabase
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
@@ -828,12 +896,19 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
                     user_id=request.user_id,  # For custom goal keywords
+                    strength_history=strength_history,  # Use historical weights
+                    favorite_exercises=favorite_exercises,  # Prioritize favorites
+                    queued_exercises=queued_exercises,  # Include queued exercises
+                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
+                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
                 exercises_used = []
+                queued_used = []
                 if rag_exercises:
                     exercises_used = [ex.get("name", "") for ex in rag_exercises]
+                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
 
                     # Get the effective workout focus from adaptive params
                     effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
@@ -881,6 +956,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     "difficulty": workout_data.get("difficulty", intensity_preference),
                     "exercises": workout_data.get("exercises", []),
                     "exercises_used": exercises_used,
+                    "queued_used": queued_used,  # Track queued exercises to mark as used
                 }
 
             except Exception as e:
@@ -923,6 +999,11 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 if exercises_used_in_workout:
                     used_exercises.extend(exercises_used_in_workout)
                     logger.debug(f"Added {len(exercises_used_in_workout)} exercises to avoid list. Total: {len(used_exercises)}")
+
+                # Mark queued exercises as used
+                queued_used_in_workout = result.get("queued_used", [])
+                if queued_used_in_workout:
+                    await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
 
                 workout_db_data = {
                     "user_id": request.user_id,
@@ -1073,7 +1154,29 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             from services.adaptive_workout_service import get_adaptive_workout_service
             adaptive_service = get_adaptive_workout_service(db.client)
 
-            used_exercises: List[str] = await get_recently_used_exercises(body.user_id, days=7)
+            # Check user's consistency mode preference
+            consistency_mode = await get_user_consistency_mode(body.user_id)
+            logger.info(f"[STREAM] User consistency mode: {consistency_mode}")
+
+            used_exercises: List[str] = []
+            recently_used_for_boost: List[str] = []  # For consistency mode positive boost
+
+            if consistency_mode == "vary":
+                used_exercises = await get_recently_used_exercises(body.user_id, days=7)
+                logger.info(f"[STREAM] Using {len(used_exercises)} exercises to avoid (vary mode)")
+            else:
+                recently_used_for_boost = await get_recently_used_exercises(body.user_id, days=14)
+                logger.info(f"[STREAM] Consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
+
+            # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
+            strength_history = await get_user_strength_history(body.user_id)
+            if strength_history:
+                logger.info(f"[STREAM] Loaded strength history for {len(strength_history)} exercises")
+
+            # Fetch user's favorite exercises for prioritization
+            favorite_exercises = await get_user_favorite_exercises(body.user_id)
+            if favorite_exercises:
+                logger.info(f"[STREAM] User has {len(favorite_exercises)} favorite exercises")
 
             # Generate workouts one at a time with progress updates
             for idx, workout_date in enumerate(workout_dates):
@@ -1095,6 +1198,9 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     except Exception:
                         pass
 
+                    # Get queued exercises for this focus area
+                    queued_exercises = await get_user_exercise_queue(body.user_id, focus_area=focus)
+
                     # Select exercises via RAG
                     avoid_list = used_exercises[-30:].copy() if used_exercises else []
                     rag_exercises = await exercise_rag.select_exercises_for_workout(
@@ -1109,6 +1215,11 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         dumbbell_count=dumbbell_count,
                         kettlebell_count=kettlebell_count,
                         user_id=body.user_id,
+                        strength_history=strength_history,  # Use historical weights
+                        favorite_exercises=favorite_exercises,  # Prioritize favorites
+                        queued_exercises=queued_exercises,  # Include queued exercises
+                        consistency_mode=consistency_mode,  # Boost or avoid recent exercises
+                        recently_used_exercises=recently_used_for_boost,  # For consistency boost
                     )
 
                     if not rag_exercises:
@@ -1117,6 +1228,11 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
 
                     exercises_used = [ex.get("name", "") for ex in rag_exercises]
                     used_exercises.extend(exercises_used)
+
+                    # Mark queued exercises as used
+                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
+                    if queued_used:
+                        await mark_queued_exercises_used(body.user_id, queued_used)
 
                     # Generate workout name with AI
                     workout_data = await gemini_service.generate_workout_from_library(
@@ -1305,13 +1421,34 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
 
+        # Check user's consistency mode preference
+        consistency_mode = await get_user_consistency_mode(request.user_id)
+        logger.info(f"User consistency mode: {consistency_mode}")
+
         # Start with exercises from recent days to ensure cross-week variety
-        used_exercises: List[str] = await get_recently_used_exercises(request.user_id, days=7)
-        logger.info(f"Starting remaining generation with {len(used_exercises)} recently used exercises")
+        used_exercises: List[str] = []
+        recently_used_for_boost: List[str] = []  # For consistency mode positive boost
+
+        if consistency_mode == "vary":
+            used_exercises = await get_recently_used_exercises(request.user_id, days=7)
+            logger.info(f"Starting remaining generation with {len(used_exercises)} exercises to avoid (vary mode)")
+        else:
+            recently_used_for_boost = await get_recently_used_exercises(request.user_id, days=14)
+            logger.info(f"Starting remaining generation in consistent mode - will boost {len(recently_used_for_boost)} recent exercises")
 
         # Get adaptive workout service for varied parameters
         from services.adaptive_workout_service import get_adaptive_workout_service
         adaptive_service = get_adaptive_workout_service(db.client)
+
+        # Fetch user's strength history from ChromaDB - addresses "weird weights" issue
+        strength_history = await get_user_strength_history(request.user_id)
+        if strength_history:
+            logger.info(f"Loaded strength history for {len(strength_history)} exercises")
+
+        # Fetch user's favorite exercises for prioritization
+        favorite_exercises = await get_user_favorite_exercises(request.user_id)
+        if favorite_exercises:
+            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
         BATCH_SIZE = 4
 
@@ -1335,6 +1472,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 logger.warning(f"Adaptive params failed for regeneration: {adapt_err}, using defaults")
                 adaptive_params = None
 
+            # Get queued exercises for this focus area
+            queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
+
             try:
                 # Use RAG to intelligently select exercises
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
@@ -1349,11 +1489,18 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
                     user_id=request.user_id,  # For custom goal keywords
+                    strength_history=strength_history,  # Use historical weights
+                    favorite_exercises=favorite_exercises,  # Prioritize favorites
+                    queued_exercises=queued_exercises,  # Include queued exercises
+                    consistency_mode=consistency_mode,  # Boost or avoid recent exercises
+                    recently_used_exercises=recently_used_for_boost,  # For consistency boost
                 )
 
                 exercises_used = []
+                queued_used = []
                 if rag_exercises:
                     exercises_used = [ex.get("name", "") for ex in rag_exercises]
+                    queued_used = [ex.get("name") for ex in rag_exercises if ex.get("from_queue")]
 
                     # Get the effective workout focus from adaptive params
                     effective_focus = adaptive_params.get("workout_focus", "hypertrophy") if adaptive_params else "hypertrophy"
@@ -1410,6 +1557,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "difficulty": workout_data.get("difficulty", intensity_preference),
                     "exercises": workout_data.get("exercises", []),
                     "exercises_used": exercises_used,
+                    "queued_used": queued_used,  # Track queued exercises to mark as used
                 }
 
             except Exception as e:
@@ -1422,6 +1570,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     "difficulty": intensity_preference,
                     "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
                     "exercises_used": ["Push-ups"],
+                    "queued_used": [],
                 }
 
         for batch_start in range(0, len(workout_dates), BATCH_SIZE):
@@ -1457,6 +1606,11 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 exercises_used_in_workout = result.get("exercises_used", [])
                 if exercises_used_in_workout:
                     used_exercises.extend(exercises_used_in_workout)
+
+                # Mark queued exercises as used
+                queued_used_in_workout = result.get("queued_used", [])
+                if queued_used_in_workout:
+                    await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
 
                 workout_db_data = {
                     "user_id": request.user_id,

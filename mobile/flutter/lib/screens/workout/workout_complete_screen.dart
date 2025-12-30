@@ -32,6 +32,9 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final String? challengeId;
   final Map<String, dynamic>? challengeData;
 
+  // PRs detected by the backend during workout completion
+  final List<PersonalRecordInfo>? personalRecords;
+
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
@@ -46,6 +49,7 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.totalVolumeKg,
     this.challengeId,
     this.challengeData,
+    this.personalRecords,
   });
 
   @override
@@ -82,7 +86,29 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _loadAICoachFeedback();
-    _loadAchievements();
+
+    // Use API-provided PRs if available (preferred as they're more accurate)
+    if (widget.personalRecords != null && widget.personalRecords!.isNotEmpty) {
+      _newPRs = widget.personalRecords!.map((pr) => {
+        'exercise_name': pr.exerciseName,
+        'weight_kg': pr.weightKg,
+        'reps': pr.reps,
+        'estimated_1rm_kg': pr.estimated1rmKg,
+        'previous_pr': pr.previous1rmKg,
+        'improvement_kg': pr.improvementKg,
+        'improvement_percent': pr.improvementPercent,
+        'celebration_message': pr.celebrationMessage,
+        'is_all_time_pr': pr.isAllTimePr,
+      }).toList();
+      _isLoadingAchievements = false;
+      // Play confetti for PRs
+      Future.microtask(() => _confettiController.play());
+      debugPrint('🏆 [Complete] Using ${_newPRs.length} PRs from API');
+    } else {
+      // Fall back to client-side detection
+      _loadAchievements();
+    }
+
     _loadExerciseProgress();
 
     // Complete challenge if this workout was from a challenge
@@ -1053,32 +1079,97 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              ..._newPRs.map((pr) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: AppColors.orange, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '${pr['exercise_name']}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: textPrimaryPR,
+              ..._newPRs.map((pr) {
+                final celebrationMessage = pr['celebration_message'] as String?;
+                final improvementKg = pr['improvement_kg'] as num?;
+                final improvementPercent = pr['improvement_percent'] as num?;
+                final estimated1rm = pr['estimated_1rm_kg'] as num?;
+                final reps = pr['reps'] as int?;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: AppColors.orange, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${pr['exercise_name']}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: textPrimaryPR,
+                              ),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg${reps != null ? ' x $reps' : ''}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              if (estimated1rm != null)
+                                Text(
+                                  '1RM: ${estimated1rm.toStringAsFixed(1)} kg',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textPrimaryPR.withOpacity(0.7),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // Show improvement if available
+                      if (improvementKg != null && improvementKg > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const SizedBox(width: 26),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '+${improvementKg.toStringAsFixed(1)} kg${improvementPercent != null ? ' (+${improvementPercent.toStringAsFixed(1)}%)' : ''}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                    Text(
-                      '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              )).toList(),
+                      ],
+                      // Show AI celebration message if available
+                      if (celebrationMessage != null && celebrationMessage.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 26),
+                          child: Text(
+                            celebrationMessage,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: textPrimaryPR.withOpacity(0.8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
             ],
           ),
         );

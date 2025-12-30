@@ -20,6 +20,8 @@ from api.v1 import features  # Feature voting system (Robinhood-style)
 from api.v1 import custom_goals  # Custom training goals with AI keywords
 from api.v1 import fasting  # Intermittent fasting tracking and timer
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
+from api.v1 import scores  # Strength scores, readiness scores, personal records
+from api.v1 import workout_history  # Manual workout history import for AI learning
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -120,3 +122,9 @@ router.include_router(fasting.router, prefix="/fasting", tags=["Fasting"])
 
 # Progress photos with before/after comparisons
 router.include_router(progress_photos.router, prefix="/progress-photos", tags=["Progress Photos"])
+
+# Scores: strength scores, readiness scores, personal records
+router.include_router(scores.router, prefix="/scores", tags=["Scores"])
+
+# Workout history import for AI learning (manual entry of past workouts)
+router.include_router(workout_history.router, tags=["Workout History"])

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/consistency_mode_provider.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/timezone_provider.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -242,12 +246,90 @@ class SettingsCard extends ConsumerWidget {
     );
   }
 
+  void _showConsistencyModeSelector(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentMode = ref.read(consistencyModeProvider).mode;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Exercise Consistency',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'How should the AI select exercises for your workouts?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...ConsistencyMode.values.map((mode) => _ConsistencyModeOptionTile(
+                  mode: mode,
+                  isSelected: mode == currentMode,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ref.read(consistencyModeProvider.notifier).setMode(mode);
+                    Navigator.pop(context);
+                  },
+                )),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToFavoriteExercises(BuildContext context) {
+    context.push('/settings/favorite-exercises');
+  }
+
+  void _navigateToExerciseQueue(BuildContext context) {
+    context.push('/settings/exercise-queue');
+  }
+
+  void _navigateToWorkoutHistoryImport(BuildContext context) {
+    context.push('/settings/workout-history-import');
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final timezoneState = ref.watch(timezoneProvider);
     final trainingPrefs = ref.watch(trainingPreferencesProvider);
     final envEquipState = ref.watch(environmentEquipmentProvider);
+    final consistencyModeState = ref.watch(consistencyModeProvider);
+    final favoritesState = ref.watch(favoritesProvider);
+    final queueState = ref.watch(exerciseQueueProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDarkModeActive = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
@@ -406,6 +488,78 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _showEquipmentSelector(context, ref);
+          } else if (item.isConsistencyModeSelector) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  consistencyModeState.mode.displayName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showConsistencyModeSelector(context, ref);
+          } else if (item.isFavoriteExercisesManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${favoritesState.favorites.length} exercises',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToFavoriteExercises(context);
+          } else if (item.isExerciseQueueManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${queueState.activeQueue.length} queued',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToExerciseQueue(context);
+          } else if (item.isWorkoutHistoryImport) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToWorkoutHistoryImport(context);
           } else {
             trailing = item.trailing;
           }
@@ -425,7 +579,11 @@ class SettingsCard extends ConsumerWidget {
                     !item.isProgressionPaceSelector &&
                     !item.isWorkoutTypeSelector &&
                     !item.isWorkoutEnvironmentSelector &&
-                    !item.isEquipmentSelector,
+                    !item.isEquipmentSelector &&
+                    !item.isConsistencyModeSelector &&
+                    !item.isFavoriteExercisesManager &&
+                    !item.isExerciseQueueManager &&
+                    !item.isWorkoutHistoryImport,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -1103,6 +1261,114 @@ class _EquipmentOptionTile extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A tile for consistency mode selection in the bottom sheet.
+class _ConsistencyModeOptionTile extends StatelessWidget {
+  final ConsistencyMode mode;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ConsistencyModeOptionTile({
+    required this.mode,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  IconData get _icon {
+    switch (mode) {
+      case ConsistencyMode.vary:
+        return Icons.shuffle;
+      case ConsistencyMode.consistent:
+        return Icons.repeat;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.cyan : cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _icon,
+              color: isSelected ? AppColors.cyan : textMuted,
+              size: 28,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        mode.displayName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                        ),
+                      ),
+                      if (mode == ConsistencyMode.consistent) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.purple.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'For Learning',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.purple,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    mode.description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check_circle,
+                color: AppColors.cyan,
+                size: 24,
+              ),
           ],
         ),
       ),

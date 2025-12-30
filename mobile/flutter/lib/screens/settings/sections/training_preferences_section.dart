@@ -6,6 +6,9 @@ import '../widgets/widgets.dart';
 /// Allows users to configure:
 /// - Progression Pace: How fast to increase weights (slow/medium/fast)
 /// - Workout Type: Strength, cardio, or mixed
+/// - Exercise Consistency: Vary exercises or keep consistent
+/// - Favorite Exercises: Manage favorite exercises for AI prioritization
+/// - Exercise Queue: Queue exercises for upcoming workouts
 /// - Workout Environment: Where they train (gym, home, etc.)
 /// - Equipment: What equipment they have access to
 class TrainingPreferencesSection extends StatelessWidget {
@@ -31,6 +34,30 @@ class TrainingPreferencesSection extends StatelessWidget {
               title: 'Workout Type',
               subtitle: 'Strength, cardio, or mixed',
               isWorkoutTypeSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.shuffle,
+              title: 'Exercise Consistency',
+              subtitle: 'Vary or keep same exercises',
+              isConsistencyModeSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.favorite,
+              title: 'Favorite Exercises',
+              subtitle: 'AI will prioritize these',
+              isFavoriteExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.queue,
+              title: 'Exercise Queue',
+              subtitle: 'Queue exercises for next workout',
+              isExerciseQueueManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.history,
+              title: 'Import Workout History',
+              subtitle: 'Add past workouts for better AI weights',
+              isWorkoutHistoryImport: true,
             ),
             SettingItemData(
               icon: Icons.location_on,

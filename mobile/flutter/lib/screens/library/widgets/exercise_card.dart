@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/providers/favorites_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -68,6 +71,19 @@ class ExerciseCard extends ConsumerWidget {
     );
   }
 
+  void _toggleFavorite(WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(favoritesProvider.notifier).toggleFavorite(exercise.name);
+  }
+
+  void _toggleQueue(WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(exerciseQueueProvider.notifier).toggleQueue(
+      exercise.name,
+      targetMuscleGroup: exercise.muscleGroup,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -76,6 +92,12 @@ class ExerciseCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final hasVideo = exercise.videoUrl != null && exercise.videoUrl!.isNotEmpty;
+
+    // Watch favorites and queue state
+    final favoritesState = ref.watch(favoritesProvider);
+    final queueState = ref.watch(exerciseQueueProvider);
+    final isFavorite = favoritesState.isFavorite(exercise.name);
+    final isQueued = queueState.isQueued(exercise.name);
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),
@@ -191,15 +213,53 @@ class ExerciseCard extends ConsumerWidget {
               ),
             ),
 
-            // Add to workout button + Arrow
+            // Action buttons row
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Favorite button
+                GestureDetector(
+                  onTap: () => _toggleFavorite(ref),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isFavorite
+                          ? AppColors.error.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? AppColors.error : textMuted,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                // Queue button
+                GestureDetector(
+                  onTap: () => _toggleQueue(ref),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isQueued
+                          ? AppColors.cyan.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                      color: isQueued ? AppColors.cyan : textMuted,
+                      size: 18,
+                    ),
+                  ),
+                ),
                 // Add to workout button
                 GestureDetector(
                   onTap: () => _showAddToWorkoutSheet(context, ref),
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: AppColors.success.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -207,19 +267,20 @@ class ExerciseCard extends ConsumerWidget {
                     child: Icon(
                       Icons.add_circle_outline,
                       color: AppColors.success,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 // Arrow
                 Icon(
                   Icons.chevron_right,
                   color: textMuted,
+                  size: 20,
                 ),
               ],
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
           ],
         ),
       ),

@@ -7,15 +7,17 @@ This module handles basic create, read, update, delete operations for workouts:
 - GET /{id} - Get workout by ID
 - PUT /{id} - Update workout
 - DELETE /{id} - Delete workout
-- POST /{id}/complete - Mark workout as completed
+- POST /{id}/complete - Mark workout as completed (with PR detection & strength recalc)
 """
 import json
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime, date, timedelta
+from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
+from core.db import get_supabase_db as get_db
 from core.logger import get_logger
 from models.schemas import Workout, WorkoutCreate, WorkoutUpdate
 
@@ -25,8 +27,35 @@ from .utils import (
     index_workout_to_rag,
 )
 
+# Import services for PR detection and strength calculation
+from services.personal_records_service import PersonalRecordsService
+from services.strength_calculator_service import StrengthCalculatorService, MuscleGroup
+from services.ai_insights_service import ai_insights_service
+
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# Response model for workout completion with PRs
+class PersonalRecordInfo(BaseModel):
+    """PR info returned after workout completion."""
+    exercise_name: str
+    weight_kg: float
+    reps: int
+    estimated_1rm_kg: float
+    previous_1rm_kg: Optional[float] = None
+    improvement_kg: Optional[float] = None
+    improvement_percent: Optional[float] = None
+    is_all_time_pr: bool = True
+    celebration_message: Optional[str] = None
+
+
+class WorkoutCompletionResponse(BaseModel):
+    """Extended response for workout completion including PRs."""
+    workout: Workout
+    personal_records: List[PersonalRecordInfo] = []
+    strength_scores_updated: bool = False
+    message: str = "Workout completed successfully"
 
 
 @router.post("/", response_model=Workout)
@@ -205,18 +234,33 @@ async def delete_workout(workout_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/{workout_id}/complete", response_model=Workout)
-async def complete_workout(workout_id: str):
-    """Mark a workout as completed."""
+@router.post("/{workout_id}/complete", response_model=WorkoutCompletionResponse)
+async def complete_workout(
+    workout_id: str,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Mark a workout as completed with PR detection and strength score updates.
+
+    This endpoint:
+    1. Marks the workout as completed
+    2. Detects any new personal records from the workout exercises
+    3. Saves PRs to the database with AI-generated celebration messages
+    4. Triggers background recalculation of strength scores
+    """
     logger.info(f"Completing workout: id={workout_id}")
     try:
         db = get_supabase_db()
+        supabase = get_db()
 
         existing = db.get_workout(workout_id)
         if not existing:
             logger.warning(f"Workout not found: id={workout_id}")
             raise HTTPException(status_code=404, detail="Workout not found")
 
+        user_id = existing.get("user_id")
+
+        # Mark workout as completed
         update_data = {
             "is_completed": True,
             "last_modified_at": datetime.now().isoformat(),
@@ -237,11 +281,260 @@ async def complete_workout(workout_id: str):
             change_source="user"
         )
 
+        # =====================================================================
+        # PR Detection
+        # =====================================================================
+        detected_prs: List[PersonalRecordInfo] = []
+
+        try:
+            pr_service = PersonalRecordsService()
+
+            # Get exercises from workout
+            exercises = existing.get("exercises") or existing.get("exercises_json") or []
+            if isinstance(exercises, str):
+                exercises = json.loads(exercises)
+
+            if exercises:
+                # Get existing PRs for this user
+                existing_prs_response = supabase.table("personal_records").select("*").eq(
+                    "user_id", user_id
+                ).execute()
+
+                existing_prs_by_exercise: Dict[str, List[Dict]] = {}
+                for pr in (existing_prs_response.data or []):
+                    exercise_key = pr_service._normalize_exercise_name(pr.get("exercise_name", ""))
+                    if exercise_key not in existing_prs_by_exercise:
+                        existing_prs_by_exercise[exercise_key] = []
+                    existing_prs_by_exercise[exercise_key].append(pr)
+
+                # Format exercises for PR detection
+                workout_exercises = []
+                for ex in exercises:
+                    sets = ex.get("sets", [])
+                    if sets:
+                        workout_exercises.append({
+                            "exercise_name": ex.get("name", ""),
+                            "exercise_id": ex.get("id") or ex.get("exercise_id"),
+                            "workout_id": workout_id,
+                            "sets": sets,
+                        })
+
+                # Detect PRs
+                new_prs = pr_service.detect_prs_in_workout(
+                    workout_exercises=workout_exercises,
+                    existing_prs_by_exercise=existing_prs_by_exercise,
+                )
+
+                logger.info(f"Detected {len(new_prs)} PRs in workout {workout_id}")
+
+                # Save PRs and generate AI celebrations
+                for pr in new_prs:
+                    # Generate AI celebration message
+                    try:
+                        ai_celebration = await ai_insights_service.generate_pr_celebration(
+                            pr_data={
+                                "exercise_name": pr.exercise_name,
+                                "weight_kg": pr.weight_kg,
+                                "reps": pr.reps,
+                                "estimated_1rm_kg": pr.estimated_1rm_kg,
+                                "previous_1rm_kg": pr.previous_1rm_kg,
+                                "improvement_kg": pr.improvement_kg,
+                                "improvement_percent": pr.improvement_percent,
+                            },
+                            user_profile={"id": user_id},
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to generate AI celebration: {e}")
+                        ai_celebration = pr.celebration_message
+
+                    # Save to database
+                    pr_record = {
+                        "user_id": user_id,
+                        "exercise_name": pr.exercise_name,
+                        "exercise_id": pr.exercise_id,
+                        "muscle_group": pr.muscle_group,
+                        "weight_kg": pr.weight_kg,
+                        "reps": pr.reps,
+                        "estimated_1rm_kg": pr.estimated_1rm_kg,
+                        "set_type": pr.set_type,
+                        "rpe": pr.rpe,
+                        "achieved_at": datetime.now().isoformat(),
+                        "workout_id": workout_id,
+                        "previous_weight_kg": pr.previous_weight_kg,
+                        "previous_1rm_kg": pr.previous_1rm_kg,
+                        "improvement_kg": pr.improvement_kg,
+                        "improvement_percent": pr.improvement_percent,
+                        "is_all_time_pr": pr.is_all_time_pr,
+                        "celebration_message": ai_celebration,
+                    }
+
+                    supabase.table("personal_records").insert(pr_record).execute()
+
+                    detected_prs.append(PersonalRecordInfo(
+                        exercise_name=pr.exercise_name,
+                        weight_kg=pr.weight_kg,
+                        reps=pr.reps,
+                        estimated_1rm_kg=pr.estimated_1rm_kg,
+                        previous_1rm_kg=pr.previous_1rm_kg,
+                        improvement_kg=pr.improvement_kg,
+                        improvement_percent=pr.improvement_percent,
+                        is_all_time_pr=pr.is_all_time_pr,
+                        celebration_message=ai_celebration,
+                    ))
+
+                logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
+
+        except Exception as e:
+            logger.error(f"Error during PR detection: {e}")
+            # Continue even if PR detection fails
+
+        # =====================================================================
+        # Background: Recalculate Strength Scores
+        # =====================================================================
+        background_tasks.add_task(
+            recalculate_user_strength_scores,
+            user_id=user_id,
+            supabase=supabase,
+        )
+
         await index_workout_to_rag(workout)
-        return workout
+
+        # Build response message
+        if detected_prs:
+            pr_count = len(detected_prs)
+            message = f"Workout completed! You set {pr_count} new personal record{'s' if pr_count > 1 else ''}!"
+        else:
+            message = "Workout completed successfully!"
+
+        return WorkoutCompletionResponse(
+            workout=workout,
+            personal_records=detected_prs,
+            strength_scores_updated=True,
+            message=message,
+        )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def recalculate_user_strength_scores(user_id: str, supabase):
+    """
+    Background task to recalculate strength scores after workout completion.
+    """
+    try:
+        logger.info(f"Background: Recalculating strength scores for user {user_id}")
+
+        strength_service = StrengthCalculatorService()
+
+        # Get user info
+        user_response = supabase.table("users").select("weight_kg, gender").eq(
+            "id", user_id
+        ).maybe_single().execute()
+
+        if not user_response.data:
+            logger.warning(f"User not found for strength recalc: {user_id}")
+            return
+
+        user = user_response.data
+        bodyweight = float(user.get("weight_kg", 70))
+        gender = user.get("gender", "male")
+
+        # Get workout data from last 90 days
+        start_date = (date.today() - timedelta(days=90)).isoformat()
+
+        workouts_response = supabase.table("workouts").select(
+            "id, exercises, completed_at"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "is_completed", True
+        ).gte(
+            "scheduled_date", start_date
+        ).execute()
+
+        # Extract exercise performances
+        workout_data = []
+        for workout in (workouts_response.data or []):
+            exercises = workout.get("exercises", [])
+            if isinstance(exercises, str):
+                exercises = json.loads(exercises)
+            for exercise in exercises:
+                if isinstance(exercise, dict):
+                    sets = exercise.get("sets", [])
+                    if sets:
+                        best_set = max(
+                            (s for s in sets if s.get("completed", True)),
+                            key=lambda s: float(s.get("weight_kg", 0)) * int(s.get("reps", 0)),
+                            default=None,
+                        )
+                        if best_set:
+                            workout_data.append({
+                                "exercise_name": exercise.get("name", ""),
+                                "weight_kg": float(best_set.get("weight_kg", 0)),
+                                "reps": int(best_set.get("reps", 0)),
+                                "sets": len(sets),
+                            })
+
+        # Calculate scores for all muscle groups
+        muscle_scores = strength_service.calculate_all_muscle_scores(
+            workout_data, bodyweight, gender
+        )
+
+        # Get previous scores for trend calculation
+        previous_response = supabase.from_("latest_strength_scores").select(
+            "muscle_group, strength_score"
+        ).eq("user_id", user_id).execute()
+
+        previous_scores = {
+            r["muscle_group"]: r["strength_score"]
+            for r in (previous_response.data or [])
+        }
+
+        # Save new scores
+        now = datetime.now()
+        period_end = date.today()
+        period_start = period_end - timedelta(days=7)
+
+        for mg, score in muscle_scores.items():
+            prev_score = previous_scores.get(mg)
+
+            # Determine trend
+            if prev_score is not None:
+                if score.strength_score > prev_score + 2:
+                    trend = "improving"
+                elif score.strength_score < prev_score - 2:
+                    trend = "declining"
+                else:
+                    trend = "maintaining"
+                score_change = score.strength_score - prev_score
+            else:
+                trend = "maintaining"
+                score_change = None
+
+            record_data = {
+                "user_id": user_id,
+                "muscle_group": mg,
+                "strength_score": score.strength_score,
+                "strength_level": score.strength_level.value,
+                "best_exercise_name": score.best_exercise_name,
+                "best_estimated_1rm_kg": score.best_estimated_1rm_kg,
+                "bodyweight_ratio": score.bodyweight_ratio,
+                "weekly_sets": score.weekly_sets,
+                "weekly_volume_kg": score.weekly_volume_kg,
+                "previous_score": prev_score,
+                "score_change": score_change,
+                "trend": trend,
+                "calculated_at": now.isoformat(),
+                "period_start": period_start.isoformat(),
+                "period_end": period_end.isoformat(),
+            }
+
+            supabase.table("strength_scores").insert(record_data).execute()
+
+        logger.info(f"Background: Updated strength scores for {len(muscle_scores)} muscle groups")
+
+    except Exception as e:
+        logger.error(f"Background: Failed to recalculate strength scores: {e}")

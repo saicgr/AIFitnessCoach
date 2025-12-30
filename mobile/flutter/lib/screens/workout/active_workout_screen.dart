@@ -2096,6 +2096,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     double totalVolumeKg = 0.0;
     int totalRestSeconds = 0;
     double avgRestSeconds = 0.0;
+    List<PersonalRecordInfo>? personalRecords;
 
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
@@ -2175,9 +2176,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         );
         debugPrint('✅ Workout exit logged as completed');
 
-        // 6. Mark workout as complete in workouts table
-        await workoutRepo.completeWorkout(widget.workout.id!);
+        // 6. Mark workout as complete in workouts table and get PRs
+        final completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
         debugPrint('✅ Workout marked as complete');
+
+        // Store PRs from the response
+        if (completionResponse != null && completionResponse.hasPRs) {
+          personalRecords = completionResponse.personalRecords;
+          debugPrint('🏆 Got ${personalRecords!.length} PRs from completion API');
+        }
 
         // 7. Build exercises performance data for social post
         final exercisesPerformanceForSocial = <Map<String, dynamic>>[];
@@ -2243,6 +2250,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       debugPrint('🏋️ [Complete] workoutId: ${widget.workout.id}');
       debugPrint('🏋️ [Complete] exercisesPerformance: ${exercisesPerformance.length} exercises');
       debugPrint('🏋️ [Complete] totalSets: $totalCompletedSets, totalReps: $totalReps, totalVolumeKg: $totalVolumeKg');
+      debugPrint('🏋️ [Complete] personalRecords: ${personalRecords?.length ?? 0} PRs');
 
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
@@ -2261,6 +2269,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         // Challenge data (if this workout was from a challenge)
         'challengeId': widget.challengeId,
         'challengeData': widget.challengeData,
+        // PRs detected from workout completion
+        'personalRecords': personalRecords,
       });
     }
   }

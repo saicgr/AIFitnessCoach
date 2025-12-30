@@ -83,13 +83,28 @@ class WorkoutRepository {
   }
 
   /// Mark workout as complete
-  Future<Workout?> completeWorkout(String workoutId) async {
+  /// Returns WorkoutCompletionResponse which includes PRs detected during the workout
+  Future<WorkoutCompletionResponse?> completeWorkout(String workoutId) async {
     try {
+      debugPrint('🏋️ [Workout] Completing workout: $workoutId');
       final response = await _apiClient.post(
         '${ApiConstants.workouts}/$workoutId/complete',
       );
       if (response.statusCode == 200) {
-        return Workout.fromJson(response.data as Map<String, dynamic>);
+        final completionResponse = WorkoutCompletionResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Workout completed: ${completionResponse.message}');
+        if (completionResponse.hasPRs) {
+          debugPrint('🏆 [Workout] ${completionResponse.prCount} PRs detected!');
+          for (final pr in completionResponse.personalRecords) {
+            debugPrint('  - ${pr.exerciseName}: ${pr.weightKg}kg x ${pr.reps} = ${pr.estimated1rmKg}kg 1RM');
+            if (pr.celebrationMessage != null) {
+              debugPrint('    🎉 ${pr.celebrationMessage}');
+            }
+          }
+        }
+        return completionResponse;
       }
       return null;
     } catch (e) {

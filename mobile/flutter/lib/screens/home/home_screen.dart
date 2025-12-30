@@ -307,6 +307,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: _buildTodaySectionHeader(isDark),
               ),
 
+              // Readiness Check-in Card
+              const SliverToBoxAdapter(
+                child: HomeReadinessCard(),
+              ),
+
               // Daily Activity Card
               const SliverToBoxAdapter(
                 child: DailyActivityCard(),

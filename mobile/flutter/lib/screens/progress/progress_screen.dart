@@ -7,12 +7,17 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/progress_photos.dart';
+import '../../data/models/scores.dart';
+import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
 import 'log_measurement_sheet.dart';
 import 'comparison_view.dart';
 import 'photo_editor_screen.dart';
+import 'widgets/readiness_checkin_card.dart';
+import 'widgets/strength_overview_card.dart';
+import 'widgets/pr_summary_card.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -31,12 +36,19 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
     _loadData();
+  }
+
+  void _handleTabChange() {
+    // Trigger rebuild when tab changes for FAB visibility
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -79,6 +91,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             unselectedLabelColor: colorScheme.onSurfaceVariant,
             indicatorColor: colorScheme.primary,
             tabs: const [
+              Tab(icon: Icon(Icons.fitness_center), text: 'Scores'),
               Tab(icon: Icon(Icons.photo_library), text: 'Photos'),
               Tab(icon: Icon(Icons.straighten), text: 'Measurements'),
             ],
@@ -89,6 +102,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
             : TabBarView(
                 controller: _tabController,
                 children: [
+                  _buildScoresTab(),
                   _buildPhotosTab(),
                   _buildMeasurementsTab(),
                 ],
@@ -98,16 +112,352 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
     );
   }
 
-  Widget _buildFAB() {
+  Widget? _buildFAB() {
+    // No FAB for Scores tab (index 0)
+    if (_tabController.index == 0) return null;
+
+    final isPhotosTab = _tabController.index == 1;
     return FloatingActionButton.extended(
-      onPressed: () => _tabController.index == 0
+      onPressed: () => isPhotosTab
           ? _showAddPhotoSheet()
           : _showAddMeasurementSheet(),
-      icon: Icon(_tabController.index == 0 ? Icons.camera_alt : Icons.add),
-      label: Text(_tabController.index == 0 ? 'Add Photo' : 'Log Measurement'),
+      icon: Icon(isPhotosTab ? Icons.camera_alt : Icons.add),
+      label: Text(isPhotosTab ? 'Add Photo' : 'Log Measurement'),
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
     );
+  }
+
+  // ============================================
+  // Scores Tab
+  // ============================================
+
+  Widget _buildScoresTab() {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(scoresProvider.notifier).loadScoresOverview(userId: _userId);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Readiness Check-in Card
+            ReadinessCheckinCard(
+              userId: _userId!,
+              onCheckInComplete: () {
+                // Refresh overview after check-in
+                ref.read(scoresProvider.notifier).loadScoresOverview();
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Strength Overview Card
+            StrengthOverviewCard(
+              userId: _userId!,
+              onTapMuscleGroup: (muscleGroup) {
+                // Navigate to muscle detail - we could add a detailed view later
+                _showMuscleDetail(muscleGroup);
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Personal Records Summary Card
+            PRSummaryCard(userId: _userId!),
+            const SizedBox(height: 80), // Bottom padding for scroll
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMuscleDetail(String muscleGroup) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.fitness_center, color: colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatMuscleGroupName(muscleGroup),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final scoresState = ref.watch(scoresProvider);
+                      final muscleData =
+                          scoresState.strengthScores?.muscleScores[muscleGroup];
+
+                      if (muscleData == null) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 48,
+                                color: colorScheme.outline,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No data for this muscle group yet',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Complete workouts targeting this muscle\nto see your strength progress.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.outline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Level card
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color:
+                                  Color(muscleData.levelColor).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Color(muscleData.levelColor)
+                                    .withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: Color(muscleData.levelColor),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${muscleData.strengthScore}',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        muscleData.levelDisplayName,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(muscleData.levelColor),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: muscleData.progressToNextLevel,
+                                          backgroundColor: colorScheme.outline
+                                              .withOpacity(0.2),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Color(muscleData.levelColor),
+                                          ),
+                                          minHeight: 6,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Progress to next level',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Stats
+                          Text(
+                            'Details',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            'Best Exercise',
+                            muscleData.bestExerciseName ?? 'N/A',
+                            Icons.star,
+                          ),
+                          if (muscleData.bestEstimated1rmKg != null)
+                            _buildDetailRow(
+                              'Estimated 1RM',
+                              '${muscleData.bestEstimated1rmKg!.toStringAsFixed(1)} kg',
+                              Icons.fitness_center,
+                            ),
+                          if (muscleData.bodyweightRatio != null)
+                            _buildDetailRow(
+                              'Bodyweight Ratio',
+                              '${muscleData.bodyweightRatio!.toStringAsFixed(2)}x',
+                              Icons.monitor_weight,
+                            ),
+                          _buildDetailRow(
+                            'Weekly Sets',
+                            '${muscleData.weeklySets}',
+                            Icons.repeat,
+                          ),
+                          _buildDetailRow(
+                            'Weekly Volume',
+                            '${muscleData.weeklyVolumeKg.toStringAsFixed(0)} kg',
+                            Icons.trending_up,
+                          ),
+                          _buildDetailRow(
+                            'Trend',
+                            muscleData.trend[0].toUpperCase() +
+                                muscleData.trend.substring(1),
+                            _getTrendIcon(muscleData.trendDirection),
+                            valueColor:
+                                _getTrendColor(muscleData.trendDirection),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value,
+    IconData icon, {
+    Color? valueColor,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colorScheme.outline),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatMuscleGroupName(String name) {
+    return name
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) =>
+            word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
+  IconData _getTrendIcon(TrendDirection trend) {
+    switch (trend) {
+      case TrendDirection.improving:
+        return Icons.trending_up;
+      case TrendDirection.declining:
+        return Icons.trending_down;
+      case TrendDirection.maintaining:
+        return Icons.trending_flat;
+    }
+  }
+
+  Color _getTrendColor(TrendDirection trend) {
+    switch (trend) {
+      case TrendDirection.improving:
+        return Colors.green;
+      case TrendDirection.declining:
+        return Colors.red;
+      case TrendDirection.maintaining:
+        return Colors.grey;
+    }
   }
 
   // ============================================

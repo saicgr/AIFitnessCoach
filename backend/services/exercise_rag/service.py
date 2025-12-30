@@ -230,6 +230,11 @@ class ExerciseRAGService:
         kettlebell_count: int = 1,
         workout_params: Optional[Dict] = None,
         user_id: Optional[str] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
+        favorite_exercises: Optional[List[str]] = None,
+        queued_exercises: Optional[List[Dict]] = None,
+        consistency_mode: str = "vary",
+        recently_used_exercises: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -246,12 +251,27 @@ class ExerciseRAGService:
             kettlebell_count: Number of kettlebells user has (1 or 2)
             workout_params: Optional adaptive parameters (sets, reps, rest_seconds)
             user_id: User ID for fetching custom goal keywords (optional)
+            strength_history: Dict mapping exercise names to historical weight data
+                              e.g. {"Bench Press": {"last_weight_kg": 70, "max_weight_kg": 85, "last_reps": 8}}
+            favorite_exercises: List of user's favorite exercise names to prioritize
+            queued_exercises: List of exercises user has queued for inclusion
+            consistency_mode: "vary" to avoid recent exercises, "consistent" to prefer them
+            recently_used_exercises: List of exercises used in recent workouts (for consistency boost)
 
         Returns:
             List of selected exercises with full details
         """
         logger.info(f"Selecting {count} exercises for {focus_area} workout")
         logger.info(f"Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
+        logger.info(f"Consistency mode: {consistency_mode}")
+        if strength_history:
+            logger.info(f"Using strength history for {len(strength_history)} exercises")
+        if favorite_exercises:
+            logger.info(f"User has {len(favorite_exercises)} favorite exercises")
+        if queued_exercises:
+            logger.info(f"User has {len(queued_exercises)} queued exercises")
+        if recently_used_exercises:
+            logger.info(f"User has {len(recently_used_exercises)} recently used exercises")
         if injuries:
             logger.info(f"User has injuries/conditions: {injuries}")
 
@@ -378,18 +398,136 @@ class ExerciseRAGService:
             else:
                 logger.warning("Pre-filter removed all candidates, keeping original list")
 
-        # Use AI to make final selection
-        selected = await self._ai_select_exercises(
-            candidates=candidates[:20],
-            focus_area=focus_area,
-            fitness_level=fitness_level,
-            goals=goals,
-            count=count,
-            injuries=injuries,
-            workout_params=workout_params,
-        )
+        # Boost favorites: STRONG boost to ensure favorites are prioritized
+        # Using 2.5x multiplier (was 1.5x) - favorites should almost always be included
+        if favorite_exercises:
+            favorite_names_lower = [f.lower() for f in favorite_exercises]
+            for candidate in candidates:
+                if candidate["name"].lower() in favorite_names_lower:
+                    # 150% boost (2.5x multiplier) - favorites get strong priority
+                    candidate["similarity"] = min(1.0, candidate["similarity"] * 2.5)
+                    candidate["is_favorite"] = True
+                    candidate["boost_reason"] = "favorite"
+                    logger.info(f"Boosted favorite exercise (2.5x): {candidate['name']} -> {candidate['similarity']:.2f}")
+                else:
+                    candidate["is_favorite"] = False
 
-        return selected
+            # Re-sort by similarity after boosting
+            candidates.sort(key=lambda x: x["similarity"], reverse=True)
+
+        # Consistency mode boost: In "consistent" mode, boost recently used exercises
+        # This ensures users who prefer consistent routines get exercises they know
+        if consistency_mode == "consistent" and recently_used_exercises:
+            recently_used_lower = [e.lower() for e in recently_used_exercises]
+            boosted_count = 0
+            for candidate in candidates:
+                if candidate["name"].lower() in recently_used_lower:
+                    # 80% boost (1.8x multiplier) for recently used in consistent mode
+                    original_sim = candidate["similarity"]
+                    candidate["similarity"] = min(1.0, candidate["similarity"] * 1.8)
+                    candidate["consistency_boosted"] = True
+                    if not candidate.get("boost_reason"):
+                        candidate["boost_reason"] = "consistent_routine"
+                    else:
+                        candidate["boost_reason"] += "+consistent_routine"
+                    boosted_count += 1
+                    logger.info(f"Boosted consistent exercise (1.8x): {candidate['name']} {original_sim:.2f} -> {candidate['similarity']:.2f}")
+                else:
+                    candidate["consistency_boosted"] = False
+
+            if boosted_count > 0:
+                logger.info(f"Consistency mode: boosted {boosted_count} recently used exercises")
+                # Re-sort after consistency boost
+                candidates.sort(key=lambda x: x["similarity"], reverse=True)
+
+        # Process queued exercises - include them first before AI selection
+        # Track exclusion reasons for user feedback
+        queued_included = []
+        queued_names_used = []
+        queued_exclusion_reasons = []  # Track why queued exercises weren't included
+
+        if queued_exercises:
+            queued_names = [q["name"].lower() for q in queued_exercises]
+            candidate_names_lower = [c["name"].lower() for c in candidates]
+
+            # Find queued exercises in candidates
+            for queued in queued_exercises:
+                queued_name_lower = queued["name"].lower()
+                queued_focus = queued.get("target_muscle_group", "").lower()
+
+                # Check if this exercise is in our candidates
+                found_in_candidates = False
+                for candidate in candidates:
+                    if candidate["name"].lower() == queued_name_lower:
+                        queued_included.append(candidate)
+                        queued_names_used.append(candidate["name"])
+                        candidate["from_queue"] = True
+                        found_in_candidates = True
+                        logger.info(f"Including queued exercise: {candidate['name']}")
+                        break
+
+                # Track why exercise wasn't included
+                if not found_in_candidates:
+                    reason = {
+                        "exercise_name": queued["name"],
+                        "queued_focus": queued_focus,
+                        "current_focus": focus_area,
+                    }
+
+                    if queued_focus and queued_focus != focus_area.lower():
+                        reason["exclusion_reason"] = f"Focus area mismatch: queued for '{queued_focus}', today is '{focus_area}'"
+                    elif queued_name_lower not in candidate_names_lower:
+                        reason["exclusion_reason"] = "Exercise not found in available library for current equipment"
+                    else:
+                        reason["exclusion_reason"] = "Exercise filtered out (equipment/injury filter)"
+
+                    queued_exclusion_reasons.append(reason)
+                    logger.info(f"Queued exercise excluded: {queued['name']} - {reason['exclusion_reason']}")
+
+            # Remove queued exercises from candidates to avoid duplicates
+            candidates = [c for c in candidates if c["name"].lower() not in queued_names]
+
+        # Calculate how many more exercises we need from AI selection
+        remaining_count = count - len(queued_included)
+
+        if remaining_count > 0:
+            # Use AI to select remaining exercises
+            selected = await self._ai_select_exercises(
+                candidates=candidates[:20],
+                focus_area=focus_area,
+                fitness_level=fitness_level,
+                goals=goals,
+                count=remaining_count,
+                injuries=injuries,
+                workout_params=workout_params,
+                strength_history=strength_history,
+            )
+        else:
+            selected = []
+
+        # Combine queued exercises first, then AI-selected exercises
+        final_selection = queued_included + selected
+
+        # Store queued exercise names for marking as used (returned via metadata)
+        if queued_names_used:
+            for ex in final_selection:
+                if ex["name"] in queued_names_used:
+                    ex["from_queue"] = True
+
+        # Add metadata about selection process for transparency
+        selection_metadata = {
+            "queued_included_count": len(queued_included),
+            "queued_exclusion_reasons": queued_exclusion_reasons,
+            "favorites_in_selection": sum(1 for ex in final_selection if ex.get("is_favorite")),
+            "consistency_boosted_count": sum(1 for ex in final_selection if ex.get("consistency_boosted")),
+            "historical_weights_available": len(strength_history) if strength_history else 0,
+        }
+
+        # Attach metadata to first exercise (will be extracted by generation.py)
+        if final_selection:
+            final_selection[0]["_selection_metadata"] = selection_metadata
+
+        return final_selection
 
     async def _ai_select_exercises(
         self,
@@ -400,6 +538,7 @@ class ExerciseRAGService:
         count: int,
         injuries: Optional[List[str]] = None,
         workout_params: Optional[Dict] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
 
@@ -497,7 +636,9 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
                     seen_indices.add(idx)
                     seen_names.add(exercise_name)
-                    selected.append(self._format_exercise_for_workout(ex, fitness_level, workout_params))
+                    selected.append(self._format_exercise_for_workout(
+                        ex, fitness_level, workout_params, strength_history
+                    ))
 
             # If we don't have enough exercises due to duplicates, try to fill from remaining candidates
             if len(selected) < count:
@@ -510,7 +651,9 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                         if exercise_name not in seen_names:
                             seen_indices.add(i + 1)
                             seen_names.add(exercise_name)
-                            selected.append(self._format_exercise_for_workout(candidate, fitness_level, workout_params))
+                            selected.append(self._format_exercise_for_workout(
+                                candidate, fitness_level, workout_params, strength_history
+                            ))
 
             logger.info(f"AI selected {len(selected)} unique exercises: {[e['name'] for e in selected]}")
             return selected
@@ -523,12 +666,14 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         self,
         exercise: Dict,
         fitness_level: str,
-        workout_params: Optional[Dict] = None
+        workout_params: Optional[Dict] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
     ) -> Dict:
         """
         Format an exercise for inclusion in a workout.
 
         Includes equipment-aware starting weight recommendations based on:
+        - User's historical strength data (if available) - HIGHEST PRIORITY
         - Exercise type (compound vs isolation)
         - Equipment type (dumbbell, barbell, machine, etc.)
         - User's fitness level
@@ -537,6 +682,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             exercise: Raw exercise data from the database
             fitness_level: User's fitness level (beginner, intermediate, advanced)
             workout_params: Optional adaptive parameters (sets, reps, rest_seconds)
+            strength_history: Dict mapping exercise names to historical weight data
+                              e.g. {"Bench Press": {"last_weight_kg": 70, "max_weight_kg": 85, "last_reps": 8}}
 
         Returns:
             Formatted exercise dict with realistic weight recommendations
@@ -562,15 +709,36 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
         # Get equipment type for weight calculations
         equipment_type = detect_equipment_type(exercise_name, [equipment] if equipment else None)
 
-        # Calculate starting weight based on exercise, equipment, and fitness level
-        # Returns 0 for bodyweight exercises
+        # Calculate starting weight - prioritize historical data over generic estimates
         starting_weight = 0.0
+        weight_source = "generic"  # Track where weight came from
+
         if equipment_type != "bodyweight" and equipment.lower() not in ["bodyweight", "body weight", "none", ""]:
-            starting_weight = get_starting_weight(
-                exercise_name=exercise_name,
-                equipment_type=equipment_type,
-                fitness_level=fitness_level,
-            )
+            # PRIORITY 1: Use historical weight data if available
+            if strength_history:
+                # Try exact match first
+                history = strength_history.get(exercise_name)
+                if not history:
+                    # Try case-insensitive match
+                    for hist_name, hist_data in strength_history.items():
+                        if hist_name.lower() == exercise_name.lower():
+                            history = hist_data
+                            break
+
+                if history and history.get("last_weight_kg", 0) > 0:
+                    # Use the user's last weight for this exercise
+                    starting_weight = history["last_weight_kg"]
+                    weight_source = "historical"
+                    logger.info(f"Using historical weight for {exercise_name}: {starting_weight}kg (last used)")
+
+            # PRIORITY 2: Fall back to generic weight estimate
+            if starting_weight == 0.0:
+                starting_weight = get_starting_weight(
+                    exercise_name=exercise_name,
+                    equipment_type=equipment_type,
+                    fitness_level=fitness_level,
+                )
+                weight_source = "generic"
 
         return {
             "name": exercise_name,
@@ -578,8 +746,9 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "reps": reps,
             "rest_seconds": rest,
             "equipment": equipment,
-            "equipment_type": equipment_type,  # New: normalized equipment type for weight utilities
-            "weight_kg": starting_weight,      # New: recommended starting weight
+            "equipment_type": equipment_type,  # Normalized equipment type for weight utilities
+            "weight_kg": starting_weight,      # Recommended starting weight
+            "weight_source": weight_source,    # "historical" or "generic" - indicates data source
             "muscle_group": exercise.get("target_muscle", exercise.get("body_part", "")),
             "body_part": exercise.get("body_part", ""),
             "notes": exercise.get("instructions", "Focus on proper form"),
@@ -587,6 +756,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "video_url": exercise.get("video_url", ""),
             "image_url": exercise.get("image_url", ""),
             "library_id": exercise.get("id", ""),
+            "is_favorite": exercise.get("is_favorite", False),  # From favorite boost
         }
 
     def get_stats(self) -> Dict[str, Any]:

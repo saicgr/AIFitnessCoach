@@ -42,6 +42,18 @@ class SettingItemData {
   /// Whether this item is the equipment selector.
   final bool isEquipmentSelector;
 
+  /// Whether this item is the consistency mode selector.
+  final bool isConsistencyModeSelector;
+
+  /// Whether this item is the favorite exercises management.
+  final bool isFavoriteExercisesManager;
+
+  /// Whether this item is the exercise queue management.
+  final bool isExerciseQueueManager;
+
+  /// Whether this item is the workout history import.
+  final bool isWorkoutHistoryImport;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -56,6 +68,10 @@ class SettingItemData {
     this.isWorkoutTypeSelector = false,
     this.isWorkoutEnvironmentSelector = false,
     this.isEquipmentSelector = false,
+    this.isConsistencyModeSelector = false,
+    this.isFavoriteExercisesManager = false,
+    this.isExerciseQueueManager = false,
+    this.isWorkoutHistoryImport = false,
   });
 }
 

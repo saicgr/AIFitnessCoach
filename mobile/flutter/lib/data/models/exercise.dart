@@ -43,6 +43,12 @@ class WorkoutExercise extends Equatable {
   final bool? isCompleted;
   @JsonKey(name: 'alternating_hands')
   final bool? alternatingHands;
+  @JsonKey(name: 'weight_source')
+  final String? weightSource; // "historical" (from past workouts), "generic" (estimated), or null
+  @JsonKey(name: 'is_favorite')
+  final bool? isFavorite;
+  @JsonKey(name: 'from_queue')
+  final bool? fromQueue;
 
   const WorkoutExercise({
     this.id,
@@ -67,7 +73,25 @@ class WorkoutExercise extends Equatable {
     this.instructions,
     this.isCompleted,
     this.alternatingHands,
+    this.weightSource,
+    this.isFavorite,
+    this.fromQueue,
   });
+
+  /// Whether the weight is based on user's past workout history
+  bool get isWeightFromHistory => weightSource == 'historical';
+
+  /// Get a display label for the weight source
+  String get weightSourceLabel {
+    switch (weightSource) {
+      case 'historical':
+        return 'Based on your history';
+      case 'generic':
+        return 'Estimated';
+      default:
+        return '';
+    }
+  }
 
   factory WorkoutExercise.fromJson(Map<String, dynamic> json) =>
       _$WorkoutExerciseFromJson(json);

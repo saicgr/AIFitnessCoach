@@ -33,6 +33,9 @@ import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/help_screen.dart';
+import '../screens/settings/exercise_preferences/favorite_exercises_screen.dart';
+import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
+import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
@@ -43,6 +46,7 @@ import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
+import '../screens/progress/progress_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
@@ -489,6 +493,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               child: ProfileScreen(),
             ),
           ),
+          GoRoute(
+            path: '/progress',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: ProgressScreen(),
+            ),
+          ),
         ],
       ),
 
@@ -600,6 +610,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             totalSets: data['totalSets'] as int?,
             totalReps: data['totalReps'] as int?,
             totalVolumeKg: data['totalVolumeKg'] as double?,
+            challengeId: data['challengeId'] as String?,
+            challengeData: data['challengeData'] as Map<String, dynamic>?,
+            personalRecords: data['personalRecords'] as List<PersonalRecordInfo>?,
           );
         },
       ),
@@ -650,6 +663,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // Favorite Exercises (Settings sub-screen)
+      GoRoute(
+        path: '/settings/favorite-exercises',
+        builder: (context, state) => const FavoriteExercisesScreen(),
+      ),
+
+      // Exercise Queue (Settings sub-screen)
+      GoRoute(
+        path: '/settings/exercise-queue',
+        builder: (context, state) => const ExerciseQueueScreen(),
+      ),
+
+      // Workout History Import (Settings sub-screen)
+      GoRoute(
+        path: '/settings/workout-history-import',
+        builder: (context, state) => const WorkoutHistoryImportScreen(),
       ),
 
       // Help & Support

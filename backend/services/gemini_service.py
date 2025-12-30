@@ -1551,3 +1551,19 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
 
 # Backward compatibility alias
 OpenAIService = GeminiService
+
+
+# Singleton instance for services that need it
+_gemini_service_instance: Optional[GeminiService] = None
+
+
+def get_gemini_service() -> GeminiService:
+    """Get or create singleton GeminiService instance."""
+    global _gemini_service_instance
+    if _gemini_service_instance is None:
+        _gemini_service_instance = GeminiService()
+    return _gemini_service_instance
+
+
+# Module-level singleton for backward compatibility
+gemini_service = GeminiService()

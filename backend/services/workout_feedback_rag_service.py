@@ -771,3 +771,17 @@ Remember: Be specific, encouraging, and brief!"""
     print(f"🎯 Generated feedback for user {user_id}: {feedback[:50]}...")
 
     return feedback
+
+
+# Singleton instance for services that need it
+_workout_feedback_rag_instance: Optional[WorkoutFeedbackRAGService] = None
+
+
+def get_workout_feedback_rag_service() -> WorkoutFeedbackRAGService:
+    """Get or create singleton WorkoutFeedbackRAGService instance."""
+    global _workout_feedback_rag_instance
+    if _workout_feedback_rag_instance is None:
+        from services.gemini_service import get_gemini_service
+        gemini = get_gemini_service()
+        _workout_feedback_rag_instance = WorkoutFeedbackRAGService(gemini)
+    return _workout_feedback_rag_instance

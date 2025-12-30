@@ -1,6 +1,24 @@
-<!-- big task add 2 columns infront of every table those those two columns are Problem and Solution, you would have to populate them by reqeiwing the code -->
+<!-- big task to FEATURES.md add 
+1. column at the end of every table that column should tell if the feature is fully implemented or partially implemented or not implemented those, you would have to populate them by reviewing the code 
+2. 6 more columns for 
+frontend implemented yes/no, 
+backend API implemented yes/no, 
+Gemini AI uses this data yes/no, 
+chromadb RAG reads it yes/no, 
+supabase tables exists yes/no, 
+backend tests implemented yes/no 
 
-<!-- For gravl app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every aprt of the review with this flutter app and see waht needs improved and implemented -->
+you would have to populate them by reviewing the code    
+-->
+
+<!-- For other app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every aprt of the review with this flutter app and see waht needs improved and implemented.
+
+Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well
+ -->
+
+<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well -->
+
+<!-- Did you forget anyhitng to implement? -->
 
 FUTURE in voting:
 1. Posture video review
@@ -14,8 +32,6 @@ ASAP:
 25. Demo of the whole app
 32. Make it easy to add supersets
 37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
-46. One annoying bug I've encountered: after completing a workout, you can attach an image with the workout summary, similar to Strava. However, the 'Save' and 'Share' buttons don't work. Clicking them does nothing. The image won't save to the gallery or share to any platform I've tried (Messenger, Facebook, etc.).
-47. The good: the app has a nice UX and is bug free. The bad: The “AI” constantly suggests new exercises with weird weights, even after I programmed in my own workouts so it could “learn” my strength level. The “consistent” setting, favoriting exercises, queuing exercises didn’t help - I had to customize around the AI’s suggestions so much, I turned it into a time consuming, paid version of the spreadsheet I was already using. I only wish I hadn’t paid for six months, this app is just not for me.
 48. I hope they add more exercises especially unilateral and mobility exercises.
 49. It keeps my workouts fresh by changing some of the exercises each week and they aren't disruptive changes, same muscle group different exercise. For me...definitely worth the subscription.
 50. I've been using this for about 2 months now, and it works great. I love that I can modify the weights, reps, sets, and have it give me drop sets or supersets. it also has a great list of exercises that give instructions and videos of how to do the exercises. I do have a couple complaints, though. It will calculate your estimate 1RM, but I would like for it to give the option to work out at a percentage of your 1RM; so, if I only wanted to do 70% of my max, I'd like for it to let me.
@@ -69,6 +85,7 @@ ASAP:
 57.3 Okay app that allows you to track your macros as intended. But falls short for its library and ability to input cooked grains. It feels like I'm constantly having to add to it and after paying a premium of $80 it's not worth it especially when other apps have a larger data base and options while also trackin macros and cost way less annually. Also has issues when using the scan feature (ex. Scans well known drink, "Item not found"), I manually search for it and it's the first thing that pops up.
 57.4 Initially enjoyed the polish of this, but I regret paying for Pro. It's too slow and too convoluted to track meals, which is the whole point of the app. We need a way to disable the useless (and incorrect) AI food tips after each meal logged, at least. Between that, the lag when searching for foods, and the various submenus for foods/meals/recipes, it's too much. Even saving common foods as a meal and selecting that every morning feels slower than other apps because of the tracker layout.
 58. For analytics do we have workout bistory per exercise and also per muscle, not sure what the image is sowing like muscle or soemthing else.
+59. Research on improving NEAT for a user.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

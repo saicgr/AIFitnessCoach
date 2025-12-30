@@ -392,3 +392,331 @@ def extract_name_words(workout_name: str) -> List[str]:
     ignore_words = {'the', 'a', 'an', 'of', 'for', 'and', 'or', 'to', 'workout', 'session'}
     words = re.findall(r'[A-Za-z]{3,}', workout_name.lower())
     return [w for w in words if w not in ignore_words]
+
+
+def fuzzy_exercise_match(name1: str, name2: str) -> bool:
+    """
+    Check if two exercise names are similar enough to be considered the same.
+
+    Handles variations like:
+    - "Bench Press" vs "Barbell Bench Press"
+    - "Squat" vs "Barbell Back Squat"
+    - "Pull-up" vs "Pull Up" vs "Pullup"
+
+    Returns True if names are similar enough.
+    """
+    import re
+
+    # First, normalize compound words (pullup -> pull up, pushup -> push up)
+    def expand_compound(name: str) -> str:
+        name = name.lower()
+        # Common compound variations
+        name = re.sub(r'pullup', 'pull up', name)
+        name = re.sub(r'pushup', 'push up', name)
+        name = re.sub(r'situp', 'sit up', name)
+        name = re.sub(r'chinup', 'chin up', name)
+        name = re.sub(r'stepup', 'step up', name)
+        name = re.sub(r'lunge', 'lunge', name)
+        # Remove hyphens
+        name = name.replace('-', ' ')
+        return name
+
+    # Normalize both names
+    def normalize(name: str) -> set:
+        # Expand compound words first
+        name = expand_compound(name)
+        # Remove common prefixes/suffixes
+        remove_words = {
+            'barbell', 'dumbbell', 'cable', 'machine', 'smith',
+            'seated', 'standing', 'incline', 'decline', 'flat',
+            'wide', 'narrow', 'close', 'grip', 'overhand', 'underhand',
+            'single', 'double', 'one', 'two', 'arm', 'leg',
+            'front', 'back', 'rear', 'side', 'lateral',
+        }
+        # Split into words, remove punctuation
+        words = set(re.findall(r'[a-z]+', name))
+        # Keep only significant words
+        significant = words - remove_words
+        return significant if significant else words
+
+    words1 = normalize(name1)
+    words2 = normalize(name2)
+
+    # Check if there's significant overlap
+    if not words1 or not words2:
+        return name1.lower() == name2.lower()
+
+    # Calculate Jaccard similarity
+    intersection = len(words1 & words2)
+    union = len(words1 | words2)
+    similarity = intersection / union if union > 0 else 0
+
+    # Also check if one is a subset of the other
+    is_subset = words1.issubset(words2) or words2.issubset(words1)
+
+    # Match if similarity > 0.5 OR one is subset of other
+    return similarity > 0.5 or is_subset
+
+
+async def get_user_strength_history(user_id: str) -> dict:
+    """
+    Get user's strength history from ALL sources for workout generation.
+
+    Combines data from:
+    1. Completed workouts (ChromaDB) - actual workout performance
+    2. Imported workout history (Supabase) - manual entries
+
+    Returns:
+        Dict mapping exercise names to their historical data:
+        {
+            "Bench Press": {"last_weight_kg": 70, "max_weight_kg": 85, "last_reps": 8, "source": "completed"},
+            "Squat": {"last_weight_kg": 100, "max_weight_kg": 120, "last_reps": 6, "source": "imported"},
+        }
+    """
+    strength_history = {}
+
+    # SOURCE 1: Get from ChromaDB (completed workouts)
+    try:
+        from services.workout_feedback_rag_service import get_workout_feedback_rag_service
+        feedback_rag = get_workout_feedback_rag_service()
+
+        sessions = await feedback_rag.find_similar_exercise_sessions(
+            exercise_name="",  # Empty to get all
+            user_id=user_id,
+            n_results=50,
+        )
+
+        for session in sessions:
+            exercises = session.get("metadata", {}).get("exercises", [])
+            for ex in exercises:
+                name = ex.get("name", "")
+                weight = ex.get("weight_kg", 0)
+                reps = ex.get("reps", 0)
+
+                if not name or weight <= 0:
+                    continue
+
+                if name not in strength_history:
+                    strength_history[name] = {
+                        "last_weight_kg": weight,
+                        "max_weight_kg": weight,
+                        "last_reps": reps,
+                        "session_count": 1,
+                        "source": "completed",
+                    }
+                else:
+                    if weight > strength_history[name]["max_weight_kg"]:
+                        strength_history[name]["max_weight_kg"] = weight
+                    strength_history[name]["session_count"] += 1
+
+        logger.info(f"Found {len(strength_history)} exercises from completed workouts")
+
+    except Exception as e:
+        logger.warning(f"Error getting ChromaDB strength history: {e}")
+
+    # SOURCE 2: Get from imported workout history (Supabase)
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("workout_history_imports") \
+            .select("exercise_name, weight_kg, reps, performed_at") \
+            .eq("user_id", user_id) \
+            .order("performed_at", desc=True) \
+            .limit(200) \
+            .execute()
+
+        imported_count = 0
+        for row in result.data or []:
+            name = row.get("exercise_name", "")
+            weight = float(row.get("weight_kg", 0))
+            reps = row.get("reps", 0)
+
+            if not name or weight <= 0:
+                continue
+
+            # Check if this exercise already exists (exact or fuzzy match)
+            matched_name = None
+            for existing_name in strength_history.keys():
+                if existing_name.lower() == name.lower() or fuzzy_exercise_match(existing_name, name):
+                    matched_name = existing_name
+                    break
+
+            if matched_name:
+                # Merge with existing data - prefer completed workout data for last_weight
+                # but update max if imported is higher
+                if weight > strength_history[matched_name]["max_weight_kg"]:
+                    strength_history[matched_name]["max_weight_kg"] = weight
+                strength_history[matched_name]["session_count"] += 1
+                strength_history[matched_name]["source"] = "both"
+            else:
+                # New exercise from imports
+                strength_history[name] = {
+                    "last_weight_kg": weight,
+                    "max_weight_kg": weight,
+                    "last_reps": reps,
+                    "session_count": 1,
+                    "source": "imported",
+                }
+                imported_count += 1
+
+        logger.info(f"Added {imported_count} exercises from imported history")
+
+    except Exception as e:
+        logger.warning(f"Error getting imported strength history: {e}")
+
+    logger.info(f"Total strength history: {len(strength_history)} exercises for user {user_id}")
+    return strength_history
+
+
+async def get_user_favorite_exercises(user_id: str) -> List[str]:
+    """
+    Get user's favorite exercise names from the database.
+
+    Returns:
+        List of exercise names the user has favorited.
+    """
+    try:
+        db = get_supabase_db()
+
+        response = db.client.table("favorite_exercises").select(
+            "exercise_name"
+        ).eq("user_id", user_id).execute()
+
+        if not response.data:
+            return []
+
+        favorites = [row["exercise_name"] for row in response.data]
+        logger.info(f"Found {len(favorites)} favorite exercises for user {user_id}")
+        return favorites
+
+    except Exception as e:
+        # Table might not exist yet - this is fine
+        logger.debug(f"Could not get favorite exercises (table may not exist): {e}")
+        return []
+
+
+async def get_user_consistency_mode(user_id: str) -> str:
+    """
+    Get user's exercise consistency preference.
+
+    Returns:
+        "vary" (default) - Avoid recently used exercises for variety
+        "consistent" - Prefer recently used exercises for consistency
+
+    This addresses competitor feedback: "The 'consistent' setting didn't help"
+    """
+    try:
+        db = get_supabase_db()
+
+        user = db.get_user(user_id)
+        if not user:
+            return "vary"  # Default
+
+        preferences = user.get("preferences", {})
+        if isinstance(preferences, str):
+            try:
+                preferences = json.loads(preferences)
+            except json.JSONDecodeError:
+                preferences = {}
+
+        # Get the consistency mode from preferences, default to "vary"
+        consistency_mode = preferences.get("exercise_consistency", "vary")
+
+        # Validate the value
+        if consistency_mode not in ["vary", "consistent"]:
+            consistency_mode = "vary"
+
+        logger.debug(f"User {user_id} exercise_consistency mode: {consistency_mode}")
+        return consistency_mode
+
+    except Exception as e:
+        logger.error(f"Error getting consistency mode: {e}")
+        return "vary"  # Default to variety on error
+
+
+async def get_user_exercise_queue(user_id: str, focus_area: str = None) -> List[dict]:
+    """
+    Get user's queued exercises for workout generation.
+
+    Args:
+        user_id: The user's ID
+        focus_area: Optional focus area to filter matching exercises
+
+    Returns:
+        List of queued exercises with their details.
+        Each exercise has: name, exercise_id, priority, target_muscle_group
+
+    This addresses competitor feedback: "queuing exercises didn't help"
+    """
+    try:
+        db = get_supabase_db()
+        now = datetime.now().isoformat()
+
+        # Get active queue items (not expired, not used)
+        query = db.client.table("exercise_queue").select(
+            "id", "exercise_name", "exercise_id", "priority", "target_muscle_group"
+        ).eq("user_id", user_id).is_("used_at", "null").gte("expires_at", now)
+
+        # Filter by focus area if specified
+        if focus_area:
+            # Include exercises matching this focus area, OR exercises with no target specified
+            # We do an OR filter for matching target or null target
+            pass  # Supabase doesn't easily support OR, so we'll filter in Python
+
+        result = query.order("priority", desc=False).execute()
+
+        if not result.data:
+            return []
+
+        queued = []
+        for row in result.data:
+            # If focus area specified, filter to matching or unspecified target
+            target = row.get("target_muscle_group", "").lower() if row.get("target_muscle_group") else ""
+
+            if focus_area:
+                focus_lower = focus_area.lower()
+                # Include if target matches focus, or if no target specified
+                if target and target not in focus_lower and focus_lower not in target:
+                    continue
+
+            queued.append({
+                "queue_id": row["id"],
+                "name": row["exercise_name"],
+                "exercise_id": row.get("exercise_id"),
+                "priority": row.get("priority", 0),
+                "target_muscle_group": row.get("target_muscle_group"),
+            })
+
+        logger.info(f"Found {len(queued)} queued exercises for user {user_id} (focus: {focus_area})")
+        return queued
+
+    except Exception as e:
+        # Table might not exist yet - this is fine
+        logger.debug(f"Could not get exercise queue (table may not exist): {e}")
+        return []
+
+
+async def mark_queued_exercises_used(user_id: str, exercise_names: List[str]):
+    """
+    Mark queued exercises as used after they've been included in a workout.
+
+    Args:
+        user_id: The user's ID
+        exercise_names: List of exercise names that were used
+    """
+    if not exercise_names:
+        return
+
+    try:
+        db = get_supabase_db()
+        now = datetime.now().isoformat()
+
+        for name in exercise_names:
+            db.client.table("exercise_queue").update({
+                "used_at": now
+            }).eq("user_id", user_id).eq("exercise_name", name).is_("used_at", "null").execute()
+
+        logger.info(f"Marked {len(exercise_names)} queued exercises as used for user {user_id}")
+
+    except Exception as e:
+        logger.warning(f"Could not mark queued exercises as used: {e}")
