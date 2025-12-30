@@ -136,9 +136,7 @@ class _ActivityCardState extends State<ActivityCard> {
                 // More options
                 IconButton(
                   icon: const Icon(Icons.more_horiz_rounded),
-                  onPressed: () {
-                    // TODO: Show options menu
-                  },
+                  onPressed: () => _showPostOptionsMenu(context),
                   iconSize: 20,
                 ),
               ],
@@ -252,6 +250,146 @@ class _ActivityCardState extends State<ActivityCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Show post options menu (3-dot menu)
+  void _showPostOptionsMenu(BuildContext context) {
+    HapticFeedback.lightImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textMuted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Copy link option
+            ListTile(
+              leading: const Icon(Icons.link_rounded),
+              title: const Text('Copy Link'),
+              onTap: () {
+                Navigator.pop(context);
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Link copied to clipboard'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
+
+            // Share option
+            ListTile(
+              leading: const Icon(Icons.share_rounded),
+              title: const Text('Share'),
+              onTap: () {
+                Navigator.pop(context);
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Share feature coming soon!'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
+
+            // Report option (only show if not own post)
+            ListTile(
+              leading: Icon(Icons.flag_rounded, color: AppColors.textMuted),
+              title: Text('Report', style: TextStyle(color: AppColors.textMuted)),
+              onTap: () {
+                Navigator.pop(context);
+                HapticFeedback.lightImpact();
+                _showReportDialog(context);
+              },
+            ),
+
+            // Bottom padding for safe area
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show report dialog
+  void _showReportDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: elevated,
+        title: const Text('Report Post'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Why are you reporting this post?',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            _buildReportOption(context, 'Spam or misleading'),
+            _buildReportOption(context, 'Inappropriate content'),
+            _buildReportOption(context, 'Harassment or bullying'),
+            _buildReportOption(context, 'Other'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportOption(BuildContext context, String reason) {
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        HapticFeedback.lightImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Report submitted. Thank you for helping keep our community safe.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.radio_button_unchecked, size: 20, color: AppColors.textMuted),
+            const SizedBox(width: 12),
+            Text(reason, style: const TextStyle(fontSize: 14)),
+          ],
+        ),
       ),
     );
   }
@@ -415,8 +553,122 @@ class _ActivityCardState extends State<ActivityCard> {
         return _buildChallengeVictoryContent(context);
       case 'challenge_completed':
         return _buildChallengeCompletedContent(context);
+      case 'manual_post':
+        return _buildManualPostContent(context);
       default:
         return _buildGenericContent(context);
+    }
+  }
+
+  Widget _buildManualPostContent(BuildContext context) {
+    final caption = widget.activityData['caption'] as String? ?? '';
+    final postType = widget.activityData['post_type'] as String?;
+    final hasImage = widget.activityData['has_image'] as bool? ?? false;
+    final imageUrl = widget.activityData['image_url'] as String?;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Post type badge if applicable
+        if (postType != null && postType != 'progress') ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getPostTypeColor(postType).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _getPostTypeIcon(postType),
+                  size: 14,
+                  color: _getPostTypeColor(postType),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _getPostTypeLabel(postType),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _getPostTypeColor(postType),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        // Caption text
+        if (caption.isNotEmpty)
+          Text(
+            caption,
+            style: const TextStyle(fontSize: 15),
+          ),
+
+        // Image if present
+        if (hasImage && imageUrl != null) ...[
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              imageUrl,
+              width: double.infinity,
+              height: 200,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: double.infinity,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: AppColors.textMuted,
+                    size: 32,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Color _getPostTypeColor(String postType) {
+    switch (postType) {
+      case 'milestone':
+        return AppColors.orange;
+      case 'photo':
+        return AppColors.purple;
+      default:
+        return AppColors.cyan;
+    }
+  }
+
+  IconData _getPostTypeIcon(String postType) {
+    switch (postType) {
+      case 'milestone':
+        return Icons.emoji_events_rounded;
+      case 'photo':
+        return Icons.photo_camera_rounded;
+      default:
+        return Icons.trending_up_rounded;
+    }
+  }
+
+  String _getPostTypeLabel(String postType) {
+    switch (postType) {
+      case 'milestone':
+        return 'Milestone';
+      case 'photo':
+        return 'Photo';
+      default:
+        return 'Progress Update';
     }
   }
 
@@ -459,6 +711,32 @@ class _ActivityCardState extends State<ActivityCard> {
             if (totalVolume != null)
               _buildStat(Icons.trending_up_outlined, '${totalVolume.toStringAsFixed(0)} lbs'),
           ],
+        ),
+
+        // Challenge button - always visible and prominent
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              _showBeatWorkoutDialog(context);
+            },
+            icon: const Icon(Icons.emoji_events, size: 20),
+            label: const Text(
+              'Challenge',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              elevation: 2,
+            ),
+          ),
         ),
 
         // Show exercises button if exercise data is available
@@ -748,14 +1026,14 @@ class _ActivityCardState extends State<ActivityCard> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('✅ Workout saved to Library!'),
+                      content: Text('Workout saved to Library!'),
                       backgroundColor: AppColors.cyan,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
               } catch (e) {
-                debugPrint('❌ Error saving workout: $e');
+                debugPrint('Error saving workout: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -831,10 +1109,10 @@ class _ActivityCardState extends State<ActivityCard> {
               ),
               child: Column(
                 children: [
-                  _buildChallengeStat('⏱️', 'Time', '$duration min'),
+                  _buildChallengeStat('Time', '$duration min'),
                   if (totalVolume != null) ...[
                     const SizedBox(height: 8),
-                    _buildChallengeStat('💪', 'Total Volume', '${totalVolume.toStringAsFixed(0)} lbs'),
+                    _buildChallengeStat('Total Volume', '${totalVolume.toStringAsFixed(0)} lbs'),
                   ],
                 ],
               ),
@@ -862,7 +1140,7 @@ class _ActivityCardState extends State<ActivityCard> {
               // Show loading
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('💪 Accepting challenge...'),
+                  content: Text('Accepting challenge...'),
                   duration: Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -878,7 +1156,7 @@ class _ActivityCardState extends State<ActivityCard> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('🏆 Challenge accepted! Starting workout...'),
+                      content: Text('Challenge accepted! Starting workout...'),
                       backgroundColor: AppColors.orange,
                       behavior: SnackBarBehavior.floating,
                       duration: Duration(seconds: 2),
@@ -894,7 +1172,7 @@ class _ActivityCardState extends State<ActivityCard> {
                   // ));
                 }
               } catch (e) {
-                debugPrint('❌ Error accepting challenge: $e');
+                debugPrint('Error accepting challenge: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -920,17 +1198,11 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
-  Widget _buildChallengeStat(String emoji, String label, String value) {
+  Widget _buildChallengeStat(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(fontSize: 13)),
-          ],
-        ),
+        Text(label, style: const TextStyle(fontSize: 13)),
         Text(
           value,
           style: const TextStyle(
@@ -1404,12 +1676,14 @@ class _ActivityCardState extends State<ActivityCard> {
                 children: [
                   const Icon(Icons.info_outline, size: 16, color: AppColors.orange),
                   const SizedBox(width: 6),
-                  Text(
-                    'Keep training! Every attempt makes you stronger 🔥',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                      fontStyle: FontStyle.italic,
+                  Expanded(
+                    child: Text(
+                      'Keep training! Every attempt makes you stronger',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
                 ],
@@ -1418,11 +1692,11 @@ class _ActivityCardState extends State<ActivityCard> {
 
               // Stats
               if (yourDuration != null && theirDuration != null) ...[
-                _buildChallengeStatRow('⏱️', 'Time', '$yourDuration min', '$theirDuration min'),
+                _buildChallengeStatRow('Time', '$yourDuration min', '$theirDuration min'),
                 const SizedBox(height: 8),
               ],
               if (yourVolume != null && theirVolume != null)
-                _buildChallengeStatRow('💪', 'Volume', '${yourVolume.toStringAsFixed(0)} lbs', '${theirVolume.toStringAsFixed(0)} lbs'),
+                _buildChallengeStatRow('Volume', '${yourVolume.toStringAsFixed(0)} lbs', '${theirVolume.toStringAsFixed(0)} lbs'),
             ],
           ),
         ),
@@ -1430,11 +1704,9 @@ class _ActivityCardState extends State<ActivityCard> {
     );
   }
 
-  Widget _buildChallengeStatRow(String emoji, String label, String yourValue, String targetValue) {
+  Widget _buildChallengeStatRow(String label, String yourValue, String targetValue) {
     return Row(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 16)),
-        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1464,7 +1736,7 @@ class _ActivityCardState extends State<ActivityCard> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text('•', style: TextStyle(color: AppColors.textMuted)),
+                  const Text('|', style: TextStyle(color: AppColors.textMuted)),
                   const SizedBox(width: 12),
                   Text(
                     'Target: ',
@@ -1491,7 +1763,12 @@ class _ActivityCardState extends State<ActivityCard> {
   }
 
   Widget _buildGenericContent(BuildContext context) {
-    return const Text('was active');
+    // Try to show caption if available for unknown activity types
+    final caption = widget.activityData['caption'] as String?;
+    if (caption != null && caption.isNotEmpty) {
+      return Text(caption, style: const TextStyle(fontSize: 15));
+    }
+    return const Text('shared an update');
   }
 
   Widget _buildStat(IconData icon, String label) {
@@ -1641,7 +1918,7 @@ class _ScheduleWorkoutDialogState extends State<_ScheduleWorkoutDialog> {
             // Show loading
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('📅 Scheduling workout...'),
+                content: Text('Scheduling workout...'),
                 duration: Duration(seconds: 1),
                 behavior: SnackBarBehavior.floating,
               ),
@@ -1659,7 +1936,7 @@ class _ScheduleWorkoutDialogState extends State<_ScheduleWorkoutDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      '📅 Workout scheduled for ${_selectedDate.month}/${_selectedDate.day}!',
+                      'Workout scheduled for ${_selectedDate.month}/${_selectedDate.day}!',
                     ),
                     backgroundColor: AppColors.orange,
                     behavior: SnackBarBehavior.floating,
@@ -1667,7 +1944,7 @@ class _ScheduleWorkoutDialogState extends State<_ScheduleWorkoutDialog> {
                 );
               }
             } catch (e) {
-              debugPrint('❌ Error scheduling workout: $e');
+              debugPrint('Error scheduling workout: $e');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

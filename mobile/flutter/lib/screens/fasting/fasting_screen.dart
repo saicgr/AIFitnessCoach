@@ -6,6 +6,7 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/main_shell.dart';
 import 'widgets/fasting_timer_widget.dart';
 import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
@@ -277,6 +278,9 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     final preferences = ref.read(fastingProvider).preferences;
     HapticService.light();
 
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -303,7 +307,10 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           if (mounted) Navigator.pop(context);
         },
       ),
-    );
+    ).then((_) {
+      // Show nav bar when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   void _showEndFastDialog(BuildContext context, String userId) {

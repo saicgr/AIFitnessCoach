@@ -8,6 +8,7 @@ import '../../models/program_history.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/mood.dart';
+import '../models/workout_generation_params.dart';
 import '../services/api_client.dart';
 
 /// Workout repository provider
@@ -1210,6 +1211,30 @@ class WorkoutRepository {
   /// Regenerate AI workout summary (bypasses cache)
   Future<String?> regenerateWorkoutSummary(String workoutId) async {
     return getWorkoutSummary(workoutId, forceRegenerate: true);
+  }
+
+  /// Get workout generation parameters and AI reasoning
+  /// Returns the user profile, program preferences, and reasoning for exercise selection
+  Future<WorkoutGenerationParams?> getWorkoutGenerationParams(String workoutId) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching generation params for workout: $workoutId');
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId/generation-params',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+      if (response.statusCode == 200) {
+        final params = WorkoutGenerationParams.fromJson(response.data as Map<String, dynamic>);
+        debugPrint('✅ [Workout] Got generation params with ${params.exerciseReasoning.length} exercise reasons');
+        return params;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching generation params: $e');
+      return null;
+    }
   }
 
   /// Create a workout log (when workout completes)

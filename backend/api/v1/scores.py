@@ -1373,7 +1373,7 @@ async def get_scores_overview(
         )
 
     # Get strength scores summary
-    strength_response = db.from_("latest_strength_scores").select(
+    strength_response = db.client.table("latest_strength_scores").select(
         "muscle_group, strength_score"
     ).eq("user_id", user_id).execute()
 

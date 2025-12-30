@@ -65,25 +65,26 @@ def analyze_food_image(
             timeout=60
         )
 
-        if not analysis_result.get("success"):
+        # VisionService returns the result directly (not wrapped in success/data)
+        if not analysis_result or not analysis_result.get("food_items"):
             return {
                 "success": False,
                 "action": "analyze_food_image",
                 "user_id": user_id,
-                "message": analysis_result.get("error", "Failed to analyze food image")
+                "message": "Failed to analyze food image - no food items identified"
             }
 
-        # Extract nutrition data
-        nutrition_data = analysis_result.get("data", {})
-        meal_type = nutrition_data.get("meal_type", "snack")
-        food_items = nutrition_data.get("food_items", [])
-        total_calories = nutrition_data.get("total_calories", 0)
-        protein_g = nutrition_data.get("protein_g", 0)
-        carbs_g = nutrition_data.get("carbs_g", 0)
-        fat_g = nutrition_data.get("fat_g", 0)
-        fiber_g = nutrition_data.get("fiber_g", 0)
-        health_score = nutrition_data.get("health_score", 5)
-        ai_feedback = nutrition_data.get("feedback", "")
+        # Extract nutrition data directly from the result
+        # VisionService returns total_protein_g, total_carbs_g, etc.
+        meal_type = analysis_result.get("meal_type", "snack")
+        food_items = analysis_result.get("food_items", [])
+        total_calories = analysis_result.get("total_calories", 0)
+        protein_g = analysis_result.get("total_protein_g", 0) or analysis_result.get("protein_g", 0)
+        carbs_g = analysis_result.get("total_carbs_g", 0) or analysis_result.get("carbs_g", 0)
+        fat_g = analysis_result.get("total_fat_g", 0) or analysis_result.get("fat_g", 0)
+        fiber_g = analysis_result.get("total_fiber_g", 0) or analysis_result.get("fiber_g", 0)
+        health_score = analysis_result.get("health_score", 5)
+        ai_feedback = analysis_result.get("feedback", "")
 
         # Save to database
         food_log = db.create_food_log(

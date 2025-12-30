@@ -31,6 +31,8 @@ from .utils import (
 from services.personal_records_service import PersonalRecordsService
 from services.strength_calculator_service import StrengthCalculatorService, MuscleGroup
 from services.ai_insights_service import ai_insights_service
+from services.fitness_score_calculator_service import FitnessScoreCalculatorService
+from services.nutrition_calculator_service import NutritionCalculatorService
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -55,6 +57,7 @@ class WorkoutCompletionResponse(BaseModel):
     workout: Workout
     personal_records: List[PersonalRecordInfo] = []
     strength_scores_updated: bool = False
+    fitness_score_updated: bool = False
     message: str = "Workout completed successfully"
 
 
@@ -389,10 +392,17 @@ async def complete_workout(
             # Continue even if PR detection fails
 
         # =====================================================================
-        # Background: Recalculate Strength Scores
+        # Background: Recalculate Strength Scores and Fitness Score
         # =====================================================================
         background_tasks.add_task(
             recalculate_user_strength_scores,
+            user_id=user_id,
+            supabase=supabase,
+        )
+
+        # Also recalculate the overall fitness score
+        background_tasks.add_task(
+            recalculate_user_fitness_score,
             user_id=user_id,
             supabase=supabase,
         )
@@ -410,6 +420,7 @@ async def complete_workout(
             workout=workout,
             personal_records=detected_prs,
             strength_scores_updated=True,
+            fitness_score_updated=True,
             message=message,
         )
 
@@ -538,3 +549,140 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
 
     except Exception as e:
         logger.error(f"Background: Failed to recalculate strength scores: {e}")
+
+
+async def recalculate_user_fitness_score(user_id: str, supabase):
+    """
+    Background task to recalculate overall fitness score after workout completion.
+
+    The fitness score combines:
+    - Strength score (40%)
+    - Consistency score (30%)
+    - Nutrition score (20%)
+    - Readiness score (10%)
+    """
+    try:
+        logger.info(f"Background: Recalculating fitness score for user {user_id}")
+
+        fitness_service = FitnessScoreCalculatorService()
+        strength_service = StrengthCalculatorService()
+        nutrition_service = NutritionCalculatorService()
+
+        # 1. Get strength score (overall)
+        strength_response = supabase.from_("latest_strength_scores").select(
+            "muscle_group, strength_score"
+        ).eq("user_id", user_id).execute()
+
+        if strength_response.data:
+            score_objects = {
+                r["muscle_group"]: type('obj', (object,), {'strength_score': r["strength_score"] or 0})()
+                for r in strength_response.data
+            }
+            strength_score, _ = strength_service.calculate_overall_strength_score(score_objects)
+        else:
+            strength_score = 0
+
+        # 2. Get consistency score (workout completion rate for last 30 days)
+        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+
+        # Count scheduled workouts
+        scheduled_response = supabase.table("workouts").select(
+            "id", count="exact"
+        ).eq(
+            "user_id", user_id
+        ).gte(
+            "scheduled_date", thirty_days_ago
+        ).execute()
+        scheduled_count = scheduled_response.count or 0
+
+        # Count completed workouts
+        completed_response = supabase.table("workouts").select(
+            "id", count="exact"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "is_completed", True
+        ).gte(
+            "scheduled_date", thirty_days_ago
+        ).execute()
+        completed_count = completed_response.count or 0
+
+        consistency_score = fitness_service.calculate_consistency_score(
+            scheduled=scheduled_count,
+            completed=completed_count,
+        )
+
+        # 3. Get nutrition score (current week)
+        week_start, week_end = nutrition_service.get_current_week_range()
+
+        nutrition_response = supabase.table("nutrition_scores").select(
+            "nutrition_score"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "week_start", week_start.isoformat()
+        ).maybe_single().execute()
+
+        nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response.data else 0
+
+        # 4. Get readiness score (7-day average)
+        seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+        readiness_response = supabase.table("readiness_scores").select(
+            "readiness_score"
+        ).eq(
+            "user_id", user_id
+        ).gte(
+            "score_date", seven_days_ago
+        ).execute()
+
+        readiness_scores = [r["readiness_score"] for r in (readiness_response.data or [])]
+        readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
+
+        # 5. Get previous fitness score
+        previous_response = supabase.table("fitness_scores").select(
+            "overall_fitness_score"
+        ).eq(
+            "user_id", user_id
+        ).order(
+            "calculated_at", desc=True
+        ).limit(1).maybe_single().execute()
+
+        previous_score = previous_response.data.get("overall_fitness_score") if previous_response.data else None
+
+        # 6. Calculate overall fitness score
+        score = fitness_service.calculate_fitness_score(
+            user_id=user_id,
+            strength_score=strength_score,
+            readiness_score=readiness_score,
+            consistency_score=consistency_score,
+            nutrition_score=nutrition_score,
+            previous_score=previous_score,
+        )
+
+        # 7. Save to database
+        record_data = {
+            "user_id": user_id,
+            "calculated_date": date.today().isoformat(),
+            "strength_score": score.strength_score,
+            "readiness_score": score.readiness_score,
+            "consistency_score": score.consistency_score,
+            "nutrition_score": score.nutrition_score,
+            "overall_fitness_score": score.overall_fitness_score,
+            "fitness_level": score.fitness_level.value,
+            "strength_weight": score.strength_weight,
+            "consistency_weight": score.consistency_weight,
+            "nutrition_weight": score.nutrition_weight,
+            "readiness_weight": score.readiness_weight,
+            "focus_recommendation": score.focus_recommendation,
+            "previous_score": score.previous_score,
+            "score_change": score.score_change,
+            "trend": score.trend,
+            "calculated_at": datetime.now().isoformat(),
+        }
+
+        supabase.table("fitness_scores").insert(record_data).execute()
+
+        logger.info(f"Background: Updated fitness score for user {user_id}: {score.overall_fitness_score} ({score.fitness_level.value})")
+
+    except Exception as e:
+        logger.error(f"Background: Failed to recalculate fitness score: {e}")

@@ -61,17 +61,6 @@ class _CustomContentCard extends ConsumerWidget {
             iconColor: AppColors.purple,
             onTap: () => context.push('/custom-exercises'),
           ),
-          Divider(height: 1, color: cardBorder, indent: 50),
-
-          // My Workouts (Coming Soon)
-          _CustomContentTile(
-            icon: Icons.calendar_view_week,
-            title: 'My Workouts',
-            subtitle: 'Coming soon',
-            iconColor: AppColors.orange,
-            isDisabled: true,
-            onTap: () => _showComingSoonSnackbar(context, 'Custom Workouts'),
-          ),
         ],
       ),
     );

@@ -159,6 +159,13 @@ Guidelines:
             if "total_fiber_g" not in result:
                 result["total_fiber_g"] = 0.0
 
+            # Normalize response - add non-prefixed versions for consistency with GeminiService
+            # This ensures both total_protein_g and protein_g are available
+            result["protein_g"] = result.get("total_protein_g", 0.0)
+            result["carbs_g"] = result.get("total_carbs_g", 0.0)
+            result["fat_g"] = result.get("total_fat_g", 0.0)
+            result["fiber_g"] = result.get("total_fiber_g", 0.0)
+
             logger.info(
                 f"✅ Food analysis complete: {result['total_calories']} cal, "
                 f"{len(result['food_items'])} items identified"

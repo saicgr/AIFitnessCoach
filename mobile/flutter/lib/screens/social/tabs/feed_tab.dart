@@ -46,8 +46,6 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     // Show loading while fetching userId
     if (_isLoadingUser) {
       return const Center(child: CircularProgressIndicator());
@@ -72,7 +70,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         activityFeedAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) {
-            debugPrint('❌ [FeedTab] Error loading feed: $error');
+            debugPrint('Error loading feed: $error');
             return SocialEmptyState(
               icon: Icons.cloud_off_rounded,
               title: 'Failed to Load Feed',
@@ -101,17 +99,9 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             return CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // Quick Stats Summary
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _buildQuickStats(context, isDark, feedData),
-                  ),
-                ),
-
                 // Activity Feed List
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
@@ -197,95 +187,11 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       try {
         return DateTime.parse(timestamp);
       } catch (e) {
-        debugPrint('⚠️ [FeedTab] Failed to parse timestamp: $timestamp');
+        debugPrint('Failed to parse timestamp: $timestamp');
         return DateTime.now();
       }
     }
     return DateTime.now();
-  }
-
-  Widget _buildQuickStats(BuildContext context, bool isDark, Map<String, dynamic> feedData) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    // Extract stats from feedData
-    final friendsCount = feedData['friends_count'] as int? ?? 0;
-    final challengesCount = feedData['challenges_count'] as int? ?? 0;
-    final reactionsCount = feedData['reactions_received_count'] as int? ?? 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem(
-            context,
-            icon: Icons.people_rounded,
-            label: 'Friends',
-            value: friendsCount.toString(),
-            color: AppColors.cyan,
-          ),
-          _buildStatDivider(isDark),
-          _buildStatItem(
-            context,
-            icon: Icons.emoji_events_rounded,
-            label: 'Challenges',
-            value: challengesCount.toString(),
-            color: AppColors.orange,
-          ),
-          _buildStatDivider(isDark),
-          _buildStatItem(
-            context,
-            icon: Icons.favorite_rounded,
-            label: 'Reactions',
-            value: reactionsCount.toString(),
-            color: AppColors.pink,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-              ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatDivider(bool isDark) {
-    return Container(
-      height: 40,
-      width: 1,
-      color: (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
-          .withValues(alpha: 0.3),
-    );
   }
 
   Future<void> _handleReaction(String activityId, String reactionType) async {
@@ -308,7 +214,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           userId: _userId!,
           activityId: activityId,
         );
-        debugPrint('🔄 [FeedTab] Removed reaction: $reactionType');
+        debugPrint('Removed reaction: $reactionType');
       } else {
         // Add or update reaction
         await socialService.addReaction(
@@ -316,13 +222,13 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           activityId: activityId,
           reactionType: reactionType,
         );
-        debugPrint('🔄 [FeedTab] Added reaction: $reactionType');
+        debugPrint('Added reaction: $reactionType');
       }
 
       // Refresh the feed to show updated reaction counts
       ref.invalidate(activityFeedProvider(_userId!));
     } catch (e) {
-      debugPrint('❌ [FeedTab] Error handling reaction: $e');
+      debugPrint('Error handling reaction: $e');
       // Show error snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -335,7 +241,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   void _handleComment(String activityId) {
     HapticFeedback.lightImpact();
     // TODO: Show comment bottom sheet
-    debugPrint('💬 [FeedTab] Comment on activity: $activityId');
+    debugPrint('Comment on activity: $activityId');
 
     // Placeholder: Show coming soon message
     if (mounted) {

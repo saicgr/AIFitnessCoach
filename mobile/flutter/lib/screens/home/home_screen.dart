@@ -25,7 +25,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
   bool _isCheckingWorkouts = false;
   bool _isStreamingGeneration = false;
   String? _generationStartDate;
@@ -35,13 +36,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _generationMessage = '';
   String? _generationDetail;
 
+  // Edit mode state
+  bool _isEditMode = false;
+  late AnimationController _wiggleController;
+  List<HomeTile> _editingTiles = [];
+
   @override
   void initState() {
     super.initState();
+    // Wiggle animation for edit mode (like iOS app icons)
+    _wiggleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeWorkouts();
       _checkPendingWidgetAction();
     });
+  }
+
+  @override
+  void dispose() {
+    _wiggleController.dispose();
+    super.dispose();
+  }
+
+  void _enterEditMode() {
+    final layout = ref.read(activeLayoutProvider).value;
+    if (layout != null) {
+      setState(() {
+        _isEditMode = true;
+        _editingTiles = List.from(layout.tiles);
+      });
+      _wiggleController.repeat(reverse: true);
+      HapticService.medium();
+    }
+  }
+
+  void _exitEditMode({bool save = true}) async {
+    _wiggleController.stop();
+    _wiggleController.reset();
+
+    if (save && _editingTiles.isNotEmpty) {
+      // Save the updated tiles
+      await ref.read(activeLayoutProvider.notifier).updateTiles(_editingTiles);
+      HapticService.success();
+    }
+
+    setState(() {
+      _isEditMode = false;
+      _editingTiles = [];
+    });
+  }
+
+  void _onReorderTiles(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) newIndex--;
+      final tile = _editingTiles.removeAt(oldIndex);
+      _editingTiles.insert(newIndex, tile);
+      // Update order values
+      for (int i = 0; i < _editingTiles.length; i++) {
+        _editingTiles[i] = _editingTiles[i].copyWith(order: i);
+      }
+    });
+    HapticService.light();
+  }
+
+  void _toggleTileVisibility(String tileId) {
+    setState(() {
+      final index = _editingTiles.indexWhere((t) => t.id == tileId);
+      if (index != -1) {
+        _editingTiles[index] = _editingTiles[index].copyWith(
+          isVisible: !_editingTiles[index].isVisible,
+        );
+      }
+    });
+    HapticService.light();
   }
 
   void _checkPendingWidgetAction() {
@@ -349,6 +419,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     (int, int) weeklyProgress,
     List upcomingWorkouts,
   ) {
+    // In edit mode, use the editing tiles list
+    if (_isEditMode && _editingTiles.isNotEmpty) {
+      return _buildEditModeTiles(context, isDark, workoutsState, workoutsNotifier, nextWorkout, isAIGenerating);
+    }
+
     return activeLayoutState.when(
       loading: () => [
         const SliverToBoxAdapter(
@@ -521,6 +596,190 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         return slivers;
       },
+    );
+  }
+
+  /// Build tiles for edit mode with drag-to-reorder and visibility toggles
+  List<Widget> _buildEditModeTiles(
+    BuildContext context,
+    bool isDark,
+    AsyncValue workoutsState,
+    WorkoutsNotifier workoutsNotifier,
+    dynamic nextWorkout,
+    bool isAIGenerating,
+  ) {
+    // Sort tiles by order for display
+    final sortedTiles = List<HomeTile>.from(_editingTiles)
+      ..sort((a, b) => a.order.compareTo(b.order));
+
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Drag cards to reorder • Tap eye to hide/show',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+      SliverReorderableList(
+        itemBuilder: (context, index) {
+          final tile = sortedTiles[index];
+          return _buildEditableTile(
+            context,
+            tile,
+            index,
+            isDark,
+            workoutsState,
+            workoutsNotifier,
+            nextWorkout,
+            isAIGenerating,
+          );
+        },
+        itemCount: sortedTiles.length,
+        onReorder: _onReorderTiles,
+      ),
+    ];
+  }
+
+  /// Build a single tile in edit mode with wiggle, drag handle, and visibility toggle
+  Widget _buildEditableTile(
+    BuildContext context,
+    HomeTile tile,
+    int index,
+    bool isDark,
+    AsyncValue workoutsState,
+    WorkoutsNotifier workoutsNotifier,
+    dynamic nextWorkout,
+    bool isAIGenerating,
+  ) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Build the actual tile content
+    Widget tileContent;
+    if (tile.type == TileType.nextWorkout) {
+      tileContent = _buildNextWorkoutSection(
+        context,
+        workoutsState,
+        workoutsNotifier,
+        nextWorkout,
+        isAIGenerating,
+      );
+    } else {
+      tileContent = TileFactory.buildTile(context, ref, tile, isDark: isDark);
+    }
+
+    return ReorderableDelayedDragStartListener(
+      key: ValueKey(tile.id),
+      index: index,
+      child: AnimatedBuilder(
+        animation: _wiggleController,
+        builder: (context, child) {
+          // Wiggle animation like iOS icons
+          final wiggle = _wiggleController.value * 2 - 1; // -1 to 1
+          final angle = wiggle * 0.02; // Small rotation
+
+          return Transform.rotate(
+            angle: angle,
+            child: child,
+          );
+        },
+        child: Stack(
+          children: [
+            // The tile content with opacity for hidden tiles
+            Opacity(
+              opacity: tile.isVisible ? 1.0 : 0.4,
+              child: IgnorePointer(
+                // Disable interactions in edit mode
+                ignoring: true,
+                child: tileContent,
+              ),
+            ),
+            // Overlay with drag handle and visibility toggle
+            Positioned.fill(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.purple.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Drag handle
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: elevatedColor.withValues(alpha: 0.95),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                          bottomLeft: Radius.circular(14),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.drag_handle_rounded,
+                        color: AppColors.purple,
+                        size: 24,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Visibility toggle button
+                    GestureDetector(
+                      onTap: () => _toggleTileVisibility(tile.id),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: elevatedColor.withValues(alpha: 0.95),
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(14),
+                            bottomRight: Radius.circular(14),
+                          ),
+                        ),
+                        child: Icon(
+                          tile.isVisible
+                              ? Icons.visibility_rounded
+                              : Icons.visibility_off_rounded,
+                          color: tile.isVisible ? AppColors.cyan : AppColors.textMuted,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Tile type label
+            Positioned(
+              top: 12,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.purple.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    tile.type.displayName,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -726,6 +985,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildTodaySectionHeader(bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -741,9 +1001,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const Spacer(),
-          MySpaceButton(isDark: isDark),
-          const SizedBox(width: 8),
-          CustomizeProgramButton(isDark: isDark),
+          if (_isEditMode) ...[
+            // Done button in edit mode
+            Material(
+              color: AppColors.cyan,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: () => _exitEditMode(save: true),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ] else ...[
+            // Edit button (replaces My Space)
+            Material(
+              color: elevatedColor,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: _enterEditMode,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.purple.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.edit_rounded,
+                        size: 16,
+                        color: AppColors.purple,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            CustomizeProgramButton(isDark: isDark),
+          ],
         ],
       ),
     );

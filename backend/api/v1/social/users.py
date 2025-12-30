@@ -6,12 +6,15 @@ This module handles user search and suggestions:
 - GET /users/suggestions - Get friend suggestions
 - GET /users/{user_id}/profile - Get user profile for social display
 """
+import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
 from models.friend_request import UserSearchResult, UserSuggestion
 from .utils import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users")
 
@@ -36,87 +39,91 @@ async def search_users(
     if not query.strip():
         return []
 
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Search users by name (case-insensitive)
-    result = supabase.table("users").select(
-        "id, name, avatar_url, bio"
-    ).ilike("name", f"%{query}%").neq("id", user_id).limit(limit).execute()
+        # Search users by name (case-insensitive)
+        result = supabase.table("users").select(
+            "id, name, avatar_url, bio"
+        ).ilike("name", f"%{query}%").neq("id", user_id).limit(limit).execute()
 
-    if not result.data:
+        if not result.data:
+            return []
+
+        # Get current user's connections to determine relationship status
+        user_ids = [u["id"] for u in result.data]
+
+        # Get connections where current user is follower
+        following_result = supabase.table("user_connections").select(
+            "following_id"
+        ).eq("follower_id", user_id).in_("following_id", user_ids).execute()
+        following_ids = {c["following_id"] for c in following_result.data}
+
+        # Get connections where current user is being followed
+        followers_result = supabase.table("user_connections").select(
+            "follower_id"
+        ).eq("following_id", user_id).in_("follower_id", user_ids).execute()
+        follower_ids = {c["follower_id"] for c in followers_result.data}
+
+        # Get pending friend requests
+        pending_sent = supabase.table("friend_requests").select(
+            "id, to_user_id"
+        ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", user_ids).execute()
+        pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
+
+        pending_received = supabase.table("friend_requests").select(
+            "id, from_user_id"
+        ).eq("to_user_id", user_id).eq("status", "pending").in_("from_user_id", user_ids).execute()
+        pending_received_map = {r["from_user_id"]: r["id"] for r in pending_received.data}
+
+        # Get privacy settings for users to check if they require approval
+        privacy_result = supabase.table("user_privacy_settings").select(
+            "user_id, require_follow_approval"
+        ).in_("user_id", user_ids).execute()
+        requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy_result.data}
+
+        # Get workout stats for users
+        stats_result = supabase.table("workout_logs").select(
+            "user_id"
+        ).in_("user_id", user_ids).execute()
+
+        # Count workouts per user
+        workout_counts = {}
+        for log in stats_result.data:
+            uid = log["user_id"]
+            workout_counts[uid] = workout_counts.get(uid, 0) + 1
+
+        # Build results
+        results = []
+        for user in result.data:
+            uid = user["id"]
+            is_following = uid in following_ids
+            is_follower = uid in follower_ids
+            is_friend = is_following and is_follower
+
+            # Check for pending requests in either direction
+            has_pending = uid in pending_sent_map or uid in pending_received_map
+            pending_id = pending_sent_map.get(uid) or pending_received_map.get(uid)
+
+            results.append(UserSearchResult(
+                id=uid,
+                name=user.get("name", "Unknown"),
+                avatar_url=user.get("avatar_url"),
+                bio=user.get("bio"),
+                total_workouts=workout_counts.get(uid, 0),
+                current_streak=0,  # Would need separate query for streak calculation
+                is_following=is_following,
+                is_follower=is_follower,
+                is_friend=is_friend,
+                has_pending_request=has_pending,
+                pending_request_id=pending_id,
+                requires_approval=requires_approval.get(uid, False),
+            ))
+
+        return results
+    except Exception as e:
+        logger.error(f"Error searching users for query '{query}': {e}", exc_info=True)
         return []
-
-    # Get current user's connections to determine relationship status
-    user_ids = [u["id"] for u in result.data]
-
-    # Get connections where current user is follower
-    following_result = supabase.table("user_connections").select(
-        "following_id"
-    ).eq("follower_id", user_id).in_("following_id", user_ids).execute()
-    following_ids = {c["following_id"] for c in following_result.data}
-
-    # Get connections where current user is being followed
-    followers_result = supabase.table("user_connections").select(
-        "follower_id"
-    ).eq("following_id", user_id).in_("follower_id", user_ids).execute()
-    follower_ids = {c["follower_id"] for c in followers_result.data}
-
-    # Get pending friend requests
-    pending_sent = supabase.table("friend_requests").select(
-        "id, to_user_id"
-    ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", user_ids).execute()
-    pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
-
-    pending_received = supabase.table("friend_requests").select(
-        "id, from_user_id"
-    ).eq("to_user_id", user_id).eq("status", "pending").in_("from_user_id", user_ids).execute()
-    pending_received_map = {r["from_user_id"]: r["id"] for r in pending_received.data}
-
-    # Get privacy settings for users to check if they require approval
-    privacy_result = supabase.table("user_privacy_settings").select(
-        "user_id, require_follow_approval"
-    ).in_("user_id", user_ids).execute()
-    requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy_result.data}
-
-    # Get workout stats for users
-    stats_result = supabase.table("workout_logs").select(
-        "user_id"
-    ).in_("user_id", user_ids).execute()
-
-    # Count workouts per user
-    workout_counts = {}
-    for log in stats_result.data:
-        uid = log["user_id"]
-        workout_counts[uid] = workout_counts.get(uid, 0) + 1
-
-    # Build results
-    results = []
-    for user in result.data:
-        uid = user["id"]
-        is_following = uid in following_ids
-        is_follower = uid in follower_ids
-        is_friend = is_following and is_follower
-
-        # Check for pending requests in either direction
-        has_pending = uid in pending_sent_map or uid in pending_received_map
-        pending_id = pending_sent_map.get(uid) or pending_received_map.get(uid)
-
-        results.append(UserSearchResult(
-            id=uid,
-            name=user.get("name", "Unknown"),
-            avatar_url=user.get("avatar_url"),
-            bio=user.get("bio"),
-            total_workouts=workout_counts.get(uid, 0),
-            current_streak=0,  # Would need separate query for streak calculation
-            is_following=is_following,
-            is_follower=is_follower,
-            is_friend=is_friend,
-            has_pending_request=has_pending,
-            pending_request_id=pending_id,
-            requires_approval=requires_approval.get(uid, False),
-        ))
-
-    return results
 
 
 @router.get("/suggestions", response_model=List[UserSuggestion])
@@ -134,111 +141,154 @@ async def get_friend_suggestions(
     Returns:
         List of suggested users with reasons
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Get current user's following list
-    following = supabase.table("user_connections").select(
-        "following_id"
-    ).eq("follower_id", user_id).execute()
-    following_ids = {c["following_id"] for c in following.data}
-    following_ids.add(user_id)  # Exclude self
+        # Get current user's following list
+        following = supabase.table("user_connections").select(
+            "following_id"
+        ).eq("follower_id", user_id).execute()
+        following_ids = {c["following_id"] for c in following.data}
 
-    # Get friends of friends (mutual connections)
-    if following_ids:
-        # Get who the user's friends are following
-        friends_following = supabase.table("user_connections").select(
-            "follower_id, following_id"
-        ).in_("follower_id", list(following_ids)).execute()
+        # Store original following ids (without self) for pending request check
+        original_following_ids = following_ids.copy()
+        following_ids.add(user_id)  # Exclude self from suggestions
 
-        # Count how many mutual friends each potential suggestion has
-        mutual_counts = {}
-        for conn in friends_following.data:
-            potential_friend = conn["following_id"]
-            if potential_friend not in following_ids:
-                mutual_counts[potential_friend] = mutual_counts.get(potential_friend, 0) + 1
+        suggestions = []
 
-        # Get top suggestions by mutual friend count
-        sorted_suggestions = sorted(mutual_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+        # Try to get suggestions based on mutual connections
+        if original_following_ids:  # Only if user actually follows someone
+            # Get who the user's friends are following
+            friends_following = supabase.table("user_connections").select(
+                "follower_id, following_id"
+            ).in_("follower_id", list(original_following_ids)).execute()
 
-        if sorted_suggestions:
-            suggestion_ids = [s[0] for s in sorted_suggestions]
+            # Count how many mutual friends each potential suggestion has
+            mutual_counts = {}
+            for conn in friends_following.data:
+                potential_friend = conn["following_id"]
+                if potential_friend not in following_ids:
+                    mutual_counts[potential_friend] = mutual_counts.get(potential_friend, 0) + 1
 
-            # Get user profiles
-            users = supabase.table("users").select(
-                "id, name, avatar_url, bio"
-            ).in_("id", suggestion_ids).execute()
+            # Get top suggestions by mutual friend count
+            sorted_suggestions = sorted(mutual_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
 
-            # Get workout counts
-            stats = supabase.table("workout_logs").select(
-                "user_id"
-            ).in_("user_id", suggestion_ids).execute()
-            workout_counts = {}
-            for log in stats.data:
-                uid = log["user_id"]
-                workout_counts[uid] = workout_counts.get(uid, 0) + 1
+            if sorted_suggestions:
+                suggestion_ids = [s[0] for s in sorted_suggestions]
 
-            # Get privacy settings
-            privacy = supabase.table("user_privacy_settings").select(
-                "user_id, require_follow_approval"
-            ).in_("user_id", suggestion_ids).execute()
-            requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
+                # Get user profiles
+                users = supabase.table("users").select(
+                    "id, name, avatar_url, bio"
+                ).in_("id", suggestion_ids).execute()
 
-            # Build user map for quick lookup
-            user_map = {u["id"]: u for u in users.data}
+                # Get workout counts
+                stats = supabase.table("workout_logs").select(
+                    "user_id"
+                ).in_("user_id", suggestion_ids).execute()
+                workout_counts = {}
+                for log in stats.data:
+                    uid = log["user_id"]
+                    workout_counts[uid] = workout_counts.get(uid, 0) + 1
 
-            suggestions = []
-            for uid, mutual_count in sorted_suggestions:
-                if uid in user_map:
-                    user = user_map[uid]
-                    suggestions.append(UserSuggestion(
-                        id=uid,
-                        name=user.get("name", "Unknown"),
-                        avatar_url=user.get("avatar_url"),
-                        bio=user.get("bio"),
-                        total_workouts=workout_counts.get(uid, 0),
-                        current_streak=0,
-                        is_following=False,
-                        is_follower=False,
-                        is_friend=False,
-                        has_pending_request=False,
-                        requires_approval=requires_approval.get(uid, False),
-                        suggestion_reason=f"{mutual_count} mutual friends",
-                        mutual_friends_count=mutual_count,
-                    ))
+                # Get privacy settings
+                privacy = supabase.table("user_privacy_settings").select(
+                    "user_id, require_follow_approval"
+                ).in_("user_id", suggestion_ids).execute()
+                requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
 
-            return suggestions
+                # Get pending friend requests to these users
+                pending_sent = supabase.table("friend_requests").select(
+                    "id, to_user_id"
+                ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", suggestion_ids).execute()
+                pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
 
-    # Fallback: Get active users if no mutual connections
-    active_users = supabase.table("users").select(
-        "id, name, avatar_url, bio"
-    ).neq("id", user_id).limit(limit).execute()
+                # Build user map for quick lookup
+                user_map = {u["id"]: u for u in users.data}
 
-    # Get privacy settings
-    user_ids = [u["id"] for u in active_users.data]
-    privacy = supabase.table("user_privacy_settings").select(
-        "user_id, require_follow_approval"
-    ).in_("user_id", user_ids).execute()
-    requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
+                for uid, mutual_count in sorted_suggestions:
+                    if uid in user_map:
+                        user = user_map[uid]
+                        has_pending = uid in pending_sent_map
+                        suggestions.append(UserSuggestion(
+                            id=uid,
+                            name=user.get("name", "Unknown"),
+                            avatar_url=user.get("avatar_url"),
+                            bio=user.get("bio"),
+                            total_workouts=workout_counts.get(uid, 0),
+                            current_streak=0,
+                            is_following=False,
+                            is_follower=False,
+                            is_friend=False,
+                            has_pending_request=has_pending,
+                            pending_request_id=pending_sent_map.get(uid),
+                            requires_approval=requires_approval.get(uid, False),
+                            suggestion_reason=f"{mutual_count} mutual friends",
+                            mutual_friends_count=mutual_count,
+                        ))
 
-    return [
-        UserSuggestion(
-            id=u["id"],
-            name=u.get("name", "Unknown"),
-            avatar_url=u.get("avatar_url"),
-            bio=u.get("bio"),
-            total_workouts=0,
-            current_streak=0,
-            is_following=False,
-            is_follower=False,
-            is_friend=False,
-            has_pending_request=False,
-            requires_approval=requires_approval.get(u["id"], False),
-            suggestion_reason="Active on IncircleAI",
-            mutual_friends_count=0,
-        )
-        for u in active_users.data
-        if u["id"] not in following_ids
-    ]
+                return suggestions
+
+        # Fallback: Get active users if no mutual connections
+        active_users = supabase.table("users").select(
+            "id, name, avatar_url, bio"
+        ).neq("id", user_id).limit(limit).execute()
+
+        if not active_users.data:
+            return []
+
+        # Filter out users already being followed
+        filtered_users = [u for u in active_users.data if u["id"] not in following_ids]
+
+        if not filtered_users:
+            return []
+
+        user_ids = [u["id"] for u in filtered_users]
+
+        # Get privacy settings (only if we have users)
+        privacy = supabase.table("user_privacy_settings").select(
+            "user_id, require_follow_approval"
+        ).in_("user_id", user_ids).execute()
+        requires_approval = {p["user_id"]: p.get("require_follow_approval", False) for p in privacy.data}
+
+        # Get pending friend requests
+        pending_sent = supabase.table("friend_requests").select(
+            "id, to_user_id"
+        ).eq("from_user_id", user_id).eq("status", "pending").in_("to_user_id", user_ids).execute()
+        pending_sent_map = {r["to_user_id"]: r["id"] for r in pending_sent.data}
+
+        # Get workout counts for better sorting
+        stats = supabase.table("workout_logs").select(
+            "user_id"
+        ).in_("user_id", user_ids).execute()
+        workout_counts = {}
+        for log in stats.data:
+            uid = log["user_id"]
+            workout_counts[uid] = workout_counts.get(uid, 0) + 1
+
+        return [
+            UserSuggestion(
+                id=u["id"],
+                name=u.get("name", "Unknown"),
+                avatar_url=u.get("avatar_url"),
+                bio=u.get("bio"),
+                total_workouts=workout_counts.get(u["id"], 0),
+                current_streak=0,
+                is_following=False,
+                is_follower=False,
+                is_friend=False,
+                has_pending_request=u["id"] in pending_sent_map,
+                pending_request_id=pending_sent_map.get(u["id"]),
+                requires_approval=requires_approval.get(u["id"], False),
+                suggestion_reason="Active on IncircleAI",
+                mutual_friends_count=0,
+            )
+            for u in filtered_users
+        ]
+    except Exception as e:
+        # Log the error for debugging
+        logger.error(f"Error getting friend suggestions for user {user_id}: {e}", exc_info=True)
+        # Return empty list instead of failing
+        return []
 
 
 @router.get("/{target_user_id}/profile", response_model=UserSearchResult)

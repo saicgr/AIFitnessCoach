@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
+import '../../data/models/workout_generation_params.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../home/widgets/components/training_program_selector.dart';
@@ -38,6 +39,9 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   bool _isWarmupExpanded = false;  // For warmup section
   bool _isStretchesExpanded = false;  // For stretches section
   String? _trainingSplit;  // Training program type from user preferences
+  WorkoutGenerationParams? _generationParams;  // AI reasoning and parameters
+  bool _isLoadingParams = false;  // Loading state for generation params
+  bool _isAIReasoningExpanded = false;  // For AI reasoning section
 
   @override
   void initState() {
@@ -58,9 +62,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         _workout = workout;
         _isLoading = false;
       });
-      // Load workout summary and training split after workout loads
+      // Load workout summary, training split, and generation params after workout loads
       _loadWorkoutSummary();
       _loadTrainingSplit();
+      _loadGenerationParams();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -135,6 +140,34 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       debugPrint('❌ [WorkoutDetail] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isLoadingSummary = false);
+      }
+    }
+  }
+
+  /// Load generation parameters and AI reasoning for the workout
+  Future<void> _loadGenerationParams() async {
+    if (_workout == null) {
+      debugPrint('🔍 [WorkoutDetail] Cannot load generation params - workout is null');
+      return;
+    }
+
+    debugPrint('🔍 [WorkoutDetail] Loading generation params for: ${widget.workoutId}');
+    setState(() => _isLoadingParams = true);
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final params = await workoutRepo.getWorkoutGenerationParams(widget.workoutId);
+      if (mounted) {
+        setState(() {
+          _generationParams = params;
+          _isLoadingParams = false;
+        });
+        debugPrint('✅ [WorkoutDetail] Generation params loaded - ${params?.exerciseReasoning.length ?? 0} exercise reasons');
+      }
+    } catch (e) {
+      debugPrint('❌ [WorkoutDetail] Failed to load generation params: $e');
+      if (mounted) {
+        setState(() => _isLoadingParams = false);
       }
     }
   }
@@ -273,6 +306,12 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
               SliverToBoxAdapter(
                 child: _buildTargetedMusclesSection(workout.primaryMuscles),
               ),
+
+              // AI Reasoning Section (expandable)
+              if (_generationParams != null || _isLoadingParams)
+                SliverToBoxAdapter(
+                  child: _buildAIReasoningSection(),
+                ),
 
               // Stats Row
           SliverToBoxAdapter(
@@ -1272,6 +1311,563 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate);
   }
 
+  /// Build AI Reasoning section - expandable section showing why exercises were selected
+  Widget _buildAIReasoningSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        children: [
+          // Expandable header
+          GestureDetector(
+            onTap: () => setState(() => _isAIReasoningExpanded = !_isAIReasoningExpanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.green.withOpacity(0.15),
+                    AppColors.cyan.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(_isAIReasoningExpanded ? 0 : 12),
+                  bottomRight: Radius.circular(_isAIReasoningExpanded ? 0 : 12),
+                ),
+                border: Border.all(
+                  color: AppColors.green.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.psychology,
+                      color: AppColors.green,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'WHY THESE EXERCISES?',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: textMuted,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        if (_isLoadingParams)
+                          Text(
+                            'Loading AI reasoning...',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        else
+                          Text(
+                            'Tap to see AI reasoning for exercise selection',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _isAIReasoningExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: AppColors.green,
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expanded content
+          if (_isAIReasoningExpanded && _generationParams != null)
+            Container(
+              decoration: BoxDecoration(
+                color: elevatedColor,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                border: Border.all(
+                  color: cardBorder.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Overall workout reasoning
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.purple,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Workout Design',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.purple,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _generationParams!.workoutReasoning,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(color: cardBorder.withOpacity(0.3), height: 1),
+                  // Exercise-specific reasoning
+                  if (_generationParams!.exerciseReasoning.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.fitness_center,
+                                color: AppColors.cyan,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Exercise Selection',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.cyan,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ..._generationParams!.exerciseReasoning.take(5).map((er) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    margin: const EdgeInsets.only(top: 6, right: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.cyan,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          er.exerciseName,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          er.reasoning,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: textSecondary,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          if (_generationParams!.exerciseReasoning.length > 5)
+                            Text(
+                              '+ ${_generationParams!.exerciseReasoning.length - 5} more exercises...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  // View Parameters button
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: GestureDetector(
+                      onTap: () => _showViewParametersModal(),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.orange.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.tune,
+                              color: AppColors.orange,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'View All Parameters Sent to AI',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    ).animate()
+      .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+      .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate);
+  }
+
+  /// Show modal with all parameters sent to AI
+  void _showViewParametersModal() {
+    if (_generationParams == null) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final params = _generationParams!;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: elevatedColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Draggable handle
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 12, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.orange.withOpacity(0.3),
+                            AppColors.purple.withOpacity(0.2),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.tune,
+                        color: AppColors.orange,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'AI Generation Parameters',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(color: cardBorder.withOpacity(0.3), height: 1),
+              // Content
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    // User Profile Section
+                    _buildParamsSection(
+                      title: 'User Profile',
+                      icon: Icons.person,
+                      color: AppColors.cyan,
+                      items: [
+                        if (params.userProfile.fitnessLevel != null)
+                          _ParamItem('Fitness Level', params.userProfile.fitnessLevel!.capitalize()),
+                        if (params.userProfile.goals.isNotEmpty)
+                          _ParamItem('Goals', params.userProfile.goals.join(', ')),
+                        if (params.userProfile.equipment.isNotEmpty)
+                          _ParamItem('Equipment', params.userProfile.equipment.join(', ')),
+                        if (params.userProfile.injuries.isNotEmpty)
+                          _ParamItem('Injuries/Limitations', params.userProfile.injuries.join(', ')),
+                        if (params.userProfile.age != null)
+                          _ParamItem('Age', '${params.userProfile.age}'),
+                        if (params.userProfile.gender != null)
+                          _ParamItem('Gender', params.userProfile.gender!.capitalize()),
+                      ],
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 16),
+                    // Program Preferences Section
+                    _buildParamsSection(
+                      title: 'Program Preferences',
+                      icon: Icons.settings,
+                      color: AppColors.purple,
+                      items: [
+                        if (params.programPreferences.difficulty != null)
+                          _ParamItem('Difficulty', params.programPreferences.difficulty!.capitalize()),
+                        if (params.programPreferences.durationMinutes != null)
+                          _ParamItem('Duration', '${params.programPreferences.durationMinutes} min'),
+                        if (params.programPreferences.workoutType != null)
+                          _ParamItem('Workout Type', params.programPreferences.workoutType!.capitalize()),
+                        if (params.programPreferences.trainingSplit != null)
+                          _ParamItem('Training Split', params.programPreferences.trainingSplit!.replaceAll('_', ' ').capitalize()),
+                        if (params.programPreferences.focusAreas.isNotEmpty)
+                          _ParamItem('Focus Areas', params.programPreferences.focusAreas.join(', ')),
+                        if (params.programPreferences.workoutDays.isNotEmpty)
+                          _ParamItem('Workout Days', params.programPreferences.workoutDays.join(', ')),
+                      ],
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 16),
+                    // Workout Specifics Section
+                    _buildParamsSection(
+                      title: 'Workout Specifics',
+                      icon: Icons.fitness_center,
+                      color: AppColors.green,
+                      items: [
+                        _ParamItem('Workout Name', params.workoutName ?? 'N/A'),
+                        _ParamItem('Type', (params.workoutType ?? 'N/A').capitalize()),
+                        _ParamItem('Difficulty', (params.difficulty ?? 'N/A').capitalize()),
+                        _ParamItem('Duration', '${params.durationMinutes ?? 0} min'),
+                        _ParamItem('Generation Method', (params.generationMethod ?? 'ai').toUpperCase()),
+                        if (params.targetMuscles.isNotEmpty)
+                          _ParamItem('Target Muscles', params.targetMuscles.join(', ')),
+                      ],
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 24),
+                    // Info box
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.cyan.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.cyan,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'These parameters were used by the AI to generate personalized exercises that match your fitness level, goals, and available equipment.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a section in the parameters modal
+  Widget _buildParamsSection({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<_ParamItem> items,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Filter out empty items
+    final validItems = items.where((item) => item.value.isNotEmpty && item.value != 'N/A').toList();
+    if (validItems.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: cardBorder.withOpacity(0.3), height: 1),
+          // Items
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: validItems.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item.value,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Build collapsible section header for warmup/stretches
   Widget _buildCollapsibleSectionHeader({
     required String title,
@@ -1474,6 +2070,18 @@ class _StatCard extends StatelessWidget {
       ),
     );
   }
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Param Item (helper for parameters modal)
+// ─────────────────────────────────────────────────────────────────
+
+class _ParamItem {
+  final String label;
+  final String value;
+
+  _ParamItem(this.label, this.value);
 }
 
 

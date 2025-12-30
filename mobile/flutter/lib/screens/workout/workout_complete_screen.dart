@@ -11,6 +11,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
+import '../../data/providers/scores_provider.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/share_workout_sheet.dart';
@@ -574,6 +575,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
       // Refresh workouts
       await ref.read(workoutsProvider.notifier).refresh();
+
+      // Refresh fitness scores (they are recalculated on the backend after workout completion)
+      ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
 
       if (mounted) {
         context.go('/home');

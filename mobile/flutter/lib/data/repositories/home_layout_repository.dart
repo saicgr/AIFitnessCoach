@@ -20,7 +20,7 @@ class HomeLayoutRepository {
     try {
       debugPrint('🔍 [Layouts] Fetching layouts for user $userId');
 
-      final response = await _apiClient.get('/v1/layouts/user/$userId');
+      final response = await _apiClient.get('/layouts/user/$userId');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;
@@ -42,7 +42,7 @@ class HomeLayoutRepository {
     try {
       debugPrint('🔍 [Layouts] Fetching active layout for user $userId');
 
-      final response = await _apiClient.get('/v1/layouts/user/$userId/active');
+      final response = await _apiClient.get('/layouts/user/$userId/active');
 
       if (response.statusCode == 200) {
         final layout =
@@ -69,7 +69,7 @@ class HomeLayoutRepository {
       debugPrint('🔍 [Layouts] Creating layout: $name');
 
       final response = await _apiClient.post(
-        '/v1/layouts/user/$userId',
+        '/layouts/user/$userId',
         data: {
           'name': name,
           'tiles': tiles.map((t) => t.toJson()).toList(),
@@ -104,7 +104,7 @@ class HomeLayoutRepository {
       if (tiles != null) data['tiles'] = tiles.map((t) => t.toJson()).toList();
 
       final response = await _apiClient.put(
-        '/v1/layouts/$layoutId',
+        '/layouts/$layoutId',
         data: data,
         queryParameters: {'user_id': userId},
       );
@@ -130,7 +130,7 @@ class HomeLayoutRepository {
       debugPrint('🔍 [Layouts] Deleting layout $layoutId');
 
       final response = await _apiClient.delete(
-        '/v1/layouts/$layoutId',
+        '/layouts/$layoutId',
         queryParameters: {'user_id': userId},
       );
 
@@ -155,7 +155,7 @@ class HomeLayoutRepository {
       debugPrint('🔍 [Layouts] Activating layout $layoutId');
 
       final response = await _apiClient.post(
-        '/v1/layouts/$layoutId/activate',
+        '/layouts/$layoutId/activate',
         queryParameters: {'user_id': userId},
       );
 
@@ -176,7 +176,7 @@ class HomeLayoutRepository {
     try {
       debugPrint('🔍 [Layouts] Fetching layout templates');
 
-      final response = await _apiClient.get('/v1/layouts/templates');
+      final response = await _apiClient.get('/layouts/templates');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List;
@@ -207,7 +207,7 @@ class HomeLayoutRepository {
       if (name != null) queryParams['name'] = name;
 
       final response = await _apiClient.post(
-        '/v1/layouts/user/$userId/from-template/$templateId',
+        '/layouts/user/$userId/from-template/$templateId',
         queryParameters: queryParams,
       );
 

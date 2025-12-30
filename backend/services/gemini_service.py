@@ -1176,7 +1176,8 @@ Requirements:
         workout_date: Optional[str] = None,
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
-        intensity_preference: Optional[str] = None
+        intensity_preference: Optional[str] = None,
+        custom_prompt_override: Optional[str] = None
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -1184,44 +1185,53 @@ Requirements:
         Yields chunks of JSON as they're generated, allowing the client to
         display exercises incrementally.
 
+        Args:
+            custom_prompt_override: If provided, use this prompt instead of
+                                    building the default workout prompt.
+
         Yields:
             str: JSON chunks as they arrive from Gemini
         """
-        # Use intensity_preference if provided, otherwise derive from fitness_level
-        if intensity_preference:
-            difficulty = intensity_preference
+        # If custom prompt provided, use it directly
+        if custom_prompt_override:
+            prompt = custom_prompt_override
+            logger.info(f"[Streaming] Using custom prompt override for {fitness_level} user")
         else:
-            difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
-
-        avoid_instruction = ""
-        if avoid_name_words and len(avoid_name_words) > 0:
-            avoid_instruction = f"\n\n⚠️ Do NOT use these words in the workout name: {', '.join(avoid_name_words)}"
-
-        holiday_theme = self._get_holiday_theme(workout_date)
-        holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
-
-        age_activity_context = ""
-        if age:
-            if age < 25:
-                age_activity_context += f"\n- Age: {age} (young adult)"
-            elif age < 40:
-                age_activity_context += f"\n- Age: {age} (adult)"
-            elif age < 55:
-                age_activity_context += f"\n- Age: {age} (middle-aged - joint-friendly)"
+            # Use intensity_preference if provided, otherwise derive from fitness_level
+            if intensity_preference:
+                difficulty = intensity_preference
             else:
-                age_activity_context += f"\n- Age: {age} (senior - low-impact)"
+                difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
-        if activity_level:
-            activity_descriptions = {
-                'sedentary': 'sedentary (start slow)',
-                'lightly_active': 'lightly active (moderate intensity)',
-                'moderately_active': 'moderately active (challenging workouts)',
-                'very_active': 'very active (high intensity)'
-            }
-            activity_desc = activity_descriptions.get(activity_level, activity_level)
-            age_activity_context += f"\n- Activity Level: {activity_desc}"
+            avoid_instruction = ""
+            if avoid_name_words and len(avoid_name_words) > 0:
+                avoid_instruction = f"\n\n⚠️ Do NOT use these words in the workout name: {', '.join(avoid_name_words)}"
 
-        prompt = f"""Generate a {duration_minutes}-minute workout for:
+            holiday_theme = self._get_holiday_theme(workout_date)
+            holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
+
+            age_activity_context = ""
+            if age:
+                if age < 25:
+                    age_activity_context += f"\n- Age: {age} (young adult)"
+                elif age < 40:
+                    age_activity_context += f"\n- Age: {age} (adult)"
+                elif age < 55:
+                    age_activity_context += f"\n- Age: {age} (middle-aged - joint-friendly)"
+                else:
+                    age_activity_context += f"\n- Age: {age} (senior - low-impact)"
+
+            if activity_level:
+                activity_descriptions = {
+                    'sedentary': 'sedentary (start slow)',
+                    'lightly_active': 'lightly active (moderate intensity)',
+                    'moderately_active': 'moderately active (challenging workouts)',
+                    'very_active': 'very active (high intensity)'
+                }
+                activity_desc = activity_descriptions.get(activity_level, activity_level)
+                age_activity_context += f"\n- Activity Level: {activity_desc}"
+
+            prompt = f"""Generate a {duration_minutes}-minute workout for:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
@@ -1243,7 +1253,7 @@ Return ONLY valid JSON (no markdown):
 Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
 {holiday_instruction}{avoid_instruction}"""
 
-        logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")
+            logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")
 
         try:
             stream = await client.aio.models.generate_content_stream(

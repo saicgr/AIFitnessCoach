@@ -9,6 +9,7 @@ import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../screens/chat/chat_screen.dart';
+import '../main_shell.dart';
 import 'floating_chat_provider.dart';
 
 /// Hero tag for chat window animation
@@ -34,6 +35,9 @@ class FloatingChatOverlay extends StatelessWidget {
 /// Shows the chat bottom sheet using the given context.
 /// This should be called from a widget that has Navigator access (like MainShell).
 void showChatBottomSheet(BuildContext context, WidgetRef ref) {
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true, // Allows the sheet to take full height
@@ -47,11 +51,16 @@ void showChatBottomSheet(BuildContext context, WidgetRef ref) {
   ).whenComplete(() {
     // Collapse the state when sheet is dismissed
     ref.read(floatingChatProvider.notifier).collapse();
+    // Show nav bar when sheet is closed
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
   });
 }
 
 /// Shows the chat bottom sheet with no entry animation (for seamless minimize transition)
 void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -69,6 +78,8 @@ void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
     ),
   ).whenComplete(() {
     ref.read(floatingChatProvider.notifier).collapse();
+    // Show nav bar when sheet is closed
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
   });
 }
 

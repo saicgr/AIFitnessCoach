@@ -54,7 +54,10 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
   }
 
   Future<void> _loadSuggestions() async {
-    if (_userId == null) return;
+    if (_userId == null) {
+      debugPrint('❌ [FriendSearch] Cannot load suggestions: userId is null');
+      return;
+    }
 
     setState(() {
       _isLoadingSuggestions = true;
@@ -62,18 +65,22 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
     });
 
     try {
+      debugPrint('🔍 [FriendSearch] Loading friend suggestions for user: $_userId');
       final socialService = ref.read(socialServiceProvider);
       final suggestions = await socialService.getFriendSuggestions(
         userId: _userId!,
         limit: 20,
       );
+      debugPrint('✅ [FriendSearch] Loaded ${suggestions.length} suggestions');
       if (mounted) {
         setState(() {
           _suggestions = suggestions;
           _isLoadingSuggestions = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [FriendSearch] Error loading suggestions: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _error = 'Failed to load suggestions';
@@ -92,7 +99,10 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       return;
     }
 
-    if (_userId == null) return;
+    if (_userId == null) {
+      debugPrint('❌ [FriendSearch] Cannot search: userId is null');
+      return;
+    }
 
     setState(() {
       _isSearching = true;
@@ -100,19 +110,23 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
     });
 
     try {
+      debugPrint('🔍 [FriendSearch] Searching users with query: $query');
       final socialService = ref.read(socialServiceProvider);
       final results = await socialService.searchUsers(
         userId: _userId!,
         query: query,
         limit: 30,
       );
+      debugPrint('✅ [FriendSearch] Found ${results.length} users');
       if (mounted) {
         setState(() {
           _searchResults = results;
           _isSearching = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [FriendSearch] Search error: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           _error = 'Search failed';

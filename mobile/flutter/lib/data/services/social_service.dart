@@ -532,6 +532,7 @@ class SocialService {
     required String userId,
     int limit = 10,
   }) async {
+    debugPrint('🔍 [Social] Getting friend suggestions for user: $userId (limit: $limit)');
     try {
       final response = await _apiClient.get(
         '/social/users/suggestions',
@@ -541,9 +542,13 @@ class SocialService {
         },
       );
 
+      debugPrint('🔍 [Social] Suggestions response status: ${response.statusCode}');
       if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(response.data);
+        final suggestions = List<Map<String, dynamic>>.from(response.data);
+        debugPrint('✅ [Social] Got ${suggestions.length} friend suggestions');
+        return suggestions;
       } else {
+        debugPrint('❌ [Social] Suggestions failed with status: ${response.statusCode}');
         throw Exception('Failed to get suggestions: ${response.statusCode}');
       }
     } catch (e) {

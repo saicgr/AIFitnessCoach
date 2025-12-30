@@ -13,8 +13,8 @@ import '../../../data/services/workout_gallery_service.dart';
 
 /// Workout Gallery Section for Profile Screen
 ///
-/// Shows a 2x2 grid of recent workout gallery images with a "See All" button.
-/// Displays empty state if no images exist.
+/// Netflix-style horizontal carousel of recent workout gallery images.
+/// Compact design with smooth horizontal scrolling.
 class WorkoutGallerySection extends ConsumerStatefulWidget {
   const WorkoutGallerySection({super.key});
 
@@ -44,39 +44,28 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
       return const SizedBox.shrink();
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
     final recentImagesAsync = ref.watch(recentGalleryImagesProvider(_userId!));
 
     return recentImagesAsync.when(
-      data: (images) => _buildSection(context, images, elevated, isDark),
-      loading: () => _buildLoadingSection(elevated),
+      data: (images) => _buildSection(context, images),
+      loading: () => _buildLoadingSection(),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
 
-  Widget _buildSection(
-    BuildContext context,
-    List<WorkoutGalleryImage> images,
-    Color elevated,
-    bool isDark,
-  ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.cardBorder.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+  Widget _buildSection(BuildContext context, List<WorkoutGalleryImage> images) {
+    // Don't show section if no images
+    if (images.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header row - Netflix style
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
@@ -84,118 +73,96 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
                   Icon(
                     Icons.photo_library_rounded,
                     color: AppColors.cyan,
-                    size: 20,
+                    size: 18,
                   ),
                   const SizedBox(width: 8),
                   const Text(
                     'Workout Gallery',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              if (images.isNotEmpty)
-                TextButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    context.push('/workout-gallery');
-                  },
-                  child: Text(
-                    'See All',
-                    style: TextStyle(
-                      color: AppColors.cyan,
-                      fontWeight: FontWeight.w600,
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/workout-gallery');
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'See All',
+                      style: TextStyle(
+                        color: AppColors.cyan,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.cyan,
+                      size: 18,
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
+        ),
 
-          const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-          // Content
-          if (images.isEmpty)
-            _buildEmptyState(isDark)
-          else
-            _buildGalleryGrid(images),
-        ],
-      ),
+        // Horizontal carousel - Netflix style
+        SizedBox(
+          height: 140, // Compact height
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: images.length,
+            itemBuilder: (context, index) {
+              final image = images[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index < images.length - 1 ? 10 : 0,
+                ),
+                child: _buildCarouselItem(image),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          Icon(
-            Icons.add_photo_alternate_rounded,
-            size: 48,
-            color: AppColors.textMuted.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No workout images yet',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Complete a workout and share it to build your gallery',
-            style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.7),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildCarouselItem(WorkoutGalleryImage image) {
+    // Netflix-style card with 9:16 aspect ratio scaled down
+    const double cardWidth = 80;
+    const double cardHeight = 140;
 
-  Widget _buildGalleryGrid(List<WorkoutGalleryImage> images) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 9 / 16,
-      ),
-      itemCount: images.length > 4 ? 4 : images.length,
-      itemBuilder: (context, index) {
-        final image = images[index];
-        return _buildGalleryItem(image);
-      },
-    );
-  }
-
-  Widget _buildGalleryItem(WorkoutGalleryImage image) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         _showImageDetail(image);
       },
       child: Container(
+        width: cardWidth,
+        height: cardHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -211,41 +178,43 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.6),
+                        Colors.black.withValues(alpha: 0.7),
                       ],
-                      stops: const [0.6, 1.0],
+                      stops: const [0.5, 1.0],
                     ),
                   ),
                 ),
               ),
 
-              // Shared badges
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (image.sharedToFeed)
-                      _buildBadge(Icons.feed_rounded, AppColors.cyan),
-                    if (image.sharedExternally) ...[
-                      const SizedBox(width: 4),
-                      _buildBadge(Icons.share_rounded, AppColors.purple),
-                    ],
-                  ],
+              // Shared badge (small indicator)
+              if (image.sharedToFeed || image.sharedExternally)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      image.sharedToFeed ? Icons.feed_rounded : Icons.share_rounded,
+                      size: 10,
+                      color: AppColors.cyan,
+                    ),
+                  ),
                 ),
-              ),
 
-              // Workout name
+              // Workout name at bottom
               Positioned(
-                bottom: 8,
-                left: 8,
-                right: 8,
+                bottom: 6,
+                left: 6,
+                right: 6,
                 child: Text(
                   image.workoutName ?? 'Workout',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 2,
@@ -255,21 +224,6 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Icon(
-        icon,
-        size: 12,
-        color: color,
       ),
     );
   }
@@ -288,6 +242,7 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
           errorBuilder: (_, __, ___) => _buildImageErrorWidget(),
         );
       } catch (e) {
+        debugPrint('Error decoding base64 image: $e');
         return _buildImageErrorWidget();
       }
     }
@@ -299,58 +254,72 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
       placeholder: (_, __) => Container(
         color: AppColors.elevated,
         child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ),
       ),
-      errorWidget: (_, __, ___) => _buildImageErrorWidget(),
+      errorWidget: (_, url, error) {
+        debugPrint('Error loading image from $url: $error');
+        return _buildImageErrorWidget();
+      },
     );
   }
 
   Widget _buildImageErrorWidget() {
     return Container(
       color: AppColors.elevated,
-      child: Icon(
-        Icons.broken_image_rounded,
-        color: AppColors.textMuted,
+      child: Center(
+        child: Icon(
+          Icons.broken_image_rounded,
+          color: AppColors.textMuted,
+          size: 20,
+        ),
       ),
     );
   }
 
-  Widget _buildLoadingSection(Color elevated) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildLoadingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
             children: [
               Icon(
                 Icons.photo_library_rounded,
                 color: AppColors.cyan,
-                size: 20,
+                size: 18,
               ),
               const SizedBox(width: 8),
               const Text(
                 'Workout Gallery',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 32),
-          const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 140,
+          child: Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.cyan,
+              ),
+            ),
           ),
-          const SizedBox(height: 32),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -408,11 +377,15 @@ class _ImageDetailSheet extends ConsumerWidget {
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                 ),
-                Text(
-                  image.workoutName ?? 'Workout Recap',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    image.workoutName ?? 'Workout Recap',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -280,24 +282,8 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image
-              CachedNetworkImage(
-                imageUrl: image.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  color: AppColors.elevated,
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: AppColors.elevated,
-                  child: Icon(
-                    Icons.broken_image_rounded,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
+              // Image - handles both data URLs and network URLs
+              _buildGalleryImage(image.imageUrl),
 
               // Gradient overlay
               Positioned.fill(
@@ -417,6 +403,55 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     );
   }
 
+  /// Build gallery image widget that handles both data URLs and network URLs
+  Widget _buildGalleryImage(String imageUrl) {
+    // Check if it's a data URL (base64 encoded image)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        // Extract base64 data from data URL
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildImageErrorWidget(),
+        );
+      } catch (e) {
+        debugPrint('Error decoding base64 image: $e');
+        return _buildImageErrorWidget();
+      }
+    }
+
+    // Network URL - use CachedNetworkImage
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        color: AppColors.elevated,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (_, url, error) {
+        debugPrint('Error loading image from $url: $error');
+        return _buildImageErrorWidget();
+      },
+    );
+  }
+
+  Widget _buildImageErrorWidget() {
+    return Container(
+      color: AppColors.elevated,
+      child: Center(
+        child: Icon(
+          Icons.broken_image_rounded,
+          color: AppColors.textMuted,
+          size: 32,
+        ),
+      ),
+    );
+  }
+
   Widget _buildBadge(IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -521,26 +556,39 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
 
   Future<void> _reshareImage(WorkoutGalleryImage image) async {
     try {
-      // Download image bytes using dio
-      final dio = Dio();
-      final response = await dio.get<List<int>>(
-        image.imageUrl,
-        options: Options(responseType: ResponseType.bytes),
-      );
-      if (response.statusCode == 200 && response.data != null) {
-        await ShareService.shareGeneric(
-          Uint8List.fromList(response.data!),
-          caption: 'Check out my ${image.workoutName ?? "workout"}!',
-        );
+      Uint8List imageBytes;
 
-        // Track external share
-        final service = ref.read(workoutGalleryServiceProvider);
-        await service.trackExternalShare(
-          userId: _userId!,
-          imageId: image.id,
+      // Handle both data URLs and network URLs
+      if (image.imageUrl.startsWith('data:image')) {
+        final base64Data = image.imageUrl.split(',').last;
+        imageBytes = Uint8List.fromList(base64Decode(base64Data));
+      } else {
+        // Download image bytes using dio
+        final dio = Dio();
+        final response = await dio.get<List<int>>(
+          image.imageUrl,
+          options: Options(responseType: ResponseType.bytes),
         );
+        if (response.statusCode != 200 || response.data == null) {
+          _showError('Failed to load image');
+          return;
+        }
+        imageBytes = Uint8List.fromList(response.data!);
       }
+
+      await ShareService.shareGeneric(
+        imageBytes,
+        caption: 'Check out my ${image.workoutName ?? "workout"}!',
+      );
+
+      // Track external share
+      final service = ref.read(workoutGalleryServiceProvider);
+      await service.trackExternalShare(
+        userId: _userId!,
+        imageId: image.id,
+      );
     } catch (e) {
+      debugPrint('Error resharing image: $e');
       _showError('Failed to share');
     }
   }
@@ -628,6 +676,41 @@ class _FullImageScreen extends StatelessWidget {
     required this.onDelete,
   });
 
+  /// Build image widget that handles both data URLs and network URLs
+  Widget _buildImage(String imageUrl) {
+    // Check if it's a data URL (base64 encoded image)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        // Extract base64 data from data URL
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Center(
+            child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.white54),
+          ),
+        );
+      } catch (e) {
+        return const Center(
+          child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.white54),
+        );
+      }
+    }
+
+    // Network URL - use CachedNetworkImage
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.contain,
+      placeholder: (_, __) => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+      errorWidget: (_, __, ___) => const Center(
+        child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.white54),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -639,11 +722,7 @@ class _FullImageScreen extends StatelessWidget {
       ),
       body: InteractiveViewer(
         child: Center(
-          child: CachedNetworkImage(
-            imageUrl: image.imageUrl,
-            fit: BoxFit.contain,
-            placeholder: (_, __) => const CircularProgressIndicator(),
-          ),
+          child: _buildImage(image.imageUrl),
         ),
       ),
     );

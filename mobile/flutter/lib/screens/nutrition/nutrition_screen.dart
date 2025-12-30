@@ -84,8 +84,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     final prefsState = ref.read(nutritionPreferencesProvider);
 
+    // Check if onboarding is complete - check both state flag and preferences object
+    // This handles cases where the state flag might not be set but preferences exist
+    final isOnboardingComplete = prefsState.onboardingCompleted ||
+        (prefsState.preferences?.nutritionOnboardingCompleted ?? false);
+
+    debugPrint('🥗 [NutritionScreen] Checking onboarding: stateFlag=${prefsState.onboardingCompleted}, prefsFlag=${prefsState.preferences?.nutritionOnboardingCompleted}, final=$isOnboardingComplete');
+
     // If onboarding not completed and not skipped, show welcome screen first
-    if (!prefsState.onboardingCompleted && !_hasSkippedOnboarding) {
+    if (!isOnboardingComplete && !_hasSkippedOnboarding) {
       debugPrint('🥗 [NutritionScreen] Onboarding not completed, showing welcome');
 
       // Hide floating nav bar during onboarding
@@ -385,6 +392,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   void _showRecipeBuilder(BuildContext context, bool isDark) {
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -392,6 +402,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       builder: (context) =>
           RecipeBuilderSheet(userId: _userId ?? '', isDark: isDark),
     ).then((_) {
+      // Show nav bar when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
       if (_userId != null) {
         _loadRecipes(_userId!);
       }
