@@ -30,6 +30,18 @@ class SettingItemData {
   /// Whether this item is the timezone selector.
   final bool isTimezoneSelector;
 
+  /// Whether this item is the progression pace selector.
+  final bool isProgressionPaceSelector;
+
+  /// Whether this item is the workout type selector.
+  final bool isWorkoutTypeSelector;
+
+  /// Whether this item is the workout environment selector.
+  final bool isWorkoutEnvironmentSelector;
+
+  /// Whether this item is the equipment selector.
+  final bool isEquipmentSelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -40,6 +52,10 @@ class SettingItemData {
     this.isFollowSystemToggle = false,
     this.isThemeSelector = false,
     this.isTimezoneSelector = false,
+    this.isProgressionPaceSelector = false,
+    this.isWorkoutTypeSelector = false,
+    this.isWorkoutEnvironmentSelector = false,
+    this.isEquipmentSelector = false,
   });
 }
 

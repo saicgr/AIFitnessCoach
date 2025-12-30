@@ -13,6 +13,15 @@
     <!-- Camera permission for food photo logging and barcode scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Storage permissions for saving workout images to gallery -->
+    <!-- For Android 9 and below -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- For Android 13+ (scoped storage) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>

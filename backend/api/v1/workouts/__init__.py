@@ -26,6 +26,7 @@ from .exercises import router as exercises_router
 from .exit_tracking import router as exit_tracking_router
 from .program import router as program_router
 from .program_history import router as program_history_router
+from .weight_suggestions import router as weight_suggestions_router
 
 # Create the combined router
 router = APIRouter()
@@ -60,6 +61,9 @@ router.include_router(program_router)
 
 # Program history endpoints
 router.include_router(program_history_router)
+
+# AI weight suggestion endpoints
+router.include_router(weight_suggestions_router)
 
 # Re-export commonly used utilities
 from .utils import (

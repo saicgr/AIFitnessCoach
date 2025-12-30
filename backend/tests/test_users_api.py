@@ -269,3 +269,155 @@ class TestUserEndpoints:
 
         # Should not be 404
         assert response.status_code != 404
+
+    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.log_user_activity')
+    def test_update_training_preferences(self, mock_log, mock_db, client):
+        """Test updating progression_pace and workout_type_preference saves to Supabase."""
+        user_id = "test-user-uuid-123"
+
+        # Mock existing user with current preferences
+        existing_user = {
+            "id": user_id,
+            "email": "test@example.com",
+            "name": "Test User",
+            "onboarding_completed": True,
+            "fitness_level": "intermediate",
+            "goals": '["build_muscle"]',
+            "equipment": '["dumbbells"]',
+            "preferences": {"days_per_week": 4, "progression_pace": "medium", "workout_type_preference": "strength"},
+            "active_injuries": '[]',
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        # Mock updated user (after DB update)
+        updated_user = {
+            **existing_user,
+            "preferences": {"days_per_week": 4, "progression_pace": "slow", "workout_type_preference": "mixed"},
+        }
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = existing_user
+        mock_db_instance.update_user.return_value = updated_user
+        mock_db.return_value = mock_db_instance
+
+        mock_log.return_value = None
+
+        # Send PUT request with new training preferences
+        response = client.put(
+            f"/api/v1/users/{user_id}",
+            json={
+                "progression_pace": "slow",
+                "workout_type_preference": "mixed"
+            }
+        )
+
+        assert response.status_code == 200
+
+        # Verify update_user was called with correct preferences merged
+        mock_db_instance.update_user.assert_called_once()
+        call_args = mock_db_instance.update_user.call_args[0]
+        assert call_args[0] == user_id
+        update_data = call_args[1]
+
+        # Check that preferences contains the new training preferences
+        assert "preferences" in update_data
+        prefs = update_data["preferences"]
+        assert prefs.get("progression_pace") == "slow"
+        assert prefs.get("workout_type_preference") == "mixed"
+        # Original preference should be preserved
+        assert prefs.get("days_per_week") == 4
+
+    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.log_user_activity')
+    def test_update_progression_pace_only(self, mock_log, mock_db, client):
+        """Test updating only progression_pace without affecting workout_type."""
+        user_id = "test-user-uuid-456"
+
+        existing_user = {
+            "id": user_id,
+            "email": "test@example.com",
+            "name": "Test User",
+            "onboarding_completed": True,
+            "fitness_level": "intermediate",
+            "goals": '["build_muscle"]',
+            "equipment": '["dumbbells"]',
+            "preferences": {"progression_pace": "medium", "workout_type_preference": "strength"},
+            "active_injuries": '[]',
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        updated_user = {
+            **existing_user,
+            "preferences": {"progression_pace": "fast", "workout_type_preference": "strength"},
+        }
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = existing_user
+        mock_db_instance.update_user.return_value = updated_user
+        mock_db.return_value = mock_db_instance
+
+        mock_log.return_value = None
+
+        response = client.put(
+            f"/api/v1/users/{user_id}",
+            json={"progression_pace": "fast"}
+        )
+
+        assert response.status_code == 200
+
+        call_args = mock_db_instance.update_user.call_args[0]
+        update_data = call_args[1]
+        prefs = update_data["preferences"]
+
+        # progression_pace should be updated
+        assert prefs.get("progression_pace") == "fast"
+        # workout_type_preference should be preserved (not overwritten)
+        assert prefs.get("workout_type_preference") == "strength"
+
+    @patch('api.v1.users.get_supabase_db')
+    @patch('api.v1.users.log_user_activity')
+    def test_update_workout_type_only(self, mock_log, mock_db, client):
+        """Test updating only workout_type_preference without affecting progression_pace."""
+        user_id = "test-user-uuid-789"
+
+        existing_user = {
+            "id": user_id,
+            "email": "test@example.com",
+            "name": "Test User",
+            "onboarding_completed": True,
+            "fitness_level": "intermediate",
+            "goals": '["build_muscle"]',
+            "equipment": '["dumbbells"]',
+            "preferences": {"progression_pace": "slow", "workout_type_preference": "strength"},
+            "active_injuries": '[]',
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        updated_user = {
+            **existing_user,
+            "preferences": {"progression_pace": "slow", "workout_type_preference": "cardio"},
+        }
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = existing_user
+        mock_db_instance.update_user.return_value = updated_user
+        mock_db.return_value = mock_db_instance
+
+        mock_log.return_value = None
+
+        response = client.put(
+            f"/api/v1/users/{user_id}",
+            json={"workout_type_preference": "cardio"}
+        )
+
+        assert response.status_code == 200
+
+        call_args = mock_db_instance.update_user.call_args[0]
+        update_data = call_args[1]
+        prefs = update_data["preferences"]
+
+        # workout_type_preference should be updated
+        assert prefs.get("workout_type_preference") == "cardio"
+        # progression_pace should be preserved
+        assert prefs.get("progression_pace") == "slow"

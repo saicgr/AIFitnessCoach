@@ -1,0 +1,955 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/constants/app_colors.dart';
+import '../../data/models/progress_photos.dart';
+import '../../data/repositories/progress_photos_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../widgets/main_shell.dart';
+import 'log_measurement_sheet.dart';
+import 'comparison_view.dart';
+import 'photo_editor_screen.dart';
+
+class ProgressScreen extends ConsumerStatefulWidget {
+  const ProgressScreen({super.key});
+
+  @override
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
+}
+
+class _ProgressScreenState extends ConsumerState<ProgressScreen>
+    with SingleTickerProviderStateMixin {
+  String? _userId;
+  late TabController _tabController;
+  bool _isLoading = true;
+  PhotoViewType? _selectedViewFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId != null) {
+      setState(() {
+        _userId = userId;
+        _isLoading = false;
+      });
+      // Load photos data
+      ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return MainShell(
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(
+          title: const Text('Progress'),
+          centerTitle: true,
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.compare_arrows),
+              tooltip: 'Compare Photos',
+              onPressed: _userId != null ? _showComparisonPicker : null,
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: colorScheme.onSurfaceVariant,
+            indicatorColor: colorScheme.primary,
+            tabs: const [
+              Tab(icon: Icon(Icons.photo_library), text: 'Photos'),
+              Tab(icon: Icon(Icons.straighten), text: 'Measurements'),
+            ],
+          ),
+        ),
+        body: _isLoading || _userId == null
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildPhotosTab(),
+                  _buildMeasurementsTab(),
+                ],
+              ),
+        floatingActionButton: _buildFAB(),
+      ),
+    );
+  }
+
+  Widget _buildFAB() {
+    return FloatingActionButton.extended(
+      onPressed: () => _tabController.index == 0
+          ? _showAddPhotoSheet()
+          : _showAddMeasurementSheet(),
+      icon: Icon(_tabController.index == 0 ? Icons.camera_alt : Icons.add),
+      label: Text(_tabController.index == 0 ? 'Add Photo' : 'Log Measurement'),
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+
+  // ============================================
+  // Photos Tab
+  // ============================================
+
+  Widget _buildPhotosTab() {
+    final state = ref.watch(progressPhotosNotifierProvider(_userId!));
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return RefreshIndicator(
+      onRefresh: () => ref
+          .read(progressPhotosNotifierProvider(_userId!).notifier)
+          .loadAll(),
+      child: CustomScrollView(
+        slivers: [
+          // Stats Card
+          SliverToBoxAdapter(
+            child: _buildPhotoStatsCard(state),
+          ),
+
+          // View Type Filter
+          SliverToBoxAdapter(
+            child: _buildViewTypeFilter(),
+          ),
+
+          // Latest Photos by View
+          if (state.latestByView != null && _selectedViewFilter == null)
+            SliverToBoxAdapter(
+              child: _buildLatestPhotosByView(state.latestByView!),
+            ),
+
+          // Photo Grid
+          if (state.isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (state.photos.isEmpty)
+            SliverFillRemaining(
+              child: _buildEmptyPhotosState(),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.75,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final filteredPhotos = _selectedViewFilter == null
+                        ? state.photos
+                        : state.photos
+                            .where((p) =>
+                                p.viewTypeEnum == _selectedViewFilter)
+                            .toList();
+                    if (index >= filteredPhotos.length) return null;
+                    return _buildPhotoCard(filteredPhotos[index]);
+                  },
+                  childCount: _selectedViewFilter == null
+                      ? state.photos.length
+                      : state.photos
+                          .where(
+                              (p) => p.viewTypeEnum == _selectedViewFilter)
+                          .length,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoStatsCard(ProgressPhotosState state) {
+    final stats = state.stats;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer,
+            colorScheme.primaryContainer.withOpacity(0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.insights, color: colorScheme.onPrimaryContainer),
+              const SizedBox(width: 8),
+              Text(
+                'Photo Progress',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                '${stats?.totalPhotos ?? 0}',
+                'Total Photos',
+                Icons.photo_library,
+              ),
+              _buildStatItem(
+                '${stats?.viewTypesCaptured ?? 0}/4',
+                'Views Captured',
+                Icons.view_carousel,
+              ),
+              _buildStatItem(
+                stats?.formattedTrackingDuration ?? '-',
+                'Tracking',
+                Icons.calendar_month,
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.1, end: 0);
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Icon(icon, size: 24, color: colorScheme.onPrimaryContainer),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onPrimaryContainer,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildViewTypeFilter() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 50,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          FilterChip(
+            label: const Text('All'),
+            selected: _selectedViewFilter == null,
+            onSelected: (_) => setState(() => _selectedViewFilter = null),
+          ),
+          const SizedBox(width: 8),
+          ...PhotoViewType.values.map((type) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(type.displayName),
+                  selected: _selectedViewFilter == type,
+                  onSelected: (_) =>
+                      setState(() => _selectedViewFilter = type),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatestPhotosByView(LatestPhotosByView latest) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Latest by View',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 120,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: PhotoViewType.values.map((type) {
+                final photo = latest.getPhoto(type);
+                return _buildLatestViewCard(type, photo);
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLatestViewCard(PhotoViewType type, ProgressPhoto? photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: 90,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: photo != null
+                      ? colorScheme.primary.withOpacity(0.5)
+                      : colorScheme.outline.withOpacity(0.3),
+                  width: photo != null ? 2 : 1,
+                ),
+              ),
+              child: photo != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: CachedNetworkImage(
+                        imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        errorWidget: (_, __, ___) => Icon(
+                          Icons.broken_image,
+                          color: colorScheme.error,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.add_a_photo,
+                        color: colorScheme.outline,
+                        size: 28,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            type.displayName,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoCard(ProgressPhoto photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () => _showPhotoDetail(photo),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(
+                  color: colorScheme.surfaceContainerHighest,
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: colorScheme.errorContainer,
+                  child: Icon(Icons.broken_image, color: colorScheme.error),
+                ),
+              ),
+              // Gradient overlay for text readability
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        photo.viewTypeEnum.displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        photo.formattedDate,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 9,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyPhotosState() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.photo_camera_outlined,
+              size: 80,
+              color: colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Progress Photos Yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Take photos from different angles to track your visual progress over time.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _showAddPhotoSheet,
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('Take First Photo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================
+  // Measurements Tab
+  // ============================================
+
+  Widget _buildMeasurementsTab() {
+    // TODO: Implement measurements tab with body_measurements data
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.straighten_outlined,
+              size: 80,
+              color: colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Body Measurements',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Track your body measurements to see detailed progress beyond the scale.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _showAddMeasurementSheet,
+              icon: const Icon(Icons.add),
+              label: const Text('Log Measurements'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============================================
+  // Actions
+  // ============================================
+
+  Future<void> _showAddPhotoSheet() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    PhotoViewType? selectedType;
+
+    // First, pick a view type
+    selectedType = await showModalBottomSheet<PhotoViewType>(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select View Type',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...PhotoViewType.values.map((type) => ListTile(
+                  leading: Icon(_getViewTypeIcon(type)),
+                  title: Text(type.displayName),
+                  subtitle: Text(_getViewTypeDescription(type)),
+                  onTap: () => Navigator.pop(context, type),
+                )),
+          ],
+        ),
+      ),
+    );
+
+    if (selectedType == null || !mounted) return;
+
+    // Then pick image source
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              subtitle: const Text('Use camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              subtitle: const Text('Select existing photo'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    // Pick the image
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null || !mounted) return;
+
+    // Open photo editor for cropping and logo overlay
+    final editedFile = await Navigator.push<File>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoEditorScreen(
+          imageFile: File(pickedFile.path),
+          viewTypeName: selectedType!.displayName,
+        ),
+      ),
+    );
+
+    // If user saved the edited photo, upload it
+    if (editedFile != null && mounted) {
+      _uploadPhoto(editedFile, selectedType);
+    }
+  }
+
+  Future<void> _uploadPhoto(File imageFile, PhotoViewType viewType) async {
+    if (_userId == null) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Uploading photo...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await ref
+          .read(progressPhotosNotifierProvider(_userId!).notifier)
+          .uploadPhoto(
+            imageFile: imageFile,
+            viewType: viewType,
+          );
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        // Show success dialog - more prominent than snackbar
+        _showUploadSuccessDialog(viewType);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        // Show error dialog - more prominent than snackbar
+        _showUploadErrorDialog(e.toString());
+      }
+    }
+  }
+
+  void _showUploadSuccessDialog(PhotoViewType viewType) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.check_circle,
+            color: Colors.green,
+            size: 48,
+          ),
+        ),
+        title: const Text('Photo Saved!'),
+        content: Text(
+          'Your ${viewType.displayName} progress photo has been saved successfully.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Great!'),
+          ),
+        ],
+        actionsAlignment: MainAxisAlignment.center,
+      ),
+    );
+  }
+
+  void _showUploadErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 48,
+          ),
+        ),
+        title: const Text('Upload Failed'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'We couldn\'t save your photo. Please try again.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                error,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+        actionsAlignment: MainAxisAlignment.center,
+      ),
+    );
+  }
+
+  void _showAddMeasurementSheet() {
+    if (_userId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => LogMeasurementSheet(userId: _userId!),
+    );
+  }
+
+  void _showPhotoDetail(ProgressPhoto photo) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Photo
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  child: Column(
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 0.75,
+                        child: CachedNetworkImage(
+                          imageUrl: photo.photoUrl,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              photo.viewTypeEnum.displayName,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              DateFormat('MMMM d, yyyy').format(photo.takenAt),
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            if (photo.formattedWeight != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Weight: ${photo.formattedWeight}',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                            if (photo.notes != null && photo.notes!.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Text(
+                                photo.notes!,
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _deletePhoto(photo),
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text('Delete'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deletePhoto(ProgressPhoto photo) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Photo?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      Navigator.pop(context); // Close detail sheet
+      await ref
+          .read(progressPhotosNotifierProvider(_userId!).notifier)
+          .deletePhoto(photo.id);
+    }
+  }
+
+  void _showComparisonPicker() {
+    if (_userId == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComparisonView(userId: _userId!),
+      ),
+    );
+  }
+
+  IconData _getViewTypeIcon(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return Icons.person;
+      case PhotoViewType.sideLeft:
+        return Icons.arrow_back;
+      case PhotoViewType.sideRight:
+        return Icons.arrow_forward;
+      case PhotoViewType.back:
+        return Icons.person_outline;
+    }
+  }
+
+  String _getViewTypeDescription(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return 'Face the camera directly';
+      case PhotoViewType.sideLeft:
+        return 'Turn your left side to camera';
+      case PhotoViewType.sideRight:
+        return 'Turn your right side to camera';
+      case PhotoViewType.back:
+        return 'Turn your back to camera';
+    }
+  }
+}

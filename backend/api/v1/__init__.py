@@ -18,6 +18,8 @@ from api.v1 import personal_goals  # Weekly personal challenges
 from api.v1 import goal_social  # Goal sharing and friend features
 from api.v1 import features  # Feature voting system (Robinhood-style)
 from api.v1 import custom_goals  # Custom training goals with AI keywords
+from api.v1 import fasting  # Intermittent fasting tracking and timer
+from api.v1 import progress_photos  # Progress photos with before/after comparisons
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -112,3 +114,9 @@ router.include_router(features.router, tags=["Features"])
 
 # Custom training goals with AI-generated keywords
 router.include_router(custom_goals.router, prefix="/custom-goals", tags=["Custom Goals"])
+
+# Intermittent fasting tracking endpoints
+router.include_router(fasting.router, prefix="/fasting", tags=["Fasting"])
+
+# Progress photos with before/after comparisons
+router.include_router(progress_photos.router, prefix="/progress-photos", tags=["Progress Photos"])

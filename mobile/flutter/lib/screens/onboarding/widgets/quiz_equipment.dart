@@ -3,6 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Workout environment options for quick selection
+class _WorkoutEnvironmentOption {
+  final String id;
+  final String label;
+  final String emoji;
+  final String description;
+  final List<String> defaultEquipment;
+
+  const _WorkoutEnvironmentOption({
+    required this.id,
+    required this.label,
+    required this.emoji,
+    required this.description,
+    required this.defaultEquipment,
+  });
+}
+
 /// Equipment selection widget for quiz screens.
 class QuizEquipment extends StatelessWidget {
   final Set<String> selectedEquipment;
@@ -14,6 +31,8 @@ class QuizEquipment extends StatelessWidget {
   final Function(BuildContext, String, bool) onInfoTap;
   final VoidCallback? onOtherTap;
   final Set<String> otherSelectedEquipment;
+  final String? selectedEnvironment;
+  final ValueChanged<String>? onEnvironmentChanged;
 
   const QuizEquipment({
     super.key,
@@ -26,7 +45,40 @@ class QuizEquipment extends StatelessWidget {
     required this.onInfoTap,
     this.onOtherTap,
     this.otherSelectedEquipment = const {},
+    this.selectedEnvironment,
+    this.onEnvironmentChanged,
   });
+
+  static const _environments = [
+    _WorkoutEnvironmentOption(
+      id: 'home',
+      label: 'Home',
+      emoji: '🏡',
+      description: 'Minimal equipment - bodyweight, bands, mat',
+      defaultEquipment: ['bodyweight', 'resistance_bands'],
+    ),
+    _WorkoutEnvironmentOption(
+      id: 'home_gym',
+      label: 'Home Gym',
+      emoji: '🏠',
+      description: 'Dedicated space with dumbbells, barbell, bench',
+      defaultEquipment: ['bodyweight', 'dumbbells', 'barbell', 'resistance_bands', 'pull_up_bar', 'kettlebell'],
+    ),
+    _WorkoutEnvironmentOption(
+      id: 'commercial_gym',
+      label: 'Gym',
+      emoji: '🏢',
+      description: 'Full gym with machines, cables, and free weights',
+      defaultEquipment: ['full_gym'],
+    ),
+    _WorkoutEnvironmentOption(
+      id: 'hotel',
+      label: 'Hotel',
+      emoji: '🧳',
+      description: 'Travel-friendly - dumbbells, cardio machines',
+      defaultEquipment: ['bodyweight', 'dumbbells', 'resistance_bands'],
+    ),
+  ];
 
   static const _allEquipmentIds = [
     'bodyweight',
@@ -70,7 +122,12 @@ class QuizEquipment extends StatelessWidget {
           _buildTitle(textPrimary),
           const SizedBox(height: 8),
           _buildSubtitle(textSecondary),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // Environment quick selection chips
+          if (onEnvironmentChanged != null) ...[
+            _buildEnvironmentSection(context, isDark, textPrimary, textSecondary),
+            const SizedBox(height: 16),
+          ],
           Expanded(
             child: ListView.builder(
               itemCount: totalItems,
@@ -85,6 +142,195 @@ class QuizEquipment extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEnvironmentSection(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Where do you workout?',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            GestureDetector(
+              onTap: () => _showEnvironmentInfo(context, isDark),
+              child: Icon(
+                Icons.info_outline,
+                size: 18,
+                color: AppColors.cyan,
+              ),
+            ),
+          ],
+        ).animate().fadeIn(delay: 150.ms),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _environments.map((env) {
+              final isSelected = selectedEnvironment == env.id;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onEnvironmentChanged?.call(env.id);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      color: isSelected
+                          ? null
+                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.cyan
+                            : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          env.emoji,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          env.label,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? Colors.white : textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ).animate().fadeIn(delay: 200.ms),
+        if (selectedEnvironment != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _environments.firstWhere((e) => e.id == selectedEnvironment).description,
+            style: TextStyle(
+              fontSize: 12,
+              color: textSecondary,
+              fontStyle: FontStyle.italic,
+            ),
+          ).animate().fadeIn(),
+        ],
+      ],
+    );
+  }
+
+  void _showEnvironmentInfo(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Workout Environment',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Selecting your workout environment helps us recommend the right exercises and equipment for your setup.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ..._environments.map((env) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(env.emoji, style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            env.label,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            env.description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 8),
+              Text(
+                'You can customize equipment after selecting an environment, or skip this and select equipment manually.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

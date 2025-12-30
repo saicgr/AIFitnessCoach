@@ -4,7 +4,7 @@ import '../../../core/accessibility/accessibility_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../widgets/section_header.dart';
 
-/// The App Mode section for selecting display mode (Normal, Senior, Kids).
+/// The App Mode section for selecting display mode (Standard, Senior, Kids).
 class AppModeSection extends StatelessWidget {
   const AppModeSection({super.key});
 
@@ -40,7 +40,7 @@ class AccessibilitySection extends StatelessWidget {
   }
 }
 
-/// App Mode card for selecting Normal, Senior, or Kids mode.
+/// App Mode card for selecting Standard, Senior, or Kids mode.
 class _AppModeCard extends ConsumerWidget {
   const _AppModeCard();
 
@@ -99,13 +99,13 @@ class _AppModeCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _AppModeButton(
-                    label: 'Normal',
+                    label: 'Standard',
                     icon: Icons.apps,
                     description: 'Full features',
-                    isSelected: accessibilitySettings.mode == AccessibilityMode.normal,
+                    isSelected: accessibilitySettings.mode == AccessibilityMode.standard,
                     color: AppColors.cyan,
                     onTap: () {
-                      ref.read(accessibilityProvider.notifier).setMode(AccessibilityMode.normal);
+                      ref.read(accessibilityProvider.notifier).setMode(AccessibilityMode.standard);
                     },
                   ),
                 ),
@@ -156,7 +156,7 @@ class _AppModeCard extends ConsumerWidget {
         return 'Larger text, simpler navigation';
       case AccessibilityMode.kids:
         return 'Fun & easy interface';
-      case AccessibilityMode.normal:
+      case AccessibilityMode.standard:
         return 'Standard experience with all features';
     }
   }
@@ -167,8 +167,8 @@ class _AppModeCard extends ConsumerWidget {
         return 'Senior';
       case AccessibilityMode.kids:
         return 'Kids';
-      case AccessibilityMode.normal:
-        return 'Normal';
+      case AccessibilityMode.standard:
+        return 'Standard';
     }
   }
 
@@ -178,7 +178,7 @@ class _AppModeCard extends ConsumerWidget {
         return AppColors.purple;
       case AccessibilityMode.kids:
         return AppColors.orange;
-      case AccessibilityMode.normal:
+      case AccessibilityMode.standard:
         return AppColors.cyan;
     }
   }

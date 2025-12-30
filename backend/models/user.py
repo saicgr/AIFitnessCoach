@@ -111,11 +111,16 @@ class UserUpdate(BaseModel):
     device_platform: Optional[str] = Field(default=None, max_length=20)  # 'android' or 'ios'
     notification_preferences: Optional[dict] = None  # NotificationPreferences as dict
     # Accessibility settings
-    accessibility_mode: Optional[str] = Field(default=None, max_length=20)  # 'normal', 'senior', 'kids'
+    accessibility_mode: Optional[str] = Field(default=None, max_length=20)  # 'standard', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings (font_scale, etc.)
     # Progression and workout type preferences
     progression_pace: Optional[str] = Field(default=None, max_length=20)  # slow, medium, fast
     workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
+    # Workout environment - stored in preferences
+    workout_environment: Optional[str] = Field(default=None, max_length=50)  # commercial_gym, home_gym, home, etc.
+    # Detailed equipment with quantities and weights
+    # Array of objects: [{"name": "dumbbells", "quantity": 2, "weights": [15, 25], "weight_unit": "lbs", "notes": ""}]
+    equipment_details: Optional[list] = None
 
 
 class User(BaseModel):
@@ -144,5 +149,8 @@ class User(BaseModel):
     gender: Optional[str] = Field(default=None, max_length=20)
     activity_level: Optional[str] = Field(default=None, max_length=50)
     # Accessibility settings
-    accessibility_mode: Optional[str] = Field(default="normal", max_length=20)  # 'normal', 'senior', 'kids'
+    accessibility_mode: Optional[str] = Field(default="standard", max_length=20)  # 'standard', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings
+    # Detailed equipment with quantities and weights
+    # Array of objects: [{"name": "dumbbells", "quantity": 2, "weights": [15, 25], "weight_unit": "lbs", "notes": ""}]
+    equipment_details: Optional[list] = None

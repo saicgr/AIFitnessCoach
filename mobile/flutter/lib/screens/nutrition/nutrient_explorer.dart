@@ -829,51 +829,15 @@ class NutrientDetailSheet extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Progress bar with floor/ceiling markers
-                Column(
-                  children: [
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: (percentage / 100).clamp(0.0, 1.0),
-                            minHeight: 12,
-                            backgroundColor: glassSurface,
-                            color: statusColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (nutrient.floorValue != null)
-                          Text(
-                            'Floor: ${nutrient.floorValue!.toInt()} ${nutrient.unit}',
-                            style: TextStyle(fontSize: 11, color: textMuted),
-                          )
-                        else
-                          const SizedBox(),
-                        Text(
-                          '${percentage.toInt()}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: statusColor,
-                          ),
-                        ),
-                        if (nutrient.ceilingValue != null)
-                          Text(
-                            'Ceiling: ${nutrient.ceilingValue!.toInt()} ${nutrient.unit}',
-                            style: TextStyle(fontSize: 11, color: textMuted),
-                          )
-                        else
-                          const SizedBox(),
-                      ],
-                    ),
-                  ],
+                // 3-Tier Progress bar with floor/target/ceiling markers
+                _ThreeTierProgressBar(
+                  currentValue: nutrient.currentValue,
+                  floorValue: nutrient.floorValue,
+                  targetValue: nutrient.targetValue,
+                  ceilingValue: nutrient.ceilingValue,
+                  unit: nutrient.unit,
+                  statusColor: statusColor,
+                  isDark: isDark,
                 ),
               ],
             ),
@@ -1174,6 +1138,339 @@ class _EmptyNutrientState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Three-Tier Progress Bar - Shows floor, target, ceiling
+// ─────────────────────────────────────────────────────────────────
+
+class _ThreeTierProgressBar extends StatelessWidget {
+  final double currentValue;
+  final double? floorValue;
+  final double targetValue;
+  final double? ceilingValue;
+  final String unit;
+  final Color statusColor;
+  final bool isDark;
+
+  const _ThreeTierProgressBar({
+    required this.currentValue,
+    this.floorValue,
+    required this.targetValue,
+    this.ceilingValue,
+    required this.unit,
+    required this.statusColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    // Calculate the max value for the bar (150% of target or ceiling, whichever is higher)
+    final maxValue = ceilingValue != null
+        ? ceilingValue! * 1.1
+        : targetValue * 1.5;
+
+    // Calculate positions as percentages
+    final floorPercent = floorValue != null ? (floorValue! / maxValue) : 0.0;
+    final targetPercent = targetValue / maxValue;
+    final ceilingPercent = ceilingValue != null ? (ceilingValue! / maxValue) : 1.0;
+    final currentPercent = (currentValue / maxValue).clamp(0.0, 1.0);
+
+    // Determine zone colors
+    Color deficientColor = const Color(0xFFEF5350); // Red - below floor
+    Color lowColor = const Color(0xFFFFC107); // Yellow - between floor and target
+    Color optimalColor = const Color(0xFF4CAF50); // Green - at target or above
+    Color highColor = const Color(0xFFFF9800); // Orange - approaching ceiling
+    Color excessiveColor = const Color(0xFFF44336); // Red - over ceiling
+
+    return Column(
+      children: [
+        // Visual progress bar with zones
+        Container(
+          height: 24,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: glassSurface,
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              return Stack(
+                children: [
+                  // Zone backgrounds (subtle)
+                  if (floorValue != null) ...[
+                    // Deficient zone (0 to floor)
+                    Positioned(
+                      left: 0,
+                      width: width * floorPercent,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: deficientColor.withOpacity(0.1),
+                          borderRadius: const BorderRadius.horizontal(
+                            left: Radius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Low zone (floor to target)
+                    Positioned(
+                      left: width * floorPercent,
+                      width: width * (targetPercent - floorPercent),
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        color: lowColor.withOpacity(0.1),
+                      ),
+                    ),
+                  ],
+                  // Optimal zone (target to ceiling or end)
+                  Positioned(
+                    left: width * targetPercent,
+                    width: ceilingValue != null
+                        ? width * (ceilingPercent - targetPercent)
+                        : width * (1 - targetPercent),
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      color: optimalColor.withOpacity(0.1),
+                    ),
+                  ),
+                  // Excessive zone (over ceiling)
+                  if (ceilingValue != null)
+                    Positioned(
+                      left: width * ceilingPercent,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: excessiveColor.withOpacity(0.1),
+                          borderRadius: const BorderRadius.horizontal(
+                            right: Radius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Current value fill
+                  Positioned(
+                    left: 0,
+                    width: width * currentPercent,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+
+                  // Floor marker
+                  if (floorValue != null)
+                    Positioned(
+                      left: width * floorPercent - 1,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 2,
+                        decoration: BoxDecoration(
+                          color: lowColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: lowColor.withOpacity(0.5),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Target marker
+                  Positioned(
+                    left: width * targetPercent - 1,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: optimalColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: optimalColor.withOpacity(0.5),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Ceiling marker
+                  if (ceilingValue != null)
+                    Positioned(
+                      left: width * ceilingPercent - 1,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 2,
+                        decoration: BoxDecoration(
+                          color: excessiveColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: excessiveColor.withOpacity(0.5),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Labels row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Floor label
+            if (floorValue != null)
+              _TierLabel(
+                label: 'Floor',
+                value: '${floorValue!.toStringAsFixed(0)}$unit',
+                color: const Color(0xFFFFC107),
+              )
+            else
+              const SizedBox(width: 60),
+
+            // Target label (center)
+            _TierLabel(
+              label: 'Target',
+              value: '${targetValue.toStringAsFixed(0)}$unit',
+              color: const Color(0xFF4CAF50),
+              isCenter: true,
+            ),
+
+            // Ceiling label
+            if (ceilingValue != null)
+              _TierLabel(
+                label: 'Ceiling',
+                value: '${ceilingValue!.toStringAsFixed(0)}$unit',
+                color: const Color(0xFFF44336),
+              )
+            else
+              const SizedBox(width: 60),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        // Current value badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: statusColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getStatusIcon(),
+                size: 16,
+                color: statusColor,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Current: ${currentValue.toStringAsFixed(1)}$unit',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '(${(currentValue / targetValue * 100).toStringAsFixed(0)}%)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: statusColor.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getStatusIcon() {
+    if (floorValue != null && currentValue < floorValue!) {
+      return Icons.warning_amber; // Below floor - deficient
+    } else if (currentValue < targetValue) {
+      return Icons.arrow_upward; // Below target - low
+    } else if (ceilingValue != null && currentValue > ceilingValue!) {
+      return Icons.error_outline; // Over ceiling - excessive
+    } else {
+      return Icons.check_circle; // Optimal
+    }
+  }
+}
+
+class _TierLabel extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isCenter;
+
+  const _TierLabel({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.isCenter = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

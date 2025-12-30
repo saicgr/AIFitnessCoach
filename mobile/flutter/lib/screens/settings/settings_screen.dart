@@ -60,7 +60,7 @@ const Map<String, List<String>> _settingsSearchIndex = {
   ],
   'app_mode': [
     // Direct keywords
-    'app mode', 'mode', 'normal', 'senior', 'kids', 'elderly',
+    'app mode', 'mode', 'standard', 'senior', 'kids', 'elderly',
     'simple mode', 'easy mode', 'child',
     // Natural language
     'change mode', 'make it simpler', 'bigger buttons', 'easier to use',
@@ -157,6 +157,17 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'change coach', 'different coach', 'coach personality',
     'ai personality', 'trainer voice', 'virtual coach',
     'chatbot', 'bot voice', 'assistant voice',
+  ],
+  // Training preferences - progression pace and workout type
+  'training': [
+    // Direct keywords
+    'training', 'progression', 'pace', 'workout type', 'cardio',
+    'strength', 'mixed', 'weights', 'weight increase', 'reps',
+    // Natural language
+    'how fast increase weight', 'slow progression', 'fast progression',
+    'dont increase weight', 'keep same weight', 'weight too fast',
+    'add cardio', 'cardio workouts', 'strength training',
+    'mixed workouts', 'progression speed', 'weight jumps',
   ],
 };
 
@@ -398,6 +409,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('preferences'))
                     const SizedBox(height: 24),
 
+                  // Training Preferences section (progression pace, workout type)
+                  if (_sectionMatches('training'))
+                    const TrainingPreferencesSection().animate().fadeIn(delay: 51.ms),
+
+                  if (_sectionMatches('training'))
+                    const SizedBox(height: 24),
+
                   // My Custom Content section (equipment, exercises, workouts)
                   if (_sectionMatches('custom_content'))
                     const CustomContentSection().animate().fadeIn(delay: 52.ms),
@@ -412,7 +430,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('haptics'))
                     const SizedBox(height: 24),
 
-                  // App Mode section (Normal, Senior, Kids)
+                  // App Mode section (Standard, Senior, Kids)
                   if (_sectionMatches('app_mode'))
                     const AppModeSection().animate().fadeIn(delay: 56.ms),
 

@@ -18,6 +18,7 @@ import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'package:flutter/services.dart';
 import '../../widgets/floating_chat/floating_chat_provider.dart';
+import '../../widgets/fasting_training_warning.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
@@ -268,6 +269,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       ],
                     ],
                   ),
+                ),
+              ),
+
+              // Fasting Training Warning (if applicable)
+              SliverToBoxAdapter(
+                child: FastingTrainingWarning(
+                  workoutIntensity: workout.difficulty,
+                  workoutType: workout.type,
+                  durationMinutes: workout.durationMinutes,
                 ),
               ),
 

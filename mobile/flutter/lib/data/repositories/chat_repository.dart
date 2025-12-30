@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
@@ -7,9 +6,9 @@ import '../../core/theme/theme_provider.dart';
 import '../../navigation/app_router.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../models/chat_message.dart';
-import '../models/workout.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
+import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
 import 'auth_repository.dart';
 import 'hydration_repository.dart';
@@ -20,7 +19,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(apiClient);
 });
 
-/// Chat messages provider - now includes workout context, settings control, navigation, hydration, and AI settings
+/// Chat messages provider - now includes workout context, settings control, navigation, hydration, AI settings, and unified fasting/nutrition context
 final chatMessagesProvider =
     StateNotifierProvider<ChatMessagesNotifier, AsyncValue<List<ChatMessage>>>(
         (ref) {
@@ -36,7 +35,9 @@ final chatMessagesProvider =
   AISettings getAISettings() => ref.read(aiSettingsProvider);
   // Pass a callback to set AI generating state (triggers home screen rebuild)
   void setAIGenerating(bool value) => ref.read(aiGeneratingWorkoutProvider.notifier).state = value;
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating);
+  // Pass a callback to get the unified fasting/nutrition/workout context
+  String getUnifiedContext() => ref.read(aiCoachContextProvider);
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, authState.user, themeNotifier, router, hydrationNotifier, getAISettings, setAIGenerating, getUnifiedContext);
 });
 
 /// Chat repository for API calls
@@ -79,11 +80,15 @@ class ChatRepository {
     Map<String, dynamic>? workoutSchedule,
     List<Map<String, dynamic>>? conversationHistory,
     Map<String, dynamic>? aiSettings,
+    String? unifiedContext,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
       if (aiSettings != null) {
         debugPrint('🤖 [Chat] AI settings: ${aiSettings['coaching_style']}, ${aiSettings['communication_tone']}');
+      }
+      if (unifiedContext != null) {
+        debugPrint('🎯 [Chat] Including unified fasting/nutrition/workout context');
       }
 
       final response = await _apiClient.post(
@@ -96,6 +101,7 @@ class ChatRepository {
           workoutSchedule: workoutSchedule,
           conversationHistory: conversationHistory,
           aiSettings: aiSettings,
+          unifiedContext: unifiedContext,
         ).toJson(),
       );
 
@@ -128,6 +134,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final HydrationNotifier _hydrationNotifier;
   final AISettings Function() _getAISettings; // Callback to get fresh settings
   final void Function(bool) _setAIGenerating; // Callback to set AI generating state
+  final String Function() _getUnifiedContext; // Callback to get unified fasting/nutrition/workout context
   bool _isLoading = false;
 
   /// Keywords that indicate user wants a quick workout (mirrors backend)
@@ -159,7 +166,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext)
       : super(const AsyncValue.data([]));
 
   bool get isLoading => _isLoading;
@@ -223,7 +230,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // Build user profile context (matches backend UserProfile model)
       Map<String, dynamic>? userProfile;
       if (_user != null) {
-        final user = _user!;
+        final user = _user;
         userProfile = {
           'id': user.id,  // Required by backend
           'fitness_level': user.fitnessLevel ?? 'beginner',
@@ -238,7 +245,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       Map<String, dynamic>? currentWorkout;
       final nextWorkout = _workoutsNotifier.nextWorkout;
       if (nextWorkout != null) {
-        final exercisesList = nextWorkout.exercises?.map((e) {
+        final exercisesList = nextWorkout.exercises.map((e) {
           return <String, dynamic>{
             'name': e.name,
             'sets': e.sets,
@@ -247,7 +254,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             'muscle_group': e.muscleGroup,
             'equipment': e.equipment,
           };
-        }).toList() ?? <Map<String, dynamic>>[];
+        }).toList();
 
         currentWorkout = {
           'id': nextWorkout.id is int ? nextWorkout.id : int.tryParse(nextWorkout.id.toString()) ?? 0,
@@ -289,6 +296,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final currentAISettings = _getAISettings();
       debugPrint('🤖 [Chat] Using fresh AI settings: ${currentAISettings.coachingStyle}, ${currentAISettings.communicationTone}');
 
+      // Get unified fasting/nutrition/workout context
+      final unifiedContext = _getUnifiedContext();
+      debugPrint('🎯 [Chat] Unified context length: ${unifiedContext.length} chars');
+
       final response = await _repository.sendMessage(
         message: message,
         userId: userId,
@@ -297,6 +308,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         workoutSchedule: workoutSchedule,
         conversationHistory: history,
         aiSettings: currentAISettings.toJson(),
+        unifiedContext: unifiedContext,
       );
 
       // Process action_data if present (await to ensure refresh completes)

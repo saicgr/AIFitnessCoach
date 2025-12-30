@@ -52,6 +52,7 @@ class ProgramPreferences(BaseModel):
     last_updated: Optional[str] = None
     dumbbell_count: Optional[int] = None
     kettlebell_count: Optional[int] = None
+    workout_environment: Optional[str] = None  # commercial_gym, home_gym, home, outdoors, hotel, etc.
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -111,6 +112,8 @@ def row_to_user(row: dict) -> User:
         name=row.get("name") or prefs_dict.get("name"),
         email=row.get("email"),  # Include email in response
         onboarding_completed=row.get("onboarding_completed", False),
+        coach_selected=row.get("coach_selected", False),
+        paywall_completed=row.get("paywall_completed", False),
         fitness_level=row.get("fitness_level", "beginner"),
         goals=goals,
         equipment=equipment,
@@ -125,6 +128,8 @@ def row_to_user(row: dict) -> User:
         date_of_birth=str(get_with_fallback("date_of_birth")) if get_with_fallback("date_of_birth") else None,
         gender=get_with_fallback("gender", default_values=["prefer_not_to_say"]),
         activity_level=get_with_fallback("activity_level", default_values=["lightly_active"]),
+        # Detailed equipment with quantities and weights
+        equipment_details=row.get("equipment_details"),
     )
 
 
@@ -207,6 +212,7 @@ def merge_extended_fields_into_preferences(
     preferred_time: Optional[str],
     progression_pace: Optional[str] = None,
     workout_type_preference: Optional[str] = None,
+    workout_environment: Optional[str] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -232,6 +238,8 @@ def merge_extended_fields_into_preferences(
         prefs["progression_pace"] = progression_pace
     if workout_type_preference is not None:
         prefs["workout_type_preference"] = workout_type_preference
+    if workout_environment is not None:
+        prefs["workout_environment"] = workout_environment
 
     return prefs
 
@@ -403,6 +411,7 @@ async def get_program_preferences(user_id: str):
             last_updated=latest_regen.get("created_at") if latest_regen else user_row.get("updated_at"),
             dumbbell_count=base_prefs.get("dumbbell_count", 2),
             kettlebell_count=base_prefs.get("kettlebell_count", 2),
+            workout_environment=base_prefs.get("workout_environment"),
         )
 
         logger.info(f"Program preferences fetched for user {user_id}")
@@ -491,16 +500,24 @@ async def update_user(user_id: str, user: UserUpdate):
             update_data["goals"] = json.loads(user.goals) if isinstance(user.goals, str) else user.goals
         if user.equipment is not None:
             update_data["equipment"] = json.loads(user.equipment) if isinstance(user.equipment, str) else user.equipment
+        if user.custom_equipment is not None:
+            update_data["custom_equipment"] = json.loads(user.custom_equipment) if isinstance(user.custom_equipment, str) else user.custom_equipment
+            logger.info(f"Updating custom_equipment for user {user_id}")
         if user.active_injuries is not None:
             update_data["active_injuries"] = json.loads(user.active_injuries) if isinstance(user.active_injuries, str) else user.active_injuries
         if user.onboarding_completed is not None:
             update_data["onboarding_completed"] = user.onboarding_completed
+        if user.coach_selected is not None:
+            update_data["coach_selected"] = user.coach_selected
+        if user.paywall_completed is not None:
+            update_data["paywall_completed"] = user.paywall_completed
 
         # Handle extended onboarding fields - merge into preferences
         has_extended_fields = any([
             user.days_per_week, user.workout_duration, user.training_split,
             user.intensity_preference, user.preferred_time,
-            user.progression_pace, user.workout_type_preference
+            user.progression_pace, user.workout_type_preference,
+            user.workout_environment
         ])
 
         if user.preferences is not None or has_extended_fields:
@@ -514,6 +531,7 @@ async def update_user(user_id: str, user: UserUpdate):
                 user.preferred_time,
                 user.progression_pace,
                 user.workout_type_preference,
+                user.workout_environment,
             )
             update_data["preferences"] = final_preferences
 
@@ -558,6 +576,11 @@ async def update_user(user_id: str, user: UserUpdate):
             merged_prefs = {**existing_notif_prefs, **user.notification_preferences}
             update_data["notification_preferences"] = merged_prefs
             logger.info(f"Updating notification preferences for user {user_id}")
+
+        # Handle detailed equipment with quantities and weights
+        if user.equipment_details is not None:
+            update_data["equipment_details"] = user.equipment_details
+            logger.info(f"Updating equipment_details for user {user_id}: {len(user.equipment_details)} items")
 
         if update_data:
             updated = db.update_user(user_id, update_data)

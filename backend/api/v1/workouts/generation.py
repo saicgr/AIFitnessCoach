@@ -55,12 +55,14 @@ async def generate_workout(request: GenerateWorkoutRequest):
 
     try:
         db = get_supabase_db()
+        equipment_details = []  # Initialize to empty, may be populated from user data
 
         if request.fitness_level and request.goals and request.equipment:
             fitness_level = request.fitness_level
             goals = request.goals
             equipment = request.equipment
             intensity_preference = "medium"  # Default when no user data
+            workout_environment = None
         else:
             user = db.get_user(request.user_id)
             if not user:
@@ -69,8 +71,10 @@ async def generate_workout(request: GenerateWorkoutRequest):
             fitness_level = request.fitness_level or user.get("fitness_level")
             goals = request.goals or user.get("goals", [])
             equipment = request.equipment or user.get("equipment", [])
+            equipment_details = user.get("equipment_details", [])  # Detailed equipment with quantities/weights
             preferences = parse_json_field(user.get("preferences"), {})
             intensity_preference = preferences.get("intensity_preference", "medium")
+            workout_environment = preferences.get("workout_environment")
 
         # Fetch user's custom exercises
         logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {request.user_id}")
@@ -98,7 +102,9 @@ async def generate_workout(request: GenerateWorkoutRequest):
                 duration_minutes=request.duration_minutes or 45,
                 focus_areas=request.focus_areas,
                 intensity_preference=intensity_preference,
-                custom_exercises=custom_exercises if custom_exercises else None
+                custom_exercises=custom_exercises if custom_exercises else None,
+                workout_environment=workout_environment,
+                equipment_details=equipment_details if equipment_details else None,
             )
 
             exercises = workout_data.get("exercises", [])
@@ -533,6 +539,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         workout_type_preference = preferences.get("workout_type_preference", "strength")
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
+        # Get workout environment for environment-aware workout generation
+        workout_environment = preferences.get("workout_environment")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -648,7 +656,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                         intensity_preference=intensity_preference,
                         custom_program_description=custom_program_description,
                         workout_type_preference=workout_type_preference,
-                        custom_exercises=custom_exercises if custom_exercises else None
+                        custom_exercises=custom_exercises if custom_exercises else None,
+                        workout_environment=workout_environment
                     )
 
                 exercises = workout_data.get("exercises", [])
@@ -709,6 +718,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         intensity_preference = preferences.get("intensity_preference", "medium")
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
+        # Get workout environment for environment-aware workout generation
+        workout_environment = preferences.get("workout_environment")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -1028,6 +1039,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             training_split = preferences.get("training_split", "full_body")
             intensity_preference = preferences.get("intensity_preference", "medium")
             custom_program_description = preferences.get("custom_program_description")
+            workout_environment = preferences.get("workout_environment")
             dumbbell_count = preferences.get("dumbbell_count", 2)
             kettlebell_count = preferences.get("kettlebell_count", 1)
             active_injuries = parse_json_field(user.get("active_injuries"), [])
@@ -1229,6 +1241,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         intensity_preference = preferences.get("intensity_preference", "medium")
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
+        # Get workout environment for environment-aware workout generation
+        workout_environment = preferences.get("workout_environment")
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -1385,7 +1399,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                         activity_level=user_activity_level,
                         intensity_preference=intensity_preference,
                         custom_program_description=custom_program_description,
-                        custom_exercises=custom_exercises if custom_exercises else None
+                        workout_environment=workout_environment
                     )
 
                 return {

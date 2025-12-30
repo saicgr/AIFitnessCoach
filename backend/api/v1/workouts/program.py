@@ -140,6 +140,7 @@ async def update_program(request: UpdateProgramRequest):
                 equipment=request.equipment,
                 focus_areas=request.focus_areas,
                 injuries=request.injuries,
+                workout_environment=request.workout_environment,
                 change_reason="program_customization",
             )
             logger.info(f"Indexed program preferences to RAG for user {request.user_id}")

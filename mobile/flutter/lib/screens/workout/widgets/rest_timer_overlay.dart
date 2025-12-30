@@ -1,12 +1,15 @@
 /// Rest timer overlay widget
 ///
 /// Displays the rest countdown between sets or exercises.
+/// Now includes smart weight suggestions based on RPE/RIR!
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
 
 /// Rest timer overlay displayed between sets or exercises
@@ -41,6 +44,18 @@ class RestTimerOverlay extends StatelessWidget {
   /// Callback to log 1RM
   final VoidCallback? onLog1RM;
 
+  /// Weight suggestion for the next set (optional)
+  final WeightSuggestion? weightSuggestion;
+
+  /// Whether AI is currently fetching a weight suggestion
+  final bool isLoadingWeightSuggestion;
+
+  /// Callback when user accepts weight suggestion
+  final ValueChanged<double>? onAcceptWeightSuggestion;
+
+  /// Callback when user dismisses weight suggestion
+  final VoidCallback? onDismissWeightSuggestion;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -53,6 +68,10 @@ class RestTimerOverlay extends StatelessWidget {
     this.isRestBetweenExercises = false,
     required this.onSkipRest,
     this.onLog1RM,
+    this.weightSuggestion,
+    this.isLoadingWeightSuggestion = false,
+    this.onAcceptWeightSuggestion,
+    this.onDismissWeightSuggestion,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -100,8 +119,16 @@ class RestTimerOverlay extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // AI Coach encouragement message
-              if (restMessage.isNotEmpty)
+              // Weight suggestion section (loading or card)
+              if (isRestBetweenSets) ...[
+                if (isLoadingWeightSuggestion)
+                  _buildLoadingWeightSuggestion(cardBg, textColor, subtitleColor, isDark)
+                else if (weightSuggestion != null)
+                  _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark),
+              ],
+
+              // AI Coach encouragement message (only if no weight suggestion and not loading)
+              if (restMessage.isNotEmpty && weightSuggestion == null && !isLoadingWeightSuggestion)
                 _buildEncouragementMessage(cardBg, textColor),
 
               const SizedBox(height: 24),
@@ -449,13 +476,346 @@ class RestTimerOverlay extends StatelessWidget {
         .slideY(begin: 0.1, end: 0);
   }
 
+  /// Loading state for AI weight suggestion
+  Widget _buildLoadingWeightSuggestion(
+    Color cardBg,
+    Color textColor,
+    Color subtitleColor,
+    bool isDark,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.cyan.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.cyan.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI WEIGHT COACH',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Analyzing your performance...',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: subtitleColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms);
+  }
+
+  Widget _buildWeightSuggestionCard(
+    Color cardBg,
+    Color textColor,
+    Color subtitleColor,
+    bool isDark,
+  ) {
+    final suggestion = weightSuggestion!;
+
+    // Determine colors based on suggestion type
+    Color accentColor;
+    IconData icon;
+    String actionLabel;
+
+    switch (suggestion.type) {
+      case SuggestionType.increase:
+        accentColor = AppColors.success;
+        icon = Icons.trending_up;
+        actionLabel = 'Go heavier';
+      case SuggestionType.decrease:
+        accentColor = AppColors.orange;
+        icon = Icons.trending_down;
+        actionLabel = 'Go lighter';
+      case SuggestionType.maintain:
+        accentColor = AppColors.cyan;
+        icon = Icons.trending_flat;
+        actionLabel = 'Keep it up';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.5),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: accentColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          suggestion.aiPowered ? 'AI WEIGHT COACH' : 'WEIGHT SUGGESTION',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: accentColor,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        if (suggestion.aiPowered) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.purple.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '✨ AI',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.purple,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      actionLabel,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Confidence indicator
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${(suggestion.confidence * 100).round()}%',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Weight change display
+          if (!suggestion.isNoChange)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    suggestion.formattedDelta,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: subtitleColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 12),
+
+          // Reason text
+          Text(
+            suggestion.reason,
+            style: TextStyle(
+              fontSize: 14,
+              color: subtitleColor,
+              height: 1.4,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Encouragement
+          Text(
+            suggestion.encouragement,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Action buttons
+          if (onAcceptWeightSuggestion != null || onDismissWeightSuggestion != null)
+            Row(
+              children: [
+                // Dismiss button
+                if (onDismissWeightSuggestion != null)
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        onDismissWeightSuggestion!();
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: subtitleColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Current',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: subtitleColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (onAcceptWeightSuggestion != null &&
+                    onDismissWeightSuggestion != null)
+                  const SizedBox(width: 12),
+                // Accept button
+                if (onAcceptWeightSuggestion != null && !suggestion.isNoChange)
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        onAcceptWeightSuggestion!(suggestion.suggestedWeight);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check, size: 20),
+                      label: Text(
+                        'Use ${suggestion.suggestedWeight.toStringAsFixed(1)} kg',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    )
+        .animate()
+        .fadeIn(duration: 400.ms)
+        .slideY(begin: 0.1, end: 0)
+        .shimmer(
+          delay: 500.ms,
+          duration: 1000.ms,
+          color: accentColor.withValues(alpha: 0.1),
+        );
+  }
+
   Widget _buildSkipButton(bool isDark) {
     return TextButton.icon(
       onPressed: onSkipRest,
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         backgroundColor:
-            isDark ? Colors.white.withOpacity(0.1) : AppColorsLight.cardBorder,
+            isDark ? Colors.white.withValues(alpha: 0.1) : AppColorsLight.cardBorder,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),

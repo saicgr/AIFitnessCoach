@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
@@ -34,7 +35,11 @@ class _ChallengesScreenState extends State<ChallengesScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _challengesService = ChallengesService(ApiClient());
+    const storage = FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+    );
+    _challengesService = ChallengesService(ApiClient(storage));
     _loadData();
   }
 

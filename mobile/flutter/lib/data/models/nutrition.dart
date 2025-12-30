@@ -29,6 +29,35 @@ class FoodItem {
   Map<String, dynamic> toJson() => _$FoodItemToJson(this);
 }
 
+/// Mood options for food-mood tracking
+enum FoodMood {
+  great('great', 'Great', '😊'),
+  good('good', 'Good', '🙂'),
+  neutral('neutral', 'Neutral', '😐'),
+  tired('tired', 'Tired', '😴'),
+  stressed('stressed', 'Stressed', '😰'),
+  hungry('hungry', 'Hungry', '🍽️'),
+  satisfied('satisfied', 'Satisfied', '😌'),
+  bloated('bloated', 'Bloated', '🫃');
+
+  final String value;
+  final String displayName;
+  final String emoji;
+
+  const FoodMood(this.value, this.displayName, this.emoji);
+
+  /// Convenience getter for UI
+  String get label => displayName;
+
+  static FoodMood? fromString(String? value) {
+    if (value == null) return null;
+    return FoodMood.values.firstWhere(
+      (m) => m.value == value,
+      orElse: () => FoodMood.neutral,
+    );
+  }
+}
+
 /// Food log entry
 @JsonSerializable()
 class FoodLog {
@@ -55,6 +84,12 @@ class FoodLog {
   final int? healthScore;
   @JsonKey(name: 'ai_feedback')
   final String? aiFeedback;
+  @JsonKey(name: 'mood_before')
+  final String? moodBefore;
+  @JsonKey(name: 'mood_after')
+  final String? moodAfter;
+  @JsonKey(name: 'energy_level')
+  final int? energyLevel;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
@@ -71,8 +106,17 @@ class FoodLog {
     this.fiberG,
     this.healthScore,
     this.aiFeedback,
+    this.moodBefore,
+    this.moodAfter,
+    this.energyLevel,
     required this.createdAt,
   });
+
+  /// Get mood before as enum
+  FoodMood? get moodBeforeEnum => FoodMood.fromString(moodBefore);
+
+  /// Get mood after as enum
+  FoodMood? get moodAfterEnum => FoodMood.fromString(moodAfter);
 
   factory FoodLog.fromJson(Map<String, dynamic> json) =>
       _$FoodLogFromJson(json);
@@ -370,6 +414,13 @@ class LogFoodResponse {
   final List<String>? warnings;  // Concerns (high sodium, etc.)
   @JsonKey(name: 'recommended_swap')
   final String? recommendedSwap;  // Healthier alternative
+  // AI confidence for estimates
+  @JsonKey(name: 'confidence_score')
+  final double? confidenceScore;  // 0.0-1.0 confidence in analysis
+  @JsonKey(name: 'confidence_level')
+  final String? confidenceLevel;  // 'low', 'medium', 'high'
+  @JsonKey(name: 'source_type')
+  final String? sourceType;  // 'image', 'text', 'barcode', 'restaurant'
 
   const LogFoodResponse({
     required this.success,
@@ -387,6 +438,9 @@ class LogFoodResponse {
     this.encouragements,
     this.warnings,
     this.recommendedSwap,
+    this.confidenceScore,
+    this.confidenceLevel,
+    this.sourceType,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -403,6 +457,29 @@ class LogFoodResponse {
     if (overallMealScore == null) return 'neutral';
     if (overallMealScore! >= 8) return 'green';
     if (overallMealScore! >= 5) return 'yellow';
+    return 'red';
+  }
+
+  /// Get confidence display info
+  String get confidenceDisplay {
+    if (confidenceLevel == null) return 'Unknown';
+    switch (confidenceLevel) {
+      case 'high':
+        return 'High confidence';
+      case 'medium':
+        return 'Medium confidence';
+      case 'low':
+        return 'Estimate - please verify';
+      default:
+        return confidenceLevel!;
+    }
+  }
+
+  /// Get confidence color
+  String get confidenceColor {
+    if (confidenceScore == null) return 'neutral';
+    if (confidenceScore! >= 0.75) return 'green';
+    if (confidenceScore! >= 0.5) return 'orange';
     return 'red';
   }
 }

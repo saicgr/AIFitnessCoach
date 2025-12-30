@@ -47,6 +47,7 @@ ChatRequest _$ChatRequestFromJson(Map<String, dynamic> json) => ChatRequest(
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
   aiSettings: json['ai_settings'] as Map<String, dynamic>?,
+  unifiedContext: json['unified_context'] as String?,
 );
 
 Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
@@ -58,6 +59,7 @@ Map<String, dynamic> _$ChatRequestToJson(ChatRequest instance) =>
       'workout_schedule': instance.workoutSchedule,
       'conversation_history': instance.conversationHistory,
       'ai_settings': instance.aiSettings,
+      'unified_context': instance.unifiedContext,
     };
 
 ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(

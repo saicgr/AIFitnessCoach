@@ -11,12 +11,18 @@ class SetLog {
   final double weight;
   final DateTime completedAt;
   final String setType;
+  final int? rpe; // Rate of Perceived Exertion (6-10)
+  final int? rir; // Reps in Reserve (0-5)
+  final int targetReps; // Original target reps for this set
 
   SetLog({
     required this.reps,
     required this.weight,
     DateTime? completedAt,
     this.setType = 'working',
+    this.rpe,
+    this.rir,
+    this.targetReps = 0,
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -24,12 +30,18 @@ class SetLog {
     double? weight,
     DateTime? completedAt,
     String? setType,
+    int? rpe,
+    int? rir,
+    int? targetReps,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
       weight: weight ?? this.weight,
       completedAt: completedAt ?? this.completedAt,
       setType: setType ?? this.setType,
+      rpe: rpe ?? this.rpe,
+      rir: rir ?? this.rir,
+      targetReps: targetReps ?? this.targetReps,
     );
   }
 }

@@ -102,9 +102,9 @@ class _ModeSelectionScreenState extends ConsumerState<ModeSelectionScreen> {
                 title: 'Normal Mode',
                 subtitle: 'Full features, standard design',
                 icon: Icons.apps,
-                isSelected: _selectedMode == AccessibilityMode.normal,
+                isSelected: _selectedMode == AccessibilityMode.standard,
                 isRecommended: !_recommendSenior,
-                onPressed: () => _selectMode(AccessibilityMode.normal),
+                onPressed: () => _selectMode(AccessibilityMode.standard),
               ),
 
               const SizedBox(height: 20),
@@ -219,7 +219,7 @@ class ModeSelectionQuickReplies extends StatelessWidget {
             _ModeButton(
               label: 'Normal Mode',
               isRecommended: !_recommendSenior,
-              onTap: () => onModeSelected(AccessibilityMode.normal),
+              onTap: () => onModeSelected(AccessibilityMode.standard),
             ),
             _ModeButton(
               label: 'Senior Mode',

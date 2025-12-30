@@ -106,9 +106,11 @@ class TestListFoodLogs:
 
         mock_supabase_db.list_food_logs.return_value = [sample_food_log]
 
+        # Explicitly pass limit as int to avoid Query object issue when calling directly
         asyncio.get_event_loop().run_until_complete(
             list_food_logs(
                 sample_user_id,
+                limit=50,
                 from_date="2025-01-01",
                 to_date="2025-01-31",
                 meal_type="lunch"
@@ -266,6 +268,8 @@ class TestDailySummary:
         import asyncio
         from datetime import datetime
 
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
         mock_supabase_db.get_daily_nutrition_summary.return_value = {
             "total_calories": 0,
             "total_protein_g": 0,
@@ -277,11 +281,12 @@ class TestDailySummary:
         }
         mock_supabase_db.list_food_logs.return_value = []
 
+        # Explicitly pass date to avoid Query object issue when calling directly
         result = asyncio.get_event_loop().run_until_complete(
-            get_daily_summary(sample_user_id)
+            get_daily_summary(sample_user_id, date=today_str)
         )
 
-        assert result.date == datetime.now().strftime("%Y-%m-%d")
+        assert result.date == today_str
 
     def test_get_daily_summary_empty_day(self, mock_supabase_db, sample_user_id):
         """Test daily summary for a day with no meals."""

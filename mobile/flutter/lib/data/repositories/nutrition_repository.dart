@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../models/nutrition.dart';
 import '../models/micronutrients.dart';
+import '../models/nutrition_preferences.dart';
 import '../models/recipe.dart';
 import '../services/api_client.dart';
 
@@ -351,6 +352,42 @@ class NutritionRepository {
       return LogFoodResponse.fromJson(response.data);
     } catch (e) {
       debugPrint('Error logging food from text: $e');
+      rethrow;
+    }
+  }
+
+  /// Log pre-analyzed food directly (for restaurant mode, manual adjustments)
+  Future<LogFoodResponse> logAdjustedFood({
+    required String userId,
+    required String mealType,
+    required List<Map<String, dynamic>> foodItems,
+    required int totalCalories,
+    required int totalProtein,
+    required int totalCarbs,
+    required int totalFat,
+    int? totalFiber,
+    String sourceType = 'restaurant',
+    String? notes,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/log-direct',
+        data: {
+          'user_id': userId,
+          'meal_type': mealType,
+          'food_items': foodItems,
+          'total_calories': totalCalories,
+          'total_protein': totalProtein,
+          'total_carbs': totalCarbs,
+          'total_fat': totalFat,
+          if (totalFiber != null) 'total_fiber': totalFiber,
+          'source_type': sourceType,
+          if (notes != null) 'notes': notes,
+        },
+      );
+      return LogFoodResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('Error logging adjusted food: $e');
       rethrow;
     }
   }
@@ -952,6 +989,114 @@ class NutritionRepository {
     } catch (e) {
       debugPrint('Error updating pinned nutrients: $e');
       rethrow;
+    }
+  }
+
+  // ============================================
+  // Adaptive TDEE & Weekly Check-in Methods
+  // ============================================
+
+  /// Get the latest adaptive TDEE calculation
+  Future<AdaptiveCalculation?> getAdaptiveCalculation(String userId) async {
+    try {
+      debugPrint('🔍 [Nutrition] Getting adaptive calculation for $userId');
+      final response = await _client.get('/nutrition/adaptive/$userId');
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return AdaptiveCalculation.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting adaptive calculation: $e');
+      return null;
+    }
+  }
+
+  /// Calculate adaptive TDEE based on food intake and weight changes
+  Future<AdaptiveCalculation?> calculateAdaptiveTdee(
+    String userId, {
+    int days = 14,
+  }) async {
+    try {
+      debugPrint('🧮 [Nutrition] Calculating adaptive TDEE for $userId over $days days');
+      final response = await _client.post(
+        '/nutrition/adaptive/$userId/calculate',
+        queryParameters: {'days': days},
+      );
+
+      return AdaptiveCalculation.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error calculating adaptive TDEE: $e');
+      return null;
+    }
+  }
+
+  /// Get weekly summary data (food logs, weight, etc.)
+  Future<WeeklySummaryData?> getWeeklySummary(String userId) async {
+    try {
+      debugPrint('📊 [Nutrition] Getting weekly summary for $userId');
+      final response = await _client.get('/nutrition/weekly-summary/$userId');
+
+      return WeeklySummaryData.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting weekly summary: $e');
+      return null;
+    }
+  }
+
+  /// Get the latest weekly nutrition recommendation
+  Future<WeeklyRecommendation?> getWeeklyRecommendation(String userId) async {
+    try {
+      debugPrint('💡 [Nutrition] Getting weekly recommendation for $userId');
+      final response = await _client.get('/nutrition/recommendations/$userId');
+
+      if (response.data == null) {
+        return null;
+      }
+
+      return WeeklyRecommendation.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error getting weekly recommendation: $e');
+      return null;
+    }
+  }
+
+  /// Respond to a weekly nutrition recommendation (accept or decline)
+  Future<bool> respondToRecommendation({
+    required String userId,
+    required String recommendationId,
+    required bool accepted,
+    int? modifiedCalories,
+  }) async {
+    try {
+      debugPrint('📝 [Nutrition] Responding to recommendation $recommendationId: accepted=$accepted');
+      await _client.post(
+        '/nutrition/recommendations/$recommendationId/respond',
+        queryParameters: {
+          'user_id': userId,
+          'accepted': accepted,
+        },
+        data: modifiedCalories != null ? {'modified_calories': modifiedCalories} : null,
+      );
+
+      return true;
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error responding to recommendation: $e');
+      return false;
+    }
+  }
+
+  /// Generate a new weekly recommendation based on current data
+  Future<WeeklyRecommendation?> generateWeeklyRecommendation(String userId) async {
+    try {
+      debugPrint('🎯 [Nutrition] Generating weekly recommendation for $userId');
+      final response = await _client.post('/nutrition/recommendations/$userId/generate');
+
+      return WeeklyRecommendation.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Error generating weekly recommendation: $e');
+      return null;
     }
   }
 }

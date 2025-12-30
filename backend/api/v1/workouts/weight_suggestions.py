@@ -1,0 +1,517 @@
+"""
+AI-Powered Weight Suggestion API.
+
+Provides real-time weight suggestions during active workouts based on:
+- Current set performance (reps achieved, RPE, RIR)
+- Historical workout data for this exercise
+- User's fitness level and goals
+- Equipment-aware weight increments
+
+Uses Gemini AI to generate intelligent, personalized suggestions.
+"""
+
+from fastapi import APIRouter, HTTPException
+from typing import List, Optional
+from datetime import datetime
+from pydantic import BaseModel
+
+from core.supabase_db import get_supabase_db
+from core.logger import get_logger
+from services.gemini_service import GeminiService
+
+router = APIRouter()
+logger = get_logger(__name__)
+
+# Singleton Gemini service
+_gemini_service: Optional[GeminiService] = None
+
+
+def get_gemini_service() -> GeminiService:
+    """Get or create Gemini service singleton."""
+    global _gemini_service
+    if _gemini_service is None:
+        _gemini_service = GeminiService()
+    return _gemini_service
+
+
+# Equipment-aware weight increments
+EQUIPMENT_INCREMENTS = {
+    "dumbbell": 2.5,
+    "dumbbells": 2.5,
+    "barbell": 2.5,
+    "machine": 5.0,
+    "cable": 2.5,
+    "kettlebell": 4.0,
+    "bodyweight": 0,
+}
+
+
+class SetPerformance(BaseModel):
+    """Data about a completed set."""
+    set_number: int
+    reps_completed: int
+    target_reps: int
+    weight_kg: float
+    rpe: Optional[int] = None  # Rate of Perceived Exertion (6-10)
+    rir: Optional[int] = None  # Reps in Reserve (0-5)
+
+
+class ExerciseHistory(BaseModel):
+    """Historical performance data for an exercise."""
+    date: str
+    weight_kg: float
+    reps: int
+    sets: int
+    rpe: Optional[int] = None
+    rir: Optional[int] = None
+
+
+class WeightSuggestionRequest(BaseModel):
+    """Request for AI weight suggestion."""
+    user_id: str
+    exercise_name: str
+    exercise_id: Optional[str] = None
+    equipment: str = "dumbbell"
+    muscle_group: str = "unknown"
+    current_set: SetPerformance
+    total_sets: int
+    is_last_set: bool = False
+    fitness_level: str = "intermediate"
+    goals: List[str] = []
+
+
+class WeightSuggestionResponse(BaseModel):
+    """AI-generated weight suggestion response."""
+    suggested_weight: float
+    weight_delta: float
+    suggestion_type: str  # "increase", "maintain", "decrease"
+    reason: str
+    encouragement: str
+    confidence: float
+    ai_powered: bool = True
+
+
+async def get_exercise_history(
+    user_id: str,
+    exercise_name: str,
+    limit: int = 5
+) -> List[dict]:
+    """
+    Fetch user's recent performance history for an exercise.
+
+    Returns the last N workout sessions where this exercise was performed,
+    including weight, reps, and intensity feedback.
+    """
+    try:
+        db = get_supabase_db()
+
+        # Query workout_logs joined with workout data to find this exercise
+        # We'll look for exercise performance in the set_logs field
+        result = db.client.table("workout_logs").select(
+            "id, completed_at, set_logs, workout_id"
+        ).eq(
+            "user_id", user_id
+        ).not_.is_(
+            "completed_at", "null"
+        ).order(
+            "completed_at", desc=True
+        ).limit(20).execute()
+
+        history = []
+        for log in result.data or []:
+            set_logs = log.get("set_logs", {}) or {}
+
+            # set_logs structure: {exercise_name: [{reps, weight, rpe, rir, ...}]}
+            if exercise_name.lower() in [k.lower() for k in set_logs.keys()]:
+                # Find the matching key (case-insensitive)
+                matching_key = next(
+                    k for k in set_logs.keys()
+                    if k.lower() == exercise_name.lower()
+                )
+                sets_data = set_logs[matching_key]
+
+                if sets_data:
+                    # Get the heaviest set from this session
+                    best_set = max(sets_data, key=lambda s: s.get("weight", 0))
+                    history.append({
+                        "date": log["completed_at"],
+                        "weight_kg": best_set.get("weight", 0),
+                        "reps": best_set.get("reps", 0),
+                        "sets": len(sets_data),
+                        "rpe": best_set.get("rpe"),
+                        "rir": best_set.get("rir"),
+                    })
+
+                    if len(history) >= limit:
+                        break
+
+        return history
+
+    except Exception as e:
+        logger.warning(f"Failed to fetch exercise history: {e}")
+        return []
+
+
+def get_equipment_increment(equipment: str) -> float:
+    """Get the appropriate weight increment for equipment type."""
+    equipment_lower = equipment.lower()
+
+    for key, increment in EQUIPMENT_INCREMENTS.items():
+        if key in equipment_lower:
+            return increment
+
+    return 2.5  # Default increment
+
+
+def generate_rule_based_suggestion(
+    request: WeightSuggestionRequest,
+    equipment_increment: float
+) -> WeightSuggestionResponse:
+    """
+    Generate a rule-based weight suggestion as fallback.
+
+    This is used when:
+    - AI service is unavailable
+    - No RPE/RIR data provided
+    - Need a quick response without API call
+    """
+    current = request.current_set
+
+    # Calculate rep performance ratio
+    rep_ratio = current.reps_completed / current.target_reps if current.target_reps > 0 else 1.0
+
+    # Determine effective RIR (convert RPE if needed)
+    effective_rir = None
+    if current.rir is not None:
+        effective_rir = current.rir
+    elif current.rpe is not None:
+        effective_rir = max(0, 10 - current.rpe)
+
+    if effective_rir is None:
+        # Without intensity data, suggest maintaining weight
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg,
+            weight_delta=0,
+            suggestion_type="maintain",
+            reason="Track your RPE/RIR to get personalized suggestions!",
+            encouragement="Keep pushing! 💪",
+            confidence=0.5,
+            ai_powered=False,
+        )
+
+    # Decision logic based on RIR and rep achievement
+    if effective_rir >= 4 and rep_ratio >= 1.0:
+        # Very easy - increase by double increment
+        delta = equipment_increment * 2
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg + delta,
+            weight_delta=delta,
+            suggestion_type="increase",
+            reason=f"That set was too easy! You had {effective_rir}+ reps left.",
+            encouragement="Time to level up! 💪",
+            confidence=0.9,
+            ai_powered=False,
+        )
+    elif effective_rir >= 3 and rep_ratio >= 1.0:
+        # Easy - increase by one increment
+        delta = equipment_increment
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg + delta,
+            weight_delta=delta,
+            suggestion_type="increase",
+            reason=f"Great form with {effective_rir} reps in reserve.",
+            encouragement="Let's push a bit harder!",
+            confidence=0.85,
+            ai_powered=False,
+        )
+    elif effective_rir >= 2 and rep_ratio >= 0.9:
+        # Good working set
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg,
+            weight_delta=0,
+            suggestion_type="maintain",
+            reason="Perfect intensity! Keep this weight.",
+            encouragement="You're in the zone! 🎯",
+            confidence=0.9,
+            ai_powered=False,
+        )
+    elif effective_rir <= 1 and rep_ratio >= 0.8:
+        # Hard set
+        if request.is_last_set:
+            return WeightSuggestionResponse(
+                suggested_weight=current.weight_kg,
+                weight_delta=0,
+                suggestion_type="maintain",
+                reason="Pushed hard on the last set - perfect!",
+                encouragement="Great finish! 🔥",
+                confidence=0.85,
+                ai_powered=False,
+            )
+        else:
+            return WeightSuggestionResponse(
+                suggested_weight=current.weight_kg,
+                weight_delta=0,
+                suggestion_type="maintain",
+                reason="Working hard! Save energy for remaining sets.",
+                encouragement="Stay strong!",
+                confidence=0.7,
+                ai_powered=False,
+            )
+    elif effective_rir == 0 or rep_ratio < 0.7:
+        # Failed or struggled
+        delta = -equipment_increment
+        return WeightSuggestionResponse(
+            suggested_weight=max(0, current.weight_kg + delta),
+            weight_delta=delta,
+            suggestion_type="decrease",
+            reason="Reduce weight to maintain form and hit targets.",
+            encouragement="Smart training is sustainable training.",
+            confidence=0.85,
+            ai_powered=False,
+        )
+    else:
+        # Default - maintain
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg,
+            weight_delta=0,
+            suggestion_type="maintain",
+            reason="Good effort. Maintain current weight.",
+            encouragement="Keep pushing!",
+            confidence=0.7,
+            ai_powered=False,
+        )
+
+
+async def generate_ai_suggestion(
+    gemini: GeminiService,
+    request: WeightSuggestionRequest,
+    history: List[dict],
+    equipment_increment: float
+) -> WeightSuggestionResponse:
+    """
+    Generate an AI-powered weight suggestion using Gemini.
+
+    Takes into account:
+    - Current set performance
+    - Historical data for this exercise
+    - User's fitness level and goals
+    - Equipment-specific increments
+    """
+    current = request.current_set
+
+    # Build history context
+    history_context = ""
+    if history:
+        history_lines = []
+        for h in history[:5]:
+            history_lines.append(
+                f"- {h['date'][:10]}: {h['weight_kg']}kg x {h['reps']} reps"
+                + (f", RPE {h['rpe']}" if h.get('rpe') else "")
+            )
+        history_context = "\n".join(history_lines)
+    else:
+        history_context = "No previous history for this exercise."
+
+    # Build RPE/RIR context
+    intensity_context = ""
+    if current.rpe is not None:
+        rpe_desc = {
+            6: "Light - could do 4+ more reps",
+            7: "Moderate - could do 3 more reps",
+            8: "Challenging - could do 2 more reps",
+            9: "Hard - could do 1 more rep",
+            10: "Max effort - couldn't do another rep",
+        }
+        intensity_context += f"RPE {current.rpe}: {rpe_desc.get(current.rpe, 'Unknown')}\n"
+
+    if current.rir is not None:
+        intensity_context += f"RIR {current.rir}: {current.rir} reps left in the tank"
+
+    if not intensity_context:
+        intensity_context = "No intensity data provided"
+
+    prompt = f"""You are an expert fitness coach providing real-time weight suggestions during a workout.
+
+CURRENT SET PERFORMANCE:
+- Exercise: {request.exercise_name}
+- Equipment: {request.equipment}
+- Muscle Group: {request.muscle_group}
+- Set {current.set_number} of {request.total_sets}
+- Target: {current.target_reps} reps
+- Achieved: {current.reps_completed} reps
+- Weight Used: {current.weight_kg}kg
+- Intensity: {intensity_context}
+- Is Last Set: {request.is_last_set}
+
+USER PROFILE:
+- Fitness Level: {request.fitness_level}
+- Goals: {', '.join(request.goals) if request.goals else 'General fitness'}
+
+EXERCISE HISTORY (Recent Sessions):
+{history_context}
+
+EQUIPMENT CONSTRAINTS:
+- Minimum weight increment: {equipment_increment}kg
+- Available increments must be in multiples of {equipment_increment}kg
+
+ANALYZE the performance and provide a weight suggestion for the NEXT set.
+
+Return ONLY valid JSON (no markdown):
+{{
+  "suggested_weight": <number - the suggested weight in kg>,
+  "weight_delta": <number - change from current weight>,
+  "suggestion_type": "<increase|maintain|decrease>",
+  "reason": "<1-2 sentence explanation of why this suggestion>",
+  "encouragement": "<short motivational message>",
+  "confidence": <0.0-1.0 - how confident you are in this suggestion>
+}}
+
+IMPORTANT:
+- Consider the user's historical performance trend
+- Account for fatigue (later sets may need lower weight)
+- If they're building up (earlier sets), consider progressive overload
+- Weight suggestions must align with equipment increments
+- Be encouraging but realistic"""
+
+    try:
+        response = await gemini.chat(
+            user_message=prompt,
+            system_prompt="You are a precision fitness coach. Analyze set performance and provide optimal weight suggestions. Return only valid JSON."
+        )
+
+        # Parse response
+        import json
+        content = response.strip()
+
+        # Clean markdown if present
+        if content.startswith("```json"):
+            content = content[7:]
+        elif content.startswith("```"):
+            content = content[3:]
+        if content.endswith("```"):
+            content = content[:-3]
+
+        data = json.loads(content.strip())
+
+        # Validate and round to equipment increment
+        suggested = data.get("suggested_weight", current.weight_kg)
+        suggested = round(suggested / equipment_increment) * equipment_increment
+        suggested = max(0, suggested)  # No negative weights
+
+        delta = suggested - current.weight_kg
+
+        # Determine suggestion type based on delta
+        if delta > 0:
+            suggestion_type = "increase"
+        elif delta < 0:
+            suggestion_type = "decrease"
+        else:
+            suggestion_type = "maintain"
+
+        return WeightSuggestionResponse(
+            suggested_weight=suggested,
+            weight_delta=delta,
+            suggestion_type=suggestion_type,
+            reason=data.get("reason", "Based on your performance."),
+            encouragement=data.get("encouragement", "Keep it up!"),
+            confidence=min(1.0, max(0.0, data.get("confidence", 0.8))),
+            ai_powered=True,
+        )
+
+    except Exception as e:
+        logger.error(f"AI suggestion generation failed: {e}")
+        raise
+
+
+@router.post("/weight-suggestion", response_model=WeightSuggestionResponse)
+async def get_weight_suggestion(request: WeightSuggestionRequest):
+    """
+    Get an AI-powered weight suggestion for the next set.
+
+    This endpoint is called during active workouts after completing a set.
+    It analyzes:
+    - Current set performance (reps, weight, RPE/RIR)
+    - Historical exercise data
+    - User profile and goals
+
+    Returns a personalized weight suggestion with reasoning.
+
+    Falls back to rule-based suggestions if AI is unavailable.
+    """
+    logger.info(
+        f"Weight suggestion request: user={request.user_id}, "
+        f"exercise={request.exercise_name}, "
+        f"set={request.current_set.set_number}/{request.total_sets}"
+    )
+
+    try:
+        # Get equipment-specific increment
+        equipment_increment = get_equipment_increment(request.equipment)
+
+        # Check if we have intensity data for AI suggestion
+        has_intensity_data = (
+            request.current_set.rpe is not None or
+            request.current_set.rir is not None
+        )
+
+        if not has_intensity_data:
+            # Without RPE/RIR, use rule-based
+            logger.info("No intensity data provided, using rule-based suggestion")
+            return generate_rule_based_suggestion(request, equipment_increment)
+
+        # Fetch exercise history
+        history = await get_exercise_history(
+            user_id=request.user_id,
+            exercise_name=request.exercise_name,
+            limit=5
+        )
+
+        # Try AI-powered suggestion
+        try:
+            gemini = get_gemini_service()
+            suggestion = await generate_ai_suggestion(
+                gemini=gemini,
+                request=request,
+                history=history,
+                equipment_increment=equipment_increment
+            )
+            logger.info(
+                f"AI suggestion: {suggestion.suggestion_type} to {suggestion.suggested_weight}kg "
+                f"(delta: {suggestion.weight_delta:+.1f}kg, confidence: {suggestion.confidence:.0%})"
+            )
+            return suggestion
+
+        except Exception as ai_error:
+            logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}")
+            return generate_rule_based_suggestion(request, equipment_increment)
+
+    except Exception as e:
+        logger.error(f"Weight suggestion failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weight-suggestion/history/{user_id}/{exercise_name}")
+async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10):
+    """
+    Get weight history for an exercise.
+
+    Returns the user's recent performance data for the specified exercise,
+    useful for displaying progress charts or informing manual weight selection.
+    """
+    try:
+        history = await get_exercise_history(
+            user_id=user_id,
+            exercise_name=exercise_name,
+            limit=limit
+        )
+
+        return {
+            "user_id": user_id,
+            "exercise_name": exercise_name,
+            "history": history,
+            "data_points": len(history),
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get weight history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

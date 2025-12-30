@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -230,30 +230,41 @@ class ShareService {
     }
   }
 
-  /// Save image to device gallery
+  /// Save image to device gallery (Photos app)
+  ///
+  /// Uses image_gallery_saver_plus to properly save to the device's
+  /// photo gallery on both iOS (Camera Roll) and Android (Pictures).
   static Future<ShareResult> saveToGallery(Uint8List imageBytes) async {
     try {
-      // Get the downloads/pictures directory
-      final directory = Platform.isAndroid
-          ? await getExternalStorageDirectory()
-          : await getApplicationDocumentsDirectory();
-
-      if (directory == null) {
-        throw Exception('Could not access storage directory');
-      }
-
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'workout_recap_$timestamp.png';
-      final file = File('${directory.path}/$fileName');
+      final fileName = 'FitWiz_Workout_$timestamp';
 
-      await file.writeAsBytes(imageBytes);
-
-      debugPrint('✅ [Share] Saved to gallery: ${file.path}');
-
-      return const ShareResult(
-        success: true,
-        destination: ShareDestination.saveToGallery,
+      // Use ImageGallerySaverPlus to save directly to device gallery
+      // This works on both iOS (Camera Roll) and Android (Pictures/MediaStore)
+      final result = await ImageGallerySaverPlus.saveImage(
+        imageBytes,
+        quality: 100,
+        name: fileName,
       );
+
+      // Result is a Map with 'isSuccess', 'filePath', 'errorMessage'
+      final isSuccess = result['isSuccess'] == true;
+
+      if (isSuccess) {
+        debugPrint('✅ [Share] Saved to gallery: ${result['filePath']}');
+        return const ShareResult(
+          success: true,
+          destination: ShareDestination.saveToGallery,
+        );
+      } else {
+        final errorMsg = result['errorMessage'] ?? 'Unknown error';
+        debugPrint('❌ [Share] Gallery save failed: $errorMsg');
+        return ShareResult(
+          success: false,
+          destination: ShareDestination.saveToGallery,
+          error: errorMsg.toString(),
+        );
+      }
     } catch (e) {
       debugPrint('❌ [Share] Save to gallery error: $e');
       return ShareResult(

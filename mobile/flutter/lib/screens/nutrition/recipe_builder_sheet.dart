@@ -4,6 +4,8 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/recipe.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../widgets/nutrition/cooking_converter_sheet.dart';
+import '../../widgets/nutrition/batch_portioning_sheet.dart';
 
 /// Recipe Builder Sheet - Create custom recipes with multiple ingredients
 class RecipeBuilderSheet extends ConsumerStatefulWidget {
@@ -33,6 +35,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
   RecipeCategory _selectedCategory = RecipeCategory.other;
   final List<_IngredientEntry> _ingredients = [];
   bool _isSaving = false;
+  bool _isPublic = false; // Recipe sharing toggle
   String? _error;
 
   // Calculated totals
@@ -76,6 +79,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
     _prepTimeController.text = recipe.prepTimeMinutes?.toString() ?? '';
     _cookTimeController.text = recipe.cookTimeMinutes?.toString() ?? '';
     _selectedCategory = recipe.categoryEnum;
+    _isPublic = recipe.isPublic;
 
     // Load ingredients
     for (final ingredient in recipe.ingredients) {
@@ -159,6 +163,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
             : null,
         category: _selectedCategory.value,
         sourceType: 'manual',
+        isPublic: _isPublic,
         ingredients: _ingredients.map((i) => RecipeIngredientCreate(
           foodName: i.name,
           amount: i.amount,
@@ -192,6 +197,63 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
         _isSaving = false;
         _error = 'Failed to save recipe: $e';
       });
+    }
+  }
+
+  void _openCookingConverter(BuildContext context) async {
+    final result = await showModalBottomSheet<CookingConversionResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CookingConverterSheet(
+        isDark: widget.isDark,
+      ),
+    );
+
+    if (result != null && mounted) {
+      // Show the conversion result
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${result.inputGrams.toStringAsFixed(0)}g ${result.direction == ConversionDirection.rawToCooked ? "raw" : "cooked"} '
+            '${result.foodName} = ${result.outputGrams.toStringAsFixed(0)}g '
+            '${result.direction == ConversionDirection.rawToCooked ? "cooked" : "raw"}',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  void _openBatchPortioning(BuildContext context) async {
+    final result = await showModalBottomSheet<BatchPortioningResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BatchPortioningSheet(
+        isDark: widget.isDark,
+        recipeName: _nameController.text.isNotEmpty ? _nameController.text : null,
+        totalCalories: _totalCalories,
+        totalProtein: _totalProtein,
+        totalCarbs: _totalCarbs,
+        totalFat: _totalFat,
+        defaultServings: _servings,
+      ),
+    );
+
+    if (result != null && mounted) {
+      // Show the portioning result
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Logged ${result.portionEaten} serving(s) of "${result.recipeName}": '
+            '${result.caloriesConsumed} kcal',
+          ),
+          backgroundColor: Colors.purple,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -509,32 +571,76 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                             );
                           }),
 
-                        // Add Ingredient Button
-                        InkWell(
-                          onTap: _addIngredient,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: _ingredients.isNotEmpty
-                                  ? Border(top: BorderSide(color: cardBorder))
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add, color: teal, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Add Ingredient',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: teal,
+                        // Add Ingredient Button Row
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: _ingredients.isNotEmpty
+                                ? Border(top: BorderSide(color: cardBorder))
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              // Add Ingredient Button
+                              Expanded(
+                                child: InkWell(
+                                  onTap: _addIngredient,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: teal.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.add, color: teal, size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Add Ingredient',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: teal,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Cooking Converter Button
+                              InkWell(
+                                onTap: () => _openCookingConverter(context),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.scale, color: Colors.orange, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Converter',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -562,6 +668,40 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                       fiber: _fiberPerServing,
                       servings: _servings,
                       isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    // Batch Portioning Button
+                    InkWell(
+                      onTap: () => _openBatchPortioning(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.purple.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.pie_chart, color: Colors.purple, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Calculate Portion to Log',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.purple,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -602,6 +742,64 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Recipe Sharing Toggle
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: teal.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.share_outlined,
+                            color: teal,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Share Recipe',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _isPublic
+                                    ? 'Others can discover this recipe'
+                                    : 'Only you can see this recipe',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _isPublic,
+                          onChanged: (value) => setState(() => _isPublic = value),
+                          activeColor: teal,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 100),

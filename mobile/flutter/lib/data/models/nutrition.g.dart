@@ -41,6 +41,9 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   fiberG: (json['fiber_g'] as num?)?.toDouble(),
   healthScore: (json['health_score'] as num?)?.toInt(),
   aiFeedback: json['ai_feedback'] as String?,
+  moodBefore: json['mood_before'] as String?,
+  moodAfter: json['mood_after'] as String?,
+  energyLevel: (json['energy_level'] as num?)?.toInt(),
   createdAt: DateTime.parse(json['created_at'] as String),
 );
 
@@ -57,6 +60,9 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'fiber_g': instance.fiberG,
   'health_score': instance.healthScore,
   'ai_feedback': instance.aiFeedback,
+  'mood_before': instance.moodBefore,
+  'mood_after': instance.moodAfter,
+  'energy_level': instance.energyLevel,
   'created_at': instance.createdAt.toIso8601String(),
 };
 
@@ -240,6 +246,9 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
           ?.map((e) => e as String)
           .toList(),
       recommendedSwap: json['recommended_swap'] as String?,
+      confidenceScore: (json['confidence_score'] as num?)?.toDouble(),
+      confidenceLevel: json['confidence_level'] as String?,
+      sourceType: json['source_type'] as String?,
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -259,6 +268,9 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'encouragements': instance.encouragements,
       'warnings': instance.warnings,
       'recommended_swap': instance.recommendedSwap,
+      'confidence_score': instance.confidenceScore,
+      'confidence_level': instance.confidenceLevel,
+      'source_type': instance.sourceType,
     };
 
 SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>

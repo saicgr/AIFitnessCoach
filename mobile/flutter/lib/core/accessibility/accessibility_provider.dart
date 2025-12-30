@@ -6,7 +6,7 @@ import '../constants/api_constants.dart';
 
 /// Accessibility mode types
 enum AccessibilityMode {
-  normal,
+  standard,
   senior,
   kids, // Coming soon
 }
@@ -20,7 +20,7 @@ class AccessibilitySettings {
   final bool reduceAnimations;
 
   const AccessibilitySettings({
-    this.mode = AccessibilityMode.normal,
+    this.mode = AccessibilityMode.standard,
     this.fontScale = 1.0,
     this.highContrast = false,
     this.largeButtons = false,
@@ -49,8 +49,8 @@ class AccessibilitySettings {
   /// Check if we're in senior mode
   bool get isSeniorMode => mode == AccessibilityMode.senior;
 
-  /// Check if we're in normal mode
-  bool get isNormalMode => mode == AccessibilityMode.normal;
+  /// Check if we're in standard mode
+  bool get isStandardMode => mode == AccessibilityMode.standard;
 
   AccessibilitySettings copyWith({
     AccessibilityMode? mode,
@@ -81,8 +81,8 @@ class AccessibilitySettings {
   factory AccessibilitySettings.fromJson(Map<String, dynamic> json) {
     return AccessibilitySettings(
       mode: AccessibilityMode.values.firstWhere(
-        (e) => e.name == json['mode'],
-        orElse: () => AccessibilityMode.normal,
+        (e) => e.name == json['mode'] || (e == AccessibilityMode.standard && json['mode'] == 'normal'),
+        orElse: () => AccessibilityMode.standard,
       ),
       fontScale: (json['font_scale'] as num?)?.toDouble() ?? 1.0,
       highContrast: json['high_contrast'] as bool? ?? false,
@@ -188,8 +188,8 @@ class AccessibilityNotifier extends StateNotifier<AccessibilitySettings> {
         final modeStr = data['accessibility_mode'] as String?;
         if (modeStr != null) {
           final mode = AccessibilityMode.values.firstWhere(
-            (e) => e.name == modeStr,
-            orElse: () => AccessibilityMode.normal,
+            (e) => e.name == modeStr || (e == AccessibilityMode.standard && modeStr == 'normal'),
+            orElse: () => AccessibilityMode.standard,
           );
           state = state.copyWith(mode: mode);
           await _saveToPrefs();
@@ -240,8 +240,8 @@ class AccessibilityNotifier extends StateNotifier<AccessibilitySettings> {
     await syncToBackend();
   }
 
-  /// Reset to normal mode
-  Future<void> resetToNormal() async {
+  /// Reset to standard mode
+  Future<void> resetToStandard() async {
     state = const AccessibilitySettings();
     await _saveToPrefs();
     await syncToBackend();

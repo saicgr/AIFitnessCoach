@@ -4,7 +4,7 @@
 library;
 
 export 'exit_confirmation_dialog.dart';
-export 'exercise_detail_sheet.dart';
+export 'exercise_detail_sheet.dart' hide SetData;
 export 'exercise_set_tracker.dart';
 export 'exercise_swap_sheet.dart';
 export 'number_input_widgets.dart';

@@ -354,6 +354,9 @@ QUICK_REPLIES = {
         {"label": "Home (minimal) 🏡", "value": "home"},
         {"label": "Outdoors 🌳", "value": "outdoors"},
         {"label": "Hotel/Travel 🧳", "value": "hotel"},
+        {"label": "Apartment gym 🏬", "value": "apartment_gym"},
+        {"label": "Office gym 💼", "value": "office_gym"},
+        {"label": "Custom setup ⚙️", "value": "custom"},
     ],
     # Focus areas - muscle groups to prioritize
     "focus_areas": [
@@ -407,7 +410,15 @@ QUICK_REPLIES = {
         {"label": "210 lbs (95kg)", "value": "95"},
         {"label": "230+ lbs (104kg)", "value": "104"},
     ],
-    # NOTE: target_weight_kg uses custom component "weight_goal_input" instead of quick replies
-    # The Flutter component handles the two-step flow: direction selection -> amount input
+    # Target weight - relative weight goals
+    "target_weight_kg": [
+        {"label": "Lose 10 lbs (4.5kg)", "value": "lose_10"},
+        {"label": "Lose 20 lbs (9kg)", "value": "lose_20"},
+        {"label": "Lose 30+ lbs (14kg)", "value": "lose_30"},
+        {"label": "Gain 10 lbs (4.5kg)", "value": "gain_10"},
+        {"label": "Gain 20 lbs (9kg)", "value": "gain_20"},
+        {"label": "Happy where I am 😊", "value": "__skip__"},
+        {"label": "Not sure 🤔", "value": "__skip__"},
+    ],
 }
 

@@ -396,6 +396,10 @@ class HealthService {
     // Sleep
     HealthDataType.SLEEP_ASLEEP,
     HealthDataType.SLEEP_IN_BED,
+
+    // Diabetic metrics (Blood glucose & insulin)
+    HealthDataType.BLOOD_GLUCOSE,
+    HealthDataType.INSULIN_DELIVERY,
   ];
 
   // Data types we want to write to Health Connect
@@ -741,8 +745,264 @@ class HealthService {
         return 'kcal';
       case HealthDataType.DISTANCE_DELTA:
         return 'm';
+      case HealthDataType.BLOOD_GLUCOSE:
+        return 'mg/dL';
+      case HealthDataType.INSULIN_DELIVERY:
+        return 'units';
       default:
         return '';
     }
+  }
+
+  // ============================================
+  // Diabetic Health Metrics (Blood Glucose & Insulin)
+  // ============================================
+
+  /// Get blood glucose readings from Health Connect
+  Future<List<BloodGlucoseReading>> getBloodGlucoseData({int days = 7}) async {
+    try {
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: [HealthDataType.BLOOD_GLUCOSE],
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+
+      return uniqueData.map((point) {
+        final value = (point.value as NumericHealthValue).numericValue.toDouble();
+        return BloodGlucoseReading(
+          value: value,
+          unit: 'mg/dL',
+          recordedAt: point.dateTo,
+          source: point.sourceName ?? 'Health Connect',
+          mealContext: _inferMealContext(point.dateTo),
+        );
+      }).toList()
+        ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    } catch (e) {
+      debugPrint('❌ Error getting blood glucose data: $e');
+      return [];
+    }
+  }
+
+  /// Get insulin delivery data from Health Connect
+  Future<List<InsulinDose>> getInsulinData({int days = 7}) async {
+    try {
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: [HealthDataType.INSULIN_DELIVERY],
+      );
+
+      final uniqueData = _health.removeDuplicates(data);
+
+      return uniqueData.map((point) {
+        final value = (point.value as NumericHealthValue).numericValue.toDouble();
+        return InsulinDose(
+          units: value,
+          deliveredAt: point.dateTo,
+          source: point.sourceName ?? 'Health Connect',
+          insulinType: 'unknown', // Health Connect doesn't differentiate
+        );
+      }).toList()
+        ..sort((a, b) => b.deliveredAt.compareTo(a.deliveredAt));
+    } catch (e) {
+      debugPrint('❌ Error getting insulin data: $e');
+      return [];
+    }
+  }
+
+  /// Write manual blood glucose reading
+  Future<bool> writeBloodGlucose(double mgDl) async {
+    return writeMeasurement(
+      type: HealthDataType.BLOOD_GLUCOSE,
+      value: mgDl,
+      time: DateTime.now(),
+    );
+  }
+
+  /// Get daily blood glucose summary
+  Future<BloodGlucoseSummary> getDailyGlucoseSummary({DateTime? date}) async {
+    final targetDate = date ?? DateTime.now();
+    final start = DateTime(targetDate.year, targetDate.month, targetDate.day);
+    final end = start.add(const Duration(days: 1));
+
+    try {
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: end,
+        types: [HealthDataType.BLOOD_GLUCOSE],
+      );
+
+      if (data.isEmpty) {
+        return BloodGlucoseSummary.empty(date: targetDate);
+      }
+
+      final values = data.map((p) =>
+        (p.value as NumericHealthValue).numericValue.toDouble()
+      ).toList();
+
+      final average = values.reduce((a, b) => a + b) / values.length;
+      final min = values.reduce((a, b) => a < b ? a : b);
+      final max = values.reduce((a, b) => a > b ? a : b);
+
+      // Calculate time in range (70-180 mg/dL is typical target)
+      final inRangeCount = values.where((v) => v >= 70 && v <= 180).length;
+      final timeInRange = (inRangeCount / values.length) * 100;
+
+      return BloodGlucoseSummary(
+        date: targetDate,
+        readingCount: values.length,
+        averageGlucose: average,
+        minGlucose: min,
+        maxGlucose: max,
+        timeInRange: timeInRange,
+        timeAboveRange: values.where((v) => v > 180).length / values.length * 100,
+        timeBelowRange: values.where((v) => v < 70).length / values.length * 100,
+      );
+    } catch (e) {
+      debugPrint('❌ Error getting daily glucose summary: $e');
+      return BloodGlucoseSummary.empty(date: targetDate);
+    }
+  }
+
+  /// Infer meal context based on time of day
+  String _inferMealContext(DateTime time) {
+    final hour = time.hour;
+    if (hour >= 5 && hour < 9) return 'before_breakfast';
+    if (hour >= 9 && hour < 11) return 'after_breakfast';
+    if (hour >= 11 && hour < 13) return 'before_lunch';
+    if (hour >= 13 && hour < 15) return 'after_lunch';
+    if (hour >= 17 && hour < 19) return 'before_dinner';
+    if (hour >= 19 && hour < 22) return 'after_dinner';
+    return 'general';
+  }
+}
+
+// ============================================
+// Diabetic Data Models
+// ============================================
+
+/// Blood glucose reading from Health Connect
+class BloodGlucoseReading {
+  final double value;
+  final String unit;
+  final DateTime recordedAt;
+  final String source;
+  final String? mealContext;
+  final String? notes;
+
+  const BloodGlucoseReading({
+    required this.value,
+    required this.unit,
+    required this.recordedAt,
+    required this.source,
+    this.mealContext,
+    this.notes,
+  });
+
+  /// Get status based on glucose level
+  GlucoseStatus get status {
+    if (value < 70) return GlucoseStatus.low;
+    if (value <= 100) return GlucoseStatus.normal;
+    if (value <= 125) return GlucoseStatus.elevated;
+    if (value <= 180) return GlucoseStatus.high;
+    return GlucoseStatus.veryHigh;
+  }
+
+  /// Get display color based on status
+  String get statusColor {
+    switch (status) {
+      case GlucoseStatus.low:
+        return 'red';
+      case GlucoseStatus.normal:
+        return 'green';
+      case GlucoseStatus.elevated:
+        return 'yellow';
+      case GlucoseStatus.high:
+        return 'orange';
+      case GlucoseStatus.veryHigh:
+        return 'red';
+    }
+  }
+}
+
+/// Glucose status levels
+enum GlucoseStatus {
+  low,       // < 70 mg/dL - Hypoglycemia
+  normal,    // 70-100 mg/dL - Normal fasting
+  elevated,  // 100-125 mg/dL - Pre-diabetes range
+  high,      // 126-180 mg/dL - Diabetes range
+  veryHigh,  // > 180 mg/dL - Very high
+}
+
+/// Insulin dose record
+class InsulinDose {
+  final double units;
+  final DateTime deliveredAt;
+  final String source;
+  final String insulinType; // 'rapid', 'short', 'intermediate', 'long', 'unknown'
+  final String? notes;
+
+  const InsulinDose({
+    required this.units,
+    required this.deliveredAt,
+    required this.source,
+    required this.insulinType,
+    this.notes,
+  });
+}
+
+/// Daily blood glucose summary
+class BloodGlucoseSummary {
+  final DateTime date;
+  final int readingCount;
+  final double averageGlucose;
+  final double minGlucose;
+  final double maxGlucose;
+  final double timeInRange;     // Percentage
+  final double timeAboveRange;  // Percentage
+  final double timeBelowRange;  // Percentage
+
+  const BloodGlucoseSummary({
+    required this.date,
+    required this.readingCount,
+    required this.averageGlucose,
+    required this.minGlucose,
+    required this.maxGlucose,
+    required this.timeInRange,
+    required this.timeAboveRange,
+    required this.timeBelowRange,
+  });
+
+  factory BloodGlucoseSummary.empty({required DateTime date}) {
+    return BloodGlucoseSummary(
+      date: date,
+      readingCount: 0,
+      averageGlucose: 0,
+      minGlucose: 0,
+      maxGlucose: 0,
+      timeInRange: 0,
+      timeAboveRange: 0,
+      timeBelowRange: 0,
+    );
+  }
+
+  bool get hasData => readingCount > 0;
+
+  /// Get overall glucose control status
+  String get controlStatus {
+    if (!hasData) return 'No data';
+    if (timeInRange >= 70) return 'Excellent';
+    if (timeInRange >= 50) return 'Good';
+    if (timeInRange >= 30) return 'Needs improvement';
+    return 'Poor control';
   }
 }

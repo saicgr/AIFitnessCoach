@@ -712,7 +712,9 @@ IMPORTANT:
         intensity_preference: Optional[str] = None,
         custom_program_description: Optional[str] = None,
         workout_type_preference: Optional[str] = None,
-        custom_exercises: Optional[List[Dict]] = None
+        custom_exercises: Optional[List[Dict]] = None,
+        workout_environment: Optional[str] = None,
+        equipment_details: Optional[List[Dict]] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -731,6 +733,9 @@ IMPORTANT:
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX", "Improve box jump height")
             workout_type_preference: Optional workout type preference (strength, cardio, mixed) - affects exercise selection
             custom_exercises: Optional list of user's custom exercises to potentially include
+            workout_environment: Optional workout environment (commercial_gym, home_gym, home, outdoors, hotel, etc.)
+            equipment_details: Optional detailed equipment info with quantities and weights
+                               [{"name": "dumbbells", "quantity": 2, "weights": [15, 25, 40], "weight_unit": "lbs"}]
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -865,12 +870,95 @@ When including custom exercises, use the user's default sets/reps as a starting 
         else:
             logger.info(f"🏋️ [Gemini Service] No custom exercises to include in prompt")
 
+        # Build workout environment instruction if provided
+        environment_instruction = ""
+        if workout_environment:
+            env_descriptions = {
+                'commercial_gym': ('🏢 COMMERCIAL GYM', 'Full access to machines, cables, and free weights. Can use any equipment.'),
+                'home_gym': ('🏠 HOME GYM', 'Dedicated home gym setup. Focus on free weights and basic equipment available.'),
+                'home': ('🏡 HOME (MINIMAL)', 'Limited equipment at home. Prefer bodyweight exercises and minimal equipment.'),
+                'outdoors': ('🌳 OUTDOORS', 'Outdoor workout (park, trail). Use bodyweight exercises, running, outdoor-friendly movements.'),
+                'hotel': ('🧳 HOTEL/TRAVEL', 'Hotel gym with limited equipment. Focus on bodyweight and dumbbells.'),
+                'apartment_gym': ('🏬 APARTMENT GYM', 'Basic apartment building gym. Focus on machines and basic weights.'),
+                'office_gym': ('💼 OFFICE GYM', 'Workplace fitness center. Use machines and basic equipment.'),
+                'custom': ('⚙️ CUSTOM SETUP', 'User has specific equipment they selected. Use only the equipment listed.'),
+            }
+            env_name, env_desc = env_descriptions.get(workout_environment, ('', workout_environment))
+            if env_name:
+                environment_instruction = f"\n- Workout Environment: {env_name} - {env_desc}"
+
+        # Build detailed equipment instruction if provided
+        equipment_details_instruction = ""
+        if equipment_details and len(equipment_details) > 0:
+            logger.info(f"🏋️ [Gemini Service] Including {len(equipment_details)} detailed equipment items in prompt")
+            equip_list = []
+            for item in equipment_details:
+                name = item.get("name", "unknown")
+                quantity = item.get("quantity", 1)
+                weights = item.get("weights", [])
+                unit = item.get("weight_unit", "lbs")
+                notes = item.get("notes", "")
+
+                if weights:
+                    weights_str = f", weights: {', '.join(str(w) for w in weights)} {unit}"
+                else:
+                    weights_str = ""
+
+                notes_str = f" ({notes})" if notes else ""
+                equip_list.append(f"  - {name}: qty {quantity}{weights_str}{notes_str}")
+
+            equipment_details_instruction = f"""
+
+🏋️ DETAILED EQUIPMENT AVAILABLE:
+The user has specified exact equipment with quantities and weights. Use ONLY these items and recommend weights from this list:
+{chr(10).join(equip_list)}
+
+When recommending weights for exercises, select from the user's available weights listed above.
+If user has multiple weight options, pick appropriate weights based on fitness level and exercise type."""
+
+        # Build focus area instruction based on the training split/focus
+        focus_instruction = ""
+        if focus_areas and len(focus_areas) > 0:
+            focus = focus_areas[0].lower()
+            logger.info(f"🎯 [Gemini Service] Workout focus area: {focus}")
+            # Map focus areas to strict exercise selection guidelines
+            focus_mapping = {
+                'push': '🎯 PUSH FOCUS: Select exercises that target chest, shoulders, and triceps. Include bench press variations, shoulder press, push-ups, dips, tricep extensions.',
+                'pull': '🎯 PULL FOCUS: Select exercises that target back and biceps. Include rows, pull-ups/lat pulldowns, deadlifts, curls, face pulls.',
+                'legs': '🎯 LEG FOCUS: Select exercises that target quads, hamstrings, glutes, and calves. Include squats, lunges, leg press, deadlifts, calf raises.',
+                'upper': '🎯 UPPER BODY: Select exercises for chest, back, shoulders, and arms. Mix pushing and pulling movements.',
+                'lower': '🎯 LOWER BODY: Select exercises for quads, hamstrings, glutes, and calves. Focus on compound leg movements.',
+                'chest': '🎯 CHEST FOCUS: At least 70% of exercises must target chest. Include bench press, flyes, push-ups, cable crossovers.',
+                'back': '🎯 BACK FOCUS: At least 70% of exercises must target back. Include rows, pull-ups, lat pulldowns, deadlifts.',
+                'shoulders': '🎯 SHOULDER FOCUS: At least 70% of exercises must target shoulders. Include overhead press, lateral raises, front raises, rear delts.',
+                'arms': '🎯 ARMS FOCUS: At least 70% of exercises must target biceps and triceps. Include curls, extensions, dips, hammer curls.',
+                'core': '🎯 CORE FOCUS: At least 70% of exercises must target abs and obliques. Include planks, crunches, leg raises, russian twists.',
+                'glutes': '🎯 GLUTE FOCUS: At least 70% of exercises must target glutes. Include hip thrusts, glute bridges, lunges, deadlifts.',
+                'full_body': '🎯 FULL BODY: Include at least one exercise for each major muscle group: chest, back, shoulders, legs, core.',
+                'full_body_push': '🎯 FULL BODY with PUSH EMPHASIS: Include exercises for all major muscle groups, but prioritize chest, shoulders, and triceps (at least 50% pushing movements).',
+                'full_body_pull': '🎯 FULL BODY with PULL EMPHASIS: Include exercises for all major muscle groups, but prioritize back and biceps (at least 50% pulling movements).',
+                'full_body_legs': '🎯 FULL BODY with LEG EMPHASIS: Include exercises for all major muscle groups, but prioritize legs and glutes (at least 50% lower body movements).',
+                'full_body_core': '🎯 FULL BODY with CORE EMPHASIS: Include exercises for all major muscle groups, but prioritize core/abs (at least 40% core movements).',
+                'full_body_upper': '🎯 FULL BODY with UPPER EMPHASIS: Include exercises for all major muscle groups, but prioritize upper body (at least 60% upper body movements).',
+                'full_body_lower': '🎯 FULL BODY with LOWER EMPHASIS: Include exercises for all major muscle groups, but prioritize lower body (at least 60% lower body movements).',
+                'full_body_power': '🎯 FULL BODY POWER: Focus on explosive, compound movements across all muscle groups. Include power cleans, box jumps, kettlebell swings.',
+                'upper_power': '🎯 UPPER BODY POWER: Heavy compound upper body movements. Lower reps (4-6), higher weight. Include bench press, overhead press, rows.',
+                'lower_power': '🎯 LOWER BODY POWER: Heavy compound leg movements. Lower reps (4-6), higher weight. Include squats, deadlifts, leg press.',
+                'upper_hypertrophy': '🎯 UPPER BODY HYPERTROPHY: Moderate weight, higher reps (8-12). Focus on time under tension for chest, back, shoulders, arms.',
+                'lower_hypertrophy': '🎯 LOWER BODY HYPERTROPHY: Moderate weight, higher reps (8-12). Focus on time under tension for quads, hamstrings, glutes.',
+            }
+            focus_instruction = focus_mapping.get(focus, f'🎯 FOCUS: {focus.upper()} - Select exercises primarily targeting this area.')
+
         prompt = f"""Generate a {duration_minutes}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
-- Workout Type: {workout_type}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}
+
+⚠️ CRITICAL - MUSCLE GROUP TARGETING:
+{focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}
+You MUST follow this focus area strictly. Do NOT give random exercises that don't match the focus.
 
 Return a valid JSON object with this exact structure:
 {{

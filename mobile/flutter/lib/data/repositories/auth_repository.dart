@@ -157,7 +157,9 @@ class AuthRepository {
 
       final response = await _apiClient.get('${ApiConstants.users}/$userId');
       if (response.statusCode == 200) {
-        return app_user.User.fromJson(response.data as Map<String, dynamic>);
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('🔍 [Auth] User data from API: onboarding_completed=${data['onboarding_completed']}, coach_selected=${data['coach_selected']}, paywall_completed=${data['paywall_completed']}');
+        return app_user.User.fromJson(data);
       }
       return null;
     } catch (e) {
@@ -264,9 +266,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Mark onboarding as complete
   Future<void> markOnboardingComplete() async {
     if (state.user != null) {
-      // Update the user's onboarding status locally
-      // The actual backend update is done in onboarding completion
-      debugPrint('✅ [Auth] Marking onboarding complete');
+      final updatedUser = state.user!.copyWith(onboardingCompleted: true);
+      state = state.copyWith(user: updatedUser);
+      debugPrint('✅ [Auth] Marked onboarding as complete');
     }
   }
 

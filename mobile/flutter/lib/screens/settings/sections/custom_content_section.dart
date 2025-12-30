@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_repository.dart';
+import '../../../data/services/api_client.dart';
 import '../widgets/section_header.dart';
 
 /// Section for managing user's custom content: equipment, exercises, workouts.
@@ -332,6 +333,8 @@ class _CustomEquipmentManagerState
   List<String> _customEquipment = [];
   final _textController = TextEditingController();
   bool _isLoading = true;
+  bool _isSaving = false;
+  String? _userId;
 
   @override
   void initState() {
@@ -346,11 +349,89 @@ class _CustomEquipmentManagerState
   }
 
   Future<void> _loadCustomEquipment() async {
-    // TODO: Load from user profile via API
-    setState(() {
-      _isLoading = false;
-      _customEquipment = [];
-    });
+    debugPrint('🏋️ [CustomEquipment] Loading custom equipment...');
+    try {
+      final authState = ref.read(authStateProvider);
+      _userId = authState.user?.id;
+
+      if (_userId == null) {
+        debugPrint('⚠️ [CustomEquipment] User not logged in');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch user data to get custom_equipment
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.get('/users/$_userId');
+
+      if (response.data != null) {
+        final userData = response.data as Map<String, dynamic>;
+        final customEquipmentData = userData['custom_equipment'];
+
+        List<String> equipment = [];
+        if (customEquipmentData != null) {
+          if (customEquipmentData is List) {
+            equipment = customEquipmentData.cast<String>();
+          } else if (customEquipmentData is String && customEquipmentData.isNotEmpty) {
+            // Parse JSON string
+            try {
+              final parsed = List<String>.from(
+                (customEquipmentData as String).isNotEmpty
+                    ? List.from(Uri.decodeComponent(customEquipmentData).split(','))
+                    : [],
+              );
+              equipment = parsed;
+            } catch (e) {
+              debugPrint('⚠️ [CustomEquipment] Error parsing: $e');
+            }
+          }
+        }
+
+        debugPrint('✅ [CustomEquipment] Loaded ${equipment.length} custom equipment items');
+        setState(() {
+          _customEquipment = equipment;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      debugPrint('❌ [CustomEquipment] Error loading: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveCustomEquipment() async {
+    if (_userId == null) return;
+
+    setState(() => _isSaving = true);
+    debugPrint('💾 [CustomEquipment] Saving ${_customEquipment.length} items...');
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.put(
+        '/users/$_userId',
+        data: {
+          'custom_equipment': _customEquipment,
+        },
+      );
+      debugPrint('✅ [CustomEquipment] Saved successfully');
+    } catch (e) {
+      debugPrint('❌ [CustomEquipment] Error saving: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 
   Future<void> _addEquipment(String name) async {
@@ -372,19 +453,36 @@ class _CustomEquipmentManagerState
     });
     _textController.clear();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added "$trimmed" to your equipment'),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.cyan.withValues(alpha: 0.9),
-      ),
-    );
+    // Save to backend
+    await _saveCustomEquipment();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added "$trimmed" to your equipment'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.cyan.withValues(alpha: 0.9),
+        ),
+      );
+    }
   }
 
-  void _removeEquipment(String name) {
+  Future<void> _removeEquipment(String name) async {
     setState(() {
       _customEquipment.remove(name);
     });
+
+    // Save to backend
+    await _saveCustomEquipment();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Removed "$name"'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override

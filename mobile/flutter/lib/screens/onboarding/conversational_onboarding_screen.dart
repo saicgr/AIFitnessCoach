@@ -858,6 +858,9 @@ class _ConversationalOnboardingScreenState
       await prefs.setBool('onboarding_completed', true);
       debugPrint('✅ [Onboarding] Marked onboarding as complete (API + local)');
 
+      // Update local auth state immediately (don't rely solely on refreshUser)
+      await ref.read(authStateProvider.notifier).markOnboardingComplete();
+
       setState(() {
         _workoutLoadingProgress = 100;
         _workoutLoadingMessage = 'All done! Taking you to your dashboard...';
@@ -865,7 +868,7 @@ class _ConversationalOnboardingScreenState
 
       await Future.delayed(const Duration(seconds: 1));
 
-      // Refresh user and navigate
+      // Refresh user to get any other updates from backend
       await ref.read(authStateProvider.notifier).refreshUser();
 
       if (mounted) {

@@ -30,7 +30,7 @@ MICRONUTRIENT ENDPOINTS:
 - GET  /api/v1/nutrition/rdas - Get all RDA values
 - PUT  /api/v1/nutrition/pinned-nutrients/{user_id} - Update pinned nutrients
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional, AsyncGenerator
 import uuid
 import base64
@@ -184,6 +184,20 @@ class LogTextRequest(BaseModel):
     meal_type: str  # breakfast, lunch, dinner, snack
 
 
+class LogDirectRequest(BaseModel):
+    """Request to log already-analyzed food directly (e.g., from restaurant mode with portion adjustments)."""
+    user_id: str
+    meal_type: str  # breakfast, lunch, dinner, snack
+    food_items: List[dict]
+    total_calories: int
+    total_protein: int
+    total_carbs: int
+    total_fat: int
+    total_fiber: Optional[int] = None
+    source_type: str = "restaurant"  # restaurant, manual, adjusted
+    notes: Optional[str] = None
+
+
 class FoodItemRanking(BaseModel):
     """Individual food item with goal-based ranking."""
     name: str
@@ -217,6 +231,10 @@ class LogFoodResponse(BaseModel):
     encouragements: Optional[List[str]] = None  # Positive aspects
     warnings: Optional[List[str]] = None  # Concerns (high sodium, etc.)
     recommended_swap: Optional[str] = None  # Healthier alternative
+    # AI confidence for estimates
+    confidence_score: Optional[float] = None  # 0.0-1.0 confidence in analysis
+    confidence_level: Optional[str] = None  # 'low', 'medium', 'high'
+    source_type: Optional[str] = None  # 'image', 'text', 'barcode', 'restaurant'
 
 
 @router.get("/food-logs/{user_id}", response_model=List[FoodLogResponse])
@@ -728,6 +746,16 @@ async def log_food_from_image(
             status_code=200
         )
 
+        # Calculate confidence based on image analysis factors
+        # Higher confidence for clearer images with identifiable foods
+        confidence_score = 0.7  # Base confidence for image analysis
+        if len(food_items) == 1:
+            confidence_score = 0.8  # Single item is more accurate
+        elif len(food_items) > 5:
+            confidence_score = 0.6  # Complex meals have lower confidence
+
+        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -737,6 +765,9 @@ async def log_food_from_image(
             carbs_g=carbs_g,
             fat_g=fat_g,
             fiber_g=fiber_g,
+            confidence_score=confidence_score,
+            confidence_level=confidence_level,
+            source_type="image",
         )
 
     except HTTPException:
@@ -886,6 +917,15 @@ async def log_food_from_text(request: LogTextRequest):
             status_code=200
         )
 
+        # Text descriptions are generally more accurate than images
+        confidence_score = 0.85  # Base confidence for text
+        if len(request.description) < 20:
+            confidence_score = 0.7  # Short descriptions have less context
+        elif "about" in request.description.lower() or "roughly" in request.description.lower():
+            confidence_score = 0.65  # Approximate language reduces confidence
+
+        confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -902,6 +942,9 @@ async def log_food_from_text(request: LogTextRequest):
             encouragements=encouragements,
             warnings=warnings,
             recommended_swap=recommended_swap,
+            confidence_score=confidence_score,
+            confidence_level=confidence_level,
+            source_type="text",
         )
 
     except HTTPException:
@@ -920,6 +963,69 @@ async def log_food_from_text(request: LogTextRequest):
             },
             status_code=500
         )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Direct Food Logging (for restaurant mode, manual adjustments)
+# ============================================
+
+
+@router.post("/log-direct", response_model=LogFoodResponse)
+async def log_food_direct(request: LogDirectRequest):
+    """
+    Log pre-analyzed food directly without AI processing.
+
+    Used for:
+    - Restaurant mode with portion adjustments
+    - Manual food entry
+    - Adjusted servings from previous logs
+
+    The caller provides the nutrition data directly, which is logged as-is.
+    """
+    logger.info(f"Logging food directly for user {request.user_id}, source: {request.source_type}")
+
+    try:
+        db = get_supabase_db()
+
+        # Create food log directly
+        created_log = db.create_food_log(
+            user_id=request.user_id,
+            meal_type=request.meal_type,
+            food_items=request.food_items,
+            total_calories=request.total_calories,
+            protein_g=request.total_protein,
+            carbs_g=request.total_carbs,
+            fat_g=request.total_fat,
+            fiber_g=request.total_fiber,
+            ai_feedback=f"Logged via {request.source_type}" + (f": {request.notes}" if request.notes else ""),
+            health_score=None,  # No AI scoring for direct logs
+        )
+
+        food_log_id = created_log.get('id') if created_log else "unknown"
+        logger.info(f"Successfully logged food directly as {food_log_id}")
+
+        # Restaurant mode has lower confidence due to portion estimation
+        confidence_score = 0.6 if request.source_type == "restaurant" else 0.9
+        confidence_level = "medium" if request.source_type == "restaurant" else "high"
+
+        return LogFoodResponse(
+            success=True,
+            food_log_id=food_log_id,
+            food_items=request.food_items,
+            total_calories=request.total_calories,
+            protein_g=float(request.total_protein),
+            carbs_g=float(request.total_carbs),
+            fat_g=float(request.total_fat),
+            fiber_g=float(request.total_fiber) if request.total_fiber else 0.0,
+            overall_meal_score=None,
+            ai_suggestion=None,
+            confidence_score=confidence_score,
+            confidence_level=confidence_level,
+            source_type=request.source_type,
+        )
+    except Exception as e:
+        logger.error(f"Error logging food directly: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -2626,4 +2732,1563 @@ async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate):
         raise
     except Exception as e:
         logger.error(f"Failed to update pinned nutrients: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Nutrition Preferences ====================
+
+class NutritionPreferencesResponse(BaseModel):
+    """Nutrition preferences response model."""
+    id: Optional[str] = None
+    user_id: str
+    nutrition_goal: str = "maintain"
+    rate_of_change: Optional[str] = None
+    calculated_bmr: Optional[int] = None
+    calculated_tdee: Optional[int] = None
+    target_calories: Optional[int] = None
+    target_protein_g: Optional[int] = None
+    target_carbs_g: Optional[int] = None
+    target_fat_g: Optional[int] = None
+    target_fiber_g: int = 25
+    diet_type: str = "balanced"
+    custom_carb_percent: Optional[int] = None
+    custom_protein_percent: Optional[int] = None
+    custom_fat_percent: Optional[int] = None
+    allergies: List[str] = []
+    dietary_restrictions: List[str] = []
+    disliked_foods: List[str] = []
+    meal_pattern: str = "3_meals"
+    cooking_skill: str = "intermediate"
+    cooking_time_minutes: int = 30
+    budget_level: str = "moderate"
+    show_ai_feedback_after_logging: bool = True
+    calm_mode_enabled: bool = False
+    show_weekly_instead_of_daily: bool = False
+    adjust_calories_for_training: bool = True
+    adjust_calories_for_rest: bool = False
+    nutrition_onboarding_completed: bool = False
+    onboarding_completed_at: Optional[datetime] = None
+    last_recalculated_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class NutritionPreferencesUpdate(BaseModel):
+    """Nutrition preferences update request."""
+    nutrition_goal: Optional[str] = None
+    rate_of_change: Optional[str] = None
+    target_calories: Optional[int] = None
+    target_protein_g: Optional[int] = None
+    target_carbs_g: Optional[int] = None
+    target_fat_g: Optional[int] = None
+    target_fiber_g: Optional[int] = None
+    diet_type: Optional[str] = None
+    custom_carb_percent: Optional[int] = None
+    custom_protein_percent: Optional[int] = None
+    custom_fat_percent: Optional[int] = None
+    allergies: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    disliked_foods: Optional[List[str]] = None
+    meal_pattern: Optional[str] = None
+    cooking_skill: Optional[str] = None
+    cooking_time_minutes: Optional[int] = None
+    budget_level: Optional[str] = None
+    show_ai_feedback_after_logging: Optional[bool] = None
+    calm_mode_enabled: Optional[bool] = None
+    show_weekly_instead_of_daily: Optional[bool] = None
+    adjust_calories_for_training: Optional[bool] = None
+    adjust_calories_for_rest: Optional[bool] = None
+
+
+class DynamicTargetsResponse(BaseModel):
+    """Dynamic nutrition targets response model."""
+    target_calories: int = 2000
+    target_protein_g: int = 150
+    target_carbs_g: int = 200
+    target_fat_g: int = 65
+    target_fiber_g: int = 25
+    is_training_day: bool = False
+    is_fasting_day: bool = False
+    is_rest_day: bool = True
+    adjustment_reason: Optional[str] = None
+    calorie_adjustment: int = 0
+
+
+@router.get("/preferences/{user_id}", response_model=NutritionPreferencesResponse)
+async def get_nutrition_preferences(user_id: str):
+    """
+    Get user's nutrition preferences.
+
+    Returns nutrition goals, targets, dietary restrictions, and settings.
+    """
+    logger.info(f"Getting nutrition preferences for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("nutrition_preferences")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not result.data:
+            # Return default preferences
+            return NutritionPreferencesResponse(user_id=user_id)
+
+        data = result.data
+        return NutritionPreferencesResponse(
+            id=data.get("id"),
+            user_id=data.get("user_id", user_id),
+            nutrition_goal=data.get("nutrition_goal", "maintain"),
+            rate_of_change=data.get("rate_of_change"),
+            calculated_bmr=data.get("calculated_bmr"),
+            calculated_tdee=data.get("calculated_tdee"),
+            target_calories=data.get("target_calories"),
+            target_protein_g=data.get("target_protein_g"),
+            target_carbs_g=data.get("target_carbs_g"),
+            target_fat_g=data.get("target_fat_g"),
+            target_fiber_g=data.get("target_fiber_g", 25),
+            diet_type=data.get("diet_type", "balanced"),
+            custom_carb_percent=data.get("custom_carb_percent"),
+            custom_protein_percent=data.get("custom_protein_percent"),
+            custom_fat_percent=data.get("custom_fat_percent"),
+            allergies=data.get("allergies") or [],
+            dietary_restrictions=data.get("dietary_restrictions") or [],
+            disliked_foods=data.get("disliked_foods") or [],
+            meal_pattern=data.get("meal_pattern", "3_meals"),
+            cooking_skill=data.get("cooking_skill", "intermediate"),
+            cooking_time_minutes=data.get("cooking_time_minutes", 30),
+            budget_level=data.get("budget_level", "moderate"),
+            show_ai_feedback_after_logging=data.get("show_ai_feedback_after_logging", True),
+            calm_mode_enabled=data.get("calm_mode_enabled", False),
+            show_weekly_instead_of_daily=data.get("show_weekly_instead_of_daily", False),
+            adjust_calories_for_training=data.get("adjust_calories_for_training", True),
+            adjust_calories_for_rest=data.get("adjust_calories_for_rest", False),
+            nutrition_onboarding_completed=data.get("nutrition_onboarding_completed", False),
+            onboarding_completed_at=datetime.fromisoformat(str(data.get("onboarding_completed_at")).replace("Z", "+00:00")) if data.get("onboarding_completed_at") else None,
+            last_recalculated_at=datetime.fromisoformat(str(data.get("last_recalculated_at")).replace("Z", "+00:00")) if data.get("last_recalculated_at") else None,
+            created_at=datetime.fromisoformat(str(data.get("created_at")).replace("Z", "+00:00")) if data.get("created_at") else None,
+            updated_at=datetime.fromisoformat(str(data.get("updated_at")).replace("Z", "+00:00")) if data.get("updated_at") else None,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get nutrition preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/preferences/{user_id}", response_model=NutritionPreferencesResponse)
+async def update_nutrition_preferences(user_id: str, request: NutritionPreferencesUpdate):
+    """
+    Update user's nutrition preferences.
+
+    Allows updating goals, targets, dietary restrictions, and settings.
+    """
+    logger.info(f"Updating nutrition preferences for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Build update data, only including non-None fields
+        update_data = {}
+        for field, value in request.model_dump().items():
+            if value is not None:
+                update_data[field] = value
+
+        update_data["updated_at"] = datetime.utcnow().isoformat()
+
+        # Check if preferences exist
+        existing = db.client.table("nutrition_preferences")\
+            .select("id")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if existing.data:
+            # Update existing
+            result = db.client.table("nutrition_preferences")\
+                .update(update_data)\
+                .eq("user_id", user_id)\
+                .execute()
+        else:
+            # Insert new
+            update_data["user_id"] = user_id
+            result = db.client.table("nutrition_preferences")\
+                .insert(update_data)\
+                .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to update preferences")
+
+        # Return the updated preferences
+        return await get_nutrition_preferences(user_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update nutrition preferences: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/dynamic-targets/{user_id}", response_model=DynamicTargetsResponse)
+async def get_dynamic_nutrition_targets(
+    user_id: str,
+    date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to today"),
+):
+    """
+    Get dynamic nutrition targets for a specific date.
+
+    Adjusts base targets based on:
+    - Whether it's a training day (workout scheduled/completed)
+    - Whether it's a fasting day (for 5:2, ADF protocols)
+    - User's preferences for training/rest day adjustments
+    """
+    from datetime import date as date_type
+
+    logger.info(f"Getting dynamic nutrition targets for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Parse target date
+        if date:
+            target_date = datetime.fromisoformat(date).date()
+        else:
+            target_date = date_type.today()
+
+        target_date_str = target_date.isoformat()
+
+        # Get user's base preferences
+        prefs_result = db.client.table("nutrition_preferences")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        prefs = prefs_result.data or {}
+
+        base_calories = prefs.get("target_calories") or 2000
+        base_protein = prefs.get("target_protein_g") or 150
+        base_carbs = prefs.get("target_carbs_g") or 200
+        base_fat = prefs.get("target_fat_g") or 65
+        base_fiber = prefs.get("target_fiber_g") or 25
+        adjust_for_training = prefs.get("adjust_calories_for_training", True)
+        adjust_for_rest = prefs.get("adjust_calories_for_rest", False)
+
+        # Check if there's a workout scheduled or completed today
+        workout_result = db.client.table("workout_logs")\
+            .select("id, status")\
+            .eq("user_id", user_id)\
+            .gte("started_at", f"{target_date_str}T00:00:00")\
+            .lt("started_at", f"{target_date_str}T23:59:59")\
+            .execute()
+
+        has_workout = bool(workout_result.data)
+
+        # Also check scheduled workouts if no log exists
+        if not has_workout:
+            schedule_result = db.client.table("workout_schedules")\
+                .select("id")\
+                .eq("user_id", user_id)\
+                .eq("scheduled_date", target_date_str)\
+                .execute()
+            has_workout = bool(schedule_result.data)
+
+        # Check if it's a fasting day (for 5:2 or ADF protocols)
+        is_fasting_day = False
+        fasting_prefs = db.client.table("fasting_preferences")\
+            .select("default_protocol, fasting_days")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if fasting_prefs.data:
+            protocol = fasting_prefs.data.get("default_protocol", "")
+            fasting_days = fasting_prefs.data.get("fasting_days") or []
+
+            if protocol in ["5:2", "adf"]:
+                day_name = target_date.strftime("%A").lower()
+                is_fasting_day = day_name in [d.lower() for d in fasting_days]
+
+        # Calculate adjustments
+        calorie_adjustment = 0
+        adjustment_reason = None
+
+        if is_fasting_day:
+            # Fasting day: significant calorie reduction
+            calorie_adjustment = -int(base_calories * 0.75)  # 25% of normal
+            adjustment_reason = "Fasting day - reduced calories"
+        elif has_workout and adjust_for_training:
+            # Training day: increase calories
+            calorie_adjustment = 200
+            adjustment_reason = "Training day - extra fuel for workout and recovery"
+        elif not has_workout and adjust_for_rest:
+            # Rest day: slight decrease
+            calorie_adjustment = -100
+            adjustment_reason = "Rest day - slightly reduced intake"
+
+        target_calories = base_calories + calorie_adjustment
+
+        # Adjust protein on training days
+        target_protein = base_protein
+        if has_workout and adjust_for_training:
+            target_protein = int(base_protein * 1.1)  # 10% more protein
+
+        # Adjust carbs on training days
+        target_carbs = base_carbs
+        if has_workout and adjust_for_training:
+            target_carbs = int(base_carbs * 1.15)  # 15% more carbs for glycogen
+
+        return DynamicTargetsResponse(
+            target_calories=target_calories,
+            target_protein_g=target_protein,
+            target_carbs_g=target_carbs,
+            target_fat_g=base_fat,
+            target_fiber_g=base_fiber,
+            is_training_day=has_workout,
+            is_fasting_day=is_fasting_day,
+            is_rest_day=not has_workout and not is_fasting_day,
+            adjustment_reason=adjustment_reason,
+            calorie_adjustment=calorie_adjustment,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get dynamic nutrition targets: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# WEIGHT LOGGING ENDPOINTS
+# ============================================================================
+
+
+class WeightLogCreate(BaseModel):
+    """Request model for creating a weight log"""
+    user_id: str
+    weight_kg: float
+    logged_at: Optional[datetime] = None
+    source: str = "manual"
+    notes: Optional[str] = None
+
+
+class WeightLogResponse(BaseModel):
+    """Response model for weight log"""
+    id: str
+    user_id: str
+    weight_kg: float
+    logged_at: datetime
+    source: str = "manual"
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class WeightTrendResponse(BaseModel):
+    """Response model for weight trend"""
+    start_weight: Optional[float] = None
+    end_weight: Optional[float] = None
+    change_kg: Optional[float] = None
+    weekly_rate_kg: Optional[float] = None
+    direction: str = "maintaining"  # 'losing', 'maintaining', 'gaining'
+    days_analyzed: int = 0
+    confidence: float = 0.0
+
+
+@router.post("/weight-logs", response_model=WeightLogResponse)
+async def create_weight_log(request: WeightLogCreate):
+    """
+    Log a weight entry for a user.
+
+    Used for tracking weight over time and enabling adaptive TDEE calculations.
+    """
+    logger.info(f"Creating weight log for user {request.user_id}: {request.weight_kg} kg")
+
+    try:
+        db = get_supabase_db()
+
+        log_data = {
+            "user_id": request.user_id,
+            "weight_kg": request.weight_kg,
+            "logged_at": (request.logged_at or datetime.utcnow()).isoformat(),
+            "source": request.source,
+        }
+        if request.notes:
+            log_data["notes"] = request.notes
+
+        result = db.client.table("weight_logs")\
+            .insert(log_data)\
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create weight log")
+
+        data = result.data[0]
+        return WeightLogResponse(
+            id=data["id"],
+            user_id=data["user_id"],
+            weight_kg=float(data["weight_kg"]),
+            logged_at=datetime.fromisoformat(str(data["logged_at"]).replace("Z", "+00:00")),
+            source=data.get("source", "manual"),
+            notes=data.get("notes"),
+            created_at=datetime.fromisoformat(str(data["created_at"]).replace("Z", "+00:00")) if data.get("created_at") else None,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create weight log: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weight-logs/{user_id}", response_model=List[WeightLogResponse])
+async def get_weight_logs(
+    user_id: str,
+    limit: int = Query(30, description="Maximum number of logs to return"),
+    from_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    to_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+):
+    """
+    Get weight logs for a user.
+
+    Returns logs sorted by date descending (newest first).
+    """
+    logger.info(f"Getting weight logs for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        query = db.client.table("weight_logs")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("logged_at", desc=True)\
+            .limit(limit)
+
+        if from_date:
+            query = query.gte("logged_at", f"{from_date}T00:00:00")
+        if to_date:
+            query = query.lte("logged_at", f"{to_date}T23:59:59")
+
+        result = query.execute()
+
+        logs = []
+        for data in (result.data or []):
+            logs.append(WeightLogResponse(
+                id=data["id"],
+                user_id=data["user_id"],
+                weight_kg=float(data["weight_kg"]),
+                logged_at=datetime.fromisoformat(str(data["logged_at"]).replace("Z", "+00:00")),
+                source=data.get("source", "manual"),
+                notes=data.get("notes"),
+                created_at=datetime.fromisoformat(str(data["created_at"]).replace("Z", "+00:00")) if data.get("created_at") else None,
+            ))
+
+        return logs
+
+    except Exception as e:
+        logger.error(f"Failed to get weight logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/weight-logs/{log_id}")
+async def delete_weight_log(
+    log_id: str,
+    user_id: str = Query(..., description="User ID for verification"),
+):
+    """
+    Delete a weight log entry.
+    """
+    logger.info(f"Deleting weight log {log_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("weight_logs")\
+            .delete()\
+            .eq("id", log_id)\
+            .eq("user_id", user_id)\
+            .execute()
+
+        return {"success": True, "message": "Weight log deleted"}
+
+    except Exception as e:
+        logger.error(f"Failed to delete weight log: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/weight-logs/{user_id}/trend", response_model=WeightTrendResponse)
+async def get_weight_trend(
+    user_id: str,
+    days: int = Query(14, description="Number of days to analyze"),
+):
+    """
+    Calculate weight trend from recent weight logs.
+
+    Uses exponential moving average for smoothing.
+    """
+    logger.info(f"Calculating weight trend for user {user_id} over {days} days")
+
+    try:
+        db = get_supabase_db()
+
+        from_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        result = db.client.table("weight_logs")\
+            .select("weight_kg, logged_at")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", from_date)\
+            .order("logged_at", desc=False)\
+            .execute()
+
+        logs = result.data or []
+
+        if len(logs) < 2:
+            return WeightTrendResponse(
+                direction="maintaining",
+                days_analyzed=len(logs),
+                confidence=0.0,
+            )
+
+        # Get start and end weights (simple moving average of first/last 3 entries)
+        start_weights = [float(log["weight_kg"]) for log in logs[:min(3, len(logs))]]
+        end_weights = [float(log["weight_kg"]) for log in logs[-min(3, len(logs)):]]
+
+        start_weight = sum(start_weights) / len(start_weights)
+        end_weight = sum(end_weights) / len(end_weights)
+        change_kg = end_weight - start_weight
+
+        # Calculate weekly rate
+        days_between = (datetime.fromisoformat(str(logs[-1]["logged_at"]).replace("Z", "+00:00")) -
+                       datetime.fromisoformat(str(logs[0]["logged_at"]).replace("Z", "+00:00"))).days
+        if days_between > 0:
+            weekly_rate = (change_kg / days_between) * 7
+        else:
+            weekly_rate = 0.0
+
+        # Determine direction
+        if change_kg < -0.2:
+            direction = "losing"
+        elif change_kg > 0.2:
+            direction = "gaining"
+        else:
+            direction = "maintaining"
+
+        # Confidence based on number of data points
+        confidence = min(1.0, len(logs) / 10)
+
+        return WeightTrendResponse(
+            start_weight=round(start_weight, 2),
+            end_weight=round(end_weight, 2),
+            change_kg=round(change_kg, 2),
+            weekly_rate_kg=round(weekly_rate, 2),
+            direction=direction,
+            days_analyzed=days_between or 1,
+            confidence=round(confidence, 2),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to calculate weight trend: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# NUTRITION ONBOARDING ENDPOINTS
+# ============================================================================
+
+
+class NutritionOnboardingRequest(BaseModel):
+    """Request model for completing nutrition onboarding"""
+    user_id: str
+    nutrition_goal: str  # 'lose_fat', 'build_muscle', 'maintain', etc.
+    rate_of_change: Optional[str] = None  # 'slow', 'moderate', 'aggressive'
+    diet_type: str = "balanced"
+    allergies: List[str] = []
+    dietary_restrictions: List[str] = []
+    meal_pattern: str = "3_meals"
+    fasting_start_hour: Optional[int] = None
+    fasting_end_hour: Optional[int] = None
+    cooking_skill: str = "intermediate"
+    cooking_time_minutes: int = 30
+    budget_level: str = "moderate"
+    custom_carb_percent: Optional[int] = None
+    custom_protein_percent: Optional[int] = None
+    custom_fat_percent: Optional[int] = None
+
+
+@router.post("/onboarding/complete", response_model=NutritionPreferencesResponse)
+async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
+    """
+    Complete nutrition onboarding and calculate initial targets.
+
+    Calculates BMR, TDEE, and macro targets based on user profile and goals.
+    """
+    logger.info(f"Completing nutrition onboarding for user {request.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get user profile for BMR/TDEE calculation
+        user_result = db.client.table("users")\
+            .select("weight_kg, height_cm, age, gender, activity_level")\
+            .eq("id", request.user_id)\
+            .single()\
+            .execute()
+
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user = user_result.data
+        weight_kg = float(user.get("weight_kg") or 70)
+        height_cm = float(user.get("height_cm") or 170)
+        age = int(user.get("age") or 30)
+        gender = user.get("gender", "male").lower()
+        activity_level = user.get("activity_level", "moderately_active")
+
+        # Calculate BMR using Mifflin-St Jeor equation
+        if gender == "male":
+            bmr = int((10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5)
+        else:
+            bmr = int((10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161)
+
+        # Calculate TDEE
+        activity_multipliers = {
+            "sedentary": 1.2,
+            "lightly_active": 1.375,
+            "moderately_active": 1.55,
+            "very_active": 1.725,
+            "extra_active": 1.9,
+        }
+        multiplier = activity_multipliers.get(activity_level, 1.55)
+        tdee = int(bmr * multiplier)
+
+        # Calculate calorie target based on goal
+        goal_adjustments = {
+            "lose_fat": -500,
+            "build_muscle": 300,
+            "maintain": 0,
+            "improve_energy": 0,
+            "eat_healthier": 0,
+            "recomposition": -200,
+        }
+
+        rate_adjustments = {
+            "slow": 250,
+            "moderate": 500,
+            "aggressive": 750,
+        }
+
+        adjustment = goal_adjustments.get(request.nutrition_goal, 0)
+        if request.nutrition_goal == "lose_fat" and request.rate_of_change:
+            adjustment = -rate_adjustments.get(request.rate_of_change, 500)
+        elif request.nutrition_goal == "build_muscle" and request.rate_of_change:
+            adjustment = rate_adjustments.get(request.rate_of_change, 500) // 2
+
+        target_calories = max(
+            1200 if gender == "female" else 1500,
+            tdee + adjustment
+        )
+
+        # Calculate macros based on diet type
+        diet_macros = {
+            "balanced": (45, 25, 30),
+            "low_carb": (25, 35, 40),
+            "keto": (5, 25, 70),
+            "high_protein": (35, 40, 25),
+            "vegetarian": (50, 20, 30),
+            "vegan": (55, 20, 25),
+            "mediterranean": (45, 20, 35),
+        }
+
+        if request.diet_type == "custom" and all([
+            request.custom_carb_percent,
+            request.custom_protein_percent,
+            request.custom_fat_percent
+        ]):
+            carb_pct = request.custom_carb_percent
+            protein_pct = request.custom_protein_percent
+            fat_pct = request.custom_fat_percent
+        else:
+            carb_pct, protein_pct, fat_pct = diet_macros.get(request.diet_type, (45, 25, 30))
+
+        target_protein = int((target_calories * protein_pct / 100) / 4)
+        target_carbs = int((target_calories * carb_pct / 100) / 4)
+        target_fat = int((target_calories * fat_pct / 100) / 9)
+
+        # Create/update nutrition preferences
+        prefs_data = {
+            "user_id": request.user_id,
+            "nutrition_goal": request.nutrition_goal,
+            "rate_of_change": request.rate_of_change,
+            "calculated_bmr": bmr,
+            "calculated_tdee": tdee,
+            "target_calories": target_calories,
+            "target_protein_g": target_protein,
+            "target_carbs_g": target_carbs,
+            "target_fat_g": target_fat,
+            "diet_type": request.diet_type,
+            "custom_carb_percent": request.custom_carb_percent,
+            "custom_protein_percent": request.custom_protein_percent,
+            "custom_fat_percent": request.custom_fat_percent,
+            "allergies": request.allergies,
+            "dietary_restrictions": request.dietary_restrictions,
+            "meal_pattern": request.meal_pattern,
+            "cooking_skill": request.cooking_skill,
+            "cooking_time_minutes": request.cooking_time_minutes,
+            "budget_level": request.budget_level,
+            "nutrition_onboarding_completed": True,
+            "onboarding_completed_at": datetime.utcnow().isoformat(),
+            "last_recalculated_at": datetime.utcnow().isoformat(),
+        }
+
+        # Check if preferences exist
+        existing = db.client.table("nutrition_preferences")\
+            .select("id")\
+            .eq("user_id", request.user_id)\
+            .maybe_single()\
+            .execute()
+
+        if existing.data:
+            result = db.client.table("nutrition_preferences")\
+                .update(prefs_data)\
+                .eq("user_id", request.user_id)\
+                .execute()
+        else:
+            result = db.client.table("nutrition_preferences")\
+                .insert(prefs_data)\
+                .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to save preferences")
+
+        # Initialize nutrition streak
+        streak_exists = db.client.table("nutrition_streaks")\
+            .select("id")\
+            .eq("user_id", request.user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not streak_exists.data:
+            db.client.table("nutrition_streaks")\
+                .insert({"user_id": request.user_id})\
+                .execute()
+
+        # Return the updated preferences
+        return await get_nutrition_preferences(request.user_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to complete nutrition onboarding: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/preferences/{user_id}/recalculate", response_model=NutritionPreferencesResponse)
+async def recalculate_nutrition_targets(user_id: str):
+    """
+    Recalculate nutrition targets based on current user data.
+
+    Useful after weight changes or profile updates.
+    """
+    logger.info(f"Recalculating nutrition targets for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get current preferences
+        prefs_result = db.client.table("nutrition_preferences")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not prefs_result.data:
+            raise HTTPException(status_code=404, detail="Nutrition preferences not found")
+
+        prefs = prefs_result.data
+
+        # Get user profile
+        user_result = db.client.table("users")\
+            .select("weight_kg, height_cm, age, gender, activity_level")\
+            .eq("id", user_id)\
+            .single()\
+            .execute()
+
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user = user_result.data
+        weight_kg = float(user.get("weight_kg") or 70)
+        height_cm = float(user.get("height_cm") or 170)
+        age = int(user.get("age") or 30)
+        gender = user.get("gender", "male").lower()
+        activity_level = user.get("activity_level", "moderately_active")
+
+        # Recalculate BMR and TDEE
+        if gender == "male":
+            bmr = int((10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5)
+        else:
+            bmr = int((10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161)
+
+        activity_multipliers = {
+            "sedentary": 1.2,
+            "lightly_active": 1.375,
+            "moderately_active": 1.55,
+            "very_active": 1.725,
+            "extra_active": 1.9,
+        }
+        multiplier = activity_multipliers.get(activity_level, 1.55)
+        tdee = int(bmr * multiplier)
+
+        # Calculate calorie target
+        goal_adjustments = {
+            "lose_fat": -500,
+            "build_muscle": 300,
+            "maintain": 0,
+            "improve_energy": 0,
+            "eat_healthier": 0,
+            "recomposition": -200,
+        }
+
+        rate_adjustments = {
+            "slow": 250,
+            "moderate": 500,
+            "aggressive": 750,
+        }
+
+        nutrition_goal = prefs.get("nutrition_goal", "maintain")
+        rate_of_change = prefs.get("rate_of_change")
+
+        adjustment = goal_adjustments.get(nutrition_goal, 0)
+        if nutrition_goal == "lose_fat" and rate_of_change:
+            adjustment = -rate_adjustments.get(rate_of_change, 500)
+        elif nutrition_goal == "build_muscle" and rate_of_change:
+            adjustment = rate_adjustments.get(rate_of_change, 500) // 2
+
+        target_calories = max(
+            1200 if gender == "female" else 1500,
+            tdee + adjustment
+        )
+
+        # Recalculate macros
+        diet_type = prefs.get("diet_type", "balanced")
+        diet_macros = {
+            "balanced": (45, 25, 30),
+            "low_carb": (25, 35, 40),
+            "keto": (5, 25, 70),
+            "high_protein": (35, 40, 25),
+            "vegetarian": (50, 20, 30),
+            "vegan": (55, 20, 25),
+            "mediterranean": (45, 20, 35),
+        }
+
+        if diet_type == "custom" and all([
+            prefs.get("custom_carb_percent"),
+            prefs.get("custom_protein_percent"),
+            prefs.get("custom_fat_percent")
+        ]):
+            carb_pct = prefs["custom_carb_percent"]
+            protein_pct = prefs["custom_protein_percent"]
+            fat_pct = prefs["custom_fat_percent"]
+        else:
+            carb_pct, protein_pct, fat_pct = diet_macros.get(diet_type, (45, 25, 30))
+
+        target_protein = int((target_calories * protein_pct / 100) / 4)
+        target_carbs = int((target_calories * carb_pct / 100) / 4)
+        target_fat = int((target_calories * fat_pct / 100) / 9)
+
+        # Update preferences
+        update_data = {
+            "calculated_bmr": bmr,
+            "calculated_tdee": tdee,
+            "target_calories": target_calories,
+            "target_protein_g": target_protein,
+            "target_carbs_g": target_carbs,
+            "target_fat_g": target_fat,
+            "last_recalculated_at": datetime.utcnow().isoformat(),
+        }
+
+        db.client.table("nutrition_preferences")\
+            .update(update_data)\
+            .eq("user_id", user_id)\
+            .execute()
+
+        return await get_nutrition_preferences(user_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to recalculate nutrition targets: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# NUTRITION STREAKS ENDPOINTS
+# ============================================================================
+
+
+class NutritionStreakResponse(BaseModel):
+    """Response model for nutrition streak"""
+    id: Optional[str] = None
+    user_id: str
+    current_streak_days: int = 0
+    streak_start_date: Optional[datetime] = None
+    last_logged_date: Optional[datetime] = None
+    freezes_available: int = 2
+    freezes_used_this_week: int = 0
+    week_start_date: Optional[datetime] = None
+    longest_streak_ever: int = 0
+    total_days_logged: int = 0
+    weekly_goal_enabled: bool = False
+    weekly_goal_days: int = 5
+    days_logged_this_week: int = 0
+
+
+@router.get("/streak/{user_id}", response_model=NutritionStreakResponse)
+async def get_nutrition_streak(user_id: str):
+    """
+    Get nutrition streak for a user.
+    """
+    logger.info(f"Getting nutrition streak for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("nutrition_streaks")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not result.data:
+            # Create default streak
+            insert_result = db.client.table("nutrition_streaks")\
+                .insert({"user_id": user_id})\
+                .execute()
+            data = insert_result.data[0] if insert_result.data else {"user_id": user_id}
+        else:
+            data = result.data
+
+        return NutritionStreakResponse(
+            id=data.get("id"),
+            user_id=data.get("user_id", user_id),
+            current_streak_days=data.get("current_streak_days", 0),
+            streak_start_date=datetime.fromisoformat(str(data["streak_start_date"]).replace("Z", "+00:00")) if data.get("streak_start_date") else None,
+            last_logged_date=datetime.fromisoformat(str(data["last_logged_date"]).replace("Z", "+00:00")) if data.get("last_logged_date") else None,
+            freezes_available=data.get("freezes_available", 2),
+            freezes_used_this_week=data.get("freezes_used_this_week", 0),
+            week_start_date=datetime.fromisoformat(str(data["week_start_date"]).replace("Z", "+00:00")) if data.get("week_start_date") else None,
+            longest_streak_ever=data.get("longest_streak_ever", 0),
+            total_days_logged=data.get("total_days_logged", 0),
+            weekly_goal_enabled=data.get("weekly_goal_enabled", False),
+            weekly_goal_days=data.get("weekly_goal_days", 5),
+            days_logged_this_week=data.get("days_logged_this_week", 0),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get nutrition streak: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/streak/{user_id}/freeze", response_model=NutritionStreakResponse)
+async def use_streak_freeze(user_id: str):
+    """
+    Use a streak freeze to preserve current streak.
+    """
+    logger.info(f"Using streak freeze for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get current streak
+        result = db.client.table("nutrition_streaks")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Streak not found")
+
+        data = result.data
+        freezes_available = data.get("freezes_available", 0)
+
+        if freezes_available <= 0:
+            raise HTTPException(status_code=400, detail="No freezes available")
+
+        # Use a freeze
+        db.client.table("nutrition_streaks")\
+            .update({
+                "freezes_available": freezes_available - 1,
+                "freezes_used_this_week": data.get("freezes_used_this_week", 0) + 1,
+                "last_logged_date": datetime.utcnow().date().isoformat(),
+            })\
+            .eq("user_id", user_id)\
+            .execute()
+
+        return await get_nutrition_streak(user_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to use streak freeze: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# ADAPTIVE TDEE CALCULATION ENDPOINTS
+# ============================================================================
+
+
+class AdaptiveCalculationResponse(BaseModel):
+    """Response model for adaptive TDEE calculation"""
+    id: str
+    user_id: str
+    calculated_at: datetime
+    period_start: datetime
+    period_end: datetime
+    avg_daily_intake: int
+    start_trend_weight_kg: Optional[float] = None
+    end_trend_weight_kg: Optional[float] = None
+    calculated_tdee: int
+    data_quality_score: float = 0.0
+    confidence_level: str = "low"
+    days_logged: int = 0
+    weight_entries: int = 0
+
+
+@router.get("/adaptive/{user_id}", response_model=Optional[AdaptiveCalculationResponse])
+async def get_adaptive_calculation(user_id: str):
+    """
+    Get the latest adaptive TDEE calculation for a user.
+    """
+    logger.info(f"Getting adaptive calculation for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("adaptive_nutrition_calculations")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("calculated_at", desc=True)\
+            .limit(1)\
+            .maybe_single()\
+            .execute()
+
+        if not result.data:
+            return None
+
+        data = result.data
+        return AdaptiveCalculationResponse(
+            id=data["id"],
+            user_id=data["user_id"],
+            calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
+            period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
+            period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+            avg_daily_intake=data.get("avg_daily_intake", 0),
+            start_trend_weight_kg=float(data["start_trend_weight_kg"]) if data.get("start_trend_weight_kg") else None,
+            end_trend_weight_kg=float(data["end_trend_weight_kg"]) if data.get("end_trend_weight_kg") else None,
+            calculated_tdee=data.get("calculated_tdee", 0),
+            data_quality_score=float(data.get("data_quality_score", 0)),
+            confidence_level=data.get("confidence_level", "low"),
+            days_logged=data.get("days_logged", 0),
+            weight_entries=data.get("weight_entries", 0),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get adaptive calculation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/adaptive/{user_id}/calculate", response_model=AdaptiveCalculationResponse)
+async def calculate_adaptive_tdee(
+    user_id: str,
+    days: int = Query(14, description="Number of days to analyze"),
+):
+    """
+    Calculate adaptive TDEE based on food intake and weight changes.
+
+    Formula: TDEE = Calories In - (Weight Change * 7700 kcal/kg)
+
+    Requires at least 6 days of food logs and 2 weight entries.
+    """
+    logger.info(f"Calculating adaptive TDEE for user {user_id} over {days} days")
+
+    try:
+        db = get_supabase_db()
+
+        from_date = datetime.utcnow() - timedelta(days=days)
+        from_date_str = from_date.date().isoformat()
+        to_date_str = datetime.utcnow().date().isoformat()
+
+        # Get food logs for the period
+        food_result = db.client.table("food_logs")\
+            .select("logged_at, total_macros")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .execute()
+
+        food_logs = food_result.data or []
+
+        # Get weight logs for the period
+        weight_result = db.client.table("weight_logs")\
+            .select("weight_kg, logged_at")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .order("logged_at", desc=False)\
+            .execute()
+
+        weight_logs = weight_result.data or []
+
+        # Check minimum data requirements
+        days_logged = len(set(
+            datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            for log in food_logs
+        ))
+        weight_entries = len(weight_logs)
+
+        if days_logged < 6 or weight_entries < 2:
+            # Not enough data, return placeholder calculation
+            quality_score = min(days_logged / 6, weight_entries / 2) * 0.5
+
+            calc_data = {
+                "user_id": user_id,
+                "calculated_at": datetime.utcnow().isoformat(),
+                "period_start": from_date_str,
+                "period_end": to_date_str,
+                "avg_daily_intake": 0,
+                "calculated_tdee": 0,
+                "data_quality_score": quality_score,
+                "confidence_level": "low",
+                "days_logged": days_logged,
+                "weight_entries": weight_entries,
+            }
+
+            result = db.client.table("adaptive_nutrition_calculations")\
+                .insert(calc_data)\
+                .execute()
+
+            data = result.data[0]
+            return AdaptiveCalculationResponse(
+                id=data["id"],
+                user_id=data["user_id"],
+                calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
+                period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
+                period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+                avg_daily_intake=0,
+                calculated_tdee=0,
+                data_quality_score=quality_score,
+                confidence_level="low",
+                days_logged=days_logged,
+                weight_entries=weight_entries,
+            )
+
+        # Calculate average daily calorie intake
+        total_calories = 0
+        for log in food_logs:
+            macros = log.get("total_macros") or {}
+            total_calories += macros.get("calories", 0)
+
+        avg_daily_intake = int(total_calories / days_logged) if days_logged > 0 else 0
+
+        # Calculate weight trend
+        start_weights = [float(log["weight_kg"]) for log in weight_logs[:min(3, len(weight_logs))]]
+        end_weights = [float(log["weight_kg"]) for log in weight_logs[-min(3, len(weight_logs)):]]
+
+        start_trend = sum(start_weights) / len(start_weights) if start_weights else None
+        end_trend = sum(end_weights) / len(end_weights) if end_weights else None
+
+        if start_trend and end_trend:
+            weight_change = end_trend - start_trend
+            # 7700 kcal = 1 kg of body weight
+            caloric_difference = int(weight_change * 7700 / days)
+            calculated_tdee = avg_daily_intake - caloric_difference
+        else:
+            calculated_tdee = avg_daily_intake
+
+        # Calculate quality score (0-1)
+        quality_score = min(1.0, (
+            (min(days_logged, 14) / 14) * 0.5 +
+            (min(weight_entries, 7) / 7) * 0.5
+        ))
+
+        confidence = "low" if quality_score < 0.4 else "medium" if quality_score < 0.7 else "high"
+
+        # Save calculation
+        calc_data = {
+            "user_id": user_id,
+            "calculated_at": datetime.utcnow().isoformat(),
+            "period_start": from_date_str,
+            "period_end": to_date_str,
+            "avg_daily_intake": avg_daily_intake,
+            "start_trend_weight_kg": start_trend,
+            "end_trend_weight_kg": end_trend,
+            "calculated_tdee": max(1000, calculated_tdee),  # Minimum TDEE
+            "data_quality_score": quality_score,
+            "confidence_level": confidence,
+            "days_logged": days_logged,
+            "weight_entries": weight_entries,
+        }
+
+        result = db.client.table("adaptive_nutrition_calculations")\
+            .insert(calc_data)\
+            .execute()
+
+        data = result.data[0]
+        return AdaptiveCalculationResponse(
+            id=data["id"],
+            user_id=data["user_id"],
+            calculated_at=datetime.fromisoformat(str(data["calculated_at"]).replace("Z", "+00:00")),
+            period_start=datetime.fromisoformat(str(data["period_start"]).replace("Z", "+00:00")),
+            period_end=datetime.fromisoformat(str(data["period_end"]).replace("Z", "+00:00")),
+            avg_daily_intake=avg_daily_intake,
+            start_trend_weight_kg=start_trend,
+            end_trend_weight_kg=end_trend,
+            calculated_tdee=max(1000, calculated_tdee),
+            data_quality_score=quality_score,
+            confidence_level=confidence,
+            days_logged=days_logged,
+            weight_entries=weight_entries,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to calculate adaptive TDEE: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# WEEKLY RECOMMENDATIONS ENDPOINTS
+# ============================================================================
+
+
+class WeeklyRecommendationResponse(BaseModel):
+    """Response model for weekly nutrition recommendation"""
+    id: str
+    user_id: str
+    week_start: datetime
+    current_goal: str
+    target_rate_per_week: float
+    calculated_tdee: int
+    recommended_calories: int
+    recommended_protein_g: int
+    recommended_carbs_g: int
+    recommended_fat_g: int
+    adjustment_reason: Optional[str] = None
+    adjustment_amount: int = 0
+    user_accepted: bool = False
+    user_modified: bool = False
+    modified_calories: Optional[int] = None
+
+
+@router.post("/recommendations/{recommendation_id}/respond")
+async def respond_to_recommendation(
+    recommendation_id: str,
+    user_id: str,
+    accepted: bool,
+):
+    """
+    Respond to a weekly nutrition recommendation (accept or decline).
+
+    If accepted, updates the user's nutrition preferences with recommended values.
+    """
+    logger.info(f"User {user_id} responding to recommendation {recommendation_id}: accepted={accepted}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get the recommendation
+        rec_result = db.client.table("weekly_nutrition_recommendations")\
+            .select("*")\
+            .eq("id", recommendation_id)\
+            .eq("user_id", user_id)\
+            .single()\
+            .execute()
+
+        if not rec_result.data:
+            raise HTTPException(status_code=404, detail="Recommendation not found")
+
+        rec = rec_result.data
+
+        # Update recommendation status
+        db.client.table("weekly_nutrition_recommendations")\
+            .update({"user_accepted": accepted})\
+            .eq("id", recommendation_id)\
+            .execute()
+
+        # If accepted, update preferences
+        if accepted:
+            db.client.table("nutrition_preferences")\
+                .update({
+                    "target_calories": rec["recommended_calories"],
+                    "target_protein_g": rec["recommended_protein_g"],
+                    "target_carbs_g": rec["recommended_carbs_g"],
+                    "target_fat_g": rec["recommended_fat_g"],
+                    "calculated_tdee": rec["calculated_tdee"],
+                    "last_recalculated_at": datetime.utcnow().isoformat(),
+                })\
+                .eq("user_id", user_id)\
+                .execute()
+
+        return {"success": True, "accepted": accepted}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to respond to recommendation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/recommendations/{user_id}", response_model=Optional[WeeklyRecommendationResponse])
+async def get_weekly_recommendation(user_id: str):
+    """
+    Get the latest pending weekly nutrition recommendation for a user.
+    """
+    logger.info(f"Getting weekly recommendation for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("weekly_nutrition_recommendations")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("user_accepted", False)\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .maybe_single()\
+            .execute()
+
+        if not result.data:
+            return None
+
+        data = result.data
+        return WeeklyRecommendationResponse(
+            id=data["id"],
+            user_id=data["user_id"],
+            week_start=datetime.fromisoformat(str(data["week_start"]).replace("Z", "+00:00")),
+            current_goal=data.get("current_goal", "maintain"),
+            target_rate_per_week=float(data.get("target_rate_per_week", 0)),
+            calculated_tdee=data.get("calculated_tdee", 0),
+            recommended_calories=data.get("recommended_calories", 0),
+            recommended_protein_g=data.get("recommended_protein_g", 0),
+            recommended_carbs_g=data.get("recommended_carbs_g", 0),
+            recommended_fat_g=data.get("recommended_fat_g", 0),
+            adjustment_reason=data.get("adjustment_reason"),
+            adjustment_amount=data.get("adjustment_amount", 0),
+            user_accepted=data.get("user_accepted", False),
+            user_modified=data.get("user_modified", False),
+            modified_calories=data.get("modified_calories"),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get weekly recommendation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class WeeklySummaryResponse(BaseModel):
+    """Response model for weekly nutrition summary"""
+    days_logged: int
+    avg_calories: int
+    avg_protein: int
+    weight_change: Optional[float] = None
+    total_meals: int = 0
+    start_weight_kg: Optional[float] = None
+    end_weight_kg: Optional[float] = None
+
+
+@router.get("/weekly-summary/{user_id}", response_model=WeeklySummaryResponse)
+async def get_weekly_summary(user_id: str):
+    """
+    Get the weekly nutrition summary for a user (last 7 days).
+    """
+    logger.info(f"Getting weekly summary for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        from_date = datetime.utcnow() - timedelta(days=7)
+        from_date_str = from_date.date().isoformat()
+
+        # Get food logs for the past week
+        food_result = db.client.table("food_logs")\
+            .select("logged_at, total_macros")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .execute()
+
+        food_logs = food_result.data or []
+
+        # Get weight logs for the past week
+        weight_result = db.client.table("weight_logs")\
+            .select("weight_kg, logged_at")\
+            .eq("user_id", user_id)\
+            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .order("logged_at", desc=False)\
+            .execute()
+
+        weight_logs = weight_result.data or []
+
+        # Calculate days logged
+        logged_dates = set(
+            datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            for log in food_logs
+        )
+        days_logged = len(logged_dates)
+
+        # Calculate average calories and protein
+        total_calories = 0
+        total_protein = 0
+        for log in food_logs:
+            macros = log.get("total_macros") or {}
+            total_calories += macros.get("calories", 0)
+            total_protein += macros.get("protein", 0)
+
+        avg_calories = int(total_calories / days_logged) if days_logged > 0 else 0
+        avg_protein = int(total_protein / days_logged) if days_logged > 0 else 0
+
+        # Calculate weight change
+        weight_change = None
+        start_weight = None
+        end_weight = None
+        if len(weight_logs) >= 2:
+            start_weight = float(weight_logs[0]["weight_kg"])
+            end_weight = float(weight_logs[-1]["weight_kg"])
+            weight_change = round(end_weight - start_weight, 2)
+
+        return WeeklySummaryResponse(
+            days_logged=days_logged,
+            avg_calories=avg_calories,
+            avg_protein=avg_protein,
+            weight_change=weight_change,
+            total_meals=len(food_logs),
+            start_weight_kg=start_weight,
+            end_weight_kg=end_weight,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get weekly summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/recommendations/{user_id}/generate", response_model=WeeklyRecommendationResponse)
+async def generate_weekly_recommendation(user_id: str):
+    """
+    Generate a new weekly nutrition recommendation based on adaptive TDEE calculation.
+    """
+    logger.info(f"Generating weekly recommendation for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # First, get the latest adaptive calculation
+        adaptive_result = db.client.table("adaptive_nutrition_calculations")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .order("calculated_at", desc=True)\
+            .limit(1)\
+            .maybe_single()\
+            .execute()
+
+        # Get user's nutrition preferences
+        prefs_result = db.client.table("nutrition_preferences")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .maybe_single()\
+            .execute()
+
+        prefs = prefs_result.data or {}
+        current_goal = prefs.get("nutrition_goal", "maintain")
+        current_calories = prefs.get("target_calories", 2000)
+        current_protein = prefs.get("target_protein_g", 150)
+        current_carbs = prefs.get("target_carbs_g", 200)
+        current_fat = prefs.get("target_fat_g", 70)
+
+        # Determine adjustment
+        adjustment_reason = None
+        adjustment_amount = 0
+        calculated_tdee = 0
+        target_rate = 0.0
+
+        if adaptive_result.data:
+            adaptive = adaptive_result.data
+            calculated_tdee = adaptive.get("calculated_tdee", 0)
+            quality = adaptive.get("data_quality_score", 0)
+
+            # Only make recommendations if we have enough data
+            if quality >= 0.5 and calculated_tdee > 0:
+                # Determine goal-based adjustment
+                if current_goal == "lose_fat":
+                    target_rate = -0.5  # 0.5 kg/week loss
+                    recommended_calories = calculated_tdee - 500
+                    adjustment_amount = recommended_calories - current_calories
+                    if adjustment_amount != 0:
+                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for fat loss goal"
+                elif current_goal == "build_muscle":
+                    target_rate = 0.25  # 0.25 kg/week gain
+                    recommended_calories = calculated_tdee + 250
+                    adjustment_amount = recommended_calories - current_calories
+                    if adjustment_amount != 0:
+                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for muscle building"
+                else:  # maintain
+                    target_rate = 0.0
+                    recommended_calories = calculated_tdee
+                    adjustment_amount = recommended_calories - current_calories
+                    if abs(adjustment_amount) > 100:
+                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for maintenance"
+                    else:
+                        adjustment_amount = 0
+            else:
+                # Not enough data - keep current targets
+                recommended_calories = current_calories
+                adjustment_reason = "Need more tracking data (6+ days logged, 2+ weight entries) for adaptive recommendations"
+        else:
+            recommended_calories = current_calories
+            adjustment_reason = "No adaptive calculation available yet - continue tracking to get personalized recommendations"
+
+        # Calculate macros based on new calories
+        # Use a balanced split: 30% protein, 40% carbs, 30% fat
+        recommended_protein = int((recommended_calories * 0.30) / 4)  # 4 cal/g
+        recommended_carbs = int((recommended_calories * 0.40) / 4)    # 4 cal/g
+        recommended_fat = int((recommended_calories * 0.30) / 9)      # 9 cal/g
+
+        # Create the recommendation
+        week_start = datetime.utcnow().date() - timedelta(days=datetime.utcnow().weekday())
+
+        rec_data = {
+            "user_id": user_id,
+            "week_start": week_start.isoformat(),
+            "current_goal": current_goal,
+            "target_rate_per_week": target_rate,
+            "calculated_tdee": calculated_tdee,
+            "recommended_calories": recommended_calories,
+            "recommended_protein_g": recommended_protein,
+            "recommended_carbs_g": recommended_carbs,
+            "recommended_fat_g": recommended_fat,
+            "adjustment_reason": adjustment_reason,
+            "adjustment_amount": adjustment_amount,
+            "user_accepted": False,
+            "user_modified": False,
+        }
+
+        result = db.client.table("weekly_nutrition_recommendations")\
+            .insert(rec_data)\
+            .execute()
+
+        data = result.data[0]
+        return WeeklyRecommendationResponse(
+            id=data["id"],
+            user_id=data["user_id"],
+            week_start=datetime.fromisoformat(str(data["week_start"]).replace("Z", "+00:00")),
+            current_goal=data.get("current_goal", "maintain"),
+            target_rate_per_week=float(data.get("target_rate_per_week", 0)),
+            calculated_tdee=data.get("calculated_tdee", 0),
+            recommended_calories=data.get("recommended_calories", 0),
+            recommended_protein_g=data.get("recommended_protein_g", 0),
+            recommended_carbs_g=data.get("recommended_carbs_g", 0),
+            recommended_fat_g=data.get("recommended_fat_g", 0),
+            adjustment_reason=data.get("adjustment_reason"),
+            adjustment_amount=data.get("adjustment_amount", 0),
+            user_accepted=data.get("user_accepted", False),
+            user_modified=data.get("user_modified", False),
+            modified_calories=data.get("modified_calories"),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to generate weekly recommendation: {e}")
         raise HTTPException(status_code=500, detail=str(e))

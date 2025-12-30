@@ -26,6 +26,7 @@ import 'package:video_player/video_player.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/weight_suggestion_service.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
@@ -48,6 +49,7 @@ import 'widgets/workout_top_overlay.dart';
 import 'widgets/set_tracking_overlay.dart';
 import 'widgets/workout_bottom_bar.dart';
 import 'widgets/number_input_widgets.dart';
+import 'widgets/set_row.dart'; // For RpeRirSelector
 
 /// Active workout screen with modular composition
 class ActiveWorkoutScreenRefactored extends ConsumerStatefulWidget {
@@ -123,6 +125,14 @@ class _ActiveWorkoutScreenRefactoredState
   int? _justCompletedSetIndex;
   bool _isLoadingHistory = true;
   final Map<String, double> _exerciseMaxWeights = {};
+
+  // RPE/RIR and weight suggestion state
+  int? _lastSetRpe;
+  int? _lastSetRir;
+  WeightSuggestion? _currentWeightSuggestion;
+  bool _showRpeSelector = false;
+  bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
+  SetLog? _pendingSetLog; // Set waiting for RPE/RIR input
 
   // Warmup/stretch state (fetched from API)
   List<WarmupExerciseData>? _warmupExercises;
@@ -321,15 +331,67 @@ class _ActiveWorkoutScreenRefactoredState
   void _completeSet() {
     final weight = double.tryParse(_weightController.text) ?? 0;
     final reps = int.tryParse(_repsController.text) ?? 0;
+    final exercise = _exercises[_currentExerciseIndex];
+    final targetReps = exercise.reps ?? 10;
 
     final setLog = SetLog(
       reps: reps,
       weight: _useKg ? weight : weight * 0.453592,
+      targetReps: targetReps,
+    );
+
+    // Store as pending - we'll finalize after RPE input
+    _pendingSetLog = setLog;
+
+    // Show RPE selector immediately
+    _showRpeSelectorSheet();
+
+    HapticFeedback.heavyImpact();
+    _lastSetCompletedAt = DateTime.now();
+  }
+
+  /// Show the RPE/RIR selector bottom sheet
+  void _showRpeSelectorSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: false, // Force user to respond
+      enableDrag: false,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: RpeRirSelector(
+            currentRpe: _lastSetRpe,
+            currentRir: _lastSetRir,
+            onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+            onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+            onDone: () {
+              Navigator.pop(context);
+              _finalizeSetWithRpe();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Finalize the set log with RPE/RIR and continue
+  void _finalizeSetWithRpe() {
+    if (_pendingSetLog == null) return;
+
+    // Update set log with RPE/RIR
+    final finalSetLog = _pendingSetLog!.copyWith(
+      rpe: _lastSetRpe,
+      rir: _lastSetRir,
     );
 
     setState(() {
       _completedSets[_currentExerciseIndex] ??= [];
-      _completedSets[_currentExerciseIndex]!.add(setLog);
+      _completedSets[_currentExerciseIndex]!.add(finalSetLog);
       _justCompletedSetIndex = _completedSets[_currentExerciseIndex]!.length - 1;
     });
 
@@ -350,21 +412,129 @@ class _ActiveWorkoutScreenRefactoredState
     } else {
       // Start rest between sets
       _startRest(false);
+
+      // Fetch AI-powered weight suggestion during rest
+      _fetchAIWeightSuggestion(finalSetLog);
     }
 
-    HapticFeedback.heavyImpact();
-    _lastSetCompletedAt = DateTime.now();
+    // Reset for next set
+    _pendingSetLog = null;
+    // Don't reset RPE/RIR - keep for context but allow changes
+  }
+
+  /// Fetch AI-powered weight suggestion from the backend
+  Future<void> _fetchAIWeightSuggestion(SetLog setLog) async {
+    final exercise = _exercises[_currentExerciseIndex];
+    final isLastSet = (_completedSets[_currentExerciseIndex]?.length ?? 0) >=
+        (_totalSetsPerExercise[_currentExerciseIndex] ?? 3);
+    final equipmentIncrement = WeightIncrements.getIncrement(exercise.equipment);
+
+    // Set loading state
+    setState(() => _isLoadingWeightSuggestion = true);
+
+    try {
+      // Get API client and user ID
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        // No user - use rule-based fallback
+        _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+        return;
+      }
+
+      // Try AI-powered suggestion
+      final aiSuggestion = await WeightSuggestionService.getAISuggestion(
+        dio: apiClient.dio,
+        userId: userId,
+        exerciseName: exercise.name,
+        exerciseId: exercise.id,
+        equipment: exercise.equipment ?? 'dumbbell',
+        muscleGroup: exercise.muscleGroup ?? 'unknown',
+        setNumber: _completedSets[_currentExerciseIndex]?.length ?? 1,
+        totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+        repsCompleted: setLog.reps,
+        targetReps: setLog.targetReps,
+        weightKg: setLog.weight,
+        rpe: _lastSetRpe,
+        rir: _lastSetRir,
+        isLastSet: isLastSet,
+        fitnessLevel: 'intermediate', // TODO: Get from user profile
+        goals: [], // TODO: Get from user profile
+      );
+
+      if (!mounted) return;
+
+      if (aiSuggestion != null) {
+        setState(() {
+          _currentWeightSuggestion = aiSuggestion;
+          _isLoadingWeightSuggestion = false;
+        });
+        print('✅ [AI Weight] Got AI suggestion: ${aiSuggestion.type} '
+            'to ${aiSuggestion.suggestedWeight}kg');
+      } else {
+        // AI failed - use rule-based fallback
+        _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+      }
+    } catch (e) {
+      print('❌ [AI Weight] Error fetching suggestion: $e');
+      if (!mounted) return;
+      _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+    }
+  }
+
+  /// Fallback to rule-based suggestion when AI is unavailable
+  void _useRuleBasedSuggestion(
+    SetLog setLog,
+    WorkoutExercise exercise,
+    bool isLastSet,
+    double equipmentIncrement,
+  ) {
+    setState(() {
+      _currentWeightSuggestion = WeightSuggestionService.generateSuggestion(
+        currentWeight: setLog.weight,
+        targetReps: setLog.targetReps,
+        actualReps: setLog.reps,
+        rpe: _lastSetRpe,
+        rir: _lastSetRir,
+        equipmentIncrement: equipmentIncrement,
+        isLastSet: isLastSet,
+      );
+      _isLoadingWeightSuggestion = false;
+    });
+  }
+
+  /// Handle accepting a weight suggestion
+  void _acceptWeightSuggestion(double newWeight) {
+    setState(() {
+      _weightController.text = newWeight.toStringAsFixed(1);
+      _currentWeightSuggestion = null; // Clear suggestion after accepting
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle dismissing a weight suggestion
+  void _dismissWeightSuggestion() {
+    setState(() {
+      _currentWeightSuggestion = null;
+    });
   }
 
   void _startRest(bool betweenExercises) {
     final restSeconds =
         _exercises[_currentExerciseIndex].restSeconds ?? (betweenExercises ? 120 : 90);
 
+    // Get AI settings for personalized message
+    final aiSettings = ref.read(aiSettingsProvider);
+    final message = RestMessages.getMessage(
+      aiSettings.coachingStyle,
+      aiSettings.encouragementLevel,
+    );
+
     setState(() {
       _isResting = true;
       _isRestingBetweenExercises = betweenExercises;
-      _currentRestMessage = restMessages[
-          DateTime.now().millisecondsSinceEpoch % restMessages.length];
+      _currentRestMessage = message;
     });
 
     _timerController.startRestTimer(restSeconds);
@@ -681,7 +851,10 @@ class _ActiveWorkoutScreenRefactoredState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Log1RMSheet(exerciseName: exercise.name),
+      builder: (context) => Log1RMSheet(
+        exerciseName: exercise.name,
+        exerciseId: exercise.id ?? exercise.libraryId ?? '',
+      ),
     );
   }
 
@@ -746,7 +919,7 @@ class _ActiveWorkoutScreenRefactoredState
               child: _buildMediaBackground(),
             ),
 
-            // Rest overlay
+            // Rest overlay with weight suggestion
             if (_isResting)
               Positioned.fill(
                 child: RestTimerOverlay(
@@ -761,6 +934,11 @@ class _ActiveWorkoutScreenRefactoredState
                   isRestBetweenExercises: _isRestingBetweenExercises,
                   onSkipRest: () => _timerController.skipRest(),
                   onLog1RM: () => _showLog1RMSheet(currentExercise),
+                  // Weight suggestion props
+                  weightSuggestion: _currentWeightSuggestion,
+                  isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                  onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                  onDismissWeightSuggestion: _dismissWeightSuggestion,
                 ),
               ),
 

@@ -262,3 +262,298 @@ class NutritionDB(BaseDB):
             "daily_carbs_target_g": None,
             "daily_fat_target_g": None,
         }
+
+    # ==================== WEIGHT LOGS ====================
+
+    def create_weight_log(
+        self,
+        user_id: str,
+        weight_kg: float,
+        logged_at: Optional[datetime] = None,
+        source: str = "manual",
+        notes: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a weight log entry.
+
+        Args:
+            user_id: User's UUID
+            weight_kg: Weight in kilograms
+            logged_at: When the weight was logged (defaults to now)
+            source: Source of the weight log (manual, apple_health, etc.)
+            notes: Optional notes
+
+        Returns:
+            Created weight log record or None
+        """
+        data = {
+            "user_id": user_id,
+            "weight_kg": weight_kg,
+            "logged_at": (logged_at or datetime.utcnow()).isoformat(),
+            "source": source,
+            "notes": notes,
+        }
+        result = self.client.table("weight_logs").insert(data).execute()
+        return result.data[0] if result.data else None
+
+    def get_weight_logs(
+        self,
+        user_id: str,
+        limit: int = 30,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get weight logs for a user.
+
+        Args:
+            user_id: User's UUID
+            limit: Maximum records to return
+            from_date: Filter from date
+            to_date: Filter to date
+
+        Returns:
+            List of weight log records ordered by date (newest first)
+        """
+        query = self.client.table("weight_logs").select("*").eq("user_id", user_id)
+
+        if from_date:
+            query = query.gte("logged_at", from_date)
+        if to_date:
+            query = query.lte("logged_at", to_date)
+
+        result = query.order("logged_at", desc=True).limit(limit).execute()
+        return result.data or []
+
+    def delete_weight_log(self, log_id: str, user_id: str) -> bool:
+        """
+        Delete a weight log entry.
+
+        Args:
+            log_id: Weight log UUID
+            user_id: User's UUID (for verification)
+
+        Returns:
+            True if deleted
+        """
+        result = (
+            self.client.table("weight_logs")
+            .delete()
+            .eq("id", log_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return len(result.data or []) > 0
+
+    # ==================== NUTRITION PREFERENCES ====================
+
+    def get_nutrition_preferences(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get nutrition preferences for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            Nutrition preferences record or None
+        """
+        result = (
+            self.client.table("nutrition_preferences")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def upsert_nutrition_preferences(
+        self, user_id: str, preferences: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create or update nutrition preferences.
+
+        Args:
+            user_id: User's UUID
+            preferences: Preferences data
+
+        Returns:
+            Created/updated preferences record
+        """
+        data = {"user_id": user_id, **preferences}
+        result = (
+            self.client.table("nutrition_preferences")
+            .upsert(data, on_conflict="user_id")
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    # ==================== NUTRITION STREAKS ====================
+
+    def get_nutrition_streak(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get nutrition streak for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            Streak record or None
+        """
+        result = (
+            self.client.table("nutrition_streaks")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def upsert_nutrition_streak(
+        self, user_id: str, streak_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create or update nutrition streak.
+
+        Args:
+            user_id: User's UUID
+            streak_data: Streak data to update
+
+        Returns:
+            Created/updated streak record
+        """
+        data = {"user_id": user_id, **streak_data}
+        result = (
+            self.client.table("nutrition_streaks")
+            .upsert(data, on_conflict="user_id")
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    # ==================== ADAPTIVE NUTRITION ====================
+
+    def get_latest_adaptive_calculation(
+        self, user_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get the most recent adaptive TDEE calculation for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            Latest calculation record or None
+        """
+        result = (
+            self.client.table("adaptive_nutrition_calculations")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("calculated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def create_adaptive_calculation(
+        self, user_id: str, calculation_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a new adaptive TDEE calculation record.
+
+        Args:
+            user_id: User's UUID
+            calculation_data: Calculation results
+
+        Returns:
+            Created calculation record
+        """
+        data = {"user_id": user_id, **calculation_data}
+        result = (
+            self.client.table("adaptive_nutrition_calculations")
+            .insert(data)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    # ==================== WEEKLY RECOMMENDATIONS ====================
+
+    def get_weekly_recommendation(
+        self, recommendation_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get a weekly nutrition recommendation by ID.
+
+        Args:
+            recommendation_id: Recommendation UUID
+
+        Returns:
+            Recommendation record or None
+        """
+        result = (
+            self.client.table("weekly_nutrition_recommendations")
+            .select("*")
+            .eq("id", recommendation_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def get_pending_recommendations(
+        self, user_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Get pending (not yet responded to) recommendations for a user.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            List of pending recommendations
+        """
+        result = (
+            self.client.table("weekly_nutrition_recommendations")
+            .select("*")
+            .eq("user_id", user_id)
+            .is_("user_accepted", "null")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return result.data or []
+
+    def create_weekly_recommendation(
+        self, user_id: str, recommendation_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Create a new weekly nutrition recommendation.
+
+        Args:
+            user_id: User's UUID
+            recommendation_data: Recommendation details
+
+        Returns:
+            Created recommendation record
+        """
+        data = {"user_id": user_id, **recommendation_data}
+        result = (
+            self.client.table("weekly_nutrition_recommendations")
+            .insert(data)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def update_recommendation_response(
+        self, recommendation_id: str, accepted: bool
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update user response to a recommendation.
+
+        Args:
+            recommendation_id: Recommendation UUID
+            accepted: Whether the user accepted the recommendation
+
+        Returns:
+            Updated recommendation record
+        """
+        result = (
+            self.client.table("weekly_nutrition_recommendations")
+            .update({"user_accepted": accepted})
+            .eq("id", recommendation_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None

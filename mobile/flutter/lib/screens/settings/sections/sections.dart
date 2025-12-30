@@ -15,3 +15,4 @@ export 'notifications_section.dart';
 export 'preferences_section.dart';
 export 'social_privacy_section.dart';
 export 'support_section.dart';
+export 'training_preferences_section.dart';

@@ -323,7 +323,6 @@ def _extract_workout_environment(user_message: str) -> str:
         'garage gym': 'home_gym',
         'basement gym': 'home_gym',
         'home': 'home',
-        'apartment': 'home',
         'living room': 'home',
         'outdoors': 'outdoors',
         'outside': 'outdoors',
@@ -332,6 +331,16 @@ def _extract_workout_environment(user_message: str) -> str:
         'hotel': 'hotel',
         'travel': 'hotel',
         'on the road': 'hotel',
+        # New environments
+        'apartment gym': 'apartment_gym',
+        'building gym': 'apartment_gym',
+        'condo gym': 'apartment_gym',
+        'office gym': 'office_gym',
+        'work gym': 'office_gym',
+        'workplace gym': 'office_gym',
+        'custom': 'custom',
+        'my own setup': 'custom',
+        'my own equipment': 'custom',
     }
 
     user_lower = user_message.strip().lower()

@@ -534,6 +534,9 @@ class WorkoutRAGService:
                 'home': 'Home without dedicated gym',
                 'outdoors': 'Outdoor workouts',
                 'hotel': 'Hotel/travel workouts',
+                'apartment_gym': 'Apartment building gym',
+                'office_gym': 'Office/workplace gym',
+                'custom': 'Custom equipment setup',
             }
             pref_parts.append(f"Workout Environment: {env_map.get(workout_environment, workout_environment)}")
         if difficulty:

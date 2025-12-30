@@ -6,6 +6,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
+import '../../data/models/fasting.dart';
+import '../../data/providers/fasting_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
@@ -65,6 +67,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
   final _descriptionController = TextEditingController();
   bool _hasScanned = false;
+
+  // Restaurant mode state - shows confidence ranges instead of exact values
+  bool _restaurantMode = false;
+  LogFoodResponse? _pendingFoodLog; // Holds analyzed food when restaurant mode needs portion selection
 
   @override
   void initState() {
@@ -128,6 +134,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         }
 
         if (progress.isCompleted && progress.foodLog != null) {
+          if (_restaurantMode) {
+            // Show portion selector instead of logging directly
+            setState(() {
+              _pendingFoodLog = progress.foodLog;
+              _isLoading = false;
+            });
+            return;
+          }
           Navigator.pop(context);
           _showSuccessSnackbar(progress.foodLog!.totalCalories);
           ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
@@ -198,6 +212,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
 
       if (mounted && response != null) {
         setState(() => _isLoading = false);
+
+        if (_restaurantMode) {
+          // Show portion selector instead of confirmation dialog
+          setState(() {
+            _pendingFoodLog = response;
+          });
+          return;
+        }
+
         // Show rainbow confirmation dialog
         final confirmed = await _showRainbowNutritionConfirmation(response, description);
         if (confirmed == true && mounted) {
@@ -215,10 +238,174 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   }
 
   /// Log an already analyzed food response
-  void _logAnalyzedFood(LogFoodResponse response) {
+  void _logAnalyzedFood(LogFoodResponse response) async {
+    // Check if there's an active fast that should be ended
+    final fastingState = ref.read(fastingProvider);
+    if (fastingState.activeFast != null && response.totalCalories > 50) {
+      // Show dialog to confirm ending fast
+      final shouldEndFast = await _showEndFastDialog(fastingState.activeFast!);
+      if (!mounted) return;
+
+      if (shouldEndFast == true) {
+        // End the fast
+        await ref.read(fastingProvider.notifier).endFast(
+          userId: widget.userId,
+          notes: 'Ended by meal log: ${response.foodItems.map((f) => f['name'] ?? 'Food').join(", ")}',
+        );
+      } else if (shouldEndFast == null) {
+        // User cancelled, don't log the meal
+        return;
+      }
+      // If shouldEndFast == false, continue logging but don't end fast
+    }
+
     Navigator.pop(context);
     _showSuccessSnackbar(response.totalCalories);
     ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+  }
+
+  /// Log food with portion size multiplier (for restaurant mode)
+  Future<void> _logWithPortion(double portionMultiplier) async {
+    if (_pendingFoodLog == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _progressMessage = 'Logging meal...';
+    });
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+
+      // Create adjusted food items with multiplied nutrition
+      final adjustedItems = _pendingFoodLog!.foodItems.map((item) {
+        final adjustedCalories = ((item['calories'] ?? 0) * portionMultiplier).round();
+        final adjustedProtein = ((item['protein_g'] ?? 0) * portionMultiplier).round();
+        final adjustedCarbs = ((item['carbs_g'] ?? 0) * portionMultiplier).round();
+        final adjustedFat = ((item['fat_g'] ?? 0) * portionMultiplier).round();
+
+        return {
+          ...item,
+          'calories': adjustedCalories,
+          'protein_g': adjustedProtein,
+          'carbs_g': adjustedCarbs,
+          'fat_g': adjustedFat,
+          'portion_adjusted': true,
+          'portion_multiplier': portionMultiplier,
+        };
+      }).toList();
+
+      // Calculate new totals
+      final adjustedCalories = (_pendingFoodLog!.totalCalories * portionMultiplier).round();
+      final adjustedProtein = (_pendingFoodLog!.proteinG * portionMultiplier).round();
+      final adjustedCarbs = (_pendingFoodLog!.carbsG * portionMultiplier).round();
+      final adjustedFat = (_pendingFoodLog!.fatG * portionMultiplier).round();
+
+      // Log the adjusted food
+      await repository.logAdjustedFood(
+        userId: widget.userId,
+        mealType: _selectedMealType.value,
+        foodItems: adjustedItems,
+        totalCalories: adjustedCalories,
+        totalProtein: adjustedProtein,
+        totalCarbs: adjustedCarbs,
+        totalFat: adjustedFat,
+        sourceType: 'restaurant',
+        notes: 'Portion: ${_getPortionLabel(portionMultiplier)}',
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _pendingFoodLog = null;
+        });
+        Navigator.pop(context);
+        _showSuccessSnackbar(adjustedCalories);
+        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  String _getPortionLabel(double multiplier) {
+    if (multiplier <= 0.75) return 'Light portion';
+    if (multiplier >= 1.25) return 'Large portion';
+    return 'Typical portion';
+  }
+
+  /// Show dialog to ask user if they want to end their fast
+  Future<bool?> _showEndFastDialog(FastingRecord activeFast) {
+    final isDark = widget.isDark;
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    final elapsedHours = activeFast.elapsedMinutes ~/ 60;
+    final elapsedMins = activeFast.elapsedMinutes % 60;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: nearBlack,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.restaurant, color: purple, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'End Your Fast?',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You\'ve been fasting for ${elapsedHours}h ${elapsedMins}m.',
+              style: TextStyle(color: textPrimary, fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Logging this meal will end your fast. Continue?',
+              style: TextStyle(color: textMuted, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null), // Cancel
+            child: Text('Cancel', style: TextStyle(color: textMuted)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false), // Log without ending fast
+            child: Text('Log Only', style: TextStyle(color: purple)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true), // End fast and log
+            style: ElevatedButton.styleFrom(
+              backgroundColor: purple,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('End Fast & Log'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool?> _showRainbowNutritionConfirmation(LogFoodResponse response, String description) {
@@ -351,11 +538,22 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             ),
 
             const SizedBox(height: 16),
-            Text(
-              'These values are AI estimates based on your description.',
-              style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
-              textAlign: TextAlign.center,
-            ),
+
+            // Confidence indicator
+            if (response.confidenceLevel != null)
+              _ConfidenceIndicator(
+                confidenceLevel: response.confidenceLevel!,
+                confidenceScore: response.confidenceScore,
+                sourceType: response.sourceType,
+                isDark: isDark,
+              ),
+
+            if (response.confidenceLevel == null)
+              Text(
+                'These values are AI estimates based on your description.',
+                style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
         actions: [
@@ -515,6 +713,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -600,7 +799,77 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // Restaurant mode toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: GestureDetector(
+              onTap: () => setState(() => _restaurantMode = !_restaurantMode),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _restaurantMode ? orange.withValues(alpha: 0.15) : elevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _restaurantMode ? orange : cardBorder,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.restaurant,
+                      size: 18,
+                      color: _restaurantMode ? orange : textMuted,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Restaurant Mode',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _restaurantMode ? orange : textMuted,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 40,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: _restaurantMode ? orange : cardBorder,
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: AnimatedAlign(
+                        duration: const Duration(milliseconds: 200),
+                        alignment: _restaurantMode ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          if (_restaurantMode)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+              child: Text(
+                'Portions are estimated - pick the size that matches your meal',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ),
+
+          const SizedBox(height: 12),
 
           // Tab bar
           Container(
@@ -664,8 +933,18 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
               ),
             ),
 
+          // Restaurant portion selector
+          if (_pendingFoodLog != null && _restaurantMode)
+            Expanded(
+              child: _RestaurantPortionSelector(
+                foodLog: _pendingFoodLog!,
+                isDark: isDark,
+                onSelectPortion: _logWithPortion,
+                onCancel: () => setState(() => _pendingFoodLog = null),
+              ),
+            )
           // Loading indicator with streaming progress
-          if (_isLoading)
+          else if (_isLoading)
             Expanded(
               child: Center(
                 child: Padding(
@@ -1193,6 +1472,11 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   bool _isSaved = false;
   bool _isSaving = false;
 
+  // Mood tracking state
+  FoodMood? _moodBefore;
+  FoodMood? _moodAfter;
+  int _energyLevel = 3; // Default to middle (1-5 scale)
+
   // Streaming progress state
   int _currentStep = 0;
   int _totalSteps = 4;
@@ -1575,6 +1859,18 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
                 label: Text('Edit', style: TextStyle(color: textMuted)),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Mood tracking section
+          _MoodTrackingSection(
+            moodBefore: _moodBefore,
+            moodAfter: _moodAfter,
+            energyLevel: _energyLevel,
+            onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
+            onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
+            onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
+            isDark: isDark,
           ),
           const SizedBox(height: 16),
 
@@ -2656,6 +2952,703 @@ class _AISuggestionCard extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Mood Tracking Section
+// ─────────────────────────────────────────────────────────────────
+
+class _MoodTrackingSection extends StatefulWidget {
+  final FoodMood? moodBefore;
+  final FoodMood? moodAfter;
+  final int energyLevel;
+  final ValueChanged<FoodMood?> onMoodBeforeChanged;
+  final ValueChanged<FoodMood?> onMoodAfterChanged;
+  final ValueChanged<int> onEnergyLevelChanged;
+  final bool isDark;
+
+  const _MoodTrackingSection({
+    required this.moodBefore,
+    required this.moodAfter,
+    required this.energyLevel,
+    required this.onMoodBeforeChanged,
+    required this.onMoodAfterChanged,
+    required this.onEnergyLevelChanged,
+    required this.isDark,
+  });
+
+  @override
+  State<_MoodTrackingSection> createState() => _MoodTrackingSectionState();
+}
+
+class _MoodTrackingSectionState extends State<_MoodTrackingSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final purple = widget.isDark ? AppColors.purple : AppColorsLight.purple;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          // Header (always visible)
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: purple.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.mood, size: 20, color: purple),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'How are you feeling?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          widget.moodBefore != null
+                              ? 'Before: ${widget.moodBefore!.label}'
+                              : 'Optional - track your mood',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.expand_more, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expanded content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Divider(height: 1, color: cardBorder),
+                  const SizedBox(height: 16),
+
+                  // Mood Before Eating
+                  Text(
+                    'Before eating',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: FoodMood.values.map((mood) => _MoodChip(
+                      mood: mood,
+                      isSelected: widget.moodBefore == mood,
+                      onTap: () => widget.onMoodBeforeChanged(
+                        widget.moodBefore == mood ? null : mood,
+                      ),
+                      isDark: widget.isDark,
+                    )).toList(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Mood After Eating (optional)
+                  Text(
+                    'After eating (optional)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: FoodMood.values.map((mood) => _MoodChip(
+                      mood: mood,
+                      isSelected: widget.moodAfter == mood,
+                      onTap: () => widget.onMoodAfterChanged(
+                        widget.moodAfter == mood ? null : mood,
+                      ),
+                      isDark: widget.isDark,
+                    )).toList(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Energy Level Slider
+                  Text(
+                    'Energy level',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.battery_1_bar, size: 18, color: textMuted),
+                      Expanded(
+                        child: Slider(
+                          value: widget.energyLevel.toDouble(),
+                          min: 1,
+                          max: 5,
+                          divisions: 4,
+                          activeColor: purple,
+                          inactiveColor: purple.withValues(alpha: 0.2),
+                          onChanged: (value) => widget.onEnergyLevelChanged(value.round()),
+                        ),
+                      ),
+                      Icon(Icons.battery_full, size: 18, color: purple),
+                    ],
+                  ),
+                  Center(
+                    child: Text(
+                      _getEnergyLabel(widget.energyLevel),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: purple,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getEnergyLabel(int level) {
+    switch (level) {
+      case 1:
+        return 'Very Low';
+      case 2:
+        return 'Low';
+      case 3:
+        return 'Moderate';
+      case 4:
+        return 'High';
+      case 5:
+        return 'Very High';
+      default:
+        return 'Moderate';
+    }
+  }
+}
+
+class _MoodChip extends StatelessWidget {
+  final FoodMood mood;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _MoodChip({
+    required this.mood,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  Color _getMoodColor() {
+    switch (mood) {
+      case FoodMood.great:
+        return const Color(0xFF6BCB77); // Green
+      case FoodMood.good:
+        return const Color(0xFF4ECDC4); // Teal
+      case FoodMood.neutral:
+        return const Color(0xFF95A5A6); // Gray
+      case FoodMood.tired:
+        return const Color(0xFF9B59B6); // Purple
+      case FoodMood.stressed:
+        return const Color(0xFFE74C3C); // Red
+      case FoodMood.hungry:
+        return const Color(0xFFFF6B6B); // Coral
+      case FoodMood.satisfied:
+        return const Color(0xFF3498DB); // Blue
+      case FoodMood.bloated:
+        return const Color(0xFFF39C12); // Orange
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getMoodColor();
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.2) : elevated,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : color.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              mood.emoji,
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              mood.label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected ? color : textPrimary,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Restaurant Portion Selector - Shows min/typical/max portion options
+// ─────────────────────────────────────────────────────────────────
+
+class _RestaurantPortionSelector extends StatelessWidget {
+  final LogFoodResponse foodLog;
+  final bool isDark;
+  final void Function(double multiplier) onSelectPortion;
+  final VoidCallback onCancel;
+
+  const _RestaurantPortionSelector({
+    required this.foodLog,
+    required this.isDark,
+    required this.onSelectPortion,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
+    final baseCals = foodLog.totalCalories;
+    final baseProtein = foodLog.proteinG.round();
+    final baseCarbs = foodLog.carbsG.round();
+    final baseFat = foodLog.fatG.round();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: orange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.restaurant, color: orange, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Portion Size',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Restaurant portions vary - pick what matches yours',
+                      style: TextStyle(fontSize: 13, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Food name summary
+          if (foodLog.foodItems.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                foodLog.foodItems.map((f) => f['name'] ?? 'Food').join(', '),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Portion options
+          _PortionOption(
+            title: 'Light Portion',
+            subtitle: 'Smaller than typical, lighter prep',
+            multiplier: 0.75,
+            calories: (baseCals * 0.75).round(),
+            protein: (baseProtein * 0.75).round(),
+            carbs: (baseCarbs * 0.75).round(),
+            fat: (baseFat * 0.75).round(),
+            icon: Icons.expand_less,
+            color: teal,
+            isDark: isDark,
+            onTap: () => onSelectPortion(0.75),
+          ),
+
+          const SizedBox(height: 12),
+
+          _PortionOption(
+            title: 'Typical Portion',
+            subtitle: 'Standard restaurant serving',
+            multiplier: 1.0,
+            calories: baseCals,
+            protein: baseProtein,
+            carbs: baseCarbs,
+            fat: baseFat,
+            icon: Icons.horizontal_rule,
+            color: orange,
+            isDark: isDark,
+            onTap: () => onSelectPortion(1.0),
+            isRecommended: true,
+          ),
+
+          const SizedBox(height: 12),
+
+          _PortionOption(
+            title: 'Large Portion',
+            subtitle: 'Generous serving, rich preparation',
+            multiplier: 1.25,
+            calories: (baseCals * 1.25).round(),
+            protein: (baseProtein * 1.25).round(),
+            carbs: (baseCarbs * 1.25).round(),
+            fat: (baseFat * 1.25).round(),
+            icon: Icons.expand_more,
+            color: isDark ? AppColors.purple : AppColorsLight.purple,
+            isDark: isDark,
+            onTap: () => onSelectPortion(1.25),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Cancel button
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
+              onPressed: onCancel,
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: textMuted),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PortionOption extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final double multiplier;
+  final int calories;
+  final int protein;
+  final int carbs;
+  final int fat;
+  final IconData icon;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+  final bool isRecommended;
+
+  const _PortionOption({
+    required this.title,
+    required this.subtitle,
+    required this.multiplier,
+    required this.calories,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    required this.icon,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+    this.isRecommended = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isRecommended ? color.withValues(alpha: 0.1) : elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isRecommended ? color : cardBorder,
+              width: isRecommended ? 2 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+
+              // Title and subtitle
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        if (isRecommended) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'TYPICAL',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Calories
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$calories',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    'cal',
+                    style: TextStyle(fontSize: 11, color: textMuted),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Confidence indicator for AI estimates
+class _ConfidenceIndicator extends StatelessWidget {
+  final String confidenceLevel;
+  final double? confidenceScore;
+  final String? sourceType;
+  final bool isDark;
+
+  const _ConfidenceIndicator({
+    required this.confidenceLevel,
+    this.confidenceScore,
+    this.sourceType,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color indicatorColor;
+    final IconData indicatorIcon;
+    final String displayText;
+    final String? subText;
+
+    switch (confidenceLevel) {
+      case 'high':
+        indicatorColor = isDark ? AppColors.green : AppColorsLight.green;
+        indicatorIcon = Icons.verified;
+        displayText = 'High confidence';
+        subText = sourceType == 'barcode' ? 'Verified from barcode' : 'AI analysis confident';
+        break;
+      case 'medium':
+        indicatorColor = isDark ? AppColors.orange : AppColorsLight.orange;
+        indicatorIcon = Icons.info_outline;
+        displayText = 'Medium confidence';
+        subText = sourceType == 'restaurant'
+            ? 'Restaurant estimate - actual may vary'
+            : 'AI estimate - values may vary slightly';
+        break;
+      case 'low':
+      default:
+        indicatorColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        indicatorIcon = Icons.help_outline;
+        displayText = 'Estimate only';
+        subText = 'Please verify these values';
+        break;
+    }
+
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: indicatorColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: indicatorColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(indicatorIcon, size: 16, color: indicatorColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      displayText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: indicatorColor,
+                      ),
+                    ),
+                    if (confidenceScore != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '(${(confidenceScore! * 100).toInt()}%)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (subText != null)
+                  Text(
+                    subText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

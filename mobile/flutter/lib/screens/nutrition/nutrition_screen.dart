@@ -2,19 +2,27 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
+import '../../data/models/nutrition_preferences.dart';
 import '../../data/models/recipe.dart';
+import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/nutrition/health_metrics_card.dart';
+import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
+import 'nutrition_onboarding/nutrition_onboarding_screen.dart';
+import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
+import 'weekly_checkin_sheet.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   const NutritionScreen({super.key});
@@ -31,6 +39,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   DailyMicronutrientSummary? _micronutrientSummary;
   List<RecipeSummary> _recipes = [];
   bool _isLoadingMicronutrients = false;
+  bool _hasCheckedOnboarding = false;
 
   @override
   void initState() {
@@ -49,12 +58,46 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId != null) {
       setState(() => _userId = userId);
+
+      // Initialize nutrition preferences and check onboarding status
+      await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
+
+      // Check if onboarding is needed (only once per screen load)
+      if (!_hasCheckedOnboarding) {
+        _hasCheckedOnboarding = true;
+        await _checkAndShowOnboarding();
+      }
+
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
       ref.read(nutritionProvider.notifier).loadTargets(userId);
       ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
       _loadMicronutrients(userId, dateStr);
       _loadRecipes(userId);
+    }
+  }
+
+  Future<void> _checkAndShowOnboarding() async {
+    if (!mounted) return;
+
+    final prefsState = ref.read(nutritionPreferencesProvider);
+
+    // If onboarding not completed, show onboarding screen
+    if (!prefsState.onboardingCompleted) {
+      debugPrint('🥗 [NutritionScreen] Onboarding not completed, showing onboarding');
+
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const NutritionOnboardingScreen(),
+        ),
+      );
+
+      // If onboarding was completed, reload data
+      if (result == true && mounted) {
+        debugPrint('✅ [NutritionScreen] Onboarding completed, reloading data');
+        _loadData();
+      }
     }
   }
 
@@ -130,6 +173,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(nutritionProvider);
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final calmMode = prefsState.preferences?.calmModeEnabled ?? false;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -204,7 +249,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
           IconButton(
             icon: Icon(Icons.settings_outlined, color: textPrimary),
-            onPressed: () => _showTargetsSettings(context, isDark),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NutritionSettingsScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -260,6 +312,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onLogMeal: () => _showLogMealSheet(isDark),
                             onDeleteMeal: (id) => _deleteMeal(id),
                             isDark: isDark,
+                            calmMode: calmMode,
                           ),
 
                           // Nutrients Tab
@@ -567,6 +620,7 @@ class _DailyTab extends ConsumerStatefulWidget {
   final VoidCallback onLogMeal;
   final void Function(String) onDeleteMeal;
   final bool isDark;
+  final bool calmMode;
 
   const _DailyTab({
     required this.userId,
@@ -577,6 +631,7 @@ class _DailyTab extends ConsumerStatefulWidget {
     required this.onLogMeal,
     required this.onDeleteMeal,
     required this.isDark,
+    this.calmMode = false,
   });
 
   @override
@@ -679,21 +734,62 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Energy Balance Card (MacroFactor style)
+            // Energy Balance Card (MacroFactor style) - supports calm mode
             _EnergyBalanceCard(
               consumed: widget.summary?.totalCalories ?? 0,
               target: widget.targets?.dailyCalorieTarget ?? 2000,
               isDark: widget.isDark,
+              calmMode: widget.calmMode,
             ).animate().fadeIn().scale(),
 
             const SizedBox(height: 16),
 
-            // Macronutrient Cards Row
-            _MacrosRow(
-              summary: widget.summary,
-              targets: widget.targets,
+            // Nutrition Streak Card
+            _NutritionStreakCard(
+              userId: widget.userId,
               isDark: widget.isDark,
-            ).animate().fadeIn(delay: 100.ms),
+            ).animate().fadeIn(delay: 50.ms),
+
+            const SizedBox(height: 16),
+
+            // Macronutrient Cards Row (hidden in calm mode)
+            if (!widget.calmMode)
+              _MacrosRow(
+                summary: widget.summary,
+                targets: widget.targets,
+                isDark: widget.isDark,
+              ).animate().fadeIn(delay: 100.ms),
+
+            if (!widget.calmMode) const SizedBox(height: 16),
+
+            // Weight Tracking Card
+            _WeightTrackingCard(
+              userId: widget.userId,
+              isDark: widget.isDark,
+            ).animate().fadeIn(delay: 110.ms),
+
+            const SizedBox(height: 16),
+
+            // Weekly Check-in Card (Adaptive TDEE)
+            _WeeklyCheckinCard(
+              userId: widget.userId,
+              isDark: widget.isDark,
+            ).animate().fadeIn(delay: 115.ms),
+
+            const SizedBox(height: 16),
+
+            // Health Metrics Card (Blood Glucose & Insulin)
+            HealthMetricsCard(
+              isDark: widget.isDark,
+            ).animate().fadeIn(delay: 120.ms),
+
+            const SizedBox(height: 16),
+
+            // Food & Mood Analytics Card
+            FoodMoodAnalyticsCard(
+              userId: widget.userId,
+              isDark: widget.isDark,
+            ).animate().fadeIn(delay: 122.ms),
 
             const SizedBox(height: 16),
 
@@ -963,11 +1059,13 @@ class _EnergyBalanceCard extends StatelessWidget {
   final int consumed;
   final int target;
   final bool isDark;
+  final bool calmMode;
 
   const _EnergyBalanceCard({
     required this.consumed,
     required this.target,
     required this.isDark,
+    this.calmMode = false,
   });
 
   int get remaining => target - consumed;
@@ -977,24 +1075,36 @@ class _EnergyBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
+    // Use soft orange instead of coral/red for over-target (non-judgmental)
+    final overColor = isDark ? AppColors.orange : AppColorsLight.orange;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
-    final progressColor = isOver ? coral : teal;
+    final progressColor = calmMode ? purple : (isOver ? overColor : teal);
+
+    // Calm mode shows a mindful message instead of numbers
+    if (calmMode) {
+      return _buildCalmModeCard(
+        elevated: elevated,
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+        progressColor: progressColor,
+        glassSurface: glassSurface,
+        purple: purple,
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: progressColor.withOpacity(0.3)),
+        border: Border.all(color: progressColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -1038,7 +1148,7 @@ class _EnergyBalanceCard extends StatelessWidget {
               _FormulaItem(
                 value: isOver ? '+${consumed - target}' : remaining.toString(),
                 label: isOver ? 'Over' : 'Left',
-                valueColor: isOver ? coral : teal,
+                valueColor: isOver ? overColor : teal,
                 isDark: isDark,
               ),
             ],
@@ -1065,6 +1175,93 @@ class _EnergyBalanceCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalmModeCard({
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color progressColor,
+    required Color glassSurface,
+    required Color purple,
+  }) {
+    // Determine the message based on how much was eaten
+    final String message;
+    final IconData icon;
+
+    if (consumed == 0) {
+      message = "Ready to nourish your body today";
+      icon = Icons.wb_sunny_rounded;
+    } else if (percentage < 0.5) {
+      message = "You're taking it easy today";
+      icon = Icons.spa_rounded;
+    } else if (percentage >= 0.5 && percentage < 0.85) {
+      message = "Nourishing your body well";
+      icon = Icons.favorite_rounded;
+    } else if (percentage >= 0.85 && percentage <= 1.1) {
+      message = "Well balanced today";
+      icon = Icons.check_circle_rounded;
+    } else {
+      message = "Enjoying your food today";
+      icon = Icons.restaurant_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: purple.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          // Calm Mode Icon
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: purple.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 32, color: purple),
+          ),
+          const SizedBox(height: 16),
+
+          // Mindful message
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Focus on how food makes you feel',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: textMuted,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Gentle progress bar (no numbers)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: percentage.clamp(0.0, 1.0),
+              minHeight: 8,
+              backgroundColor: glassSurface,
+              color: purple,
             ),
           ),
         ],
@@ -1122,8 +1319,14 @@ class _MacrosRow extends StatelessWidget {
   final DailyNutritionSummary? summary;
   final NutritionTargets? targets;
   final bool isDark;
+  final bool calmMode;
 
-  const _MacrosRow({this.summary, this.targets, required this.isDark});
+  const _MacrosRow({
+    this.summary,
+    this.targets,
+    required this.isDark,
+    this.calmMode = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2152,6 +2355,947 @@ class _NutritionErrorState extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─────────────────────────────────────────────────────────────────
+// Weight Tracking Card
+// ─────────────────────────────────────────────────────────────────
+
+class _WeightTrackingCard extends ConsumerStatefulWidget {
+  final String userId;
+  final bool isDark;
+
+  const _WeightTrackingCard({
+    required this.userId,
+    required this.isDark,
+  });
+
+  @override
+  ConsumerState<_WeightTrackingCard> createState() => _WeightTrackingCardState();
+}
+
+class _WeightTrackingCardState extends ConsumerState<_WeightTrackingCard> {
+  final _weightController = TextEditingController();
+  bool _isLogging = false;
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _logWeight() async {
+    final weightText = _weightController.text.trim();
+    if (weightText.isEmpty) return;
+
+    final weight = double.tryParse(weightText);
+    if (weight == null || weight <= 0 || weight > 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please enter a valid weight'),
+          backgroundColor: widget.isDark ? AppColors.error : AppColorsLight.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLogging = true);
+    try {
+      await ref.read(nutritionPreferencesProvider.notifier).logWeight(
+            userId: widget.userId,
+            weightKg: weight,
+          );
+
+      if (mounted) {
+        _weightController.clear();
+        FocusScope.of(context).unfocus();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Weight logged: ${weight.toStringAsFixed(1)} kg'),
+            backgroundColor:
+                widget.isDark ? AppColors.success : AppColorsLight.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to log weight: $e'),
+            backgroundColor: widget.isDark ? AppColors.error : AppColorsLight.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLogging = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final latestWeight = prefsState.latestWeight;
+    final weightTrend = prefsState.weightTrend;
+
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder =
+        widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Determine trend icon and color
+    IconData trendIcon;
+    Color trendColor;
+    String trendText;
+
+    if (weightTrend != null) {
+      switch (weightTrend.direction) {
+        case 'losing':
+          trendIcon = Icons.trending_down;
+          trendColor = Colors.green;
+          trendText = '${weightTrend.weeklyRateKg?.abs().toStringAsFixed(2) ?? '0'} kg/week';
+          break;
+        case 'gaining':
+          trendIcon = Icons.trending_up;
+          trendColor = Colors.orange;
+          trendText = '+${weightTrend.weeklyRateKg?.toStringAsFixed(2) ?? '0'} kg/week';
+          break;
+        default:
+          trendIcon = Icons.trending_flat;
+          trendColor = textMuted;
+          trendText = 'Stable';
+      }
+    } else {
+      trendIcon = Icons.trending_flat;
+      trendColor = textMuted;
+      trendText = 'Log weight to see trend';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(Icons.monitor_weight_outlined, color: teal, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Weight',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const Spacer(),
+              if (latestWeight != null)
+                Text(
+                  '${latestWeight.toStringAsFixed(1)} kg',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Trend indicator
+          Row(
+            children: [
+              Icon(trendIcon, color: trendColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                trendText,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: trendColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+
+          // Mini Weight Chart (if we have history data)
+          if (prefsState.weightHistory.length >= 2) ...[
+            const SizedBox(height: 16),
+            _MiniWeightChart(
+              weightHistory: prefsState.weightHistory,
+              isDark: widget.isDark,
+              trendColor: trendColor,
+            ),
+          ],
+
+          const SizedBox(height: 16),
+
+          // Quick log row
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _weightController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(color: textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Enter weight (kg)',
+                    hintStyle: TextStyle(color: textMuted),
+                    filled: true,
+                    fillColor: widget.isDark
+                        ? AppColors.pureBlack
+                        : AppColorsLight.pureWhite,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cardBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: cardBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: teal, width: 2),
+                    ),
+                  ),
+                  onSubmitted: (_) => _logWeight(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: _isLogging ? null : _logWeight,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: _isLogging
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Log'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Nutrition Streak Card
+// ─────────────────────────────────────────────────────────────────
+
+class _NutritionStreakCard extends ConsumerWidget {
+  final String userId;
+  final bool isDark;
+
+  const _NutritionStreakCard({required this.userId, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final streak = ref.watch(nutritionStreakProvider);
+
+    if (streak == null) return const SizedBox.shrink();
+
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+
+    // Determine streak color based on streak length
+    final streakColor = streak.currentStreakDays >= 7
+        ? orange
+        : streak.currentStreakDays >= 3
+            ? teal
+            : purple;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Streak fire/badge icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: streakColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: streakColor.withValues(alpha: 0.3)),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(
+                      streak.currentStreakDays >= 7
+                          ? Icons.local_fire_department
+                          : Icons.emoji_events,
+                      size: 28,
+                      color: streakColor,
+                    ),
+                    if (streak.currentStreakDays > 0)
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: streakColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${streak.currentStreakDays}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Streak info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${streak.currentStreakDays} Day Streak',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                        if (streak.currentStreakDays >= streak.longestStreakEver &&
+                            streak.currentStreakDays > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: orange.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'BEST',
+                              style: TextStyle(
+                                color: orange,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      streak.weeklyGoalEnabled
+                          ? '${streak.daysLoggedThisWeek}/${streak.weeklyGoalDays} days this week'
+                          : 'Best: ${streak.longestStreakEver} days',
+                      style: TextStyle(fontSize: 13, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Streak freezes
+              if (streak.freezesAvailable > 0)
+                Column(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(
+                        2,
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Icon(
+                            index < streak.freezesAvailable
+                                ? Icons.ac_unit
+                                : Icons.ac_unit_outlined,
+                            size: 18,
+                            color: index < streak.freezesAvailable
+                                ? const Color(0xFF4ECDC4)
+                                : textMuted.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Freezes',
+                      style: TextStyle(fontSize: 10, color: textMuted),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+
+          // Weekly goal progress (if enabled)
+          if (streak.weeklyGoalEnabled) ...[
+            const SizedBox(height: 16),
+            _WeeklyGoalProgress(
+              daysLogged: streak.daysLoggedThisWeek,
+              goalDays: streak.weeklyGoalDays,
+              isDark: isDark,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyGoalProgress extends StatelessWidget {
+  final int daysLogged;
+  final int goalDays;
+  final bool isDark;
+
+  const _WeeklyGoalProgress({
+    required this.daysLogged,
+    required this.goalDays,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final isGoalMet = daysLogged >= goalDays;
+    final weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final today = DateTime.now().weekday; // 1 = Monday
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Weekly Goal',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+              ),
+            ),
+            if (isGoalMet)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle, size: 14, color: teal),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Complete!',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: teal,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(7, (index) {
+            final dayNumber = index + 1;
+            final isToday = dayNumber == today;
+            final isLogged = index < daysLogged; // Simplified - in real app, check actual logged days
+
+            return Column(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isLogged
+                        ? teal.withValues(alpha: 0.2)
+                        : elevated,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isToday
+                          ? teal
+                          : isLogged
+                              ? teal.withValues(alpha: 0.5)
+                              : textMuted.withValues(alpha: 0.2),
+                      width: isToday ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: isLogged
+                        ? Icon(Icons.check, size: 16, color: teal)
+                        : Text(
+                            weekDays[index],
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isToday ? teal : textMuted,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Weekly Check-in Card - Shows adaptive TDEE and prompts check-in
+// ─────────────────────────────────────────────────────────────────
+
+class _WeeklyCheckinCard extends ConsumerWidget {
+  final String userId;
+  final bool isDark;
+
+  const _WeeklyCheckinCard({required this.userId, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final adaptiveCalc = prefsState.adaptiveCalculation;
+
+    // Show different states based on data availability
+    final hasEnoughData = adaptiveCalc != null && adaptiveCalc.daysLogged >= 7;
+
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: (hasEnoughData ? teal : purple).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  hasEnoughData ? Icons.insights : Icons.trending_up,
+                  color: hasEnoughData ? teal : purple,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasEnoughData ? 'Weekly Check-in' : 'Adaptive Targets',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _getSubtitle(adaptiveCalc),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // TDEE Info (if available)
+          if (adaptiveCalc != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: teal.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _TdeeInfoItem(
+                    label: 'Calculated TDEE',
+                    value: '${adaptiveCalc.calculatedTdee}',
+                    unit: 'cal',
+                    color: teal,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: textMuted.withValues(alpha: 0.2),
+                  ),
+                  _TdeeInfoItem(
+                    label: 'Data Quality',
+                    value: '${(adaptiveCalc.dataQualityScore * 100).round()}%',
+                    unit: '',
+                    color: adaptiveCalc.dataQualityScore >= 0.7
+                        ? teal
+                        : adaptiveCalc.dataQualityScore >= 0.4
+                            ? orange
+                            : textMuted,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Check-in Button
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: Material(
+              color: hasEnoughData ? teal : teal.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: () => _openCheckinSheet(context, ref),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        hasEnoughData ? Icons.checklist : Icons.insights,
+                        size: 18,
+                        color: hasEnoughData ? Colors.white : teal,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        hasEnoughData
+                            ? 'View Weekly Summary'
+                            : 'View Progress',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: hasEnoughData ? Colors.white : teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getSubtitle(AdaptiveCalculation? calc) {
+    if (calc != null) {
+      if (calc.daysLogged >= 7) {
+        return 'TDEE calculated from ${calc.daysLogged} days of data';
+      }
+      return '${7 - calc.daysLogged} more days until adaptive targets';
+    }
+    return 'Track for 7+ days to unlock adaptive targets';
+  }
+
+  void _openCheckinSheet(BuildContext context, WidgetRef ref) {
+    showWeeklyCheckinSheet(context, ref);
+  }
+}
+
+class _TdeeInfoItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final Color color;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _TdeeInfoItem({
+    required this.label,
+    required this.value,
+    required this.unit,
+    required this.color,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            if (unit.isNotEmpty) ...[
+              const SizedBox(width: 2),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Mini Weight Chart - Compact trend visualization
+// ─────────────────────────────────────────────────────────────────
+
+class _MiniWeightChart extends StatelessWidget {
+  final List<WeightLog> weightHistory;
+  final bool isDark;
+  final Color trendColor;
+
+  const _MiniWeightChart({
+    required this.weightHistory,
+    required this.isDark,
+    required this.trendColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (weightHistory.length < 2) return const SizedBox.shrink();
+
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Get last 14 days of data (or less if not available)
+    final recentData = weightHistory.take(14).toList().reversed.toList();
+
+    if (recentData.isEmpty) return const SizedBox.shrink();
+
+    // Calculate min/max for proper scaling
+    final weights = recentData.map((w) => w.weightKg).toList();
+    final minWeight = weights.reduce((a, b) => a < b ? a : b);
+    final maxWeight = weights.reduce((a, b) => a > b ? a : b);
+
+    // Add padding to the range
+    final range = maxWeight - minWeight;
+    final padding = range < 1 ? 1.0 : range * 0.2;
+    final minY = minWeight - padding;
+    final maxY = maxWeight + padding;
+
+    // Create spots for the chart
+    final spots = <FlSpot>[];
+    for (int i = 0; i < recentData.length; i++) {
+      spots.add(FlSpot(i.toDouble(), recentData[i].weightKg));
+    }
+
+    return Container(
+      height: 100,
+      padding: const EdgeInsets.only(right: 8),
+      child: LineChart(
+        LineChartData(
+          minY: minY,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: (maxY - minY) / 3,
+            getDrawingHorizontalLine: (value) => FlLine(
+              color: cardBorder,
+              strokeWidth: 0.5,
+            ),
+          ),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) {
+                  // Only show first and last labels
+                  if (value == minY || value == maxY) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    '${value.toStringAsFixed(1)}',
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                  );
+                },
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 22,
+                interval: (recentData.length / 3).ceil().toDouble().clamp(1, double.infinity),
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index >= 0 && index < recentData.length) {
+                    final date = recentData[index].loggedAt;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        DateFormat('d/M').format(date),
+                        style: TextStyle(fontSize: 9, color: textMuted),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              curveSmoothness: 0.3,
+              color: trendColor,
+              barWidth: 2,
+              isStrokeCapRound: true,
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, barData, index) {
+                  // Show dot only for first and last point
+                  final isEndpoint = index == 0 || index == spots.length - 1;
+                  return FlDotCirclePainter(
+                    radius: isEndpoint ? 4 : 2,
+                    color: trendColor,
+                    strokeWidth: 0,
+                  );
+                },
+              ),
+              belowBarData: BarAreaData(
+                show: true,
+                color: trendColor.withValues(alpha: 0.1),
+              ),
+            ),
+          ],
+          lineTouchData: LineTouchData(
+            enabled: true,
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (touchedSpot) =>
+                  isDark ? AppColors.elevated : AppColorsLight.elevated,
+              tooltipRoundedRadius: 8,
+              getTooltipItems: (touchedSpots) {
+                return touchedSpots.map((touchedSpot) {
+                  final index = touchedSpot.spotIndex;
+                  if (index >= 0 && index < recentData.length) {
+                    final weight = recentData[index];
+                    return LineTooltipItem(
+                      '${weight.weightKg.toStringAsFixed(1)} kg\n${DateFormat('MMM d').format(weight.loggedAt)}',
+                      TextStyle(
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  }
+                  return null;
+                }).toList();
+              },
+            ),
+          ),
         ),
       ),
     );

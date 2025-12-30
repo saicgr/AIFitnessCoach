@@ -380,9 +380,11 @@ class TestFieldOrder:
     def test_quick_replies_defined_for_fields(self):
         """CRITICAL: Quick replies must be defined for non-free-text fields."""
         free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
+        # Fields that use custom components instead of quick replies
+        custom_component_fields = ["selected_days", "target_weight_kg"]
 
         for field in FIELD_ORDER:
-            if field not in free_text_fields and field != "selected_days":
+            if field not in free_text_fields and field not in custom_component_fields:
                 assert field in QUICK_REPLIES, \
                     f"CRITICAL: Quick replies missing for '{field}'"
 

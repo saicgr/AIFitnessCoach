@@ -77,7 +77,11 @@ dependencies:
 
   # Image Picker (for food photos)
   image_picker: ^1.1.2
+  image_cropper: ^8.0.2
   speech_to_text: ^7.3.0
+
+  # Gallery Saver (for saving workout images to device gallery)
+  image_gallery_saver_plus: ^3.0.5
 
   # Home Screen Widgets
   home_widget: ^0.7.0

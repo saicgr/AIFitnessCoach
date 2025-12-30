@@ -773,7 +773,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             );
 
             // Refresh challenges list
-            _loadChallenges();
+            _loadData();
           } catch (e) {
             if (!mounted) return;
 

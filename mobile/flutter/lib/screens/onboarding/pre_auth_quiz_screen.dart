@@ -448,6 +448,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   final List<String> _customEquipment = [];  // User-added equipment not in predefined list
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
+  String? _selectedEnvironment;  // Workout environment (home, home_gym, commercial_gym, hotel)
   // Question 5: Training Preferences (Split + Workout Type + Progression Pace)
   String? _selectedTrainingSplit;
   String? _selectedWorkoutType;
@@ -721,6 +722,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onInfoTap: _showEquipmentInfo,
           onOtherTap: _showOtherEquipmentSheet,
           otherSelectedEquipment: _otherSelectedEquipment,
+          selectedEnvironment: _selectedEnvironment,
+          onEnvironmentChanged: _handleEnvironmentChange,
         );
       case 4:
         return QuizTrainingPreferences(
@@ -805,6 +808,52 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         } else {
           _selectedEquipment.add(id);
         }
+      }
+    });
+  }
+
+  /// Handle environment selection - pre-populates equipment based on environment
+  void _handleEnvironmentChange(String envId) {
+    setState(() {
+      _selectedEnvironment = envId;
+
+      // Pre-populate equipment based on environment
+      _selectedEquipment.clear();
+      _otherSelectedEquipment.clear();
+
+      switch (envId) {
+        case 'home':
+          _selectedEquipment.addAll(['bodyweight', 'resistance_bands']);
+          break;
+        case 'home_gym':
+          _selectedEquipment.addAll([
+            'bodyweight',
+            'dumbbells',
+            'barbell',
+            'resistance_bands',
+            'pull_up_bar',
+            'kettlebell',
+          ]);
+          break;
+        case 'commercial_gym':
+          _selectedEquipment.addAll([
+            'bodyweight',
+            'dumbbells',
+            'barbell',
+            'resistance_bands',
+            'pull_up_bar',
+            'kettlebell',
+            'cable_machine',
+            'full_gym',
+          ]);
+          break;
+        case 'hotel':
+          _selectedEquipment.addAll([
+            'bodyweight',
+            'dumbbells',
+            'resistance_bands',
+          ]);
+          break;
       }
     });
   }

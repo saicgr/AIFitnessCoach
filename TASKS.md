@@ -1,3 +1,7 @@
+<!-- big task add 2 columns infront of every table those those two columns are Problem and Solution, you would have to populate them by reqeiwing the code -->
+
+<!-- For gravl app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every aprt of the review with this flutter app and see waht needs improved and implemented -->
+
 FUTURE in voting:
 1. Posture video review
 2. Casting to TV
@@ -9,12 +13,7 @@ ASAP:
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
 25. Demo of the whole app
 32. Make it easy to add supersets
-37. Gemini 2.5 flash text to speech for video audio AI generated
-41. it's a good app, but going up 10 or 15 pounds every week is not what I want I constantly have to make it to where I have a the same reps and weight for at least two weeks or a month. I hate how you can't pick cardio for one of your workouts. you have to manually add it. most apps you can include it. Doing 20 reps of something because you keep the same weight is crazy as well.
-42. No option to change to a home gym and detail the equipment available. If it isn't a known commercial gym forget about it. The app won't save daily photos anymore. You can try taking the photo or selecting it from the gallery . it will let you crop it and it will put the gavel logo in the gym stats in front of it but there is no save button anymore. Also You will do leg workouts 5 days a week and you'll be lucky to hit arms, shoulders, chest, back or abs maybe once a week.
-43. An otherwise excellent app, that seems to have often bizarre and contradictory support experiences. The lack of ability to create equipment yourself is odd -- and it does have coverage gaps if your gym uses Technogym, Hoist, or LifeFitness branded equipment. You are directed instead to reach out to support or post on reddit. Some support team members take the feedback, others give you responses like "just don't use that equipment" -- as if you can control equipment mix and availability.
-44. 3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend.
-45. I'd also like to see some widgets
+37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
 46. One annoying bug I've encountered: after completing a workout, you can attach an image with the workout summary, similar to Strava. However, the 'Save' and 'Share' buttons don't work. Clicking them does nothing. The image won't save to the gallery or share to any platform I've tried (Messenger, Facebook, etc.).
 47. The good: the app has a nice UX and is bug free. The bad: The “AI” constantly suggests new exercises with weird weights, even after I programmed in my own workouts so it could “learn” my strength level. The “consistent” setting, favoriting exercises, queuing exercises didn’t help - I had to customize around the AI’s suggestions so much, I turned it into a time consuming, paid version of the spreadsheet I was already using. I only wish I hadn’t paid for six months, this app is just not for me.
 48. I hope they add more exercises especially unilateral and mobility exercises.
@@ -62,11 +61,14 @@ ASAP:
 55.5. older person. trying to get moving. it has been helpful. however I progressed too quickly with the running and strained my calf. I should of made the AI make the running more gradual. having said that I've trained with an adapted program removing lower leg activities.
 55.5 Offline mode aka Tracker Only Mode
 56. Premium Subscriptionwork
+56. Strength Score and integration to social
+56.1. Need a FULL PLAN using all strength, nutrition, fasting in mind - can talk more.
 57. Nutrition below:
 57.1 I really like the app & think I've finally started reaching my goals thanks to it. Sometimes I wonder if adding data that takes into account fasting? Marking days that you fast & continue to weigh yourself... if & how that impacts your goals.
 57.2 I would love to track my insulin and blood sugars with this using health connect. Type 1 Diabetic.
 57.3 Okay app that allows you to track your macros as intended. But falls short for its library and ability to input cooked grains. It feels like I'm constantly having to add to it and after paying a premium of $80 it's not worth it especially when other apps have a larger data base and options while also trackin macros and cost way less annually. Also has issues when using the scan feature (ex. Scans well known drink, "Item not found"), I manually search for it and it's the first thing that pops up.
 57.4 Initially enjoyed the polish of this, but I regret paying for Pro. It's too slow and too convoluted to track meals, which is the whole point of the app. We need a way to disable the useless (and incorrect) AI food tips after each meal logged, at least. Between that, the lag when searching for foods, and the various submenus for foods/meals/recipes, it's too much. Even saving common foods as a meal and selecting that every morning feels slower than other apps because of the tracker layout.
+58. For analytics do we have workout bistory per exercise and also per muscle, not sure what the image is sowing like muscle or soemthing else.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

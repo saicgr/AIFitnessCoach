@@ -251,6 +251,12 @@ class User extends Equatable {
         return 'Outdoors';
       case 'hotel':
         return 'Hotel/Travel';
+      case 'apartment_gym':
+        return 'Apartment Gym';
+      case 'office_gym':
+        return 'Office Gym';
+      case 'custom':
+        return 'Custom Setup';
       default:
         return env;
     }
