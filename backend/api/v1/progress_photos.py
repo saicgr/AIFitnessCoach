@@ -132,9 +132,10 @@ async def upload_photo_to_s3(
 async def delete_photo_from_s3(storage_key: str) -> bool:
     """Delete photo from S3."""
     try:
+        settings = get_settings()
         s3 = get_s3_client()
         s3.delete_object(
-            Bucket=settings.S3_BUCKET_NAME,
+            Bucket=settings.s3_bucket_name,
             Key=storage_key,
         )
         return True
