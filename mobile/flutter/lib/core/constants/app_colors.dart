@@ -137,6 +137,7 @@ class AppColorsLight {
   static const Color purple = Color(0xFF8B5CF6);
   static const Color coral = Color(0xFFF43F5E);
   static const Color magenta = Color(0xFFEC4899);
+  static const Color green = Color(0xFF16A34A);
 
   // Semantic Colors
   static const Color success = Color(0xFF16A34A);

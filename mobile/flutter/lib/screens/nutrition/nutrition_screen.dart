@@ -20,6 +20,7 @@ import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
 import 'nutrition_onboarding/nutrition_onboarding_screen.dart';
+import 'nutrition_onboarding/nutrition_welcome_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
@@ -40,6 +41,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   List<RecipeSummary> _recipes = [];
   bool _isLoadingMicronutrients = false;
   bool _hasCheckedOnboarding = false;
+  bool _hasSkippedOnboarding = false;
 
   @override
   void initState() {
@@ -82,21 +84,33 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     final prefsState = ref.read(nutritionPreferencesProvider);
 
-    // If onboarding not completed, show onboarding screen
-    if (!prefsState.onboardingCompleted) {
-      debugPrint('🥗 [NutritionScreen] Onboarding not completed, showing onboarding');
+    // If onboarding not completed and not skipped, show welcome screen first
+    if (!prefsState.onboardingCompleted && !_hasSkippedOnboarding) {
+      debugPrint('🥗 [NutritionScreen] Onboarding not completed, showing welcome');
+
+      // Hide floating nav bar during onboarding
+      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
       final result = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
-          builder: (_) => const NutritionOnboardingScreen(),
+          builder: (_) => _NutritionWelcomeFlow(),
         ),
       );
+
+      // Show floating nav bar again
+      if (mounted) {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      }
 
       // If onboarding was completed, reload data
       if (result == true && mounted) {
         debugPrint('✅ [NutritionScreen] Onboarding completed, reloading data');
         _loadData();
+      } else if (mounted) {
+        // User skipped - remember this so we don't ask again during this session
+        debugPrint('⏭️ [NutritionScreen] User skipped onboarding');
+        setState(() => _hasSkippedOnboarding = true);
       }
     }
   }
@@ -3298,6 +3312,45 @@ class _MiniWeightChart extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Nutrition Welcome Flow (Welcome + Onboarding)
+// ─────────────────────────────────────────────────────────────────
+
+/// Combined flow that shows welcome screen first, then onboarding
+class _NutritionWelcomeFlow extends StatefulWidget {
+  const _NutritionWelcomeFlow();
+
+  @override
+  State<_NutritionWelcomeFlow> createState() => _NutritionWelcomeFlowState();
+}
+
+class _NutritionWelcomeFlowState extends State<_NutritionWelcomeFlow> {
+  bool _showingOnboarding = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showingOnboarding) {
+      return NutritionOnboardingScreen(
+        onComplete: () {
+          Navigator.of(context).pop(true);
+        },
+        onSkip: () {
+          Navigator.of(context).pop(false);
+        },
+      );
+    }
+
+    return NutritionWelcomeScreen(
+      onGetStarted: () {
+        setState(() => _showingOnboarding = true);
+      },
+      onSkip: () {
+        Navigator.of(context).pop(false);
+      },
     );
   }
 }

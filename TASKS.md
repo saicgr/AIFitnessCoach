@@ -1,22 +1,18 @@
 <!-- big task to FEATURES.md add 
-1. column at the end of every table that column should tell if the feature is fully implemented or partially implemented or not implemented those, you would have to populate them by reviewing the code 
-2. 6 more columns for 
-frontend implemented yes/no, 
-backend API implemented yes/no, 
-Gemini AI uses this data yes/no, 
-chromadb RAG reads it yes/no, 
-supabase tables exists yes/no, 
-backend tests implemented yes/no 
+column at the end of every table to say if it is user focused or developer focused meaning would the user be able to access or is it for dev purposes only, because there are so many features i want to have that differentiation
 
-you would have to populate them by reviewing the code    
+you would have to populate them by reviewing the code   
+use multiple agents to run in parallel 
 -->
 
-<!-- For other app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every aprt of the review with this flutter app and see waht needs improved and implemented.
+<!-- For other app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every part of the review with this flutter app and see waht needs improved and implemented.
 
-Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well
+Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration should all be implemented as well and Update Features.md
  -->
 
-<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well -->
+<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well and Update Features.md -->
+
+<!-- Dont foget to make sure backend API, supabase tables, gemini API calls, backend tests are all integrated properly with this changes and Update Features.md -->
 
 <!-- Did you forget anyhitng to implement? -->
 
@@ -32,9 +28,6 @@ ASAP:
 25. Demo of the whole app
 32. Make it easy to add supersets
 37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
-48. I hope they add more exercises especially unilateral and mobility exercises.
-49. It keeps my workouts fresh by changing some of the exercises each week and they aren't disruptive changes, same muscle group different exercise. For me...definitely worth the subscription.
-50. I've been using this for about 2 months now, and it works great. I love that I can modify the weights, reps, sets, and have it give me drop sets or supersets. it also has a great list of exercises that give instructions and videos of how to do the exercises. I do have a couple complaints, though. It will calculate your estimate 1RM, but I would like for it to give the option to work out at a percentage of your 1RM; so, if I only wanted to do 70% of my max, I'd like for it to let me.
 51. Only one I could tell is that it doesn't allow you to make your own exercise; i.e. a combo dumbbell bench press & chest fly.
 52. Suggest Recipes based on food, culture, body type and diet.
 53. Add mood based workout - like might have to add how does your mood feel today and the user selects and option and then a pop up would show up do you want to work it out, like if the user is angry, then it would generate a workout for anger etc.

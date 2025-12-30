@@ -10,3 +10,4 @@ export 'library_quick_access_card.dart';
 export 'exercise_image_thumbnail.dart';
 export 'upcoming_features_card.dart';
 export 'home_readiness_card.dart';
+export 'week_changes_card.dart';

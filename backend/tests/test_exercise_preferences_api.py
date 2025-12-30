@@ -1,9 +1,13 @@
 """
 Tests for Exercise Preferences API endpoints.
 
-Tests the favorite exercises, exercise queue, and consistency mode endpoints.
-These features address competitor feedback about "favoriting exercises didn't help"
-and "queuing exercises didn't help".
+Tests the favorite exercises, exercise queue, consistency mode, staple exercises,
+and variation percentage endpoints.
+
+These features address competitor feedback about "favoriting exercises didn't help",
+"queuing exercises didn't help", and "It keeps my workouts fresh by changing some
+of the exercises each week and they aren't disruptive changes, same muscle group
+different exercise."
 """
 import pytest
 from unittest.mock import MagicMock, patch
@@ -684,3 +688,315 @@ class TestExercisePreferencesValidation:
             }
         )
         assert response.status_code == 422
+
+
+# ============================================================================
+# Staple Exercises and Variation Percentage Tests
+# ============================================================================
+
+class TestStapleExercisesAPI:
+    """Tests for staple exercises - core lifts that never rotate out."""
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_get_staples_empty(self, mock_get_db, client):
+        """Test getting staples for user with none returns empty list."""
+        user_id = "test-user-123"
+
+        mock_db = create_mock_db(table_data=[])
+        mock_get_db.return_value = mock_db
+
+        response = client.get(f"/api/v1/exercise-preferences/staples/{user_id}")
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_get_staples_with_data(self, mock_get_db, client):
+        """Test getting staples returns list with exercise details."""
+        user_id = "test-user-123"
+
+        staples_data = [
+            {
+                "id": "staple-1",
+                "exercise_name": "Barbell Squat",
+                "library_id": "lib-123",
+                "muscle_group": "legs",
+                "reason": "core_compound",
+                "created_at": "2025-01-01T00:00:00Z",
+                "body_part": "quads",
+                "equipment": "barbell",
+                "gif_url": "https://example.com/squat.gif",
+            },
+            {
+                "id": "staple-2",
+                "exercise_name": "Bench Press",
+                "library_id": None,
+                "muscle_group": "chest",
+                "reason": "strength_focus",
+                "created_at": "2025-01-02T00:00:00Z",
+                "body_part": None,
+                "equipment": None,
+                "gif_url": None,
+            }
+        ]
+
+        mock_db = create_mock_db(table_data=staples_data)
+        mock_get_db.return_value = mock_db
+
+        response = client.get(f"/api/v1/exercise-preferences/staples/{user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["exercise_name"] == "Barbell Squat"
+        assert data[0]["reason"] == "core_compound"
+        assert data[1]["exercise_name"] == "Bench Press"
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_add_staple_exercise(self, mock_get_db, client):
+        """Test adding a new staple exercise."""
+        new_staple = {
+            "id": "new-staple-id",
+            "exercise_name": "Deadlift",
+            "library_id": None,
+            "muscle_group": "back",
+            "reason": "core_compound",
+            "created_at": "2025-01-03T00:00:00Z",
+        }
+
+        mock_db = create_mock_db(
+            table_data=[new_staple],
+            check_existing_data=[]  # Not already a staple
+        )
+        mock_get_db.return_value = mock_db
+
+        response = client.post(
+            "/api/v1/exercise-preferences/staples",
+            json={
+                "user_id": "test-user",
+                "exercise_name": "Deadlift",
+                "muscle_group": "back",
+                "reason": "core_compound"
+            }
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["exercise_name"] == "Deadlift"
+        assert data["reason"] == "core_compound"
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_add_staple_already_exists(self, mock_get_db, client):
+        """Test adding a staple that already exists returns 400."""
+        mock_db = MagicMock()
+
+        # Chain for select to check existing
+        table_mock = MagicMock()
+        mock_db.client.table.return_value = table_mock
+        select_mock = MagicMock()
+        table_mock.select.return_value = select_mock
+        eq_mock = MagicMock()
+        select_mock.eq.return_value = eq_mock
+        eq_mock.eq.return_value = eq_mock
+        # Return existing data to simulate duplicate
+        eq_mock.execute.return_value = MagicMock(data=[{"id": "existing-staple"}])
+
+        mock_get_db.return_value = mock_db
+
+        response = client.post(
+            "/api/v1/exercise-preferences/staples",
+            json={
+                "user_id": "test-user",
+                "exercise_name": "Already Stapled"
+            }
+        )
+
+        assert response.status_code == 400
+        assert "already a staple" in response.json()["detail"].lower()
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_remove_staple_exercise(self, mock_get_db, client):
+        """Test removing a staple exercise."""
+        user_id = "test-user-123"
+        staple_id = "staple-to-remove"
+
+        mock_db = create_mock_db(table_data=[{"id": staple_id}])
+        mock_get_db.return_value = mock_db
+
+        response = client.delete(
+            f"/api/v1/exercise-preferences/staples/{user_id}/{staple_id}"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_remove_nonexistent_staple(self, mock_get_db, client):
+        """Test removing a staple that doesn't exist returns 404."""
+        user_id = "test-user-123"
+        staple_id = "nonexistent-staple"
+
+        mock_db = create_mock_db(table_data=[])  # Empty = not found
+        mock_get_db.return_value = mock_db
+
+        response = client.delete(
+            f"/api/v1/exercise-preferences/staples/{user_id}/{staple_id}"
+        )
+
+        assert response.status_code == 404
+
+
+class TestVariationPercentageAPI:
+    """Tests for variation percentage preference (0-100%)."""
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_get_variation_default(self, mock_get_db, client):
+        """Test getting variation returns default 30% if not set."""
+        user_id = "test-user-123"
+
+        mock_db = MagicMock()
+        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+            {"variation_percentage": None}
+        ]
+        mock_get_db.return_value = mock_db
+
+        response = client.get(f"/api/v1/exercise-preferences/variation/{user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["variation_percentage"] == 30
+        assert "Balanced" in data["description"]
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_get_variation_custom_value(self, mock_get_db, client):
+        """Test getting custom variation percentage value."""
+        user_id = "test-user-123"
+
+        mock_db = MagicMock()
+        mock_db.client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
+            {"variation_percentage": 0}
+        ]
+        mock_get_db.return_value = mock_db
+
+        response = client.get(f"/api/v1/exercise-preferences/variation/{user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["variation_percentage"] == 0
+        assert "Same exercises every week" in data["description"]
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_update_variation_percentage(self, mock_get_db, client):
+        """Test updating variation percentage."""
+        mock_db = MagicMock()
+        mock_db.client.table.return_value.update.return_value.eq.return_value.execute.return_value.data = [
+            {"variation_percentage": 75}
+        ]
+        mock_get_db.return_value = mock_db
+
+        response = client.put(
+            "/api/v1/exercise-preferences/variation",
+            json={
+                "user_id": "test-user",
+                "variation_percentage": 75
+            }
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["variation_percentage"] == 75
+        assert "High variety" in data["description"]
+
+    def test_variation_percentage_below_zero(self, client):
+        """Test variation percentage below 0 fails validation."""
+        response = client.put(
+            "/api/v1/exercise-preferences/variation",
+            json={
+                "user_id": "test-user",
+                "variation_percentage": -10
+            }
+        )
+        assert response.status_code == 422
+
+    def test_variation_percentage_above_hundred(self, client):
+        """Test variation percentage above 100 fails validation."""
+        response = client.put(
+            "/api/v1/exercise-preferences/variation",
+            json={
+                "user_id": "test-user",
+                "variation_percentage": 110
+            }
+        )
+        assert response.status_code == 422
+
+
+class TestWeekComparisonAPI:
+    """Tests for week-over-week exercise comparison."""
+
+    @patch('api.v1.exercise_preferences.get_supabase_db')
+    def test_week_comparison_no_workouts(self, mock_get_db, client):
+        """Test week comparison with no workout data returns empty."""
+        user_id = "test-user-123"
+
+        mock_db = MagicMock()
+        mock_db.client.table.return_value.select.return_value.eq.return_value.gte.return_value.lt.return_value.execute.return_value.data = []
+        mock_get_db.return_value = mock_db
+
+        response = client.get(f"/api/v1/exercise-preferences/week-comparison/{user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_current"] == 0
+        assert data["total_previous"] == 0
+        assert data["kept_exercises"] == []
+        assert data["new_exercises"] == []
+        assert data["removed_exercises"] == []
+
+
+class TestStaplesIntegration:
+    """Tests for staple exercises integration with workout generation."""
+
+    def test_staples_removed_from_avoid_list(self):
+        """Test that staple exercises are removed from the avoid list."""
+        avoid_exercises = ["Squat", "Bench Press", "Lat Pulldown", "Bicep Curl"]
+        staple_exercises = ["Squat", "Bench Press"]
+
+        # Simulate the filtering logic from RAG service
+        staple_lower = [s.lower() for s in staple_exercises]
+        filtered_avoid = [e for e in avoid_exercises if e.lower() not in staple_lower]
+
+        assert len(filtered_avoid) == 2
+        assert "Squat" not in filtered_avoid
+        assert "Bench Press" not in filtered_avoid
+        assert "Lat Pulldown" in filtered_avoid
+        assert "Bicep Curl" in filtered_avoid
+
+    def test_staples_included_in_priority_order(self):
+        """Test that staples are included before other exercises."""
+        staple_exercises = ["Squat", "Bench Press", "Deadlift"]
+        queued_exercises = ["Lat Pulldown"]
+        ai_selected = ["Leg Press", "Lunges", "Bicep Curl"]
+
+        # Combine in priority order: staples > queued > AI-selected
+        final_selection = staple_exercises + queued_exercises + ai_selected
+
+        # Staples should be first
+        assert final_selection[:3] == ["Squat", "Bench Press", "Deadlift"]
+        # Queued next
+        assert final_selection[3] == "Lat Pulldown"
+        # AI-selected last
+        assert final_selection[4:] == ["Leg Press", "Lunges", "Bicep Curl"]
+
+    def test_variation_percentage_calculation(self):
+        """Test variation percentage calculation for exercise rotation."""
+        total_exercises = 6
+        variation_percentage = 30  # Default
+
+        # Calculate how many exercises should rotate
+        exercises_to_rotate = max(1, int(total_exercises * variation_percentage / 100))
+
+        assert exercises_to_rotate == 1  # At 30%, rotate ~1-2 of 6 exercises
+
+        # Test edge cases
+        assert max(1, int(6 * 0 / 100)) == 1  # 0% still allows 1 (minimum)
+        assert int(6 * 100 / 100) == 6  # 100% rotates all

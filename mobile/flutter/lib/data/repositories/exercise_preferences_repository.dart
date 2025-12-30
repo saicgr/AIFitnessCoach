@@ -39,6 +39,117 @@ class FavoriteExercise {
   };
 }
 
+/// Model for a staple exercise (never rotated out)
+class StapleExercise {
+  final String id;
+  final String exerciseName;
+  final String? libraryId;
+  final String? muscleGroup;
+  final String? reason;
+  final DateTime createdAt;
+  final String? bodyPart;
+  final String? equipment;
+  final String? gifUrl;
+
+  const StapleExercise({
+    required this.id,
+    required this.exerciseName,
+    this.libraryId,
+    this.muscleGroup,
+    this.reason,
+    required this.createdAt,
+    this.bodyPart,
+    this.equipment,
+    this.gifUrl,
+  });
+
+  factory StapleExercise.fromJson(Map<String, dynamic> json) {
+    return StapleExercise(
+      id: json['id'] as String,
+      exerciseName: json['exercise_name'] as String,
+      libraryId: json['library_id'] as String?,
+      muscleGroup: json['muscle_group'] as String?,
+      reason: json['reason'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      bodyPart: json['body_part'] as String?,
+      equipment: json['equipment'] as String?,
+      gifUrl: json['gif_url'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'exercise_name': exerciseName,
+    'library_id': libraryId,
+    'muscle_group': muscleGroup,
+    'reason': reason,
+    'created_at': createdAt.toIso8601String(),
+  };
+}
+
+/// Model for variation preference
+class VariationPreference {
+  final int variationPercentage;
+  final String description;
+
+  const VariationPreference({
+    required this.variationPercentage,
+    required this.description,
+  });
+
+  factory VariationPreference.fromJson(Map<String, dynamic> json) {
+    return VariationPreference(
+      variationPercentage: json['variation_percentage'] as int,
+      description: json['description'] as String,
+    );
+  }
+}
+
+/// Model for week-over-week exercise comparison
+class WeekComparison {
+  final DateTime currentWeekStart;
+  final DateTime previousWeekStart;
+  final List<String> keptExercises;
+  final List<String> newExercises;
+  final List<String> removedExercises;
+  final int totalCurrent;
+  final int totalPrevious;
+  final String variationSummary;
+
+  const WeekComparison({
+    required this.currentWeekStart,
+    required this.previousWeekStart,
+    required this.keptExercises,
+    required this.newExercises,
+    required this.removedExercises,
+    required this.totalCurrent,
+    required this.totalPrevious,
+    required this.variationSummary,
+  });
+
+  factory WeekComparison.fromJson(Map<String, dynamic> json) {
+    return WeekComparison(
+      currentWeekStart: DateTime.parse(json['current_week_start'] as String),
+      previousWeekStart: DateTime.parse(json['previous_week_start'] as String),
+      keptExercises: (json['kept_exercises'] as List<dynamic>).cast<String>(),
+      newExercises: (json['new_exercises'] as List<dynamic>).cast<String>(),
+      removedExercises: (json['removed_exercises'] as List<dynamic>).cast<String>(),
+      totalCurrent: json['total_current'] as int,
+      totalPrevious: json['total_previous'] as int,
+      variationSummary: json['variation_summary'] as String,
+    );
+  }
+
+  /// Check if there are any changes this week
+  bool get hasChanges => newExercises.isNotEmpty || removedExercises.isNotEmpty;
+
+  /// Get percentage of exercises that changed
+  double get changePercentage {
+    if (totalPrevious == 0) return 0.0;
+    return (newExercises.length / totalPrevious) * 100;
+  }
+}
+
 /// Model for a queued exercise
 class QueuedExercise {
   final String id;
@@ -382,6 +493,184 @@ class ExercisePreferencesRepository {
       debugPrint('❌ [ExercisePrefs] Error setting consistency mode: $e');
       debugPrint('Stack trace: $stackTrace');
       rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Staple Exercises (Core lifts that never rotate)
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get all staple exercises for a user
+  Future<List<StapleExercise>> getStapleExercises(String userId) async {
+    debugPrint('🔒 [ExercisePrefs] Fetching staple exercises for user: $userId');
+
+    try {
+      final response = await _apiClient.get<List<dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples/$userId',
+      );
+
+      if (response.data != null) {
+        final staples = response.data!
+            .map((json) => StapleExercise.fromJson(json as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [ExercisePrefs] Found ${staples.length} staple exercises');
+        return staples;
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching staples: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Add an exercise to staples
+  Future<StapleExercise> addStapleExercise(
+    String userId,
+    String exerciseName, {
+    String? libraryId,
+    String? muscleGroup,
+    String? reason,
+  }) async {
+    debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
+
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples',
+        data: {
+          'user_id': userId,
+          'exercise_name': exerciseName,
+          if (libraryId != null) 'library_id': libraryId,
+          if (muscleGroup != null) 'muscle_group': muscleGroup,
+          if (reason != null) 'reason': reason,
+        },
+      );
+
+      if (response.data != null) {
+        final staple = StapleExercise.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Added staple: ${staple.exerciseName}');
+        return staple;
+      }
+
+      throw Exception('Failed to add staple exercise');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error adding staple: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Remove an exercise from staples
+  Future<void> removeStapleExercise(String userId, String stapleId) async {
+    debugPrint('🔒 [ExercisePrefs] Removing staple: $stapleId for user: $userId');
+
+    try {
+      await _apiClient.delete(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples/$userId/$stapleId',
+      );
+      debugPrint('✅ [ExercisePrefs] Removed staple: $stapleId');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error removing staple: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Check if an exercise is a staple
+  Future<bool> isStaple(String userId, String exerciseName) async {
+    try {
+      final staples = await getStapleExercises(userId);
+      return staples.any((s) => s.exerciseName.toLowerCase() == exerciseName.toLowerCase());
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Variation Percentage
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get user's variation percentage preference
+  Future<VariationPreference> getVariationPreference(String userId) async {
+    debugPrint('🔄 [ExercisePrefs] Fetching variation preference for user: $userId');
+
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/variation/$userId',
+      );
+
+      if (response.data != null) {
+        final pref = VariationPreference.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Variation: ${pref.variationPercentage}% - ${pref.description}');
+        return pref;
+      }
+
+      return const VariationPreference(
+        variationPercentage: 30,
+        description: 'Balanced variety',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching variation: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return const VariationPreference(
+        variationPercentage: 30,
+        description: 'Balanced variety',
+      );
+    }
+  }
+
+  /// Set user's variation percentage preference
+  Future<VariationPreference> setVariationPreference(String userId, int percentage) async {
+    debugPrint('🔄 [ExercisePrefs] Setting variation to: $percentage% for user: $userId');
+
+    try {
+      final response = await _apiClient.put<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/variation',
+        data: {
+          'user_id': userId,
+          'variation_percentage': percentage,
+        },
+      );
+
+      if (response.data != null) {
+        final pref = VariationPreference.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Updated variation to: ${pref.variationPercentage}%');
+        return pref;
+      }
+
+      throw Exception('Failed to update variation preference');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error setting variation: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Week-over-Week Comparison
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get week-over-week exercise comparison
+  Future<WeekComparison?> getWeekComparison(String userId) async {
+    debugPrint('📊 [ExercisePrefs] Fetching week comparison for user: $userId');
+
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/week-comparison/$userId',
+      );
+
+      if (response.data != null) {
+        final comparison = WeekComparison.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Week comparison: ${comparison.variationSummary}');
+        return comparison;
+      }
+
+      return null;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching week comparison: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
     }
   }
 }

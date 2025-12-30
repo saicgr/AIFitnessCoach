@@ -3260,30 +3260,69 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                       final completedSetsCount = _completedSets[index]?.length ?? 0;
                       final totalSets = _totalSetsPerExercise[index] ?? exercise.sets ?? 3;
 
+                      // Check if this is a superset pair
+                      final isFirstInSuperset = exercise.isSupersetFirst;
+                      final isSecondInSuperset = exercise.isSupersetSecond;
+                      final showSupersetConnector = isFirstInSuperset &&
+                          index + 1 < _exercises.length &&
+                          _exercises[index + 1].supersetGroup == exercise.supersetGroup;
+
                       return Container(
                         key: ValueKey('exercise_$index'),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pop(context);
-                              _makeExerciseActive(index);
-                            },
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: isCurrent
-                                    ? AppColors.cyan.withOpacity(0.1)
-                                    : AppColors.elevated,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isCurrent
-                                      ? AppColors.cyan.withOpacity(0.5)
-                                      : AppColors.cardBorder,
+                        margin: EdgeInsets.only(bottom: showSupersetConnector ? 0 : 12),
+                        child: Column(
+                          children: [
+                            // Superset header for first exercise in pair
+                            if (isFirstInSuperset)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.purple.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.link, size: 12, color: AppColors.purple),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'SUPERSET ${exercise.supersetGroup}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.purple,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _makeExerciseActive(index);
+                                },
+                                borderRadius: BorderRadius.circular(14),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: isCurrent
+                                        ? AppColors.cyan.withOpacity(0.1)
+                                        : exercise.isInSuperset
+                                            ? AppColors.purple.withOpacity(0.05)
+                                            : AppColors.elevated,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isCurrent
+                                          ? AppColors.cyan.withOpacity(0.5)
+                                          : exercise.isInSuperset
+                                              ? AppColors.purple.withOpacity(0.3)
+                                              : AppColors.cardBorder,
+                                    ),
+                                  ),
                               child: Row(
                                 children: [
                                   // Drag handle
@@ -3332,19 +3371,77 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          exercise.name,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textPrimary,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                exercise.name,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            // Superset badge
+                                            if (exercise.isInSuperset) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.purple.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.link, size: 10, color: AppColors.purple),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      'SS${exercise.supersetGroup}',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: AppColors.purple,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            // Drop set badge
+                                            if (exercise.hasDropSets) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.orange.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.trending_down, size: 10, color: AppColors.orange),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      'DROP',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: AppColors.orange,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '$totalSets sets × ${exercise.reps ?? 10} reps',
+                                          '$totalSets sets × ${exercise.reps ?? 10} reps${exercise.hasDropSets ? ' + ${exercise.dropSetCount} drops' : ''}',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: AppColors.textMuted.withOpacity(0.8),
@@ -3401,6 +3498,35 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             ),
                           ),
                         ),
+                        // Superset connector line between paired exercises
+                        if (showSupersetConnector)
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 48),
+                                Container(
+                                  width: 2,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.purple.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'No rest',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.italic,
+                                    color: AppColors.purple.withOpacity(0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                       );
                     },
                   ),

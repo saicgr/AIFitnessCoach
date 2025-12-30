@@ -59,13 +59,27 @@ enum RateOfChange {
 
 /// Diet type options
 enum DietType {
+  // No restrictions
+  noDiet('no_diet', 'I Eat Everything', 45, 25, 30),
+
+  // Macro-focused diets
   balanced('balanced', 'Balanced', 45, 25, 30),
   lowCarb('low_carb', 'Low Carb', 25, 35, 40),
   keto('keto', 'Keto', 5, 25, 70),
   highProtein('high_protein', 'High Protein', 35, 40, 25),
-  vegetarian('vegetarian', 'Vegetarian', 50, 20, 30),
-  vegan('vegan', 'Vegan', 55, 20, 25),
   mediterranean('mediterranean', 'Mediterranean', 45, 20, 35),
+
+  // Plant-based diets (strict to flexible)
+  vegan('vegan', 'Vegan', 55, 20, 25),
+  vegetarian('vegetarian', 'Vegetarian', 50, 20, 30),
+  lactoOvo('lacto_ovo', 'Lacto-Ovo Vegetarian', 50, 22, 28),
+  pescatarian('pescatarian', 'Pescatarian', 45, 25, 30),
+
+  // Flexible/part-time diets
+  flexitarian('flexitarian', 'Flexitarian', 45, 25, 30),
+  partTimeVeg('part_time_veg', 'Part-Time Vegetarian', 50, 20, 30),
+
+  // Custom
   custom('custom', 'Custom', 0, 0, 0);
 
   final String value;
@@ -94,9 +108,14 @@ enum DietType {
 enum MealPattern {
   threeMeals('3_meals', '3 Meals', 3),
   threeMealsSnacks('3_meals_snacks', '3 Meals + Snacks', 5),
+  twoMeals('2_meals', '2 Meals', 2),
+  omad('omad', 'One Meal a Day (OMAD)', 1),
   if168('if_16_8', 'Intermittent Fasting (16:8)', 2),
   if186('if_18_6', 'Intermittent Fasting (18:6)', 2),
-  smallMeals('5_6_small_meals', '5-6 Small Meals', 6);
+  if204('if_20_4', 'Intermittent Fasting (20:4)', 1),
+  smallMeals('5_6_small_meals', '5-6 Small Meals', 6),
+  religiousFasting('religious_fasting', 'Religious/Traditional Fasting', 3),
+  custom('custom', 'Custom Schedule', 3);
 
   final String value;
   final String displayName;

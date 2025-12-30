@@ -720,3 +720,227 @@ async def mark_queued_exercises_used(user_id: str, exercise_names: List[str]):
 
     except Exception as e:
         logger.warning(f"Could not mark queued exercises as used: {e}")
+
+
+async def get_user_staple_exercises(user_id: str) -> List[str]:
+    """
+    Get user's staple exercise names from the database.
+
+    Staple exercises are core lifts that should NEVER be rotated out during
+    weekly workout variation. Examples: Squat, Bench Press, Deadlift.
+
+    Returns:
+        List of exercise names the user has marked as staples.
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("staple_exercises").select(
+            "exercise_name"
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            return []
+
+        staples = [row["exercise_name"] for row in result.data]
+        logger.info(f"Found {len(staples)} staple exercises for user {user_id}")
+        return staples
+
+    except Exception as e:
+        # Table might not exist yet - this is fine
+        logger.debug(f"Could not get staple exercises (table may not exist): {e}")
+        return []
+
+
+async def get_user_variation_percentage(user_id: str) -> int:
+    """
+    Get user's exercise variation percentage setting.
+
+    Controls how much exercises change week-to-week:
+    - 0% = Same exercises every week (maximum consistency)
+    - 30% = Default - rotate about 1/3 of exercises (balanced)
+    - 100% = Maximum variety - new exercises every week
+
+    Note: Staple exercises are never affected by this setting.
+
+    Returns:
+        Variation percentage (0-100), defaults to 30.
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("users").select(
+            "variation_percentage"
+        ).eq("id", user_id).execute()
+
+        if not result.data:
+            return 30  # Default
+
+        percentage = result.data[0].get("variation_percentage", 30)
+
+        # Validate range
+        if percentage is None or percentage < 0:
+            percentage = 30
+        elif percentage > 100:
+            percentage = 100
+
+        logger.debug(f"User {user_id} variation_percentage: {percentage}%")
+        return percentage
+
+    except Exception as e:
+        logger.error(f"Error getting variation percentage: {e}")
+        return 30  # Default on error
+
+
+async def get_user_1rm_data(user_id: str) -> dict:
+    """
+    Get user's stored 1RMs for percentage-based training.
+
+    This data is used to calculate working weights at the user's
+    preferred training intensity (e.g., 70% of 1RM).
+
+    Returns:
+        Dict mapping exercise names (lowercase) to 1RM data:
+        {
+            "bench press": {"one_rep_max_kg": 100.0, "source": "manual", "confidence": 1.0},
+            "squat": {"one_rep_max_kg": 140.0, "source": "calculated", "confidence": 0.85},
+        }
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("user_exercise_1rms").select(
+            "exercise_name, one_rep_max_kg, source, confidence"
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            return {}
+
+        one_rm_data = {}
+        for row in result.data:
+            exercise_name = row.get("exercise_name", "").lower()
+            if exercise_name:
+                one_rm_data[exercise_name] = {
+                    "one_rep_max_kg": float(row.get("one_rep_max_kg", 0)),
+                    "source": row.get("source", "manual"),
+                    "confidence": float(row.get("confidence", 1.0)),
+                }
+
+        logger.info(f"Loaded {len(one_rm_data)} 1RMs for user {user_id}")
+        return one_rm_data
+
+    except Exception as e:
+        # Table might not exist yet
+        logger.debug(f"Could not get user 1RMs (table may not exist): {e}")
+        return {}
+
+
+async def get_user_training_intensity(user_id: str) -> int:
+    """
+    Get user's global training intensity preference.
+
+    This is the percentage of 1RM the user wants to train at.
+    Values range from 50 (light/recovery) to 100 (max effort).
+
+    Returns:
+        Training intensity percentage (50-100), defaults to 75.
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("users").select(
+            "training_intensity_percent"
+        ).eq("id", user_id).execute()
+
+        if not result.data:
+            return 75  # Default
+
+        intensity = result.data[0].get("training_intensity_percent", 75)
+
+        # Validate range
+        if intensity is None or intensity < 50:
+            intensity = 75
+        elif intensity > 100:
+            intensity = 100
+
+        logger.debug(f"User {user_id} training_intensity: {intensity}%")
+        return intensity
+
+    except Exception as e:
+        logger.debug(f"Error getting training intensity: {e}")
+        return 75  # Default
+
+
+async def get_user_intensity_overrides(user_id: str) -> dict:
+    """
+    Get user's per-exercise intensity overrides.
+
+    Returns:
+        Dict mapping exercise names (lowercase) to intensity percentages:
+        {"bench press": 85, "squat": 70}
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("exercise_intensity_overrides").select(
+            "exercise_name, intensity_percent"
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            return {}
+
+        overrides = {}
+        for row in result.data:
+            exercise_name = row.get("exercise_name", "").lower()
+            if exercise_name:
+                overrides[exercise_name] = row.get("intensity_percent", 75)
+
+        logger.debug(f"User {user_id} has {len(overrides)} intensity overrides")
+        return overrides
+
+    except Exception as e:
+        logger.debug(f"Could not get intensity overrides: {e}")
+        return {}
+
+
+def calculate_working_weight_from_1rm(
+    one_rep_max_kg: float,
+    intensity_percent: int,
+    equipment_type: str = 'barbell',
+) -> float:
+    """
+    Calculate working weight from 1RM and intensity percentage.
+
+    Args:
+        one_rep_max_kg: User's 1RM for the exercise
+        intensity_percent: Desired training intensity (50-100)
+        equipment_type: Type of equipment for rounding
+
+    Returns:
+        Working weight rounded to equipment increment
+    """
+    # Equipment-based weight increments for rounding
+    WEIGHT_INCREMENTS = {
+        'barbell': 2.5,
+        'dumbbell': 2.0,
+        'machine': 5.0,
+        'cable': 2.5,
+        'kettlebell': 4.0,
+        'bodyweight': 0,
+    }
+
+    if intensity_percent < 50:
+        intensity_percent = 50
+    elif intensity_percent > 100:
+        intensity_percent = 100
+
+    raw_weight = one_rep_max_kg * (intensity_percent / 100)
+
+    # Round to equipment increment
+    increment = WEIGHT_INCREMENTS.get(equipment_type, 2.5)
+    if increment > 0:
+        rounded_weight = round(raw_weight / increment) * increment
+    else:
+        rounded_weight = raw_weight
+
+    return round(rounded_weight, 1)

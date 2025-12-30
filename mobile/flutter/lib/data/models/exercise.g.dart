@@ -33,6 +33,13 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       weightSource: json['weight_source'] as String?,
       isFavorite: json['is_favorite'] as bool?,
       fromQueue: json['from_queue'] as bool?,
+      holdSeconds: (json['hold_seconds'] as num?)?.toInt(),
+      isUnilateral: json['is_unilateral'] as bool?,
+      supersetGroup: (json['superset_group'] as num?)?.toInt(),
+      supersetOrder: (json['superset_order'] as num?)?.toInt(),
+      isDropSet: json['is_drop_set'] as bool?,
+      dropSetCount: (json['drop_set_count'] as num?)?.toInt(),
+      dropSetPercentage: (json['drop_set_percentage'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -62,6 +69,13 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'weight_source': instance.weightSource,
       'is_favorite': instance.isFavorite,
       'from_queue': instance.fromQueue,
+      'hold_seconds': instance.holdSeconds,
+      'is_unilateral': instance.isUnilateral,
+      'superset_group': instance.supersetGroup,
+      'superset_order': instance.supersetOrder,
+      'is_drop_set': instance.isDropSet,
+      'drop_set_count': instance.dropSetCount,
+      'drop_set_percentage': instance.dropSetPercentage,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>

@@ -42,6 +42,7 @@ class AdaptiveWorkoutService:
             "description": "Moderate weight, higher reps for muscle growth",
             "allow_supersets": True,   # Supersets work great for hypertrophy
             "allow_amrap": True,       # AMRAP finishers for extra pump
+            "allow_drop_sets": True,   # Drop sets are excellent for hypertrophy
         },
         "endurance": {
             "sets": (2, 3),      # 2-3 sets
@@ -51,6 +52,7 @@ class AdaptiveWorkoutService:
             "description": "Lower weight, high reps for muscular endurance",
             "allow_supersets": True,   # Supersets keep heart rate up
             "allow_amrap": True,
+            "allow_drop_sets": True,   # Drop sets work well for endurance
         },
         "power": {
             "sets": (5, 6),      # 5-6 sets
@@ -800,6 +802,143 @@ class AdaptiveWorkoutService:
             "equipment": "Bodyweight",
             "notes": "AMRAP - As Many Reps As Possible in 60 seconds. Push yourself!",
         }
+
+    def should_use_drop_sets(
+        self,
+        workout_focus: str,
+        user_fitness_level: str,
+    ) -> bool:
+        """
+        Determine if drop sets should be used in this workout.
+
+        Drop sets are good for:
+        - Hypertrophy workouts (muscle building)
+        - Endurance workouts (muscular endurance)
+        - Intermediate and advanced users
+
+        Args:
+            workout_focus: The type of workout
+            user_fitness_level: User's fitness level
+
+        Returns:
+            True if drop sets should be included
+        """
+        structure = self.WORKOUT_STRUCTURES.get(workout_focus, self.WORKOUT_STRUCTURES["hypertrophy"])
+
+        if not structure.get("allow_drop_sets", False):
+            return False
+
+        # Only for intermediate and advanced users
+        # Beginners should focus on form and consistent technique first
+        return user_fitness_level in ["intermediate", "advanced"]
+
+    def add_drop_sets_to_exercise(
+        self,
+        exercise: Dict[str, Any],
+        drop_set_count: int = 2,
+        drop_percentage: int = 20,
+    ) -> Dict[str, Any]:
+        """
+        Configure an exercise to use drop sets.
+
+        Drop sets involve:
+        - Performing a set to near failure
+        - Immediately reducing weight by a percentage
+        - Continuing without rest for additional reps
+
+        Args:
+            exercise: The exercise dict to modify
+            drop_set_count: Number of drop sets (typically 2-3)
+            drop_percentage: Percentage to reduce weight each drop (typically 20-25%)
+
+        Returns:
+            Modified exercise dict with drop set configuration
+        """
+        exercise_copy = exercise.copy()
+        exercise_copy["is_drop_set"] = True
+        exercise_copy["drop_set_count"] = drop_set_count
+        exercise_copy["drop_set_percentage"] = drop_percentage
+        exercise_copy["notes"] = (
+            f"Drop Set: Complete main set, then immediately reduce weight by {drop_percentage}% "
+            f"and continue for {drop_set_count} more drops. No rest between drops."
+        )
+        return exercise_copy
+
+    def apply_drop_sets_to_workout(
+        self,
+        exercises: List[Dict[str, Any]],
+        workout_focus: str,
+        user_fitness_level: str,
+        max_drop_set_exercises: int = 2,
+    ) -> List[Dict[str, Any]]:
+        """
+        Apply drop sets to suitable exercises in a workout.
+
+        Best exercises for drop sets:
+        - Isolation exercises (curls, extensions, flyes)
+        - Machine exercises (easy to change weight)
+        - Cable exercises
+
+        Exercises to avoid for drop sets:
+        - Compound barbell exercises (squats, deadlifts)
+        - Power movements
+        - Exercises requiring spotters
+
+        Args:
+            exercises: List of exercises in the workout
+            workout_focus: Type of workout
+            user_fitness_level: User's fitness level
+            max_drop_set_exercises: Maximum number of exercises to apply drop sets to
+
+        Returns:
+            Modified exercise list with drop sets applied where appropriate
+        """
+        if not self.should_use_drop_sets(workout_focus, user_fitness_level):
+            return exercises
+
+        # Exercise types good for drop sets
+        good_for_drop_sets = {
+            "machine", "cable", "dumbbell", "isolation",
+            "curl", "extension", "fly", "raise", "pushdown",
+            "pulldown", "row"  # Machine rows are fine
+        }
+
+        # Exercise types to avoid for drop sets
+        avoid_drop_sets = {
+            "barbell squat", "deadlift", "bench press", "overhead press",
+            "clean", "snatch", "jerk", "power", "explosive"
+        }
+
+        result = []
+        drop_set_count = 0
+
+        for exercise in exercises:
+            exercise_copy = exercise.copy()
+            name_lower = exercise.get("name", "").lower()
+            equipment_lower = exercise.get("equipment", "").lower()
+
+            # Check if this exercise is suitable for drop sets
+            is_suitable = False
+            if drop_set_count < max_drop_set_exercises:
+                # Check if it's a good candidate
+                for keyword in good_for_drop_sets:
+                    if keyword in name_lower or keyword in equipment_lower:
+                        is_suitable = True
+                        break
+
+                # Check if it should be avoided
+                for keyword in avoid_drop_sets:
+                    if keyword in name_lower:
+                        is_suitable = False
+                        break
+
+            if is_suitable:
+                exercise_copy = self.add_drop_sets_to_exercise(exercise_copy)
+                drop_set_count += 1
+
+            result.append(exercise_copy)
+
+        return result
 
 
 # Singleton instance for easy import

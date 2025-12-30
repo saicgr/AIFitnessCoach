@@ -63,7 +63,9 @@ enum ProgressionPace {
 enum WorkoutType {
   strength,
   cardio,
-  mixed;
+  mixed,
+  mobility,
+  recovery;
 
   String get displayName {
     switch (this) {
@@ -73,6 +75,10 @@ enum WorkoutType {
         return 'Cardio';
       case WorkoutType.mixed:
         return 'Mixed';
+      case WorkoutType.mobility:
+        return 'Mobility';
+      case WorkoutType.recovery:
+        return 'Recovery';
     }
   }
 
@@ -84,6 +90,10 @@ enum WorkoutType {
         return 'Running, cycling, HIIT';
       case WorkoutType.mixed:
         return 'Strength + cardio days';
+      case WorkoutType.mobility:
+        return 'Stretching, yoga, flexibility';
+      case WorkoutType.recovery:
+        return 'Light movement, active rest';
     }
   }
 
@@ -95,6 +105,10 @@ enum WorkoutType {
         return WorkoutType.cardio;
       case 'mixed':
         return WorkoutType.mixed;
+      case 'mobility':
+        return WorkoutType.mobility;
+      case 'recovery':
+        return WorkoutType.recovery;
       case 'strength':
       default:
         return WorkoutType.strength;

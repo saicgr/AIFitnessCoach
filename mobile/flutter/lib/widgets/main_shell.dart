@@ -142,6 +142,11 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     const itemPadding = 4.0; // 8px grid compliant padding
     final itemHeight = navBarHeight - (itemPadding * 2); // 40
 
+    // Calculate available width for nav bar (screen width - padding - AI button - spacing)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final availableNavBarWidth = screenWidth - 32 - 44 - 8; // 32 = left+right padding, 44 = AI button, 8 = spacing
+    final navBarMaxWidth = availableNavBarWidth.clamp(0.0, 320.0); // Cap at 320 max
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -151,10 +156,11 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Nav bar
-          Container(
-            height: navBarHeight,
-            constraints: const BoxConstraints(maxWidth: 340), // Increased to accommodate 5 nav items
+          // Nav bar - flexible to avoid overflow
+          Flexible(
+            child: Container(
+              height: navBarHeight,
+              constraints: BoxConstraints(maxWidth: navBarMaxWidth),
             decoration: BoxDecoration(
               color: navBarColor,
               borderRadius: BorderRadius.circular(navBarRadius),
@@ -226,6 +232,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ],
               ),
             ),
+          ),
           ),
 
           // Spacing between nav bar and AI button

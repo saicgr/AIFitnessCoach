@@ -35,7 +35,9 @@ import '../screens/settings/settings_screen.dart';
 import '../screens/settings/help_screen.dart';
 import '../screens/settings/exercise_preferences/favorite_exercises_screen.dart';
 import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
+import '../screens/settings/exercise_preferences/staple_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
+import '../screens/settings/training/my_1rms_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
@@ -681,6 +683,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/workout-history-import',
         builder: (context, state) => const WorkoutHistoryImportScreen(),
+      ),
+
+      // Staple Exercises (Settings sub-screen)
+      GoRoute(
+        path: '/settings/staple-exercises',
+        builder: (context, state) => const StapleExercisesScreen(),
+      ),
+
+      // My 1RMs (Settings sub-screen for percentage-based training)
+      GoRoute(
+        path: '/settings/my-1rms',
+        builder: (context, state) => const My1RMsScreen(),
       ),
 
       // Help & Support

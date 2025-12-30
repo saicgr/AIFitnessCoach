@@ -7,8 +7,11 @@ import '../../../core/providers/consistency_mode_provider.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/timezone_provider.dart';
 import '../../../core/providers/training_preferences_provider.dart';
+import '../../../core/providers/variation_provider.dart';
+import '../../../core/providers/training_intensity_provider.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../equipment/environment_list_screen.dart';
 import 'setting_tile.dart';
@@ -321,6 +324,52 @@ class SettingsCard extends ConsumerWidget {
     context.push('/settings/workout-history-import');
   }
 
+  void _navigateToStapleExercises(BuildContext context) {
+    context.push('/settings/staple-exercises');
+  }
+
+  void _showVariationSlider(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentPercentage = ref.read(variationProvider).percentage;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _VariationSliderSheet(
+        initialValue: currentPercentage,
+        onSave: (value) {
+          ref.read(variationProvider.notifier).setVariation(value);
+        },
+      ),
+    );
+  }
+
+  void _navigateToMyOneRMs(BuildContext context) {
+    context.push('/settings/my-1rms');
+  }
+
+  void _showTrainingIntensitySelector(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentIntensity = ref.read(trainingIntensityProvider).globalIntensityPercent;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _TrainingIntensitySheet(
+        initialValue: currentIntensity,
+        onSave: (value) {
+          ref.read(trainingIntensityProvider.notifier).setGlobalIntensity(value);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
@@ -330,6 +379,10 @@ class SettingsCard extends ConsumerWidget {
     final consistencyModeState = ref.watch(consistencyModeProvider);
     final favoritesState = ref.watch(favoritesProvider);
     final queueState = ref.watch(exerciseQueueProvider);
+    final staplesState = ref.watch(staplesProvider);
+    final variationState = ref.watch(variationProvider);
+    final intensityState = ref.watch(trainingIntensityProvider);
+    final oneRMsState = ref.watch(userOneRMsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDarkModeActive = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
@@ -560,6 +613,86 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _navigateToWorkoutHistoryImport(context);
+          } else if (item.isStapleExercisesManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${staplesState.staples.length} exercises',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToStapleExercises(context);
+          } else if (item.isVariationSlider) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${variationState.percentage}%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showVariationSlider(context, ref);
+          } else if (item.isMyOneRMsScreen) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${oneRMsState.oneRMs.length} lifts',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToMyOneRMs(context);
+          } else if (item.isTrainingIntensitySelector) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${intensityState.globalIntensityPercent}%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showTrainingIntensitySelector(context, ref);
           } else {
             trailing = item.trailing;
           }
@@ -583,7 +716,11 @@ class SettingsCard extends ConsumerWidget {
                     !item.isConsistencyModeSelector &&
                     !item.isFavoriteExercisesManager &&
                     !item.isExerciseQueueManager &&
-                    !item.isWorkoutHistoryImport,
+                    !item.isWorkoutHistoryImport &&
+                    !item.isStapleExercisesManager &&
+                    !item.isVariationSlider &&
+                    !item.isMyOneRMsScreen &&
+                    !item.isTrainingIntensitySelector,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -905,6 +1042,10 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
         return Icons.directions_run;
       case WorkoutType.mixed:
         return Icons.sports_gymnastics;
+      case WorkoutType.mobility:
+        return Icons.self_improvement;
+      case WorkoutType.recovery:
+        return Icons.spa;
     }
   }
 
@@ -1369,6 +1510,474 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
                 color: AppColors.cyan,
                 size: 24,
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A bottom sheet for selecting variation percentage.
+class _VariationSliderSheet extends StatefulWidget {
+  final int initialValue;
+  final ValueChanged<int> onSave;
+
+  const _VariationSliderSheet({
+    required this.initialValue,
+    required this.onSave,
+  });
+
+  @override
+  State<_VariationSliderSheet> createState() => _VariationSliderSheetState();
+}
+
+class _VariationSliderSheetState extends State<_VariationSliderSheet> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue.toDouble();
+  }
+
+  String _getDescription(int percentage) {
+    if (percentage == 0) {
+      return 'Same exercises every week';
+    } else if (percentage <= 25) {
+      return 'Minimal variety - mostly consistent';
+    } else if (percentage <= 50) {
+      return 'Balanced variety';
+    } else if (percentage <= 75) {
+      return 'High variety - frequent changes';
+    } else {
+      return 'Maximum variety - new exercises each week';
+    }
+  }
+
+  String _getLabel(int percentage) {
+    if (percentage <= 20) return 'Consistent';
+    if (percentage <= 40) return 'Balanced';
+    if (percentage <= 60) return 'Varied';
+    if (percentage <= 80) return 'Fresh';
+    return 'All New';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final percentage = _value.round();
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Weekly Exercise Variety',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'How much should exercises change each week?',
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Large percentage display
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$percentage',
+                  style: TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.cyan,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    '%',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              _getLabel(percentage),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.cyan,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getDescription(percentage),
+              style: TextStyle(
+                fontSize: 13,
+                color: textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+
+            // Slider
+            Slider(
+              value: _value,
+              min: 0,
+              max: 100,
+              divisions: 20,
+              activeColor: AppColors.cyan,
+              inactiveColor: AppColors.cyan.withValues(alpha: 0.2),
+              onChanged: (value) {
+                HapticFeedback.selectionClick();
+                setState(() => _value = value);
+              },
+            ),
+
+            // Labels
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Consistent',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                  Text(
+                    'Fresh',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Info banner
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.cyan.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Staple exercises are never affected by this setting.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onSave(percentage);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A bottom sheet for selecting training intensity percentage.
+class _TrainingIntensitySheet extends StatefulWidget {
+  final int initialValue;
+  final ValueChanged<int> onSave;
+
+  const _TrainingIntensitySheet({
+    required this.initialValue,
+    required this.onSave,
+  });
+
+  @override
+  State<_TrainingIntensitySheet> createState() => _TrainingIntensitySheetState();
+}
+
+class _TrainingIntensitySheetState extends State<_TrainingIntensitySheet> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue.toDouble();
+  }
+
+  String _getLabel(int percentage) {
+    if (percentage <= 60) return 'Light';
+    if (percentage <= 70) return 'Moderate';
+    if (percentage <= 80) return 'Working';
+    if (percentage <= 90) return 'Heavy';
+    return 'Max';
+  }
+
+  String _getDescription(int percentage) {
+    if (percentage <= 60) return 'Recovery / Deload week';
+    if (percentage <= 70) return 'Endurance / Volume focus';
+    if (percentage <= 80) return 'Hypertrophy / Building muscle';
+    if (percentage <= 90) return 'Strength / Power focus';
+    return 'Near max / Peaking';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final percentage = _value.round();
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Training Intensity',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'What percentage of your 1RM do you want to train at?',
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+
+            // Large percentage display
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$percentage',
+                  style: TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.cyan,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    '%',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              _getLabel(percentage),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.cyan,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getDescription(percentage),
+              style: TextStyle(
+                fontSize: 13,
+                color: textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+
+            // Slider
+            Slider(
+              value: _value,
+              min: 50,
+              max: 100,
+              divisions: 10,
+              activeColor: AppColors.cyan,
+              inactiveColor: AppColors.cyan.withValues(alpha: 0.2),
+              onChanged: (value) {
+                HapticFeedback.selectionClick();
+                setState(() => _value = value);
+              },
+            ),
+
+            // Labels
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '50%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                  Text(
+                    '75%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                  Text(
+                    '100%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Info banner
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.cyan.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'This applies to exercises where you have logged a 1RM.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onSave(percentage);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -826,6 +826,67 @@ STRUCTURE SUGGESTION:
 - Start with compound strength movement
 - Follow with cardio burst (30-45 seconds)
 - Repeat pattern for full workout"""
+        elif workout_type == "mobility":
+            workout_type_instruction = """
+
+🧘 MOBILITY WORKOUT TYPE:
+This is a MOBILITY/FLEXIBILITY-focused workout. You MUST:
+1. Focus on stretching, yoga poses, and mobility drills
+2. Use hold_seconds for static stretches (typically 30-60 seconds)
+3. Include dynamic mobility movements with controlled tempo
+4. Emphasize joint range of motion and flexibility
+5. Keep rest minimal (15-30 seconds) - these are low-intensity movements
+6. Include unilateral (single-side) exercises for balance work
+
+MOBILITY EXERCISE CATEGORIES TO INCLUDE:
+- Static stretches: Hip flexor stretch, Hamstring stretch, Pigeon pose (hold_seconds: 30-60)
+- Dynamic mobility: Leg swings, Arm circles, Cat-cow (sets: 2-3, reps: 10-15)
+- Yoga poses: Downward dog, Cobra, Child's pose, Warrior poses (hold_seconds: 30-45)
+- Joint circles: Ankle circles, Wrist circles, Neck rotations (sets: 2, reps: 10 each direction)
+- Foam rolling/Self-myofascial release: IT band roll, Quad roll (hold_seconds: 30-45 per area)
+
+STRUCTURE FOR MOBILITY:
+- Start with joint circles and dynamic warm-up (5 min)
+- Progress to deeper stretches and yoga poses (15-20 min)
+- Include balance and stability work (5 min)
+- End with relaxation poses and breathing (5 min)
+
+MOBILITY-SPECIFIC JSON FIELDS:
+- Use "hold_seconds" for static holds instead of reps
+- Set reps=1 for held positions
+- Include "is_unilateral": true for single-side exercises
+- Add detailed notes about proper form and breathing"""
+        elif workout_type == "recovery":
+            workout_type_instruction = """
+
+💆 RECOVERY WORKOUT TYPE:
+This is a RECOVERY/ACTIVE REST workout. You MUST:
+1. Keep intensity very low (RPE 3-4 out of 10)
+2. Focus on blood flow and gentle movement
+3. Include light stretching and mobility work
+4. Use longer holds and slower tempos
+5. Emphasize breathing and relaxation
+6. NO heavy weights or intense cardio
+
+RECOVERY EXERCISE CATEGORIES:
+- Light cardio: Walking, slow cycling, easy swimming (duration_seconds: 300-600)
+- Gentle stretches: All major muscle groups with 45-60 second holds
+- Foam rolling: Full body self-massage (30-60 seconds per muscle group)
+- Breathing exercises: Box breathing, diaphragmatic breathing (duration_seconds: 120-180)
+- Yoga flow: Gentle sun salutations, restorative poses
+- Light mobility: Joint circles, gentle twists, easy hip openers
+
+STRUCTURE FOR RECOVERY:
+- Start with 5-10 min light cardio (walking, easy cycling)
+- Gentle full-body stretching (15-20 min)
+- Foam rolling/self-massage (5-10 min)
+- End with breathing and relaxation (5 min)
+
+RECOVERY-SPECIFIC NOTES:
+- This is NOT a challenging workout - it should feel restorative
+- Perfect for rest days or after intense training
+- Focus on areas that feel tight or sore
+- Encourage slow, controlled breathing throughout"""
 
         # Build custom program instruction if user has specified a custom training goal
         custom_program_instruction = ""
@@ -975,8 +1036,10 @@ Return a valid JSON object with this exact structure:
       "weight_kg": 10,
       "rest_seconds": 60,
       "duration_seconds": null,
+      "hold_seconds": null,
       "equipment": "equipment used or bodyweight",
       "muscle_group": "primary muscle targeted",
+      "is_unilateral": false,
       "notes": "Form tips or modifications"
     }}
   ],
@@ -985,6 +1048,8 @@ Return a valid JSON object with this exact structure:
 
 NOTE: For cardio exercises, use duration_seconds (e.g., 30) instead of reps (set reps to 1).
 For strength exercises, set duration_seconds to null and use reps normally.
+For mobility/stretching exercises, use hold_seconds (e.g., 30-60) for static holds instead of reps.
+For unilateral exercises (single-arm, single-leg), set is_unilateral: true.
 
 ⚠️ CRITICAL - REALISTIC WEIGHT RECOMMENDATIONS:
 For each exercise, include a starting weight_kg that follows industry-standard equipment increments:

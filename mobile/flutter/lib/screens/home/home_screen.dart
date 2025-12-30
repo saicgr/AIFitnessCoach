@@ -346,6 +346,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: SectionHeader(title: 'YOUR WEEK'),
               ),
 
+              // Week Changes Card (shows exercise variation this week)
+              const SliverToBoxAdapter(
+                child: WeekChangesCard(),
+              ),
+
               // Weekly Progress
               SliverToBoxAdapter(
                 child: WeeklyProgressCard(

@@ -54,6 +54,18 @@ class SettingItemData {
   /// Whether this item is the workout history import.
   final bool isWorkoutHistoryImport;
 
+  /// Whether this item is the staple exercises management.
+  final bool isStapleExercisesManager;
+
+  /// Whether this item is the variation percentage slider.
+  final bool isVariationSlider;
+
+  /// Whether this item is the My 1RMs screen.
+  final bool isMyOneRMsScreen;
+
+  /// Whether this item is the training intensity selector.
+  final bool isTrainingIntensitySelector;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -72,6 +84,10 @@ class SettingItemData {
     this.isFavoriteExercisesManager = false,
     this.isExerciseQueueManager = false,
     this.isWorkoutHistoryImport = false,
+    this.isStapleExercisesManager = false,
+    this.isVariationSlider = false,
+    this.isMyOneRMsScreen = false,
+    this.isTrainingIntensitySelector = false,
   });
 }
 

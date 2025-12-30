@@ -24,6 +24,18 @@ class TrainingPreferencesSection extends StatelessWidget {
         SettingsCard(
           items: [
             SettingItemData(
+              icon: Icons.speed,
+              title: 'My 1RMs',
+              subtitle: 'View and edit your max lifts',
+              isMyOneRMsScreen: true,
+            ),
+            SettingItemData(
+              icon: Icons.percent,
+              title: 'Training Intensity',
+              subtitle: 'Work at a percentage of your max',
+              isTrainingIntensitySelector: true,
+            ),
+            SettingItemData(
               icon: Icons.trending_up,
               title: 'Progression Pace',
               subtitle: 'How fast to increase weights',
@@ -42,10 +54,22 @@ class TrainingPreferencesSection extends StatelessWidget {
               isConsistencyModeSelector: true,
             ),
             SettingItemData(
+              icon: Icons.tune,
+              title: 'Weekly Variety',
+              subtitle: 'How much exercises change each week',
+              isVariationSlider: true,
+            ),
+            SettingItemData(
               icon: Icons.favorite,
               title: 'Favorite Exercises',
               subtitle: 'AI will prioritize these',
               isFavoriteExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.lock,
+              title: 'Staple Exercises',
+              subtitle: 'Core lifts that never rotate',
+              isStapleExercisesManager: true,
             ),
             SettingItemData(
               icon: Icons.queue,

@@ -136,6 +136,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         }
       }
 
+      // Preserve onboardingCompleted if already true (avoid race condition)
+      // This handles the case where completeOnboarding set it to true but
+      // the backend fetch might return stale data momentarily
+      final wasOnboardingCompleted = state.onboardingCompleted;
+      final isOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
+
       state = state.copyWith(
         preferences: preferences,
         streak: streak,
@@ -143,11 +149,11 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         weightTrend: weightTrend,
         dynamicTargets: dynamicTargets,
         isLoading: false,
-        onboardingCompleted: preferences?.nutritionOnboardingCompleted ?? false,
+        onboardingCompleted: wasOnboardingCompleted || isOnboardingCompleted,
       );
 
       debugPrint(
-          '✅ [NutritionPrefsProvider] Initialized: onboarded=${preferences?.nutritionOnboardingCompleted}, weights=${weightHistory.length}');
+          '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=${isOnboardingCompleted}, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Init error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());

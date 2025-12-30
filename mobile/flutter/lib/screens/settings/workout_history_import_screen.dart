@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/workout_history_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../core/providers/user_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 
 /// Screen for importing past workout history to seed AI learning.
 /// Addresses the "weird weights" issue by allowing users to input
@@ -28,13 +28,17 @@ class _WorkoutHistoryImportScreenState
   List<StrengthSummary> _strengthSummary = [];
   List<WorkoutHistoryRecord> _recentHistory = [];
 
-  late WorkoutHistoryRepository _repository;
+  WorkoutHistoryRepository? _repository;
 
   @override
   void initState() {
     super.initState();
-    _repository = WorkoutHistoryRepository(ApiClient());
-    _loadData();
+    // Initialize repository after first frame when ref is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final apiClient = ref.read(apiClientProvider);
+      _repository = WorkoutHistoryRepository(apiClient);
+      _loadData();
+    });
   }
 
   @override
@@ -47,15 +51,16 @@ class _WorkoutHistoryImportScreenState
   }
 
   Future<void> _loadData() async {
-    final user = ref.read(userProvider);
-    if (user == null) return;
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    if (user == null || _repository == null) return;
 
     setState(() => _isLoading = true);
 
     try {
       final results = await Future.wait([
-        _repository.getStrengthSummary(userId: user.id),
-        _repository.getHistory(userId: user.id, limit: 10),
+        _repository!.getStrengthSummary(userId: user.id),
+        _repository!.getHistory(userId: user.id, limit: 10),
       ]);
 
       setState(() {
@@ -72,13 +77,14 @@ class _WorkoutHistoryImportScreenState
   Future<void> _submitEntry() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final user = ref.read(userProvider);
-    if (user == null) return;
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    if (user == null || _repository == null) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final result = await _repository.importSingleEntry(
+      final result = await _repository!.importSingleEntry(
         userId: user.id,
         exerciseName: _exerciseController.text.trim(),
         weightKg: double.parse(_weightController.text),
@@ -120,10 +126,11 @@ class _WorkoutHistoryImportScreenState
   }
 
   Future<void> _deleteEntry(String entryId) async {
-    final user = ref.read(userProvider);
-    if (user == null) return;
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    if (user == null || _repository == null) return;
 
-    final success = await _repository.deleteEntry(
+    final success = await _repository!.deleteEntry(
       userId: user.id,
       entryId: entryId,
     );

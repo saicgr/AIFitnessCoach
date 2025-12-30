@@ -49,6 +49,20 @@ class WorkoutExercise extends Equatable {
   final bool? isFavorite;
   @JsonKey(name: 'from_queue')
   final bool? fromQueue;
+  @JsonKey(name: 'hold_seconds')
+  final int? holdSeconds; // For static stretches/holds (e.g., 30-60 seconds)
+  @JsonKey(name: 'is_unilateral')
+  final bool? isUnilateral; // Single-arm or single-leg exercises
+  @JsonKey(name: 'superset_group')
+  final int? supersetGroup; // Group ID for superset pairing (exercises with same ID are paired)
+  @JsonKey(name: 'superset_order')
+  final int? supersetOrder; // Order within superset (1 or 2)
+  @JsonKey(name: 'is_drop_set')
+  final bool? isDropSet; // Whether this exercise uses drop sets
+  @JsonKey(name: 'drop_set_count')
+  final int? dropSetCount; // Number of drop sets (typically 2-3)
+  @JsonKey(name: 'drop_set_percentage')
+  final int? dropSetPercentage; // Percentage to reduce weight each drop (typically 20-25%)
 
   const WorkoutExercise({
     this.id,
@@ -76,6 +90,13 @@ class WorkoutExercise extends Equatable {
     this.weightSource,
     this.isFavorite,
     this.fromQueue,
+    this.holdSeconds,
+    this.isUnilateral,
+    this.supersetGroup,
+    this.supersetOrder,
+    this.isDropSet,
+    this.dropSetCount,
+    this.dropSetPercentage,
   });
 
   /// Whether the weight is based on user's past workout history
@@ -100,11 +121,24 @@ class WorkoutExercise extends Equatable {
   /// Get name (never null for display)
   String get name => nameValue ?? 'Exercise';
 
-  /// Format sets x reps
+  /// Format sets x reps (or hold time for stretches, or duration for cardio)
   String get setsRepsDisplay {
+    // For stretching/mobility exercises with hold times
+    if (holdSeconds != null && holdSeconds! > 0) {
+      final holdStr = holdSeconds! >= 60
+          ? '${holdSeconds! ~/ 60}m ${holdSeconds! % 60}s'
+          : '${holdSeconds}s';
+      if (sets != null && sets! > 1) {
+        return '$sets × $holdStr hold';
+      }
+      return '$holdStr hold';
+    }
+    // For strength exercises with sets/reps
     if (sets != null && reps != null) {
       return '$sets × $reps';
-    } else if (durationSeconds != null) {
+    }
+    // For cardio exercises with duration
+    if (durationSeconds != null) {
       final minutes = durationSeconds! ~/ 60;
       final seconds = durationSeconds! % 60;
       if (minutes > 0 && seconds > 0) {
@@ -116,6 +150,50 @@ class WorkoutExercise extends Equatable {
       }
     }
     return '';
+  }
+
+  /// Whether this is a unilateral (single-side) exercise
+  bool get isSingleSide => isUnilateral == true || alternatingHands == true;
+
+  /// Get unilateral indicator text
+  String get unilateralIndicator => isSingleSide ? 'Each side' : '';
+
+  /// Whether this exercise is part of a superset
+  bool get isInSuperset => supersetGroup != null && supersetGroup! > 0;
+
+  /// Whether this is the first exercise in a superset pair
+  bool get isSupersetFirst => isInSuperset && supersetOrder == 1;
+
+  /// Whether this is the second exercise in a superset pair
+  bool get isSupersetSecond => isInSuperset && supersetOrder == 2;
+
+  /// Whether this exercise has drop sets
+  bool get hasDropSets => isDropSet == true && (dropSetCount ?? 0) > 0;
+
+  /// Get drop set display text (e.g., "3 drop sets @ 20%")
+  String get dropSetDisplay {
+    if (!hasDropSets) return '';
+    final count = dropSetCount ?? 2;
+    final percent = dropSetPercentage ?? 20;
+    return '$count drops @ $percent% less';
+  }
+
+  /// Calculate drop set weights from a starting weight
+  List<double> getDropSetWeights(double startingWeight) {
+    if (!hasDropSets) return [startingWeight];
+
+    final count = dropSetCount ?? 2;
+    final percentDrop = (dropSetPercentage ?? 20) / 100;
+    final weights = <double>[startingWeight];
+
+    for (int i = 0; i < count; i++) {
+      final previousWeight = weights.last;
+      final newWeight = previousWeight * (1 - percentDrop);
+      // Round to nearest 2.5kg for practical gym use
+      weights.add((newWeight / 2.5).round() * 2.5);
+    }
+
+    return weights;
   }
 
   /// Get rest time display
@@ -176,6 +254,16 @@ class WorkoutExercise extends Equatable {
     String? instructions,
     bool? isCompleted,
     bool? alternatingHands,
+    String? weightSource,
+    bool? isFavorite,
+    bool? fromQueue,
+    int? holdSeconds,
+    bool? isUnilateral,
+    int? supersetGroup,
+    int? supersetOrder,
+    bool? isDropSet,
+    int? dropSetCount,
+    int? dropSetPercentage,
   }) {
     return WorkoutExercise(
       id: id ?? this.id,
@@ -200,6 +288,16 @@ class WorkoutExercise extends Equatable {
       instructions: instructions ?? this.instructions,
       isCompleted: isCompleted ?? this.isCompleted,
       alternatingHands: alternatingHands ?? this.alternatingHands,
+      weightSource: weightSource ?? this.weightSource,
+      isFavorite: isFavorite ?? this.isFavorite,
+      fromQueue: fromQueue ?? this.fromQueue,
+      holdSeconds: holdSeconds ?? this.holdSeconds,
+      isUnilateral: isUnilateral ?? this.isUnilateral,
+      supersetGroup: supersetGroup ?? this.supersetGroup,
+      supersetOrder: supersetOrder ?? this.supersetOrder,
+      isDropSet: isDropSet ?? this.isDropSet,
+      dropSetCount: dropSetCount ?? this.dropSetCount,
+      dropSetPercentage: dropSetPercentage ?? this.dropSetPercentage,
     );
   }
 }

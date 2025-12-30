@@ -22,6 +22,8 @@ from api.v1 import fasting  # Intermittent fasting tracking and timer
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
 from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
+from api.v1 import exercise_preferences  # Staple exercises and variation control
+from api.v1 import training_intensity  # Percentage-based 1RM training
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -128,3 +130,9 @@ router.include_router(scores.router, prefix="/scores", tags=["Scores"])
 
 # Workout history import for AI learning (manual entry of past workouts)
 router.include_router(workout_history.router, tags=["Workout History"])
+
+# Exercise preferences: staple exercises, variation control, week comparison
+router.include_router(exercise_preferences.router, tags=["Exercise Preferences"])
+
+# Percentage-based 1RM training (train at X% of your max)
+router.include_router(training_intensity.router, tags=["Training Intensity"])

@@ -47,6 +47,8 @@ from .utils import (
     get_user_consistency_mode,
     get_user_exercise_queue,
     mark_queued_exercises_used,
+    get_user_staple_exercises,
+    get_user_variation_percentage,
 )
 
 router = APIRouter()
@@ -608,6 +610,15 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         if favorite_exercises:
             logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
+        # Fetch user's staple exercises (never rotated out)
+        staple_exercises = await get_user_staple_exercises(request.user_id)
+        if staple_exercises:
+            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+
+        # Fetch user's variation percentage preference
+        variation_percentage = await get_user_variation_percentage(request.user_id)
+        logger.info(f"User variation percentage: {variation_percentage}%")
+
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
@@ -644,6 +655,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     queued_exercises=queued_exercises,  # Include queued exercises
                     consistency_mode=consistency_mode,  # Boost or avoid recent exercises
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
+                    staple_exercises=staple_exercises,  # Core lifts that never rotate
+                    variation_percentage=variation_percentage,  # User's variety preference
                 )
 
                 if rag_exercises:
@@ -858,6 +871,15 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         if favorite_exercises:
             logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
+        # Fetch user's staple exercises (never rotated out)
+        staple_exercises = await get_user_staple_exercises(request.user_id)
+        if staple_exercises:
+            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+
+        # Fetch user's variation percentage preference
+        variation_percentage = await get_user_variation_percentage(request.user_id)
+        logger.info(f"User variation percentage: {variation_percentage}%")
+
         async def generate_single_workout(
             workout_date: datetime,
             index: int,
@@ -899,6 +921,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     strength_history=strength_history,  # Use historical weights
                     favorite_exercises=favorite_exercises,  # Prioritize favorites
                     queued_exercises=queued_exercises,  # Include queued exercises
+                    staple_exercises=staple_exercises,  # Core lifts that never rotate
+                    variation_percentage=variation_percentage,  # User's variety preference
                     consistency_mode=consistency_mode,  # Boost or avoid recent exercises
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
                 )
@@ -1178,6 +1202,15 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             if favorite_exercises:
                 logger.info(f"[STREAM] User has {len(favorite_exercises)} favorite exercises")
 
+            # Fetch user's staple exercises (never rotated out)
+            staple_exercises = await get_user_staple_exercises(body.user_id)
+            if staple_exercises:
+                logger.info(f"[STREAM] User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+
+            # Fetch user's variation percentage preference
+            variation_percentage = await get_user_variation_percentage(body.user_id)
+            logger.info(f"[STREAM] User variation percentage: {variation_percentage}%")
+
             # Generate workouts one at a time with progress updates
             for idx, workout_date in enumerate(workout_dates):
                 current = idx + 1
@@ -1220,6 +1253,8 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         queued_exercises=queued_exercises,  # Include queued exercises
                         consistency_mode=consistency_mode,  # Boost or avoid recent exercises
                         recently_used_exercises=recently_used_for_boost,  # For consistency boost
+                        staple_exercises=staple_exercises,  # Core lifts that never rotate
+                        variation_percentage=variation_percentage,  # User's variety preference
                     )
 
                     if not rag_exercises:
@@ -1450,6 +1485,15 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if favorite_exercises:
             logger.info(f"User has {len(favorite_exercises)} favorite exercises")
 
+        # Fetch user's staple exercises (never rotated out)
+        staple_exercises = await get_user_staple_exercises(request.user_id)
+        if staple_exercises:
+            logger.info(f"User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+
+        # Fetch user's variation percentage preference
+        variation_percentage = await get_user_variation_percentage(request.user_id)
+        logger.info(f"User variation percentage: {variation_percentage}%")
+
         BATCH_SIZE = 4
 
         async def generate_single_workout(
@@ -1494,6 +1538,8 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     queued_exercises=queued_exercises,  # Include queued exercises
                     consistency_mode=consistency_mode,  # Boost or avoid recent exercises
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
+                    staple_exercises=staple_exercises,  # Core lifts that never rotate
+                    variation_percentage=variation_percentage,  # User's variety preference
                 )
 
                 exercises_used = []

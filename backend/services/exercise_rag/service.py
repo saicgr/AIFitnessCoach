@@ -235,6 +235,8 @@ class ExerciseRAGService:
         queued_exercises: Optional[List[Dict]] = None,
         consistency_mode: str = "vary",
         recently_used_exercises: Optional[List[str]] = None,
+        staple_exercises: Optional[List[str]] = None,
+        variation_percentage: int = 30,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -257,13 +259,22 @@ class ExerciseRAGService:
             queued_exercises: List of exercises user has queued for inclusion
             consistency_mode: "vary" to avoid recent exercises, "consistent" to prefer them
             recently_used_exercises: List of exercises used in recent workouts (for consistency boost)
+            staple_exercises: List of user's staple exercises that should ALWAYS be included
+            variation_percentage: How much variety user wants (0-100, default 30)
 
         Returns:
             List of selected exercises with full details
         """
         logger.info(f"Selecting {count} exercises for {focus_area} workout")
         logger.info(f"Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
-        logger.info(f"Consistency mode: {consistency_mode}")
+        logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
+        if staple_exercises:
+            logger.info(f"User has {len(staple_exercises)} staple exercises (never rotated)")
+            # CRITICAL: Never put staples in avoid list - they should always be included
+            if avoid_exercises:
+                staple_lower = [s.lower() for s in staple_exercises]
+                avoid_exercises = [e for e in avoid_exercises if e.lower() not in staple_lower]
+                logger.info(f"Removed staples from avoid list, now avoiding {len(avoid_exercises)} exercises")
         if strength_history:
             logger.info(f"Using strength history for {len(strength_history)} exercises")
         if favorite_exercises:
@@ -440,6 +451,29 @@ class ExerciseRAGService:
                 # Re-sort after consistency boost
                 candidates.sort(key=lambda x: x["similarity"], reverse=True)
 
+        # Process STAPLE exercises - these are ALWAYS included (never rotated)
+        # Staples take highest priority, even above queued exercises
+        staple_included = []
+        staple_names_used = []
+
+        if staple_exercises:
+            staple_names_lower = [s.lower() for s in staple_exercises]
+
+            # Find staple exercises in candidates
+            for staple_name in staple_exercises:
+                staple_lower = staple_name.lower()
+                for candidate in candidates:
+                    if candidate["name"].lower() == staple_lower:
+                        staple_included.append(candidate)
+                        staple_names_used.append(candidate["name"])
+                        candidate["is_staple"] = True
+                        logger.info(f"Including STAPLE exercise: {candidate['name']}")
+                        break
+
+            # Remove staples from candidates to avoid duplicates
+            candidates = [c for c in candidates if c["name"].lower() not in staple_names_lower]
+            logger.info(f"Staples included: {len(staple_included)} of {len(staple_exercises)}")
+
         # Process queued exercises - include them first before AI selection
         # Track exclusion reasons for user feedback
         queued_included = []
@@ -488,7 +522,8 @@ class ExerciseRAGService:
             candidates = [c for c in candidates if c["name"].lower() not in queued_names]
 
         # Calculate how many more exercises we need from AI selection
-        remaining_count = count - len(queued_included)
+        # Staples and queued take priority
+        remaining_count = count - len(staple_included) - len(queued_included)
 
         if remaining_count > 0:
             # Use AI to select remaining exercises
@@ -505,8 +540,8 @@ class ExerciseRAGService:
         else:
             selected = []
 
-        # Combine queued exercises first, then AI-selected exercises
-        final_selection = queued_included + selected
+        # Combine in priority order: staples first, then queued, then AI-selected
+        final_selection = staple_included + queued_included + selected
 
         # Store queued exercise names for marking as used (returned via metadata)
         if queued_names_used:
@@ -516,11 +551,14 @@ class ExerciseRAGService:
 
         # Add metadata about selection process for transparency
         selection_metadata = {
+            "staple_included_count": len(staple_included),
+            "staple_exercises_used": staple_names_used,
             "queued_included_count": len(queued_included),
             "queued_exclusion_reasons": queued_exclusion_reasons,
             "favorites_in_selection": sum(1 for ex in final_selection if ex.get("is_favorite")),
             "consistency_boosted_count": sum(1 for ex in final_selection if ex.get("consistency_boosted")),
             "historical_weights_available": len(strength_history) if strength_history else 0,
+            "variation_percentage": variation_percentage,
         }
 
         # Attach metadata to first exercise (will be extracted by generation.py)
@@ -757,6 +795,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             "image_url": exercise.get("image_url", ""),
             "library_id": exercise.get("id", ""),
             "is_favorite": exercise.get("is_favorite", False),  # From favorite boost
+            "is_staple": exercise.get("is_staple", False),  # User's core lifts that never rotate
+            "from_queue": exercise.get("from_queue", False),  # From exercise queue
         }
 
     def get_stats(self) -> Dict[str, Any]:

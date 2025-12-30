@@ -46,6 +46,8 @@ class ActiveSetData {
   DateTime? completedAt;
   int? durationSeconds;
   String? equipmentType; // Equipment type for weight increment calculations
+  double? oneRepMax; // User's 1RM for this exercise (if available)
+  int? intensityPercent; // Target intensity as % of 1RM (e.g., 75)
 
   ActiveSetData({
     required this.setNumber,
@@ -62,11 +64,26 @@ class ActiveSetData {
     this.completedAt,
     this.durationSeconds,
     this.equipmentType,
+    this.oneRepMax,
+    this.intensityPercent,
   })  : actualWeight = actualWeight ?? targetWeight,
         actualReps = actualReps ?? targetReps;
 
   /// Get the weight increment for this set based on equipment type
   double get weightIncrement => WeightIncrements.getIncrement(equipmentType);
+
+  /// Calculate actual percentage of 1RM for current weight
+  int? get actualPercentOfMax {
+    if (oneRepMax == null || oneRepMax! <= 0) return null;
+    return ((actualWeight / oneRepMax!) * 100).round();
+  }
+
+  /// Check if user is hitting their target intensity
+  bool get isOnTarget {
+    if (intensityPercent == null || oneRepMax == null) return true;
+    final actual = actualPercentOfMax ?? 0;
+    return (actual - intensityPercent!).abs() <= 5; // Within 5% tolerance
+  }
 
   ActiveSetData copyWith({
     int? setNumber,
@@ -83,6 +100,8 @@ class ActiveSetData {
     DateTime? completedAt,
     int? durationSeconds,
     String? equipmentType,
+    double? oneRepMax,
+    int? intensityPercent,
   }) {
     return ActiveSetData(
       setNumber: setNumber ?? this.setNumber,
@@ -99,6 +118,8 @@ class ActiveSetData {
       completedAt: completedAt ?? this.completedAt,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       equipmentType: equipmentType ?? this.equipmentType,
+      oneRepMax: oneRepMax ?? this.oneRepMax,
+      intensityPercent: intensityPercent ?? this.intensityPercent,
     );
   }
 }
@@ -234,6 +255,63 @@ class _SetRowState extends State<SetRow> {
     }
   }
 
+  /// Build the 1RM target label showing target weight and percentage
+  Widget _buildOneRMTargetLabel() {
+    final oneRM = widget.setData.oneRepMax!;
+    final targetPercent = widget.setData.intensityPercent!;
+    final actualPercent = widget.setData.actualPercentOfMax ?? 0;
+    final isOnTarget = widget.setData.isOnTarget;
+
+    // Determine color based on how close to target
+    Color percentColor;
+    if (isOnTarget) {
+      percentColor = AppColors.success;
+    } else if (actualPercent > targetPercent) {
+      percentColor = AppColors.orange; // Going heavier than target
+    } else {
+      percentColor = AppColors.cyan; // Going lighter than target
+    }
+
+    return Row(
+      children: [
+        // Target info
+        Text(
+          'Target: $targetPercent%',
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const SizedBox(width: 4),
+        // Actual percentage (dynamic)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          decoration: BoxDecoration(
+            color: percentColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            '→ $actualPercent%',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: percentColor,
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        // 1RM reference
+        Text(
+          '(1RM: ${oneRM.toStringAsFixed(0)})',
+          style: const TextStyle(
+            fontSize: 9,
+            color: AppColors.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompleted = widget.setData.isCompleted;
@@ -296,7 +374,11 @@ class _SetRowState extends State<SetRow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.showPrevious && widget.setData.previousWeight != null)
+                // Show 1RM percentage target if available
+                if (widget.setData.oneRepMax != null &&
+                    widget.setData.intensityPercent != null)
+                  _buildOneRMTargetLabel()
+                else if (widget.showPrevious && widget.setData.previousWeight != null)
                   Text(
                     'Prev: ${widget.setData.previousWeight?.toStringAsFixed(1)} kg',
                     style: const TextStyle(

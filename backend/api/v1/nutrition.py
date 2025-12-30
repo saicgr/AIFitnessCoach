@@ -3387,14 +3387,24 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         )
 
         # Calculate macros based on diet type
+        # Format: (carb%, protein%, fat%)
         diet_macros = {
+            # No restrictions
+            "no_diet": (45, 25, 30),
+            # Macro-focused diets
             "balanced": (45, 25, 30),
             "low_carb": (25, 35, 40),
             "keto": (5, 25, 70),
             "high_protein": (35, 40, 25),
-            "vegetarian": (50, 20, 30),
-            "vegan": (55, 20, 25),
             "mediterranean": (45, 20, 35),
+            # Plant-based diets (strict to flexible)
+            "vegan": (55, 20, 25),
+            "vegetarian": (50, 20, 30),
+            "lacto_ovo": (50, 22, 28),
+            "pescatarian": (45, 25, 30),
+            # Flexible/part-time diets
+            "flexitarian": (45, 25, 30),
+            "part_time_veg": (50, 20, 30),
         }
 
         if request.diet_type == "custom" and all([
@@ -3477,6 +3487,36 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to complete nutrition onboarding: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{user_id}/reset-onboarding")
+async def reset_nutrition_onboarding(user_id: str):
+    """
+    Reset nutrition onboarding so user can redo it.
+
+    Sets nutrition_onboarding_completed to false while preserving
+    all food logs and nutrition history.
+    """
+    logger.info(f"Resetting nutrition onboarding for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Update nutrition_onboarding_completed to false
+        result = db.client.table("nutrition_preferences")\
+            .update({"nutrition_onboarding_completed": False})\
+            .eq("user_id", user_id)\
+            .execute()
+
+        if not result.data:
+            # No preferences exist yet, that's fine
+            logger.info(f"No nutrition preferences found for user {user_id}, nothing to reset")
+
+        return {"success": True, "message": "Nutrition onboarding reset successfully"}
+
+    except Exception as e:
+        logger.error(f"Failed to reset nutrition onboarding: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -3569,14 +3609,24 @@ async def recalculate_nutrition_targets(user_id: str):
 
         # Recalculate macros
         diet_type = prefs.get("diet_type", "balanced")
+        # Format: (carb%, protein%, fat%)
         diet_macros = {
+            # No restrictions
+            "no_diet": (45, 25, 30),
+            # Macro-focused diets
             "balanced": (45, 25, 30),
             "low_carb": (25, 35, 40),
             "keto": (5, 25, 70),
             "high_protein": (35, 40, 25),
-            "vegetarian": (50, 20, 30),
-            "vegan": (55, 20, 25),
             "mediterranean": (45, 20, 35),
+            # Plant-based diets (strict to flexible)
+            "vegan": (55, 20, 25),
+            "vegetarian": (50, 20, 30),
+            "lacto_ovo": (50, 22, 28),
+            "pescatarian": (45, 25, 30),
+            # Flexible/part-time diets
+            "flexitarian": (45, 25, 30),
+            "part_time_veg": (50, 20, 30),
         }
 
         if diet_type == "custom" and all([

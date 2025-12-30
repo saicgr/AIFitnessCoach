@@ -8,7 +8,14 @@ import '../../../data/services/haptic_service.dart';
 
 /// Onboarding screen for nutrition preferences
 class NutritionOnboardingScreen extends ConsumerStatefulWidget {
-  const NutritionOnboardingScreen({super.key});
+  final VoidCallback? onComplete;
+  final VoidCallback? onSkip;
+
+  const NutritionOnboardingScreen({
+    super.key,
+    this.onComplete,
+    this.onSkip,
+  });
 
   @override
   ConsumerState<NutritionOnboardingScreen> createState() =>
@@ -36,10 +43,23 @@ class _NutritionOnboardingScreenState
   int _customProteinPercent = 25;
   int _customFatPercent = 30;
 
+  // Custom diet description (for part-time veg, flexitarian, custom)
+  final TextEditingController _customDietController = TextEditingController();
+
+  // Custom meal pattern description (for religious/custom)
+  final TextEditingController _customMealPatternController = TextEditingController();
+
   // Calculated targets for preview
   NutritionPreferences? _calculatedTargets;
 
   static const int _totalSteps = 6;
+
+  @override
+  void dispose() {
+    _customDietController.dispose();
+    _customMealPatternController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,25 +76,43 @@ class _NutritionOnboardingScreenState
       body: SafeArea(
         child: Column(
           children: [
-            // Progress indicator
+            // Header with progress and skip button
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
               child: Row(
-                children: List.generate(_totalSteps, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin:
-                          EdgeInsets.only(right: index < _totalSteps - 1 ? 8 : 0),
-                      decoration: BoxDecoration(
-                        color: index <= _currentStep
-                            ? green
-                            : textMuted.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
+                children: [
+                  // Progress indicator
+                  Expanded(
+                    child: Row(
+                      children: List.generate(_totalSteps, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(
+                                right: index < _totalSteps - 1 ? 8 : 0),
+                            decoration: BoxDecoration(
+                              color: index <= _currentStep
+                                  ? green
+                                  : textMuted.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  // Skip button
+                  TextButton(
+                    onPressed: _handleSkip,
+                    child: Text(
+                      'Skip',
+                      style: TextStyle(
+                        color: textMuted,
+                        fontSize: 14,
                       ),
                     ),
-                  );
-                }),
+                  ),
+                ],
               ),
             ),
 
@@ -439,7 +477,7 @@ class _NutritionOnboardingScreenState
     );
   }
 
-  // Step 2: Diet Type
+  // Step 2: Diet Type - Grid layout
   Widget _buildDietTypeStep(
     bool isDark,
     Color textPrimary,
@@ -447,6 +485,7 @@ class _NutritionOnboardingScreenState
     Color accentColor,
   ) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final dietTypes = DietType.values.toList();
 
     return Column(
       key: const ValueKey('diet'),
@@ -466,61 +505,91 @@ class _NutritionOnboardingScreenState
           'This affects your macro distribution',
           style: TextStyle(fontSize: 16, color: textMuted),
         ),
-        const SizedBox(height: 32),
-        ...DietType.values.map((diet) {
-          final isSelected = _selectedDietType == diet;
-          String macroInfo = diet == DietType.custom
-              ? 'Set your own ratios'
-              : 'C: ${diet.carbPercent}% | P: ${diet.proteinPercent}% | F: ${diet.fatPercent}%';
+        const SizedBox(height: 24),
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              onTap: () {
-                HapticService.light();
-                setState(() => _selectedDietType = diet);
-              },
+        // Grid of diet type tiles (2 columns)
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.1,
+          ),
+          itemCount: dietTypes.length,
+          itemBuilder: (context, index) {
+            final diet = dietTypes[index];
+            final isSelected = _selectedDietType == diet;
+
+            return _buildDietTile(
+              diet: diet,
+              isSelected: isSelected,
+              elevated: elevated,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              accentColor: accentColor,
+            );
+          },
+        ),
+
+        // Description input for flexible diets (part-time veg, flexitarian)
+        if (_selectedDietType == DietType.partTimeVeg ||
+            _selectedDietType == DietType.flexitarian) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevated,
               borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? accentColor : Colors.transparent,
-                    width: 2,
+              border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _selectedDietType == DietType.partTimeVeg
+                      ? 'Which days are you vegetarian?'
+                      : 'Describe your eating pattern',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            diet.displayName,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            macroInfo,
-                            style: TextStyle(fontSize: 13, color: textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isSelected)
-                      Icon(Icons.check_circle, color: accentColor, size: 24),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  _selectedDietType == DietType.partTimeVeg
+                      ? 'e.g., "Tuesdays & Thursdays" or "Weekdays only"'
+                      : 'e.g., "Meat only on weekends" or "Fish but no red meat"',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _customDietController,
+                  style: TextStyle(color: textPrimary),
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: 'Describe your pattern...',
+                    hintStyle: TextStyle(color: textMuted),
+                    filled: true,
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+              ],
             ),
-          );
-        }),
+          ),
+        ],
 
         // Custom macro sliders if custom diet selected
         if (_selectedDietType == DietType.custom) ...[
@@ -528,6 +597,404 @@ class _NutritionOnboardingScreenState
           _buildCustomMacroSliders(isDark, textPrimary, textMuted, accentColor),
         ],
       ],
+    );
+  }
+
+  // Get diet info for the info dialog
+  Map<String, String> _getDietInfo(DietType diet) {
+    switch (diet) {
+      case DietType.noDiet:
+        return {
+          'title': 'I Eat Everything',
+          'description': 'No dietary restrictions. You eat all types of food including meat, fish, dairy, eggs, and plant-based foods.',
+        };
+      case DietType.balanced:
+        return {
+          'title': 'Balanced Diet',
+          'description': 'A moderate approach with ~45% carbs, 25% protein, 30% fat. Good for general health and sustainable long-term.',
+        };
+      case DietType.lowCarb:
+        return {
+          'title': 'Low Carb',
+          'description': 'Reduced carbohydrate intake (~25% carbs). Often used for weight loss. Focuses on protein and healthy fats.',
+        };
+      case DietType.keto:
+        return {
+          'title': 'Ketogenic (Keto)',
+          'description': 'Very low carb (~5%), high fat diet that puts your body into ketosis. Requires strict carb restriction.',
+        };
+      case DietType.highProtein:
+        return {
+          'title': 'High Protein',
+          'description': 'Emphasizes protein (~40%) for muscle building and satiety. Popular with athletes and bodybuilders.',
+        };
+      case DietType.mediterranean:
+        return {
+          'title': 'Mediterranean',
+          'description': 'Based on traditional foods from Mediterranean countries. Rich in olive oil, fish, vegetables, and whole grains. Great for heart health.',
+        };
+      case DietType.vegan:
+        return {
+          'title': 'Vegan',
+          'description': 'No animal products at all. Excludes meat, fish, dairy, eggs, honey, and any animal-derived ingredients.',
+        };
+      case DietType.vegetarian:
+        return {
+          'title': 'Vegetarian',
+          'description': 'No meat or fish, but includes dairy and eggs. A common plant-based diet that allows animal by-products.',
+        };
+      case DietType.lactoOvo:
+        return {
+          'title': 'Lacto-Ovo Vegetarian',
+          'description': 'Includes dairy (lacto) and eggs (ovo), but no meat or fish. The most common type of vegetarian diet.',
+        };
+      case DietType.pescatarian:
+        return {
+          'title': 'Pescatarian',
+          'description': 'Vegetarian diet that includes fish and seafood. No meat from land animals. Good for omega-3 intake.',
+        };
+      case DietType.flexitarian:
+        return {
+          'title': 'Flexitarian',
+          'description': 'Mostly plant-based but occasionally includes meat or fish. Flexible approach to reduce meat consumption without strict rules.',
+        };
+      case DietType.partTimeVeg:
+        return {
+          'title': 'Part-Time Vegetarian',
+          'description': 'Vegetarian on specific days (e.g., Tuesdays, Thursdays, weekdays). Common in Indian culture and for religious observances.',
+        };
+      case DietType.custom:
+        return {
+          'title': 'Custom Diet',
+          'description': 'Set your own macro percentages for carbs, protein, and fat. For those with specific requirements.',
+        };
+    }
+  }
+
+  void _showDietInfoDialog(BuildContext context, DietType diet) {
+    final info = _getDietInfo(diet);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          info['title']!,
+          style: TextStyle(
+            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          info['description']!,
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Got it',
+              style: TextStyle(
+                color: isDark ? AppColors.green : AppColorsLight.success,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDietTile({
+    required DietType diet,
+    required bool isSelected,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color accentColor,
+  }) {
+    // Icons and subtitles for each diet type
+    IconData icon;
+    String subtitle;
+    switch (diet) {
+      case DietType.noDiet:
+        icon = Icons.check_circle_outline;
+        subtitle = 'No restrictions';
+      case DietType.balanced:
+        icon = Icons.balance;
+        subtitle = 'Moderate macros';
+      case DietType.lowCarb:
+        icon = Icons.no_food;
+        subtitle = 'Reduced carbs';
+      case DietType.keto:
+        icon = Icons.local_fire_department;
+        subtitle = 'Very low carb';
+      case DietType.highProtein:
+        icon = Icons.fitness_center;
+        subtitle = 'Muscle building';
+      case DietType.mediterranean:
+        icon = Icons.restaurant;
+        subtitle = 'Heart healthy';
+      case DietType.vegan:
+        icon = Icons.grass;
+        subtitle = 'No animal products';
+      case DietType.vegetarian:
+        icon = Icons.eco;
+        subtitle = 'No meat/fish';
+      case DietType.lactoOvo:
+        icon = Icons.egg_alt;
+        subtitle = 'Dairy + eggs OK';
+      case DietType.pescatarian:
+        icon = Icons.set_meal;
+        subtitle = 'Fish + seafood OK';
+      case DietType.flexitarian:
+        icon = Icons.swap_horiz;
+        subtitle = 'Mostly plant-based';
+      case DietType.partTimeVeg:
+        icon = Icons.calendar_today;
+        subtitle = 'Veg on some days';
+      case DietType.custom:
+        icon = Icons.tune;
+        subtitle = 'Set your own';
+    }
+
+    return Stack(
+      children: [
+        InkWell(
+          onTap: () {
+            HapticService.light();
+            setState(() => _selectedDietType = diet);
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? accentColor : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon with selection indicator
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? accentColor.withValues(alpha: 0.2)
+                            : textMuted.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        icon,
+                        color: isSelected ? accentColor : textMuted,
+                        size: 20,
+                      ),
+                    ),
+                    if (isSelected)
+                      Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 10,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Diet name
+                Text(
+                  diet.displayName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? accentColor : textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                // Subtitle
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Info button in top-right corner
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: () => _showDietInfoDialog(context, diet),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: textMuted.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.info_outline,
+                size: 14,
+                color: textMuted,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMealPatternTile({
+    required MealPattern pattern,
+    required bool isSelected,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color accentColor,
+  }) {
+    // Icons for each meal pattern
+    IconData icon;
+    String subtitle;
+    switch (pattern) {
+      case MealPattern.threeMeals:
+        icon = Icons.restaurant_menu;
+        subtitle = 'Breakfast, lunch, dinner';
+      case MealPattern.threeMealsSnacks:
+        icon = Icons.brunch_dining;
+        subtitle = 'Meals + snacks';
+      case MealPattern.twoMeals:
+        icon = Icons.lunch_dining;
+        subtitle = 'Skip one meal';
+      case MealPattern.omad:
+        icon = Icons.dinner_dining;
+        subtitle = 'One big meal';
+      case MealPattern.if168:
+        icon = Icons.schedule;
+        subtitle = '8hr eating window';
+      case MealPattern.if186:
+        icon = Icons.timer;
+        subtitle = '6hr eating window';
+      case MealPattern.if204:
+        icon = Icons.timer_off;
+        subtitle = '4hr eating window';
+      case MealPattern.smallMeals:
+        icon = Icons.grid_view;
+        subtitle = 'Graze throughout day';
+      case MealPattern.religiousFasting:
+        icon = Icons.auto_awesome;
+        subtitle = 'Traditional/spiritual';
+      case MealPattern.custom:
+        icon = Icons.edit_calendar;
+        subtitle = 'Your own schedule';
+    }
+
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        setState(() => _selectedMealPattern = pattern);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? accentColor : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon with selection indicator
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? accentColor.withValues(alpha: 0.2)
+                        : textMuted.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? accentColor : textMuted,
+                    size: 22,
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 10,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Pattern name
+            Text(
+              pattern.displayName,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? accentColor : textPrimary,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            // Subtitle
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: textMuted,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -743,7 +1210,7 @@ class _NutritionOnboardingScreenState
     );
   }
 
-  // Step 4: Meal Pattern
+  // Step 4: Meal Pattern - Grid layout
   Widget _buildMealPatternStep(
     bool isDark,
     Color textPrimary,
@@ -751,6 +1218,7 @@ class _NutritionOnboardingScreenState
     Color accentColor,
   ) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final mealPatterns = MealPattern.values.toList();
 
     return Column(
       key: const ValueKey('meal_pattern'),
@@ -770,48 +1238,91 @@ class _NutritionOnboardingScreenState
           'This helps us structure your meal suggestions',
           style: TextStyle(fontSize: 16, color: textMuted),
         ),
-        const SizedBox(height: 32),
-        ...MealPattern.values.map((pattern) {
-          final isSelected = _selectedMealPattern == pattern;
+        const SizedBox(height: 24),
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              onTap: () {
-                HapticService.light();
-                setState(() => _selectedMealPattern = pattern);
-              },
+        // Grid of meal pattern tiles (2 columns)
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.3,
+          ),
+          itemCount: mealPatterns.length,
+          itemBuilder: (context, index) {
+            final pattern = mealPatterns[index];
+            final isSelected = _selectedMealPattern == pattern;
+
+            return _buildMealPatternTile(
+              pattern: pattern,
+              isSelected: isSelected,
+              elevated: elevated,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              accentColor: accentColor,
+            );
+          },
+        ),
+
+        // Custom description input for religious/custom patterns
+        if (_selectedMealPattern == MealPattern.religiousFasting ||
+            _selectedMealPattern == MealPattern.custom) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: elevated,
               borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? accentColor : Colors.transparent,
-                    width: 2,
+              border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _selectedMealPattern == MealPattern.religiousFasting
+                      ? 'Describe your fasting practice'
+                      : 'Describe your eating schedule',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        pattern.displayName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (isSelected)
-                      Icon(Icons.check_circle, color: accentColor, size: 24),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  _selectedMealPattern == MealPattern.religiousFasting
+                      ? 'e.g., "I fast on Tuesdays and Thursdays" or "I follow Ramadan fasting"'
+                      : 'e.g., "I eat only between 12pm and 6pm" or "I skip breakfast on weekdays"',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _customMealPatternController,
+                  style: TextStyle(color: textPrimary),
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Describe your eating pattern...',
+                    hintStyle: TextStyle(color: textMuted),
+                    filled: true,
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+              ],
             ),
-          );
-        }),
+          ),
+        ],
 
         // Lifestyle preferences
         const SizedBox(height: 32),
@@ -1181,6 +1692,17 @@ class _NutritionOnboardingScreenState
     }
   }
 
+  void _handleSkip() {
+    HapticService.light();
+
+    // Use callback if provided, otherwise just pop
+    if (widget.onSkip != null) {
+      widget.onSkip!();
+    } else {
+      Navigator.of(context).pop(false);
+    }
+  }
+
   void _previousStep() {
     HapticService.light();
 
@@ -1267,8 +1789,12 @@ class _NutritionOnboardingScreenState
 
       HapticService.heavy();
 
-      // Navigate back or to nutrition screen
-      Navigator.of(context).pop(true);
+      // Call onComplete callback if provided, otherwise just pop
+      if (widget.onComplete != null) {
+        widget.onComplete!();
+      } else {
+        Navigator.of(context).pop(true);
+      }
     } catch (e) {
       if (!mounted) return;
 

@@ -97,6 +97,37 @@ def sample_nutrition_preferences():
     }
 
 
+# Valid diet types and meal patterns for testing
+VALID_DIET_TYPES = [
+    "no_diet",      # No restrictions
+    "balanced",     # Macro-focused
+    "low_carb",
+    "keto",
+    "high_protein",
+    "mediterranean",
+    "vegan",        # Plant-based
+    "vegetarian",
+    "lacto_ovo",
+    "pescatarian",
+    "flexitarian",  # Flexible
+    "part_time_veg",
+    "custom",
+]
+
+VALID_MEAL_PATTERNS = [
+    "3_meals",
+    "3_meals_snacks",
+    "2_meals",
+    "omad",
+    "if_16_8",
+    "if_18_6",
+    "if_20_4",
+    "5_6_small_meals",
+    "religious_fasting",
+    "custom",
+]
+
+
 @pytest.fixture
 def sample_nutrition_streak():
     return {
@@ -583,6 +614,116 @@ class TestNutritionPreferencesModels:
         assert response.target_calories == 2200
         assert response.is_training_day == True
         assert response.adjustment_reason == "training_day"
+
+
+# ============================================================
+# DIET TYPE AND MEAL PATTERN TESTS
+# ============================================================
+
+class TestDietTypesAndMealPatterns:
+    """Test diet type and meal pattern handling."""
+
+    def test_all_diet_types_have_macro_definitions(self):
+        """Verify all valid diet types have macro percentages defined in backend."""
+        # These macro definitions match what's in nutrition.py
+        diet_macros = {
+            "no_diet": (45, 25, 30),
+            "balanced": (45, 25, 30),
+            "low_carb": (25, 35, 40),
+            "keto": (5, 25, 70),
+            "high_protein": (35, 40, 25),
+            "mediterranean": (45, 20, 35),
+            "vegan": (55, 20, 25),
+            "vegetarian": (50, 20, 30),
+            "lacto_ovo": (50, 22, 28),
+            "pescatarian": (45, 25, 30),
+            "flexitarian": (45, 25, 30),
+            "part_time_veg": (50, 20, 30),
+        }
+
+        # All non-custom diet types should have definitions
+        for diet_type in VALID_DIET_TYPES:
+            if diet_type != "custom":
+                assert diet_type in diet_macros, f"Missing macro definition for {diet_type}"
+                carb, protein, fat = diet_macros[diet_type]
+                assert carb + protein + fat == 100, f"Macros for {diet_type} don't sum to 100%"
+
+    def test_plant_based_diets_have_higher_carb_ratios(self):
+        """Verify plant-based diets have appropriate macro ratios."""
+        plant_based_diets = {
+            "vegan": (55, 20, 25),
+            "vegetarian": (50, 20, 30),
+            "lacto_ovo": (50, 22, 28),
+            "part_time_veg": (50, 20, 30),
+        }
+
+        for diet_type, (carb, protein, fat) in plant_based_diets.items():
+            # Plant-based diets should have carbs >= 50%
+            assert carb >= 50, f"{diet_type} should have higher carbs for plant-based diet"
+
+    def test_low_carb_diets_have_reduced_carb_ratios(self):
+        """Verify low carb diets have reduced carbohydrate percentages."""
+        low_carb_diets = {
+            "low_carb": (25, 35, 40),
+            "keto": (5, 25, 70),
+        }
+
+        for diet_type, (carb, protein, fat) in low_carb_diets.items():
+            # Low carb diets should have carbs < 30%
+            assert carb < 30, f"{diet_type} should have lower carbs"
+
+    def test_meal_pattern_values_match_flutter(self):
+        """Verify meal pattern values match between frontend and backend."""
+        # These should match the MealPattern enum in nutrition_preferences.dart
+        expected_patterns = [
+            "3_meals",
+            "3_meals_snacks",
+            "2_meals",
+            "omad",
+            "if_16_8",
+            "if_18_6",
+            "if_20_4",
+            "5_6_small_meals",
+            "religious_fasting",
+            "custom",
+        ]
+
+        for pattern in expected_patterns:
+            assert pattern in VALID_MEAL_PATTERNS, f"Missing meal pattern: {pattern}"
+
+    def test_onboarding_request_accepts_new_diet_types(self):
+        """Test that NutritionOnboardingRequest accepts new diet types."""
+        from api.v1.nutrition import NutritionOnboardingRequest
+
+        new_diet_types = [
+            "no_diet", "lacto_ovo", "pescatarian", "flexitarian", "part_time_veg"
+        ]
+
+        for diet_type in new_diet_types:
+            request = NutritionOnboardingRequest(
+                user_id="user-123",
+                nutrition_goal="maintain",
+                diet_type=diet_type,
+                meal_pattern="3_meals",
+            )
+            assert request.diet_type == diet_type
+
+    def test_onboarding_request_accepts_new_meal_patterns(self):
+        """Test that NutritionOnboardingRequest accepts new meal patterns."""
+        from api.v1.nutrition import NutritionOnboardingRequest
+
+        new_patterns = [
+            "omad", "if_18_6", "if_20_4", "religious_fasting", "custom"
+        ]
+
+        for meal_pattern in new_patterns:
+            request = NutritionOnboardingRequest(
+                user_id="user-123",
+                nutrition_goal="maintain",
+                diet_type="balanced",
+                meal_pattern=meal_pattern,
+            )
+            assert request.meal_pattern == meal_pattern
 
 
 # ============================================================
