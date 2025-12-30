@@ -11,8 +11,8 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel
 
-from core.db.supabase_client import get_supabase_db
-from core.config import settings
+from core.db import get_supabase_db
+from core.config import get_settings
 
 router = APIRouter()
 
@@ -89,11 +89,12 @@ class PhotoStatsResponse(BaseModel):
 
 def get_s3_client():
     """Get S3 client with configured credentials."""
+    settings = get_settings()
     return boto3.client(
         's3',
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_DEFAULT_REGION,
+        aws_access_key_id=settings.aws_access_key_id,
+        aws_secret_access_key=settings.aws_secret_access_key,
+        region_name=settings.aws_default_region,
     )
 
 
@@ -114,15 +115,16 @@ async def upload_photo_to_s3(
     s3 = get_s3_client()
     contents = await file.read()
 
+    settings = get_settings()
     s3.put_object(
-        Bucket=settings.S3_BUCKET_NAME,
+        Bucket=settings.s3_bucket_name,
         Key=storage_key,
         Body=contents,
         ContentType=file.content_type or 'image/jpeg',
     )
 
     # Generate URL
-    photo_url = f"https://{settings.S3_BUCKET_NAME}.s3.{settings.AWS_DEFAULT_REGION}.amazonaws.com/{storage_key}"
+    photo_url = f"https://{settings.s3_bucket_name}.s3.{settings.aws_default_region}.amazonaws.com/{storage_key}"
 
     return photo_url, storage_key
 
