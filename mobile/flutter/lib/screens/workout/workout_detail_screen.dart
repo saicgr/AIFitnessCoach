@@ -78,12 +78,35 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       final workoutRepo = ref.read(workoutRepositoryProvider);
       final prefs = await workoutRepo.getProgramPreferences(userId);
       if (mounted && prefs?.trainingSplit != null) {
+        // Resolve 'dont_know' to actual split based on workout days
+        final resolvedSplit = _resolveTrainingSplit(
+          prefs!.trainingSplit!,
+          prefs.workoutDays?.length ?? 3,
+        );
         setState(() {
-          _trainingSplit = prefs!.trainingSplit;
+          _trainingSplit = resolvedSplit;
         });
       }
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load training split: $e');
+    }
+  }
+
+  /// Resolve 'dont_know' to actual training split based on workout days count
+  String _resolveTrainingSplit(String split, int numDays) {
+    if (split.toLowerCase() != 'dont_know') {
+      return split;  // Already a specific split
+    }
+
+    // Auto-pick based on days per week (matches backend logic)
+    if (numDays <= 3) {
+      return 'full_body';
+    } else if (numDays == 4) {
+      return 'upper_lower';
+    } else if (numDays <= 6) {
+      return 'push_pull_legs';
+    } else {
+      return 'full_body';
     }
   }
 
@@ -117,18 +140,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   /// Convert training split ID to display name
+  /// Returns the program name if found, or throws for unrecognized splits
   String _getTrainingProgramName(String splitId) {
-    // Find the program in the default list
-    final program = defaultTrainingPrograms.firstWhere(
-      (p) => p.id == splitId,
-      orElse: () => TrainingProgram(
-        id: splitId,
-        name: splitId.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' '),
-        description: '',
-        daysPerWeek: '',
-        icon: Icons.fitness_center,
-      ),
-    );
+    // Split should already be resolved (dont_know -> actual split) by _resolveTrainingSplit
+    // Look up the program - must exist in our known list
+    final program = defaultTrainingPrograms.where((p) => p.id == splitId).firstOrNull;
+    if (program == null) {
+      // Unknown split ID - this is a data integrity issue that should be fixed
+      throw StateError('Unknown training split: $splitId - this should not happen');
+    }
     return program.name;
   }
 
@@ -199,74 +219,36 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                 child: SizedBox(height: MediaQuery.of(context).padding.top + 60),
               ),
 
-              // Type badges row
+              // Type badges row - with explicit labels for clarity
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Row(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: typeColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          workout.type?.toUpperCase() ?? 'STRENGTH',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: typeColor,
-                            letterSpacing: 1,
-                          ),
-                        ),
+                      // Workout Type Badge
+                      _buildLabeledBadge(
+                        label: 'Type',
+                        value: (workout.type ?? 'strength').capitalize(),
+                        color: typeColor,
+                        backgroundColor: typeColor.withOpacity(0.2),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: glassSurface,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          (workout.difficulty ?? 'Medium').capitalize(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.getDifficultyColor(
-                              workout.difficulty ?? 'medium',
-                            ),
-                          ),
-                        ),
+                      // Difficulty Badge
+                      _buildLabeledBadge(
+                        label: 'Difficulty',
+                        value: (workout.difficulty ?? 'Medium').capitalize(),
+                        color: AppColors.getDifficultyColor(workout.difficulty ?? 'medium'),
+                        backgroundColor: glassSurface,
                       ),
                       // Training Program Badge
-                      if (_trainingSplit != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.purple.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _getTrainingProgramName(_trainingSplit!),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
-                            ),
-                          ),
+                      if (_trainingSplit != null)
+                        _buildLabeledBadge(
+                          label: 'Program',
+                          value: _getTrainingProgramName(_trainingSplit!),
+                          color: AppColors.purple,
+                          backgroundColor: AppColors.purple.withOpacity(0.15),
                         ),
-                      ],
                     ],
                   ),
                 ),
@@ -817,6 +799,46 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
       debugPrint('⚠️ [WorkoutDetail] Failed to parse insights JSON: $e');
       return null;
     }
+  }
+
+  /// Build a labeled badge with "Label: Value" format for clarity
+  Widget _buildLabeledBadge({
+    required String label,
+    required String value,
+    required Color color,
+    required Color backgroundColor,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: labelColor,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildWorkoutSummarySection() {

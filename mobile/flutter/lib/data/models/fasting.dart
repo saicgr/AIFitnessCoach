@@ -68,21 +68,27 @@ enum FastingProtocolType {
 
 /// Predefined fasting protocols
 enum FastingProtocol {
-  twelve12('12:12', 12, 12, FastingProtocolType.tre, 'Beginner'),
-  fourteen10('14:10', 14, 10, FastingProtocolType.tre, 'Beginner'),
-  sixteen8('16:8', 16, 8, FastingProtocolType.tre, 'Intermediate'),
-  eighteen6('18:6', 18, 6, FastingProtocolType.tre, 'Intermediate'),
-  twenty4('20:4', 20, 4, FastingProtocolType.tre, 'Advanced'),
-  omad('OMAD', 23, 1, FastingProtocolType.tre, 'Advanced'),
-  fiveTwo('5:2', 24, 0, FastingProtocolType.modified, 'Intermediate'),
-  adf('ADF', 24, 0, FastingProtocolType.modified, 'Advanced'),
-  custom('Custom', 0, 0, FastingProtocolType.custom, 'Varies');
+  twelve12('12:12', 12, 12, FastingProtocolType.tre, 'Beginner', false, null),
+  fourteen10('14:10', 14, 10, FastingProtocolType.tre, 'Beginner', false, null),
+  sixteen8('16:8', 16, 8, FastingProtocolType.tre, 'Intermediate', false, null),
+  eighteen6('18:6', 18, 6, FastingProtocolType.tre, 'Intermediate', false, null),
+  twenty4('20:4', 20, 4, FastingProtocolType.tre, 'Advanced', false, null),
+  omad('OMAD (One Meal a Day)', 23, 1, FastingProtocolType.tre, 'Advanced', false, 'Only eat one meal per day within a 1-hour window'),
+  waterFast24('24h Water Fast', 24, 0, FastingProtocolType.extended, 'Advanced', true, 'Full day water-only fast. Consult doctor first.'),
+  waterFast48('48h Water Fast', 48, 0, FastingProtocolType.extended, 'Expert', true, 'Extended fast - requires medical supervision'),
+  waterFast72('72h Water Fast', 72, 0, FastingProtocolType.extended, 'Expert', true, 'Extended fast - requires medical supervision'),
+  waterFast7Day('7-Day Water Fast', 168, 0, FastingProtocolType.extended, 'Expert', true, 'Extended fast - REQUIRES medical supervision'),
+  fiveTwo('5:2', 24, 0, FastingProtocolType.modified, 'Intermediate', false, 'Eat normally 5 days, restrict calories 2 days'),
+  adf('ADF (Alternate Day)', 24, 0, FastingProtocolType.modified, 'Advanced', false, 'Alternate between fasting and eating days'),
+  custom('Custom', 0, 0, FastingProtocolType.custom, 'Varies', false, 'Set your own fasting and eating windows');
 
   final String displayName;
   final int fastingHours;
   final int eatingHours;
   final FastingProtocolType type;
   final String difficulty;
+  final bool isDangerous;
+  final String? description;
 
   const FastingProtocol(
     this.displayName,
@@ -90,6 +96,8 @@ enum FastingProtocol {
     this.eatingHours,
     this.type,
     this.difficulty,
+    this.isDangerous,
+    this.description,
   );
 
   /// Get the protocol ID (same as the enum name)
@@ -575,6 +583,9 @@ class FastingSafetyQuestion {
   final bool blocksIfTrue;
   final String blockMessage;
   final String? warnMessage;
+  final String? detailedExplanation;
+  final List<String>? potentialRisks;
+  final bool allowContinueWithWarning;
 
   const FastingSafetyQuestion({
     required this.id,
@@ -582,6 +593,9 @@ class FastingSafetyQuestion {
     required this.blocksIfTrue,
     required this.blockMessage,
     this.warnMessage,
+    this.detailedExplanation,
+    this.potentialRisks,
+    this.allowContinueWithWarning = false,
   });
 }
 
@@ -590,28 +604,72 @@ final List<FastingSafetyQuestion> fastingSafetyQuestions = [
   const FastingSafetyQuestion(
     id: 'pregnant_breastfeeding',
     question: "Are you pregnant or breastfeeding?",
-    blocksIfTrue: true,
+    blocksIfTrue: false,
     blockMessage: "Fasting is not recommended during pregnancy or breastfeeding.",
+    warnMessage: "Fasting during pregnancy or breastfeeding can affect your baby's nutrition.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "During pregnancy and breastfeeding, your body requires consistent nutrition to support fetal development and milk production. Fasting can lead to nutrient deficiencies that may affect your baby.",
+    potentialRisks: [
+      "Nutrient deficiencies affecting fetal/infant development",
+      "Reduced breast milk production",
+      "Low blood sugar affecting energy levels",
+      "Dehydration risks",
+      "Potential hormonal imbalances",
+    ],
   ),
   const FastingSafetyQuestion(
     id: 'eating_disorder',
     question: "Do you have a history of eating disorders?",
-    blocksIfTrue: true,
+    blocksIfTrue: false,
     blockMessage:
         "For your safety, we don't recommend fasting for those with a history of eating disorders.",
+    warnMessage: "Fasting may trigger unhealthy eating patterns.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "Intermittent fasting involves structured eating windows which may reinforce or trigger obsessive thoughts about food, eating, and body image in individuals with eating disorder history.",
+    potentialRisks: [
+      "May trigger restrictive eating patterns",
+      "Can reinforce obsessive food thoughts",
+      "Risk of binge eating during eating windows",
+      "May worsen anxiety around food",
+      "Could delay recovery progress",
+    ],
   ),
   const FastingSafetyQuestion(
     id: 'type1_diabetes',
     question: "Do you have Type 1 diabetes?",
-    blocksIfTrue: true,
+    blocksIfTrue: false,
     blockMessage:
         "Type 1 diabetics should not fast without strict medical supervision.",
+    warnMessage: "Fasting with Type 1 diabetes requires careful blood sugar monitoring.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "Type 1 diabetes means your body doesn't produce insulin. During fasting, blood sugar levels can become unpredictable. Without careful monitoring and insulin adjustment, you risk dangerous hypoglycemia (low blood sugar) or ketoacidosis.",
+    potentialRisks: [
+      "Severe hypoglycemia (dangerously low blood sugar)",
+      "Diabetic ketoacidosis (DKA)",
+      "Difficulty managing insulin dosing",
+      "Unpredictable blood sugar swings",
+      "Increased risk during extended fasts",
+    ],
   ),
   const FastingSafetyQuestion(
     id: 'under_18',
     question: "Are you under 18 years old?",
-    blocksIfTrue: true,
+    blocksIfTrue: false,
     blockMessage: "Fasting is not recommended for those under 18.",
+    warnMessage: "Young people need consistent nutrition for proper growth.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "During adolescence, your body requires consistent nutrition for proper growth, brain development, and hormonal balance. Fasting can interfere with these critical developmental processes.",
+    potentialRisks: [
+      "May affect growth and development",
+      "Can impact concentration and academic performance",
+      "Risk of nutrient deficiencies",
+      "May affect hormonal development",
+      "Could establish unhealthy eating patterns",
+    ],
   ),
   const FastingSafetyQuestion(
     id: 'medication_with_food',
@@ -619,7 +677,16 @@ final List<FastingSafetyQuestion> fastingSafetyQuestions = [
     blocksIfTrue: false,
     blockMessage: "",
     warnMessage:
-        "Please consult your doctor about adjusting medication timing before starting a fasting protocol.",
+        "Please consult your doctor about adjusting medication timing.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "Some medications need to be taken with food to be absorbed properly or to prevent stomach irritation. Fasting may affect how your medications work.",
+    potentialRisks: [
+      "Reduced medication effectiveness",
+      "Stomach irritation or ulcers",
+      "Nausea and digestive issues",
+      "Potential medication side effects",
+    ],
   ),
   const FastingSafetyQuestion(
     id: 'type2_diabetes_bp',
@@ -627,6 +694,15 @@ final List<FastingSafetyQuestion> fastingSafetyQuestions = [
     blocksIfTrue: false,
     blockMessage: "",
     warnMessage:
-        "We recommend consulting your doctor before starting intermittent fasting. You may need to adjust your medication.",
+        "Consult your doctor - you may need to adjust your medication.",
+    allowContinueWithWarning: true,
+    detailedExplanation:
+        "Fasting can affect blood sugar and blood pressure levels. While many people with Type 2 diabetes benefit from fasting, medication doses may need adjustment to prevent low blood sugar or low blood pressure.",
+    potentialRisks: [
+      "Low blood sugar (hypoglycemia)",
+      "Low blood pressure episodes",
+      "Dizziness or fainting",
+      "Medication dose may need adjustment",
+    ],
   ),
 ];

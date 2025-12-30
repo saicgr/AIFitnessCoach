@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'app_watermark.dart';
 
 /// Photo Overlay Template - User's photo with workout stats overlay
 /// Stats displayed at bottom with gradient overlay
@@ -13,6 +14,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
   final Uint8List? userPhotoBytes;
   final String? userPhotoUrl;
   final DateTime completedAt;
+  final bool showWatermark;
 
   const PhotoOverlayTemplate({
     super.key,
@@ -24,6 +26,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
     this.userPhotoBytes,
     this.userPhotoUrl,
     required this.completedAt,
+    this.showWatermark = true,
   });
 
   String get _formattedDuration {
@@ -149,7 +152,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Watermark
-                  _buildWatermark(),
+                  if (showWatermark) const AppWatermark(),
                 ],
               ),
             ),
@@ -332,47 +335,4 @@ class PhotoOverlayTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildWatermark() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.cyan, AppColors.purple],
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  size: 12,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'FitWiz',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }

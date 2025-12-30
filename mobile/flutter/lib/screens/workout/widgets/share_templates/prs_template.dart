@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'app_watermark.dart';
 
 /// PRs Template - Showcases personal records achieved in the workout
 /// Gold/trophy theme with achievement highlights
@@ -8,6 +9,7 @@ class PrsTemplate extends StatelessWidget {
   final List<Map<String, dynamic>> prsData;
   final List<Map<String, dynamic>>? achievementsData;
   final DateTime completedAt;
+  final bool showWatermark;
 
   const PrsTemplate({
     super.key,
@@ -15,6 +17,7 @@ class PrsTemplate extends StatelessWidget {
     required this.prsData,
     this.achievementsData,
     required this.completedAt,
+    this.showWatermark = true,
   });
 
   @override
@@ -96,7 +99,7 @@ class PrsTemplate extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Watermark
-                _buildWatermark(),
+                if (showWatermark) const AppWatermark(),
               ],
             ),
           ),
@@ -308,49 +311,6 @@ class PrsTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildWatermark() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFDAA520)],
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  size: 12,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'FitWiz',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Custom painter for gold shimmer effect

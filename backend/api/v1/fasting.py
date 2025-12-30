@@ -86,7 +86,14 @@ class FastingPreferencesRequest(BaseModel):
     notify_zone_transitions: Optional[bool] = True
     notify_goal_reached: Optional[bool] = True
     notify_eating_window_end: Optional[bool] = True
+    notify_fast_start_reminder: Optional[bool] = True
     is_keto_adapted: Optional[bool] = False
+    # Meal reminders (new)
+    meal_reminders_enabled: Optional[bool] = True
+    lunch_reminder_hour: Optional[int] = Field(None, ge=0, le=23)
+    dinner_reminder_hour: Optional[int] = Field(None, ge=0, le=23)
+    extended_protocol_acknowledged: Optional[bool] = False
+    safety_responses: Optional[dict] = None
 
 
 class CompleteOnboardingRequest(BaseModel):
@@ -151,9 +158,17 @@ class FastingPreferencesResponse(BaseModel):
     notify_zone_transitions: bool
     notify_goal_reached: bool
     notify_eating_window_end: bool
+    notify_fast_start_reminder: Optional[bool] = True
     is_keto_adapted: bool
+    # Meal reminders (new)
+    meal_reminders_enabled: Optional[bool] = True
+    lunch_reminder_hour: Optional[int] = None
+    dinner_reminder_hour: Optional[int] = None
+    extended_protocol_acknowledged: Optional[bool] = False
+    safety_responses: Optional[dict] = None
     safety_screening_completed: bool
     safety_warnings_acknowledged: Optional[List[str]] = None
+    has_medical_conditions: Optional[bool] = False
     fasting_onboarding_completed: bool
     onboarding_completed_at: Optional[str] = None
     created_at: str
@@ -238,9 +253,17 @@ def row_to_preferences(row: dict) -> FastingPreferencesResponse:
         notify_zone_transitions=row.get("notify_zone_transitions", True),
         notify_goal_reached=row.get("notify_goal_reached", True),
         notify_eating_window_end=row.get("notify_eating_window_end", True),
+        notify_fast_start_reminder=row.get("notify_fast_start_reminder", True),
         is_keto_adapted=row.get("is_keto_adapted", False),
+        # Meal reminders
+        meal_reminders_enabled=row.get("meal_reminders_enabled", True),
+        lunch_reminder_hour=row.get("lunch_reminder_hour"),
+        dinner_reminder_hour=row.get("dinner_reminder_hour"),
+        extended_protocol_acknowledged=row.get("extended_protocol_acknowledged", False),
+        safety_responses=row.get("safety_responses"),
         safety_screening_completed=row.get("safety_screening_completed", False),
         safety_warnings_acknowledged=row.get("safety_warnings_acknowledged"),
+        has_medical_conditions=row.get("has_medical_conditions", False),
         fasting_onboarding_completed=row.get("fasting_onboarding_completed", False),
         onboarding_completed_at=row.get("onboarding_completed_at"),
         created_at=row.get("created_at"),
@@ -986,6 +1009,7 @@ async def save_safety_screening(data: SafetyScreeningRequest):
             "user_id": data.user_id,
             "safety_screening_completed": True,
             "safety_warnings_acknowledged": list(data.responses.keys()),
+            "safety_responses": data.responses,
             "updated_at": datetime.utcnow().isoformat(),
         }, on_conflict="user_id").execute()
 
@@ -994,3 +1018,147 @@ async def save_safety_screening(data: SafetyScreeningRequest):
     except Exception as e:
         logger.error(f"Error saving safety screening: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== User Context Logging Endpoints ====================
+
+class LogFastingContextRequest(BaseModel):
+    """Request to log fasting context for AI coaching."""
+    user_id: str
+    fasting_record_id: Optional[str] = None
+    context_type: str  # 'fast_started', 'zone_entered', 'fast_ended', 'fast_cancelled', 'note_added', 'mood_logged'
+    zone_name: Optional[str] = None
+    mood: Optional[str] = None
+    energy_level: Optional[int] = Field(None, ge=1, le=5)
+    note: Optional[str] = None
+    protocol: Optional[str] = None
+    protocol_type: Optional[str] = None
+    is_dangerous_protocol: Optional[bool] = False
+    elapsed_minutes: Optional[int] = None
+    goal_minutes: Optional[int] = None
+
+
+@router.post("/context/log")
+async def log_fasting_context(data: LogFastingContextRequest):
+    """
+    Log user context during fasting for AI coaching and analytics.
+
+    This logs events like:
+    - fast_started: When user starts a fast
+    - zone_entered: When user enters a new metabolic zone
+    - fast_ended: When user completes a fast
+    - fast_cancelled: When user cancels a fast
+    - note_added: When user adds a note
+    - mood_logged: When user logs their mood/energy
+    """
+    logger.info(f"Logging fasting context for user {data.user_id}: {data.context_type}")
+
+    try:
+        db = get_supabase_db()
+
+        # Calculate completion percentage if applicable
+        completion_percentage = None
+        if data.elapsed_minutes and data.goal_minutes and data.goal_minutes > 0:
+            completion_percentage = min(100.0, round((data.elapsed_minutes / data.goal_minutes) * 100, 2))
+
+        context_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": data.user_id,
+            "fasting_record_id": data.fasting_record_id,
+            "context_type": data.context_type,
+            "zone_name": data.zone_name,
+            "mood": data.mood,
+            "energy_level": data.energy_level,
+            "note": data.note,
+            "protocol": data.protocol,
+            "protocol_type": data.protocol_type,
+            "is_dangerous_protocol": data.is_dangerous_protocol,
+            "elapsed_minutes": data.elapsed_minutes,
+            "goal_minutes": data.goal_minutes,
+            "completion_percentage": completion_percentage,
+            "timestamp": datetime.utcnow().isoformat(),
+            "created_at": datetime.utcnow().isoformat(),
+        }
+
+        result = db.client.table("fasting_user_context").insert(context_data).execute()
+
+        if not result.data:
+            logger.warning(f"Could not log fasting context (table may not exist yet)")
+            # Don't fail if table doesn't exist - migration may not be run
+            return {"status": "skipped", "reason": "context table not available"}
+
+        return {"status": "logged", "context_id": context_data["id"]}
+
+    except Exception as e:
+        logger.error(f"Error logging fasting context: {e}")
+        # Don't fail the request - context logging is optional
+        return {"status": "error", "reason": str(e)}
+
+
+@router.get("/context/{user_id}")
+async def get_fasting_context(
+    user_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    context_type: Optional[str] = Query(None, description="Filter by context type"),
+):
+    """
+    Get user's fasting context history for AI coaching.
+
+    This provides context for the AI coach about the user's fasting patterns,
+    moods, energy levels, and notes.
+    """
+    logger.info(f"Getting fasting context for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        query = db.client.table("fasting_user_context").select("*").eq(
+            "user_id", user_id
+        )
+
+        if context_type:
+            query = query.eq("context_type", context_type)
+
+        result = query.order("timestamp", desc=True).limit(limit).execute()
+
+        return {"contexts": result.data or [], "count": len(result.data or [])}
+
+    except Exception as e:
+        logger.error(f"Error getting fasting context: {e}")
+        # Return empty if table doesn't exist
+        return {"contexts": [], "count": 0}
+
+
+# ==================== Extended Protocol Helpers ====================
+
+DANGEROUS_PROTOCOLS = [
+    "24h Water Fast",
+    "48h Water Fast",
+    "72h Water Fast",
+    "7-Day Water Fast",
+]
+
+def is_dangerous_protocol(protocol: str) -> bool:
+    """Check if a protocol is considered dangerous/extended."""
+    return protocol in DANGEROUS_PROTOCOLS
+
+
+def get_protocol_fasting_hours(protocol: str) -> int:
+    """Get the fasting hours for a protocol."""
+    protocol_hours = {
+        "12:12": 12,
+        "14:10": 14,
+        "16:8": 16,
+        "18:6": 18,
+        "20:4": 20,
+        "OMAD": 23,
+        "OMAD (One Meal a Day)": 23,
+        "24h Water Fast": 24,
+        "48h Water Fast": 48,
+        "72h Water Fast": 72,
+        "7-Day Water Fast": 168,
+        "5:2": 24,
+        "ADF": 24,
+        "ADF (Alternate Day)": 24,
+    }
+    return protocol_hours.get(protocol, 16)

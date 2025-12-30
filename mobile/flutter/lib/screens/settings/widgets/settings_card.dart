@@ -351,6 +351,18 @@ class SettingsCard extends ConsumerWidget {
     context.push('/settings/my-1rms');
   }
 
+  void _navigateToCustomExercises(BuildContext context) {
+    context.push('/custom-exercises');
+  }
+
+  void _navigateToAvoidedExercises(BuildContext context) {
+    context.push('/settings/avoided-exercises');
+  }
+
+  void _navigateToAvoidedMuscles(BuildContext context) {
+    context.push('/settings/avoided-muscles');
+  }
+
   void _showTrainingIntensitySelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIntensity = ref.read(trainingIntensityProvider).globalIntensityPercent;
@@ -693,6 +705,42 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _showTrainingIntensitySelector(context, ref);
+          } else if (item.isCustomExercisesScreen) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToCustomExercises(context);
+          } else if (item.isAvoidedExercisesManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToAvoidedExercises(context);
+          } else if (item.isAvoidedMusclesManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToAvoidedMuscles(context);
           } else {
             trailing = item.trailing;
           }
@@ -720,7 +768,10 @@ class SettingsCard extends ConsumerWidget {
                     !item.isStapleExercisesManager &&
                     !item.isVariationSlider &&
                     !item.isMyOneRMsScreen &&
-                    !item.isTrainingIntensitySelector,
+                    !item.isTrainingIntensitySelector &&
+                    !item.isCustomExercisesScreen &&
+                    !item.isAvoidedExercisesManager &&
+                    !item.isAvoidedMusclesManager,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -1569,7 +1620,7 @@ class _VariationSliderSheetState extends State<_VariationSliderSheet> {
     final percentage = _value.round();
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -269,8 +269,22 @@ async def check_and_regenerate_workouts(
 
         # Get user preferences for workout days
         preferences = parse_json_field(user.get("preferences"), {})
-        selected_days = preferences.get("workout_days", [0, 2, 4])  # Default Mon/Wed/Fri
+        # Try workout_days first (new format), fall back to selected_days (old format)
+        selected_days = preferences.get("workout_days") or preferences.get("selected_days") or [0, 2, 4]
         duration_minutes = preferences.get("workout_duration", 45)
+
+        # Log fitness level for context - important for debugging beginner issues
+        raw_fitness_level = user.get("fitness_level")
+        fitness_level = raw_fitness_level or "intermediate"
+        if not raw_fitness_level:
+            logger.warning(f"[Auto-Regen] User {user_id} has no fitness_level in DB, will default to intermediate during generation")
+        else:
+            logger.info(f"[Auto-Regen] User {user_id} fitness_level: {fitness_level}")
+
+        # Log the day mapping for debugging
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        selected_day_names = [day_names[d] for d in selected_days if 0 <= d < 7]
+        logger.info(f"[Auto-Regen] User {user_id} workout_days: {selected_days} = {selected_day_names} (0=Mon, 6=Sun)")
 
         # If no workout days configured, use defaults
         if not selected_days or not isinstance(selected_days, list):

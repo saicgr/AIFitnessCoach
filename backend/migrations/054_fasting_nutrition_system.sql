@@ -593,5 +593,48 @@ GRANT SELECT ON active_fasts TO authenticated;
 GRANT SELECT ON fasting_stats TO authenticated;
 
 -- ============================================================================
+-- PART 12: SERVICE ROLE POLICIES (For backend API access)
+-- ============================================================================
+
+-- These policies allow the backend (using service_role key) to bypass RLS
+-- This is necessary because the FastAPI backend doesn't use Supabase auth
+
+DROP POLICY IF EXISTS nutrition_preferences_service_all ON nutrition_preferences;
+CREATE POLICY nutrition_preferences_service_all ON nutrition_preferences
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS nutrition_streaks_service_all ON nutrition_streaks;
+CREATE POLICY nutrition_streaks_service_all ON nutrition_streaks
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS fasting_records_service_all ON fasting_records;
+CREATE POLICY fasting_records_service_all ON fasting_records
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS fasting_preferences_service_all ON fasting_preferences;
+CREATE POLICY fasting_preferences_service_all ON fasting_preferences
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS fasting_streaks_service_all ON fasting_streaks;
+CREATE POLICY fasting_streaks_service_all ON fasting_streaks
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS daily_unified_state_service_all ON daily_unified_state;
+CREATE POLICY daily_unified_state_service_all ON daily_unified_state
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS weight_logs_service_all ON weight_logs;
+CREATE POLICY weight_logs_service_all ON weight_logs
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS adaptive_nutrition_calculations_service_all ON adaptive_nutrition_calculations;
+CREATE POLICY adaptive_nutrition_calculations_service_all ON adaptive_nutrition_calculations
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS weekly_nutrition_recommendations_service_all ON weekly_nutrition_recommendations;
+CREATE POLICY weekly_nutrition_recommendations_service_all ON weekly_nutrition_recommendations
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================

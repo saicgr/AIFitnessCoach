@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/home_layout.dart';
+import '../../data/providers/home_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -13,6 +15,7 @@ import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
+import 'widgets/tile_factory.dart';
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
@@ -244,10 +247,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final user = authState.user;
     final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
+    final activeLayoutState = ref.watch(activeLayoutProvider);
 
     final nextWorkout = workoutsNotifier.nextWorkout;
     final upcomingWorkouts = workoutsNotifier.upcomingWorkouts;
-    final completedCount = workoutsNotifier.completedCount;
     final weeklyProgress = workoutsNotifier.weeklyProgress;
     final currentStreak = workoutsNotifier.currentStreak;
 
@@ -259,7 +262,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: RefreshIndicator(
-        onRefresh: () => workoutsNotifier.refresh(),
+        onRefresh: () async {
+          await workoutsNotifier.refresh();
+          ref.invalidate(activeLayoutProvider);
+        },
         color: AppColors.cyan,
         backgroundColor: elevatedColor,
         child: SafeArea(
@@ -307,17 +313,119 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: _buildTodaySectionHeader(isDark),
               ),
 
-              // Readiness Check-in Card
-              const SliverToBoxAdapter(
-                child: HomeReadinessCard(),
+              // Dynamic Tile Rendering based on active layout
+              ..._buildDynamicTiles(
+                context,
+                activeLayoutState,
+                isDark,
+                workoutsState,
+                workoutsNotifier,
+                nextWorkout,
+                isAIGenerating,
+                weeklyProgress,
+                upcomingWorkouts,
               ),
 
-              // Daily Activity Card
+              // Bottom padding
               const SliverToBoxAdapter(
-                child: DailyActivityCard(),
+                child: SizedBox(height: 100),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // Next Workout Card
+  /// Build tiles dynamically based on the active layout
+  List<Widget> _buildDynamicTiles(
+    BuildContext context,
+    AsyncValue<HomeLayout?> activeLayoutState,
+    bool isDark,
+    AsyncValue workoutsState,
+    WorkoutsNotifier workoutsNotifier,
+    dynamic nextWorkout,
+    bool isAIGenerating,
+    (int, int) weeklyProgress,
+    List upcomingWorkouts,
+  ) {
+    return activeLayoutState.when(
+      loading: () => [
+        const SliverToBoxAdapter(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ],
+      error: (error, _) => [
+        // Fallback to default layout on error
+        ..._buildDefaultTiles(
+          context,
+          isDark,
+          workoutsState,
+          workoutsNotifier,
+          nextWorkout,
+          isAIGenerating,
+          weeklyProgress,
+          upcomingWorkouts,
+        ),
+      ],
+      data: (layout) {
+        // Fallback to default layout if layout is null or has no tiles
+        if (layout == null || layout.tiles.isEmpty) {
+          return _buildDefaultTiles(
+            context,
+            isDark,
+            workoutsState,
+            workoutsNotifier,
+            nextWorkout,
+            isAIGenerating,
+            weeklyProgress,
+            upcomingWorkouts,
+          );
+        }
+
+        final visibleTiles = layout.tiles.where((t) => t.isVisible).toList()
+          ..sort((a, b) => a.order.compareTo(b.order));
+
+        if (visibleTiles.isEmpty) {
+          return _buildDefaultTiles(
+            context,
+            isDark,
+            workoutsState,
+            workoutsNotifier,
+            nextWorkout,
+            isAIGenerating,
+            weeklyProgress,
+            upcomingWorkouts,
+          );
+        }
+
+        final slivers = <Widget>[];
+        var i = 0;
+
+        // Group YOUR WEEK tiles together
+        final weekTileTypes = {
+          TileType.weekChanges,
+          TileType.weeklyProgress,
+          TileType.weeklyGoals,
+        };
+        bool hasAddedWeekHeader = false;
+
+        while (i < visibleTiles.length) {
+          final tile = visibleTiles[i];
+
+          // Add YOUR WEEK section header before first week-related tile
+          if (weekTileTypes.contains(tile.type) && !hasAddedWeekHeader) {
+            slivers.add(
+              const SliverToBoxAdapter(
+                child: SectionHeader(title: 'YOUR WEEK'),
+              ),
+            );
+            hasAddedWeekHeader = true;
+          }
+
+          // Handle special tiles that need custom rendering
+          if (tile.type == TileType.nextWorkout) {
+            slivers.add(
               SliverToBoxAdapter(
                 child: _buildNextWorkoutSection(
                   context,
@@ -327,50 +435,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   isAIGenerating,
                 ),
               ),
+            );
+            i++;
+            continue;
+          }
 
-              // Quick Actions Row
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 8),
-                  child: QuickActionsRow(),
-                ),
-              ),
-
-              // Upcoming Features Card (Robinhood-style)
-              const SliverToBoxAdapter(
-                child: UpcomingFeaturesCard(),
-              ),
-
-              // Section: YOUR WEEK
-              const SliverToBoxAdapter(
-                child: SectionHeader(title: 'YOUR WEEK'),
-              ),
-
-              // Week Changes Card (shows exercise variation this week)
-              const SliverToBoxAdapter(
-                child: WeekChangesCard(),
-              ),
-
-              // Weekly Progress
-              SliverToBoxAdapter(
-                child: WeeklyProgressCard(
-                  completed: weeklyProgress.$1,
-                  total: weeklyProgress.$2,
-                  isDark: isDark,
-                ).animateSlideRotate(delay: const Duration(milliseconds: 50)),
-              ),
-
-              // Weekly Goals Card
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: WeeklyGoalsCard(isDark: isDark)
-                      .animateSlideRotate(delay: const Duration(milliseconds: 100)),
-                ),
-              ),
-
-              // Section: UPCOMING
-              if (upcomingWorkouts.isNotEmpty) ...[
+          if (tile.type == TileType.upcomingWorkouts) {
+            if (upcomingWorkouts.isNotEmpty) {
+              slivers.add(
                 SliverToBoxAdapter(
                   child: SectionHeader(
                     title: 'UPCOMING',
@@ -382,6 +454,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     },
                   ),
                 ),
+              );
+              slivers.add(
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -406,17 +480,158 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     childCount: upcomingWorkouts.length.clamp(0, 3),
                   ),
                 ),
-              ],
+              );
+            }
+            i++;
+            continue;
+          }
 
-              // Bottom padding
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
+          // Handle half-width tiles - group them in pairs
+          if (tile.size == TileSize.half) {
+            final halfTiles = <HomeTile>[tile];
+            if (i + 1 < visibleTiles.length &&
+                visibleTiles[i + 1].size == TileSize.half &&
+                visibleTiles[i + 1].isVisible) {
+              halfTiles.add(visibleTiles[i + 1]);
+              i++;
+            }
+
+            slivers.add(
+              SliverToBoxAdapter(
+                child: TileFactory.buildHalfWidthRow(
+                  context,
+                  ref,
+                  halfTiles,
+                  isDark,
+                ),
               ),
-            ],
-          ),
+            );
+            i++;
+            continue;
+          }
+
+          // Full-width tile
+          slivers.add(
+            SliverToBoxAdapter(
+              child: TileFactory.buildTile(context, ref, tile, isDark: isDark),
+            ),
+          );
+          i++;
+        }
+
+        return slivers;
+      },
+    );
+  }
+
+  /// Build default tiles when no layout is available
+  List<Widget> _buildDefaultTiles(
+    BuildContext context,
+    bool isDark,
+    AsyncValue workoutsState,
+    WorkoutsNotifier workoutsNotifier,
+    dynamic nextWorkout,
+    bool isAIGenerating,
+    (int, int) weeklyProgress,
+    List upcomingWorkouts,
+  ) {
+    return [
+      // Fitness Score Card
+      const SliverToBoxAdapter(child: FitnessScoreCard()),
+
+      // Mood Picker Card
+      const SliverToBoxAdapter(child: MoodPickerCard()),
+
+      // Daily Activity Card
+      const SliverToBoxAdapter(child: DailyActivityCard()),
+
+      // Next Workout Card
+      SliverToBoxAdapter(
+        child: _buildNextWorkoutSection(
+          context,
+          workoutsState,
+          workoutsNotifier,
+          nextWorkout,
+          isAIGenerating,
         ),
       ),
-    );
+
+      // Quick Actions Row
+      const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.only(top: 8, bottom: 8),
+          child: QuickActionsRow(),
+        ),
+      ),
+
+      // Upcoming Features Card
+      const SliverToBoxAdapter(child: UpcomingFeaturesCard()),
+
+      // Section: YOUR WEEK
+      const SliverToBoxAdapter(
+        child: SectionHeader(title: 'YOUR WEEK'),
+      ),
+
+      // Week Changes Card
+      const SliverToBoxAdapter(child: WeekChangesCard()),
+
+      // Weekly Progress
+      SliverToBoxAdapter(
+        child: WeeklyProgressCard(
+          completed: weeklyProgress.$1,
+          total: weeklyProgress.$2,
+          isDark: isDark,
+        ).animateSlideRotate(delay: const Duration(milliseconds: 50)),
+      ),
+
+      // Weekly Goals Card
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: WeeklyGoalsCard(isDark: isDark)
+              .animateSlideRotate(delay: const Duration(milliseconds: 100)),
+        ),
+      ),
+
+      // Section: UPCOMING
+      if (upcomingWorkouts.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: SectionHeader(
+            title: 'UPCOMING',
+            subtitle: '${upcomingWorkouts.length} workouts',
+            actionText: 'View All',
+            onAction: () {
+              HapticService.light();
+              context.push('/schedule');
+            },
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= upcomingWorkouts.length) return null;
+              final workout = upcomingWorkouts[index];
+              return AnimationConfiguration.staggeredList(
+                position: index,
+                duration: AppAnimations.listItem,
+                child: SlideAnimation(
+                  verticalOffset: 20,
+                  curve: AppAnimations.fastOut,
+                  child: FadeInAnimation(
+                    curve: AppAnimations.fastOut,
+                    child: UpcomingWorkoutCard(
+                      workout: workout,
+                      onTap: () => context.push('/workout/${workout.id}'),
+                    ),
+                  ),
+                ),
+              );
+            },
+            childCount: upcomingWorkouts.length.clamp(0, 3),
+          ),
+        ),
+      ],
+    ];
   }
 
   Widget _buildHeader(
@@ -526,6 +741,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const Spacer(),
+          MySpaceButton(isDark: isDark),
+          const SizedBox(width: 8),
           CustomizeProgramButton(isDark: isDark),
         ],
       ),

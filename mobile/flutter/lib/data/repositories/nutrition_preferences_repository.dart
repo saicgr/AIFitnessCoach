@@ -60,10 +60,10 @@ class NutritionPreferencesRepository {
     }
   }
 
-  /// Complete nutrition onboarding
+  /// Complete nutrition onboarding (supports multi-select goals)
   Future<NutritionPreferences> completeOnboarding({
     required String userId,
-    required NutritionGoal goal,
+    required List<NutritionGoal> goals, // Multi-select goals
     required RateOfChange? rateOfChange,
     required DietType dietType,
     required List<FoodAllergen> allergies,
@@ -79,13 +79,17 @@ class NutritionPreferencesRepository {
     int? customFatPercent,
   }) async {
     try {
-      debugPrint('🎓 [NutritionPrefs] Completing onboarding for $userId');
+      debugPrint('🎓 [NutritionPrefs] Completing onboarding for $userId with ${goals.length} goals');
+
+      // Send both nutrition_goals (array) and nutrition_goal (legacy, primary goal)
+      final primaryGoal = goals.isNotEmpty ? goals.first : NutritionGoal.maintain;
 
       final response = await _client.post(
         '/nutrition/onboarding/complete',
         data: {
           'user_id': userId,
-          'nutrition_goal': goal.value,
+          'nutrition_goals': goals.map((g) => g.value).toList(), // New multi-select
+          'nutrition_goal': primaryGoal.value, // Legacy field for backward compatibility
           if (rateOfChange != null) 'rate_of_change': rateOfChange.value,
           'diet_type': dietType.value,
           'allergies': allergies.map((a) => a.value).toList(),

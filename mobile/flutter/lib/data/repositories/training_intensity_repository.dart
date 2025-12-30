@@ -27,8 +27,8 @@ class TrainingIntensityRepository {
         '${ApiConstants.baseUrl}/training/1rm/$userId',
       );
 
-      if (response is List) {
-        return response
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List)
             .map((json) => UserExercise1RM.fromJson(json as Map<String, dynamic>))
             .toList();
       }
@@ -46,8 +46,8 @@ class TrainingIntensityRepository {
         '${ApiConstants.baseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return UserExercise1RM.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return UserExercise1RM.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -68,7 +68,7 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/1rm',
-        {
+        data: {
           'user_id': userId,
           'exercise_name': exerciseName,
           'one_rep_max_kg': oneRepMaxKg,
@@ -79,8 +79,8 @@ class TrainingIntensityRepository {
         },
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return UserExercise1RM.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return UserExercise1RM.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -92,10 +92,10 @@ class TrainingIntensityRepository {
   /// Delete 1RM for an exercise
   Future<bool> deleteOneRM(String userId, String exerciseName) async {
     try {
-      await _apiClient.delete(
+      final response = await _apiClient.delete(
         '${ApiConstants.baseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
       );
-      return true;
+      return response.statusCode == 200;
     } catch (e) {
       debugPrint('Error deleting 1RM: $e');
       return false;
@@ -113,8 +113,8 @@ class TrainingIntensityRepository {
         '${ApiConstants.baseUrl}/training/intensity/$userId',
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return TrainingIntensitySettings.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return TrainingIntensitySettings.fromJson(response.data as Map<String, dynamic>);
       }
       return const TrainingIntensitySettings();
     } catch (e) {
@@ -131,14 +131,14 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/intensity',
-        {
+        data: {
           'user_id': userId,
           'intensity_percent': intensityPercent,
         },
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return IntensityResponse.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return IntensityResponse.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -156,15 +156,15 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/intensity/exercise',
-        {
+        data: {
           'user_id': userId,
           'exercise_name': exerciseName,
           'intensity_percent': intensityPercent,
         },
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return IntensityResponse.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return IntensityResponse.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
     } catch (e) {
@@ -179,10 +179,10 @@ class TrainingIntensityRepository {
     required String exerciseName,
   }) async {
     try {
-      await _apiClient.delete(
+      final response = await _apiClient.delete(
         '${ApiConstants.baseUrl}/training/intensity/exercise/$userId/${Uri.encodeComponent(exerciseName)}',
       );
-      return true;
+      return response.statusCode == 200;
     } catch (e) {
       debugPrint('Error removing exercise intensity: $e');
       return false;
@@ -202,15 +202,15 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/calculate-weight',
-        {
+        data: {
           'one_rep_max_kg': oneRepMaxKg,
           'intensity_percent': intensityPercent,
           'equipment_type': equipmentType,
         },
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return (response['working_weight_kg'] as num?)?.toDouble();
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return (response.data['working_weight_kg'] as num?)?.toDouble();
       }
       return null;
     } catch (e) {
@@ -228,15 +228,15 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/workout-weights',
-        {
+        data: {
           'user_id': userId,
           'exercises': exercises,
           if (equipmentTypes != null) 'equipment_types': equipmentTypes,
         },
       );
 
-      if (response is List) {
-        return response
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List)
             .map((json) =>
                 WorkingWeightResult.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -261,11 +261,11 @@ class TrainingIntensityRepository {
     try {
       final response = await _apiClient.post(
         '${ApiConstants.baseUrl}/training/auto-populate/$userId?days_lookback=$daysLookback&min_confidence=$minConfidence',
-        {},
+        data: {},
       );
 
-      if (response != null && response is Map<String, dynamic>) {
-        return AutoPopulateResponse.fromJson(response);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return AutoPopulateResponse.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
     } catch (e) {

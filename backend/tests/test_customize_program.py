@@ -100,19 +100,38 @@ class TestIntensityPreferenceInGeneration:
 
         assert intensity_preference == "hard"
 
-    def test_intensity_preference_defaults_to_medium(self):
-        """Test that intensity_preference defaults to medium when not set."""
-        from api.v1.workouts.utils import parse_json_field
+    def test_intensity_preference_derived_from_fitness_level_when_not_set(self):
+        """Test that intensity is derived from fitness_level when intensity_preference not set."""
+        from api.v1.workouts.utils import parse_json_field, get_intensity_from_fitness_level
 
         user = {
+            "fitness_level": "beginner",
             "preferences": json.dumps({
                 "workout_duration": 45,
             })
         }
         preferences = parse_json_field(user.get("preferences"), {})
-        intensity_preference = preferences.get("intensity_preference", "medium")
+        fitness_level = user.get("fitness_level")
+        # New logic: derive from fitness level when not explicitly set
+        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
-        assert intensity_preference == "medium"
+        # Beginners should get 'easy', not 'medium'
+        assert intensity_preference == "easy"
+
+    def test_intensity_from_fitness_level_beginner(self):
+        """Test beginner gets easy intensity."""
+        from api.v1.workouts.utils import get_intensity_from_fitness_level
+        assert get_intensity_from_fitness_level("beginner") == "easy"
+
+    def test_intensity_from_fitness_level_intermediate(self):
+        """Test intermediate gets medium intensity."""
+        from api.v1.workouts.utils import get_intensity_from_fitness_level
+        assert get_intensity_from_fitness_level("intermediate") == "medium"
+
+    def test_intensity_from_fitness_level_advanced(self):
+        """Test advanced gets hard intensity."""
+        from api.v1.workouts.utils import get_intensity_from_fitness_level
+        assert get_intensity_from_fitness_level("advanced") == "hard"
 
     def test_generate_workout_from_library_accepts_intensity(self):
         """Test that generate_workout_from_library accepts intensity_preference parameter."""

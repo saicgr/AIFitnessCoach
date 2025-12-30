@@ -2741,7 +2741,8 @@ class NutritionPreferencesResponse(BaseModel):
     """Nutrition preferences response model."""
     id: Optional[str] = None
     user_id: str
-    nutrition_goal: str = "maintain"
+    nutrition_goals: List[str] = []  # Multi-select goals array
+    nutrition_goal: str = "maintain"  # Legacy field (primary goal)
     rate_of_change: Optional[str] = None
     calculated_bmr: Optional[int] = None
     calculated_tdee: Optional[int] = None
@@ -2775,7 +2776,8 @@ class NutritionPreferencesResponse(BaseModel):
 
 class NutritionPreferencesUpdate(BaseModel):
     """Nutrition preferences update request."""
-    nutrition_goal: Optional[str] = None
+    nutrition_goals: Optional[List[str]] = None  # Multi-select goals array
+    nutrition_goal: Optional[str] = None  # Legacy field
     rate_of_change: Optional[str] = None
     target_calories: Optional[int] = None
     target_protein_g: Optional[int] = None
@@ -2837,9 +2839,15 @@ async def get_nutrition_preferences(user_id: str):
             return NutritionPreferencesResponse(user_id=user_id)
 
         data = result.data
+        # Get nutrition_goals, fallback to single goal in array if not present
+        nutrition_goals = data.get("nutrition_goals") or []
+        if not nutrition_goals and data.get("nutrition_goal"):
+            nutrition_goals = [data.get("nutrition_goal")]
+
         return NutritionPreferencesResponse(
             id=data.get("id"),
             user_id=data.get("user_id", user_id),
+            nutrition_goals=nutrition_goals,
             nutrition_goal=data.get("nutrition_goal", "maintain"),
             rate_of_change=data.get("rate_of_change"),
             calculated_bmr=data.get("calculated_bmr"),
@@ -3297,7 +3305,8 @@ async def get_weight_trend(
 class NutritionOnboardingRequest(BaseModel):
     """Request model for completing nutrition onboarding"""
     user_id: str
-    nutrition_goal: str  # 'lose_fat', 'build_muscle', 'maintain', etc.
+    nutrition_goals: List[str] = []  # Multi-select: ['lose_fat', 'improve_energy', ...]
+    nutrition_goal: Optional[str] = None  # Legacy single goal (backward compatibility)
     rate_of_change: Optional[str] = None  # 'slow', 'moderate', 'aggressive'
     diet_type: str = "balanced"
     allergies: List[str] = []
@@ -3311,6 +3320,22 @@ class NutritionOnboardingRequest(BaseModel):
     custom_carb_percent: Optional[int] = None
     custom_protein_percent: Optional[int] = None
     custom_fat_percent: Optional[int] = None
+
+    @property
+    def primary_goal(self) -> str:
+        """Get primary goal - first in goals list or legacy goal field"""
+        if self.nutrition_goals:
+            return self.nutrition_goals[0]
+        return self.nutrition_goal or "maintain"
+
+    @property
+    def all_goals(self) -> List[str]:
+        """Get all goals as list"""
+        if self.nutrition_goals:
+            return self.nutrition_goals
+        if self.nutrition_goal:
+            return [self.nutrition_goal]
+        return ["maintain"]
 
 
 @router.post("/onboarding/complete", response_model=NutritionPreferencesResponse)
@@ -3375,10 +3400,12 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
             "aggressive": 750,
         }
 
-        adjustment = goal_adjustments.get(request.nutrition_goal, 0)
-        if request.nutrition_goal == "lose_fat" and request.rate_of_change:
+        # Use primary_goal property for calculations (first goal in multi-select list)
+        primary_goal = request.primary_goal
+        adjustment = goal_adjustments.get(primary_goal, 0)
+        if primary_goal == "lose_fat" and request.rate_of_change:
             adjustment = -rate_adjustments.get(request.rate_of_change, 500)
-        elif request.nutrition_goal == "build_muscle" and request.rate_of_change:
+        elif primary_goal == "build_muscle" and request.rate_of_change:
             adjustment = rate_adjustments.get(request.rate_of_change, 500) // 2
 
         target_calories = max(
@@ -3425,7 +3452,8 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         # Create/update nutrition preferences
         prefs_data = {
             "user_id": request.user_id,
-            "nutrition_goal": request.nutrition_goal,
+            "nutrition_goals": request.all_goals,  # Multi-select goals array
+            "nutrition_goal": request.primary_goal,  # Legacy single goal (primary)
             "rate_of_change": request.rate_of_change,
             "calculated_bmr": bmr,
             "calculated_tdee": tdee,

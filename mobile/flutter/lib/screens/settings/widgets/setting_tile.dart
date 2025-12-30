@@ -66,6 +66,15 @@ class SettingItemData {
   /// Whether this item is the training intensity selector.
   final bool isTrainingIntensitySelector;
 
+  /// Whether this item navigates to the Custom Exercises screen.
+  final bool isCustomExercisesScreen;
+
+  /// Whether this item is the avoided exercises management.
+  final bool isAvoidedExercisesManager;
+
+  /// Whether this item is the avoided muscles management.
+  final bool isAvoidedMusclesManager;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -88,6 +97,9 @@ class SettingItemData {
     this.isVariationSlider = false,
     this.isMyOneRMsScreen = false,
     this.isTrainingIntensitySelector = false,
+    this.isCustomExercisesScreen = false,
+    this.isAvoidedExercisesManager = false,
+    this.isAvoidedMusclesManager = false,
   });
 }
 

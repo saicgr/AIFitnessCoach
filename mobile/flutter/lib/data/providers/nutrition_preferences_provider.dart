@@ -160,10 +160,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     }
   }
 
-  /// Complete nutrition onboarding
+  /// Complete nutrition onboarding (supports multi-select goals)
   Future<void> completeOnboarding({
     required String userId,
-    required NutritionGoal goal,
+    required List<NutritionGoal> goals, // Multi-select goals
     RateOfChange? rateOfChange,
     required DietType dietType,
     List<FoodAllergen> allergies = const [],
@@ -180,10 +180,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      debugPrint('🎓 [NutritionPrefsProvider] Completing onboarding');
+      debugPrint('🎓 [NutritionPrefsProvider] Completing onboarding with ${goals.length} goals');
       final preferences = await _repository.completeOnboarding(
         userId: userId,
-        goal: goal,
+        goals: goals,
         rateOfChange: rateOfChange,
         dietType: dietType,
         allergies: allergies,

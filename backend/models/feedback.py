@@ -122,13 +122,23 @@ class RestIntervalCreate(BaseModel):
     """Request to log rest interval during workout."""
     user_id: str = Field(..., max_length=100)  # UUID string
     workout_log_id: str = Field(..., max_length=100)  # UUID string
-    exercise_index: int = Field(..., ge=0, le=100)  # Index of the exercise in workout
-    exercise_name: str = Field(..., max_length=200)
+    # Exercise info - optional since Flutter sends exercise_id instead
+    exercise_index: Optional[int] = Field(default=0, ge=0, le=100)  # Index of the exercise in workout
+    exercise_name: Optional[str] = Field(default="Unknown", max_length=200)
+    exercise_id: Optional[str] = Field(default=None, max_length=100)  # Alternative: exercise ID from Flutter
     set_number: Optional[int] = Field(default=None, ge=1, le=100)  # Which set the rest followed
-    rest_duration_seconds: int = Field(..., ge=0, le=3600)  # Actual rest taken (max 1 hour)
+    # Rest duration - accept both field names for compatibility
+    rest_duration_seconds: Optional[int] = Field(default=None, ge=0, le=3600)  # Actual rest taken (max 1 hour)
+    rest_seconds: Optional[int] = Field(default=None, ge=0, le=3600)  # Alias used by Flutter
     prescribed_rest_seconds: Optional[int] = Field(default=None, ge=0, le=600)  # What was recommended
     rest_type: str = Field(default="between_sets", max_length=50)  # "between_sets", "between_exercises", etc.
     notes: Optional[str] = Field(default=None, max_length=500)
+    logged_at: Optional[str] = Field(default=None, max_length=50)  # ISO timestamp from Flutter
+
+    @property
+    def get_rest_duration(self) -> int:
+        """Get rest duration from either field name."""
+        return self.rest_duration_seconds or self.rest_seconds or 0
 
 
 class RestInterval(BaseModel):

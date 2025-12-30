@@ -285,6 +285,11 @@ ScoresOverview _$ScoresOverviewFromJson(
       const [],
   prCount30Days: (json['pr_count_30_days'] as num).toInt(),
   readinessAverage7Days: (json['readiness_average_7_days'] as num?)?.toDouble(),
+  nutritionScore: (json['nutrition_score'] as num?)?.toInt(),
+  nutritionLevel: json['nutrition_level'] as String?,
+  consistencyScore: (json['consistency_score'] as num?)?.toInt(),
+  overallFitnessScore: (json['overall_fitness_score'] as num?)?.toInt(),
+  fitnessLevel: json['fitness_level'] as String?,
 );
 
 Map<String, dynamic> _$ScoresOverviewToJson(ScoresOverview instance) =>
@@ -298,4 +303,132 @@ Map<String, dynamic> _$ScoresOverviewToJson(ScoresOverview instance) =>
       'recent_prs': instance.recentPrs,
       'pr_count_30_days': instance.prCount30Days,
       'readiness_average_7_days': instance.readinessAverage7Days,
+      'nutrition_score': instance.nutritionScore,
+      'nutrition_level': instance.nutritionLevel,
+      'consistency_score': instance.consistencyScore,
+      'overall_fitness_score': instance.overallFitnessScore,
+      'fitness_level': instance.fitnessLevel,
     };
+
+NutritionScoreData _$NutritionScoreDataFromJson(Map<String, dynamic> json) =>
+    NutritionScoreData(
+      id: json['id'] as String?,
+      userId: json['user_id'] as String,
+      weekStart: json['week_start'] as String?,
+      weekEnd: json['week_end'] as String?,
+      daysLogged: (json['days_logged'] as num?)?.toInt() ?? 0,
+      totalDays: (json['total_days'] as num?)?.toInt() ?? 7,
+      adherencePercent: (json['adherence_percent'] as num?)?.toDouble() ?? 0.0,
+      calorieAdherencePercent:
+          (json['calorie_adherence_percent'] as num?)?.toDouble() ?? 0.0,
+      proteinAdherencePercent:
+          (json['protein_adherence_percent'] as num?)?.toDouble() ?? 0.0,
+      carbAdherencePercent:
+          (json['carb_adherence_percent'] as num?)?.toDouble() ?? 0.0,
+      fatAdherencePercent:
+          (json['fat_adherence_percent'] as num?)?.toDouble() ?? 0.0,
+      avgHealthScore: (json['avg_health_score'] as num?)?.toDouble() ?? 0.0,
+      fiberTargetMetDays: (json['fiber_target_met_days'] as num?)?.toInt() ?? 0,
+      nutritionScore: (json['nutrition_score'] as num?)?.toInt() ?? 0,
+      nutritionLevel: json['nutrition_level'] as String? ?? 'needs_work',
+      aiWeeklySummary: json['ai_weekly_summary'] as String?,
+      aiImprovementTips:
+          (json['ai_improvement_tips'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      calculatedAt: json['calculated_at'] as String?,
+    );
+
+Map<String, dynamic> _$NutritionScoreDataToJson(NutritionScoreData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'week_start': instance.weekStart,
+      'week_end': instance.weekEnd,
+      'days_logged': instance.daysLogged,
+      'total_days': instance.totalDays,
+      'adherence_percent': instance.adherencePercent,
+      'calorie_adherence_percent': instance.calorieAdherencePercent,
+      'protein_adherence_percent': instance.proteinAdherencePercent,
+      'carb_adherence_percent': instance.carbAdherencePercent,
+      'fat_adherence_percent': instance.fatAdherencePercent,
+      'avg_health_score': instance.avgHealthScore,
+      'fiber_target_met_days': instance.fiberTargetMetDays,
+      'nutrition_score': instance.nutritionScore,
+      'nutrition_level': instance.nutritionLevel,
+      'ai_weekly_summary': instance.aiWeeklySummary,
+      'ai_improvement_tips': instance.aiImprovementTips,
+      'calculated_at': instance.calculatedAt,
+    };
+
+FitnessScoreData _$FitnessScoreDataFromJson(
+  Map<String, dynamic> json,
+) => FitnessScoreData(
+  id: json['id'] as String?,
+  userId: json['user_id'] as String,
+  calculatedDate: json['calculated_date'] as String?,
+  strengthScore: (json['strength_score'] as num?)?.toInt() ?? 0,
+  readinessScore: (json['readiness_score'] as num?)?.toInt() ?? 0,
+  consistencyScore: (json['consistency_score'] as num?)?.toInt() ?? 0,
+  nutritionScore: (json['nutrition_score'] as num?)?.toInt() ?? 0,
+  overallFitnessScore: (json['overall_fitness_score'] as num?)?.toInt() ?? 0,
+  fitnessLevel: json['fitness_level'] as String? ?? 'beginner',
+  strengthWeight: (json['strength_weight'] as num?)?.toDouble() ?? 0.40,
+  consistencyWeight: (json['consistency_weight'] as num?)?.toDouble() ?? 0.30,
+  nutritionWeight: (json['nutrition_weight'] as num?)?.toDouble() ?? 0.20,
+  readinessWeight: (json['readiness_weight'] as num?)?.toDouble() ?? 0.10,
+  aiSummary: json['ai_summary'] as String?,
+  focusRecommendation: json['focus_recommendation'] as String?,
+  previousScore: (json['previous_score'] as num?)?.toInt(),
+  scoreChange: (json['score_change'] as num?)?.toInt(),
+  trend: json['trend'] as String? ?? 'maintaining',
+  calculatedAt: json['calculated_at'] as String?,
+);
+
+Map<String, dynamic> _$FitnessScoreDataToJson(FitnessScoreData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'calculated_date': instance.calculatedDate,
+      'strength_score': instance.strengthScore,
+      'readiness_score': instance.readinessScore,
+      'consistency_score': instance.consistencyScore,
+      'nutrition_score': instance.nutritionScore,
+      'overall_fitness_score': instance.overallFitnessScore,
+      'fitness_level': instance.fitnessLevel,
+      'strength_weight': instance.strengthWeight,
+      'consistency_weight': instance.consistencyWeight,
+      'nutrition_weight': instance.nutritionWeight,
+      'readiness_weight': instance.readinessWeight,
+      'ai_summary': instance.aiSummary,
+      'focus_recommendation': instance.focusRecommendation,
+      'previous_score': instance.previousScore,
+      'score_change': instance.scoreChange,
+      'trend': instance.trend,
+      'calculated_at': instance.calculatedAt,
+    };
+
+FitnessScoreBreakdown _$FitnessScoreBreakdownFromJson(
+  Map<String, dynamic> json,
+) => FitnessScoreBreakdown(
+  fitnessScore: FitnessScoreData.fromJson(
+    json['fitness_score'] as Map<String, dynamic>,
+  ),
+  breakdown:
+      (json['breakdown'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList() ??
+      const [],
+  levelDescription: json['level_description'] as String,
+  levelColor: json['level_color'] as String,
+);
+
+Map<String, dynamic> _$FitnessScoreBreakdownToJson(
+  FitnessScoreBreakdown instance,
+) => <String, dynamic>{
+  'fitness_score': instance.fitnessScore,
+  'breakdown': instance.breakdown,
+  'level_description': instance.levelDescription,
+  'level_color': instance.levelColor,
+};

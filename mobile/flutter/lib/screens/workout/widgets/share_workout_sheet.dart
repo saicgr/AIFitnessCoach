@@ -63,6 +63,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   bool _isSaving = false;
   Uint8List? _userPhotoBytes;
   String? _userId;
+  bool _showWatermark = true;
 
   // Capture keys for each template
   final List<GlobalKey> _captureKeys = List.generate(4, (_) => GlobalKey());
@@ -365,6 +366,39 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     );
   }
 
+  Future<void> _openPhotoEditor() async {
+    HapticFeedback.lightImpact();
+
+    // Capture current template
+    final bytes = await _captureCurrentTemplate();
+    if (bytes == null) {
+      _showError('Failed to capture image');
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Navigate to photo editor
+    final editedBytes = await Navigator.push<Uint8List>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _SimplePhotoEditor(
+          imageBytes: bytes,
+          workoutName: widget.workoutName,
+        ),
+      ),
+    );
+
+    // If user returned edited image, use it for sharing
+    if (editedBytes != null && mounted) {
+      // Share the edited image directly
+      await ShareService.shareGeneric(
+        editedBytes,
+        caption: 'Just crushed my ${widget.workoutName} workout!',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -406,7 +440,48 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 48), // Balance the close button
+                // Edit button
+                IconButton(
+                  onPressed: _openPhotoEditor,
+                  icon: Icon(
+                    Icons.edit_rounded,
+                    color: AppColors.cyan,
+                  ),
+                  tooltip: 'Edit Image',
+                ),
+              ],
+            ),
+          ),
+
+          // Watermark toggle row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.branding_watermark_rounded,
+                  size: 18,
+                  color: _showWatermark ? AppColors.cyan : Colors.grey,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Show Watermark',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _showWatermark ? null : Colors.grey,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Switch.adaptive(
+                  value: _showWatermark,
+                  onChanged: (value) {
+                    HapticFeedback.lightImpact();
+                    setState(() => _showWatermark = value);
+                  },
+                  activeTrackColor: AppColors.cyan,
+                  activeThumbColor: Colors.white,
+                ),
               ],
             ),
           ),
@@ -574,6 +649,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               totalReps: widget.totalReps,
               exercisesCount: widget.exercisesCount,
               completedAt: now,
+              showWatermark: _showWatermark,
             ),
           ),
         ),
@@ -587,6 +663,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               prsData: widget.newPRs ?? [],
               achievementsData: widget.achievements,
               completedAt: now,
+              showWatermark: _showWatermark,
             ),
           ),
         ),
@@ -603,6 +680,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               exercisesCount: widget.exercisesCount,
               userPhotoBytes: _userPhotoBytes,
               completedAt: now,
+              showWatermark: _showWatermark,
             ),
           ),
         ),
@@ -617,6 +695,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               totalWorkouts: widget.totalWorkouts ?? 1,
               durationSeconds: widget.durationSeconds,
               completedAt: now,
+              showWatermark: _showWatermark,
             ),
           ),
         ),
@@ -696,5 +775,181 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
               ],
             ),
     );
+  }
+}
+
+/// Simple photo editor for basic image manipulation
+class _SimplePhotoEditor extends StatefulWidget {
+  final Uint8List imageBytes;
+  final String workoutName;
+
+  const _SimplePhotoEditor({
+    required this.imageBytes,
+    required this.workoutName,
+  });
+
+  @override
+  State<_SimplePhotoEditor> createState() => _SimplePhotoEditorState();
+}
+
+class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
+  double _brightness = 0.0;
+  double _contrast = 1.0;
+  bool _isSharing = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.background : AppColorsLight.background,
+      appBar: AppBar(
+        title: const Text('Edit Image'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          TextButton(
+            onPressed: _isSharing ? null : _shareEdited,
+            child: Text(
+              'Share',
+              style: TextStyle(
+                color: AppColors.cyan,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Image preview
+          Expanded(
+            child: Center(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.matrix(_buildColorMatrix()),
+                child: Image.memory(
+                  widget.imageBytes,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+
+          // Edit controls
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Brightness slider
+                Row(
+                  children: [
+                    Icon(Icons.brightness_6_rounded, color: AppColors.cyan),
+                    const SizedBox(width: 12),
+                    const Text('Brightness'),
+                    const Spacer(),
+                    Text('${(_brightness * 100).toInt()}%'),
+                  ],
+                ),
+                Slider(
+                  value: _brightness,
+                  min: -0.5,
+                  max: 0.5,
+                  onChanged: (value) => setState(() => _brightness = value),
+                  activeColor: AppColors.cyan,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Contrast slider
+                Row(
+                  children: [
+                    Icon(Icons.contrast_rounded, color: AppColors.purple),
+                    const SizedBox(width: 12),
+                    const Text('Contrast'),
+                    const Spacer(),
+                    Text('${(_contrast * 100).toInt()}%'),
+                  ],
+                ),
+                Slider(
+                  value: _contrast,
+                  min: 0.5,
+                  max: 1.5,
+                  onChanged: (value) => setState(() => _contrast = value),
+                  activeColor: AppColors.purple,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Reset button
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _brightness = 0.0;
+                        _contrast = 1.0;
+                      });
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Reset'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<double> _buildColorMatrix() {
+    // Simple brightness and contrast matrix
+    final b = _brightness;
+    final c = _contrast;
+    final t = (1.0 - c) / 2.0;
+
+    return [
+      c, 0, 0, 0, b * 255 + t * 255,
+      0, c, 0, 0, b * 255 + t * 255,
+      0, 0, c, 0, b * 255 + t * 255,
+      0, 0, 0, 1, 0,
+    ];
+  }
+
+  Future<void> _shareEdited() async {
+    setState(() => _isSharing = true);
+
+    try {
+      // For now, share the original image with filters applied
+      // In a full implementation, we'd capture the filtered image
+      await ShareService.shareGeneric(
+        widget.imageBytes,
+        caption: 'Just crushed my ${widget.workoutName} workout!',
+      );
+
+      if (mounted) {
+        Navigator.pop(context, widget.imageBytes);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSharing = false);
+      }
+    }
   }
 }

@@ -28,7 +28,7 @@ class _NutritionOnboardingScreenState
   bool _isSubmitting = false;
 
   // User selections
-  NutritionGoal _selectedGoal = NutritionGoal.maintain;
+  final Set<NutritionGoal> _selectedGoals = {NutritionGoal.maintain}; // Multi-select
   RateOfChange _selectedRate = RateOfChange.moderate;
   DietType _selectedDietType = DietType.balanced;
   final List<FoodAllergen> _selectedAllergies = [];
@@ -214,20 +214,23 @@ class _NutritionOnboardingScreenState
     }
   }
 
-  // Step 0: Nutrition Goal
+  // Step 0: Nutrition Goal (Multi-select tiles)
   Widget _buildGoalStep(
     bool isDark,
     Color textPrimary,
     Color textMuted,
     Color accentColor,
   ) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final goals = NutritionGoal.values.toList();
+
     return Column(
       key: const ValueKey('goal'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
         Text(
-          'What\'s your nutrition goal?',
+          'What are your nutrition goals?',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -236,119 +239,197 @@ class _NutritionOnboardingScreenState
         ),
         const SizedBox(height: 8),
         Text(
-          'We\'ll personalize your targets based on your goal',
+          'Select all that apply',
           style: TextStyle(fontSize: 16, color: textMuted),
         ),
-        const SizedBox(height: 32),
-        ...NutritionGoal.values.map((goal) => _buildGoalOption(
+        const SizedBox(height: 24),
+
+        // Grid of goal tiles (2 columns)
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.15,
+          ),
+          itemCount: goals.length,
+          itemBuilder: (context, index) {
+            final goal = goals[index];
+            final isSelected = _selectedGoals.contains(goal);
+
+            return _buildGoalTile(
               goal: goal,
-              isSelected: _selectedGoal == goal,
-              isDark: isDark,
+              isSelected: isSelected,
+              elevated: elevated,
               textPrimary: textPrimary,
+              textMuted: textMuted,
               accentColor: accentColor,
-            )),
+            );
+          },
+        ),
+
+        // Selection hint
+        if (_selectedGoals.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: accentColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _selectedGoals.length == 1
+                        ? 'Your primary goal: ${_selectedGoals.first.displayName}'
+                        : '${_selectedGoals.length} goals selected. Primary: ${_selectedGoals.first.displayName}',
+                    style: TextStyle(fontSize: 12, color: textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildGoalOption({
+  Widget _buildGoalTile({
     required NutritionGoal goal,
     required bool isSelected,
-    required bool isDark,
+    required Color elevated,
     required Color textPrimary,
+    required Color textMuted,
     required Color accentColor,
   }) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    String description;
+    // Icons and descriptions for each goal
     IconData icon;
+    String subtitle;
     switch (goal) {
       case NutritionGoal.loseFat:
-        description = 'Lose body fat while preserving muscle';
         icon = Icons.trending_down;
+        subtitle = 'Cut body fat';
       case NutritionGoal.buildMuscle:
-        description = 'Build muscle with a slight calorie surplus';
         icon = Icons.fitness_center;
+        subtitle = 'Gain muscle mass';
       case NutritionGoal.maintain:
-        description = 'Maintain your current weight';
         icon = Icons.balance;
+        subtitle = 'Stay where you are';
       case NutritionGoal.improveEnergy:
-        description = 'Optimize nutrition for better energy levels';
         icon = Icons.bolt;
+        subtitle = 'Feel more energized';
       case NutritionGoal.eatHealthier:
-        description = 'Focus on whole foods and nutrient density';
         icon = Icons.eco;
+        subtitle = 'Whole foods focus';
       case NutritionGoal.recomposition:
-        description = 'Lose fat and build muscle simultaneously';
         icon = Icons.swap_vert;
+        subtitle = 'Lose fat, gain muscle';
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          HapticService.light();
-          setState(() => _selectedGoal = goal);
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? accentColor : Colors.transparent,
-              width: 2,
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        setState(() {
+          if (isSelected) {
+            // Don't allow deselecting the last goal
+            if (_selectedGoals.length > 1) {
+              _selectedGoals.remove(goal);
+            }
+          } else {
+            _selectedGoals.add(goal);
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? accentColor : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon with selection indicator
+            Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? accentColor.withValues(alpha: 0.2)
+                        : textMuted.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? accentColor : textMuted,
+                    size: 24,
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                  ),
+              ],
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? accentColor.withValues(alpha: 0.15)
-                      : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  color: isSelected ? accentColor : textPrimary,
-                  size: 24,
-                ),
+            const SizedBox(height: 8),
+            // Goal name
+            Text(
+              goal.displayName,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? accentColor : textPrimary,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      goal.displayName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            // Subtitle
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: textMuted,
               ),
-              if (isSelected)
-                Icon(Icons.check_circle, color: accentColor, size: 24),
-            ],
-          ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // Helper to get primary goal (first selected goal)
+  NutritionGoal get _primaryGoal => _selectedGoals.first;
+
+  // Check if any weight-related goal is selected
+  bool get _hasWeightGoal =>
+      _selectedGoals.contains(NutritionGoal.loseFat) ||
+      _selectedGoals.contains(NutritionGoal.buildMuscle);
 
   // Step 1: Rate of Change (only for weight-related goals)
   Widget _buildRateStep(
@@ -357,10 +438,7 @@ class _NutritionOnboardingScreenState
     Color textMuted,
     Color accentColor,
   ) {
-    final showRateStep = _selectedGoal == NutritionGoal.loseFat ||
-        _selectedGoal == NutritionGoal.buildMuscle;
-
-    if (!showRateStep) {
+    if (!_hasWeightGoal) {
       // Auto-skip to next step if not applicable
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_currentStep == 1) {
@@ -370,7 +448,7 @@ class _NutritionOnboardingScreenState
       return const SizedBox.shrink();
     }
 
-    final isLosing = _selectedGoal == NutritionGoal.loseFat;
+    final isLosing = _selectedGoals.contains(NutritionGoal.loseFat);
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Column(
@@ -477,7 +555,7 @@ class _NutritionOnboardingScreenState
     );
   }
 
-  // Step 2: Diet Type - Grid layout
+  // Step 2: Diet Type - Compact Grid layout (3 columns)
   Widget _buildDietTypeStep(
     bool isDark,
     Color textPrimary,
@@ -491,31 +569,31 @@ class _NutritionOnboardingScreenState
       key: const ValueKey('diet'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Text(
           'Do you follow a specific diet?',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           'This affects your macro distribution',
-          style: TextStyle(fontSize: 16, color: textMuted),
+          style: TextStyle(fontSize: 14, color: textMuted),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Grid of diet type tiles (2 columns)
+        // Grid of diet type tiles (3 columns, more compact)
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.1,
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 0.85,
           ),
           itemCount: dietTypes.length,
           itemBuilder: (context, index) {
@@ -719,49 +797,35 @@ class _NutritionOnboardingScreenState
     required Color textMuted,
     required Color accentColor,
   }) {
-    // Icons and subtitles for each diet type
+    // Icons for each diet type (no subtitles in compact mode)
     IconData icon;
-    String subtitle;
     switch (diet) {
       case DietType.noDiet:
         icon = Icons.check_circle_outline;
-        subtitle = 'No restrictions';
       case DietType.balanced:
         icon = Icons.balance;
-        subtitle = 'Moderate macros';
       case DietType.lowCarb:
         icon = Icons.no_food;
-        subtitle = 'Reduced carbs';
       case DietType.keto:
         icon = Icons.local_fire_department;
-        subtitle = 'Very low carb';
       case DietType.highProtein:
         icon = Icons.fitness_center;
-        subtitle = 'Muscle building';
       case DietType.mediterranean:
         icon = Icons.restaurant;
-        subtitle = 'Heart healthy';
       case DietType.vegan:
         icon = Icons.grass;
-        subtitle = 'No animal products';
       case DietType.vegetarian:
         icon = Icons.eco;
-        subtitle = 'No meat/fish';
       case DietType.lactoOvo:
         icon = Icons.egg_alt;
-        subtitle = 'Dairy + eggs OK';
       case DietType.pescatarian:
         icon = Icons.set_meal;
-        subtitle = 'Fish + seafood OK';
       case DietType.flexitarian:
         icon = Icons.swap_horiz;
-        subtitle = 'Mostly plant-based';
       case DietType.partTimeVeg:
         icon = Icons.calendar_today;
-        subtitle = 'Veg on some days';
       case DietType.custom:
         icon = Icons.tune;
-        subtitle = 'Set your own';
     }
 
     return Stack(
@@ -771,12 +835,12 @@ class _NutritionOnboardingScreenState
             HapticService.light();
             setState(() => _selectedDietType = diet);
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected ? accentColor : Colors.transparent,
                 width: 2,
@@ -790,7 +854,7 @@ class _NutritionOnboardingScreenState
                   alignment: Alignment.topRight,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? accentColor.withValues(alpha: 0.2)
@@ -800,7 +864,7 @@ class _NutritionOnboardingScreenState
                       child: Icon(
                         icon,
                         color: isSelected ? accentColor : textMuted,
-                        size: 20,
+                        size: 18,
                       ),
                     ),
                     if (isSelected)
@@ -813,17 +877,17 @@ class _NutritionOnboardingScreenState
                         child: const Icon(
                           Icons.check,
                           color: Colors.white,
-                          size: 10,
+                          size: 8,
                         ),
                       ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                // Diet name
+                // Diet name only (no subtitle for compact mode)
                 Text(
                   diet.displayName,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: isSelected ? accentColor : textPrimary,
                   ),
@@ -831,37 +895,25 @@ class _NutritionOnboardingScreenState
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                // Subtitle
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: textMuted,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
               ],
             ),
           ),
         ),
-        // Info button in top-right corner
+        // Info button in top-right corner (smaller)
         Positioned(
-          top: 4,
-          right: 4,
+          top: 2,
+          right: 2,
           child: GestureDetector(
             onTap: () => _showDietInfoDialog(context, diet),
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 color: textMuted.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.info_outline,
-                size: 14,
+                size: 12,
                 color: textMuted,
               ),
             ),
@@ -1580,9 +1632,15 @@ class _NutritionOnboardingScreenState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Goal', style: TextStyle(color: textMuted)),
-                      Text(_selectedGoal.displayName,
-                          style: TextStyle(color: accentColor, fontWeight: FontWeight.w600)),
+                      Text('Goals', style: TextStyle(color: textMuted)),
+                      Flexible(
+                        child: Text(
+                          _selectedGoals.map((g) => g.displayName).join(', '),
+                          style: TextStyle(color: accentColor, fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.right,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -1677,7 +1735,8 @@ class _NutritionOnboardingScreenState
         age: age,
         gender: gender,
         activityLevel: activityLevel,
-        goal: _selectedGoal,
+        goal: _primaryGoal,
+        goals: _selectedGoals.toList(),
         rate: _selectedRate,
         dietType: _selectedDietType,
         customCarbPercent: _selectedDietType == DietType.custom ? _customCarbPercent : null,
@@ -1708,9 +1767,7 @@ class _NutritionOnboardingScreenState
 
     // Handle skipping rate step when going back
     if (_currentStep == 2) {
-      final showRateStep = _selectedGoal == NutritionGoal.loseFat ||
-          _selectedGoal == NutritionGoal.buildMuscle;
-      if (!showRateStep) {
+      if (!_hasWeightGoal) {
         setState(() => _currentStep = 0);
         return;
       }
@@ -1727,9 +1784,7 @@ class _NutritionOnboardingScreenState
 
     // Handle skipping rate step
     if (_currentStep == 0) {
-      final showRateStep = _selectedGoal == NutritionGoal.loseFat ||
-          _selectedGoal == NutritionGoal.buildMuscle;
-      if (!showRateStep) {
+      if (!_hasWeightGoal) {
         setState(() => _currentStep = 2);
         return;
       }
@@ -1768,11 +1823,8 @@ class _NutritionOnboardingScreenState
 
       await ref.read(nutritionPreferencesProvider.notifier).completeOnboarding(
         userId: user.id,
-        goal: _selectedGoal,
-        rateOfChange: (_selectedGoal == NutritionGoal.loseFat ||
-                _selectedGoal == NutritionGoal.buildMuscle)
-            ? _selectedRate
-            : null,
+        goals: _selectedGoals.toList(),
+        rateOfChange: _hasWeightGoal ? _selectedRate : null,
         dietType: _selectedDietType,
         allergies: _selectedAllergies,
         restrictions: _selectedRestrictions,

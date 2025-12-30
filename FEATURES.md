@@ -1,6 +1,6 @@
 # AI Fitness Coach - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
-> **Total Features: 566+** across 23 user-facing categories and 7 technical categories
+> **Total Features: 612+** across 23 user-facing categories and 7 technical categories
 
 ---
 
@@ -39,7 +39,7 @@
 | 27 | Equipment Selection with Details | Pick equipment with quantities and weights during onboarding | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 28 | Environment Selection | Choose workout environment (gym, home, outdoor, etc.) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 
-### 2. Home Screen (15 Features)
+### 2. Home Screen (30 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -58,8 +58,23 @@
 | 13 | Daily Activity Status | Rest day vs Active day indicator | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 14 | Empty State | CTA to generate workouts when none exist | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
 | 15 | Senior Home Variant | Larger UI for accessibility | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | Partially Implemented | User |
+| 16 | Mood Picker Card | Quick mood check-in with 4 options (Great/Good/Tired/Stressed) for instant workout generation | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 17 | Fitness Score Card | Compact card showing overall/strength/nutrition scores with tap to view details | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 18 | Context Logging | Track user interactions (mood selections, score views) for AI personalization | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 19 | My Space Button | Opens layout editor to customize home screen tiles (replaces Edit button) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 20 | Layout Editor Screen | Drag-and-drop reordering of home screen tiles with visibility toggles | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 21 | Multiple Layouts | Save different layouts (Morning Focus, Full Dashboard, etc.) and switch between them | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 22 | Layout Templates | Pre-built templates (Minimalist, Performance, Wellness, Social) users can apply | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 23 | Tile Size Options | Full, Half, or Compact size for each tile with 2-column grid for half-width | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 24 | Tile Picker Sheet | Bottom sheet to add new tiles organized by category (Workout, Progress, Nutrition, Social, etc.) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 25 | Template Picker Sheet | Browse and apply system templates with preview cards | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 26 | Dynamic Tile Rendering | TileFactory builds widgets based on TileType with Consumer patterns for data | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | Dev |
+| 27 | Layout Sharing | Generate preview images of layouts and share to Instagram Stories/System Share/Gallery | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 28 | 25 Tile Types | nextWorkout, fitnessScore, moodPicker, dailyActivity, quickActions, weeklyProgress, weeklyGoals, weekChanges, upcomingFeatures, upcomingWorkouts, streakCounter, personalRecords, aiCoachTip, challengeProgress, caloriesSummary, macroRings, bodyWeight, progressPhoto, socialFeed, leaderboardRank, fasting, weeklyCalendar, muscleHeatmap, sleepScore, restDayTip | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 29 | Layout Activity Logging | Track layout creates, updates, activations, deletes for user analytics | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 30 | Default Layout Migration | Automatic creation of default layout when no layouts exist for user | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
 
-### 3. Workout Generation & Management (54 Features)
+### 3. Workout Generation & Management (65 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -70,6 +85,10 @@
 | 5 | Holiday Naming | Creative themed workout names | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 6 | Equipment Filtering | Filter exercises by available equipment with quantities and weights | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 7 | Injury-Aware Selection | Avoid exercises based on injuries | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
+| 7b | Fitness-Level Exercise Filter | Filter exercises by difficulty ceiling (beginners get easy exercises only, intermediates get easy-medium, advanced get all) | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | Dev |
+| 7c | Fitness-Level Workout Parameters | Scale sets/reps for fitness level: beginners get max 3 sets, 6-12 reps with extra rest; intermediates get up to 5 sets, 4-15 reps; advanced get no limits | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 7d | Fitness-Level Edge Case Handling | Validates fitness levels (None/empty/typos default to intermediate), caps quick workout intensity at user level, workout modifier respects ceilings, fallback exercises use level-appropriate params | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 7e | Fitness-Level Derived Difficulty | Derives workout difficulty from fitness level when intensity_preference not set: beginners get 'easy' (not 'medium'), intermediate gets 'medium', advanced gets 'hard'. Sent to Gemini API for appropriate workout generation | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
 | 8 | Goal-Based Customization | Workouts tailored to user goals | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 9 | Focus Area Targeting | Target specific muscle groups with strict enforcement | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 10 | Difficulty Adjustment | Beginner/Intermediate/Advanced | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
@@ -123,7 +142,18 @@
 | 51 | Dynamic Mobility Drills | AI generates dynamic stretches like leg swings, arm circles | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 52 | Body Area Flexibility Tracking | Track progress by body area (hips, shoulders, spine, etc.) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 53 | Unilateral Progress Analytics | Track single-side exercise sessions and variety | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 54 | Workout Type Selection UI | Choose workout type (strength, cardio, mixed, mobility, recovery) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 54 | Workout Type Selection UI | Choose workout type (strength, cardio, mixed, mobility, recovery) - now affects RAG exercise selection | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
+| 55 | Mood-Based Workout Generation | AI generates 15-30 min workouts tailored to user mood (Great→High intensity, Tired→Recovery) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 56 | Mood-to-Workout Mapping | Great→High/HIIT, Good→Mixed, Tired→Recovery/Mobility, Stressed→Cardio/Flowing | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 57 | SSE Streaming Generation | Server-Sent Events for real-time workout generation progress feedback | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | Fully Implemented | Dev |
+| 58 | Mood Check-in Logging | Track mood selections and correlate with workout completions for pattern analysis | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 59 | Mood History Screen | View full history of mood check-ins with workout info, grouped by date | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 60 | Mood Analytics Dashboard | Summary stats, mood distribution, streaks, and AI recommendations | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 61 | Mood Pattern Analysis | Track mood by time-of-day and day-of-week with dominant mood detection | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 62 | Mood Streak Tracking | Current and longest mood check-in streaks with visual display | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 63 | Mood-Based Recommendations | AI-generated suggestions based on mood patterns (fatigue, stress levels) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 64 | Today's Mood Check-in | API to get user's mood for today via database view | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 65 | Mood Workout Completion | Mark mood-generated workouts as completed from history | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
 
 ### 4. Active Workout Experience (30 Features)
 
@@ -162,7 +192,7 @@
 | 29 | Equipment-Aware Increments | Weight suggestions aligned to real gym equipment | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
 | 30 | Accept/Reject Suggestions | One-tap weight adjustment from AI suggestion | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
 
-### 5. Exercise Library (14 Features)
+### 5. Exercise Library (24 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -180,6 +210,16 @@
 | 12 | Secondary Muscles | Additional muscles worked | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 13 | Safe Minimum Weight | Recommended starting weight | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User |
 | 14 | Exercise History | Past performance tracking | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 15 | Custom Exercises Screen | Dedicated screen to manage user-created exercises | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 16 | Create Simple Exercise | Create custom single-movement exercises with name, muscle group, equipment | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 17 | Create Combo Exercise | Create composite exercises combining multiple movements (e.g., "Bench Press & Chest Fly") | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 18 | Combo Types | Support for superset, compound_set, giant_set, complex, and hybrid combo types | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 19 | Component Management | Add/remove/reorder component exercises within combos with per-component reps | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 20 | Exercise Search in Creator | Search library exercises when building combos with real-time filtering | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | User |
+| 21 | Custom Exercise Usage Tracking | Track how often custom exercises are used in workouts | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 22 | Custom Exercise Stats | View total exercises, simple count, combo count, total uses | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 23 | Custom Exercise Deletion | Delete custom exercises with confirmation dialog | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 24 | Custom Exercise Context Logging | Track creation, usage, and deletion events for analytics | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
 
 ### 6. Pre-Built Programs (8 Features)
 
@@ -229,7 +269,7 @@
 | 29 | Workout Modification | Modify today's workout via chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User |
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User |
 
-### 8. Nutrition Tracking (50 Features)
+### 8. Nutrition Tracking (64 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -287,6 +327,16 @@
 | 52 | AI-Generated Recipes | Generate recipes with AI | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 53 | Training Day Calories | Higher targets on workout days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 54 | Fasting Day Calories | Reduced targets on fasting days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 55 | AI Recipe Suggestions | Generate personalized recipes based on body type, culture, and diet | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 56 | Body Type Selection | Ectomorph, Mesomorph, Endomorph, Balanced for metabolic optimization | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 57 | Cuisine Preferences | 20 cuisines (Indian, Italian, Mexican, Japanese, etc.) for recipe suggestions | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 58 | Spice Tolerance | None/Mild/Medium/Hot/Extreme for recipe filtering | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 59 | Recipe Match Scoring | Goal alignment, cuisine match, diet compliance scores (0-100%) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 60 | Meal Type Filtering | Filter recipes by breakfast, lunch, dinner, snack, or any meal | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 61 | Recipe Save & Rate | Save favorite recipes and rate with 1-5 stars | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 62 | Mark as Cooked | Track which recipes you've actually made | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 63 | Recipe Preferences Sheet | Bottom sheet to configure body type, cuisines, spice tolerance | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 64 | Recipe Suggestion Reasons | AI explains why each recipe matches your preferences | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User |
 
 ### 9. Hydration Tracking (8 Features)
 
@@ -301,45 +351,58 @@
 | 7 | Workout-Linked | Associate with workouts | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User |
 | 8 | Entry Notes | Add notes per entry | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User |
 
-### 10. Intermittent Fasting (35 Features)
+### 10. Intermittent Fasting (48 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
-| 1 | Fasting Timer | One-tap start/stop circular progress | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 2 | 16:8 Protocol | 16 hours fasting, 8 eating | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 3 | 18:6 Protocol | 18 hours fasting, 6 eating | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 4 | 14:10 Protocol | Beginner-friendly 14:10 split | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 5 | 20:4 Warrior Diet | Advanced 20-hour fast | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 6 | OMAD (23:1) | One meal a day protocol | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 7 | 5:2 Diet | 5 normal + 2 fasting days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 8 | Custom Protocols | User-defined fasting windows | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 9 | Metabolic Zone Tracking | Fed → Fat Burning → Ketosis | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 10 | Zone Visualization | Color-coded fasting stages | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
-| 11 | Zone Notifications | Alerts when entering new zone | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
-| 12 | Fasting Streaks | Track consecutive fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 13 | Streak Freeze | Forgiveness for missed fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 14 | Eating Window Timer | Countdown to window close | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 15 | Smart Meal Detection | Auto-end fast when logging food | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
-| 16 | Fasting Day Calories | Reduced targets for 5:2/ADF | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 17 | Weekly Calorie Averaging | Average across fasting days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
-| 18 | Safety Screening | Contraindication checks | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 19 | Refeeding Guidelines | Breaking fast recommendations | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | Fully Implemented | User |
-| 20 | Workout Integration | Fasted training warnings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 21 | Fasting History | View past fasts with % | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 22 | Fasting Statistics | Total hours, avg duration | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 23 | Mood Tracking | Pre/post fast mood logging | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 24 | AI Coach Integration | Fasting-aware coaching | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | Dev |
-| 25 | Extended Fast Safety | Warnings for 24h+ fasts | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
-| 26 | Weekly Goal Mode | 5 of 7 days goal | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 27 | Keto-Adapted Mode | Faster zone transitions | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 28 | Fasting Records List | Paginated history | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 29 | Partial Fast Credit | >80% = streak maintained | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
-| 30 | Energy Level Tracking | 1-5 scale energy logging | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 31 | Alternate Day Fasting | ADF with 25% TDEE | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 32 | Eat-Stop-Eat | 24-hour fast protocol | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 33 | Extended Fasting (24-72h) | Multi-day with warnings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 34 | Fasting Onboarding | Safety + protocol setup | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 35 | Background Timer | Notifications when closed | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 1 | Fasting Timer | Start/stop button centered in circular dial | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 2 | 12:12 Protocol | Beginner 12 hours fasting, 12 eating | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 3 | 14:10 Protocol | Beginner-friendly 14:10 split | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 4 | 16:8 Protocol | 16 hours fasting, 8 eating | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 5 | 18:6 Protocol | 18 hours fasting, 6 eating | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 6 | 20:4 Warrior Diet | Advanced 20-hour fast | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 7 | OMAD (23:1) | One meal a day protocol | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 8 | 5:2 Diet | 5 normal + 2 fasting days | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 9 | ADF Protocol | Alternate Day Fasting with 25% TDEE | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 10 | 24h Water Fast | Full day water-only fast with warnings | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 11 | 48h Water Fast | Extended fast requiring medical supervision | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 12 | 72h Water Fast | 3-day fast with danger warnings | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 13 | 7-Day Water Fast | Week-long fast requiring strict supervision | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 14 | Custom Protocols | User-defined fasting/eating windows | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 15 | Dangerous Protocol Warnings | Popup warnings for extended fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 16 | Metabolic Zone Tracking | Fed → Fat Burning → Ketosis → Deep Ketosis | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 17 | Zone Visualization | Color-coded fasting stages | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 18 | Zone Notifications | Alerts when entering new zone | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 19 | Fasting Streaks | Track consecutive fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 20 | Streak Freeze | Forgiveness for missed fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 21 | Eating Window Timer | Countdown to window close | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 22 | Smart Meal Detection | Auto-end fast when logging food | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 23 | Fasting Day Calories | Reduced targets for 5:2/ADF | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 24 | Weekly Calorie Averaging | Average across fasting days | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 25 | Safety Screening | 6 health questions with risk assessment | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 26 | Colored Yes/No Buttons | Visual safety question responses | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 27 | Safety Warning Popups | Detailed risk explanations with potential side effects | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 28 | Continue After Warning | Allow users to proceed after acknowledging risks | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 29 | Refeeding Guidelines | Breaking fast recommendations | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 30 | Workout Integration | Fasted training warnings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 31 | Fasting History | View past fasts with % | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 32 | Fasting Statistics | Total hours, avg duration | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 33 | Mood Tracking | Pre/post fast mood logging | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 34 | AI Coach Integration | Fasting-aware coaching with context | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | Dev |
+| 35 | User Context Logging | Log fasting activities for AI coaching | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev |
+| 36 | Extended Fast Safety | Warnings and requirements for 24h+ fasts | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 37 | Weekly Goal Mode | 5 of 7 days goal | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 38 | Keto-Adapted Mode | Faster zone transitions | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 39 | Fasting Records List | Paginated history | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 40 | Partial Fast Credit | >80% = streak maintained | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev |
+| 41 | Energy Level Tracking | 1-5 scale energy logging | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 42 | Skip Onboarding Option | Skip setup with default 16:8 | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 43 | Meal Reminders | Notifications for lunch/dinner during eating window | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 44 | Lunch Reminder Time | Configurable lunch reminder hour | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 45 | Dinner Reminder Time | Configurable dinner reminder hour | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 46 | Background Timer | Notifications when closed | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 47 | Centered Start Button | Start fast button in center of timer dial | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 48 | Protocol Difficulty Badges | Visual difficulty indicators (Beginner/Intermediate/Advanced/Expert) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
 
 ### 11. Progress Photos & Body Tracking (35 Features)
 
@@ -451,7 +514,7 @@
 | 6 | Challenge History | Past challenges | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 7 | Fitness Profile | Age, height, weight | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 8 | Equipment List | Equipment with quantities | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 9 | Workout Preferences | Days, times, types | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 9 | Workout Preferences | Days, times, types with edit button to modify and regenerate workouts | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 10 | Focus Areas | Target muscle groups | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 11 | Experience Level | Training experience | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 12 | Environment | 8 workout environments | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
@@ -472,7 +535,7 @@
 | 7 | Completion Status | Completed vs upcoming | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 8 | Drag-and-Drop | Reschedule workouts | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User |
 
-### 16. Metrics & Analytics (10 Features)
+### 16. Metrics & Analytics (22 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -486,6 +549,18 @@
 | 8 | PRs Display | Personal records achieved | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 9 | Streak Visual | Streak status | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 10 | Export Data | Download your data | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User |
+| 11 | Overall Fitness Score | Combined score (0-100) from strength, consistency, nutrition, readiness | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 12 | Strength Score | Score based on workout performance and progressive overload | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 13 | Nutrition Score | Weekly nutrition adherence score (logging, calories, protein, health score) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 14 | Consistency Score | Workout completion rate percentage | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 15 | Readiness Score | Recovery/readiness indicator | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 16 | Fitness Level Classification | Beginner, Developing, Fit, Athletic, Elite based on overall score | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 17 | Nutrition Level Classification | Needs Work, Fair, Good, Excellent based on nutrition score | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 18 | Scoring Screen | Full-screen detailed breakdown of all fitness scores | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 19 | Score Trend Display | Show score improvement/decline over time | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 20 | Score Weight Explanation | Educational section explaining how scores are calculated | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
+| 21 | Nutrition Adherence Breakdown | Logging, calorie, and protein adherence percentages | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 22 | Consistency Tips | Dynamic tips based on consistency score level | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User |
 
 ### 17. Measurements & Body Tracking (6 Features)
 
@@ -517,7 +592,7 @@
 | 13 | Mark as Read | Clear notifications | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 14 | Preferences Screen | Manage all settings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 
-### 19. Settings (80 Features)
+### 19. Settings (88 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|
@@ -551,8 +626,8 @@
 | 28 | Equipment Quantities | Set quantity per equipment | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 29 | Equipment Weight Ranges | Set available weights | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 30 | Equipment Notes | Add notes per equipment | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 31 | Progression Pace | Slow/Medium/Fast progression | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
-| 32 | Workout Type Preference | Strength/Cardio/Mixed | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 31 | Progression Pace | Slow/Medium/Fast progression - affects sets/reps/rest in RAG | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
+| 32 | Workout Type Preference | Strength/Cardio/Mixed/Mobility/Recovery - affects exercise selection in RAG | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User |
 | 33 | Custom Equipment | Add custom equipment | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 34 | Custom Exercises | Create custom exercises | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 35 | AI Settings Screen | Dedicated AI configuration | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
@@ -605,6 +680,10 @@
 | 82 | Fuzzy Exercise Matching | Smart name matching | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | Fully Implemented | Dev |
 | 83 | Queue Exclusion Reasons | Why exercise was excluded | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
 | 84 | Preference Impact Log | Track preference effects | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User |
+| 85 | Exercises to Avoid | Skip specific exercises from workouts | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | User |
+| 86 | Muscles to Avoid | Skip or reduce exercises targeting specific muscles | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | User |
+| 87 | Temporary Avoidance | Set end date for temporary exercise/muscle avoidances | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User |
+| 88 | Avoidance Severity | Choose between "avoid completely" or "reduce priority" for muscles | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | User |
 
 ### 20. Accessibility (8 Features)
 

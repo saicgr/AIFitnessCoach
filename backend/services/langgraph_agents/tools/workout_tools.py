@@ -636,12 +636,31 @@ def generate_quick_workout(
         if intensity_key not in ["light", "moderate", "intense"]:
             intensity_key = "moderate"
 
+        # Map intensity to suggested fitness level
         intensity_to_fitness = {
             "light": "beginner",
             "moderate": "intermediate",
             "intense": "advanced",
         }
-        rag_fitness_level = intensity_to_fitness.get(intensity_key, user_fitness_level)
+        suggested_fitness_level = intensity_to_fitness.get(intensity_key, "intermediate")
+
+        # CRITICAL: Enforce fitness level ceiling - user cannot request exercises
+        # above their actual fitness level. This prevents beginners from getting
+        # advanced exercises just because they selected "intense" workout.
+        FITNESS_LEVEL_ORDER = {"beginner": 1, "intermediate": 2, "advanced": 3}
+        user_level_rank = FITNESS_LEVEL_ORDER.get(user_fitness_level.lower(), 2)
+        suggested_level_rank = FITNESS_LEVEL_ORDER.get(suggested_fitness_level, 2)
+
+        if suggested_level_rank > user_level_rank:
+            logger.warning(
+                f"[Quick Workout] User {user_fitness_level} requested {intensity_key} intensity. "
+                f"Capping exercise selection at user's level to prevent inappropriate exercises."
+            )
+            rag_fitness_level = user_fitness_level
+        else:
+            rag_fitness_level = suggested_fitness_level
+
+        logger.info(f"[Quick Workout] Intensity={intensity_key}, user_level={user_fitness_level}, rag_level={rag_fitness_level}")
 
         # Use Exercise RAG
         from services.exercise_rag_service import get_exercise_rag_service

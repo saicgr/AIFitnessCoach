@@ -78,6 +78,18 @@ class TrainingPreferencesSection extends StatelessWidget {
               isExerciseQueueManager: true,
             ),
             SettingItemData(
+              icon: Icons.block,
+              title: 'Exercises to Avoid',
+              subtitle: 'Skip specific exercises',
+              isAvoidedExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.accessibility_new,
+              title: 'Muscles to Avoid',
+              subtitle: 'Skip or reduce muscle groups',
+              isAvoidedMusclesManager: true,
+            ),
+            SettingItemData(
               icon: Icons.history,
               title: 'Import Workout History',
               subtitle: 'Add past workouts for better AI weights',

@@ -206,6 +206,86 @@ enum BudgetLevel {
   }
 }
 
+/// Body type for metabolic-based recipe suggestions
+enum BodyType {
+  ectomorph('ectomorph', 'Ectomorph', 'Lean build, fast metabolism - needs calorie-dense meals'),
+  mesomorph('mesomorph', 'Mesomorph', 'Athletic build, moderate metabolism - balanced approach'),
+  endomorph('endomorph', 'Endomorph', 'Solid build, slower metabolism - lower carb focus'),
+  balanced('balanced', 'Balanced', 'No specific body type - general recommendations');
+
+  final String value;
+  final String displayName;
+  final String description;
+
+  const BodyType(this.value, this.displayName, this.description);
+
+  static BodyType fromString(String value) {
+    return BodyType.values.firstWhere(
+      (b) => b.value == value || b.name == value,
+      orElse: () => BodyType.balanced,
+    );
+  }
+}
+
+/// Spice tolerance levels for recipe suggestions
+enum SpiceTolerance {
+  none('none', 'No Spice', 'Mild flavors only'),
+  mild('mild', 'Mild', 'Light seasoning'),
+  medium('medium', 'Medium', 'Moderate heat'),
+  hot('hot', 'Hot', 'Spicy food lover'),
+  extreme('extreme', 'Extreme', 'Bring on the heat!');
+
+  final String value;
+  final String displayName;
+  final String description;
+
+  const SpiceTolerance(this.value, this.displayName, this.description);
+
+  static SpiceTolerance fromString(String value) {
+    return SpiceTolerance.values.firstWhere(
+      (s) => s.value == value || s.name == value,
+      orElse: () => SpiceTolerance.medium,
+    );
+  }
+}
+
+/// Cuisine types for recipe suggestions
+enum CuisineType {
+  american('american', 'American', 'North America'),
+  mexican('mexican', 'Mexican', 'North America'),
+  italian('italian', 'Italian', 'Europe'),
+  french('french', 'French', 'Europe'),
+  spanish('spanish', 'Spanish', 'Europe'),
+  greek('greek', 'Greek', 'Europe'),
+  british('british', 'British', 'Europe'),
+  german('german', 'German', 'Europe'),
+  indian('indian', 'Indian', 'South Asia'),
+  chinese('chinese', 'Chinese', 'East Asia'),
+  japanese('japanese', 'Japanese', 'East Asia'),
+  korean('korean', 'Korean', 'East Asia'),
+  thai('thai', 'Thai', 'Southeast Asia'),
+  vietnamese('vietnamese', 'Vietnamese', 'Southeast Asia'),
+  mediterranean('mediterranean', 'Mediterranean', 'Mediterranean'),
+  middleEastern('middle_eastern', 'Middle Eastern', 'Middle East'),
+  african('african', 'African', 'Africa'),
+  caribbean('caribbean', 'Caribbean', 'Caribbean'),
+  brazilian('brazilian', 'Brazilian', 'South America'),
+  fusion('fusion', 'Fusion', 'Mixed');
+
+  final String value;
+  final String displayName;
+  final String region;
+
+  const CuisineType(this.value, this.displayName, this.region);
+
+  static CuisineType fromString(String value) {
+    return CuisineType.values.firstWhere(
+      (c) => c.value == value || c.name == value,
+      orElse: () => CuisineType.american,
+    );
+  }
+}
+
 /// Nutrition preferences for a user
 @JsonSerializable()
 class NutritionPreferences {
@@ -213,9 +293,11 @@ class NutritionPreferences {
   @JsonKey(name: 'user_id')
   final String userId;
 
-  // Goal settings
+  // Goal settings (multi-select)
+  @JsonKey(name: 'nutrition_goals')
+  final List<String> nutritionGoals;
   @JsonKey(name: 'nutrition_goal')
-  final String nutritionGoal;
+  final String nutritionGoal; // Legacy field for backward compatibility
   @JsonKey(name: 'rate_of_change')
   final String? rateOfChange;
 
@@ -264,6 +346,16 @@ class NutritionPreferences {
   @JsonKey(name: 'budget_level')
   final String budgetLevel;
 
+  // Recipe suggestion preferences (body type, culture, spice)
+  @JsonKey(name: 'body_type')
+  final String bodyType;
+  @JsonKey(name: 'favorite_cuisines')
+  final List<String> favoriteCuisines;
+  @JsonKey(name: 'cultural_background')
+  final String? culturalBackground;
+  @JsonKey(name: 'spice_tolerance')
+  final String spiceTolerance;
+
   // Settings
   @JsonKey(name: 'show_ai_feedback_after_logging')
   final bool showAiFeedbackAfterLogging;
@@ -291,6 +383,7 @@ class NutritionPreferences {
   const NutritionPreferences({
     this.id,
     required this.userId,
+    this.nutritionGoals = const ['maintain'],
     this.nutritionGoal = 'maintain',
     this.rateOfChange,
     this.calculatedBmr,
@@ -311,6 +404,10 @@ class NutritionPreferences {
     this.cookingSkill = 'intermediate',
     this.cookingTimeMinutes = 30,
     this.budgetLevel = 'moderate',
+    this.bodyType = 'balanced',
+    this.favoriteCuisines = const [],
+    this.culturalBackground,
+    this.spiceTolerance = 'medium',
     this.showAiFeedbackAfterLogging = true,
     this.calmModeEnabled = false,
     this.showWeeklyInsteadOfDaily = false,
@@ -323,8 +420,18 @@ class NutritionPreferences {
     this.updatedAt,
   });
 
-  /// Get nutrition goal enum
-  NutritionGoal get nutritionGoalEnum => NutritionGoal.fromString(nutritionGoal);
+  /// Get nutrition goals as enums (multi-select)
+  List<NutritionGoal> get nutritionGoalEnums => nutritionGoals
+      .map((g) => NutritionGoal.fromString(g))
+      .toList();
+
+  /// Get primary nutrition goal enum (first in list)
+  NutritionGoal get primaryGoalEnum => nutritionGoals.isNotEmpty
+      ? NutritionGoal.fromString(nutritionGoals.first)
+      : NutritionGoal.fromString(nutritionGoal);
+
+  /// Get nutrition goal enum (legacy, uses primary goal)
+  NutritionGoal get nutritionGoalEnum => primaryGoalEnum;
 
   /// Get diet type enum
   DietType get dietTypeEnum => DietType.fromString(dietType);
@@ -336,6 +443,16 @@ class NutritionPreferences {
   bool get isIntermittentFasting =>
       mealPattern == 'if_16_8' || mealPattern == 'if_18_6';
 
+  /// Get body type enum for recipe suggestions
+  BodyType get bodyTypeEnum => BodyType.fromString(bodyType);
+
+  /// Get spice tolerance enum for recipe suggestions
+  SpiceTolerance get spiceToleranceEnum => SpiceTolerance.fromString(spiceTolerance);
+
+  /// Get favorite cuisines as enums
+  List<CuisineType> get favoriteCuisineEnums =>
+      favoriteCuisines.map((c) => CuisineType.fromString(c)).toList();
+
   factory NutritionPreferences.fromJson(Map<String, dynamic> json) =>
       _$NutritionPreferencesFromJson(json);
   Map<String, dynamic> toJson() => _$NutritionPreferencesToJson(this);
@@ -343,6 +460,7 @@ class NutritionPreferences {
   NutritionPreferences copyWith({
     String? id,
     String? userId,
+    List<String>? nutritionGoals,
     String? nutritionGoal,
     String? rateOfChange,
     int? calculatedBmr,
@@ -363,6 +481,10 @@ class NutritionPreferences {
     String? cookingSkill,
     int? cookingTimeMinutes,
     String? budgetLevel,
+    String? bodyType,
+    List<String>? favoriteCuisines,
+    String? culturalBackground,
+    String? spiceTolerance,
     bool? showAiFeedbackAfterLogging,
     bool? calmModeEnabled,
     bool? showWeeklyInsteadOfDaily,
@@ -377,6 +499,7 @@ class NutritionPreferences {
     return NutritionPreferences(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      nutritionGoals: nutritionGoals ?? this.nutritionGoals,
       nutritionGoal: nutritionGoal ?? this.nutritionGoal,
       rateOfChange: rateOfChange ?? this.rateOfChange,
       calculatedBmr: calculatedBmr ?? this.calculatedBmr,
@@ -397,6 +520,10 @@ class NutritionPreferences {
       cookingSkill: cookingSkill ?? this.cookingSkill,
       cookingTimeMinutes: cookingTimeMinutes ?? this.cookingTimeMinutes,
       budgetLevel: budgetLevel ?? this.budgetLevel,
+      bodyType: bodyType ?? this.bodyType,
+      favoriteCuisines: favoriteCuisines ?? this.favoriteCuisines,
+      culturalBackground: culturalBackground ?? this.culturalBackground,
+      spiceTolerance: spiceTolerance ?? this.spiceTolerance,
       showAiFeedbackAfterLogging:
           showAiFeedbackAfterLogging ?? this.showAiFeedbackAfterLogging,
       calmModeEnabled: calmModeEnabled ?? this.calmModeEnabled,
@@ -614,6 +741,8 @@ class NutritionCalculator {
   }
 
   /// Calculate all nutrition targets from user data
+  /// Accepts multiple goals - uses the first goal for calorie calculations
+  /// but stores all goals in the preferences
   static NutritionPreferences calculateTargets({
     required String userId,
     required double weightKg,
@@ -621,7 +750,8 @@ class NutritionCalculator {
     required int age,
     required String gender,
     required String activityLevel,
-    required NutritionGoal goal,
+    required NutritionGoal goal, // Primary goal for calculations
+    List<NutritionGoal>? goals, // All selected goals (multi-select)
     required RateOfChange rate,
     required DietType dietType,
     int? customCarbPercent,
@@ -652,9 +782,13 @@ class NutritionCalculator {
       customFatPercent: customFatPercent,
     );
 
+    // Build goals list - use provided goals or default to single goal
+    final goalsList = goals?.map((g) => g.value).toList() ?? [goal.value];
+
     return NutritionPreferences(
       userId: userId,
-      nutritionGoal: goal.value,
+      nutritionGoals: goalsList,
+      nutritionGoal: goal.value, // Legacy field
       rateOfChange: rate.value,
       calculatedBmr: bmr,
       calculatedTdee: tdee,

@@ -13,6 +13,10 @@ Endpoints:
 - POST /strength/calculate - Trigger strength score recalculation
 - GET /personal-records - Get all personal records
 - GET /personal-records/{exercise} - Get PRs for specific exercise
+- GET /nutrition - Get weekly nutrition score
+- POST /nutrition/calculate - Calculate nutrition score
+- GET /fitness - Get overall fitness score
+- POST /fitness/calculate - Calculate overall fitness score
 - GET /overview - Combined dashboard data
 """
 
@@ -35,6 +39,19 @@ from services.readiness_service import (
 )
 from services.personal_records_service import PersonalRecordsService
 from services.ai_insights_service import ai_insights_service
+from services.nutrition_calculator_service import (
+    NutritionCalculatorService,
+    NutritionScore,
+    NutritionLevel,
+    NutritionTargets,
+    DailyNutrition,
+)
+from services.fitness_score_calculator_service import (
+    FitnessScoreCalculatorService,
+    FitnessScore,
+    FitnessLevel,
+)
+from services.user_context_service import user_context_service, EventType
 
 import logging
 logger = logging.getLogger(__name__)
@@ -172,6 +189,78 @@ class PRStatsResponse(BaseModel):
 
 
 # ============================================================================
+# Pydantic Models - Nutrition Score
+# ============================================================================
+
+class NutritionScoreResponse(BaseModel):
+    """Response model for weekly nutrition score."""
+    id: Optional[str] = None
+    user_id: str
+    week_start: Optional[date] = None
+    week_end: Optional[date] = None
+    days_logged: int = 0
+    total_days: int = 7
+    adherence_percent: float = 0.0
+    calorie_adherence_percent: float = 0.0
+    protein_adherence_percent: float = 0.0
+    carb_adherence_percent: float = 0.0
+    fat_adherence_percent: float = 0.0
+    avg_health_score: float = 0.0
+    fiber_target_met_days: int = 0
+    nutrition_score: int = 0
+    nutrition_level: str = "needs_work"
+    ai_weekly_summary: Optional[str] = None
+    ai_improvement_tips: List[str] = []
+    calculated_at: Optional[datetime] = None
+
+
+class NutritionCalculateRequest(BaseModel):
+    """Request model for calculating nutrition score."""
+    user_id: str
+    week_start: Optional[date] = None  # Defaults to current week
+
+
+# ============================================================================
+# Pydantic Models - Fitness Score
+# ============================================================================
+
+class FitnessScoreResponse(BaseModel):
+    """Response model for overall fitness score."""
+    id: Optional[str] = None
+    user_id: str
+    calculated_date: Optional[date] = None
+    strength_score: int = 0
+    readiness_score: int = 0
+    consistency_score: int = 0
+    nutrition_score: int = 0
+    overall_fitness_score: int = 0
+    fitness_level: str = "beginner"
+    strength_weight: float = 0.40
+    consistency_weight: float = 0.30
+    nutrition_weight: float = 0.20
+    readiness_weight: float = 0.10
+    ai_summary: Optional[str] = None
+    focus_recommendation: Optional[str] = None
+    previous_score: Optional[int] = None
+    score_change: Optional[int] = None
+    trend: str = "maintaining"
+    calculated_at: Optional[datetime] = None
+
+
+class FitnessScoreBreakdownResponse(BaseModel):
+    """Response model for fitness score with breakdown."""
+    fitness_score: FitnessScoreResponse
+    breakdown: List[Dict[str, Any]]
+    level_description: str
+    level_color: str
+
+
+class FitnessCalculateRequest(BaseModel):
+    """Request model for calculating fitness score."""
+    user_id: str
+
+
+# ============================================================================
 # Pydantic Models - Overview
 # ============================================================================
 
@@ -186,6 +275,12 @@ class ScoresOverviewResponse(BaseModel):
     recent_prs: List[PersonalRecordResponse]
     pr_count_30_days: int
     readiness_average_7_days: Optional[float] = None
+    # New fitness score fields
+    nutrition_score: Optional[int] = None
+    nutrition_level: Optional[str] = None
+    consistency_score: Optional[int] = None
+    overall_fitness_score: Optional[int] = None
+    fitness_level: Optional[str] = None
 
 
 # ============================================================================
@@ -748,6 +843,485 @@ async def get_exercise_pr_history(
 
 
 # ============================================================================
+# Nutrition Score Endpoints
+# ============================================================================
+
+@router.get("/nutrition", response_model=NutritionScoreResponse, tags=["Nutrition"])
+async def get_nutrition_score(
+    user_id: str = Query(...),
+    week_start: Optional[date] = Query(None, description="Start of week (Monday)"),
+):
+    """
+    Get weekly nutrition score for a user.
+
+    If week_start is not provided, returns current week's score.
+    """
+    db = get_supabase_db()
+    nutrition_service = NutritionCalculatorService()
+
+    # Determine week range
+    if week_start is None:
+        week_start, week_end = nutrition_service.get_current_week_range()
+    else:
+        week_end = week_start + timedelta(days=6)
+
+    # Try to get cached score from database
+    score_response = db.client.table("nutrition_scores").select("*").eq(
+        "user_id", user_id
+    ).eq(
+        "week_start", week_start.isoformat()
+    ).maybe_single().execute()
+
+    if score_response.data:
+        record = score_response.data
+        return NutritionScoreResponse(
+            id=record["id"],
+            user_id=record["user_id"],
+            week_start=date.fromisoformat(record["week_start"]),
+            week_end=date.fromisoformat(record["week_end"]),
+            days_logged=record["days_logged"],
+            total_days=record.get("total_days", 7),
+            adherence_percent=record["adherence_percent"],
+            calorie_adherence_percent=record.get("calorie_adherence_percent", 0),
+            protein_adherence_percent=record.get("protein_adherence_percent", 0),
+            carb_adherence_percent=record.get("carb_adherence_percent", 0),
+            fat_adherence_percent=record.get("fat_adherence_percent", 0),
+            avg_health_score=record.get("avg_health_score", 0),
+            fiber_target_met_days=record.get("fiber_target_met_days", 0),
+            nutrition_score=record["nutrition_score"],
+            nutrition_level=record["nutrition_level"],
+            ai_weekly_summary=record.get("ai_weekly_summary"),
+            ai_improvement_tips=record.get("ai_improvement_tips", []),
+            calculated_at=datetime.fromisoformat(record["calculated_at"]) if record.get("calculated_at") else None,
+        )
+
+    # No cached score - return empty score for this week
+    return NutritionScoreResponse(
+        user_id=user_id,
+        week_start=week_start,
+        week_end=week_end,
+        days_logged=0,
+        total_days=7,
+        nutrition_score=0,
+        nutrition_level="needs_work",
+    )
+
+
+@router.post("/nutrition/calculate", response_model=NutritionScoreResponse, tags=["Nutrition"])
+async def calculate_nutrition_score(
+    request: NutritionCalculateRequest,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Calculate and save weekly nutrition score.
+
+    Analyzes food logs for the week and calculates adherence to targets.
+    """
+    db = get_supabase_db()
+    nutrition_service = NutritionCalculatorService()
+
+    # Determine week range
+    if request.week_start is None:
+        week_start, week_end = nutrition_service.get_current_week_range()
+    else:
+        week_start = request.week_start
+        week_end = week_start + timedelta(days=6)
+
+    # Get user's nutrition targets
+    user_response = db.client.table("users").select(
+        "id, daily_calories, protein_g, carbs_g, fat_g, fiber_g"
+    ).eq("id", request.user_id).maybe_single().execute()
+
+    if not user_response.data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user = user_response.data
+    targets = NutritionTargets(
+        calories=int(user.get("daily_calories", 2000)),
+        protein_g=int(user.get("protein_g", 150)),
+        carbs_g=int(user.get("carbs_g", 200)),
+        fat_g=int(user.get("fat_g", 65)),
+        fiber_g=int(user.get("fiber_g", 30)),
+    )
+
+    # Get food logs for the week
+    food_logs_response = db.client.table("food_logs").select("*").eq(
+        "user_id", request.user_id
+    ).gte(
+        "log_date", week_start.isoformat()
+    ).lte(
+        "log_date", week_end.isoformat()
+    ).execute()
+
+    food_logs = food_logs_response.data or []
+
+    # Aggregate daily nutrition from food logs
+    daily_data = {}
+    for log in food_logs:
+        log_date = date.fromisoformat(log["log_date"])
+        if log_date not in daily_data:
+            daily_data[log_date] = DailyNutrition(
+                date=log_date,
+                calories=0,
+                protein_g=0,
+                carbs_g=0,
+                fat_g=0,
+                fiber_g=0,
+                health_score=0,
+                meals_logged=0,
+            )
+
+        daily = daily_data[log_date]
+        daily.calories += float(log.get("calories", 0))
+        daily.protein_g += float(log.get("protein_g", 0))
+        daily.carbs_g += float(log.get("carbs_g", 0))
+        daily.fat_g += float(log.get("fat_g", 0))
+        daily.fiber_g += float(log.get("fiber_g", 0))
+        daily.meals_logged += 1
+
+        # Average health score
+        if log.get("health_score"):
+            if daily.health_score == 0:
+                daily.health_score = float(log["health_score"])
+            else:
+                daily.health_score = (daily.health_score + float(log["health_score"])) / 2
+
+    # Calculate nutrition score
+    score = nutrition_service.calculate_weekly_nutrition_score(
+        user_id=request.user_id,
+        week_start=week_start,
+        week_end=week_end,
+        daily_data=list(daily_data.values()),
+        targets=targets,
+    )
+
+    # Get improvement tips
+    tips = nutrition_service.get_improvement_tips(score)
+    score.ai_improvement_tips = tips
+
+    # Get previous week's score for comparison
+    previous_week_start, previous_week_end = nutrition_service.get_previous_week_range()
+    previous_response = db.client.table("nutrition_scores").select(
+        "nutrition_score"
+    ).eq(
+        "user_id", request.user_id
+    ).eq(
+        "week_start", previous_week_start.isoformat()
+    ).maybe_single().execute()
+
+    previous_score = previous_response.data.get("nutrition_score") if previous_response.data else None
+
+    # Save to database
+    record_data = {
+        "user_id": request.user_id,
+        "week_start": week_start.isoformat(),
+        "week_end": week_end.isoformat(),
+        "days_logged": score.days_logged,
+        "total_days": score.total_days,
+        "adherence_percent": score.adherence_percent,
+        "calorie_adherence_percent": score.calorie_adherence_percent,
+        "protein_adherence_percent": score.protein_adherence_percent,
+        "carb_adherence_percent": score.carb_adherence_percent,
+        "fat_adherence_percent": score.fat_adherence_percent,
+        "avg_health_score": score.avg_health_score,
+        "fiber_target_met_days": score.fiber_target_met_days,
+        "nutrition_score": score.nutrition_score,
+        "nutrition_level": score.nutrition_level.value,
+        "ai_improvement_tips": score.ai_improvement_tips,
+        "previous_score": previous_score,
+        "calculated_at": datetime.now().isoformat(),
+    }
+
+    # Upsert (update if exists for this week)
+    response = db.client.table("nutrition_scores").upsert(
+        record_data,
+        on_conflict="user_id,week_start",
+    ).execute()
+
+    if not response.data:
+        raise HTTPException(status_code=500, detail="Failed to save nutrition score")
+
+    record = response.data[0]
+
+    return NutritionScoreResponse(
+        id=record["id"],
+        user_id=record["user_id"],
+        week_start=date.fromisoformat(record["week_start"]),
+        week_end=date.fromisoformat(record["week_end"]),
+        days_logged=record["days_logged"],
+        total_days=record.get("total_days", 7),
+        adherence_percent=record["adherence_percent"],
+        calorie_adherence_percent=record.get("calorie_adherence_percent", 0),
+        protein_adherence_percent=record.get("protein_adherence_percent", 0),
+        carb_adherence_percent=record.get("carb_adherence_percent", 0),
+        fat_adherence_percent=record.get("fat_adherence_percent", 0),
+        avg_health_score=record.get("avg_health_score", 0),
+        fiber_target_met_days=record.get("fiber_target_met_days", 0),
+        nutrition_score=record["nutrition_score"],
+        nutrition_level=record["nutrition_level"],
+        ai_weekly_summary=record.get("ai_weekly_summary"),
+        ai_improvement_tips=record.get("ai_improvement_tips", []),
+        calculated_at=datetime.fromisoformat(record["calculated_at"]) if record.get("calculated_at") else None,
+    )
+
+
+# ============================================================================
+# Fitness Score Endpoints
+# ============================================================================
+
+@router.get("/fitness", response_model=FitnessScoreBreakdownResponse, tags=["Fitness"])
+async def get_fitness_score(
+    user_id: str = Query(...),
+):
+    """
+    Get overall fitness score with breakdown.
+
+    Returns the combined fitness score from strength, consistency, nutrition, and readiness.
+    """
+    db = get_supabase_db()
+    fitness_service = FitnessScoreCalculatorService()
+
+    # Get the latest fitness score from database
+    score_response = db.client.table("fitness_scores").select("*").eq(
+        "user_id", user_id
+    ).order(
+        "calculated_at", desc=True
+    ).limit(1).maybe_single().execute()
+
+    if score_response.data:
+        record = score_response.data
+        fitness_score = FitnessScoreResponse(
+            id=record["id"],
+            user_id=record["user_id"],
+            calculated_date=date.fromisoformat(record["calculated_date"]) if record.get("calculated_date") else None,
+            strength_score=record["strength_score"],
+            readiness_score=record["readiness_score"],
+            consistency_score=record["consistency_score"],
+            nutrition_score=record["nutrition_score"],
+            overall_fitness_score=record["overall_fitness_score"],
+            fitness_level=record["fitness_level"],
+            ai_summary=record.get("ai_summary"),
+            focus_recommendation=record.get("focus_recommendation"),
+            previous_score=record.get("previous_score"),
+            score_change=record.get("score_change"),
+            trend=record.get("trend", "maintaining"),
+            calculated_at=datetime.fromisoformat(record["calculated_at"]) if record.get("calculated_at") else None,
+        )
+
+        # Build breakdown
+        score_obj = FitnessScore(
+            user_id=user_id,
+            strength_score=record["strength_score"],
+            readiness_score=record["readiness_score"],
+            consistency_score=record["consistency_score"],
+            nutrition_score=record["nutrition_score"],
+            overall_fitness_score=record["overall_fitness_score"],
+            fitness_level=FitnessLevel(record["fitness_level"]),
+        )
+        breakdown = fitness_service.get_score_breakdown_display(score_obj)
+        level_description = fitness_service.get_level_description(score_obj.fitness_level)
+        level_color = fitness_service.get_level_color(score_obj.fitness_level)
+
+        return FitnessScoreBreakdownResponse(
+            fitness_score=fitness_score,
+            breakdown=breakdown,
+            level_description=level_description,
+            level_color=level_color,
+        )
+
+    # No score exists - return default
+    default_score = FitnessScoreResponse(
+        user_id=user_id,
+        overall_fitness_score=0,
+        fitness_level="beginner",
+    )
+    return FitnessScoreBreakdownResponse(
+        fitness_score=default_score,
+        breakdown=[],
+        level_description="Starting your fitness journey - focus on consistency.",
+        level_color="#9E9E9E",
+    )
+
+
+@router.post("/fitness/calculate", response_model=FitnessScoreBreakdownResponse, tags=["Fitness"])
+async def calculate_fitness_score(
+    request: FitnessCalculateRequest,
+    background_tasks: BackgroundTasks,
+):
+    """
+    Calculate and save overall fitness score.
+
+    Combines strength, consistency, nutrition, and readiness into one score.
+    """
+    db = get_supabase_db()
+    fitness_service = FitnessScoreCalculatorService()
+    strength_service = StrengthCalculatorService()
+
+    user_id = request.user_id
+
+    # 1. Get strength score (overall)
+    strength_response = db.from_("latest_strength_scores").select(
+        "muscle_group, strength_score"
+    ).eq("user_id", user_id).execute()
+
+    if strength_response.data:
+        score_objects = {
+            r["muscle_group"]: type('obj', (object,), {'strength_score': r["strength_score"] or 0})()
+            for r in strength_response.data
+        }
+        strength_score, _ = strength_service.calculate_overall_strength_score(score_objects)
+    else:
+        strength_score = 0
+
+    # 2. Get consistency score (workout completion rate for last 30 days)
+    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+
+    # Count scheduled workouts
+    scheduled_response = db.client.table("workouts").select(
+        "id", count="exact"
+    ).eq(
+        "user_id", user_id
+    ).gte(
+        "scheduled_date", thirty_days_ago
+    ).execute()
+    scheduled_count = scheduled_response.count or 0
+
+    # Count completed workouts
+    completed_response = db.client.table("workouts").select(
+        "id", count="exact"
+    ).eq(
+        "user_id", user_id
+    ).eq(
+        "completed", True
+    ).gte(
+        "scheduled_date", thirty_days_ago
+    ).execute()
+    completed_count = completed_response.count or 0
+
+    consistency_score = fitness_service.calculate_consistency_score(
+        scheduled=scheduled_count,
+        completed=completed_count,
+    )
+
+    # 3. Get nutrition score (current week)
+    from services.nutrition_calculator_service import nutrition_calculator_service
+    week_start, week_end = nutrition_calculator_service.get_current_week_range()
+
+    nutrition_response = db.client.table("nutrition_scores").select(
+        "nutrition_score"
+    ).eq(
+        "user_id", user_id
+    ).eq(
+        "week_start", week_start.isoformat()
+    ).maybe_single().execute()
+
+    nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response.data else 0
+
+    # 4. Get readiness score (7-day average)
+    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+    readiness_response = db.client.table("readiness_scores").select(
+        "readiness_score"
+    ).eq(
+        "user_id", user_id
+    ).gte(
+        "score_date", seven_days_ago
+    ).execute()
+
+    readiness_scores = [r["readiness_score"] for r in (readiness_response.data or [])]
+    readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
+
+    # 5. Get previous fitness score
+    previous_response = db.client.table("fitness_scores").select(
+        "overall_fitness_score"
+    ).eq(
+        "user_id", user_id
+    ).order(
+        "calculated_at", desc=True
+    ).limit(1).maybe_single().execute()
+
+    previous_score = previous_response.data.get("overall_fitness_score") if previous_response.data else None
+
+    # 6. Calculate overall fitness score
+    score = fitness_service.calculate_fitness_score(
+        user_id=user_id,
+        strength_score=strength_score,
+        readiness_score=readiness_score,
+        consistency_score=consistency_score,
+        nutrition_score=nutrition_score,
+        previous_score=previous_score,
+    )
+
+    # 7. Save to database
+    record_data = {
+        "user_id": user_id,
+        "calculated_date": date.today().isoformat(),
+        "strength_score": score.strength_score,
+        "readiness_score": score.readiness_score,
+        "consistency_score": score.consistency_score,
+        "nutrition_score": score.nutrition_score,
+        "overall_fitness_score": score.overall_fitness_score,
+        "fitness_level": score.fitness_level.value,
+        "strength_weight": score.strength_weight,
+        "consistency_weight": score.consistency_weight,
+        "nutrition_weight": score.nutrition_weight,
+        "readiness_weight": score.readiness_weight,
+        "focus_recommendation": score.focus_recommendation,
+        "previous_score": score.previous_score,
+        "score_change": score.score_change,
+        "trend": score.trend,
+        "calculated_at": datetime.now().isoformat(),
+    }
+
+    response = db.client.table("fitness_scores").insert(record_data).execute()
+
+    if not response.data:
+        raise HTTPException(status_code=500, detail="Failed to save fitness score")
+
+    record = response.data[0]
+
+    # Log score calculation event
+    await user_context_service.log_event(
+        user_id=user_id,
+        event_type=EventType.SCORE_VIEW,
+        event_data={
+            "action": "calculate",
+            "overall_score": score.overall_fitness_score,
+            "fitness_level": score.fitness_level.value,
+        },
+        context={"screen": "fitness_calculation"},
+    )
+
+    # Build response
+    fitness_score_response = FitnessScoreResponse(
+        id=record["id"],
+        user_id=record["user_id"],
+        calculated_date=date.fromisoformat(record["calculated_date"]),
+        strength_score=record["strength_score"],
+        readiness_score=record["readiness_score"],
+        consistency_score=record["consistency_score"],
+        nutrition_score=record["nutrition_score"],
+        overall_fitness_score=record["overall_fitness_score"],
+        fitness_level=record["fitness_level"],
+        focus_recommendation=record.get("focus_recommendation"),
+        previous_score=record.get("previous_score"),
+        score_change=record.get("score_change"),
+        trend=record.get("trend", "maintaining"),
+        calculated_at=datetime.fromisoformat(record["calculated_at"]),
+    )
+
+    breakdown = fitness_service.get_score_breakdown_display(score)
+    level_description = fitness_service.get_level_description(score.fitness_level)
+    level_color = fitness_service.get_level_color(score.fitness_level)
+
+    return FitnessScoreBreakdownResponse(
+        fitness_score=fitness_score_response,
+        breakdown=breakdown,
+        level_description=level_description,
+        level_color=level_color,
+    )
+
+
+# ============================================================================
 # Overview Endpoint
 # ============================================================================
 
@@ -761,16 +1335,21 @@ async def get_scores_overview(
 
     # Get today's readiness
     today = date.today().isoformat()
-    readiness_response = db.client.table("readiness_scores").select("*").eq(
-        "user_id", user_id
-    ).eq(
-        "score_date", today
-    ).maybe_single().execute()
+    try:
+        readiness_response = db.client.table("readiness_scores").select("*").eq(
+            "user_id", user_id
+        ).eq(
+            "score_date", today
+        ).maybe_single().execute()
+    except Exception as e:
+        # Handle 406 or other errors gracefully
+        logger.warning(f"Failed to fetch readiness score: {e}")
+        readiness_response = None
 
     today_readiness = None
     has_checked_in = False
 
-    if readiness_response.data:
+    if readiness_response and readiness_response.data:
         has_checked_in = True
         r = readiness_response.data
         today_readiness = ReadinessResponse(
@@ -874,6 +1453,33 @@ async def get_scores_overview(
         if readiness_scores else None
     )
 
+    # Get current week nutrition score
+    nutrition_service = NutritionCalculatorService()
+    week_start, week_end = nutrition_service.get_current_week_range()
+    nutrition_response = db.client.table("nutrition_scores").select(
+        "nutrition_score, nutrition_level"
+    ).eq(
+        "user_id", user_id
+    ).eq(
+        "week_start", week_start.isoformat()
+    ).maybe_single().execute()
+
+    nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response.data else None
+    nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response.data else None
+
+    # Get latest fitness score
+    fitness_response = db.client.table("fitness_scores").select(
+        "overall_fitness_score, fitness_level, consistency_score"
+    ).eq(
+        "user_id", user_id
+    ).order(
+        "calculated_at", desc=True
+    ).limit(1).maybe_single().execute()
+
+    overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response.data else None
+    fitness_level = fitness_response.data.get("fitness_level") if fitness_response.data else None
+    consistency_score = fitness_response.data.get("consistency_score") if fitness_response.data else None
+
     return ScoresOverviewResponse(
         user_id=user_id,
         today_readiness=today_readiness,
@@ -884,6 +1490,11 @@ async def get_scores_overview(
         recent_prs=recent_prs,
         pr_count_30_days=pr_count,
         readiness_average_7_days=round(readiness_average, 1) if readiness_average else None,
+        nutrition_score=nutrition_score,
+        nutrition_level=nutrition_level,
+        consistency_score=consistency_score,
+        overall_fitness_score=overall_fitness_score,
+        fitness_level=fitness_level,
     )
 
 

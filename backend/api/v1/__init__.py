@@ -24,6 +24,8 @@ from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
 from api.v1 import exercise_preferences  # Staple exercises and variation control
 from api.v1 import training_intensity  # Percentage-based 1RM training
+from api.v1 import layouts  # Home screen layout customization
+from api.v1 import recipe_suggestions  # AI recipe suggestions based on culture, body type, diet
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -136,3 +138,9 @@ router.include_router(exercise_preferences.router, tags=["Exercise Preferences"]
 
 # Percentage-based 1RM training (train at X% of your max)
 router.include_router(training_intensity.router, tags=["Training Intensity"])
+
+# Home screen layout customization
+router.include_router(layouts.router, tags=["Layouts"])
+
+# AI recipe suggestions based on body type, culture, diet
+router.include_router(recipe_suggestions.router, tags=["Recipe Suggestions"])

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'app_watermark.dart';
 
 /// Stats Template - Shows workout duration, exercises, volume, calories
 /// Dark gradient background with bold stats display
@@ -12,6 +13,7 @@ class StatsTemplate extends StatelessWidget {
   final int? totalReps;
   final int exercisesCount;
   final DateTime completedAt;
+  final bool showWatermark;
 
   const StatsTemplate({
     super.key,
@@ -23,6 +25,7 @@ class StatsTemplate extends StatelessWidget {
     this.totalReps,
     required this.exercisesCount,
     required this.completedAt,
+    this.showWatermark = true,
   });
 
   String get _formattedDuration {
@@ -151,7 +154,7 @@ class StatsTemplate extends StatelessWidget {
                 const Spacer(),
 
                 // App watermark
-                _buildWatermark(),
+                if (showWatermark) const AppWatermark(),
               ],
             ),
           ),
@@ -255,49 +258,6 @@ class StatsTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildWatermark() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.cyan, AppColors.purple],
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  size: 12,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'FitWiz',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Custom painter for background grid pattern

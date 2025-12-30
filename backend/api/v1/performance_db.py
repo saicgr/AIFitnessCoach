@@ -674,20 +674,27 @@ async def create_rest_interval(data: RestIntervalCreate):
     try:
         db = get_supabase_db()
 
+        # Get rest duration from either field (rest_duration_seconds or rest_seconds)
+        rest_duration = data.get_rest_duration
+
+        # Get exercise info - prefer provided name/index, use defaults as fallback
+        exercise_name = data.exercise_name or "Unknown"
+        exercise_index = data.exercise_index or 0
+
         interval_data = {
             "user_id": data.user_id,
             "workout_log_id": data.workout_log_id,
-            "exercise_index": data.exercise_index,
-            "exercise_name": data.exercise_name,
+            "exercise_index": exercise_index,
+            "exercise_name": exercise_name,
             "set_number": data.set_number,
-            "rest_duration_seconds": data.rest_duration_seconds,
+            "rest_duration_seconds": rest_duration,
             "prescribed_rest_seconds": data.prescribed_rest_seconds,
             "rest_type": data.rest_type,
             "notes": data.notes,
         }
 
         created = db.create_rest_interval(interval_data)
-        logger.info(f"Rest interval created: id={created['id']}, user_id={data.user_id}, duration={data.rest_duration_seconds}s")
+        logger.info(f"Rest interval created: id={created['id']}, user_id={data.user_id}, duration={rest_duration}s")
         return row_to_rest_interval(created)
 
     except Exception as e:

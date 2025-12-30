@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'app_watermark.dart';
 
 /// Motivational Template - Workout name and streak with inspiring design
 /// Bold typography, dynamic colors, and streak celebration
@@ -9,6 +10,7 @@ class MotivationalTemplate extends StatelessWidget {
   final int totalWorkouts;
   final int durationSeconds;
   final DateTime completedAt;
+  final bool showWatermark;
 
   const MotivationalTemplate({
     super.key,
@@ -17,6 +19,7 @@ class MotivationalTemplate extends StatelessWidget {
     required this.totalWorkouts,
     required this.durationSeconds,
     required this.completedAt,
+    this.showWatermark = true,
   });
 
   String get _motivationalQuote {
@@ -67,7 +70,7 @@ class MotivationalTemplate extends StatelessWidget {
     if (hours > 0) {
       return '${hours}h ${minutes}m';
     }
-    return '${minutes} MIN';
+    return '$minutes MIN';
   }
 
   @override
@@ -159,7 +162,7 @@ class MotivationalTemplate extends StatelessWidget {
                 const Spacer(flex: 3),
 
                 // Watermark
-                _buildWatermark(),
+                if (showWatermark) const AppWatermark(),
               ],
             ),
           ),
@@ -295,49 +298,6 @@ class MotivationalTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildWatermark() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _gradientColors,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Icon(
-                  Icons.fitness_center,
-                  size: 12,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'FitWiz',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Custom painter for dynamic background pattern

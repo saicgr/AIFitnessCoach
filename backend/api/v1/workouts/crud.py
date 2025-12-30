@@ -251,7 +251,7 @@ async def complete_workout(
     logger.info(f"Completing workout: id={workout_id}")
     try:
         db = get_supabase_db()
-        supabase = get_db()
+        supabase = get_db().client  # Use .client to get the Supabase client with .table() method
 
         existing = db.get_workout(workout_id)
         if not existing:

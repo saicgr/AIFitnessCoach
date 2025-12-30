@@ -204,6 +204,94 @@ class ScoresRepository {
   }
 
   // ============================================
+  // Nutrition Score Endpoints
+  // ============================================
+
+  /// Get current nutrition score for the user
+  Future<NutritionScoreData> getNutritionScore({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('🥗 [Scores] Getting nutrition score for $userId');
+      final response = await _client.get(
+        '/scores/nutrition',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Scores] Got nutrition score');
+      return NutritionScoreData.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Scores] Error getting nutrition score: $e');
+      rethrow;
+    }
+  }
+
+  /// Calculate/recalculate nutrition score
+  Future<NutritionScoreData> calculateNutritionScore({
+    required String userId,
+    int? weekNumber,
+    int? year,
+  }) async {
+    try {
+      debugPrint('🥗 [Scores] Calculating nutrition score for $userId');
+      final response = await _client.post(
+        '/scores/nutrition/calculate',
+        data: {
+          'user_id': userId,
+          if (weekNumber != null) 'week_number': weekNumber,
+          if (year != null) 'year': year,
+        },
+      );
+      debugPrint('✅ [Scores] Nutrition score calculated');
+      return NutritionScoreData.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Scores] Error calculating nutrition score: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Fitness Score Endpoints
+  // ============================================
+
+  /// Get overall fitness score with breakdown
+  Future<FitnessScoreBreakdown> getFitnessScore({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('💪 [Scores] Getting fitness score for $userId');
+      final response = await _client.get(
+        '/scores/fitness',
+        queryParameters: {'user_id': userId},
+      );
+      debugPrint('✅ [Scores] Got fitness score');
+      return FitnessScoreBreakdown.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Scores] Error getting fitness score: $e');
+      rethrow;
+    }
+  }
+
+  /// Calculate/recalculate overall fitness score
+  Future<FitnessScoreBreakdown> calculateFitnessScore({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('💪 [Scores] Calculating fitness score for $userId');
+      final response = await _client.post(
+        '/scores/fitness/calculate',
+        data: {
+          'user_id': userId,
+        },
+      );
+      debugPrint('✅ [Scores] Fitness score calculated');
+      return FitnessScoreBreakdown.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Scores] Error calculating fitness score: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
   // Overview Endpoint
   // ============================================
 

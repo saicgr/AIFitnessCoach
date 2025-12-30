@@ -61,12 +61,14 @@ async def update_program(request: UpdateProgramRequest):
         if request.workout_type is not None:
             updated_prefs["training_split"] = request.workout_type
         if request.workout_days is not None:
-            # Store both days_per_week and selected_days
+            # Store both days_per_week and workout_days
             updated_prefs["days_per_week"] = len(request.workout_days)
             # Convert day names to indices (Mon=0, Tue=1, etc.)
             day_map = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5, "Sun": 6}
             selected_indices = [day_map.get(d, 0) for d in request.workout_days]
-            updated_prefs["selected_days"] = sorted(selected_indices)
+            # Store as workout_days for consistency across backend and Flutter
+            updated_prefs["workout_days"] = sorted(selected_indices)
+            logger.info(f"Storing workout_days: {sorted(selected_indices)} (0=Mon, 6=Sun)")
         if request.dumbbell_count is not None:
             updated_prefs["dumbbell_count"] = request.dumbbell_count
         if request.kettlebell_count is not None:

@@ -1,13 +1,17 @@
 """
-Exercise Preferences API - Staple exercises and variation control.
+Exercise Preferences API - Staple exercises, variation control, and avoidance lists.
 
 This module allows users to:
 1. Mark exercises as "staples" that should never be rotated out
 2. Control their exercise variation percentage (0-100%)
 3. View week-over-week exercise changes
+4. Specify exercises to avoid (injuries, dislikes)
+5. Specify muscle groups to avoid (injuries, limitations)
 
 Staple exercises are core lifts (like Squat, Bench Press, Deadlift) that users
 want to keep in every workout regardless of the weekly variation setting.
+
+Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -81,6 +85,65 @@ class ExerciseRotationResponse(BaseModel):
     rotation_reason: Optional[str]
     week_start_date: date
     created_at: datetime
+
+
+# =============================================================================
+# Avoided Exercises Models
+# =============================================================================
+
+class AvoidedExerciseCreate(BaseModel):
+    """Request to add an exercise to avoid."""
+    exercise_name: str = Field(..., min_length=1, max_length=200)
+    exercise_id: Optional[str] = None
+    reason: Optional[str] = Field(default=None, max_length=200)
+    is_temporary: bool = False
+    end_date: Optional[date] = None
+
+
+class AvoidedExerciseResponse(BaseModel):
+    """Response for an avoided exercise."""
+    id: str
+    exercise_name: str
+    exercise_id: Optional[str]
+    reason: Optional[str]
+    is_temporary: bool
+    end_date: Optional[date]
+    created_at: datetime
+
+
+# =============================================================================
+# Avoided Muscles Models
+# =============================================================================
+
+class AvoidedMuscleCreate(BaseModel):
+    """Request to add a muscle group to avoid."""
+    muscle_group: str = Field(..., min_length=1, max_length=100)
+    reason: Optional[str] = Field(default=None, max_length=200)
+    is_temporary: bool = False
+    end_date: Optional[date] = None
+    severity: str = Field(default="avoid", pattern="^(avoid|reduce)$")
+
+
+class AvoidedMuscleResponse(BaseModel):
+    """Response for an avoided muscle group."""
+    id: str
+    muscle_group: str
+    reason: Optional[str]
+    is_temporary: bool
+    end_date: Optional[date]
+    severity: str
+    created_at: datetime
+
+
+# Common muscle groups for reference
+MUSCLE_GROUPS = [
+    # Primary muscle groups
+    "chest", "back", "shoulders", "biceps", "triceps", "core",
+    "quadriceps", "hamstrings", "glutes", "calves",
+    # Specific areas
+    "lower_back", "upper_back", "lats", "traps", "forearms",
+    "hip_flexors", "adductors", "abductors", "abs", "obliques",
+]
 
 
 # =============================================================================
@@ -503,3 +566,441 @@ async def log_exercise_rotation(
         }).execute()
     except Exception as e:
         logger.error(f"Error logging exercise rotation: {e}")
+
+
+# =============================================================================
+# Avoided Exercises Endpoints
+# =============================================================================
+
+@router.get("/avoided-exercises/{user_id}", response_model=List[AvoidedExerciseResponse])
+async def get_avoided_exercises(user_id: str, include_expired: bool = False):
+    """
+    Get all exercises the user wants to avoid.
+
+    By default, only returns active avoidances (not expired temporary ones).
+    Set include_expired=true to get all entries.
+    """
+    logger.info(f"Getting avoided exercises for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        query = db.client.table("avoided_exercises").select("*").eq("user_id", user_id)
+
+        if not include_expired:
+            # Filter out expired temporary avoidances
+            today = date.today().isoformat()
+            # Get non-temporary OR temporary with no end_date OR temporary with future end_date
+            query = query.or_(
+                f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"
+            )
+
+        result = query.order("created_at", desc=True).execute()
+
+        exercises = []
+        for row in result.data or []:
+            exercises.append(AvoidedExerciseResponse(
+                id=row["id"],
+                exercise_name=row["exercise_name"],
+                exercise_id=row.get("exercise_id"),
+                reason=row.get("reason"),
+                is_temporary=row.get("is_temporary", False),
+                end_date=row.get("end_date"),
+                created_at=row["created_at"],
+            ))
+
+        return exercises
+
+    except Exception as e:
+        logger.error(f"Error getting avoided exercises: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/avoided-exercises/{user_id}", response_model=AvoidedExerciseResponse)
+async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate):
+    """
+    Add an exercise to the user's avoidance list.
+
+    The AI will completely skip this exercise when generating workouts.
+    Useful for injuries, equipment limitations, or personal preference.
+    """
+    logger.info(f"Adding avoided exercise '{request.exercise_name}' for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check if already exists
+        existing = db.client.table("avoided_exercises").select("id").eq(
+            "user_id", user_id
+        ).eq("exercise_name", request.exercise_name).execute()
+
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Exercise is already in avoidance list")
+
+        # Insert new avoided exercise
+        insert_data = {
+            "user_id": user_id,
+            "exercise_name": request.exercise_name,
+            "exercise_id": request.exercise_id,
+            "reason": request.reason,
+            "is_temporary": request.is_temporary,
+            "end_date": request.end_date.isoformat() if request.end_date else None,
+        }
+
+        result = db.client.table("avoided_exercises").insert(insert_data).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to add avoided exercise")
+
+        row = result.data[0]
+        return AvoidedExerciseResponse(
+            id=row["id"],
+            exercise_name=row["exercise_name"],
+            exercise_id=row.get("exercise_id"),
+            reason=row.get("reason"),
+            is_temporary=row.get("is_temporary", False),
+            end_date=row.get("end_date"),
+            created_at=row["created_at"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding avoided exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/avoided-exercises/{user_id}/{exercise_id}", response_model=AvoidedExerciseResponse)
+async def update_avoided_exercise(user_id: str, exercise_id: str, request: AvoidedExerciseCreate):
+    """
+    Update an avoided exercise entry.
+    """
+    logger.info(f"Updating avoided exercise {exercise_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        update_data = {
+            "exercise_name": request.exercise_name,
+            "exercise_id": request.exercise_id,
+            "reason": request.reason,
+            "is_temporary": request.is_temporary,
+            "end_date": request.end_date.isoformat() if request.end_date else None,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+        result = db.client.table("avoided_exercises").update(update_data).eq(
+            "id", exercise_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Avoided exercise not found")
+
+        row = result.data[0]
+        return AvoidedExerciseResponse(
+            id=row["id"],
+            exercise_name=row["exercise_name"],
+            exercise_id=row.get("exercise_id"),
+            reason=row.get("reason"),
+            is_temporary=row.get("is_temporary", False),
+            end_date=row.get("end_date"),
+            created_at=row["created_at"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating avoided exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/avoided-exercises/{user_id}/{exercise_id}")
+async def remove_avoided_exercise(user_id: str, exercise_id: str):
+    """
+    Remove an exercise from the avoidance list.
+
+    The AI will be able to use this exercise again in workouts.
+    """
+    logger.info(f"Removing avoided exercise {exercise_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("avoided_exercises").delete().eq(
+            "id", exercise_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Avoided exercise not found")
+
+        return {"success": True, "message": "Exercise removed from avoidance list"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing avoided exercise: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# Avoided Muscles Endpoints
+# =============================================================================
+
+@router.get("/avoided-muscles/{user_id}", response_model=List[AvoidedMuscleResponse])
+async def get_avoided_muscles(user_id: str, include_expired: bool = False):
+    """
+    Get all muscle groups the user wants to avoid.
+
+    By default, only returns active avoidances (not expired temporary ones).
+    Set include_expired=true to get all entries.
+    """
+    logger.info(f"Getting avoided muscles for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        query = db.client.table("avoided_muscles").select("*").eq("user_id", user_id)
+
+        if not include_expired:
+            today = date.today().isoformat()
+            query = query.or_(
+                f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"
+            )
+
+        result = query.order("created_at", desc=True).execute()
+
+        muscles = []
+        for row in result.data or []:
+            muscles.append(AvoidedMuscleResponse(
+                id=row["id"],
+                muscle_group=row["muscle_group"],
+                reason=row.get("reason"),
+                is_temporary=row.get("is_temporary", False),
+                end_date=row.get("end_date"),
+                severity=row.get("severity", "avoid"),
+                created_at=row["created_at"],
+            ))
+
+        return muscles
+
+    except Exception as e:
+        logger.error(f"Error getting avoided muscles: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/avoided-muscles/{user_id}", response_model=AvoidedMuscleResponse)
+async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate):
+    """
+    Add a muscle group to the user's avoidance list.
+
+    The AI will skip or reduce exercises targeting this muscle based on severity:
+    - 'avoid': Completely skip all exercises targeting this muscle
+    - 'reduce': Limit exercises targeting this muscle
+
+    Useful for injuries, recovery, or limitations.
+    """
+    logger.info(f"Adding avoided muscle '{request.muscle_group}' for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check if already exists
+        existing = db.client.table("avoided_muscles").select("id").eq(
+            "user_id", user_id
+        ).eq("muscle_group", request.muscle_group).execute()
+
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Muscle group is already in avoidance list")
+
+        # Insert new avoided muscle
+        insert_data = {
+            "user_id": user_id,
+            "muscle_group": request.muscle_group,
+            "reason": request.reason,
+            "is_temporary": request.is_temporary,
+            "end_date": request.end_date.isoformat() if request.end_date else None,
+            "severity": request.severity,
+        }
+
+        result = db.client.table("avoided_muscles").insert(insert_data).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to add avoided muscle")
+
+        row = result.data[0]
+        return AvoidedMuscleResponse(
+            id=row["id"],
+            muscle_group=row["muscle_group"],
+            reason=row.get("reason"),
+            is_temporary=row.get("is_temporary", False),
+            end_date=row.get("end_date"),
+            severity=row.get("severity", "avoid"),
+            created_at=row["created_at"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding avoided muscle: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/avoided-muscles/{user_id}/{muscle_id}", response_model=AvoidedMuscleResponse)
+async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMuscleCreate):
+    """
+    Update an avoided muscle entry.
+    """
+    logger.info(f"Updating avoided muscle {muscle_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        update_data = {
+            "muscle_group": request.muscle_group,
+            "reason": request.reason,
+            "is_temporary": request.is_temporary,
+            "end_date": request.end_date.isoformat() if request.end_date else None,
+            "severity": request.severity,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+
+        result = db.client.table("avoided_muscles").update(update_data).eq(
+            "id", muscle_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Avoided muscle not found")
+
+        row = result.data[0]
+        return AvoidedMuscleResponse(
+            id=row["id"],
+            muscle_group=row["muscle_group"],
+            reason=row.get("reason"),
+            is_temporary=row.get("is_temporary", False),
+            end_date=row.get("end_date"),
+            severity=row.get("severity", "avoid"),
+            created_at=row["created_at"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating avoided muscle: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/avoided-muscles/{user_id}/{muscle_id}")
+async def remove_avoided_muscle(user_id: str, muscle_id: str):
+    """
+    Remove a muscle group from the avoidance list.
+
+    The AI will be able to target this muscle group again in workouts.
+    """
+    logger.info(f"Removing avoided muscle {muscle_id} for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("avoided_muscles").delete().eq(
+            "id", muscle_id
+        ).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Avoided muscle not found")
+
+        return {"success": True, "message": "Muscle group removed from avoidance list"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing avoided muscle: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/muscle-groups")
+async def get_muscle_groups():
+    """
+    Get list of all available muscle groups that can be avoided.
+    """
+    return {
+        "muscle_groups": MUSCLE_GROUPS,
+        "primary": ["chest", "back", "shoulders", "biceps", "triceps", "core",
+                    "quadriceps", "hamstrings", "glutes", "calves"],
+        "secondary": ["lower_back", "upper_back", "lats", "traps", "forearms",
+                      "hip_flexors", "adductors", "abductors", "abs", "obliques"],
+    }
+
+
+# =============================================================================
+# Helper Functions for Avoidance Lists (for use by other modules)
+# =============================================================================
+
+async def get_user_avoided_exercises(user_id: str) -> List[str]:
+    """
+    Get list of exercise names to avoid for a user.
+    Used by RAG service and workout generation.
+    Only returns active avoidances (not expired).
+    """
+    try:
+        db = get_supabase_db()
+        today = date.today().isoformat()
+
+        result = db.client.table("avoided_exercises").select("exercise_name").eq(
+            "user_id", user_id
+        ).or_(
+            f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"
+        ).execute()
+
+        return [row["exercise_name"] for row in result.data or []]
+    except Exception as e:
+        logger.error(f"Error getting avoided exercises: {e}")
+        return []
+
+
+async def get_user_avoided_muscles(user_id: str) -> List[dict]:
+    """
+    Get list of muscle groups to avoid for a user with severity.
+    Used by RAG service and workout generation.
+    Only returns active avoidances (not expired).
+
+    Returns list of dicts: [{"muscle_group": "lower_back", "severity": "avoid"}, ...]
+    """
+    try:
+        db = get_supabase_db()
+        today = date.today().isoformat()
+
+        result = db.client.table("avoided_muscles").select(
+            "muscle_group", "severity"
+        ).eq("user_id", user_id).or_(
+            f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"
+        ).execute()
+
+        return [
+            {"muscle_group": row["muscle_group"], "severity": row.get("severity", "avoid")}
+            for row in result.data or []
+        ]
+    except Exception as e:
+        logger.error(f"Error getting avoided muscles: {e}")
+        return []
+
+
+async def is_exercise_avoided(user_id: str, exercise_name: str) -> bool:
+    """
+    Check if a specific exercise is in the user's avoidance list.
+    """
+    avoided = await get_user_avoided_exercises(user_id)
+    return any(
+        a.lower() == exercise_name.lower() for a in avoided
+    )
+
+
+async def is_muscle_avoided(user_id: str, muscle_group: str) -> tuple[bool, str]:
+    """
+    Check if a muscle group is avoided and return severity.
+    Returns (is_avoided, severity) tuple.
+    """
+    avoided = await get_user_avoided_muscles(user_id)
+    for item in avoided:
+        if item["muscle_group"].lower() == muscle_group.lower():
+            return (True, item["severity"])
+    return (False, "")

@@ -114,6 +114,66 @@ class CustomizeProgramButton extends ConsumerWidget {
   }
 }
 
+/// My Space button for the TODAY section
+/// Opens the layout editor to customize home screen tiles
+class MySpaceButton extends StatelessWidget {
+  /// Whether the current theme is dark
+  final bool isDark;
+
+  const MySpaceButton({
+    super.key,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Material(
+      color: elevatedColor,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          context.push('/settings/homescreen');
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.purple.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.dashboard_customize_outlined,
+                size: 14,
+                color: AppColors.purple,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'My Space',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.purple,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// @deprecated Use [MySpaceButton] instead
+typedef EditHomescreenButton = MySpaceButton;
+
 /// @deprecated Use [SettingsButton] and [CustomizeProgramButton] instead
 /// Kept for backwards compatibility
 typedef ProgramMenuButton = SettingsButton;

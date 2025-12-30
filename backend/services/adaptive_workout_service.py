@@ -100,6 +100,33 @@ class AdaptiveWorkoutService:
         "too_hard": {"intensity_modifier": "decrease", "set_delta": -1, "rest_delta": 15},
     }
 
+    # Fitness level adjustments for sets/reps
+    # Beginners need lower volume to build form and prevent injury
+    # These multipliers are applied to the base workout structure values
+    FITNESS_LEVEL_ADJUSTMENTS = {
+        "beginner": {
+            "sets_max": 3,       # Cap sets at 3 for beginners
+            "reps_max": 12,      # Cap reps at 12 for beginners (form focus)
+            "reps_min": 6,       # Floor reps at 6 (enough stimulus)
+            "rest_increase": 30,  # Add extra rest time (seconds)
+            "description": "Reduced volume for form mastery and injury prevention",
+        },
+        "intermediate": {
+            "sets_max": 5,       # Can handle more volume
+            "reps_max": 15,      # Moderate rep ceiling
+            "reps_min": 4,       # Can go heavier with lower reps
+            "rest_increase": 0,   # Standard rest
+            "description": "Standard workout parameters",
+        },
+        "advanced": {
+            "sets_max": 8,       # High volume capability
+            "reps_max": 20,      # Full rep range
+            "reps_min": 1,       # Can do power singles
+            "rest_increase": 0,   # Can handle shorter rest
+            "description": "No restrictions - full parameter range",
+        },
+    }
+
     def __init__(self, supabase_client=None):
         self.supabase = supabase_client
 
@@ -142,6 +169,7 @@ class AdaptiveWorkoutService:
         workout_type: str = "hypertrophy",
         user_goals: List[str] = None,
         recent_difficulty: str = None,
+        fitness_level: str = None,
     ) -> Dict[str, Any]:
         """
         Calculate recommended workout parameters based on user history.
@@ -151,6 +179,7 @@ class AdaptiveWorkoutService:
             workout_type: Type of workout OR focus area (full_body, upper, push, etc.)
             user_goals: User's fitness goals (muscle_gain, strength, endurance, weight_loss)
             recent_difficulty: Last workout's difficulty feedback
+            fitness_level: User's fitness level (beginner, intermediate, advanced)
 
         Returns:
             Dict with recommended sets, reps, rest_seconds, intensity_modifier, rpe_target
@@ -223,6 +252,34 @@ class AdaptiveWorkoutService:
         if effective_workout_type != workout_type:
             reasoning.append(f"Mapped '{workout_type}' focus to '{effective_workout_type}' structure based on goals")
 
+        # Apply fitness level adjustments (CRITICAL for beginners)
+        # This prevents beginners from getting 4+ sets and 15-20 reps which is too much
+        if fitness_level:
+            level_key = fitness_level.lower()
+            level_adj = self.FITNESS_LEVEL_ADJUSTMENTS.get(level_key, self.FITNESS_LEVEL_ADJUSTMENTS["intermediate"])
+
+            original_sets = base_sets
+            original_reps = base_reps
+            original_rest = base_rest
+
+            # Cap sets at fitness level maximum
+            base_sets = min(base_sets, level_adj["sets_max"])
+
+            # Clamp reps within fitness level range
+            base_reps = max(level_adj["reps_min"], min(base_reps, level_adj["reps_max"]))
+
+            # Add extra rest for beginners
+            base_rest = base_rest + level_adj["rest_increase"]
+
+            # Log the adjustment
+            if original_sets != base_sets or original_reps != base_reps:
+                logger.info(
+                    f"[Adaptive] Adjusted for {fitness_level}: "
+                    f"sets {original_sets}->{base_sets}, reps {original_reps}->{base_reps}, "
+                    f"rest {original_rest}->{base_rest}s ({level_adj['description']})"
+                )
+                reasoning.append(f"Adjusted for {fitness_level} level: {level_adj['description']}")
+
         return {
             "sets": base_sets,
             "reps": base_reps,
@@ -231,6 +288,7 @@ class AdaptiveWorkoutService:
             "intensity_modifier": intensity_modifier,
             "workout_focus": effective_workout_type,  # Use the mapped workout type
             "original_focus": workout_type,  # Keep original for reference
+            "fitness_level": fitness_level,  # Include for context
             "reasoning": reasoning if reasoning else ["Standard parameters for your fitness level"],
             "structure_description": structure.get("description", ""),
             "allow_supersets": structure.get("allow_supersets", False),

@@ -876,7 +876,10 @@ class _AgendaWorkoutCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -894,25 +897,33 @@ class _AgendaWorkoutCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${workout.durationMinutes ?? 45} min',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textMuted,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${workout.durationMinutes ?? 45} min',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${workout.exerciseCount} ex',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textMuted,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.fitness_center, size: 14, color: colors.textMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${workout.exerciseCount} ex',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -8,9 +8,12 @@ Tests cover:
 - calculate_workout_date
 - calculate_monthly_dates
 - extract_name_words
+- get_user_progression_pace
+- get_user_workout_type_preference
 """
 import pytest
 from datetime import datetime, timedelta
+from unittest.mock import patch, MagicMock, AsyncMock
 
 from api.v1.workouts.utils import (
     parse_json_field,
@@ -19,6 +22,8 @@ from api.v1.workouts.utils import (
     calculate_workout_date,
     calculate_monthly_dates,
     extract_name_words,
+    get_user_progression_pace,
+    get_user_workout_type_preference,
 )
 from models.schemas import Workout
 
@@ -240,3 +245,207 @@ class TestExtractNameWords:
         """Test with empty string."""
         result = extract_name_words("")
         assert result == []
+
+
+class TestGetUserProgressionPace:
+    """Tests for get_user_progression_pace function."""
+
+    @pytest.mark.asyncio
+    async def test_returns_medium_when_no_user_found(self):
+        """Test that medium is returned when user doesn't exist."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("non-existent-user")
+            assert result == "medium"
+
+    @pytest.mark.asyncio
+    async def test_returns_slow_pace(self):
+        """Test that slow pace is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"progression_pace": "slow"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "slow"
+
+    @pytest.mark.asyncio
+    async def test_returns_fast_pace(self):
+        """Test that fast pace is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"progression_pace": "fast"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "fast"
+
+    @pytest.mark.asyncio
+    async def test_returns_medium_for_invalid_pace(self):
+        """Test that medium is returned for invalid pace values."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"progression_pace": "invalid_pace"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "medium"
+
+    @pytest.mark.asyncio
+    async def test_handles_string_preferences(self):
+        """Test that JSON string preferences are parsed correctly."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": '{"progression_pace": "slow"}'}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "slow"
+
+    @pytest.mark.asyncio
+    async def test_handles_null_preferences(self):
+        """Test that null preferences returns medium."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": None}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "medium"
+
+    @pytest.mark.asyncio
+    async def test_handles_database_exception(self):
+        """Test that database exceptions return medium."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_db.side_effect = Exception("Database error")
+
+            result = await get_user_progression_pace("user-123")
+            assert result == "medium"
+
+
+class TestGetUserWorkoutTypePreference:
+    """Tests for get_user_workout_type_preference function."""
+
+    @pytest.mark.asyncio
+    async def test_returns_strength_when_no_user_found(self):
+        """Test that strength is returned when user doesn't exist."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(data=[])
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("non-existent-user")
+            assert result == "strength"
+
+    @pytest.mark.asyncio
+    async def test_returns_cardio_type(self):
+        """Test that cardio type is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"workout_type_preference": "cardio"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "cardio"
+
+    @pytest.mark.asyncio
+    async def test_returns_mixed_type(self):
+        """Test that mixed type is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"workout_type_preference": "mixed"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "mixed"
+
+    @pytest.mark.asyncio
+    async def test_returns_mobility_type(self):
+        """Test that mobility type is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"workout_type_preference": "mobility"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "mobility"
+
+    @pytest.mark.asyncio
+    async def test_returns_recovery_type(self):
+        """Test that recovery type is returned when set."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"workout_type_preference": "recovery"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "recovery"
+
+    @pytest.mark.asyncio
+    async def test_returns_strength_for_invalid_type(self):
+        """Test that strength is returned for invalid type values."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": {"workout_type_preference": "invalid_type"}}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "strength"
+
+    @pytest.mark.asyncio
+    async def test_handles_string_preferences(self):
+        """Test that JSON string preferences are parsed correctly."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": '{"workout_type_preference": "cardio"}'}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "cardio"
+
+    @pytest.mark.asyncio
+    async def test_handles_null_preferences(self):
+        """Test that null preferences returns strength."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_client = MagicMock()
+            mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
+                data=[{"preferences": None}]
+            )
+            mock_db.return_value.client = mock_client
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "strength"
+
+    @pytest.mark.asyncio
+    async def test_handles_database_exception(self):
+        """Test that database exceptions return strength."""
+        with patch("api.v1.workouts.utils.get_supabase_db") as mock_db:
+            mock_db.side_effect = Exception("Database error")
+
+            result = await get_user_workout_type_preference("user-123")
+            assert result == "strength"

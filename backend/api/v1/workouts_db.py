@@ -904,6 +904,7 @@ async def generate_weekly_workouts(http_request: Request, request: GenerateWeekl
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed for weekly: {adapt_err}, using defaults")
@@ -1121,8 +1122,9 @@ async def generate_monthly_workouts(http_request: Request, request: GenerateMont
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
-                logger.info(f"🎯 Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+                logger.info(f"🎯 Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed: {adapt_err}, using defaults")
                 adaptive_params = None
@@ -1413,8 +1415,9 @@ async def generate_remaining_workouts(http_request: Request, request: GenerateMo
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
-                logger.info(f"🎯 Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+                logger.info(f"🎯 Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed for regeneration: {adapt_err}, using defaults")
                 adaptive_params = None

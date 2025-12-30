@@ -200,6 +200,121 @@ class QueuedExercise {
   bool get isActive => usedAt == null && expiresAt.isAfter(DateTime.now());
 }
 
+/// Model for an avoided exercise
+class AvoidedExercise {
+  final String id;
+  final String exerciseName;
+  final String? exerciseId;
+  final String? reason;
+  final bool isTemporary;
+  final DateTime? endDate;
+  final DateTime createdAt;
+
+  const AvoidedExercise({
+    required this.id,
+    required this.exerciseName,
+    this.exerciseId,
+    this.reason,
+    this.isTemporary = false,
+    this.endDate,
+    required this.createdAt,
+  });
+
+  factory AvoidedExercise.fromJson(Map<String, dynamic> json) {
+    return AvoidedExercise(
+      id: json['id'] as String,
+      exerciseName: json['exercise_name'] as String,
+      exerciseId: json['exercise_id'] as String?,
+      reason: json['reason'] as String?,
+      isTemporary: json['is_temporary'] as bool? ?? false,
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'] as String)
+          : null,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'exercise_name': exerciseName,
+    'exercise_id': exerciseId,
+    'reason': reason,
+    'is_temporary': isTemporary,
+    'end_date': endDate?.toIso8601String(),
+    'created_at': createdAt.toIso8601String(),
+  };
+
+  /// Check if this avoidance is still active
+  bool get isActive {
+    if (!isTemporary) return true;
+    if (endDate == null) return true;
+    return endDate!.isAfter(DateTime.now());
+  }
+}
+
+/// Model for an avoided muscle group
+class AvoidedMuscle {
+  final String id;
+  final String muscleGroup;
+  final String? reason;
+  final bool isTemporary;
+  final DateTime? endDate;
+  final String severity; // 'avoid' or 'reduce'
+  final DateTime createdAt;
+
+  const AvoidedMuscle({
+    required this.id,
+    required this.muscleGroup,
+    this.reason,
+    this.isTemporary = false,
+    this.endDate,
+    this.severity = 'avoid',
+    required this.createdAt,
+  });
+
+  factory AvoidedMuscle.fromJson(Map<String, dynamic> json) {
+    return AvoidedMuscle(
+      id: json['id'] as String,
+      muscleGroup: json['muscle_group'] as String,
+      reason: json['reason'] as String?,
+      isTemporary: json['is_temporary'] as bool? ?? false,
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'] as String)
+          : null,
+      severity: json['severity'] as String? ?? 'avoid',
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'muscle_group': muscleGroup,
+    'reason': reason,
+    'is_temporary': isTemporary,
+    'end_date': endDate?.toIso8601String(),
+    'severity': severity,
+    'created_at': createdAt.toIso8601String(),
+  };
+
+  /// Check if this avoidance is still active
+  bool get isActive {
+    if (!isTemporary) return true;
+    if (endDate == null) return true;
+    return endDate!.isAfter(DateTime.now());
+  }
+
+  /// Get display name for the muscle group
+  String get displayName {
+    return muscleGroup
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '')
+        .join(' ');
+  }
+}
+
 /// Repository for exercise preferences (favorites, queue, consistency mode)
 class ExercisePreferencesRepository {
   final ApiClient _apiClient;
@@ -671,6 +786,244 @@ class ExercisePreferencesRepository {
       debugPrint('❌ [ExercisePrefs] Error fetching week comparison: $e');
       debugPrint('Stack trace: $stackTrace');
       return null;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Avoided Exercises
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get all avoided exercises for a user
+  Future<List<AvoidedExercise>> getAvoidedExercises(String userId) async {
+    debugPrint('🚫 [ExercisePrefs] Fetching avoided exercises for user: $userId');
+
+    try {
+      final response = await _apiClient.get<List<dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId',
+      );
+
+      if (response.data != null) {
+        final avoided = response.data!
+            .map((json) => AvoidedExercise.fromJson(json as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [ExercisePrefs] Found ${avoided.length} avoided exercises');
+        return avoided;
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching avoided exercises: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Add an exercise to the avoidance list
+  Future<AvoidedExercise> addAvoidedExercise(
+    String userId,
+    String exerciseName, {
+    String? exerciseId,
+    String? reason,
+    bool isTemporary = false,
+    DateTime? endDate,
+  }) async {
+    debugPrint('🚫 [ExercisePrefs] Adding avoided exercise: $exerciseName for user: $userId');
+
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId',
+        data: {
+          'exercise_name': exerciseName,
+          if (exerciseId != null) 'exercise_id': exerciseId,
+          if (reason != null) 'reason': reason,
+          'is_temporary': isTemporary,
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+
+      if (response.data != null) {
+        final avoided = AvoidedExercise.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Added avoided exercise: ${avoided.exerciseName}');
+        return avoided;
+      }
+
+      throw Exception('Failed to add avoided exercise');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error adding avoided exercise: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Remove an exercise from the avoidance list
+  Future<void> removeAvoidedExercise(String userId, String avoidedId) async {
+    debugPrint('🚫 [ExercisePrefs] Removing avoided exercise: $avoidedId for user: $userId');
+
+    try {
+      await _apiClient.delete(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId/$avoidedId',
+      );
+      debugPrint('✅ [ExercisePrefs] Removed avoided exercise: $avoidedId');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error removing avoided exercise: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Check if an exercise is avoided
+  Future<bool> isExerciseAvoided(String userId, String exerciseName) async {
+    try {
+      final avoided = await getAvoidedExercises(userId);
+      return avoided.any((a) =>
+          a.exerciseName.toLowerCase() == exerciseName.toLowerCase() && a.isActive);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Avoided Muscles
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get all avoided muscle groups for a user
+  Future<List<AvoidedMuscle>> getAvoidedMuscles(String userId) async {
+    debugPrint('🚫 [ExercisePrefs] Fetching avoided muscles for user: $userId');
+
+    try {
+      final response = await _apiClient.get<List<dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId',
+      );
+
+      if (response.data != null) {
+        final avoided = response.data!
+            .map((json) => AvoidedMuscle.fromJson(json as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [ExercisePrefs] Found ${avoided.length} avoided muscles');
+        return avoided;
+      }
+
+      return [];
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching avoided muscles: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Add a muscle group to the avoidance list
+  Future<AvoidedMuscle> addAvoidedMuscle(
+    String userId,
+    String muscleGroup, {
+    String? reason,
+    bool isTemporary = false,
+    DateTime? endDate,
+    String severity = 'avoid',
+  }) async {
+    debugPrint('🚫 [ExercisePrefs] Adding avoided muscle: $muscleGroup for user: $userId');
+
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId',
+        data: {
+          'muscle_group': muscleGroup,
+          if (reason != null) 'reason': reason,
+          'is_temporary': isTemporary,
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+          'severity': severity,
+        },
+      );
+
+      if (response.data != null) {
+        final avoided = AvoidedMuscle.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Added avoided muscle: ${avoided.muscleGroup}');
+        return avoided;
+      }
+
+      throw Exception('Failed to add avoided muscle');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error adding avoided muscle: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Remove a muscle group from the avoidance list
+  Future<void> removeAvoidedMuscle(String userId, String avoidedId) async {
+    debugPrint('🚫 [ExercisePrefs] Removing avoided muscle: $avoidedId for user: $userId');
+
+    try {
+      await _apiClient.delete(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId/$avoidedId',
+      );
+      debugPrint('✅ [ExercisePrefs] Removed avoided muscle: $avoidedId');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error removing avoided muscle: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Check if a muscle group is avoided
+  Future<(bool, String)> isMuscleAvoided(String userId, String muscleGroup) async {
+    try {
+      final avoided = await getAvoidedMuscles(userId);
+      final match = avoided.firstWhere(
+        (a) => a.muscleGroup.toLowerCase() == muscleGroup.toLowerCase() && a.isActive,
+        orElse: () => AvoidedMuscle(
+          id: '',
+          muscleGroup: '',
+          createdAt: DateTime.now(),
+        ),
+      );
+      if (match.id.isNotEmpty) {
+        return (true, match.severity);
+      }
+      return (false, '');
+    } catch (e) {
+      return (false, '');
+    }
+  }
+
+  /// Get list of available muscle groups
+  Future<Map<String, dynamic>> getMuscleGroups() async {
+    debugPrint('💪 [ExercisePrefs] Fetching muscle groups');
+
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/muscle-groups',
+      );
+
+      if (response.data != null) {
+        return response.data!;
+      }
+
+      // Default fallback
+      return {
+        'muscle_groups': [
+          'chest', 'back', 'shoulders', 'biceps', 'triceps', 'core',
+          'quadriceps', 'hamstrings', 'glutes', 'calves',
+          'lower_back', 'upper_back', 'lats', 'traps', 'forearms',
+          'hip_flexors', 'adductors', 'abductors', 'abs', 'obliques',
+        ],
+        'primary': ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'core',
+                    'quadriceps', 'hamstrings', 'glutes', 'calves'],
+        'secondary': ['lower_back', 'upper_back', 'lats', 'traps', 'forearms',
+                      'hip_flexors', 'adductors', 'abductors', 'abs', 'obliques'],
+      };
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error fetching muscle groups: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Return default on error
+      return {
+        'muscle_groups': [
+          'chest', 'back', 'shoulders', 'biceps', 'triceps', 'core',
+          'quadriceps', 'hamstrings', 'glutes', 'calves',
+        ],
+        'primary': ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'core',
+                    'quadriceps', 'hamstrings', 'glutes', 'calves'],
+        'secondary': ['lower_back', 'upper_back', 'lats', 'traps', 'forearms'],
+      };
     }
   }
 }

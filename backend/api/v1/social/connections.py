@@ -188,18 +188,28 @@ async def get_friends(user_id: str):
     """
     supabase = get_supabase_client()
 
-    # Use the user_friends view created in migration
-    result = supabase.table("user_friends").select(
-        "friend_id, users!user_friends_friend_id_fkey(id, name, avatar_url)"
+    # Get friend IDs from the user_friends view
+    # Note: Views don't have foreign keys, so we query separately
+    friends_result = supabase.table("user_friends").select(
+        "friend_id"
     ).eq("user_id", user_id).execute()
 
+    if not friends_result.data:
+        return []
+
+    friend_ids = [row["friend_id"] for row in friends_result.data]
+
+    # Get user profiles for the friend IDs
+    users_result = supabase.table("users").select(
+        "id, name, avatar_url"
+    ).in_("id", friend_ids).execute()
+
     friends = []
-    for row in result.data:
-        if row.get("users"):
-            friends.append(UserProfile(
-                id=row["users"]["id"],
-                name=row["users"].get("name", "Unknown"),
-                avatar_url=row["users"].get("avatar_url"),
-            ))
+    for row in users_result.data or []:
+        friends.append(UserProfile(
+            id=row["id"],
+            name=row.get("name", "Unknown"),
+            avatar_url=row.get("avatar_url"),
+        ))
 
     return friends

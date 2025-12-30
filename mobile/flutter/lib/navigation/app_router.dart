@@ -38,6 +38,7 @@ import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
 import '../screens/settings/exercise_preferences/staple_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
+import '../screens/settings/layout_editor_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
@@ -55,6 +56,12 @@ import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
 import '../data/services/deep_link_service.dart';
 import '../screens/nutrition/widget_log_trigger_screen.dart';
+import '../screens/nutrition/recipe_suggestions_screen.dart';
+import '../screens/mood/mood_history_screen.dart';
+import '../screens/scores/scoring_screen.dart';
+import '../screens/custom_exercises/custom_exercises_screen.dart';
+import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
+import '../screens/settings/exercise_preferences/avoided_muscles_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -697,6 +704,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const My1RMsScreen(),
       ),
 
+      // Layout Editor (My Space) - Home screen layout customization
+      GoRoute(
+        path: '/settings/homescreen',
+        builder: (context, state) => const LayoutEditorScreen(),
+      ),
+
+      // Avoided Exercises (Settings sub-screen)
+      GoRoute(
+        path: '/settings/avoided-exercises',
+        builder: (context, state) => const AvoidedExercisesScreen(),
+      ),
+
+      // Avoided Muscles (Settings sub-screen)
+      GoRoute(
+        path: '/settings/avoided-muscles',
+        builder: (context, state) => const AvoidedMusclesScreen(),
+      ),
+
       // Help & Support
       GoRoute(
         path: '/help',
@@ -739,10 +764,34 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WorkoutGalleryScreen(),
       ),
 
+      // Scoring Screen (Fitness score breakdown)
+      GoRoute(
+        path: '/scores',
+        builder: (context, state) => const ScoringScreen(),
+      ),
+
+      // Custom Exercises (My Exercises - user created)
+      GoRoute(
+        path: '/custom-exercises',
+        builder: (context, state) => const CustomExercisesScreen(),
+      ),
+
       // Widget deep link trigger - shows overlay then pops
       GoRoute(
         path: '/log',
         builder: (context, state) => const WidgetLogTriggerScreen(),
+      ),
+
+      // Recipe Suggestions (AI-powered based on body type, culture, diet)
+      GoRoute(
+        path: '/recipe-suggestions',
+        builder: (context, state) => const RecipeSuggestionsScreen(),
+      ),
+
+      // Mood History and Analytics
+      GoRoute(
+        path: '/mood-history',
+        builder: (context, state) => const MoodHistoryScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

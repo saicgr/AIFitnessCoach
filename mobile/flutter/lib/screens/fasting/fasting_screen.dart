@@ -169,20 +169,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           ),
         ),
       ),
-      floatingActionButton: !fastingState.hasFast
-          ? FloatingActionButton.extended(
-              onPressed: () => _showStartFastSheet(context, userId),
-              backgroundColor: purple,
-              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-              label: const Text(
-                'Start Fast',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            )
-          : null,
+      // FAB removed - Start Fast button is now in the center of the timer dial
     );
   }
 
@@ -200,11 +187,14 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Timer Widget
+          // Timer Widget with Start button in center
           FastingTimerWidget(
             activeFast: fastingState.activeFast,
             onEndFast: userId != null
                 ? () => _showEndFastDialog(context, userId)
+                : null,
+            onStartFast: userId != null
+                ? () => _showStartFastSheet(context, userId)
                 : null,
             isDark: isDark,
           ),
@@ -226,48 +216,6 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
               streak: fastingState.streak,
               isDark: isDark,
             ),
-
-          // No active fast message
-          if (!fastingState.hasFast) ...[
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.timer_outlined,
-                    size: 48,
-                    color: purple.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Ready to start fasting?',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the button below to begin your fast',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textMuted,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );

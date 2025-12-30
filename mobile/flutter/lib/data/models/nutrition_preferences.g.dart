@@ -11,6 +11,11 @@ NutritionPreferences _$NutritionPreferencesFromJson(
 ) => NutritionPreferences(
   id: json['id'] as String?,
   userId: json['user_id'] as String,
+  nutritionGoals:
+      (json['nutrition_goals'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const ['maintain'],
   nutritionGoal: json['nutrition_goal'] as String? ?? 'maintain',
   rateOfChange: json['rate_of_change'] as String?,
   calculatedBmr: (json['calculated_bmr'] as num?)?.toInt(),
@@ -41,6 +46,14 @@ NutritionPreferences _$NutritionPreferencesFromJson(
   cookingSkill: json['cooking_skill'] as String? ?? 'intermediate',
   cookingTimeMinutes: (json['cooking_time_minutes'] as num?)?.toInt() ?? 30,
   budgetLevel: json['budget_level'] as String? ?? 'moderate',
+  bodyType: json['body_type'] as String? ?? 'balanced',
+  favoriteCuisines:
+      (json['favorite_cuisines'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  culturalBackground: json['cultural_background'] as String?,
+  spiceTolerance: json['spice_tolerance'] as String? ?? 'medium',
   showAiFeedbackAfterLogging:
       json['show_ai_feedback_after_logging'] as bool? ?? true,
   calmModeEnabled: json['calm_mode_enabled'] as bool? ?? false,
@@ -70,6 +83,7 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
 ) => <String, dynamic>{
   'id': instance.id,
   'user_id': instance.userId,
+  'nutrition_goals': instance.nutritionGoals,
   'nutrition_goal': instance.nutritionGoal,
   'rate_of_change': instance.rateOfChange,
   'calculated_bmr': instance.calculatedBmr,
@@ -90,6 +104,10 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'cooking_skill': instance.cookingSkill,
   'cooking_time_minutes': instance.cookingTimeMinutes,
   'budget_level': instance.budgetLevel,
+  'body_type': instance.bodyType,
+  'favorite_cuisines': instance.favoriteCuisines,
+  'cultural_background': instance.culturalBackground,
+  'spice_tolerance': instance.spiceTolerance,
   'show_ai_feedback_after_logging': instance.showAiFeedbackAfterLogging,
   'calm_mode_enabled': instance.calmModeEnabled,
   'show_weekly_instead_of_daily': instance.showWeeklyInsteadOfDaily,

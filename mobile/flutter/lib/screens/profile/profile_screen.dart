@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../home/widgets/edit_program_sheet.dart';
 import 'widgets/widgets.dart';
 
 /// Main profile screen displaying user information, stats, and settings.
@@ -67,7 +68,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildEquipmentSection(user),
           const SizedBox(height: 24),
-          _buildWorkoutPreferencesSection(user),
+          _buildWorkoutPreferencesSection(context, ref, user),
           const SizedBox(height: 32),
           _buildAccountSection(context, ref),
           const SizedBox(height: 32),
@@ -207,12 +208,23 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWorkoutPreferencesSection(dynamic user) {
+  Widget _buildWorkoutPreferencesSection(BuildContext context, WidgetRef ref, dynamic user) {
     return Column(
       children: [
         const SectionHeader(title: 'WORKOUT PREFERENCES'),
         const SizedBox(height: 12),
-        WorkoutPreferencesCard(user: user).animate().fadeIn(delay: 190.ms),
+        WorkoutPreferencesCard(
+          user: user,
+          onEdit: () async {
+            HapticService.selection();
+            final result = await showEditProgramSheet(context, ref);
+            if (result == true) {
+              // Refresh user data and workouts after editing
+              ref.invalidate(authStateProvider);
+              ref.invalidate(workoutsProvider);
+            }
+          },
+        ).animate().fadeIn(delay: 190.ms),
       ],
     );
   }

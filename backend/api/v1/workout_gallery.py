@@ -38,46 +38,24 @@ async def upload_gallery_image(
     try:
         supabase = get_supabase_db()
 
-        # Decode base64 image
+        # Validate base64 image
         try:
             image_bytes = base64.b64decode(request.image_base64)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid base64 image: {e}")
 
-        # Generate unique filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{user_id}/{request.workout_log_id}/{request.template_type.value}_{timestamp}.png"
+        # Store image as base64 data URL (works without Supabase Storage)
+        # This ensures images are always accessible
+        image_url = f"data:image/png;base64,{request.image_base64}"
 
-        # Upload to Supabase Storage
-        try:
-            storage_response = supabase.storage.from_("workout-recaps").upload(
-                filename,
-                image_bytes,
-                {"content-type": "image/png"}
-            )
-        except Exception as e:
-            # If bucket doesn't exist or upload fails, continue with placeholder URL
-            # In production, this should be properly configured
-            print(f"Storage upload warning: {e}")
-            image_url = f"https://placeholder.supabase.co/storage/v1/object/public/workout-recaps/{filename}"
-        else:
-            # Get public URL
-            image_url = supabase.storage.from_("workout-recaps").get_public_url(filename)
-
-        # Handle optional user photo
+        # Handle optional user photo - also store as data URL
         user_photo_url = None
         if request.user_photo_base64:
             try:
-                photo_bytes = base64.b64decode(request.user_photo_base64)
-                photo_filename = f"{user_id}/{request.workout_log_id}/user_photo_{timestamp}.png"
-                supabase.storage.from_("workout-recaps").upload(
-                    photo_filename,
-                    photo_bytes,
-                    {"content-type": "image/png"}
-                )
-                user_photo_url = supabase.storage.from_("workout-recaps").get_public_url(photo_filename)
+                base64.b64decode(request.user_photo_base64)  # Validate
+                user_photo_url = f"data:image/png;base64,{request.user_photo_base64}"
             except Exception as e:
-                print(f"User photo upload warning: {e}")
+                print(f"User photo validation warning: {e}")
 
         # Insert into database
         gallery_data = {
@@ -288,7 +266,7 @@ async def share_image_to_feed(
             "workout_log_id": image_data.get("workout_log_id"),
         }
 
-        activity_result = supabase.client.table("social_activities").insert(activity_data).execute()
+        activity_result = supabase.client.table("activity_feed").insert(activity_data).execute()
 
         if not activity_result.data:
             raise HTTPException(status_code=500, detail="Failed to create social activity")

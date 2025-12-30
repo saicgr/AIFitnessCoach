@@ -45,6 +45,59 @@ def parse_json_field(value, default):
     return value if isinstance(value, (list, dict)) else default
 
 
+def get_intensity_from_fitness_level(fitness_level: Optional[str]) -> str:
+    """
+    Derive workout intensity/difficulty from user's fitness level.
+
+    This ensures beginners get 'easy' workouts, not 'medium'.
+    Should be used when intensity_preference is not explicitly set.
+
+    Args:
+        fitness_level: User's fitness level (beginner, intermediate, advanced)
+
+    Returns:
+        Appropriate intensity: 'easy', 'medium', or 'hard'
+    """
+    if not fitness_level:
+        return "medium"  # Default for unknown fitness level
+
+    level_lower = fitness_level.lower().strip()
+    if level_lower == "beginner":
+        return "easy"
+    elif level_lower == "advanced":
+        return "hard"
+    else:
+        return "medium"  # intermediate or unknown
+
+
+def resolve_training_split(split: Optional[str], num_days: int) -> str:
+    """
+    Resolve 'dont_know' to an actual training split based on workout days.
+
+    When user selects "Don't know" / "Let AI decide", we auto-pick the best
+    split based on how many days per week they train.
+
+    Args:
+        split: The stored training split (may be 'dont_know')
+        num_days: Number of workout days per week
+
+    Returns:
+        Resolved split name (never returns 'dont_know')
+    """
+    if split and split.lower() != "dont_know":
+        return split  # Already a specific split
+
+    # Auto-pick based on days per week
+    if num_days <= 3:
+        return "full_body"  # Most efficient for low frequency
+    elif num_days == 4:
+        return "upper_lower"  # Classic 4-day split
+    elif num_days <= 6:
+        return "push_pull_legs"  # PPL for 5-6 days
+    else:
+        return "full_body"  # 7 days - full body rotation
+
+
 def get_all_equipment(user: dict) -> List[str]:
     """
     Get combined list of standard and custom equipment for a user.
@@ -1041,3 +1094,173 @@ def apply_1rm_weights_to_exercises(
         logger.info(f"Applied 1RM-based weights to {applied_count}/{len(exercises)} exercises")
 
     return updated_exercises
+
+
+async def get_user_avoided_exercises(user_id: str) -> List[str]:
+    """
+    Get list of exercise names the user wants to avoid.
+
+    Only returns active avoidances (not expired temporary ones).
+
+    Returns:
+        List of exercise names to avoid (lowercase for matching).
+    """
+    try:
+        db = get_supabase_db()
+
+        # Use the database function that filters for active avoidances
+        result = db.client.rpc(
+            "get_active_avoided_exercises",
+            {"p_user_id": user_id}
+        ).execute()
+
+        if not result.data:
+            return []
+
+        avoided = [row.get("exercise_name", "").lower() for row in result.data if row.get("exercise_name")]
+        if avoided:
+            logger.info(f"User {user_id} has {len(avoided)} avoided exercises: {avoided[:5]}...")
+        return avoided
+
+    except Exception as e:
+        logger.debug(f"Could not get avoided exercises: {e}")
+        return []
+
+
+async def get_user_avoided_muscles(user_id: str) -> dict:
+    """
+    Get muscle groups the user wants to avoid or reduce.
+
+    Only returns active avoidances (not expired temporary ones).
+
+    Returns:
+        Dict with two keys:
+        - 'avoid': List of muscle groups to completely avoid
+        - 'reduce': List of muscle groups to use less often
+    """
+    try:
+        db = get_supabase_db()
+
+        # Use the database function that filters for active avoidances
+        result = db.client.rpc(
+            "get_active_avoided_muscles",
+            {"p_user_id": user_id}
+        ).execute()
+
+        if not result.data:
+            return {"avoid": [], "reduce": []}
+
+        avoid_list = []
+        reduce_list = []
+
+        for row in result.data:
+            muscle = row.get("muscle_group", "").lower()
+            severity = row.get("severity", "avoid")
+
+            if muscle:
+                if severity == "avoid":
+                    avoid_list.append(muscle)
+                elif severity == "reduce":
+                    reduce_list.append(muscle)
+
+        if avoid_list or reduce_list:
+            logger.info(f"User {user_id} avoided muscles - avoid: {avoid_list}, reduce: {reduce_list}")
+
+        return {"avoid": avoid_list, "reduce": reduce_list}
+
+    except Exception as e:
+        logger.debug(f"Could not get avoided muscles: {e}")
+        return {"avoid": [], "reduce": []}
+
+
+async def get_user_progression_pace(user_id: str) -> str:
+    """
+    Get user's progression pace preference.
+
+    Progression pace controls:
+    - slow: Conservative weight increases, more reps before adding weight
+    - medium: Standard progression (default)
+    - fast: Aggressive weight increases for experienced lifters
+
+    Returns:
+        Progression pace: "slow", "medium", or "fast". Defaults to "medium".
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("users").select(
+            "preferences"
+        ).eq("id", user_id).execute()
+
+        if not result.data:
+            return "medium"  # Default
+
+        preferences = result.data[0].get("preferences") or {}
+        if isinstance(preferences, str):
+            import json
+            try:
+                preferences = json.loads(preferences)
+            except json.JSONDecodeError:
+                preferences = {}
+
+        pace = preferences.get("progression_pace", "medium")
+
+        # Validate pace value
+        valid_paces = ["slow", "medium", "fast"]
+        if pace not in valid_paces:
+            pace = "medium"
+
+        logger.debug(f"User {user_id} progression_pace: {pace}")
+        return pace
+
+    except Exception as e:
+        logger.debug(f"Could not get progression pace: {e}")
+        return "medium"  # Default
+
+
+async def get_user_workout_type_preference(user_id: str) -> str:
+    """
+    Get user's workout type preference.
+
+    Workout type controls:
+    - strength: Focus on heavy compound lifts, lower reps
+    - cardio: Focus on cardiovascular exercises, HIIT
+    - mixed: Balanced approach with both strength and cardio
+    - mobility: Focus on flexibility and mobility work
+    - recovery: Light exercises for active recovery
+
+    Returns:
+        Workout type: "strength", "cardio", "mixed", "mobility", or "recovery".
+        Defaults to "strength".
+    """
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("users").select(
+            "preferences"
+        ).eq("id", user_id).execute()
+
+        if not result.data:
+            return "strength"  # Default
+
+        preferences = result.data[0].get("preferences") or {}
+        if isinstance(preferences, str):
+            import json
+            try:
+                preferences = json.loads(preferences)
+            except json.JSONDecodeError:
+                preferences = {}
+
+        workout_type = preferences.get("workout_type_preference", "strength")
+
+        # Validate workout type
+        valid_types = ["strength", "cardio", "mixed", "mobility", "recovery"]
+        if workout_type not in valid_types:
+            workout_type = "strength"
+
+        logger.debug(f"User {user_id} workout_type_preference: {workout_type}")
+        return workout_type
+
+    except Exception as e:
+        logger.debug(f"Could not get workout type preference: {e}")
+        return "strength"  # Default

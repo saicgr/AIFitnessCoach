@@ -9,12 +9,14 @@ import '../../../data/providers/fasting_provider.dart';
 class FastingTimerWidget extends ConsumerWidget {
   final FastingRecord? activeFast;
   final VoidCallback? onEndFast;
+  final VoidCallback? onStartFast;
   final bool isDark;
 
   const FastingTimerWidget({
     super.key,
     this.activeFast,
     this.onEndFast,
+    this.onStartFast,
     required this.isDark,
   });
 
@@ -102,39 +104,88 @@ class FastingTimerWidget extends ConsumerWidget {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Time elapsed
-                    Text(
-                      _formatTime(elapsedSeconds),
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Label
-                    Text(
-                      activeFast != null ? 'elapsed' : 'not fasting',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textMuted,
-                      ),
-                    ),
                     if (activeFast != null) ...[
-                      const SizedBox(height: 12),
+                      // Time elapsed
+                      Text(
+                        _formatTime(elapsedSeconds),
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      // Label
+                      Text(
+                        'elapsed',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       // Remaining time
                       Text(
                         _formatRemainingTime(
                             activeFast!.goalDurationMinutes - elapsedMinutes),
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: purple,
                         ),
                       ),
                       Text(
                         'remaining',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: textMuted,
+                        ),
+                      ),
+                    ] else ...[
+                      // Start Fast button in center when not fasting
+                      GestureDetector(
+                        onTap: onStartFast,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                purple,
+                                purple.withValues(alpha: 0.8),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: purple.withValues(alpha: 0.4),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Start Fast',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to begin',
                         style: TextStyle(
                           fontSize: 12,
                           color: textMuted,

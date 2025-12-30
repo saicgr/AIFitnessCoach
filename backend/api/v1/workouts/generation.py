@@ -3,6 +3,8 @@ Workout generation API endpoints.
 
 This module handles AI-powered workout generation:
 - POST /generate - Generate a single workout
+- POST /generate-stream - Generate a single workout with streaming
+- POST /generate-from-mood-stream - Generate quick workout based on mood
 - POST /generate-weekly - Generate workouts for a week
 - POST /generate-monthly - Generate workouts for a month
 - POST /generate-remaining - Generate remaining workouts for a month
@@ -12,7 +14,7 @@ This module handles AI-powered workout generation:
 import json
 import asyncio
 from datetime import datetime, timedelta
-from typing import List, AsyncGenerator
+from typing import List, AsyncGenerator, Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -28,6 +30,8 @@ from models.schemas import (
 from services.gemini_service import GeminiService
 from services.exercise_library_service import get_exercise_library_service
 from services.exercise_rag_service import get_exercise_rag_service
+from services.mood_workout_service import mood_workout_service, MoodType
+from services.user_context_service import user_context_service
 from services.warmup_stretch_service import get_warmup_stretch_service
 from core.rate_limiter import limiter
 
@@ -53,6 +57,11 @@ from .utils import (
     get_user_training_intensity,
     get_user_intensity_overrides,
     apply_1rm_weights_to_exercises,
+    get_intensity_from_fitness_level,
+    get_user_avoided_exercises,
+    get_user_avoided_muscles,
+    get_user_progression_pace,
+    get_user_workout_type_preference,
 )
 
 router = APIRouter()
@@ -72,7 +81,8 @@ async def generate_workout(request: GenerateWorkoutRequest):
             fitness_level = request.fitness_level
             goals = request.goals
             equipment = request.equipment
-            intensity_preference = "medium"  # Default when no user data
+            # Derive intensity from fitness level - beginners get 'easy', not 'medium'
+            intensity_preference = get_intensity_from_fitness_level(fitness_level)
             workout_environment = None
         else:
             user = db.get_user(request.user_id)
@@ -84,7 +94,9 @@ async def generate_workout(request: GenerateWorkoutRequest):
             equipment = request.equipment or user.get("equipment", [])
             equipment_details = user.get("equipment_details", [])  # Detailed equipment with quantities/weights
             preferences = parse_json_field(user.get("preferences"), {})
-            intensity_preference = preferences.get("intensity_preference", "medium")
+            # Use explicit intensity_preference if set, otherwise derive from fitness level
+            # This ensures beginners get 'easy' difficulty, not 'medium'
+            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
             workout_environment = preferences.get("workout_environment")
 
         # Fetch user's custom exercises
@@ -191,7 +203,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 fitness_level = body.fitness_level
                 goals = body.goals
                 equipment = body.equipment
-                intensity_preference = "medium"
+                # Derive intensity from fitness level - beginners get 'easy', not 'medium'
+                intensity_preference = get_intensity_from_fitness_level(fitness_level)
             else:
                 user = db.get_user(body.user_id)
                 if not user:
@@ -202,7 +215,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 goals = body.goals or user.get("goals", [])
                 equipment = body.equipment or user.get("equipment", [])
                 preferences = parse_json_field(user.get("preferences"), {})
-                intensity_preference = preferences.get("intensity_preference", "medium")
+                # Use explicit intensity_preference if set, otherwise derive from fitness level
+                intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
             gemini_service = GeminiService()
 
@@ -320,6 +334,699 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         }
     )
+
+
+# =============================================================================
+# MOOD-BASED QUICK WORKOUT GENERATION
+# =============================================================================
+
+from pydantic import BaseModel, Field
+from typing import Optional
+
+
+class MoodWorkoutRequest(BaseModel):
+    """Request model for mood-based workout generation."""
+    user_id: str
+    mood: str = Field(..., description="User mood: great, good, tired, or stressed")
+    duration_minutes: Optional[int] = Field(default=None, ge=10, le=45)
+    device: Optional[str] = None
+    app_version: Optional[str] = None
+
+
+@router.post("/generate-from-mood-stream")
+@limiter.limit("10/minute")
+async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutRequest):
+    """
+    Generate a quick workout based on user's current mood.
+
+    This endpoint provides fast workout generation tailored to how the user feels:
+    - great: High intensity strength/HIIT (25-30 min)
+    - good: Balanced mixed workout (20-25 min)
+    - tired: Gentle recovery/mobility (15-20 min)
+    - stressed: Stress-relief cardio/flow (20-25 min)
+
+    Returns Server-Sent Events (SSE) with:
+    - event: chunk - Progress updates during generation
+    - event: done - Complete workout with mood check-in ID
+    - event: error - Error message if generation fails
+    """
+    logger.info(f"🎯 Mood workout generation for user {body.user_id}, mood: {body.mood}")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = datetime.now()
+        mood_checkin_id = None
+
+        try:
+            # Validate mood
+            try:
+                mood = mood_workout_service.validate_mood(body.mood)
+            except ValueError as e:
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+                return
+
+            db = get_supabase_db()
+
+            # Get user data
+            user = db.get_user(body.user_id)
+            if not user:
+                yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
+                return
+
+            fitness_level = user.get("fitness_level", "intermediate")
+            goals = user.get("goals", [])
+            equipment = user.get("equipment", [])
+
+            # Get mood workout parameters
+            params = mood_workout_service.get_workout_params(
+                mood=mood,
+                user_fitness_level=fitness_level,
+                user_goals=goals,
+                user_equipment=equipment,
+                duration_override=body.duration_minutes,
+            )
+
+            # Send initial acknowledgment
+            first_chunk_time = (datetime.now() - start_time).total_seconds() * 1000
+            yield f"event: chunk\ndata: {json.dumps({'status': 'started', 'mood': mood.value, 'mood_emoji': params['mood_emoji'], 'ttfb_ms': first_chunk_time})}\n\n"
+
+            # Log mood check-in to database
+            try:
+                context = mood_workout_service.get_context_data(
+                    device=body.device,
+                    app_version=body.app_version,
+                )
+                checkin_result = db.client.table("mood_checkins").insert({
+                    "user_id": body.user_id,
+                    "mood": mood.value,
+                    "workout_generated": False,
+                    "context": context,
+                }).execute()
+
+                if checkin_result.data:
+                    mood_checkin_id = checkin_result.data[0]["id"]
+                    logger.info(f"✅ Mood check-in created: {mood_checkin_id}")
+
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to log mood check-in: {e}")
+
+            # Build the prompt
+            prompt = mood_workout_service.build_generation_prompt(
+                mood=mood,
+                user_fitness_level=fitness_level,
+                user_goals=goals,
+                user_equipment=equipment,
+                duration_minutes=params["duration_minutes"],
+            )
+
+            gemini_service = GeminiService()
+
+            # Generate workout using streaming
+            yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'message': 'Creating your {mood.value} workout...'})}\n\n"
+
+            accumulated_text = ""
+            chunk_count = 0
+
+            async for chunk in gemini_service.generate_workout_plan_streaming(
+                fitness_level=fitness_level,
+                goals=goals if isinstance(goals, list) else [],
+                equipment=equipment if isinstance(equipment, list) else [],
+                duration_minutes=params["duration_minutes"],
+                focus_areas=None,
+                intensity_preference=params["intensity_preference"],
+                custom_prompt_override=prompt,
+            ):
+                accumulated_text += chunk
+                chunk_count += 1
+
+                if chunk_count % 5 == 0:
+                    elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
+                    yield f"event: chunk\ndata: {json.dumps({'status': 'generating', 'progress': len(accumulated_text), 'elapsed_ms': elapsed_ms})}\n\n"
+
+            # Parse the response
+            try:
+                content = accumulated_text.strip()
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    parts = content.split("```")
+                    if len(parts) >= 2:
+                        content = parts[1].strip()
+                        if content.startswith(("json", "JSON")):
+                            content = content[4:].strip()
+
+                workout_data = json.loads(content)
+                exercises = workout_data.get("exercises", [])
+                warmup = workout_data.get("warmup", [])
+                cooldown = workout_data.get("cooldown", [])
+                workout_name = workout_data.get("name", f"{mood.value.capitalize()} Quick Workout")
+                workout_type = workout_data.get("type", params["workout_type_preference"])
+                difficulty = workout_data.get("difficulty", params["intensity_preference"])
+                motivational_message = workout_data.get("motivational_message", "")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse mood workout response: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
+                return
+
+            # Save workout to database
+            workout_db_data = {
+                "user_id": body.user_id,
+                "name": workout_name,
+                "type": workout_type,
+                "difficulty": difficulty,
+                "scheduled_date": datetime.now().isoformat(),
+                "exercises_json": exercises,
+                "duration_minutes": params["duration_minutes"],
+                "generation_method": "ai",
+                "generation_source": "mood_generation",
+                "generation_metadata": {
+                    "mood": mood.value,
+                    "mood_checkin_id": mood_checkin_id,
+                    "warmup": warmup,
+                    "cooldown": cooldown,
+                    "motivational_message": motivational_message,
+                },
+            }
+
+            created = db.create_workout(workout_db_data)
+            workout_id = created["id"]
+            total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+
+            logger.info(f"✅ Mood workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms")
+
+            # Update mood check-in with workout reference
+            if mood_checkin_id:
+                try:
+                    db.client.table("mood_checkins").update({
+                        "workout_generated": True,
+                        "workout_id": workout_id,
+                    }).eq("id", mood_checkin_id).execute()
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to update mood check-in: {e}")
+
+            # Log the change
+            log_workout_change(
+                workout_id=workout_id,
+                user_id=body.user_id,
+                change_type="generated",
+                change_source="mood_generation",
+                new_value={
+                    "name": workout_name,
+                    "exercises_count": len(exercises),
+                    "mood": mood.value,
+                }
+            )
+
+            # Log to user context
+            try:
+                await user_context_service.log_mood_checkin(
+                    user_id=body.user_id,
+                    mood=mood.value,
+                    workout_generated=True,
+                    workout_id=workout_id,
+                    device=body.device,
+                    app_version=body.app_version,
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to log context: {e}")
+
+            # Build final response
+            generated_workout = row_to_workout(created)
+
+            workout_response = {
+                "id": generated_workout.id,
+                "user_id": generated_workout.user_id,
+                "name": generated_workout.name,
+                "type": generated_workout.type,
+                "difficulty": generated_workout.difficulty,
+                "scheduled_date": generated_workout.scheduled_date.isoformat() if generated_workout.scheduled_date else None,
+                "exercises": exercises,
+                "warmup": warmup,
+                "cooldown": cooldown,
+                "duration_minutes": params["duration_minutes"],
+                "total_time_ms": total_time_ms,
+                "chunk_count": chunk_count,
+                "mood": mood.value,
+                "mood_emoji": params["mood_emoji"],
+                "mood_color": params["mood_color"],
+                "mood_checkin_id": mood_checkin_id,
+                "motivational_message": motivational_message,
+            }
+
+            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+
+        except Exception as e:
+            logger.error(f"❌ Mood workout generation failed: {e}")
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
+@router.get("/moods")
+async def get_available_moods():
+    """Get all available mood options with display info."""
+    return {
+        "moods": mood_workout_service.get_all_moods(),
+    }
+
+
+# ============================================================================
+# MOOD HISTORY & ANALYTICS ENDPOINTS
+# ============================================================================
+
+
+class MoodHistoryResponse(BaseModel):
+    """Response model for mood history."""
+    checkins: List[Dict[str, Any]]
+    total_count: int
+    has_more: bool
+
+
+class MoodAnalyticsResponse(BaseModel):
+    """Response model for mood analytics."""
+    summary: Dict[str, Any]
+    patterns: List[Dict[str, Any]]
+    streaks: Dict[str, Any]
+    recommendations: List[str]
+
+
+@router.get("/{user_id}/mood-history", response_model=MoodHistoryResponse)
+async def get_mood_history(
+    user_id: str,
+    limit: int = 30,
+    offset: int = 0,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    """
+    Get user's mood check-in history.
+
+    Returns a list of mood check-ins with workout information.
+    Supports pagination and date filtering.
+    """
+    logger.info(f"Fetching mood history for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Build query
+        query = db.client.table("mood_checkins") \
+            .select("*, workouts(id, name, type, difficulty, completed)") \
+            .eq("user_id", user_id) \
+            .order("check_in_time", desc=True)
+
+        # Apply date filters if provided
+        if start_date:
+            query = query.gte("check_in_time", start_date)
+        if end_date:
+            query = query.lte("check_in_time", end_date)
+
+        # Get total count first
+        count_result = db.client.table("mood_checkins") \
+            .select("*", count="exact") \
+            .eq("user_id", user_id)
+
+        if start_date:
+            count_result = count_result.gte("check_in_time", start_date)
+        if end_date:
+            count_result = count_result.lte("check_in_time", end_date)
+
+        count_response = count_result.execute()
+        total_count = count_response.count if count_response.count else 0
+
+        # Apply pagination
+        query = query.range(offset, offset + limit - 1)
+
+        result = query.execute()
+
+        checkins = []
+        for row in result.data or []:
+            # Get mood config for display info
+            mood_type = row.get("mood", "good")
+            config = mood_workout_service.get_mood_config(
+                mood_workout_service.validate_mood(mood_type)
+            )
+
+            workout_data = row.get("workouts")
+
+            checkins.append({
+                "id": row.get("id"),
+                "mood": mood_type,
+                "mood_emoji": config.emoji,
+                "mood_color": config.color_hex,
+                "check_in_time": row.get("check_in_time"),
+                "workout_generated": row.get("workout_generated", False),
+                "workout_completed": row.get("workout_completed", False),
+                "workout": {
+                    "id": workout_data.get("id"),
+                    "name": workout_data.get("name"),
+                    "type": workout_data.get("type"),
+                    "difficulty": workout_data.get("difficulty"),
+                    "completed": workout_data.get("completed"),
+                } if workout_data else None,
+                "context": row.get("context", {}),
+            })
+
+        return MoodHistoryResponse(
+            checkins=checkins,
+            total_count=total_count,
+            has_more=(offset + limit) < total_count,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get mood history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/mood-analytics", response_model=MoodAnalyticsResponse)
+async def get_mood_analytics(
+    user_id: str,
+    days: int = 30,
+):
+    """
+    Get mood analytics and patterns for a user.
+
+    Returns:
+    - Summary: Total check-ins, most frequent mood, completion rate
+    - Patterns: Mood distribution by time of day, day of week
+    - Streaks: Current streak, longest streak
+    - Recommendations: AI-generated suggestions based on patterns
+    """
+    logger.info(f"Fetching mood analytics for user {user_id}, last {days} days")
+
+    try:
+        db = get_supabase_db()
+
+        # Calculate date range
+        from datetime import timedelta
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        # Fetch all check-ins in date range
+        result = db.client.table("mood_checkins") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .gte("check_in_time", start_date.isoformat()) \
+            .lte("check_in_time", end_date.isoformat()) \
+            .order("check_in_time", desc=True) \
+            .execute()
+
+        checkins = result.data or []
+        total_count = len(checkins)
+
+        if total_count == 0:
+            return MoodAnalyticsResponse(
+                summary={
+                    "total_checkins": 0,
+                    "workouts_generated": 0,
+                    "workouts_completed": 0,
+                    "completion_rate": 0,
+                    "most_frequent_mood": None,
+                    "days_tracked": days,
+                },
+                patterns=[],
+                streaks={
+                    "current_streak": 0,
+                    "longest_streak": 0,
+                    "last_checkin": None,
+                },
+                recommendations=[
+                    "Start tracking your mood to get personalized insights!",
+                    "Check in daily to see how your mood affects your workouts.",
+                ],
+            )
+
+        # Calculate mood distribution
+        mood_counts = {"great": 0, "good": 0, "tired": 0, "stressed": 0}
+        workouts_generated = 0
+        workouts_completed = 0
+        time_of_day_moods = {"morning": {}, "afternoon": {}, "evening": {}, "night": {}}
+        day_of_week_moods = {
+            "monday": {}, "tuesday": {}, "wednesday": {},
+            "thursday": {}, "friday": {}, "saturday": {}, "sunday": {}
+        }
+
+        for checkin in checkins:
+            mood = checkin.get("mood", "good")
+            mood_counts[mood] = mood_counts.get(mood, 0) + 1
+
+            if checkin.get("workout_generated"):
+                workouts_generated += 1
+            if checkin.get("workout_completed"):
+                workouts_completed += 1
+
+            # Parse context for patterns
+            context = checkin.get("context", {})
+            time_of_day = context.get("time_of_day", "afternoon")
+            day_of_week = context.get("day_of_week", "monday")
+
+            if time_of_day in time_of_day_moods:
+                time_of_day_moods[time_of_day][mood] = time_of_day_moods[time_of_day].get(mood, 0) + 1
+
+            if day_of_week in day_of_week_moods:
+                day_of_week_moods[day_of_week][mood] = day_of_week_moods[day_of_week].get(mood, 0) + 1
+
+        # Find most frequent mood
+        most_frequent_mood = max(mood_counts, key=mood_counts.get)
+        most_frequent_config = mood_workout_service.get_mood_config(
+            mood_workout_service.validate_mood(most_frequent_mood)
+        )
+
+        # Calculate streaks
+        from datetime import date as date_type
+        checkin_dates = set()
+        for checkin in checkins:
+            check_in_time = checkin.get("check_in_time", "")
+            if check_in_time:
+                try:
+                    dt = datetime.fromisoformat(check_in_time.replace("Z", "+00:00"))
+                    checkin_dates.add(dt.date())
+                except (ValueError, AttributeError):
+                    pass
+
+        sorted_dates = sorted(checkin_dates, reverse=True)
+
+        current_streak = 0
+        longest_streak = 0
+        temp_streak = 0
+        today = date_type.today()
+
+        if sorted_dates:
+            # Calculate current streak
+            expected_date = today
+            for d in sorted_dates:
+                if d == expected_date or d == expected_date - timedelta(days=1):
+                    current_streak += 1
+                    expected_date = d - timedelta(days=1)
+                else:
+                    break
+
+            # Calculate longest streak
+            prev_date = None
+            for d in sorted(checkin_dates):
+                if prev_date is None or (d - prev_date).days == 1:
+                    temp_streak += 1
+                else:
+                    longest_streak = max(longest_streak, temp_streak)
+                    temp_streak = 1
+                prev_date = d
+            longest_streak = max(longest_streak, temp_streak)
+
+        # Build patterns list
+        patterns = []
+
+        # Mood distribution pattern
+        patterns.append({
+            "type": "mood_distribution",
+            "title": "Your Mood Distribution",
+            "data": [
+                {
+                    "mood": mood,
+                    "count": count,
+                    "percentage": round((count / total_count) * 100, 1) if total_count > 0 else 0,
+                    "emoji": mood_workout_service.get_mood_config(
+                        mood_workout_service.validate_mood(mood)
+                    ).emoji,
+                }
+                for mood, count in mood_counts.items()
+            ],
+        })
+
+        # Time of day pattern
+        patterns.append({
+            "type": "time_of_day",
+            "title": "Mood by Time of Day",
+            "data": [
+                {
+                    "time_of_day": tod,
+                    "moods": moods,
+                    "dominant_mood": max(moods, key=moods.get) if moods else None,
+                }
+                for tod, moods in time_of_day_moods.items()
+            ],
+        })
+
+        # Day of week pattern
+        patterns.append({
+            "type": "day_of_week",
+            "title": "Mood by Day of Week",
+            "data": [
+                {
+                    "day": dow,
+                    "moods": moods,
+                    "dominant_mood": max(moods, key=moods.get) if moods else None,
+                }
+                for dow, moods in day_of_week_moods.items()
+            ],
+        })
+
+        # Generate recommendations
+        recommendations = []
+
+        completion_rate = (workouts_completed / workouts_generated * 100) if workouts_generated > 0 else 0
+
+        if completion_rate < 50 and workouts_generated > 3:
+            recommendations.append(
+                "Try shorter workouts when you're feeling tired or stressed - you're more likely to complete them!"
+            )
+
+        if mood_counts.get("tired", 0) > total_count * 0.4:
+            recommendations.append(
+                "You've been feeling tired frequently. Consider adjusting your sleep schedule or trying recovery workouts."
+            )
+
+        if mood_counts.get("stressed", 0) > total_count * 0.3:
+            recommendations.append(
+                "Stress has been high lately. Our stress-relief workouts include breathing exercises and flow movements."
+            )
+
+        if mood_counts.get("great", 0) > total_count * 0.5:
+            recommendations.append(
+                "You're often feeling great! Consider trying more challenging workouts to push your limits."
+            )
+
+        if current_streak >= 7:
+            recommendations.append(
+                f"Amazing! You're on a {current_streak}-day streak. Keep it up!"
+            )
+        elif current_streak == 0:
+            recommendations.append(
+                "Check in with your mood today and get a personalized workout suggestion!"
+            )
+
+        return MoodAnalyticsResponse(
+            summary={
+                "total_checkins": total_count,
+                "workouts_generated": workouts_generated,
+                "workouts_completed": workouts_completed,
+                "completion_rate": round(completion_rate, 1),
+                "most_frequent_mood": {
+                    "mood": most_frequent_mood,
+                    "emoji": most_frequent_config.emoji,
+                    "color": most_frequent_config.color_hex,
+                    "count": mood_counts[most_frequent_mood],
+                },
+                "days_tracked": days,
+            },
+            patterns=patterns,
+            streaks={
+                "current_streak": current_streak,
+                "longest_streak": longest_streak,
+                "last_checkin": checkins[0].get("check_in_time") if checkins else None,
+            },
+            recommendations=recommendations,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to get mood analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{user_id}/mood-checkins/{checkin_id}/complete")
+async def mark_mood_workout_completed(user_id: str, checkin_id: str):
+    """Mark a mood check-in's workout as completed."""
+    logger.info(f"Marking mood workout completed: user={user_id}, checkin={checkin_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify check-in belongs to user
+        result = db.client.table("mood_checkins") \
+            .select("*") \
+            .eq("id", checkin_id) \
+            .eq("user_id", user_id) \
+            .single() \
+            .execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Mood check-in not found")
+
+        # Update completion status
+        db.client.table("mood_checkins") \
+            .update({"workout_completed": True}) \
+            .eq("id", checkin_id) \
+            .execute()
+
+        return {"success": True, "message": "Workout marked as completed"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to mark mood workout completed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/mood-today")
+async def get_today_mood(user_id: str):
+    """Get user's mood check-in for today (if any)."""
+    logger.info(f"Fetching today's mood for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Query today's check-in using the view
+        result = db.client.table("today_mood_checkin") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .execute()
+
+        if result.data and len(result.data) > 0:
+            checkin = result.data[0]
+            mood_type = checkin.get("mood", "good")
+            config = mood_workout_service.get_mood_config(
+                mood_workout_service.validate_mood(mood_type)
+            )
+
+            return {
+                "has_checkin": True,
+                "checkin": {
+                    "id": checkin.get("id"),
+                    "mood": mood_type,
+                    "mood_emoji": config.emoji,
+                    "mood_color": config.color_hex,
+                    "check_in_time": checkin.get("check_in_time"),
+                    "workout_generated": checkin.get("workout_generated", False),
+                    "workout_completed": checkin.get("workout_completed", False),
+                    "workout_id": checkin.get("workout_id"),
+                },
+            }
+
+        return {
+            "has_checkin": False,
+            "checkin": None,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get today's mood: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/swap")
@@ -545,7 +1252,8 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         equipment = get_all_equipment(user)
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
-        intensity_preference = preferences.get("intensity_preference", "medium")
+        # Use explicit intensity_preference if set, otherwise derive from fitness level
+        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
         # Get workout type preference (strength, cardio, mixed) - addresses competitor feedback
         workout_type_preference = preferences.get("workout_type_preference", "strength")
         # Get custom program description for custom training goals
@@ -630,6 +1338,19 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         if one_rm_data:
             logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
 
+        # Fetch user's avoided exercises and muscles
+        avoided_exercises = await get_user_avoided_exercises(request.user_id)
+        avoided_muscles = await get_user_avoided_muscles(request.user_id)
+        if avoided_exercises:
+            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
+        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
+            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
+
+        # Fetch user's progression pace and workout type preference
+        progression_pace = await get_user_progression_pace(request.user_id)
+        workout_type_pref = await get_user_workout_type_preference(request.user_id)
+        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
+
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
@@ -640,6 +1361,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed for weekly: {adapt_err}, using defaults")
@@ -649,6 +1371,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
             queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
 
             try:
+                # Combine avoided exercises with used_exercises for complete filtering
+                all_avoided = list(set(used_exercises + avoided_exercises))
+
                 # Use RAG to intelligently select exercises with adaptive params
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
@@ -656,7 +1381,7 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
-                    avoid_exercises=used_exercises,
+                    avoid_exercises=all_avoided,
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
@@ -668,6 +1393,9 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
                     staple_exercises=staple_exercises,  # Core lifts that never rotate
                     variation_percentage=variation_percentage,  # User's variety preference
+                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
+                    progression_pace=progression_pace,  # User's progression pace preference
+                    workout_type_preference=workout_type_pref,  # User's workout type preference
                 )
 
                 if rag_exercises:
@@ -728,7 +1456,19 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
 
             except Exception as e:
                 logger.error(f"Error generating workout: {e}")
-                exercises = [{"name": "Push-ups", "sets": 3, "reps": 12}, {"name": "Squats", "sets": 3, "reps": 15}]
+                # Fitness-level-appropriate fallback exercises
+                # CRITICAL: Beginners need lower volume to focus on form
+                if fitness_level == "beginner":
+                    fallback_sets, fallback_reps = 2, 10
+                elif fitness_level == "advanced":
+                    fallback_sets, fallback_reps = 4, 12
+                else:  # intermediate
+                    fallback_sets, fallback_reps = 3, 12
+                exercises = [
+                    {"name": "Push-ups", "sets": fallback_sets, "reps": fallback_reps},
+                    {"name": "Squats", "sets": fallback_sets, "reps": fallback_reps}
+                ]
+                logger.warning(f"Using fallback exercises with fitness_level={fitness_level}: {fallback_sets} sets x {fallback_reps} reps")
                 workout_name = f"{focus.title()} Workout"
                 workout_type = "strength"
                 difficulty = intensity_preference
@@ -788,7 +1528,8 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         equipment = get_all_equipment(user)  # Includes custom equipment
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
-        intensity_preference = preferences.get("intensity_preference", "medium")
+        # Use explicit intensity_preference if set, otherwise derive from fitness level
+        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
         # Get workout environment for environment-aware workout generation
@@ -841,7 +1582,12 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         # Filter out any dates beyond our horizon
         workout_dates = [d for d in workout_dates if d.date() <= max_horizon]
 
-        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days} (capped at {max_horizon})")
+        # Log with day names for easier debugging
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        selected_day_names = [day_names[d] for d in request.selected_days if 0 <= d < 7]
+        logger.info(f"Calculated {len(workout_dates)} workout dates for {weeks} weeks on days {request.selected_days} = {selected_day_names} (0=Mon, 6=Sun)")
+        if workout_dates:
+            logger.info(f"First 5 scheduled dates: {[d.strftime('%Y-%m-%d %a') for d in workout_dates[:5]]}")
 
         if not workout_dates:
             logger.warning("No workout dates calculated - returning empty response")
@@ -904,6 +1650,19 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         if one_rm_data:
             logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
 
+        # Fetch user's avoided exercises and muscles
+        avoided_exercises = await get_user_avoided_exercises(request.user_id)
+        avoided_muscles = await get_user_avoided_muscles(request.user_id)
+        if avoided_exercises:
+            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
+        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
+            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
+
+        # Fetch user's progression pace and workout type preference
+        progression_pace = await get_user_progression_pace(request.user_id)
+        workout_type_pref = await get_user_workout_type_preference(request.user_id)
+        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
+
         async def generate_single_workout(
             workout_date: datetime,
             index: int,
@@ -919,8 +1678,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
-                logger.info(f"Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+                logger.info(f"Adaptive params for {focus}: sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed: {adapt_err}, using defaults")
                 adaptive_params = None
@@ -929,6 +1689,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
             queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
 
             try:
+                # Combine avoided exercises with exercises_to_avoid for complete filtering
+                all_avoided_exercises = list(set(exercises_to_avoid + avoided_exercises))
+
                 # Use RAG to intelligently select exercises from ChromaDB/Supabase
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
@@ -936,7 +1699,7 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
-                    avoid_exercises=exercises_to_avoid,
+                    avoid_exercises=all_avoided_exercises,
                     injuries=active_injuries if active_injuries else None,
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
@@ -949,6 +1712,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                     variation_percentage=variation_percentage,  # User's variety preference
                     consistency_mode=consistency_mode,  # Boost or avoid recent exercises
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
+                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
+                    progression_pace=progression_pace,  # User's progression pace preference
+                    workout_type_preference=workout_type_pref,  # User's workout type preference
                 )
 
                 # Return the exercises used so they can be tracked after batch completes
@@ -1173,7 +1939,8 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             equipment = get_all_equipment(user)  # Includes custom equipment
             preferences = parse_json_field(user.get("preferences"), {})
             training_split = preferences.get("training_split", "full_body")
-            intensity_preference = preferences.get("intensity_preference", "medium")
+            # Use explicit intensity_preference if set, otherwise derive from fitness level
+            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
             custom_program_description = preferences.get("custom_program_description")
             workout_environment = preferences.get("workout_environment")
             dumbbell_count = preferences.get("dumbbell_count", 2)
@@ -1249,6 +2016,19 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             if one_rm_data:
                 logger.info(f"[STREAM] Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
 
+            # Fetch user's avoided exercises and muscles
+            avoided_exercises = await get_user_avoided_exercises(body.user_id)
+            avoided_muscles = await get_user_avoided_muscles(body.user_id)
+            if avoided_exercises:
+                logger.info(f"[STREAM] User has {len(avoided_exercises)} avoided exercises")
+            if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
+                logger.info(f"[STREAM] User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
+
+            # Fetch user's progression pace and workout type preference
+            progression_pace = await get_user_progression_pace(body.user_id)
+            workout_type_pref = await get_user_workout_type_preference(body.user_id)
+            logger.info(f"[STREAM] User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
+
             # Generate workouts one at a time with progress updates
             for idx, workout_date in enumerate(workout_dates):
                 current = idx + 1
@@ -1265,6 +2045,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                             user_id=body.user_id,
                             workout_type=focus,
                             user_goals=goals if isinstance(goals, list) else [],
+                            fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                         )
                     except Exception:
                         pass
@@ -1272,8 +2053,11 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     # Get queued exercises for this focus area
                     queued_exercises = await get_user_exercise_queue(body.user_id, focus_area=focus)
 
-                    # Select exercises via RAG
+                    # Combine avoid lists: recently used + user's avoided exercises
                     avoid_list = used_exercises[-30:].copy() if used_exercises else []
+                    avoid_list = list(set(avoid_list + avoided_exercises))
+
+                    # Select exercises via RAG
                     rag_exercises = await exercise_rag.select_exercises_for_workout(
                         focus_area=focus,
                         equipment=equipment if isinstance(equipment, list) else [],
@@ -1293,6 +2077,9 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         recently_used_exercises=recently_used_for_boost,  # For consistency boost
                         staple_exercises=staple_exercises,  # Core lifts that never rotate
                         variation_percentage=variation_percentage,  # User's variety preference
+                        avoided_muscles=avoided_muscles,  # User's avoided muscle groups
+                        progression_pace=progression_pace,  # User's progression pace preference
+                        workout_type_preference=workout_type_pref,  # User's workout type preference
                     )
 
                     if not rag_exercises:
@@ -1429,12 +2216,18 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        fitness_level = user.get("fitness_level") or "intermediate"
+        raw_fitness_level = user.get("fitness_level")
+        fitness_level = raw_fitness_level or "intermediate"
+        if not raw_fitness_level:
+            logger.warning(f"[Remaining Gen] User {request.user_id} has no fitness_level in DB, defaulting to intermediate")
+        else:
+            logger.info(f"[Remaining Gen] User {request.user_id} fitness_level: {fitness_level}")
         goals = parse_json_field(user.get("goals"), [])
         equipment = get_all_equipment(user)  # Includes custom equipment
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
-        intensity_preference = preferences.get("intensity_preference", "medium")
+        # Use explicit intensity_preference if set, otherwise derive from fitness level
+        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
         # Get workout environment for environment-aware workout generation
@@ -1546,6 +2339,19 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         if one_rm_data:
             logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
 
+        # Fetch user's avoided exercises and muscles
+        avoided_exercises = await get_user_avoided_exercises(request.user_id)
+        avoided_muscles = await get_user_avoided_muscles(request.user_id)
+        if avoided_exercises:
+            logger.info(f"User has {len(avoided_exercises)} avoided exercises")
+        if avoided_muscles.get("avoid") or avoided_muscles.get("reduce"):
+            logger.info(f"User avoided muscles - avoid: {avoided_muscles.get('avoid')}, reduce: {avoided_muscles.get('reduce')}")
+
+        # Fetch user's progression pace and workout type preference
+        progression_pace = await get_user_progression_pace(request.user_id)
+        workout_type_pref = await get_user_workout_type_preference(request.user_id)
+        logger.info(f"User progression_pace: {progression_pace}, workout_type_preference: {workout_type_pref}")
+
         BATCH_SIZE = 4
 
         async def generate_single_workout(
@@ -1562,8 +2368,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     user_id=request.user_id,
                     workout_type=focus,
                     user_goals=goals if isinstance(goals, list) else [],
+                    fitness_level=fitness_level,  # Pass fitness level for beginner adjustments
                 )
-                logger.info(f"Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}")
+                logger.info(f"Adaptive params for regeneration ({focus}): sets={adaptive_params.get('sets')}, reps={adaptive_params.get('reps')}, fitness_level={fitness_level}")
             except Exception as adapt_err:
                 logger.warning(f"Adaptive params failed for regeneration: {adapt_err}, using defaults")
                 adaptive_params = None
@@ -1572,6 +2379,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
             queued_exercises = await get_user_exercise_queue(request.user_id, focus_area=focus)
 
             try:
+                # Combine avoided exercises with exercises_to_avoid for complete filtering
+                all_avoided = list(set(exercises_to_avoid + avoided_exercises))
+
                 # Use RAG to intelligently select exercises
                 rag_exercises = await exercise_rag.select_exercises_for_workout(
                     focus_area=focus,
@@ -1579,7 +2389,7 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     count=6,
-                    avoid_exercises=exercises_to_avoid,
+                    avoid_exercises=all_avoided,
                     injuries=active_injuries if active_injuries else None,
                     workout_params=adaptive_params,
                     dumbbell_count=dumbbell_count,
@@ -1592,6 +2402,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                     recently_used_exercises=recently_used_for_boost,  # For consistency boost
                     staple_exercises=staple_exercises,  # Core lifts that never rotate
                     variation_percentage=variation_percentage,  # User's variety preference
+                    avoided_muscles=avoided_muscles,  # User's avoided muscle groups
+                    progression_pace=progression_pace,  # User's progression pace preference
+                    workout_type_preference=workout_type_pref,  # User's workout type preference
                 )
 
                 exercises_used = []
@@ -1660,13 +2473,21 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
 
             except Exception as e:
                 logger.error(f"Error generating remaining workout: {e}")
+                # Fitness-level-appropriate fallback exercises
+                if fitness_level == "beginner":
+                    fb_sets, fb_reps = 2, 10
+                elif fitness_level == "advanced":
+                    fb_sets, fb_reps = 4, 12
+                else:
+                    fb_sets, fb_reps = 3, 12
+                logger.warning(f"Using fallback exercises with fitness_level={fitness_level}: {fb_sets} sets x {fb_reps} reps")
                 return {
                     "workout_date": workout_date,
                     "focus": focus,
                     "name": f"{focus.title()} Workout",
                     "type": "strength",
                     "difficulty": intensity_preference,
-                    "exercises": [{"name": "Push-ups", "sets": 3, "reps": 12}],
+                    "exercises": [{"name": "Push-ups", "sets": fb_sets, "reps": fb_reps}],
                     "exercises_used": ["Push-ups"],
                     "queued_used": [],
                 }

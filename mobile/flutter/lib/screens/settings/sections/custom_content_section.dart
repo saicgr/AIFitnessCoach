@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_repository.dart';
@@ -52,13 +53,13 @@ class _CustomContentCard extends ConsumerWidget {
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // My Exercises
+          // My Exercises - navigate to full screen
           _CustomContentTile(
             icon: Icons.sports_gymnastics,
             title: 'My Exercises',
-            subtitle: 'Create custom exercises for your workouts',
+            subtitle: 'Create custom & combo exercises',
             iconColor: AppColors.purple,
-            onTap: () => _showExercisesSheet(context, ref),
+            onTap: () => context.push('/custom-exercises'),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 

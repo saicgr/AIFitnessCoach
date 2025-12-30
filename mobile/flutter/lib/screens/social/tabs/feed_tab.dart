@@ -84,7 +84,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
             );
           },
           data: (feedData) {
-            final activities = (feedData['activities'] as List?) ?? [];
+            // Backend returns 'items' key for activity list
+            final activities = (feedData['items'] as List?) ?? [];
             final hasActivities = activities.isNotEmpty;
 
             if (!hasActivities) {

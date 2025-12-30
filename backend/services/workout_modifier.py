@@ -196,6 +196,9 @@ class WorkoutModifier:
         """
         Modify workout intensity (increase/decrease sets, reps, or rest).
 
+        IMPORTANT: Respects user's fitness level ceiling to prevent
+        beginners from getting inappropriate volume.
+
         Returns True if successful, False otherwise.
         """
         try:
@@ -205,6 +208,19 @@ class WorkoutModifier:
             if not workout:
                 logger.error(f"Workout {workout_id} not found")
                 return False
+
+            # Get user's fitness level for ceiling enforcement
+            user_id = workout.get("user_id")
+            user = self.db.get_user(user_id) if user_id else None
+            fitness_level = (user.get("fitness_level") if user else None) or "intermediate"
+
+            # Define fitness level ceilings (matches AdaptiveWorkoutService)
+            FITNESS_CEILINGS = {
+                "beginner": {"sets_max": 3, "reps_max": 12, "reps_min": 6},
+                "intermediate": {"sets_max": 5, "reps_max": 15, "reps_min": 4},
+                "advanced": {"sets_max": 8, "reps_max": 20, "reps_min": 1},
+            }
+            ceiling = FITNESS_CEILINGS.get(fitness_level.lower(), FITNESS_CEILINGS["intermediate"])
 
             exercises_data = workout.get("exercises")
             modification_history = workout.get("modification_history") or []
@@ -221,21 +237,23 @@ class WorkoutModifier:
             else:
                 history = modification_history or []
 
-            logger.info(f"Modifying intensity for workout {workout_id}: {modification}")
+            logger.info(f"Modifying intensity for workout {workout_id}: {modification} (fitness_level={fitness_level})")
 
-            # Adjust intensity based on modification type
+            # Adjust intensity based on modification type, respecting fitness level ceilings
             if "easier" in modification.lower() or "reduce" in modification.lower():
                 # Make workout easier: reduce sets/reps, increase rest
                 for ex in exercises:
                     ex["sets"] = max(1, ex.get("sets", 3) - 1)
-                    ex["reps"] = max(5, ex.get("reps", 12) - 2)
+                    ex["reps"] = max(ceiling["reps_min"], ex.get("reps", 12) - 2)
                     ex["rest_seconds"] = min(120, ex.get("rest_seconds", 60) + 15)
             elif "harder" in modification.lower() or "increase" in modification.lower():
                 # Make workout harder: increase sets/reps, reduce rest
+                # CRITICAL: Cap at user's fitness level ceiling
                 for ex in exercises:
-                    ex["sets"] = min(5, ex.get("sets", 3) + 1)
-                    ex["reps"] = min(20, ex.get("reps", 12) + 2)
+                    ex["sets"] = min(ceiling["sets_max"], ex.get("sets", 3) + 1)
+                    ex["reps"] = min(ceiling["reps_max"], ex.get("reps", 12) + 2)
                     ex["rest_seconds"] = max(30, ex.get("rest_seconds", 60) - 10)
+                logger.info(f"Applied fitness level ceiling: sets_max={ceiling['sets_max']}, reps_max={ceiling['reps_max']}")
 
             # Update modification history
             history.append({

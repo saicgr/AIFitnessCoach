@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -197,24 +199,8 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image
-              CachedNetworkImage(
-                imageUrl: image.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  color: AppColors.elevated,
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: AppColors.elevated,
-                  child: Icon(
-                    Icons.broken_image_rounded,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
+              // Image - handles both data URLs and network URLs
+              _buildGalleryImage(image.imageUrl),
 
               // Gradient overlay
               Positioned.fill(
@@ -284,6 +270,48 @@ class _WorkoutGallerySectionState extends ConsumerState<WorkoutGallerySection> {
         icon,
         size: 12,
         color: color,
+      ),
+    );
+  }
+
+  /// Build gallery image widget that handles both data URLs and network URLs
+  Widget _buildGalleryImage(String imageUrl) {
+    // Check if it's a data URL (base64 encoded image)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        // Extract base64 data from data URL
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildImageErrorWidget(),
+        );
+      } catch (e) {
+        return _buildImageErrorWidget();
+      }
+    }
+
+    // Network URL - use CachedNetworkImage
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        color: AppColors.elevated,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (_, __, ___) => _buildImageErrorWidget(),
+    );
+  }
+
+  Widget _buildImageErrorWidget() {
+    return Container(
+      color: AppColors.elevated,
+      child: Icon(
+        Icons.broken_image_rounded,
+        color: AppColors.textMuted,
       ),
     );
   }
@@ -404,13 +432,7 @@ class _ImageDetailSheet extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: CachedNetworkImage(
-                  imageUrl: image.imageUrl,
-                  fit: BoxFit.contain,
-                  placeholder: (_, __) => const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
+                child: _buildDetailImage(image.imageUrl),
               ),
             ),
           ),
@@ -485,6 +507,41 @@ class _ImageDetailSheet extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Build detail image widget that handles both data URLs and network URLs
+  Widget _buildDetailImage(String imageUrl) {
+    // Check if it's a data URL (base64 encoded image)
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        // Extract base64 data from data URL
+        final base64Data = imageUrl.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Center(
+            child: Icon(Icons.broken_image_rounded, size: 48),
+          ),
+        );
+      } catch (e) {
+        return const Center(
+          child: Icon(Icons.broken_image_rounded, size: 48),
+        );
+      }
+    }
+
+    // Network URL - use CachedNetworkImage
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.contain,
+      placeholder: (_, __) => const Center(
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      errorWidget: (_, __, ___) => const Center(
+        child: Icon(Icons.broken_image_rounded, size: 48),
+      ),
     );
   }
 

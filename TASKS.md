@@ -1,21 +1,3 @@
-<!-- big task to FEATURES.md add 
-column at the end of every table to say if it is user focused or developer focused meaning would the user be able to access or is it for dev purposes only, because there are so many features i want to have that differentiation
-
-you would have to populate them by reviewing the code   
-use multiple agents to run in parallel 
--->
-
-<!-- For other app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every part of the review with this flutter app and see waht needs improved and implemented.
-
-Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md
- -->
-
-<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md -->
-
-<!-- Dont foget to make sure backend API, supabase tables, gemini API calls, backend tests are all integrated properly with this changes and Update Features.md -->
-
-<!-- Did you forget anyhitng to implement? -->
-
 FUTURE in voting:
 1. Posture video review
 2. Casting to TV
@@ -28,9 +10,6 @@ ASAP:
 25. Demo of the whole app
 32. Make it easy to add supersets
 37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
-51. Only one I could tell is that it doesn't allow you to make your own exercise; i.e. a combo dumbbell bench press & chest fly.
-52. Suggest Recipes based on food, culture, body type and diet.
-53. Add mood based workout - like might have to add how does your mood feel today and the user selects and option and then a pop up would show up do you want to work it out, like if the user is angry, then it would generate a workout for anger etc.
 53.1. Absolute piece of trash. Using coach I set my preferences and it totally ignored those. Then it wouldn't let me create a new plan because it showed I had already exercised today. Those few little baby exercises weren't enough and there's no way to do more under the same plan. It's much better to just use the Daily Strength app and put together your own plan.
 53.2. I love this app! I have used it for two years now. However, I noticed the app no longer shows my improvements or setbacks in my personal best sessions :( It's only showing my new PB. It used to show the reductions or increases in time, both for each exercise and the workout. My app is up to date. Please bring that feature back! it is truly insightful and motivating!
 53.3. Your UI used to be the best, but for some reason you've focused on all the social nonsense rather than just polishing the UI and adding obvious features. Pausing timed exercises? No way. Nice exercise video download flow? Who cares. But a full screen bloated with social features and random workouts instead of a simple "what's the next step on my journey" UI
@@ -79,6 +58,7 @@ ASAP:
 57.4 Initially enjoyed the polish of this, but I regret paying for Pro. It's too slow and too convoluted to track meals, which is the whole point of the app. We need a way to disable the useless (and incorrect) AI food tips after each meal logged, at least. Between that, the lag when searching for foods, and the various submenus for foods/meals/recipes, it's too much. Even saving common foods as a meal and selecting that every morning feels slower than other apps because of the tracker layout.
 58. For analytics do we have workout bistory per exercise and also per muscle, not sure what the image is sowing like muscle or soemthing else.
 59. Research on improving NEAT for a user.
+60. A 30minute(need to research if this enough for test/calibration) test/callibrate yourself befroe generating first workout(option to skip and option to be available to test yourself in profile to set AI standard). generate onboarding workout based on onboarding questions an parameters and then user logs it after user finishes it , AI would review it and give you review and validayes onboarding answers vs the workout tests result, then it will ask tell you that/ suggests you that you if they want to increase levels based on the worokout test etc and then generate levels and optimize parameters based on it, all those should be saved in settings and supabase tables, also have like istestworkoutonboardingdone yes/no, testworkoutonboarding pass or fail yes or no etc etc. What do you think? Might need a new prompt for test workout as well.
 
 <!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
 Now THAT'S a clear value prop. That changes everything.

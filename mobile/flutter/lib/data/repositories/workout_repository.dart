@@ -7,6 +7,7 @@ import '../../core/constants/api_constants.dart';
 import '../../models/program_history.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
+import '../models/mood.dart';
 import '../services/api_client.dart';
 
 /// Workout repository provider
@@ -554,6 +555,161 @@ class WorkoutRepository {
         status: WorkoutGenerationStatus.error,
         message: 'Failed to generate workout: $e',
         elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+      );
+    }
+  }
+
+  /// Generate a mood-based workout with streaming progress updates
+  ///
+  /// Returns a Stream that emits progress updates at each step:
+  /// - Step 1: Loading user profile and mood config
+  /// - Step 2: Selecting exercises via RAG
+  /// - Step 3: Creating workout with AI
+  /// - Step 4: Saving workout and mood check-in
+  ///
+  /// Each progress event contains:
+  /// - step/total_steps: Current step number and total steps
+  /// - message: Human-readable status
+  /// - detail: Additional context
+  /// - mood_emoji/mood_color: Mood info for UI display
+  Stream<MoodWorkoutProgress> generateMoodWorkoutStreaming({
+    required String userId,
+    required Mood mood,
+    int? durationMinutes,
+    String? deviceInfo,
+  }) async* {
+    debugPrint('🚀 [Workout] Starting mood workout generation for $userId with mood: ${mood.value}');
+    final startTime = DateTime.now();
+
+    try {
+      // Emit initial status
+      yield MoodWorkoutProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Starting ${mood.label.toLowerCase()} mood workout...',
+        mood: mood,
+        moodEmoji: mood.emoji,
+        elapsedMs: 0,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _apiClient.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 3),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _apiClient.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final response = await streamingDio.post(
+        '${ApiConstants.workouts}/generate-from-mood-stream',
+        data: {
+          'user_id': userId,
+          'mood': mood.value,
+          if (durationMinutes != null) 'duration_minutes': durationMinutes,
+          if (deviceInfo != null) 'device_info': deviceInfo,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'progress') {
+                  // Progress update
+                  yield MoodWorkoutProgress(
+                    step: data['step'] as int? ?? 0,
+                    totalSteps: data['total_steps'] as int? ?? 4,
+                    message: data['message'] as String? ?? 'Processing...',
+                    detail: data['detail'] as String?,
+                    mood: mood,
+                    moodEmoji: data['mood_emoji'] as String? ?? mood.emoji,
+                    moodColor: data['mood_color'] as String?,
+                    elapsedMs: elapsedMs,
+                  );
+                } else if (eventType == 'done') {
+                  // Workout complete - extract workout from response
+                  final workoutData = data['workout'] as Map<String, dynamic>?;
+                  Workout? workout;
+                  if (workoutData != null) {
+                    workout = Workout.fromJson(workoutData);
+                  }
+
+                  yield MoodWorkoutProgress(
+                    step: 4,
+                    totalSteps: 4,
+                    message: 'Workout ready!',
+                    mood: mood,
+                    moodEmoji: data['mood_emoji'] as String? ?? mood.emoji,
+                    moodColor: data['mood_color'] as String?,
+                    elapsedMs: elapsedMs,
+                    workout: workout,
+                    totalTimeMs: data['total_time_ms'] as int?,
+                    isCompleted: true,
+                  );
+                } else if (eventType == 'error') {
+                  yield MoodWorkoutProgress(
+                    step: 0,
+                    totalSteps: 4,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    mood: mood,
+                    elapsedMs: elapsedMs,
+                    hasError: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Workout] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Mood workout streaming error: $e');
+      yield MoodWorkoutProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Failed to generate mood workout: $e',
+        mood: mood,
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        hasError: true,
       );
     }
   }
@@ -2184,4 +2340,67 @@ class RegenerateProgress {
 
   @override
   String toString() => 'RegenerateProgress(step: $step/$totalSteps, message: $message, elapsedMs: $elapsedMs)';
+}
+
+/// Progress event for mood-based workout generation
+class MoodWorkoutProgress {
+  /// Current step number (1-indexed)
+  final int step;
+
+  /// Total number of steps
+  final int totalSteps;
+
+  /// Human-readable status message
+  final String message;
+
+  /// Additional detail about the current step
+  final String? detail;
+
+  /// Time elapsed since start in milliseconds
+  final int elapsedMs;
+
+  /// The generated workout (only available when completed)
+  final Workout? workout;
+
+  /// Mood that was used for generation
+  final Mood? mood;
+
+  /// Mood emoji for UI display
+  final String? moodEmoji;
+
+  /// Mood color hex for UI display
+  final String? moodColor;
+
+  /// Total time for generation (server-side, only available when completed)
+  final int? totalTimeMs;
+
+  /// Whether generation completed successfully
+  final bool isCompleted;
+
+  /// Whether an error occurred
+  final bool hasError;
+
+  MoodWorkoutProgress({
+    required this.step,
+    required this.totalSteps,
+    required this.message,
+    this.detail,
+    required this.elapsedMs,
+    this.workout,
+    this.mood,
+    this.moodEmoji,
+    this.moodColor,
+    this.totalTimeMs,
+    this.isCompleted = false,
+    this.hasError = false,
+  });
+
+  /// Progress as a percentage (0.0 to 1.0)
+  double get progress => totalSteps > 0 ? step / totalSteps : 0;
+
+  /// Whether generation is still in progress
+  bool get isLoading => !isCompleted && !hasError;
+
+  @override
+  String toString() => 'MoodWorkoutProgress(step: $step/$totalSteps, message: $message, mood: ${mood?.value}, elapsedMs: $elapsedMs)';
 }

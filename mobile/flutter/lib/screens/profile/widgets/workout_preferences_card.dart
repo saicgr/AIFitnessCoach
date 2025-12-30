@@ -5,10 +5,12 @@ import '../../../data/models/user.dart';
 /// Displays workout preferences from onboarding data.
 class WorkoutPreferencesCard extends StatelessWidget {
   final User? user;
+  final VoidCallback? onEdit;
 
   const WorkoutPreferencesCard({
     super.key,
     required this.user,
+    this.onEdit,
   });
 
   @override
@@ -28,6 +30,48 @@ class WorkoutPreferencesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row with edit button
+          if (onEdit != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: onEdit,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.cyan.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_rounded,
+                            color: AppColors.cyan,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Edit Program',
+                            style: TextStyle(
+                              color: AppColors.cyan,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           _PreferenceRow(
             icon: Icons.timeline,
             label: 'Experience',
