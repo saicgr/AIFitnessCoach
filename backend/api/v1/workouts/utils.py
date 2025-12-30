@@ -944,3 +944,100 @@ def calculate_working_weight_from_1rm(
         rounded_weight = raw_weight
 
     return round(rounded_weight, 1)
+
+
+def apply_1rm_weights_to_exercises(
+    exercises: List[dict],
+    one_rm_data: dict,
+    global_intensity: int,
+    intensity_overrides: dict = None,
+) -> List[dict]:
+    """
+    Apply 1RM-based weights to exercises that have known maxes.
+
+    This is the key function for the percentage-based training feature.
+    For each exercise with a known 1RM, it calculates the working weight
+    based on the user's intensity preference.
+
+    Args:
+        exercises: List of exercise dicts from workout generation
+        one_rm_data: Dict mapping exercise names (lowercase) to 1RM data
+        global_intensity: User's global training intensity (50-100)
+        intensity_overrides: Optional dict of per-exercise intensity overrides
+
+    Returns:
+        Updated exercises list with calculated weights and weight_source markers
+    """
+    if not one_rm_data:
+        return exercises
+
+    intensity_overrides = intensity_overrides or {}
+    updated_exercises = []
+
+    for exercise in exercises:
+        exercise_copy = dict(exercise)
+        exercise_name = (exercise.get("name") or "").lower()
+
+        # Check if we have a 1RM for this exercise (exact or fuzzy match)
+        matched_1rm = None
+        matched_name = None
+
+        # First try exact match
+        if exercise_name in one_rm_data:
+            matched_1rm = one_rm_data[exercise_name]
+            matched_name = exercise_name
+        else:
+            # Try fuzzy matching
+            for rm_name, rm_data in one_rm_data.items():
+                if fuzzy_exercise_match(exercise_name, rm_name):
+                    matched_1rm = rm_data
+                    matched_name = rm_name
+                    break
+
+        if matched_1rm:
+            one_rep_max_kg = matched_1rm.get("one_rep_max_kg", 0)
+            if one_rep_max_kg > 0:
+                # Get intensity (check for override first)
+                intensity = intensity_overrides.get(
+                    exercise_name,
+                    intensity_overrides.get(matched_name, global_intensity)
+                )
+
+                # Determine equipment type for rounding
+                equipment = (exercise.get("equipment") or "barbell").lower()
+                if "dumbbell" in equipment:
+                    equipment_type = "dumbbell"
+                elif "cable" in equipment:
+                    equipment_type = "cable"
+                elif "machine" in equipment:
+                    equipment_type = "machine"
+                elif "kettlebell" in equipment:
+                    equipment_type = "kettlebell"
+                elif "bodyweight" in equipment or "body" in equipment:
+                    equipment_type = "bodyweight"
+                else:
+                    equipment_type = "barbell"
+
+                # Calculate working weight
+                working_weight = calculate_working_weight_from_1rm(
+                    one_rep_max_kg, intensity, equipment_type
+                )
+
+                # Update exercise with calculated weight
+                exercise_copy["weight"] = working_weight
+                exercise_copy["weight_source"] = "1rm_calculated"
+                exercise_copy["one_rep_max_kg"] = one_rep_max_kg
+                exercise_copy["intensity_percent"] = intensity
+
+                logger.debug(
+                    f"Applied 1RM weight: {exercise_name} - "
+                    f"1RM: {one_rep_max_kg}kg @ {intensity}% = {working_weight}kg"
+                )
+
+        updated_exercises.append(exercise_copy)
+
+    applied_count = sum(1 for e in updated_exercises if e.get("weight_source") == "1rm_calculated")
+    if applied_count > 0:
+        logger.info(f"Applied 1RM-based weights to {applied_count}/{len(exercises)} exercises")
+
+    return updated_exercises

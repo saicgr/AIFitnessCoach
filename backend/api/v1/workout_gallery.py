@@ -98,7 +98,7 @@ async def upload_gallery_image(
             "achievements_data": request.achievements_data,
         }
 
-        result = supabase.table("workout_gallery_images").insert(gallery_data).execute()
+        result = supabase.client.table("workout_gallery_images").insert(gallery_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to save gallery image")
@@ -132,7 +132,7 @@ async def list_gallery_images(
         supabase = get_supabase_db()
 
         # Build query
-        query = supabase.table("workout_gallery_images") \
+        query = supabase.client.table("workout_gallery_images") \
             .select("*", count="exact") \
             .eq("user_id", user_id) \
             .is_("deleted_at", "null") \
@@ -174,7 +174,7 @@ async def get_gallery_image(
     try:
         supabase = get_supabase_db()
 
-        result = supabase.table("workout_gallery_images") \
+        result = supabase.client.table("workout_gallery_images") \
             .select("*") \
             .eq("id", image_id) \
             .eq("user_id", user_id) \
@@ -206,7 +206,7 @@ async def delete_gallery_image(
         supabase = get_supabase_db()
 
         # Verify ownership
-        check = supabase.table("workout_gallery_images") \
+        check = supabase.client.table("workout_gallery_images") \
             .select("id") \
             .eq("id", image_id) \
             .eq("user_id", user_id) \
@@ -218,7 +218,7 @@ async def delete_gallery_image(
             raise HTTPException(status_code=404, detail="Image not found or already deleted")
 
         # Soft delete
-        result = supabase.table("workout_gallery_images") \
+        result = supabase.client.table("workout_gallery_images") \
             .update({"deleted_at": datetime.now().isoformat()}) \
             .eq("id", image_id) \
             .execute()
@@ -253,7 +253,7 @@ async def share_image_to_feed(
         supabase = get_supabase_db()
 
         # Get the gallery image
-        image_result = supabase.table("workout_gallery_images") \
+        image_result = supabase.client.table("workout_gallery_images") \
             .select("*") \
             .eq("id", image_id) \
             .eq("user_id", user_id) \
@@ -288,13 +288,13 @@ async def share_image_to_feed(
             "workout_log_id": image_data.get("workout_log_id"),
         }
 
-        activity_result = supabase.table("social_activities").insert(activity_data).execute()
+        activity_result = supabase.client.table("social_activities").insert(activity_data).execute()
 
         if not activity_result.data:
             raise HTTPException(status_code=500, detail="Failed to create social activity")
 
         # Update gallery image to mark as shared
-        supabase.table("workout_gallery_images") \
+        supabase.client.table("workout_gallery_images") \
             .update({"shared_to_feed": True}) \
             .eq("id", image_id) \
             .execute()
@@ -326,7 +326,7 @@ async def track_external_share(
         supabase = get_supabase_db()
 
         # Get current count
-        image = supabase.table("workout_gallery_images") \
+        image = supabase.client.table("workout_gallery_images") \
             .select("external_shares_count") \
             .eq("id", image_id) \
             .eq("user_id", user_id) \
@@ -339,7 +339,7 @@ async def track_external_share(
         current_count = image.data.get("external_shares_count", 0)
 
         # Update
-        result = supabase.table("workout_gallery_images") \
+        result = supabase.client.table("workout_gallery_images") \
             .update({
                 "shared_externally": True,
                 "external_shares_count": current_count + 1

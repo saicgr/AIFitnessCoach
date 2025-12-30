@@ -273,7 +273,7 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
     today = date.today()
 
     # Get or create streak record
-    result = db.table("fasting_streaks").select("*").eq("user_id", user_id).execute()
+    result = db.client.table("fasting_streaks").select("*").eq("user_id", user_id).execute()
 
     streak_data = result.data[0] if result.data else None
 
@@ -317,7 +317,7 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        db.table("fasting_streaks").update(update_data).eq("user_id", user_id).execute()
+        db.client.table("fasting_streaks").update(update_data).eq("user_id", user_id).execute()
 
         return {
             "current_streak": current_streak,
@@ -340,7 +340,7 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        db.table("fasting_streaks").insert(new_streak).execute()
+        db.client.table("fasting_streaks").insert(new_streak).execute()
 
         return {
             "current_streak": new_streak["current_streak"],
@@ -368,7 +368,7 @@ async def start_fast(data: StartFastRequest):
         db = get_supabase_db()
 
         # Check for existing active fast
-        existing = db.table("fasting_records").select("id").eq(
+        existing = db.client.table("fasting_records").select("id").eq(
             "user_id", data.user_id
         ).eq("status", "active").execute()
 
@@ -394,7 +394,7 @@ async def start_fast(data: StartFastRequest):
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        result = db.table("fasting_records").insert(fast_data).execute()
+        result = db.client.table("fasting_records").insert(fast_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create fasting record")
@@ -437,7 +437,7 @@ async def end_fast(fast_id: str, data: EndFastRequest):
         db = get_supabase_db()
 
         # Get the fast record
-        result = db.table("fasting_records").select("*").eq(
+        result = db.client.table("fasting_records").select("*").eq(
             "id", fast_id
         ).eq("user_id", data.user_id).eq("status", "active").execute()
 
@@ -469,13 +469,13 @@ async def end_fast(fast_id: str, data: EndFastRequest):
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-        db.table("fasting_records").update(update_data).eq("id", fast_id).execute()
+        db.client.table("fasting_records").update(update_data).eq("id", fast_id).execute()
 
         # Update streak
         streak_info = await update_streak(data.user_id, completed_goal, completion_percent)
 
         # Get updated record
-        updated = db.table("fasting_records").select("*").eq("id", fast_id).execute()
+        updated = db.client.table("fasting_records").select("*").eq("id", fast_id).execute()
         record = row_to_fasting_record(updated.data[0])
 
         # Log activity
@@ -525,7 +525,7 @@ async def cancel_fast(fast_id: str, data: CancelFastRequest):
         db = get_supabase_db()
 
         # Update status to cancelled
-        result = db.table("fasting_records").update({
+        result = db.client.table("fasting_records").update({
             "status": "cancelled",
             "end_time": datetime.utcnow().isoformat(),
             "updated_at": datetime.utcnow().isoformat(),
@@ -551,7 +551,7 @@ async def get_active_fast(user_id: str):
     try:
         db = get_supabase_db()
 
-        result = db.table("fasting_records").select("*").eq(
+        result = db.client.table("fasting_records").select("*").eq(
             "user_id", user_id
         ).eq("status", "active").execute()
 
@@ -579,7 +579,7 @@ async def get_fasting_history(
     try:
         db = get_supabase_db()
 
-        query = db.table("fasting_records").select("*").eq(
+        query = db.client.table("fasting_records").select("*").eq(
             "user_id", user_id
         ).neq("status", "active")
 
@@ -615,7 +615,7 @@ async def update_fast_record(fast_id: str, data: UpdateFastRequest):
         if data.energy_level is not None:
             update_data["energy_level"] = data.energy_level
 
-        result = db.table("fasting_records").update(update_data).eq(
+        result = db.client.table("fasting_records").update(update_data).eq(
             "id", fast_id
         ).eq("user_id", data.user_id).execute()
 
@@ -641,7 +641,7 @@ async def get_preferences(user_id: str):
     try:
         db = get_supabase_db()
 
-        result = db.table("fasting_preferences").select("*").eq(
+        result = db.client.table("fasting_preferences").select("*").eq(
             "user_id", user_id
         ).execute()
 
@@ -680,20 +680,20 @@ async def update_preferences(user_id: str, data: FastingPreferencesRequest):
         }
 
         # Check if exists
-        existing = db.table("fasting_preferences").select("id").eq(
+        existing = db.client.table("fasting_preferences").select("id").eq(
             "user_id", user_id
         ).execute()
 
         if existing.data:
             # Update
-            result = db.table("fasting_preferences").update(prefs_data).eq(
+            result = db.client.table("fasting_preferences").update(prefs_data).eq(
                 "user_id", user_id
             ).execute()
         else:
             # Insert
             prefs_data["id"] = str(uuid.uuid4())
             prefs_data["created_at"] = datetime.utcnow().isoformat()
-            result = db.table("fasting_preferences").insert(prefs_data).execute()
+            result = db.client.table("fasting_preferences").insert(prefs_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to save preferences")
@@ -716,7 +716,7 @@ async def complete_onboarding(data: CompleteOnboardingRequest):
         db = get_supabase_db()
 
         # Get or create preferences
-        existing = db.table("fasting_preferences").select("id").eq(
+        existing = db.client.table("fasting_preferences").select("id").eq(
             "user_id", data.user_id
         ).execute()
 
@@ -731,13 +731,13 @@ async def complete_onboarding(data: CompleteOnboardingRequest):
         }
 
         if existing.data:
-            db.table("fasting_preferences").update(prefs_data).eq(
+            db.client.table("fasting_preferences").update(prefs_data).eq(
                 "user_id", data.user_id
             ).execute()
         else:
             prefs_data["id"] = str(uuid.uuid4())
             prefs_data["created_at"] = datetime.utcnow().isoformat()
-            db.table("fasting_preferences").insert(prefs_data).execute()
+            db.client.table("fasting_preferences").insert(prefs_data).execute()
 
         # Log activity
         await log_user_activity(
@@ -766,7 +766,7 @@ async def get_streak(user_id: str):
     try:
         db = get_supabase_db()
 
-        result = db.table("fasting_streaks").select("*").eq(
+        result = db.client.table("fasting_streaks").select("*").eq(
             "user_id", user_id
         ).execute()
 
@@ -823,7 +823,7 @@ async def get_stats(
             start_date = datetime(2020, 1, 1)  # All time
 
         # Get fasting records
-        result = db.table("fasting_records").select("*").eq(
+        result = db.client.table("fasting_records").select("*").eq(
             "user_id", user_id
         ).gte("start_time", start_date.isoformat()).execute()
 
@@ -907,7 +907,7 @@ async def check_safety_eligibility(user_id: str):
         db = get_supabase_db()
 
         # Get user profile
-        result = db.table("users").select(
+        result = db.client.table("users").select(
             "age, gender, weight_kg, height_cm, health_conditions, goals"
         ).eq("id", user_id).execute()
 
@@ -982,7 +982,7 @@ async def save_safety_screening(data: SafetyScreeningRequest):
         db = get_supabase_db()
 
         # Update preferences with safety info
-        result = db.table("fasting_preferences").upsert({
+        result = db.client.table("fasting_preferences").upsert({
             "user_id": data.user_id,
             "safety_screening_completed": True,
             "safety_warnings_acknowledged": list(data.responses.keys()),

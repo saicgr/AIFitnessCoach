@@ -49,6 +49,10 @@ from .utils import (
     mark_queued_exercises_used,
     get_user_staple_exercises,
     get_user_variation_percentage,
+    get_user_1rm_data,
+    get_user_training_intensity,
+    get_user_intensity_overrides,
+    apply_1rm_weights_to_exercises,
 )
 
 router = APIRouter()
@@ -619,6 +623,13 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
         variation_percentage = await get_user_variation_percentage(request.user_id)
         logger.info(f"User variation percentage: {variation_percentage}%")
 
+        # Fetch user's 1RM data and training intensity for percentage-based training
+        one_rm_data = await get_user_1rm_data(request.user_id)
+        training_intensity = await get_user_training_intensity(request.user_id)
+        intensity_overrides = await get_user_intensity_overrides(request.user_id)
+        if one_rm_data:
+            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
+
         for day_index in request.selected_days:
             workout_date = calculate_workout_date(request.week_start_date, day_index)
             focus = workout_focus_map[day_index]
@@ -721,6 +732,12 @@ async def generate_weekly_workouts(request: GenerateWeeklyRequest):
                 workout_name = f"{focus.title()} Workout"
                 workout_type = "strength"
                 difficulty = intensity_preference
+
+            # Apply 1RM-based weights for percentage-based training
+            if one_rm_data and exercises:
+                exercises = apply_1rm_weights_to_exercises(
+                    exercises, one_rm_data, training_intensity, intensity_overrides
+                )
 
             workout_db_data = {
                 "user_id": request.user_id,
@@ -880,6 +897,13 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         variation_percentage = await get_user_variation_percentage(request.user_id)
         logger.info(f"User variation percentage: {variation_percentage}%")
 
+        # Fetch user's 1RM data and training intensity for percentage-based training
+        one_rm_data = await get_user_1rm_data(request.user_id)
+        training_intensity = await get_user_training_intensity(request.user_id)
+        intensity_overrides = await get_user_intensity_overrides(request.user_id)
+        if one_rm_data:
+            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
+
         async def generate_single_workout(
             workout_date: datetime,
             index: int,
@@ -1029,13 +1053,20 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 if queued_used_in_workout:
                     await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
 
+                # Apply 1RM-based weights for percentage-based training
+                exercises = result["exercises"]
+                if one_rm_data and exercises:
+                    exercises = apply_1rm_weights_to_exercises(
+                        exercises, one_rm_data, training_intensity, intensity_overrides
+                    )
+
                 workout_db_data = {
                     "user_id": request.user_id,
                     "name": result["name"],
                     "type": result["type"],
                     "difficulty": result["difficulty"],
                     "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises_json": result["exercises"],
+                    "exercises_json": exercises,
                     "duration_minutes": request.duration_minutes or 45,
                     "generation_method": "ai",
                     "generation_source": "monthly_generation",
@@ -1211,6 +1242,13 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             variation_percentage = await get_user_variation_percentage(body.user_id)
             logger.info(f"[STREAM] User variation percentage: {variation_percentage}%")
 
+            # Fetch user's 1RM data and training intensity for percentage-based training
+            one_rm_data = await get_user_1rm_data(body.user_id)
+            training_intensity = await get_user_training_intensity(body.user_id)
+            intensity_overrides = await get_user_intensity_overrides(body.user_id)
+            if one_rm_data:
+                logger.info(f"[STREAM] Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
+
             # Generate workouts one at a time with progress updates
             for idx, workout_date in enumerate(workout_dates):
                 current = idx + 1
@@ -1287,6 +1325,13 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     name_words = extract_name_words(workout_data.get("name", ""))
                     used_name_words.extend(name_words)
 
+                    # Apply 1RM-based weights for percentage-based training
+                    exercises = workout_data.get("exercises", [])
+                    if one_rm_data and exercises:
+                        exercises = apply_1rm_weights_to_exercises(
+                            exercises, one_rm_data, training_intensity, intensity_overrides
+                        )
+
                     # Save to database
                     workout_db_data = {
                         "user_id": body.user_id,
@@ -1294,7 +1339,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                         "type": workout_data.get("type", "strength"),
                         "difficulty": workout_data.get("difficulty", intensity_preference),
                         "scheduled_date": workout_date.isoformat(),
-                        "exercises_json": workout_data.get("exercises", []),
+                        "exercises_json": exercises,
                         "duration_minutes": body.duration_minutes or 45,
                         "generation_method": "ai",
                         "generation_source": "streaming_monthly_generation",
@@ -1494,6 +1539,13 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         variation_percentage = await get_user_variation_percentage(request.user_id)
         logger.info(f"User variation percentage: {variation_percentage}%")
 
+        # Fetch user's 1RM data and training intensity for percentage-based training
+        one_rm_data = await get_user_1rm_data(request.user_id)
+        training_intensity = await get_user_training_intensity(request.user_id)
+        intensity_overrides = await get_user_intensity_overrides(request.user_id)
+        if one_rm_data:
+            logger.info(f"Loaded {len(one_rm_data)} 1RMs for percentage-based training at {training_intensity}%")
+
         BATCH_SIZE = 4
 
         async def generate_single_workout(
@@ -1658,13 +1710,20 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 if queued_used_in_workout:
                     await mark_queued_exercises_used(request.user_id, queued_used_in_workout)
 
+                # Apply 1RM-based weights for percentage-based training
+                exercises = result["exercises"]
+                if one_rm_data and exercises:
+                    exercises = apply_1rm_weights_to_exercises(
+                        exercises, one_rm_data, training_intensity, intensity_overrides
+                    )
+
                 workout_db_data = {
                     "user_id": request.user_id,
                     "name": result["name"],
                     "type": result["type"],
                     "difficulty": result["difficulty"],
                     "scheduled_date": result["workout_date"].isoformat(),
-                    "exercises_json": result["exercises"],
+                    "exercises_json": exercises,
                     "duration_minutes": request.duration_minutes or 45,
                     "generation_method": "ai",
                     "generation_source": "background_generation",
@@ -1677,7 +1736,6 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 # Generate warmup and stretches alongside workout
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
-                    exercises = result["exercises"]
 
                     # Generate and save warmup
                     await warmup_stretch_service.create_warmup_for_workout(

@@ -2832,7 +2832,7 @@ async def get_nutrition_preferences(user_id: str):
             .maybe_single()\
             .execute()
 
-        if not result.data:
+        if not result or not result.data:
             # Return default preferences
             return NutritionPreferencesResponse(user_id=user_id)
 
@@ -2965,7 +2965,7 @@ async def get_dynamic_nutrition_targets(
             .maybe_single()\
             .execute()
 
-        prefs = prefs_result.data or {}
+        prefs = (prefs_result.data if prefs_result else None) or {}
 
         base_calories = prefs.get("target_calories") or 2000
         base_protein = prefs.get("target_protein_g") or 150
@@ -2983,7 +2983,7 @@ async def get_dynamic_nutrition_targets(
             .lt("started_at", f"{target_date_str}T23:59:59")\
             .execute()
 
-        has_workout = bool(workout_result.data)
+        has_workout = bool(workout_result and workout_result.data)
 
         # Also check scheduled workouts if no log exists
         if not has_workout:
@@ -2992,7 +2992,7 @@ async def get_dynamic_nutrition_targets(
                 .eq("user_id", user_id)\
                 .eq("scheduled_date", target_date_str)\
                 .execute()
-            has_workout = bool(schedule_result.data)
+            has_workout = bool(schedule_result and schedule_result.data)
 
         # Check if it's a fasting day (for 5:2 or ADF protocols)
         is_fasting_day = False
@@ -3002,7 +3002,7 @@ async def get_dynamic_nutrition_targets(
             .maybe_single()\
             .execute()
 
-        if fasting_prefs.data:
+        if fasting_prefs and fasting_prefs.data:
             protocol = fasting_prefs.data.get("default_protocol", "")
             fasting_days = fasting_prefs.data.get("fasting_days") or []
 
@@ -3707,12 +3707,16 @@ async def get_nutrition_streak(user_id: str):
             .maybe_single()\
             .execute()
 
-        if not result.data:
-            # Create default streak
-            insert_result = db.client.table("nutrition_streaks")\
-                .insert({"user_id": user_id})\
-                .execute()
-            data = insert_result.data[0] if insert_result.data else {"user_id": user_id}
+        if not result or not result.data:
+            # Create default streak (if table exists) or return defaults
+            try:
+                insert_result = db.client.table("nutrition_streaks")\
+                    .insert({"user_id": user_id})\
+                    .execute()
+                data = insert_result.data[0] if insert_result and insert_result.data else {"user_id": user_id}
+            except Exception:
+                # Table might not exist yet - return defaults
+                data = {"user_id": user_id}
         else:
             data = result.data
 

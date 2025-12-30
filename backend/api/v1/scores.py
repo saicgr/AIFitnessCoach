@@ -241,7 +241,7 @@ async def submit_readiness_checkin(
     }
 
     # Upsert (update if exists for today)
-    response = db.table("readiness_scores").upsert(
+    response = db.client.table("readiness_scores").upsert(
         record_data,
         on_conflict="user_id,score_date",
     ).execute()
@@ -296,7 +296,7 @@ async def get_readiness_for_date(
     """Get readiness score for a specific date."""
     db = get_supabase_db()
 
-    response = db.table("readiness_scores").select("*").eq(
+    response = db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
     ).eq(
         "score_date", score_date.isoformat()
@@ -338,7 +338,7 @@ async def get_readiness_history(
 
     start_date = (date.today() - timedelta(days=days)).isoformat()
 
-    response = db.table("readiness_scores").select("*").eq(
+    response = db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
     ).gte(
         "score_date", start_date
@@ -402,7 +402,7 @@ async def get_all_strength_scores(
     strength_service = StrengthCalculatorService()
 
     # Get user's bodyweight and gender
-    user_response = db.table("users").select("weight_kg, gender").eq(
+    user_response = db.client.table("users").select("weight_kg, gender").eq(
         "id", user_id
     ).maybe_single().execute()
 
@@ -477,7 +477,7 @@ async def get_strength_detail(
         raise HTTPException(status_code=400, detail=f"Invalid muscle group: {muscle_group}")
 
     # Get user info
-    user_response = db.table("users").select("weight_kg, gender").eq(
+    user_response = db.client.table("users").select("weight_kg, gender").eq(
         "id", user_id
     ).maybe_single().execute()
 
@@ -500,7 +500,7 @@ async def get_strength_detail(
     exercises = []
 
     # Get trend data (historical scores)
-    trend_response = db.table("strength_scores").select(
+    trend_response = db.client.table("strength_scores").select(
         "strength_score, calculated_at"
     ).eq(
         "user_id", user_id
@@ -551,7 +551,7 @@ async def calculate_strength_scores(
     strength_service = StrengthCalculatorService()
 
     # Get user info
-    user_response = db.table("users").select("weight_kg, gender").eq(
+    user_response = db.client.table("users").select("weight_kg, gender").eq(
         "id", user_id
     ).maybe_single().execute()
 
@@ -565,7 +565,7 @@ async def calculate_strength_scores(
     # Get workout data from last 90 days
     start_date = (date.today() - timedelta(days=90)).isoformat()
 
-    workouts_response = db.table("workouts").select(
+    workouts_response = db.client.table("workouts").select(
         "id, exercises, completed_at"
     ).eq(
         "user_id", user_id
@@ -651,7 +651,7 @@ async def calculate_strength_scores(
             "period_end": period_end.isoformat(),
         }
 
-        db.table("strength_scores").insert(record_data).execute()
+        db.client.table("strength_scores").insert(record_data).execute()
 
     return {
         "success": True,
@@ -675,7 +675,7 @@ async def get_personal_records(
     pr_service = PersonalRecordsService()
 
     # Get all PRs
-    response = db.table("personal_records").select("*").eq(
+    response = db.client.table("personal_records").select("*").eq(
         "user_id", user_id
     ).order(
         "achieved_at", desc=True
@@ -734,7 +734,7 @@ async def get_exercise_pr_history(
     pr_service = PersonalRecordsService()
 
     # Get all PRs for this exercise
-    response = db.table("personal_records").select("*").eq(
+    response = db.client.table("personal_records").select("*").eq(
         "user_id", user_id
     ).ilike(
         "exercise_name", f"%{exercise}%"
@@ -761,7 +761,7 @@ async def get_scores_overview(
 
     # Get today's readiness
     today = date.today().isoformat()
-    readiness_response = db.table("readiness_scores").select("*").eq(
+    readiness_response = db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
     ).eq(
         "score_date", today
@@ -815,7 +815,7 @@ async def get_scores_overview(
         overall_level = StrengthLevel.BEGINNER
 
     # Get recent PRs
-    pr_response = db.table("personal_records").select("*").eq(
+    pr_response = db.client.table("personal_records").select("*").eq(
         "user_id", user_id
     ).order(
         "achieved_at", desc=True
@@ -848,7 +848,7 @@ async def get_scores_overview(
 
     # Count PRs in last 30 days
     thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
-    pr_count_response = db.table("personal_records").select(
+    pr_count_response = db.client.table("personal_records").select(
         "id", count="exact"
     ).eq(
         "user_id", user_id
@@ -860,7 +860,7 @@ async def get_scores_overview(
 
     # Get 7-day readiness average
     seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
-    readiness_avg_response = db.table("readiness_scores").select(
+    readiness_avg_response = db.client.table("readiness_scores").select(
         "readiness_score"
     ).eq(
         "user_id", user_id
@@ -906,7 +906,7 @@ async def generate_ai_readiness_insight(
 
         # Get today's scheduled workout if any
         today = date.today().isoformat()
-        workout_response = db.table("workouts").select(
+        workout_response = db.client.table("workouts").select(
             "name, type, duration_minutes"
         ).eq(
             "user_id", user_id
@@ -926,7 +926,7 @@ async def generate_ai_readiness_insight(
             }
 
         # Get user profile
-        user_response = db.table("users").select(
+        user_response = db.client.table("users").select(
             "display_name, fitness_level, goals"
         ).eq("id", user_id).maybe_single().execute()
 
@@ -948,7 +948,7 @@ async def generate_ai_readiness_insight(
         )
 
         # Update record with AI insight
-        db.table("readiness_scores").update({
+        db.client.table("readiness_scores").update({
             "ai_insight": ai_recommendation,
         }).eq("id", record_id).execute()
 

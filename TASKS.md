@@ -7,10 +7,10 @@ use multiple agents to run in parallel
 
 <!-- For other app another user said "3 months into the app, after switching from a face-to-face PT. Although dubious to start with, this app has proven to surpass expectations. Super clear to follow, great workouts that change each time (but still in-line with my push, pull, legs cycle). Also love how it adjusts the weights mid set to maximise the workout. Thoroughly recommend." Compare and contrast every part of the review with this flutter app and see waht needs improved and implemented.
 
-Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration should all be implemented as well and Update Features.md
+Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md
  -->
 
-<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests should all be implemented as well and Update Features.md -->
+<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md -->
 
 <!-- Dont foget to make sure backend API, supabase tables, gemini API calls, backend tests are all integrated properly with this changes and Update Features.md -->
 

@@ -66,7 +66,7 @@ async def log_hydration(data: HydrationLogCreate):
             "logged_at": datetime.utcnow().isoformat(),
         }
 
-        result = db.table("hydration_logs").insert(log_data).execute()
+        result = db.client.table("hydration_logs").insert(log_data).execute()
 
         if not result.data:
             raise HTTPException(status_code=500, detail="Failed to create hydration log")
@@ -122,7 +122,7 @@ async def get_daily_hydration(
         end_of_day = datetime.combine(target_date, datetime.max.time())
 
         # Fetch logs for the day
-        result = db.table("hydration_logs").select("*").eq(
+        result = db.client.table("hydration_logs").select("*").eq(
             "user_id", user_id
         ).gte(
             "logged_at", start_of_day.isoformat()
@@ -177,7 +177,7 @@ async def get_hydration_logs(
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
 
-        query = db.table("hydration_logs").select("*").eq(
+        query = db.client.table("hydration_logs").select("*").eq(
             "user_id", user_id
         ).gte(
             "logged_at", start_date.isoformat()
@@ -203,7 +203,7 @@ async def delete_hydration_log(log_id: str):
     try:
         db = get_supabase_db()
 
-        result = db.table("hydration_logs").delete().eq("id", log_id).execute()
+        result = db.client.table("hydration_logs").delete().eq("id", log_id).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Hydration log not found")
@@ -224,7 +224,7 @@ async def get_user_hydration_goal(user_id: str) -> int:
     try:
         db = get_supabase_db()
 
-        result = db.table("user_settings").select("hydration_goal_ml").eq(
+        result = db.client.table("user_settings").select("hydration_goal_ml").eq(
             "user_id", user_id
         ).single().execute()
 
@@ -253,7 +253,7 @@ async def update_hydration_goal(user_id: str, data: HydrationGoalUpdate):
         db = get_supabase_db()
 
         # Upsert into user_settings
-        result = db.table("user_settings").upsert({
+        result = db.client.table("user_settings").upsert({
             "user_id": user_id,
             "hydration_goal_ml": data.daily_goal_ml,
             "updated_at": datetime.utcnow().isoformat(),
