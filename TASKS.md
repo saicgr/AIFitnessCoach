@@ -3,106 +3,408 @@ FUTURE in voting:
 2. Casting to TV
 
 ASAP:
-4. User asked for a quick workout but it only gave them big message but did't generate a workout RETEST
-14. Challenges of the week. Can we do something where the user is allowed to put in a goal for the week like a push it to the limit to see how many push ups or another exercise they can do at the end of their workout week? This could be then recorded and something they can try to beat over time.
 17. Add directly from library
 20. On the rest screen do some kind of words of encouragement featuring the them of the AI coach.
-25. Demo of the whole app
-32. Make it easy to add supersets
 37. Gemini 2.5 flash text to speech for video audio AI generated --maybe just start and end audio
-53.1. Absolute piece of trash. Using coach I set my preferences and it totally ignored those. Then it wouldn't let me create a new plan because it showed I had already exercised today. Those few little baby exercises weren't enough and there's no way to do more under the same plan. It's much better to just use the Daily Strength app and put together your own plan.
-53.2. I love this app! I have used it for two years now. However, I noticed the app no longer shows my improvements or setbacks in my personal best sessions :( It's only showing my new PB. It used to show the reductions or increases in time, both for each exercise and the workout. My app is up to date. Please bring that feature back! it is truly insightful and motivating!
-53.3. Your UI used to be the best, but for some reason you've focused on all the social nonsense rather than just polishing the UI and adding obvious features. Pausing timed exercises? No way. Nice exercise video download flow? Who cares. But a full screen bloated with social features and random workouts instead of a simple "what's the next step on my journey" UI
-53.4. There is no option for substitute if you can not do workouts bc of knee problem.. i can not do squats and lungies but there is no option to tell that or get a supstitute exercise. IMPORTANT
-53.5. Lack of proper workout plans for full gym equipment. Even when you change the targeted muscle group, the warm-up exercises stay exactly the same. The coach also doesn't adjust the plan based on the actual weights I'm using. Overall, it feels like a waste of money. I'd like to request a refund, but there's no option to do that.
-53.6. Would not recommend. When I wanted to extend my subscription, they tried to automatically put me in a more expensive tier. When I contacted support, I just got a generic reply that didn't even address my concern. Very shady business. Canceled now.
-53.7. 1. Two runs (a 5K and 8K) instructed by the coach, completed. However the app got stuck at the run in progress screen, and the only way to end the run is by cancelling the completed run. So I lost two run statistics. This is a very critical bug for me. I noticed there was a new update to the app, After my next run next week, I'll remove this issue if it's fixed. 2. The app should provide a 5-10 secs transition between workout. It does not affect the rep-based workouts. However for time-based workout, the next workout will lose those seconds due to the switch where I will need to pickup the phone and see what the next workout actually is. As a bonus, if you can have the app speak out the name of the next workout, that will save the seconds that we need to look at the phone. 3. I completed this week's coach session. I intended to increase the number of days and available workout tools for next week. Either the app didn't provide me the ability to do that, or I simply overlooked that ability before starting the next week. The app should provide another function to just reset the week's settings.
-53.8. Great app, easy to use. A good range of courses to pick from with a large workout library. I love that a workout is planned for me and adjusts with my fitness level and preferences. I'm really enjoying the explosive calisthenics plan with some skill progressions selected. The app has helped me develop from regular pushups to one arm pushups. Only thing I could ask for would be extra advanced skill progressions like dragon squats, hand stand pushups etc.
-53.9. There's no way to trial the app first before subscribing. I saw there was a current subscription sale but the info in the store didn't say how much so I had to download to get information and you can't open or use the app without creating an account and subscribing. I'm not going to pay $60-75 for an app that could be rubbish as far as I know. I'm also annoyed that I had to give out my email and I can't find anywhere yet to unsubscribe from that.
-53.10. Quitting after 2.5 years of its mostly incremental workouts; too sadistic if you've taken a break. Never boring, I used 'runs' to record speedwalking, and 15 min series for aerobics using legs and core. Several times I got sore when restarting, but this was the worst- after 5 weeks of break I chose 'easier' workout. It gave me 'aura' with 90 squats and added 24 lunges with little upper body. I did half the squats but at 70 yo limped for a week. I'm done. Great potential, cruel to non-athletes.
-53.11. Overall a great app that keeps me on my toes with new routines. I'm giving 3 stars because the GPS for run based exercises isn't reliable. I'm unsure if this is because I live in Canada and I think the app is based in Europe. Ill happily change ny review to 5 stars once the GPS issues are fixed.
-53.12. The 'coach' which is astonishingly overpriced will give you contortionist levels of excersises, warm ups that take half an hour and leave you feel like you've done no real training at all almost every time..... there's much better apps out there for the casual person. Also worth noting that the app is very badly designed, with unclear segments, confusing user interactions, inability to feedback or skip exercises to help teach 'coach' on a proactive basis and a complete lack of voice guidance.
-53.13. you should start to think about your user flexibility and heart endurance before you telling them what to do. and your ai inconsistent also super stupid.
-53.14. Pretty much garbage. The "coach" part - let's face it, the only real reason to get one of these apps and not Youtube - just randomly assigns the same 15 exercises regardless of how much equipment you have at home or difficulty feedback. Warm up is ALWAYS the same, regardless of muscle group you're focusing on. Oh, you want to select a muscle group? Push day? Leg day? Too bad. Do the same 15 as usual, double time. Sucks. Can't even edit a single exercise out of a predetermined coach routine.
-53.15. it's a great app, I would say it can be a little annoying if for example you integrate something else like calisthenics at the start of your workout, ypu then get to a set and cant adjust the amount of sets ypu do, only the reps and weight, sometimes I have nothing left to give and end up trying to complete 5 sets and do not get the best form, psychologically I want to complete the whole thing but it would be nice if you could adjust the amount of sets.
-53.16. I like the app so far but it would be great if I had the option to change the workout while I'm in it for example it told me to do 50 crunches and 10 mountain climbers, I could only do 30 crunches but there was no option to input this anywhere so now it says I did 50 crunches when I didn't it would be great if I could do this so I have an accurate tracker I've only been using it for 2 days so far but I like it and as a beginner to working out it's really helpful
-53.17. strenght journeys are still too focussed on high repetitions rather then progressions and leverage. When an exercise is too easy the app just adds repetitions which makes workouts really boring. It takes really long for it to introduce pullups in a workout despite i can do them and then introduces high rep muscleups without progression or begin with low rep range. Exercises and repetitions are repetative and boring.
-53.18. Great app, lots of variety in the workouts. You can tell it what equipment you have in your home gym and the AI will generate workouts based on that. I wish there were more CrossFit like equipment options like sandbags, medicine balls, slam balls, battle ropes etc. There also isn't an option to annotate that a run was done on a treadmill. Cardio days should have an option to select indoor/outdoor and automatically adjust for whatever is selected. This is a good app, with room to improve.
-53.19. good app overall but needs to give more control over sets and reps. often adds in a workout of 6 sets of 30+ reps which is way too many. It's totally out of progression with what I have been doing, its boring as hell and I can't do it. Also doesn't seem to know what some exercises involve such as considering dumbbell squat thrusters which include shoulders, to be the same as dumbbell squats.
-53.20. While running, gps never functions properly. When garmin is at 2km, freeletics says 5km 🤦🏻‍♀️ also, warmups and cooldowns are so weak now. it used to be very good but now it is inefficient.
-53.21. One of those apps where you answer a bunch of questions to get a "tailored plan", but then hit a paywall to even see how the app works, let alone what your plan might look like. Seriously, a one week trial would not kill your profits, folks.
-53.22. the fact that Spotify stops every 30 seconds while using the app now makes it a 1 star for me. It used to be a good app, but now it's broken.
-53.23. Improvements needed: 1. warm-ups should have static holds early, not intermixed with kinetic moves, I'm trying to gradually increase my heart rate through movement, not stay stock still. 2. intervals shouldn't have any static holds. It's dangerous for your heart to go from burpee box jumps to planks. 3. Please let me change excercises in a workout at my discretion. 4. Let me pause workout without quiting. 5. countdown timer sux plus cheesy applause smh. sounds should be customizable.
-53.24. You can only choose a maximum of five days per week for exercise. Anything more than that requires changing the settings repeatedly. What a terrible UX!!
-53.25. Have to go through the sign up process and create an account before they hit you with the subscription screen. no where in the app store does it mention that the app is subscription only.
-53.26. Definitely not for beginners, even though it’s advertised as suitable for all fitness levels. The problem isn’t the number of reps—it’s the exercises themselves, which are way too difficult for someone who’s never trained before. Sure, you can skip a few of the hardest ones, but only three. Changing settings or recreating workouts doesn’t lower the difficulty at all. If you’re a complete beginner like me, it’s absolutely useless—don’t waste your money.
-53.27. it is not free. After giving all the personal information, it requires subscription to see the personal plan. I uninstalled.
-53.28. The app is very good for creating structured workout plans using all the available equipment. Missing features: * There is no option to extract workout logs in a text format. * The navigation is not so good (multiple clicks can be reduced to single click at number of places) The way images show up is also not smooth, one needs to click 2-3 times.
-53.29. Great workouts that are already planned for you so you can just exercise without thinking of what to do. You can see and feel results if you stay consistent.
-53.30. This app is abysmal for anybody that has any real training experience. Despite containing a lot of exercises, it doesn't let you create and update your own custom workouts. It forces you to use their own programs, which is brain dead if you are anything but a complete beginner. Despite being a workout app, it doesn't let you set more than 5 days of training per week, so my six day split can say bye. Let's be honest, this app is made for people who don't really know anything about fitness.
-53.31. I've been lifetime member since I really like app and I love the Ultimate Strength program. I would love it if it supports split screens so i could also play music apps. I would also love if app has a voice over explaining how to do the exercises and also prompt you of the next exercise..
-53.32. Their class modules, ability to filter for the intensity and equipments you have, and the trainers pushing you to give your best are unparalleled compared to other competitors. All this without any ads and paywalls !
-53.33. Really amazing app, just as easy to use. All the required workouts are there, from beginner to hardcore. It works for a fuss free guide, and best part being no ads, no clumsy interface.
-53.34. I love all the classes offered. My only gripe is once you finish a class, it doesn't show calories burned and I need that so I can input into another app.
+
 54. Test and check for offline mode
 55. Finish Senior Mode
 55.5. older person. trying to get moving. it has been helpful. however I progressed too quickly with the running and strained my calf. I should of made the AI make the running more gradual. having said that I've trained with an adapted program removing lower leg activities.
 55.5 Offline mode aka Tracker Only Mode
-56. Premium Subscriptionwork
+56. Premium Subscription has to work
 56. Strength Score and integration to social
-56.1. Need a FULL PLAN using all strength, nutrition, fasting in mind - can talk more.
-57. Nutrition below:
-57.1 I really like the app & think I've finally started reaching my goals thanks to it. Sometimes I wonder if adding data that takes into account fasting? Marking days that you fast & continue to weigh yourself... if & how that impacts your goals.
-57.2 I would love to track my insulin and blood sugars with this using health connect. Type 1 Diabetic.
-57.3 Okay app that allows you to track your macros as intended. But falls short for its library and ability to input cooked grains. It feels like I'm constantly having to add to it and after paying a premium of $80 it's not worth it especially when other apps have a larger data base and options while also trackin macros and cost way less annually. Also has issues when using the scan feature (ex. Scans well known drink, "Item not found"), I manually search for it and it's the first thing that pops up.
-57.4 Initially enjoyed the polish of this, but I regret paying for Pro. It's too slow and too convoluted to track meals, which is the whole point of the app. We need a way to disable the useless (and incorrect) AI food tips after each meal logged, at least. Between that, the lag when searching for foods, and the various submenus for foods/meals/recipes, it's too much. Even saving common foods as a meal and selecting that every morning feels slower than other apps because of the tracker layout.
-58. For analytics do we have workout bistory per exercise and also per muscle, not sure what the image is sowing like muscle or soemthing else.
-59. Research on improving NEAT for a user.
-60. A 30minute(need to research if this enough for test/calibration) test/callibrate yourself befroe generating first workout(option to skip and option to be available to test yourself in profile to set AI standard). generate onboarding workout based on onboarding questions an parameters and then user logs it after user finishes it , AI would review it and give you review and validayes onboarding answers vs the workout tests result, then it will ask tell you that/ suggests you that you if they want to increase levels based on the worokout test etc and then generate levels and optimize parameters based on it, all those should be saved in settings and supabase tables, also have like istestworkoutonboardingdone yes/no, testworkoutonboarding pass or fail yes or no etc etc. What do you think? Might need a new prompt for test workout as well.
 
-<!-- PRIORITY #1: Make AI Coach Actually Work Like a Coach
-Now THAT'S a clear value prop. That changes everything.
-Replacing Human Fitness Coaches with AI
-What a human coach does:
-Human Coach	Your AI Needs To Do
-Creates personalized program	✅ AI workout generation
-Adjusts based on feedback	❓ Does it adapt when user says "too hard"?
-Checks in weekly	❓ Does AI proactively reach out?
-Answers questions anytime	❓ AI chat working?
-Tracks progress over time	❓ Does AI reference past workouts?
-Holds you accountable	❓ Notifications, streaks?
-Knows your injuries/limitations	✅ User profile
-Motivates when you're slacking	❓ Re-engagement?
-Why people PAY $100-300/month for coaches:
-Accountability - Someone checking if you did the work
-Personalization - Not a generic PDF plan
-Adaptation - Plan changes based on progress/life
-Access - Can ask questions anytime
-Expertise - Knows what to do for YOUR goals
-The Real Retention Question
-Users come back to a human coach because:
-They paid money (sunk cost)
-Coach texts them "Did you workout today?"
-Coach adjusts their plan when they plateau
-They have a relationship
-Your AI needs to replicate this relationship.
-What Makes AI Coach Sticky (Not Trash Talk)
-Feature	Why It Creates Retention
-Proactive check-ins	AI messages YOU first: "How was yesterday's workout?"
-Adaptive plans	AI notices you're struggling and adjusts
-Progress tracking	"You've increased squat weight 20% in 6 weeks"
-Memory	"Last time you said your knee hurt - how is it now?"
-Accountability	"You missed Monday - want to reschedule?"
-The Key Differentiator
-Human coach: $200/month Your AI coach: $10/month (or free) Same personalization, same check-ins, same adaptation - 1/20th the price.
-Question: Is your AI currently able to:
-Remember past conversations and reference them?
-Proactively message users (push notifications)?
-Adapt workouts based on user feedback?
-These are the core features that replace a human coach - not trash talk. -->
+ISSUES:
+6. I get incorrect response/ quick reply for training history 
+7. I get number of days to select in ai onboarding as well, I thought i already answered this in prequiz? Day selecteion is overflowing as well
+8. Overflow in "unlock the full AI experience" up until the "choose your plan"
+9. Workout generation at the start of app is buggy, there is no laoding bar when the wokrout is being generated this needs to be fluid.
+10. Why does the user digithat123@gmail.com see leg workout in the workout name but only sees push-ups?
+11. Need mininmum of 3 exercises per workout session, currently only see pushups.
+12. AI coach insights and AI reasoning behind workouts doesn't generate properly
+13. Why does the user not see videos behind the push-ups?
+14. Refreshing dashboard doesn't show the updated workout?
+15. {"timestamp": "2025-12-31T23:24:54.300956Z", "level": "ERROR", "module": "generation", "message": "[STREAM] Error generating workout 8: No compatible exercises found for focus_area=push, equipment=['Full Gym']", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "057d479f"}
+{"timestamp": "2025-12-31T23:24:54.300853Z", "level": "ERROR", "module": "service", "message": "No compatible exercises found after filtering", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "057d479f"}
+16. response = await self.dispatch_func(request, call_next)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+    raise exc
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_utils.py", line 91, in collapse_excgroups
+    self.gen.throw(typ, value, traceback)
+  File "/opt/render/project/python/Python-3.11.14/lib/python3.11/contextlib.py", line 158, in __exit__
+    with collapse_excgroups():
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+    raise app_exc
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+    response = await call_next(request)
+  File "/opt/render/project/src/backend/main.py", line 42, in dispatch
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    response = await self.dispatch_func(request, call_next)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+    raise exc
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_utils.py", line 91, in collapse_excgroups
+    self.gen.throw(typ, value, traceback)
+  File "/opt/render/project/python/Python-3.11.14/lib/python3.11/contextlib.py", line 158, in __exit__
+    with collapse_excgroups():
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+{"timestamp": "2025-12-31T23:25:23.124464Z", "level": "INFO", "module": "main", "message": "Response: 200 (123ms)", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "4abca365"}
+    await self.app(scope, receive, _send)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    raise exc
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/applications.py", line 123, in __call__
+    await super().__call__(scope, receive, send)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    return await self.app(scope, receive, send)
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    result = await app(  # type: ignore[func-returns-value]
+  File "/opt/render/project/src/.venv/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+Traceback (most recent call last):
+During handling of the above exception, another exception occurred:
+    +------------------------------------
+    | AttributeError: 'NoneType' object has no attribute 'data'
+    |                                                                         ^^^^^^^^^^^^^^^^^^^^^^^
+    |     nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response.data else None
+    |   File "/opt/render/project/src/backend/api/v1/scores.py", line 1467, in get_scores_overview
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     return await dependant.call(**values)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     raw_response = await run_endpoint_function(
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 294, in app
+    |     raise e
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/fastapi/routing.py", line 299, in app
+    |                ^^^^^^^^^^^^^^^^^^^
+    |     response = await func(request)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/routing.py", line 72, in app
+    |     await app(scope, receive, sender)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/routing.py", line 77, in app
+    |     await self.app(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/routing.py", line 297, in handle
+    |     await route.handle(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/routing.py", line 782, in app
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/routing.py", line 762, in __call__
+    |     await app(scope, receive, sender)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_exception_handler.py", line 64, in wrapped_app
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/cors.py", line 83, in __call__
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+    |     raise app_exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     response = await call_next(request)
+    |   File "/opt/render/project/src/backend/main.py", line 119, in dispatch
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     response = await self.dispatch_func(request, call_next)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     raise exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_utils.py", line 91, in collapse_excgroups
+    |     self.gen.throw(typ, value, traceback)
+    |   File "/opt/render/project/python/Python-3.11.14/lib/python3.11/contextlib.py", line 158, in __exit__
+    |     with collapse_excgroups():
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 151, in coro
+    |     raise app_exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 165, in call_next
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |     response = await call_next(request)
+    |   File "/opt/render/project/src/backend/main.py", line 42, in dispatch
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     response = await self.dispatch_func(request, call_next)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 191, in __call__
+    |     raise exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_utils.py", line 91, in collapse_excgroups
+    |     self.gen.throw(typ, value, traceback)
+    |   File "/opt/render/project/python/Python-3.11.14/lib/python3.11/contextlib.py", line 158, in __exit__
+    |     with collapse_excgroups():
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 189, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     raise exc
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/applications.py", line 123, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/fastapi/applications.py", line 1054, in __call__
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     return await self.app(scope, receive, send)
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |     result = await app(  # type: ignore[func-returns-value]
+    |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 419, in run_asgi
+    | Traceback (most recent call last):
+  +-+---------------- 1 ----------------
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  |     raise BaseExceptionGroup(
+  |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 783, in __aexit__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/middleware/base.py", line 190, in __call__
+  |     yield
+  |   File "/opt/render/project/src/.venv/lib/python3.11/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+  + Exception Group Traceback (most recent call last):
+ERROR:    Exception in ASGI application
+INFO:     75.210.98.107:0 - "GET /api/v1/scores/overview?user_id=23e9eeb4-e660-4881-8386-17c097da7068 HTTP/1.1" 500 Internal Server Error
+{"timestamp": "2025-12-31T23:25:23.120311Z", "level": "INFO", "module": "httpx", "message": "HTTP Request: GET https://hpbzfahijszqmgsybuor.supabase.co/rest/v1/weekly_personal_goals?select=%2A&user_id=eq.23e9eeb4-e660-4881-8386-17c097da7068&week_start=eq.2025-12-29 \"HTTP/2 200 OK\"", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "4abca365"}
+{"timestamp": "2025-12-31T23:25:23.002786Z", "level": "INFO", "module": "personal_goals", "message": "Getting goals summary for user: 23e9eeb4-e660-4881-8386-17c097da7068", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "4abca365"}
+{"timestamp": "2025-12-31T23:25:23.001400Z", "level": "INFO", "module": "main", "message": "GET /api/v1/personal-goals/summary?user_id=23e9eeb4-e660-4881-8386-17c097da7068", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "4abca365"}
+{"timestamp": "2025-12-31T23:25:23.000676Z", "level": "ERROR", "module": "main", "message": "Request failed: AttributeError: 'NoneType' object has no attribute 'data' (713ms)", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "4f41a049"}
+17. Analyze with AI is not working
+{"timestamp": "2025-12-31T23:33:01.542053Z", "level": "ERROR", "module": "nutrition", "message": "[STREAM] Food logging error: {'message': 'relation \"recipes\" does not exist', 'code': '42P01', 'hint': None, 'details': None}", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "98ff3c09"}
+{"timestamp": "2025-12-31T23:33:01.541530Z", "level": "INFO", "module": "httpx", "message": "HTTP Request: POST https://hpbzfahijszqmgsybuor.supabase.co/rest/v1/food_logs \"HTTP/2 404 Not Found\"", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "98ff3c09"}
+✅ [Gemini] Parsed 2 food items
+      "amount": "1 can (12 o...
+      "name": "Diet Coke",
+    {
+    },
+      "reason": "Provides good protein for satiety, but its high calorie density and potential high sodium content can hinder weight loss efforts."
+      "goal_alignment": "neutral",
+      "goal_score": 5,
+      "fiber_g": 5.0,
+      "fat_g": 20.0,
+      "carbs_g": 60.0,
+      "protein_g": 40.0,
+      "calories": 550,
+      "amount": "1 serving (approx. 300g)",
+      "name": "Biryani boneless chicken",
+    {
+  "food_items": [
+🔍 [Gemini] Raw response: {
+{"timestamp": "2025-12-31T23:32:48.034873Z", "level": "INFO", "module": "models", "message": "AFC is enabled with max remote calls: 10.", "user_id": "23e9eeb4-e660-4881-8386-17c097da7068", "request_id": "98ff3c09"}
+🔍 [Gemini] Parsing food description (attempt 1/3): I ate biryani boneless chicken and drank 1 can ofdiet coke...
+18. Nutrition onboarding is overflowing
+19. No easy way to log food have to scroll down to log 
+20. AI Coach doesn't work
+21. Need a default layout for the home in app in discover and reset layout for the app home scrren
+22. Cannot seach for friends in the app
+23. AI Onboarding needs a thorough testing for every coach and custom coach(maybe we remove custom coach for now from AI onboarding and make custom coach coming soon?)
+24. Don't see features voting implemented
+25. Don't like that I can't see the name in a single line in home
+26. Fix iverflowing issues, shouldn't it be dynamic? 
 
-<!-- Can you delete data and uninstall and install flutter app? -->
-<!-- compare and contrast web code to flutter code -->
+<!-- NEW FEATURES IN APP -->
+0. Report it to them through the chat message inside the app
+01. Is there anything inflammatory in the food with barcode scanned.
+1. testorsterone, ostegrone, kegel, man and woman hormonal diet and exercises generations and suggestions
+2. Simple Habit tracker (eating healthy etc)
+3. Hi ! I suspect it's complicated and certainly not on the Roadmap but it would be huge if we had training adapted to the women's cycle. Related to Apple health for example. A woman having phases where performance will differ.
+
+But you already do a crazy job and thank you for all that :)
+If you’re not already, make sure you’re manually scheduling deload weeks around the start of your predicted periods. It would be super handy if the app automatically did it for you!
+
+Oura ring integration?
+4. So far the app reminds me of the OG Fitbod app, which was great. Using it while rehabbing a back and hip injury, and look forward to getting some more workouts from it.
+
+A couple questions:
+
+Is there a way to exclude all “jump” exercises;
+
+For specifying my home equipment, I’ve got a squat rack with either a low or high cable option, but the app still recommends exercises for an adjustable cable, like one that can be moved to a center spot;
+
+We might need a new colun saying is jump to like filter out jump exercises
+5. Add variations for exercises, ex quad dominant bulgarian split squat vs glute
+If you lean forward in the exercise you target your glutes more. Having this tracked in the app will show recovery status far more accurately.
+
+It could also be a way to categorize exercises, you have the bss, then you can select the equipment like bands, dumbbells, smith machine, etc along with stance. It could all live under one exercise making the visual display simpler
+6. Can we have a workout calendar like /Users/saichetangrandhe/AIFitnessCoach/image copy.png from gravl
+7. Can we have strength history and strength per muscle like /Users/saichetangrandhe/AIFitnessCoach/image copy 2.png 
+8. Recommendations for how I should use Gravl for hypertrophy
+Would love recommendations for how to best use Gravl given my current practices and goals. Thanks for any tips.
+
+Main goal: building my chest and shoulders, which I’ve indicated in Gravl as muscles to emphasize.
+
+Currently:
+
+- I work out 2-4x per week for 20-40 min.
+
+- I have Gravl set to generate 40 min work outs on a P/P/L. So on some days I only get halfway through somewhat randomly.
+
+Thinking about doing the following:
+
+- 30 minimum upper body 2x during the week, 60min full body 1x during the weekend, so trying to hit chest/shoulders 3x weekly. (Don’t think Gravl has a way to specify a particular training volume, right?)
+
+- Adjusting Gravl’s work outs manually so I start with Chest and shoulder exercises, in case I run out of time so I don’t end up not doing them.
+
+- Marking as “favorite” dumbbell and barbell bench and incline press and flyes? Anything else?
+
+- Setting Gravl to favor “more consistency” vs variety so I can track progress — or would variety be better for hypertrophy?
+
+- Setting Gravl to 8-12 reps, 3-4 sets, and straight sets (not drop or pyramid).
+
+What do you think? Thanks for any advice.
+9. 
+Hi! I'd love to see some options for digital resistance which allows us to track eccentric, chains mode etc
+
+(for machine like gym monster etc)
+
+thanks!
+10. Really enjoying my experience with this app so far, I have a weight bench and some adjustable dumbbells up to 50 pounds each. Along with a few other things like resistance bands. I’m looking for a list of the best bang for buck equipment to have at a home gym that this app can utilize. I think one huge key selling point of gravl is it ability to create workouts with your own equipment, I’m just not sure what equipment is most recommended that it can utilize for the most variation of exercises. If it doesn’t exist, I think they should publish a list of recommended equipment somewhere.
+11. I'd love to see the option for added weight like a weight belt or weighted vest as equipment for things like weighted dips and pull ups. I know I can add the weight manually but the app seems to ignore it overall.
+12. Are there any plans to bring Gravl to Samsung/Galaxy watches (Wear OS)? It would be amazing to track workouts and rest timers directly from the watch instead of relying on the phone screen.
+
+Also, I’ve noticed that if I switch away from the Gravl app on my phone (even briefly), the “break between sets” notification doesn’t go off. The timer runs, but the alert never pops unless the app stays open in the foreground.
+
+Not sure if this is a known limitation or a bug, but wanted to flag it in case others are seeing the same thing.
+13. Why isnt there a calf raise machine option?
+14. Have you guys thought about adding predictions. Like based on your current level and how often/hard you train you should be here at point x in 3 months/6 months/ 1 year.
+15. Please consider implementing a feature that allows data to be exported. It would be nice to view all data from exercises in a spreadsheet form. Seems to me this should be an easy addition to the app.
+16. Hello. I am a recent gravl user.
+
+I would like to put together a routine that combines one day of upper body training with dumbbells and another day of legs training with kettlebells. Is there a way to generate the routines automatically or do I have to manually add each one?
+17. You could set one gym profile with just dumbbells and the other gym Profile with kettlebells then alternate when needed
+18. Is it possible to import your workout into the Whoop strength trainer?
+19. I am trying to create a lateral sled pull and push exercise but I can’t figure out how to recreate it with distance and weight like regular sled push?
+Just seconding that I can’t figure it out either. Only option is distance, but doesn’t include weight.
+20. Is there anyway to make Treadmill a default at the beginning of every workout? I do a 20 minute incline/decline before every workout to open myself up. Or rowing machine, and if can we add like incline value on threadmill?..and add the calorie count
+21. can we add rings? and calisthenic workouts regarding those? Agreed. I use mine for ring dips, rows, pull-ups and pushups.
+22. Double Exercises in a Custom Routine
+Hi, it’s possible to allow the app to double exercises in a custom routine. Like I want to start with curls, do another exercise and return to another set of curls. I don’t see this possibility with the app right now. Nope, I’m talking about repeating same exercise in a different order from a custom workout.
+
+I received a program that I added as custom to measure my progress in the app and I realized that I need as an example start my Quad routine with Leg Extensions and finish with more intensity with another set of Leg Extensions
+23. So i literally just crossed the 1 million lbs volume. But i haven't gotten the badge for it. Can anyone explain to me as to why this is?
+24. Hey u/juliang8, what about creating a “Wrapped 2025” like the trend with the amount of hours working out, top 5 exercises, volume, days working out, calories burned, etc. Just a thought to promote the app with our friends!
+25. I’m fairly new to the app but haven’t figured out a way to move the timer. It’s hard to see if my phone is in a cup holder. Maybe give us an option in a future update to move it if it’s not possible? Thanks!
+26. Hi all, I would like to know this. When I have the reverse pyramid enabled and I do 3 or 4 warmup sets, the last training set is the same as the third/fourth warmup set. Consequently, the last training set has lower reps than the first training set, when in reality it should have higher reps. This doesn't happen when I do 2 or 1 warmup sets.This problem also exists when selecting pyramid and same reps. I think it's a bug. Many thanks.
+27. I am quite a fan of zerchers for a squat that doesn’t fatigue as much as traditional forms.
+
+Could we maybe have them added?
+
+(I suspect they maybe the next fashionable exercise as well… it’s been a while since they were fashionable and someone is bound to pick up on them for content soon) 
+Zercher squats, zercher deadlifts, jefferson deadlifts, hack deadlifts
+
+we need Bugenhagen dlc
+28. I would love for their to be a leaderboard outside of the normal friends leaderboard just to see how I was doing in my work outs comparatively. Maybe an option to turn it on and off as well.
+29. Hello devs,
+
+I’m really liking the app so far, especially the variety of exercises. It keeps the workflow fresh.
+
+However, the Strength Score for Barbell Row (and Barbell Reverse) seems wrong. The scaling doesn't match up with standard strength ratios or my other lifts. It feels like the range for these specific inputs needs an adjustment to be accurate. From what I saw online, it's currently very low for Olympic.
+It's great, because I'm currently 100% filled on Olympic, but if I'm realistic that's seems unlikely :)
+30. How can I track jacobs ladder on this app?
+31. I take post-workout pictures in the app every session. I’m wanting to make one of those videos that flip through progress pictures. Any way to mass download photos?
+32. One thing that I’ve noticed on switching from fitbod, I can’t “carry” my workout from the phone to my watch.
+
+I have to start and continue the routine pushed to my watch, or my phone, but seemingly can’t bounce between the two? Logging will get out of sync, etc. Agreed. I have used other apps like heavy and the watch app is practially useless . I would love to see heart rate and a LOT more so I don’t need to go back to my phine
+33. I have been lifting consistently for about 6 years now. I go 7 days a week, and I am pretty strict on that. My gym is open 24/7/365, and I am in there everyday. Christmas day, Thanksgiving, New Years, doesn't matter. I am in the gym. I have done a handful of workouts over the years, all the common ones. Starting strength, PPL, bro splits for the most part. For the longest, my routine has been chest, back, shoulders, legs, repeat. This app got recommended to me on Tiktok, so I gave it a try and have been using it for the last few weeks.
+
+I do like the variation of workouts, and it really pulls me out of my comfort zone. I haven't ever done things like cable kick backs, hip abductor (birthing machine), Bulgarian split squats, leg raises, hip thrusts ect. The app has me trying new machines, and different ways of working out which has made working out exciting each time I get to the gym. Sure, it's probably not the most scientific routine for building muscle, but who really cares? It's about working hard, being consistent, and having fun doing it. I like how it pushes you to progress on each lift but not just the typical add 5lbs every week. Sometimes it adds reps, sometimes it adds another set, sometimes it adds weight, sometimes it adds a lot of weight and reduces volume. It's a great way to progress without actually feeling like you're progressing if that makes sense. The other thing that was a very big positive, and most wont even recognize this, but it pushes a lot of low back isolation workouts and that is HUGE for keeping a healthy low back. I have a terrible low back, mostly because I spent so much time doing starting strength and PPL routines that have ZERO low back isolation workouts. Those routines expect your back to stay healthy under load without ever doing any low back isolation workouts. I found the cure to my back pain was in back extensions and jefferson curls. I was pleased to see this app have back extensions, weighted back extension machine, and superman's almost every other day. That is very important to target and isolate your low back often to keep it strong for things like deadlifts, squats, and rows.
+
+The only negative I can say is that the app has WAY too much volume for a natty lifter going 7 days a week. I told the app when I first signed up that I go 7 days, and the app recognized that 7 days is a lot and warned me of that, but didn't reduce any volume. There's been a couple days that I had to cut the workouts short as I was close to vomiting. The app probably works best for 3-4 days a week as is. I would like if the AI could tune for people who like to go to the gym every day, but don't want to die doing it.
+
+Anyway, I purchased a year of the app and look forward to seeing how I progress over the next 12 months.
+34. We might both progress differently but I generally workout with my sister, is there a way to sync the apps so we each do the same workout but log out different weights?
+
+Yeah, I do this every week with my buddy.
+
+Open the workout on your phone, then top right the 3 dots icon, “share”.
+
+Will put up a QR code they can scan and it will open the same routine on their phone.
+
+It also automatically changes the weights based on their profile.
+35. Any plans on a family subscription? I would love to be able to track my son’s workouts in addition to mine.
+36. I'm going on an 8 day cruise next month and would love to keep up with training using the ship's gym, but I'm not sure I can justify paying for the wifi package. Will Gravl still work at sea without internet access?
+
+If not, what alternative do you suggest? If it makes a difference, I'll have access to mobile data for the first few hours after boarding before we depart to create a new gym profile etc.
+To be honest, I've never tested for full 8 days. It's designed to work offline but we assume you'll be online at some point in between workouts. That said, I've done multiple workouts in a row in offline mode (as test) and they all synched fine. I'm also not sure what will happen with your subscription. If I have to say you there's probably 50% of it working.
+37. Hi, does the AI-generated routine take into account the shoulder split, anterior, lateral, and posterior deltoids, or does it consider the shoulder as a single muscle? And then I would like to know if a periodization is implemented in the algorithm. Thank you
+
+If you check the recovery section, you can check the estimated fatigue in each section of the shoulder. So yeah, it tracks each one separately.
+
+I haven't used it long enough or deep enough to answer thr second part of your question.
+38. Garmin Support
+39. Big fan! Two things that are must haves:
+
+Break down all muscles like shoulders: biceps - long head short head etc Triceps - long medial short Chest - upper lower mid
+
+Secondly; My gym has pre weighted easy bars - AI doesn’t have the right stuff to progressively up the weights. Would love to have all weights have options like 10,20,30,40,50lb easy bars and pre set machine numbers for customization.
+
+Keep it up team!!!
+40. Have enjoyed it for a while but I think after I switched to a strength low rep program I got a forearm injury. Not gravls fault my wrist stabilizers have been underdeveloped and it was a weak spot. But now that I’m back I have two questions
+
+Can you support user designed workout days with specific workouts and
+
+Can you make it configurable to choose the specific increments of progress (i.e. if you have 3+ RIR in one day you had chest press, limiting the increase in weight/reps to something like 0.25% or .5% increase)
+41. Hello, I created a favorite exercise for my abs. I put 6 exercises in superset. I would like to be able to repeat the superset 4 times, is this possible (if possible with a 1 minute break between each)? Because at the moment I feel like I have to create this one 4 times. THANKS
+42. Question I know that watchos app is in continuous development however a few questions:
+
+Can you replace an exercise from watch?
+
+If I update on phone during a workout ho do I refresh phone since I need to end workout on watch I hear
+
+If I end on phone it doesn't end the watch workout causing inconsistencies.
+
+I did try reading other posts but conflicting Info.
+
+Thank you!
+43. Is there any way to get my body fat percentages to sync to the gravel app? I have a Hume body pod that syncs to my Apple health app but would be sweet if all the metrics in my health could sync to gravl for a better overall picture of progress.. also if workouts in the Apple fitness would show up as well. If anyone knows of a way besides the entering it everyday it would be greatly appreciated:)
+44. I'm looking to complete a Hyrox race next year and wondered if there would be anything in Gravl that could push me in the right direction.
+
+I currently use Runna for run training plans and am training for a marathon so have the running part down with no issues.
+
+I also don't have a Hyrox specific gym nearby so can't do all the specific stations at the moment.
+45. I’m no Hyrox expert, but running is by far the most important part of a Hyrox. A good runner will always beat someone who’s just strong or does lots of HIIT workouts. So in that sense, you’re already in a great spot.
+
+After your marathon, I’d say follow a 10 K-focused running program or I'm pretty sure they even have a Hyrox one but it'll be basically the same thing.
+
+In terms of gym work, I would keep it to 2 sessions per week if you just want to maximize hyrox performance. And maybe practice a little techinique for things like rowing and skiing, although they're not rocket science.
+
+We don’t have a specific Hyrox program in Gravl, mainly because we don’t yet have the built-in capacity to recommend runs, and even the HIIT workouts would need to be structured a bit differently to fully match Hyrox training.
+
+But again, running is 80% of a Hyrox training plan.
+46. First off let me say THANK YOU to the devs for adding Strava integration to Gravl! The best part about this app is that you guys listen to your users and are constantly making the user experience better. Now, I fully recognize and own that this request is petty and nitpicky... but could we add additional detail and better looking content to the Strava Upload?
+
+A couple of examples: When you upload a workout to Strava it just says "GRAVL - Full Body" It would be nice if the upload labeled the workout the same as it does in the app - listing out the muscles worked as the title. It would also be cool if it showed the muscle diagrams of those muscle groups. Lastly I've noticed that the workout details don't include the Kcal data, would be nice to include that.
+
+I came from Fitbod (and I'll never look back...you guys truly make a superior product imo), but I did love the content they included in the Strava upload.
+
+Again, I know this request is getting into the weeds a bit. But thought I'd ask. Thank you for all you guys do!
+47. I can't effectively connect my Samsung health app. It says its connected but nothing i do in gravl ever shows up there and vice versa
+48. Add a video option for the work out summary post at the end! It would be cool to share a video of a set from the work out.
+
+Similar to how exercises show what muscle group is being worked, I'd like to see that for the warm up and stretching.
+49. I think it would be a good idea to add alternative widgets. On iOS at least, the only widgets I have access to are about my strength score, but truthfully I don’t care about that number at all.
+
+Could we get widgets that show different info? Maybe upcoming workout(s), muscle recovery, or even maybe the calendar with blue squares that shows what days you’ve worked out over the last month or two
+50. Maybe I'm asking too much, but is it possible to add a feature so that the additional workouts I log (such as forearms, core, or cardio) are not counted toward my weekly goal?
+
+
+
+
+
+
+
+
+
+
+
+<!-- OTHER APP REVIEWS -->
+1. No customized meals available
+2. I've been using Reshape for a while now, and I must say, it's been a game-changer in my journey towards a healthier lifestyle. One of the standout features for me is the seamless meal tracking. With just a single click, I can effortlessly add my meals using snap or voice input. This not only saves me time but also makes the process incredibly convenient. The AI is remarkably precise and apt, accurately identifying the nutritional content of my meals and providing insightful suggestions.
+3. Very effective in tracking Indian meals. Plus excellent integration with my Samsung Watch.
+4. Great concept, would definitely use it if it syncs with myfitnesspal. The hints you give it are although almost never processed, so needs work there.
+5. Great application for tracking calories, it's very easy and simple compared to the application which I used previously. It would be better if could track the workout like how we do it in the heavy app, like a daily basis tracking. Apart from that it's a great app for tracking calories.
+6. It's not give when capture its not recognised food and asking for describe them why they make advertisement like this
+7. Its a good app to calculate the intake of protein calories etc but after the update the Ai won't recognize the image and it takes so much time to recognize.
+8. Unable to get past the name, birthdate, and biological sex screen. Hitting "next" doesn't move me through the registration process at all. There's no change in the screen.
+9. Please add barcode scanner feature too. It is not available even in premium subscription.
+10. Amazing app 10/10 great how you can track vitamins and minerals although some foods do not count, shows cognition health, bone health ect. Premium is well worth it okay price, only thing I want to see is the vitamins and mineral tracking improve eg copper and iodine I'm having trouble tracking. Would also like to see a way to manually add vitamins and minerals eg from supplements or to manually adjust the vitamins in a food.
+
 
 <!-- startups that can combine tech innovation with strong fundamentals -->
 
@@ -148,22 +450,15 @@ NEED
 4. Need image input to read images from my fitness pal. 
 6. program_variants needs more populated Variants
 7. Create a restore table to record deleted data of user and help restoring data.
-9. Browser notifications?
 11. Need badges like gravl to show accomplishments
 12. AI suggesting workout programs and exercises after hitting add workout -- suggesting agent
 13. AI review onboarding -- onboarding review agent
 14. Water tracking remainders.
-15. Water intake during working out (optional input)
-16. Move from Oauth tindewjobs project to aiftinesscoach progject GCP
-17. Exercise Detail screen
-The final response must include the detailed image prompt, the generated image, and the legal/strategic rationale for its safety.
 18. Warmup and Stretchs in chromaDB
 19. /gymhelp reddit review and ideas for app
 20. Connect fitness apps APIs: samsung health, google health, apple health, garmin health
 21. Celebrity Name - Copyright infringement. Need to change names in DB, maybe add a new column saying alterred names
-22. can the dimensions be dynamic? height , padding, size etc?
-24. Restaurant menu help is an interesting idea
-25. Add a trial timeline what happens when they start the free trial
+24. Restaurant menu help is an interesting idea in nutrition
 25. 3 day free trial?
 26. Paywall 3 separate screens (display yearly price as monthly as well)
 26.1 Why is costs this much?
@@ -171,6 +466,8 @@ The final response must include the detailed image prompt, the generated image, 
 27. Chatgpt launced apps today 23rd Dec 2025. These are some documentations and things knowledge https://developers.openai.com/apps-sdk/quickstart https://openai.com/index/introducing-apps-in-chatgpt/ https://developers.openai.com/apps-sdk/deploy/submission https://developers.openai.com/blog/what-makes-a-great-chatgpt-app/ https://developers.openai.com/apps-sdk/app-submission-guidelines#submitting-your-app https://openai.com/index/developers-can-now-submit-apps-to-chatgpt/
 
 Can you review and resrarch them all and think for scenarios if this app AIFitnessCoach has any use cases you would have review code and everything and then create a document to document if this app can be an app in chatgpt
+
+22. can the dimensions of the app be be dynamic? height, padding, size etc?
 
 FUTURE MAYBE
 1. Modify workout names based on interests, regions, favorite hero, movies etc
