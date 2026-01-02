@@ -10,7 +10,7 @@
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAdminStore, type LiveChat } from '../../store/adminStore';
-import { getActiveLiveChats, getLiveChat } from '../../api/client';
+import { getActiveLiveChats } from '../../api/client';
 import { AdminLayout, ChatQueueItem, ChatMessageList, AdminReplyInput } from '../../components/admin';
 import { sendAdminReply, resolveLiveChat, claimLiveChat } from '../../api/client';
 

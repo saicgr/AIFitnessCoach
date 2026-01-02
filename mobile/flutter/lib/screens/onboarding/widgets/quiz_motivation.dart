@@ -110,12 +110,12 @@ class _MotivationCard extends StatelessWidget {
     final color = motivation['color'] as Color;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
@@ -127,7 +127,7 @@ class _MotivationCard extends StatelessWidget {
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected ? color : cardBorder,
               width: isSelected ? 2 : 1,
@@ -136,7 +136,7 @@ class _MotivationCard extends StatelessWidget {
                 ? [
                     BoxShadow(
                       color: color.withOpacity(0.3),
-                      blurRadius: 12,
+                      blurRadius: 10,
                       spreadRadius: 0,
                     ),
                   ]
@@ -145,34 +145,34 @@ class _MotivationCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withOpacity(0.2)
                       : color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   motivation['icon'] as IconData,
                   color: isSelected ? Colors.white : color,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   motivation['label'] as String,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: isSelected ? Colors.white : textPrimary,
                   ),
                 ),
               ),
               Container(
-                width: 24,
-                height: 24,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
                   shape: BoxShape.circle,
@@ -181,7 +181,7 @@ class _MotivationCard extends StatelessWidget {
                       : Border.all(color: cardBorder, width: 2),
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
                     : null,
               ),
             ],

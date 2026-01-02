@@ -600,6 +600,201 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  void _showSkipConfirmationDialog() {
+    HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: elevatedColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.info_outline, color: AppColors.warning, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Skip Questionnaire?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'We\'ll use these default settings for your workout plan:',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildDefaultValueRow(Icons.flag_outlined, 'Goal', 'Build Muscle', textPrimary, textSecondary, cardBorder),
+              _buildDefaultValueRow(Icons.trending_up, 'Fitness Level', 'Intermediate', textPrimary, textSecondary, cardBorder),
+              _buildDefaultValueRow(Icons.calendar_today, 'Days/Week', '4 days', textPrimary, textSecondary, cardBorder),
+              _buildDefaultValueRow(Icons.fitness_center, 'Equipment', 'Full Gym Access', textPrimary, textSecondary, cardBorder),
+              _buildDefaultValueRow(Icons.route, 'Training Split', 'Push/Pull/Legs', textPrimary, textSecondary, cardBorder),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb_outline, color: AppColors.cyan, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'You can always change these later in Settings',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.cyan,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Go Back',
+              style: TextStyle(color: textSecondary, fontWeight: FontWeight.w500),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // Apply default values before navigating
+              _applyDefaultValues();
+              // Navigate based on auth state
+              final authState = ref.read(authStateProvider);
+              if (authState.user != null) {
+                context.go('/coach-selection');
+              } else {
+                context.go('/sign-in');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text(
+              'Continue with Defaults',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultValueRow(
+    IconData icon,
+    String label,
+    String value,
+    Color textPrimary,
+    Color textSecondary,
+    Color borderColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.purple.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: AppColors.purple, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13, color: textSecondary),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _applyDefaultValues() async {
+    // Apply sensible defaults for skipped quiz
+    final notifier = ref.read(preAuthQuizProvider.notifier);
+
+    // Default goals
+    await notifier.setGoals(['build_muscle']);
+
+    // Default fitness level and experience
+    await notifier.setFitnessLevel('intermediate');
+    await notifier.setTrainingExperience('1_3_years');
+
+    // Default days per week (4 days: Mon, Tue, Thu, Fri)
+    await notifier.setDaysPerWeek(4);
+    await notifier.setWorkoutDays([1, 2, 4, 5]); // Monday, Tuesday, Thursday, Friday
+
+    // Default equipment (full gym)
+    await notifier.setEquipment([
+      'bodyweight',
+      'dumbbells',
+      'barbell',
+      'resistance_bands',
+      'pull_up_bar',
+      'kettlebell',
+      'cable_machine',
+      'full_gym',
+    ]);
+
+    // Default training split
+    await notifier.setTrainingSplit('push_pull_legs');
+
+    // Default motivations
+    await notifier.setMotivations(['look_better', 'feel_stronger']);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -627,16 +822,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 totalQuestions: _totalQuestions,
                 canGoBack: _currentQuestion > 0,
                 onBack: _previousQuestion,
-                onSkip: () {
-                  // If user is already logged in (e.g., came from Start Over),
-                  // skip to coach selection instead of sign-in
-                  final authState = ref.read(authStateProvider);
-                  if (authState.user != null) {
-                    context.go('/coach-selection');
-                  } else {
-                    context.go('/sign-in');
-                  }
+                onBackToWelcome: () {
+                  HapticFeedback.lightImpact();
+                  context.go('/stats-welcome');
                 },
+                onSkip: _showSkipConfirmationDialog,
               ),
               QuizProgressBar(progress: _progress),
               const SizedBox(height: 32),

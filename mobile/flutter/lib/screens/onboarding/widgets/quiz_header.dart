@@ -8,6 +8,8 @@ class QuizHeader extends StatelessWidget {
   final bool canGoBack;
   final VoidCallback onBack;
   final VoidCallback onSkip;
+  /// Optional callback for first question to go back to welcome screen
+  final VoidCallback? onBackToWelcome;
 
   const QuizHeader({
     super.key,
@@ -16,6 +18,7 @@ class QuizHeader extends StatelessWidget {
     required this.canGoBack,
     required this.onBack,
     required this.onSkip,
+    this.onBackToWelcome,
   });
 
   @override
@@ -32,6 +35,15 @@ class QuizHeader extends StatelessWidget {
           if (canGoBack)
             IconButton(
               onPressed: onBack,
+              icon: Icon(
+                Icons.arrow_back_ios_rounded,
+                color: textSecondary,
+                size: 20,
+              ),
+            )
+          else if (onBackToWelcome != null)
+            IconButton(
+              onPressed: onBackToWelcome,
               icon: Icon(
                 Icons.arrow_back_ios_rounded,
                 color: textSecondary,
