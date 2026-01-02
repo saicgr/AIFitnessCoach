@@ -13,10 +13,7 @@ from pydantic import BaseModel, Field, validator
 import uuid
 
 from core.supabase_db import get_supabase_db
-from services.user_context_service import (
-    log_user_activity,
-    log_user_error,
-)
+from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter(prefix="/diabetes", tags=["Diabetes Tracking"])
 
