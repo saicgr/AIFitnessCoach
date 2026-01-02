@@ -29,6 +29,8 @@ elif [ "$RUN_CRITICAL_ONLY" = "true" ]; then
         tests/test_onboarding.py \
         tests/test_health_api.py \
         tests/core/test_weight_utils.py \
+        tests/services/exercise_rag/test_filters.py \
+        tests/test_workout_generation.py \
         -v --tb=short -x -m "not slow" \
         --ignore=tests/test_quick_replies_e2e.py
 else

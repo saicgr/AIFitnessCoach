@@ -275,9 +275,9 @@ class _UpcomingRenewalCard extends StatelessWidget {
     String price;
     String tierName;
     switch (subscriptionState.tier) {
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         price = '\$79.99/year';
-        tierName = 'Ultra';
+        tierName = 'Premium Plus';
         break;
       case SubscriptionTier.premium:
         price = '\$47.99/year';

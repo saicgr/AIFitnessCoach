@@ -195,12 +195,12 @@ def filter_by_equipment(
     """
     equipment_lower = [eq.lower() for eq in user_equipment]
 
-    # Expand general equipment options
-    if "full gym" in equipment_lower:
+    # Expand general equipment options (use 'any' to match partial strings like "full gym access")
+    if any("full gym" in eq for eq in equipment_lower):
         equipment_lower = FULL_GYM_EQUIPMENT
-    elif "home gym" in equipment_lower:
+    elif any("home gym" in eq for eq in equipment_lower):
         equipment_lower = HOME_GYM_EQUIPMENT
-    elif "bodyweight only" in equipment_lower:
+    elif any("bodyweight only" in eq for eq in equipment_lower):
         equipment_lower = ["body weight", "bodyweight", "none"]
     else:
         # Always include bodyweight as an option

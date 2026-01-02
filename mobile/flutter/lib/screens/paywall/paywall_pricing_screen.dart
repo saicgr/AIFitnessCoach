@@ -37,7 +37,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final subscriptionState = ref.watch(subscriptionProvider);
     final currentTier = subscriptionState.tier;
     final isSubscribed = currentTier != SubscriptionTier.free;
-    final hasTrial = _selectedBillingCycle == 'yearly';
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -84,7 +83,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 ),
               ),
 
-              // Scrollable content
+              // Scrollable content - CLEAN, PAYMENT FIRST DESIGN
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -101,35 +100,47 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         const SizedBox(height: 16),
                       ],
 
-                      // "Your Plan is Ready" Banner - Show first for non-subscribers
-                      if (!isSubscribed && widget.showPlanPreview)
-                        _buildPlanReadyBanner(colors),
-
-                      // Title
-                      Text(
-                        isSubscribed ? 'Change Plan' : 'Choose Your Plan',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isSubscribed
-                          ? 'Upgrade, downgrade, or cancel anytime'
-                          : 'Your personalized plan is ready! Preview it free or subscribe for full access.',
-                        style: TextStyle(fontSize: 14, color: colors.textSecondary),
-                        textAlign: TextAlign.center,
-                      ),
-
-                      // Free Features Section - Show what users get without paying
+                      // Simple title
                       if (!isSubscribed) ...[
-                        const SizedBox(height: 16),
-                        _buildFreeFeaturesSection(colors),
+                        Text(
+                          'Start your fitness journey',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.green, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              '7-day free trial',
+                              style: TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(Icons.cancel_outlined, color: colors.textSecondary, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Cancel anytime',
+                              style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ] else ...[
+                        Text(
+                          'Change Plan',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                       ],
-
-                      const SizedBox(height: 16),
 
                       // Billing cycle tabs (Yearly / Monthly / Lifetime)
                       Container(
@@ -142,7 +153,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           children: [
                             _BillingTab(
                               label: 'Yearly',
-                              sublabel: '7-day trial',
+                              sublabel: 'Best value',
                               isSelected: _selectedBillingCycle == 'yearly',
                               onTap: () => setState(() {
                                 _selectedBillingCycle = 'yearly';
@@ -175,7 +186,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
 
                       // Plan options based on selected billing cycle
                       if (_selectedBillingCycle == 'lifetime')
@@ -201,9 +212,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                   period: '/mo',
                                   billedAs: '\$79.99/year',
                                   features: const [
-                                    '∞ Unlimited AI conversations',
-                                    '∞ Unlimited food scans',
-                                    '⚡ Priority responses',
+                                    '∞ Unlimited AI coach',
+                                    '∞ Unlimited workouts',
+                                    '📸 Food photo scanning',
                                     '📊 Advanced analytics',
                                   ],
                                   isSelected: _selectedPlan == 'premium_plus_yearly',
@@ -222,9 +233,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 period: '/mo',
                                 billedAs: 'Billed monthly',
                                 features: const [
-                                  '∞ Unlimited AI conversations',
-                                  '∞ Unlimited food scans',
-                                  '⚡ Priority responses',
+                                  '∞ Unlimited AI coach',
+                                  '∞ Unlimited workouts',
+                                  '📸 Food photo scanning',
                                   '📊 Advanced analytics',
                                 ],
                                 isSelected: _selectedPlan == 'premium_plus_monthly',
@@ -245,9 +256,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               period: '/mo',
                               billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
                               features: const [
-                                '100 AI conversations/day',
-                                '50 food scans/day',
-                                '🏋️ Personalized workouts',
+                                '100 AI chats/day',
+                                'Daily workouts',
+                                '5 food scans/day',
                               ],
                               isSelected: _selectedPlan == (_selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
                               onTap: () => setState(() => _selectedPlan = _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
@@ -258,122 +269,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Enhanced trial badge for new users - more prominent
-                      if (!isSubscribed && hasTrial)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.green.withOpacity(0.15),
-                                Colors.green.withOpacity(0.08),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Text(
-                                      '7-DAY FREE TRIAL',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // Use Wrap to prevent overflow on small screens
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 4,
-                                runSpacing: 6,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_circle, color: Colors.green, size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Nothing due today',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    '•',
-                                    style: TextStyle(color: Colors.green.withOpacity(0.5)),
-                                  ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.cancel_outlined, color: Colors.green, size: 16),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Cancel anytime',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      // App Store pricing note
-                      if (!isSubscribed)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: GestureDetector(
-                            onTap: () => _showAppStorePricingInfo(context, colors),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 14,
-                                  color: colors.textMuted,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'These prices match the App Store',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colors.textMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                      const SizedBox(height: 12),
-
-                      // Action button
+                      // Main action button
                       SizedBox(
                         width: double.infinity,
                         height: 54,
@@ -405,94 +301,91 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 10),
-
-                      // Why does it cost this much?
-                      GestureDetector(
-                        onTap: () => _showWhyCostSheet(context, colors),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: colors.cardBorder),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Why does it cost this much?',
-                                style: TextStyle(fontSize: 14, color: colors.textPrimary),
-                              ),
-                              Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Continue Free button - VERY visible for new users (addressing complaint)
-                      if (!isSubscribed)
+                      // Continue Free button - clear and visible
+                      if (!isSubscribed) ...[
+                        const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
-                          height: 52,
-                          child: OutlinedButton(
+                          height: 48,
+                          child: TextButton(
                             onPressed: () => _skipToFree(context, ref),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.green, width: 2),
+                            style: TextButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: colors.cardBorder),
                               ),
-                              backgroundColor: Colors.green.withOpacity(0.08),
                             ),
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      size: 20,
-                                      color: Colors.green,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Continue Free',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    'No card needed',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              'Continue Free',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textSecondary,
+                              ),
                             ),
                           ),
                         ),
+                      ],
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 16),
+
+                      // Preview options - compact row
+                      if (!isSubscribed && widget.showPlanPreview)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => context.push('/plan-preview'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: colors.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: colors.cardBorder),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.visibility_outlined, size: 18, color: colors.cyan),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Preview Plan',
+                                        style: TextStyle(fontSize: 13, color: colors.cyan, fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => context.push('/demo-workout'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: colors.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: colors.cardBorder),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.play_circle_outline, size: 18, color: Colors.green),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Try Workout',
+                                        style: TextStyle(fontSize: 13, color: Colors.green, fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 16),
 
                       // Footer links
                       Row(
@@ -502,53 +395,45 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                             onTap: () => _restorePurchases(context, ref),
                             child: Text(
                               'Restore',
-                              style: TextStyle(fontSize: 14, color: colors.cyan),
+                              style: TextStyle(fontSize: 13, color: colors.cyan),
                             ),
                           ),
-                          if (isSubscribed) ...[
-                            Text(' • ', style: TextStyle(color: colors.textSecondary)),
-                            GestureDetector(
-                              onTap: () => _navigateToSubscriptionHistory(context),
-                              child: Text(
-                                'History',
-                                style: TextStyle(fontSize: 14, color: colors.cyan),
-                              ),
-                            ),
-                          ],
-                          if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
-                            Text(' • ', style: TextStyle(color: colors.textSecondary)),
-                            GestureDetector(
-                              onTap: () => _openSubscriptionSettings(),
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 14, color: Colors.red.shade400),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Legal links
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                          Text(' • ', style: TextStyle(color: colors.textMuted)),
                           GestureDetector(
                             onTap: () => _openTermsOfService(),
                             child: Text(
-                              'Terms of Service',
-                              style: TextStyle(fontSize: 12, color: colors.textMuted),
+                              'Terms',
+                              style: TextStyle(fontSize: 13, color: colors.textMuted),
                             ),
                           ),
                           Text(' • ', style: TextStyle(color: colors.textMuted)),
                           GestureDetector(
                             onTap: () => _openPrivacyPolicy(),
                             child: Text(
-                              'Privacy Policy',
-                              style: TextStyle(fontSize: 12, color: colors.textMuted),
+                              'Privacy',
+                              style: TextStyle(fontSize: 13, color: colors.textMuted),
                             ),
                           ),
+                          if (isSubscribed) ...[
+                            Text(' • ', style: TextStyle(color: colors.textMuted)),
+                            GestureDetector(
+                              onTap: () => _navigateToSubscriptionHistory(context),
+                              child: Text(
+                                'History',
+                                style: TextStyle(fontSize: 13, color: colors.cyan),
+                              ),
+                            ),
+                          ],
+                          if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
+                            Text(' • ', style: TextStyle(color: colors.textMuted)),
+                            GestureDetector(
+                              onTap: () => _openSubscriptionSettings(),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(fontSize: 13, color: Colors.red.shade400),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
 
@@ -848,305 +733,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
   }
 
-  void _showAppStorePricingInfo(BuildContext context, ThemeColors colors) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(24),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: colors.elevated,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: colors.cardBorder),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: colors.cyan.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.verified,
-                  color: colors.cyan,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Transparent Pricing',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'All prices shown here match exactly what you see in the App Store or Google Play Store. No hidden fees.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colors.textSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    _infoRow(Icons.cancel_outlined, 'Cancel anytime from device settings', colors),
-                    const SizedBox(height: 8),
-                    _infoRow(Icons.schedule, '7-day free trial for yearly plans', colors),
-                    const SizedBox(height: 8),
-                    _infoRow(Icons.lock_outline, 'Secure payment via Apple/Google', colors),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.cyan,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Got it!',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text, ThemeColors colors) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: colors.cyan),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 13, color: colors.textPrimary),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Banner showing "Your Plan is Ready" with preview button
-  Widget _buildPlanReadyBanner(ThemeColors colors) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.cyan.withOpacity(0.15),
-            Colors.green.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cyan.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          // Icon and title
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: colors.cyan.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.auto_awesome,
-                  color: colors.cyan,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your Personalized Plan is Ready!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'See your full 4-week workout plan before subscribing',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Preview button - most prominent
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () => context.push('/plan-preview'),
-              icon: const Icon(Icons.visibility_outlined, size: 20),
-              label: const Text(
-                'Preview Your Plan Free',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.cyan,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Try one workout free button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/demo-workout'),
-              icon: Icon(Icons.play_circle_outline, size: 20, color: Colors.green),
-              label: Text(
-                'Try One Workout Free',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.green,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.green.withOpacity(0.5)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Section showing what users get for FREE
-  Widget _buildFreeFeaturesSection(ThemeColors colors) {
-    final freeFeatures = [
-      {'icon': Icons.fitness_center, 'text': 'Full workout plan preview'},
-      {'icon': Icons.play_circle_outline, 'text': 'Try 1 workout free'},
-      {'icon': Icons.search, 'text': 'Browse 1700+ exercises'},
-      {'icon': Icons.schedule, 'text': 'See your weekly schedule'},
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'What You Get Free',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: freeFeatures.map((feature) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    feature['icon'] as IconData,
-                    size: 14,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    feature['text'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showWhyCostSheet(BuildContext context, ThemeColors colors) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _WhyCostSheet(colors: colors),
-    );
-  }
 }
 
 /// Rainbow animated border for recommended plan
@@ -1604,132 +1190,6 @@ class _LifetimePlanCard extends StatelessWidget {
   }
 }
 
-/// Bottom sheet explaining pricing
-class _WhyCostSheet extends StatelessWidget {
-  final ThemeColors colors;
-
-  const _WhyCostSheet({required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.textSecondary.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Developer photo placeholder
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: colors.cyan.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person,
-              size: 35,
-              color: colors.cyan,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Title
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Hi, I'm the developer ",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const Text('👋', style: TextStyle(fontSize: 20)),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Text(
-            "I wanted to share why your subscription matters.",
-            style: TextStyle(
-              fontSize: 15,
-              color: colors.textPrimary,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            "Running advanced AI for personalized workouts, nutrition analysis, and real-time coaching requires significant infrastructure. Your subscription directly supports server costs, AI compute, and continuous improvements.",
-            style: TextStyle(
-              fontSize: 15,
-              color: colors.textSecondary,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            "With your support, we're working on adding professional workout videos from real trainers and expanding our exercise library. Your subscription helps make this vision a reality! 💪",
-            style: TextStyle(
-              fontSize: 15,
-              color: colors.textPrimary,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.cyan,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Got it!',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
 /// Current plan status card
 class _CurrentPlanCard extends StatelessWidget {
   final SubscriptionTier tier;
@@ -2090,7 +1550,6 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDowngrade = priceDiff < 0;
     final accentColor = isUpgrade ? colors.cyan : Colors.orange;
 
     return Dialog(

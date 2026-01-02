@@ -72,39 +72,52 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
                     const SizedBox(height: 40),
 
-                    // Feature list
+                    // Feature list - Key differentiators from FEATURES.md
                     _FeatureItem(
-                      icon: Icons.chat_bubble_outline,
+                      icon: Icons.smart_toy_outlined,
                       iconColor: colors.cyan,
-                      title: 'Unlimited AI conversations',
+                      title: '100+ AI coach messages daily',
+                      subtitle: 'Personal trainer in your pocket',
                       colors: colors,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
+                    _FeatureItem(
+                      icon: Icons.auto_fix_high,
+                      iconColor: colors.purple,
+                      title: 'Unlimited workout generation',
+                      subtitle: 'Custom plans for 23+ equipment types',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 16),
                     _FeatureItem(
                       icon: Icons.camera_alt_outlined,
                       iconColor: colors.orange,
                       title: 'AI food photo scanning',
+                      subtitle: 'Instant nutrition from any meal',
                       colors: colors,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _FeatureItem(
-                      icon: Icons.fitness_center,
-                      iconColor: colors.purple,
-                      title: 'Personalized workout plans',
-                      colors: colors,
-                    ),
-                    const SizedBox(height: 20),
-                    _FeatureItem(
-                      icon: Icons.insights,
+                      icon: Icons.library_books_outlined,
                       iconColor: colors.success,
-                      title: 'Progress tracking & analytics',
+                      title: '1,700+ exercise library',
+                      subtitle: 'Video demos & muscle targeting',
                       colors: colors,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     _FeatureItem(
-                      icon: Icons.emoji_events_outlined,
+                      icon: Icons.trending_up,
                       iconColor: Colors.amber,
-                      title: 'Achievements & streaks',
+                      title: 'PR tracking & 1RM calculator',
+                      subtitle: 'Track strength progress over time',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 16),
+                    _FeatureItem(
+                      icon: Icons.healing_outlined,
+                      iconColor: colors.coral,
+                      title: 'Injury-aware adaptations',
+                      subtitle: 'Auto-adjust for injuries & recovery',
                       colors: colors,
                     ),
 
@@ -157,12 +170,14 @@ class _FeatureItem extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
+  final String? subtitle;
   final ThemeColors colors;
 
   const _FeatureItem({
     required this.icon,
     required this.iconColor,
     required this.title,
+    this.subtitle,
     required this.colors,
   });
 
@@ -171,8 +186,8 @@ class _FeatureItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: iconColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
@@ -180,18 +195,33 @@ class _FeatureItem extends StatelessWidget {
           child: Icon(
             icon,
             color: iconColor,
-            size: 24,
+            size: 22,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w500,
-              color: colors.textPrimary,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],

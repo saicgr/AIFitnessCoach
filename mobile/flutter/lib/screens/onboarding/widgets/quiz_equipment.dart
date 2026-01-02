@@ -51,6 +51,13 @@ class QuizEquipment extends StatelessWidget {
 
   static const _environments = [
     _WorkoutEnvironmentOption(
+      id: 'commercial_gym',
+      label: 'Gym',
+      emoji: '🏢',
+      description: 'Full gym with machines, cables, and free weights',
+      defaultEquipment: ['full_gym'],
+    ),
+    _WorkoutEnvironmentOption(
       id: 'home',
       label: 'Home',
       emoji: '🏡',
@@ -63,13 +70,6 @@ class QuizEquipment extends StatelessWidget {
       emoji: '🏠',
       description: 'Dedicated space with dumbbells, barbell, bench',
       defaultEquipment: ['bodyweight', 'dumbbells', 'barbell', 'resistance_bands', 'pull_up_bar', 'kettlebell'],
-    ),
-    _WorkoutEnvironmentOption(
-      id: 'commercial_gym',
-      label: 'Gym',
-      emoji: '🏢',
-      description: 'Full gym with machines, cables, and free weights',
-      defaultEquipment: ['full_gym'],
     ),
     _WorkoutEnvironmentOption(
       id: 'hotel',
@@ -191,13 +191,13 @@ class QuizEquipment extends StatelessWidget {
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       gradient: isSelected ? AppColors.cyanGradient : null,
                       color: isSelected
                           ? null
                           : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.cyan
@@ -210,13 +210,13 @@ class QuizEquipment extends StatelessWidget {
                       children: [
                         Text(
                           env.emoji,
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 13),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Text(
                           env.label,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                             color: isSelected ? Colors.white : textPrimary,
                           ),

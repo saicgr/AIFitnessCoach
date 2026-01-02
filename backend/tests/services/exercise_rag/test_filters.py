@@ -104,6 +104,32 @@ class TestFilterByEquipment:
         assert filter_by_equipment("cable machine", ["Full Gym"], "Cable Fly") is True
         assert filter_by_equipment("dumbbell", ["Full Gym"], "Dumbbell Curl") is True
 
+    def test_full_gym_access_includes_all(self):
+        """Test 'Full Gym Access' (with Access suffix) includes all equipment.
+
+        This tests the bug fix where 'Full Gym Access' was not matching because
+        the check was looking for exact 'full gym' string instead of substring.
+        """
+        from services.exercise_rag.filters import filter_by_equipment
+
+        # This is the exact equipment string that caused the production bug
+        assert filter_by_equipment("barbell", ["Full Gym Access"], "Barbell Press") is True
+        assert filter_by_equipment("cable machine", ["Full Gym Access"], "Cable Fly") is True
+        assert filter_by_equipment("dumbbell", ["Full Gym Access"], "Dumbbell Curl") is True
+        assert filter_by_equipment("bodyweight", ["Full Gym Access"], "Push-up") is True
+
+    def test_full_gym_mixed_with_other_equipment(self):
+        """Test Full Gym Access works when mixed with other equipment in list."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        # Real-world case: user selects multiple equipment types including Full Gym Access
+        user_equipment = ['Bodyweight Only', 'Dumbbells', 'Barbell', 'Resistance Bands',
+                         'Pull-up Bar', 'Kettlebell', 'Cable Machine', 'Full Gym Access']
+
+        assert filter_by_equipment("barbell", user_equipment, "Barbell Squat") is True
+        assert filter_by_equipment("cable machine", user_equipment, "Cable Row") is True
+        assert filter_by_equipment("leg press", user_equipment, "Leg Press") is True
+
     def test_bodyweight_always_allowed(self):
         """Test bodyweight exercises are always allowed."""
         from services.exercise_rag.filters import filter_by_equipment

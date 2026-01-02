@@ -532,18 +532,19 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
-  /// Build a compact pricing transparency section showing key info before signup
+  /// Build a compact pricing transparency section showing all 4 tiers before signup
   Widget _buildPricingTransparencySection(bool isDark) {
     final cardColor = isDark ? AppColors.elevated : Colors.white;
     final borderColor = isDark
         ? AppColors.cardBorder.withOpacity(0.3)
         : AppColors.cyan.withOpacity(0.15);
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -581,43 +582,322 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               Text(
                 'No credit card needed',
                 style: TextStyle(
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  color: textSecondary,
                   fontSize: 10,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Pricing tiles row
+          const SizedBox(height: 10),
+
+          // All 4 tiers in 2x2 grid
           Row(
             children: [
+              // Free tier
               Expanded(
-                child: _PricingInfoTile(
-                  label: 'Free Plan',
+                child: _CompactTierCard(
+                  tierName: 'Free',
                   price: '\$0',
-                  period: 'forever',
+                  period: '/forever',
+                  highlight: 'Start here',
                   accentColor: AppColors.teal,
                   isDark: isDark,
-                  features: ['10 chats/day', '4 workouts/mo'],
+                  icon: Icons.person_outline,
                 ),
               ),
               const SizedBox(width: 6),
+              // Premium tier
               Expanded(
-                child: _PricingInfoTile(
-                  label: 'Premium',
-                  price: 'from \$4',
-                  period: '/month',
-                  accentColor: AppColors.purple,
+                child: _CompactTierCard(
+                  tierName: 'Premium',
+                  price: '\$4',
+                  period: '/mo',
+                  highlight: '7-day trial',
+                  accentColor: AppColors.cyan,
                   isDark: isDark,
-                  features: ['Unlimited', '7-day trial'],
+                  icon: Icons.workspace_premium,
                   isPopular: true,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              // Premium Plus tier
+              Expanded(
+                child: _CompactTierCard(
+                  tierName: 'Premium Plus',
+                  price: '\$6.67',
+                  period: '/mo',
+                  highlight: 'Unlimited',
+                  accentColor: AppColors.purple,
+                  isDark: isDark,
+                  icon: Icons.diamond_outlined,
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Lifetime tier
+              Expanded(
+                child: _CompactTierCard(
+                  tierName: 'Lifetime',
+                  price: '\$99.99',
+                  period: 'once',
+                  highlight: 'Best value',
+                  accentColor: const Color(0xFFFFB800), // Gold
+                  isDark: isDark,
+                  icon: Icons.all_inclusive,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Key features comparison row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.glassSurface.withOpacity(0.5)
+                  : AppColorsLight.glassSurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _FeatureComparisonItem(
+                  label: 'AI Chats',
+                  free: '10/day',
+                  paid: '100+',
+                  isDark: isDark,
+                ),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: borderColor,
+                ),
+                _FeatureComparisonItem(
+                  label: 'Workouts',
+                  free: '4/mo',
+                  paid: '∞',
+                  isDark: isDark,
+                ),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: borderColor,
+                ),
+                _FeatureComparisonItem(
+                  label: 'Food Scans',
+                  free: '—',
+                  paid: '10/day',
+                  isDark: isDark,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     ).animate().fadeIn(delay: 400.ms);
+  }
+
+  /// Show a bottom sheet with tier-by-tier feature comparison
+  void _showFeaturesBottomSheet(BuildContext context, bool isDark) {
+    final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: borderColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.compare_arrows, color: AppColors.cyan, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Compare Plans',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              // Tier header row
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.glassSurface.withOpacity(0.3)
+                      : AppColorsLight.glassSurface,
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(flex: 3, child: SizedBox()),
+                    _TierHeaderCell(name: 'Free', color: AppColors.teal, isDark: isDark),
+                    _TierHeaderCell(name: 'Premium', color: AppColors.cyan, isDark: isDark),
+                    _TierHeaderCell(name: 'Plus', color: AppColors.purple, isDark: isDark),
+                    _TierHeaderCell(name: 'Lifetime', color: const Color(0xFFFFB800), isDark: isDark),
+                  ],
+                ),
+              ),
+              // Features list
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _FeatureRow(
+                      feature: 'AI Chat Messages',
+                      values: ['10/day', '30/day', '100+', '100+'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Workout Generation',
+                      values: ['4/mo', 'Daily', '∞', '∞'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Food Photo Scans',
+                      values: ['—', '5/day', '10/day', '10/day'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Chat History',
+                      values: ['7 days', '90 days', 'Forever', 'Forever'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Exercise Library',
+                      values: ['1,700+', '1,700+', '1,700+', '1,700+'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Macro Tracking',
+                      values: ['Calories', 'Full', 'Full', 'Full'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'PR Tracking',
+                      values: ['—', '✓', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Favorite Workouts',
+                      values: ['3', '5', '∞', '∞'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Edit Workouts',
+                      values: ['—', '✓', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Shareable Links',
+                      values: ['—', '—', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Leaderboards',
+                      values: ['—', '—', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Priority Support',
+                      values: ['—', '—', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Advanced Analytics',
+                      values: ['—', '✓', '✓', '✓'],
+                      isDark: isDark,
+                    ),
+                    _FeatureRow(
+                      feature: 'Ads',
+                      values: ['Yes', 'No', 'No', 'No'],
+                      isDark: isDark,
+                      isNegative: true,
+                    ),
+                    const SizedBox(height: 16),
+                    // Pricing summary
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.cyan.withOpacity(0.1),
+                            AppColors.purple.withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Monthly Pricing',
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _PriceSummaryChip(price: '\$0', label: 'Free', color: AppColors.teal),
+                              _PriceSummaryChip(price: '\$4', label: 'Premium', color: AppColors.cyan),
+                              _PriceSummaryChip(price: '\$6.67', label: 'Plus', color: AppColors.purple),
+                              _PriceSummaryChip(price: '\$99.99', label: 'Once', color: const Color(0xFFFFB800)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomSection(bool isDark) {
@@ -658,10 +938,31 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Pricing',
+                  'Full Pricing',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.cyan,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+              // All Features link
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _showFeaturesBottomSheet(context, isDark);
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'All Features',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.purple,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -687,24 +988,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   ),
                 ),
               ),
-              // Guest Mode disabled - Coming Soon based on user feedback
-              // Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
-              // TextButton(
-              //   onPressed: _continueAsGuest,
-              //   style: TextButton.styleFrom(
-              //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              //     minimumSize: Size.zero,
-              //     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              //   ),
-              //   child: Text(
-              //     'Guest Mode',
-              //     style: TextStyle(
-              //       fontSize: 13,
-              //       color: AppColors.purple,
-              //       fontWeight: FontWeight.w500,
-              //     ),
-              //   ),
-              // ),
             ],
           ).animate().fadeIn(delay: 600.ms),
 
@@ -1264,76 +1547,85 @@ class _FillingDotPainter extends CustomPainter {
   }
 }
 
-/// Compact pricing info tile for the welcome screen
-class _PricingInfoTile extends StatelessWidget {
-  final String label;
+/// Compact tier card for the welcome screen 2x2 grid
+class _CompactTierCard extends StatelessWidget {
+  final String tierName;
   final String price;
   final String period;
+  final String highlight;
   final Color accentColor;
   final bool isDark;
-  final List<String> features;
+  final IconData icon;
   final bool isPopular;
 
-  const _PricingInfoTile({
-    required this.label,
+  const _CompactTierCard({
+    required this.tierName,
     required this.price,
     required this.period,
+    required this.highlight,
     required this.accentColor,
     required this.isDark,
-    this.features = const [],
+    required this.icon,
     this.isPopular = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.08),
+        color: accentColor.withOpacity(0.06),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: accentColor.withOpacity(0.2),
+          color: accentColor.withOpacity(isPopular ? 0.4 : 0.2),
           width: isPopular ? 1.5 : 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Label with optional popular badge
+          // Tier name with icon and optional badge
           Row(
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
+              Icon(icon, size: 12, color: accentColor),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  tierName,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (isPopular) ...[
-                const SizedBox(width: 3),
+              if (isPopular)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'POPULAR',
+                    '★',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 6,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 8,
                     ),
                   ),
                 ),
-              ],
             ],
           ),
-          const SizedBox(height: 2),
-          // Price
+          const SizedBox(height: 4),
+          // Price row
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
                 price,
@@ -1343,30 +1635,237 @@ class _PricingInfoTile extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(width: 2),
               Text(
                 period,
                 style: TextStyle(
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  color: textSecondary,
                   fontSize: 9,
                 ),
               ),
             ],
           ),
-          // Features - show as single line
-          if (features.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              features.join(' • '),
-              style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                fontSize: 8,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          const SizedBox(height: 2),
+          // Highlight text
+          Text(
+            highlight,
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 8,
             ),
-          ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Feature comparison item for the summary row
+class _FeatureComparisonItem extends StatelessWidget {
+  final String label;
+  final String free;
+  final String paid;
+  final bool isDark;
+
+  const _FeatureComparisonItem({
+    required this.label,
+    required this.free,
+    required this.paid,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: textSecondary,
+            fontSize: 8,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              free,
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 9,
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(Icons.arrow_forward, size: 8, color: textSecondary),
+            const SizedBox(width: 3),
+            Text(
+              paid,
+              style: TextStyle(
+                color: AppColors.cyan,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Tier header cell for the features comparison bottom sheet
+class _TierHeaderCell extends StatelessWidget {
+  final String name;
+  final Color color;
+  final bool isDark;
+
+  const _TierHeaderCell({
+    required this.name,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: 2,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          name,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+/// Feature row for the comparison table
+class _FeatureRow extends StatelessWidget {
+  final String feature;
+  final List<String> values; // [Free, Premium, Plus, Lifetime]
+  final bool isDark;
+  final bool isNegative;
+
+  const _FeatureRow({
+    required this.feature,
+    required this.values,
+    required this.isDark,
+    this.isNegative = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final tierColors = [
+      AppColors.teal,
+      AppColors.cyan,
+      AppColors.purple,
+      const Color(0xFFFFB800),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: borderColor.withOpacity(0.3)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              feature,
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          ...List.generate(values.length, (index) {
+            final value = values[index];
+            final isCheck = value == '✓';
+            final isDash = value == '—';
+            final isNo = value == 'No';
+            final isYes = value == 'Yes' && isNegative;
+
+            Color valueColor;
+            if (isCheck) {
+              valueColor = tierColors[index];
+            } else if (isDash || (isYes && isNegative)) {
+              valueColor = textSecondary.withOpacity(0.5);
+            } else if (isNo && isNegative) {
+              valueColor = tierColors[index];
+            } else {
+              valueColor = textSecondary;
+            }
+
+            return Expanded(
+              flex: 2,
+              child: Text(
+                isCheck ? '✓' : value,
+                style: TextStyle(
+                  color: valueColor,
+                  fontSize: 10,
+                  fontWeight: isCheck || (isNo && isNegative) ? FontWeight.bold : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Price summary chip for bottom sheet footer
+class _PriceSummaryChip extends StatelessWidget {
+  final String price;
+  final String label;
+  final Color color;
+
+  const _PriceSummaryChip({
+    required this.price,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          price,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: color.withOpacity(0.7),
+            fontSize: 9,
+          ),
+        ),
+      ],
     );
   }
 }
