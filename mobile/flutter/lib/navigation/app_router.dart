@@ -79,6 +79,7 @@ import '../screens/settings/subscription/subscription_management_screen.dart';
 import '../screens/skills/skill_progressions_screen.dart';
 import '../screens/skills/chain_detail_screen.dart';
 import '../screens/demo/demo_workout_screen.dart';
+import '../screens/demo/demo_active_workout_screen.dart';
 import '../screens/demo/plan_preview_screen.dart';
 import '../screens/tour/app_tour_screen.dart';
 import '../screens/guest/guest_home_screen.dart';
@@ -289,12 +290,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/stats-welcome';
       }
 
-      // If in guest mode and trying to access authenticated routes, redirect to guest home
-      if (isGuestMode && !isLoggedIn && !isOnSplash && !isOnStatsWelcome &&
-          !isOnPreAuthQuiz && !isOnPreview && !isOnSignIn && !isOnPricingPreview && !isOnDemoWorkout && !isOnPlanPreview) {
-        // Check if this is an allowed guest route
-        if (!isGuestRoute) {
-          return '/guest-home';
+      // Guest mode now gets FULL app UI access with restrictions
+      // Allow guests to access main app shell routes (/home, /chat, /nutrition, etc.)
+      // Usage limits are enforced at the feature level, not the route level
+      if (isGuestMode && !isLoggedIn) {
+        // Allow main app routes for guests
+        final mainAppRoutes = ['/home', '/chat', '/nutrition', '/progress', '/library', '/settings'];
+        final isMainAppRoute = mainAppRoutes.any((route) => state.matchedLocation.startsWith(route));
+
+        if (isMainAppRoute || isGuestRoute || isOnDemoWorkout || isOnPlanPreview ||
+            isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
+          return null; // Allow - guests can access full app UI
+        }
+
+        // For other routes, redirect to home (main app shell)
+        if (!isOnSplash && !isOnStatsWelcome) {
+          return '/home';
         }
       }
 
@@ -419,6 +430,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: DemoWorkoutScreen(workoutType: workoutType),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Demo Active Workout - actually do the sample workout (no auth required)
+      GoRoute(
+        path: '/demo-active-workout',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final workout = extra?['workout'] as Map<String, dynamic>? ?? {};
+          final exercises = extra?['exercises'] as List<Map<String, dynamic>>? ?? [];
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: DemoActiveWorkoutScreen(
+              workout: workout,
+              exercises: exercises,
+            ),
             transitionDuration: const Duration(milliseconds: 400),
             reverseTransitionDuration: const Duration(milliseconds: 300),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {

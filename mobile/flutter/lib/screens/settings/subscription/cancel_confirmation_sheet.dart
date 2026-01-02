@@ -103,7 +103,7 @@ class _CancelConfirmationSheetState
 
       if (userId != null) {
         final response =
-            await apiClient.get('/api/v1/subscriptions/$userId/retention-offers');
+            await apiClient.get('/subscriptions/$userId/retention-offers');
 
         if (response.data != null) {
           final offers = (response.data as List)
@@ -133,7 +133,7 @@ class _CancelConfirmationSheetState
 
       if (userId != null) {
         await apiClient.post(
-          '/api/v1/subscriptions/$userId/accept-offer',
+          '/subscriptions/$userId/accept-offer',
           data: {
             'offer_id': offer.id,
             'offer_code': offer.offerCode,

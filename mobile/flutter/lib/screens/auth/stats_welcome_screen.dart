@@ -213,9 +213,9 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     // Enter guest mode
     await ref.read(guestModeProvider.notifier).enterGuestMode();
 
-    // Navigate to guest home
+    // Navigate to main app home (guests now get full UI access with restrictions)
     if (mounted) {
-      context.go('/guest-home');
+      context.go('/home');
     }
   }
 
@@ -256,43 +256,43 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
 
                           // Progress dots (individual fillable)
                           _buildProgressDots(isDark),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
 
                           // App branding (smaller)
                           _buildBranding(isDark),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
 
                           // Stats carousel - takes remaining space
                           Expanded(
                             child: Column(
                               children: [
                                 Expanded(child: _buildStatsCarousel(isDark)),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 8),
                                 // Long description below carousel
                                 _buildStatDescription(isDark),
                               ],
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
 
                           // Pricing transparency section - shows before signup
                           if (!_showSignInButtons)
                             _buildPricingTransparencySection(isDark),
 
                           if (!_showSignInButtons)
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
 
                           // Bottom section: Language + buttons (fixed at bottom)
                           _buildBottomSection(isDark),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
@@ -353,38 +353,39 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   }
 
   Widget _buildBranding(bool isDark) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // App icon - using actual app icon image
+        // App icon - using actual app icon image (smaller)
         Container(
-          width: 80,
-          height: 80,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: AppColors.teal,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: AppColors.teal.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 2,
+                blurRadius: 12,
+                spreadRadius: 1,
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             child: Image.asset(
               'assets/images/app_icon.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => const Icon(
                 Icons.fitness_center,
                 color: AppColors.pureBlack,
-                size: 40,
+                size: 24,
               ),
             ),
           ),
         ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
 
-        const SizedBox(height: 16),
+        const SizedBox(width: 12),
 
         // App name - single teal color instead of gradient
         Text(
@@ -406,7 +407,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
 
     return Center(
       child: SizedBox(
-        height: 200,
+        height: 160,
         child: GestureDetector(
         onPanDown: (_) => _pauseAutoScroll(),
         child: PageView.builder(
@@ -436,14 +437,14 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       // Icon
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: (stat['color'] as Color).withOpacity(0.1),
                           shape: BoxShape.circle,
@@ -451,11 +452,11 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                         child: Icon(
                           stat['icon'] as IconData,
                           color: stat['color'] as Color,
-                          size: 28,
+                          size: 22,
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
 
                       // Headline number
                       Row(
@@ -466,16 +467,16 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                           Text(
                             stat['headline'] as String,
                             style: TextStyle(
-                              fontSize: 36,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: stat['color'] as Color,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             stat['subheadline'] as String,
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: isDark
                                   ? AppColors.textPrimary
@@ -485,13 +486,13 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
 
                       // Description
                       Text(
                         stat['description'] as String,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: isDark
                               ? AppColors.textSecondary
                               : AppColorsLight.textSecondary,
@@ -539,10 +540,10 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         : AppColors.cyan.withOpacity(0.15);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -552,23 +553,23 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.teal, AppColors.cyan],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 12),
-                    const SizedBox(width: 4),
+                    Icon(Icons.check_circle, color: Colors.white, size: 10),
+                    const SizedBox(width: 3),
                     Text(
                       'FREE FOREVER',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -581,12 +582,12 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                 'No credit card needed',
                 style: TextStyle(
                   color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  fontSize: 11,
+                  fontSize: 10,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           // Pricing tiles row
           Row(
             children: [
@@ -600,7 +601,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   features: ['10 chats/day', '4 workouts/mo'],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(
                 child: _PricingInfoTile(
                   label: 'Premium',
@@ -630,76 +631,82 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
         // Language selector (compact dropdown button that opens upward)
         _buildCompactLanguageSelector(isDark, cardBorder, elevated, textSecondary),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Get Started button (goes to pre-auth quiz) - hide when sign-in buttons shown
         if (!_showSignInButtons) ...[
           _buildGetStartedButton(isDark),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
 
-        // See Pricing link - shows pricing before sign up
+        // Secondary CTAs in a horizontal row
         if (!_showSignInButtons)
-          TextButton.icon(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              context.push('/pricing-preview');
-            },
-            icon: Icon(
-              Icons.visibility_outlined,
-              size: 16,
-              color: AppColors.cyan,
-            ),
-            label: Text(
-              'See Pricing',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.cyan,
-                fontWeight: FontWeight.w500,
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
+            runSpacing: 0,
+            children: [
+              // See Pricing link
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/pricing-preview');
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Pricing',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.cyan,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
+              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+              // Try Sample Workout
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/demo-workout');
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Try Sample',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.teal,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+              // Continue as Guest
+              TextButton(
+                onPressed: _continueAsGuest,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'Guest Mode',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.purple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ).animate().fadeIn(delay: 600.ms),
-
-        // Try Sample Workout - preview a workout before signing up
-        if (!_showSignInButtons)
-          TextButton.icon(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              context.push('/demo-workout');
-            },
-            icon: Icon(
-              Icons.fitness_center,
-              size: 16,
-              color: AppColors.teal,
-            ),
-            label: Text(
-              'Try a Sample Workout',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.teal,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ).animate().fadeIn(delay: 650.ms),
-
-        // Continue as Guest - explore app without signing up
-        if (!_showSignInButtons)
-          TextButton.icon(
-            onPressed: _continueAsGuest,
-            icon: Icon(
-              Icons.explore_outlined,
-              size: 16,
-              color: AppColors.purple,
-            ),
-            label: Text(
-              'Continue as Guest',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.purple,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ).animate().fadeIn(delay: 680.ms),
 
         // Already have account - sign in section
         if (!_showSignInButtons)
@@ -708,10 +715,15 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               HapticFeedback.lightImpact();
               setState(() => _showSignInButtons = true);
             },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               'Already have an account? Sign in',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: textSecondary,
               ),
             ),
@@ -885,7 +897,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   Widget _buildGetStartedButton(bool isDark) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 48,
       child: ElevatedButton(
         onPressed: () {
           HapticFeedback.mediumImpact();
@@ -900,7 +912,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           elevation: 4,
           shadowColor: AppColors.cyan.withOpacity(0.4),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: const Row(
@@ -909,12 +921,12 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
             Text(
               'Get Started',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, size: 20),
+            SizedBox(width: 6),
+            Icon(Icons.arrow_forward_rounded, size: 18),
           ],
         ),
       ),
@@ -1275,10 +1287,10 @@ class _PricingInfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: accentColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: accentColor.withOpacity(0.2),
           width: isPopular ? 1.5 : 1,
@@ -1294,23 +1306,23 @@ class _PricingInfoTile extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               if (isPopular) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                   ),
                   child: Text(
                     'POPULAR',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 7,
+                      fontSize: 6,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1318,7 +1330,7 @@ class _PricingInfoTile extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           // Price
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1327,7 +1339,7 @@ class _PricingInfoTile extends StatelessWidget {
                 price,
                 style: TextStyle(
                   color: accentColor,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1335,34 +1347,23 @@ class _PricingInfoTile extends StatelessWidget {
                 period,
                 style: TextStyle(
                   color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
               ),
             ],
           ),
-          // Features
+          // Features - show as single line
           if (features.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            ...features.map((feature) => Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check,
-                    color: accentColor,
-                    size: 10,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    feature,
-                    style: TextStyle(
-                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 2),
+            Text(
+              features.join(' • '),
+              style: TextStyle(
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                fontSize: 8,
               ),
-            )),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ],
       ),

@@ -147,7 +147,7 @@ class AdminSupportChatsNotifier extends StateNotifier<AsyncValue<List<AdminSuppo
 
     final apiClient = ref.read(apiClientProvider);
     final response = await apiClient.get(
-      '${ApiConstants.baseUrl}/api/v1/admin/live-chats',
+      '${ApiConstants.apiBaseUrl}/admin/live-chats',
     );
 
     if (response.statusCode == 200) {
@@ -215,7 +215,7 @@ class AdminChatMessagesNotifier extends StateNotifier<AsyncValue<List<AdminChatM
   Future<List<AdminChatMessage>> _fetchMessages() async {
     final apiClient = ref.read(apiClientProvider);
     final response = await apiClient.get(
-      '${ApiConstants.baseUrl}/api/v1/admin/live-chats/$ticketId',
+      '${ApiConstants.apiBaseUrl}/admin/live-chats/$ticketId',
     );
 
     if (response.statusCode == 200) {
@@ -231,7 +231,7 @@ class AdminChatMessagesNotifier extends StateNotifier<AsyncValue<List<AdminChatM
   Future<void> sendMessage(String content) async {
     final apiClient = ref.read(apiClientProvider);
     await apiClient.post(
-      '${ApiConstants.baseUrl}/api/v1/admin/live-chats/$ticketId/reply',
+      '${ApiConstants.apiBaseUrl}/admin/live-chats/$ticketId/reply',
       data: {'content': content},
     );
     // Message will be added via realtime subscription
@@ -240,14 +240,14 @@ class AdminChatMessagesNotifier extends StateNotifier<AsyncValue<List<AdminChatM
   Future<void> markAsRead() async {
     final apiClient = ref.read(apiClientProvider);
     await apiClient.post(
-      '${ApiConstants.baseUrl}/api/v1/admin/live-chats/$ticketId/read',
+      '${ApiConstants.apiBaseUrl}/admin/live-chats/$ticketId/read',
     );
   }
 
   Future<void> closeChat({String? resolutionNote}) async {
     final apiClient = ref.read(apiClientProvider);
     await apiClient.post(
-      '${ApiConstants.baseUrl}/api/v1/admin/live-chats/$ticketId/close',
+      '${ApiConstants.apiBaseUrl}/admin/live-chats/$ticketId/close',
       data: {'resolution_note': resolutionNote ?? 'Issue resolved'},
     );
   }

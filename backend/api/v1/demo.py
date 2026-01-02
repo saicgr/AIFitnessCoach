@@ -18,9 +18,13 @@ import uuid
 import logging
 
 from core.db import get_supabase_db
+from services.exercise_library_service import ExerciseLibraryService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/demo", tags=["Demo"])
+
+# Initialize exercise library service
+exercise_library = ExerciseLibraryService()
 
 
 # ============================================================================
@@ -59,6 +63,15 @@ class SessionConvertRequest(BaseModel):
     session_id: str
     user_id: str
     trigger: str
+
+
+class PersonalizedSampleWorkoutRequest(BaseModel):
+    """Request for generating a personalized sample workout with real exercises."""
+    goals: List[str]
+    fitness_level: str  # beginner, intermediate, advanced
+    equipment: List[str]
+    workout_type_preference: Optional[str] = "strength"  # strength, cardio, mixed
+    session_id: Optional[str] = None
 
 
 class TourStartRequest(BaseModel):
@@ -350,6 +363,171 @@ async def log_demo_interaction(request: DemoInteraction):
         logger.error(f"Failed to log demo interaction: {e}")
         # Don't fail the request for logging failures
         return {"status": "error", "message": str(e)}
+
+
+@router.post("/personalized-sample-workout")
+async def generate_personalized_sample_workout(request: PersonalizedSampleWorkoutRequest):
+    """
+    Generate a personalized sample workout using REAL exercises from the database.
+
+    This endpoint:
+    1. Uses the user's quiz data (goals, equipment, fitness level) to select appropriate exercises
+    2. Returns exercises WITH gif_url for video demonstrations
+    3. Creates a truly personalized preview of what their workout plan would look like
+
+    This addresses the complaint: "workouts look generic with no videos"
+    """
+    try:
+        session_id = request.session_id or str(uuid.uuid4())
+
+        # Determine workout focus based on goals
+        goal_to_focus = {
+            'build_muscle': 'full_body',
+            'lose_weight': 'full_body',
+            'increase_strength': 'full_body',
+            'improve_endurance': 'full_body',
+            'stay_active': 'full_body',
+            'flexibility': 'full_body',
+            'athletic_performance': 'full_body',
+            'general_health': 'full_body',
+        }
+
+        primary_goal = request.goals[0] if request.goals else 'general_health'
+        focus_area = goal_to_focus.get(primary_goal, 'full_body')
+
+        # Map equipment values to match exercise library format
+        equipment_mapping = {
+            'bodyweight': 'body weight',
+            'dumbbells': 'dumbbell',
+            'barbell': 'barbell',
+            'kettlebell': 'kettlebell',
+            'resistance_bands': 'band',
+            'pull_up_bar': 'body weight',
+            'cable_machine': 'cable',
+            'full_gym': ['dumbbell', 'barbell', 'cable', 'machine', 'body weight'],
+        }
+
+        # Convert equipment list
+        mapped_equipment = []
+        for eq in request.equipment:
+            eq_lower = eq.lower()
+            if eq_lower in equipment_mapping:
+                mapping = equipment_mapping[eq_lower]
+                if isinstance(mapping, list):
+                    mapped_equipment.extend(mapping)
+                else:
+                    mapped_equipment.append(mapping)
+            else:
+                mapped_equipment.append(eq_lower)
+
+        # Always include bodyweight exercises
+        if 'body weight' not in mapped_equipment:
+            mapped_equipment.append('body weight')
+
+        # Get real exercises from the library
+        exercises = exercise_library.get_exercises_for_workout(
+            focus_area=focus_area,
+            equipment=mapped_equipment,
+            count=6,
+            fitness_level=request.fitness_level
+        )
+
+        # If we didn't get enough exercises, try with just bodyweight
+        if len(exercises) < 4:
+            exercises = exercise_library.get_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=['body weight'],
+                count=6,
+                fitness_level=request.fitness_level
+            )
+
+        # Calculate workout metadata
+        duration_minutes = 30 + (len(exercises) * 5)
+        estimated_calories = 150 + (len(exercises) * 30)
+
+        # Determine workout name based on goals and fitness level
+        workout_name = _get_personalized_workout_name(primary_goal, request.fitness_level)
+
+        # Log the generation
+        try:
+            db = get_supabase_db()
+            db.client.table("demo_interactions").insert({
+                "session_id": session_id,
+                "action_type": "personalized_sample_generated",
+                "metadata": {
+                    "goals": request.goals,
+                    "fitness_level": request.fitness_level,
+                    "equipment": request.equipment,
+                    "exercise_count": len(exercises),
+                    "has_gif_urls": sum(1 for ex in exercises if ex.get('gif_url')),
+                }
+            }).execute()
+        except Exception as e:
+            logger.warning(f"Failed to log demo interaction: {e}")
+
+        return {
+            "session_id": session_id,
+            "workout": {
+                "id": f"personalized-sample-{session_id[:8]}",
+                "name": workout_name,
+                "description": f"A personalized workout designed for your {primary_goal.replace('_', ' ')} goals. "
+                               f"This preview uses real exercises from our library of 1700+ exercises.",
+                "duration_minutes": duration_minutes,
+                "difficulty": request.fitness_level,
+                "calories_estimate": estimated_calories,
+                "type": request.workout_type_preference or "strength",
+                "target_muscles": list(set(ex.get('body_part', '') for ex in exercises if ex.get('body_part'))),
+                "equipment": list(set(ex.get('equipment', '') for ex in exercises if ex.get('equipment'))),
+                "exercises": exercises,
+            },
+            "personalization": {
+                "based_on_goals": request.goals,
+                "fitness_level": request.fitness_level,
+                "equipment_matched": True,
+                "exercises_with_videos": sum(1 for ex in exercises if ex.get('gif_url')),
+                "total_exercises": len(exercises),
+            },
+            "preview_info": {
+                "is_preview": True,
+                "message": "This is a sample of your personalized workout. Sign up for full access!",
+                "full_access_features": [
+                    "4-week progressive workout program",
+                    "AI coach chat for personalized advice",
+                    "Workout history and progress tracking",
+                    "Exercise substitutions and modifications",
+                    "Rest timer and workout logging",
+                ],
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to generate personalized sample workout: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _get_personalized_workout_name(goal: str, fitness_level: str) -> str:
+    """Generate a personalized workout name based on goal and level."""
+    goal_names = {
+        'build_muscle': 'Muscle Building',
+        'lose_weight': 'Fat Burning',
+        'increase_strength': 'Strength Training',
+        'improve_endurance': 'Endurance',
+        'stay_active': 'Active Living',
+        'flexibility': 'Flexibility',
+        'athletic_performance': 'Athletic Performance',
+        'general_health': 'Total Body',
+    }
+
+    level_modifiers = {
+        'beginner': 'Foundation',
+        'intermediate': 'Power',
+        'advanced': 'Elite',
+    }
+
+    goal_name = goal_names.get(goal, 'Full Body')
+    level_modifier = level_modifiers.get(fitness_level, '')
+
+    return f"{level_modifier} {goal_name} Workout".strip()
 
 
 @router.get("/sample-workouts")

@@ -347,7 +347,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       final response = await apiClient.dio.get(
-        '/api/v1/subscriptions/$_userId/lifetime-status',
+        '/subscriptions/$_userId/lifetime-status',
       );
 
       final data = response.data;
@@ -404,7 +404,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       final response = await apiClient.dio.get(
-        '/api/v1/subscriptions/$_userId',
+        '/subscriptions/$_userId',
       );
 
       final data = response.data;
@@ -468,7 +468,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       final response = await client.dio.post(
-        '/api/v1/subscriptions/$_userId/check-access',
+        '/subscriptions/$_userId/check-access',
         data: {'feature_key': featureKey},
       );
 
@@ -516,7 +516,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     try {
       await client.dio.post(
-        '/api/v1/subscriptions/$_userId/track-usage',
+        '/subscriptions/$_userId/track-usage',
         data: {
           'feature_key': featureKey,
           'metadata': metadata,

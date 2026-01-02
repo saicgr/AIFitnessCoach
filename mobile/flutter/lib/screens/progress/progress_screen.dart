@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/constants/app_colors.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/models/scores.dart';
+import '../../data/providers/guest_mode_provider.dart';
+import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
@@ -69,6 +72,113 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Check if guest - progress tracking is disabled for guests
+    final isGuest = ref.watch(isGuestModeProvider);
+    final progressEnabled = ref.watch(isProgressTrackingEnabledProvider);
+
+    if (isGuest && !progressEnabled) {
+      final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+      final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+      final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+      return MainShell(
+        child: Scaffold(
+          backgroundColor: colorScheme.surface,
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: teal.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.insights,
+                        size: 48,
+                        color: teal,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Progress Tracking',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Track your fitness journey with progress photos, body measurements, and strength scores. See how far you\'ve come!',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: textSecondary,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await ref.read(guestModeProvider.notifier).exitGuestMode(convertedToSignup: true);
+                          if (mounted) {
+                            context.go('/pre-auth-quiz');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cyan,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.rocket_launch, size: 20),
+                            SizedBox(width: 10),
+                            Text(
+                              'Sign Up to Unlock',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => context.go('/home'),
+                      child: Text(
+                        'Back to Home',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return MainShell(
       child: Scaffold(

@@ -1220,7 +1220,7 @@ class _ConversationalOnboardingScreenState
       try {
         final apiClient = ref.read(apiClientProvider);
         await apiClient.post(
-          '/api/v1/users/${authState.user!.id}/reset-onboarding',
+          '/users/${authState.user!.id}/reset-onboarding',
         );
       } catch (e) {
         debugPrint('⚠️ Failed to reset backend: $e');

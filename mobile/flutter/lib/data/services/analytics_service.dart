@@ -88,7 +88,7 @@ class AnalyticsService {
   Future<String?> startSession({String? entryPoint}) async {
     try {
       final response = await _apiClient.dio.post(
-        '/api/v1/analytics/session/start',
+        '/analytics/session/start',
         data: {
           'user_id': _userId,
           'anonymous_id': _anonymousId,
@@ -121,7 +121,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/session/end',
+        '/analytics/session/end',
         data: {'session_id': _sessionId},
       );
 
@@ -160,7 +160,7 @@ class AnalyticsService {
 
     try {
       final response = await _apiClient.dio.post(
-        '/api/v1/analytics/screen-view',
+        '/analytics/screen-view',
         data: data,
       );
 
@@ -189,7 +189,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/screen-exit',
+        '/analytics/screen-exit',
         data: data,
       );
     } catch (e) {
@@ -219,7 +219,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/event',
+        '/analytics/event',
         data: data,
       );
     } catch (e) {
@@ -255,7 +255,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/funnel',
+        '/analytics/funnel',
         data: data,
       );
     } catch (e) {
@@ -297,7 +297,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/onboarding',
+        '/analytics/onboarding',
         data: data,
       );
     } catch (e) {
@@ -318,7 +318,7 @@ class AnalyticsService {
   }) async {
     try {
       await _apiClient.dio.post(
-        '/api/v1/subscriptions/${_userId ?? 'anonymous'}/paywall-impression',
+        '/subscriptions/${_userId ?? 'anonymous'}/paywall-impression',
         data: {
           'screen': screen,
           'source': source,
@@ -364,7 +364,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/error',
+        '/analytics/error',
         data: data,
       );
     } catch (e) {
@@ -404,7 +404,7 @@ class AnalyticsService {
 
     try {
       await _apiClient.dio.post(
-        '/api/v1/analytics/batch',
+        '/analytics/batch',
         data: {
           'user_id': _userId,
           'session_id': _sessionId,

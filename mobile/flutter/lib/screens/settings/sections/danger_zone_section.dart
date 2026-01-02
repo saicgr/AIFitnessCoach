@@ -247,7 +247,7 @@ class DangerZoneSection extends ConsumerWidget {
 
       // Call backend to reset program (keeps account, deletes workouts)
       final response = await apiClient.dio.post(
-        '/api/v1/users/$userId/reset-onboarding',
+        '/users/$userId/reset-onboarding',
       );
 
       // Close loading dialog

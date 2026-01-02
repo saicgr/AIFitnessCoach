@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/weekly_plan.dart';
+import '../../../data/providers/guest_mode_provider.dart';
+import '../../../data/providers/guest_usage_limits_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
+import '../../../widgets/guest_upgrade_sheet.dart';
 
 /// Bottom sheet for generating a new weekly plan
 class GeneratePlanSheet extends ConsumerStatefulWidget {
@@ -49,6 +52,19 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
   }
 
   Future<void> _generatePlan() async {
+    // Check guest mode limits
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canGenerate = await ref.read(guestUsageLimitsProvider.notifier).useWorkoutGeneration();
+      if (!canGenerate) {
+        // Show upgrade prompt when limit reached
+        if (mounted) {
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.workout);
+        }
+        return;
+      }
+    }
+
     final navigator = Navigator.of(context);
 
     final plan = await ref.read(weeklyPlanProvider.notifier).generatePlan(

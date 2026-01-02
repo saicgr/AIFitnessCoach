@@ -20,7 +20,7 @@ class ExerciseRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId',
       );
 
       if (response.data != null) {
@@ -48,7 +48,7 @@ class ExerciseRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId',
         data: exerciseData,
       );
 
@@ -72,7 +72,7 @@ class ExerciseRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/$exerciseId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/$exerciseId',
       );
       debugPrint('✅ [ExerciseRepository] Successfully deleted custom exercise: $exerciseId');
     } catch (e, stackTrace) {

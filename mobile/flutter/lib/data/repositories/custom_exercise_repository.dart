@@ -25,7 +25,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/all',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/all',
       );
 
       if (response.data != null) {
@@ -52,7 +52,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/stats',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/stats',
       );
 
       if (response.data != null) {
@@ -88,7 +88,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId',
         data: request.toJson(),
       );
 
@@ -132,7 +132,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/composite',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/composite',
         data: request.toJson(),
       );
 
@@ -207,7 +207,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.put<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/$exerciseId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/$exerciseId',
         data: updates,
       );
 
@@ -238,7 +238,7 @@ class CustomExerciseRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/$exerciseId',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/$exerciseId',
       );
       debugPrint('✅ [CustomExerciseRepo] Deleted exercise: $exerciseId');
     } catch (e, stackTrace) {
@@ -269,7 +269,7 @@ class CustomExerciseRepository {
       if (notes != null) queryParams['notes'] = notes;
 
       await _apiClient.post(
-        '${ApiConstants.baseUrl}/api/v1/exercises/custom/$userId/$exerciseId/log-usage',
+        '${ApiConstants.apiBaseUrl}/exercises/custom/$userId/$exerciseId/log-usage',
         queryParameters: queryParams.isEmpty ? null : queryParams,
       );
       debugPrint('✅ [CustomExerciseRepo] Logged usage');
@@ -293,7 +293,7 @@ class CustomExerciseRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercises/library/search',
+        '${ApiConstants.apiBaseUrl}/exercises/library/search',
         queryParameters: {
           'query': query,
           'limit': limit.toString(),

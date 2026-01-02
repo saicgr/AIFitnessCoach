@@ -196,7 +196,7 @@ class WeightSuggestionService {
   }) async {
     try {
       final response = await dio.post(
-        '/api/v1/workouts/weight-suggestion',
+        '/workouts/weight-suggestion',
         data: {
           'user_id': userId,
           'exercise_name': exerciseName,

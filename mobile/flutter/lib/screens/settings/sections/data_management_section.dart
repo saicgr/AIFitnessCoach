@@ -211,7 +211,7 @@ class DataManagementSection extends ConsumerWidget {
       if (userId != null) {
         // Call backend to reset nutrition onboarding
         await apiClient.dio.post(
-          '/api/v1/nutrition/$userId/reset-onboarding',
+          '/nutrition/$userId/reset-onboarding',
         );
       }
     } catch (e) {

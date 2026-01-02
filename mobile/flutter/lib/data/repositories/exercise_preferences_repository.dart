@@ -419,7 +419,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/favorite-exercises',
+        '${ApiConstants.apiBaseUrl}/users/$userId/favorite-exercises',
       );
 
       if (response.data != null) {
@@ -448,7 +448,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/favorite-exercises',
+        '${ApiConstants.apiBaseUrl}/users/$userId/favorite-exercises',
         data: {
           'exercise_name': exerciseName,
           if (exerciseId != null) 'exercise_id': exerciseId,
@@ -475,7 +475,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/favorite-exercises/${Uri.encodeComponent(exerciseName)}',
+        '${ApiConstants.apiBaseUrl}/users/$userId/favorite-exercises/${Uri.encodeComponent(exerciseName)}',
       );
       debugPrint('✅ [ExercisePrefs] Removed favorite: $exerciseName');
     } catch (e, stackTrace) {
@@ -505,7 +505,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/exercise-queue',
+        '${ApiConstants.apiBaseUrl}/users/$userId/exercise-queue',
       );
 
       if (response.data != null) {
@@ -536,7 +536,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/exercise-queue',
+        '${ApiConstants.apiBaseUrl}/users/$userId/exercise-queue',
         data: {
           'exercise_name': exerciseName,
           if (exerciseId != null) 'exercise_id': exerciseId,
@@ -565,7 +565,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId/exercise-queue/${Uri.encodeComponent(exerciseName)}',
+        '${ApiConstants.apiBaseUrl}/users/$userId/exercise-queue/${Uri.encodeComponent(exerciseName)}',
       );
       debugPrint('✅ [ExercisePrefs] Removed from queue: $exerciseName');
     } catch (e, stackTrace) {
@@ -596,7 +596,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId',
+        '${ApiConstants.apiBaseUrl}/users/$userId',
       );
 
       if (response.data != null) {
@@ -688,7 +688,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.put(
-        '${ApiConstants.baseUrl}/api/v1/users/$userId',
+        '${ApiConstants.apiBaseUrl}/users/$userId',
         data: {'exercise_consistency': mode},
       );
       debugPrint('✅ [ExercisePrefs] Updated consistency mode to: $mode');
@@ -709,7 +709,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/staples/$userId',
       );
 
       if (response.data != null) {
@@ -740,7 +740,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/staples',
         data: {
           'user_id': userId,
           'exercise_name': exerciseName,
@@ -770,7 +770,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/staples/$userId/$stapleId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/staples/$userId/$stapleId',
       );
       debugPrint('✅ [ExercisePrefs] Removed staple: $stapleId');
     } catch (e, stackTrace) {
@@ -800,7 +800,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/variation/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/variation/$userId',
       );
 
       if (response.data != null) {
@@ -829,7 +829,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.put<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/variation',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/variation',
         data: {
           'user_id': userId,
           'variation_percentage': percentage,
@@ -860,7 +860,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/week-comparison/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/week-comparison/$userId',
       );
 
       if (response.data != null) {
@@ -887,7 +887,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-exercises/$userId',
       );
 
       if (response.data != null) {
@@ -919,7 +919,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-exercises/$userId',
         data: {
           'exercise_name': exerciseName,
           if (exerciseId != null) 'exercise_id': exerciseId,
@@ -949,7 +949,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-exercises/$userId/$avoidedId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-exercises/$userId/$avoidedId',
       );
       debugPrint('✅ [ExercisePrefs] Removed avoided exercise: $avoidedId');
     } catch (e, stackTrace) {
@@ -980,7 +980,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<List<dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-muscles/$userId',
       );
 
       if (response.data != null) {
@@ -1012,7 +1012,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-muscles/$userId',
         data: {
           'muscle_group': muscleGroup,
           if (reason != null) 'reason': reason,
@@ -1042,7 +1042,7 @@ class ExercisePreferencesRepository {
 
     try {
       await _apiClient.delete(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/avoided-muscles/$userId/$avoidedId',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/avoided-muscles/$userId/$avoidedId',
       );
       debugPrint('✅ [ExercisePrefs] Removed avoided muscle: $avoidedId');
     } catch (e, stackTrace) {
@@ -1079,7 +1079,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/muscle-groups',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/muscle-groups',
       );
 
       if (response.data != null) {
@@ -1129,7 +1129,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.post<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/suggest-substitutes',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/suggest-substitutes',
         data: {
           'exercise_name': exerciseName,
           if (reason != null) 'reason': reason,
@@ -1164,7 +1164,7 @@ class ExercisePreferencesRepository {
 
     try {
       final response = await _apiClient.get<Map<String, dynamic>>(
-        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/injury-exercises/${Uri.encodeComponent(injuryType)}',
+        '${ApiConstants.apiBaseUrl}/exercise-preferences/injury-exercises/${Uri.encodeComponent(injuryType)}',
       );
 
       if (response.data != null) {

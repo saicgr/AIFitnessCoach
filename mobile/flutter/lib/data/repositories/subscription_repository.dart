@@ -265,7 +265,7 @@ class SubscriptionRepository {
   Future<List<SubscriptionEvent>> getSubscriptionHistory(String userId) async {
     try {
       final response = await _client.get(
-        '/api/v1/subscriptions/$userId/history',
+        '/subscriptions/$userId/history',
       );
       final data = response.data as List;
       return data.map((json) => SubscriptionEvent.fromJson(json)).toList();
@@ -280,7 +280,7 @@ class SubscriptionRepository {
   Future<UpcomingRenewal?> getUpcomingRenewal(String userId) async {
     try {
       final response = await _client.get(
-        '/api/v1/subscriptions/$userId/upcoming-renewal',
+        '/subscriptions/$userId/upcoming-renewal',
       );
       if (response.data != null && response.data['has_renewal'] == true) {
         return UpcomingRenewal.fromJson(response.data);
@@ -301,7 +301,7 @@ class SubscriptionRepository {
   }) async {
     try {
       final response = await _client.post(
-        '/api/v1/subscriptions/$userId/request-refund',
+        '/subscriptions/$userId/request-refund',
         data: {
           'reason': reason.apiValue,
           if (comments != null && comments.isNotEmpty) 'comments': comments,
@@ -325,7 +325,7 @@ class SubscriptionRepository {
   Future<CurrentSubscription?> getCurrentSubscription(String userId) async {
     try {
       final response = await _client.get(
-        '/api/v1/subscriptions/$userId',
+        '/subscriptions/$userId',
       );
       if (response.data != null) {
         return CurrentSubscription.fromJson(response.data);

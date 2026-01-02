@@ -63,7 +63,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get(
-        '/api/v1/custom-goals/${authState.user!.id}',
+        '/custom-goals/${authState.user!.id}',
       );
 
       final data = response.data;
@@ -104,7 +104,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.post(
-        '/api/v1/custom-goals/',
+        '/custom-goals/',
         data: {
           'user_id': authState.user!.id,
           'goal_text': goalText.trim(),
@@ -289,7 +289,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      await apiClient.delete('/api/v1/custom-goals/${goal.id}');
+      await apiClient.delete('/custom-goals/${goal.id}');
 
       setState(() {
         _goals.removeWhere((g) => g.id == goal.id);
@@ -319,7 +319,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     try {
       final apiClient = ref.read(apiClientProvider);
       await apiClient.patch(
-        '/api/v1/custom-goals/${goal.id}',
+        '/custom-goals/${goal.id}',
         data: {'priority': newPriority},
       );
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../data/providers/guest_mode_provider.dart';
+import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
@@ -58,9 +61,111 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Check if guest - fasting is disabled for guests
+    final isGuest = ref.watch(isGuestModeProvider);
+    final fastingEnabled = ref.watch(isFastingEnabledProvider);
+
+    if (isGuest && !fastingEnabled) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: purple.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.timer_outlined,
+                      size: 48,
+                      color: purple,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Fasting Tracker',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Track your intermittent fasting with smart zone notifications, progress insights, and detailed history.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: textSecondary,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await ref.read(guestModeProvider.notifier).exitGuestMode(convertedToSignup: true);
+                        if (mounted) {
+                          context.go('/pre-auth-quiz');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.rocket_launch, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            'Sign Up to Unlock',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.go('/home'),
+                    child: Text(
+                      'Back to Home',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     final fastingState = ref.watch(fastingProvider);
     final authState = ref.watch(authStateProvider);

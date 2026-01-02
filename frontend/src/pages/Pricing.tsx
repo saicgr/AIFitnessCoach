@@ -150,6 +150,10 @@ const faqs = [
     question: 'Can I upgrade or downgrade my plan?',
     answer: 'Yes, you can change your plan anytime. When upgrading, you get immediate access to new features. When downgrading, the change takes effect at the end of your billing period.',
   },
+  {
+    question: 'Why does FitWiz cost what it does?',
+    answer: 'Running advanced AI for personalized workouts, nutrition analysis, and real-time coaching requires significant infrastructure. Your subscription directly supports server costs, AI compute, and continuous improvements. We\'re also working on adding professional workout videos from real trainers. Unlike competitors charging $15-20/month, we keep prices affordable while delivering premium AI-powered fitness coaching.',
+  },
 ];
 
 export default function Pricing() {
@@ -428,8 +432,63 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQs */}
+      {/* Why It Costs This Much Section */}
       <section className="px-6 py-20">
+        <div className="max-w-[800px] mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-6">
+              <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] mb-4">
+              Why does it cost this much?
+            </h2>
+            <p className="text-[17px] text-[#86868b] max-w-[600px] mx-auto">
+              Transparency matters to us. Here's where your subscription goes.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            {[
+              { icon: '🤖', title: 'AI Infrastructure', desc: 'GPT-powered workout generation, nutrition analysis, and real-time coaching' },
+              { icon: '☁️', title: 'Cloud Servers', desc: 'Fast, reliable servers running 24/7 to sync your data and workouts' },
+              { icon: '📱', title: 'App Development', desc: 'Continuous updates, bug fixes, and new features based on your feedback' },
+              { icon: '💪', title: 'Exercise Library', desc: '1700+ exercises with videos, instructions, and AI-powered alternatives' },
+            ].map((item, i) => (
+              <div key={i} className="p-5 rounded-2xl bg-[#1d1d1f] border border-white/[0.05]">
+                <span className="text-2xl mb-3 block">{item.icon}</span>
+                <h3 className="text-[15px] font-semibold text-white mb-1">{item.title}</h3>
+                <p className="text-[13px] text-[#86868b]">{item.desc}</p>
+              </div>
+            ))}
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-center text-[15px] text-[#86868b] mt-8"
+          >
+            Competitors charge $15-20/month. We deliver premium AI coaching at 60% less.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* FAQs */}
+      <section className="px-6 py-20 bg-[#0a0a0a]">
         <div className="max-w-[800px] mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -502,15 +561,22 @@ export default function Pricing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-5 px-6 border-t border-[#424245]">
+      <footer className="py-8 px-6 border-t border-[#424245]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
-            <p>Copyright {new Date().getFullYear()} FitWiz. All rights reserved.</p>
-            <div className="flex items-center gap-6">
-              <Link to="/" className="hover:text-[#f5f5f7] transition-colors">Home</Link>
-              <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
-              <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
-              <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-[#86868b]">
+              <p>Copyright {new Date().getFullYear()} FitWiz. All rights reserved.</p>
+              <div className="flex items-center gap-6">
+                <Link to="/" className="hover:text-[#f5f5f7] transition-colors">Home</Link>
+                <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
+                <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
+                <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-6 text-[11px] text-[#6e6e73]">
+              <Link to="/terms" className="hover:text-[#86868b] transition-colors">Terms of Service</Link>
+              <span>•</span>
+              <Link to="/privacy" className="hover:text-[#86868b] transition-colors">Privacy Policy</Link>
             </div>
           </div>
         </div>

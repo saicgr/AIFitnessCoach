@@ -273,7 +273,7 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
 
     try {
       await _apiClient.post(
-        '/api/v1/window-mode/$_userId/log',
+        '/window-mode/$_userId/log',
         data: {
           'mode': mode.name,
           'width': width,
@@ -295,7 +295,7 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
     final duration = DateTime.now().difference(_splitScreenStartTime!);
     try {
       await _apiClient.post(
-        '/api/v1/window-mode/$_userId/log',
+        '/window-mode/$_userId/log',
         data: {
           'mode': 'split_screen_session',
           'width': state.windowWidth.toInt(),

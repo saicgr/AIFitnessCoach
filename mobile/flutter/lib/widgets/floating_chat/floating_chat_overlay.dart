@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/providers/guest_mode_provider.dart';
+import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../screens/chat/chat_screen.dart';
+import '../guest_upgrade_sheet.dart';
 import '../main_shell.dart';
 import 'floating_chat_provider.dart';
 
@@ -130,6 +133,19 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
   Future<void> _sendMessage() async {
     final message = _textController.text.trim();
     if (message.isEmpty || _isLoading) return;
+
+    // Check guest mode limits
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canChat = await ref.read(guestUsageLimitsProvider.notifier).useChatMessage();
+      if (!canChat) {
+        // Show upgrade prompt when limit reached
+        if (mounted) {
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.chat);
+        }
+        return;
+      }
+    }
 
     HapticService.medium();
     _textController.clear();

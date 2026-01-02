@@ -1,16 +1,23 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/difficulty_utils.dart';
 import '../../data/demo_workouts.dart';
 import '../../data/services/analytics_service.dart';
+import '../../data/services/api_client.dart';
+import '../../core/constants/api_constants.dart';
 
 /// Demo Workout Preview Screen
 /// Shows a sample workout to users BEFORE they sign up
 /// Allows them to see the workout structure without creating an account
+///
+/// This screen now fetches PERSONALIZED workouts from the API based on
+/// the user's quiz answers, with REAL exercises including video GIFs.
 class DemoWorkoutScreen extends ConsumerStatefulWidget {
   final String? workoutType;
 
@@ -21,22 +28,76 @@ class DemoWorkoutScreen extends ConsumerStatefulWidget {
 }
 
 class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
-  late DemoWorkout _currentWorkout;
+  DemoWorkout? _currentWorkout;
+  Map<String, dynamic>? _personalizedWorkout;
+  bool _isLoading = true;
   int? _expandedExerciseIndex;
   bool _hasTrackedView = false;
 
   @override
   void initState() {
     super.initState();
-    _loadWorkout();
+    _loadPersonalizedWorkout();
   }
 
-  void _loadWorkout({String? excludeType}) {
+  Future<void> _loadPersonalizedWorkout() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get quiz data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final goals = prefs.getStringList('preAuth_goals') ?? ['general_health'];
+      final fitnessLevel = prefs.getString('preAuth_fitnessLevel') ?? 'intermediate';
+      final equipment = prefs.getStringList('preAuth_equipment') ?? ['bodyweight'];
+      final workoutType = prefs.getString('preAuth_workoutTypePreference') ?? 'strength';
+
+      // Call the personalized sample workout API
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post(
+        '${ApiConstants.apiBaseUrl}/demo/personalized-sample-workout',
+        data: {
+          'goals': goals,
+          'fitness_level': fitnessLevel,
+          'equipment': equipment,
+          'workout_type_preference': workoutType,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        setState(() {
+          _personalizedWorkout = data;
+          _isLoading = false;
+        });
+
+        // Track the view
+        if (!_hasTrackedView) {
+          _trackDemoView();
+          _hasTrackedView = true;
+        }
+      } else {
+        // Fall back to static demo workout
+        _loadStaticWorkout();
+      }
+    } catch (e) {
+      debugPrint('Failed to load personalized workout: $e');
+      // Fall back to static demo workout
+      _loadStaticWorkout();
+    }
+  }
+
+  void _loadStaticWorkout({String? excludeType}) {
     if (widget.workoutType != null && excludeType == null) {
       _currentWorkout = DemoWorkouts.getWorkout(widget.workoutType!);
     } else {
       _currentWorkout = DemoWorkouts.getRandomWorkout(excludeType: excludeType);
     }
+    setState(() {
+      _isLoading = false;
+      _personalizedWorkout = null;
+    });
 
     // Track demo workout view
     if (!_hasTrackedView) {
@@ -48,12 +109,20 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   void _trackDemoView() {
     try {
       final analytics = ref.read(analyticsServiceProvider);
+      String workoutName;
+      if (_personalizedWorkout != null) {
+        final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
+        workoutName = workout?['name'] as String? ?? 'personalized';
+      } else {
+        workoutName = _currentWorkout?.name ?? 'unknown';
+      }
       analytics.trackEvent(
         eventName: 'demo_workout_viewed',
         category: 'demo',
         properties: {
-          'workout_type': _currentWorkout.type,
-          'workout_name': _currentWorkout.name,
+          'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
+          'workout_name': workoutName,
+          'is_personalized': _personalizedWorkout != null,
         },
       );
     } catch (e) {
@@ -64,12 +133,19 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   void _trackConversion(String action) {
     try {
       final analytics = ref.read(analyticsServiceProvider);
+      String workoutName;
+      if (_personalizedWorkout != null) {
+        final workout = _personalizedWorkout!['workout'] as Map<String, dynamic>?;
+        workoutName = workout?['name'] as String? ?? 'personalized';
+      } else {
+        workoutName = _currentWorkout?.name ?? 'unknown';
+      }
       analytics.trackEvent(
         eventName: 'demo_to_signup_conversion',
         category: 'conversion',
         properties: {
-          'workout_type': _currentWorkout.type,
-          'workout_name': _currentWorkout.name,
+          'workout_type': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
+          'workout_name': workoutName,
           'action': action,
         },
       );
@@ -81,7 +157,6 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   void _tryAnotherSample() {
     HapticFeedback.lightImpact();
     setState(() {
-      _loadWorkout(excludeType: _currentWorkout.type);
       _expandedExerciseIndex = null;
     });
 
@@ -92,10 +167,13 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         eventName: 'demo_try_another_clicked',
         category: 'demo',
         properties: {
-          'previous_workout': _currentWorkout.type,
+          'previous_workout': _personalizedWorkout != null ? 'personalized' : (_currentWorkout?.type ?? 'unknown'),
         },
       );
     } catch (_) {}
+
+    // Reload personalized workout (will get different exercises)
+    _loadPersonalizedWorkout();
   }
 
   void _navigateToSignUp() {
@@ -104,11 +182,74 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     context.go('/pre-auth-quiz');
   }
 
+  // Helper getters for personalized workout data
+  Map<String, dynamic>? get _workout => _personalizedWorkout?['workout'];
+  List<dynamic> get _exercises => _workout?['exercises'] as List<dynamic>? ?? [];
+  String get _workoutName => _workout?['name'] ?? _currentWorkout?.name ?? 'Sample Workout';
+  String get _workoutDescription => _workout?['description'] ?? _currentWorkout?.description ?? '';
+  String get _workoutType => _workout?['type'] ?? _currentWorkout?.workoutType ?? 'strength';
+  String get _difficulty => _workout?['difficulty'] ?? _currentWorkout?.difficulty ?? 'intermediate';
+  int get _durationMinutes => _workout?['duration_minutes'] ?? _currentWorkout?.durationMinutes ?? 30;
+  int get _caloriesEstimate => _workout?['calories_estimate'] ?? _currentWorkout?.estimatedCalories ?? 200;
+  List<String> get _targetMuscles => (_workout?['target_muscles'] as List<dynamic>?)?.cast<String>() ?? _currentWorkout?.targetMuscles ?? [];
+  List<String> get _equipment => (_workout?['equipment'] as List<dynamic>?)?.cast<String>() ?? _currentWorkout?.equipment ?? [];
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    // Show loading state
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: AppColors.cyan),
+              const SizedBox(height: 16),
+              Text(
+                'Creating your personalized workout...',
+                style: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // If neither personalized nor static workout is available, show error
+    if (_personalizedWorkout == null && _currentWorkout == null) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load workout',
+                style: TextStyle(
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _loadPersonalizedWorkout,
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -121,7 +262,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                 child: SizedBox(height: MediaQuery.of(context).padding.top + 70),
               ),
 
-              // Demo Banner
+              // Demo Banner - show personalized badge if using personalized workout
               SliverToBoxAdapter(
                 child: _buildDemoBanner(isDark),
               ),
@@ -142,7 +283,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               ),
 
               // Equipment Needed
-              if (_currentWorkout.equipment.isNotEmpty)
+              if (_equipment.isNotEmpty)
                 SliverToBoxAdapter(
                   child: _buildEquipmentSection(isDark),
                 ),
@@ -152,17 +293,29 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                 child: _buildExercisesHeader(isDark),
               ),
 
-              // Exercise List
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildExerciseCard(
-                    index,
-                    _currentWorkout.exercises[index],
-                    isDark,
+              // Exercise List - use personalized exercises if available
+              if (_personalizedWorkout != null)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildPersonalizedExerciseCard(
+                      index,
+                      _exercises[index] as Map<String, dynamic>,
+                      isDark,
+                    ),
+                    childCount: _exercises.length,
                   ),
-                  childCount: _currentWorkout.exercises.length,
+                )
+              else if (_currentWorkout != null)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildExerciseCard(
+                      index,
+                      _currentWorkout!.exercises[index],
+                      isDark,
+                    ),
+                    childCount: _currentWorkout!.exercises.length,
+                  ),
                 ),
-              ),
 
               // CTA Section
               SliverToBoxAdapter(
@@ -260,6 +413,8 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   }
 
   Widget _buildDemoBanner(bool isDark) {
+    final isPersonalized = _personalizedWorkout != null;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(16),
@@ -267,14 +422,21 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppColors.cyan.withOpacity(0.15),
-            AppColors.teal.withOpacity(0.1),
-          ],
+          colors: isPersonalized
+              ? [
+                  AppColors.purple.withOpacity(0.15),
+                  AppColors.cyan.withOpacity(0.1),
+                ]
+              : [
+                  AppColors.cyan.withOpacity(0.15),
+                  AppColors.teal.withOpacity(0.1),
+                ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+          color: isPersonalized
+              ? AppColors.purple.withOpacity(0.3)
+              : AppColors.cyan.withOpacity(0.3),
           width: 1.5,
         ),
       ),
@@ -283,12 +445,14 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.2),
+              color: isPersonalized
+                  ? AppColors.purple.withOpacity(0.2)
+                  : AppColors.cyan.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.preview_rounded,
-              color: AppColors.cyan,
+            child: Icon(
+              isPersonalized ? Icons.auto_awesome : Icons.preview_rounded,
+              color: isPersonalized ? AppColors.purple : AppColors.cyan,
               size: 24,
             ),
           ),
@@ -297,17 +461,41 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Sample Workout Preview',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      isPersonalized ? 'Your Personalized Workout' : 'Sample Workout Preview',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                    if (isPersonalized) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'AI',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.purple,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'See what your personalized workouts could look like',
+                  isPersonalized
+                      ? 'Based on your goals, equipment & fitness level'
+                      : 'See what your personalized workouts could look like',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -322,7 +510,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
   }
 
   Widget _buildWorkoutHeader(bool isDark) {
-    final typeColor = AppColors.getWorkoutTypeColor(_currentWorkout.workoutType);
+    final typeColor = AppColors.getWorkoutTypeColor(_workoutType);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -331,7 +519,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         children: [
           // Workout name
           Text(
-            _currentWorkout.name,
+            _workoutName,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -346,15 +534,15 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
             children: [
               _buildBadge(
                 label: 'Type',
-                value: _currentWorkout.workoutType.toUpperCase(),
+                value: _workoutType.toUpperCase(),
                 color: typeColor,
                 backgroundColor: typeColor.withOpacity(0.2),
               ),
               _buildBadge(
                 label: 'Difficulty',
-                value: DifficultyUtils.getDisplayName(_currentWorkout.difficulty),
-                color: DifficultyUtils.getColor(_currentWorkout.difficulty),
-                backgroundColor: DifficultyUtils.getColor(_currentWorkout.difficulty)
+                value: DifficultyUtils.getDisplayName(_difficulty),
+                color: DifficultyUtils.getColor(_difficulty),
+                backgroundColor: DifficultyUtils.getColor(_difficulty)
                     .withOpacity(0.2),
               ),
             ],
@@ -364,7 +552,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
           // Description
           Text(
-            _currentWorkout.description,
+            _workoutDescription,
             style: TextStyle(
               fontSize: 15,
               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -414,6 +602,9 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   Widget _buildStatsRow(bool isDark) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final exerciseCount = _personalizedWorkout != null
+        ? _exercises.length
+        : (_currentWorkout?.exercises.length ?? 0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -421,7 +612,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         children: [
           _buildStatCard(
             icon: Icons.timer_outlined,
-            value: '${_currentWorkout.durationMinutes}',
+            value: '$_durationMinutes',
             label: 'min',
             color: AppColors.cyan,
             backgroundColor: elevatedColor,
@@ -429,7 +620,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           const SizedBox(width: 12),
           _buildStatCard(
             icon: Icons.fitness_center,
-            value: '${_currentWorkout.exercises.length}',
+            value: '$exerciseCount',
             label: 'exercises',
             color: AppColors.purple,
             backgroundColor: elevatedColor,
@@ -437,7 +628,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           const SizedBox(width: 12),
           _buildStatCard(
             icon: Icons.local_fire_department,
-            value: '${_currentWorkout.estimatedCalories}',
+            value: '$_caloriesEstimate',
             label: 'cal',
             color: AppColors.orange,
             backgroundColor: elevatedColor,
@@ -499,6 +690,8 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    if (_targetMuscles.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -527,7 +720,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               child: Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: _currentWorkout.targetMuscles.map((muscle) {
+                children: _targetMuscles.where((m) => m.isNotEmpty).map((muscle) {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
@@ -557,6 +750,8 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
+    if (_equipment.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Column(
@@ -575,7 +770,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _currentWorkout.equipment.map((equipment) {
+            children: _equipment.where((e) => e.isNotEmpty).map((equipment) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
@@ -610,6 +805,9 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
 
   Widget _buildExercisesHeader(bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final exerciseCount = _personalizedWorkout != null
+        ? _exercises.length
+        : (_currentWorkout?.exercises.length ?? 0);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -641,7 +839,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '${_currentWorkout.exercises.length}',
+              '$exerciseCount',
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -652,6 +850,328 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
         ],
       ),
     ).animate().fadeIn(delay: 350.ms, duration: 300.ms);
+  }
+
+  /// Build exercise card for PERSONALIZED workouts with GIF support
+  Widget _buildPersonalizedExerciseCard(int index, Map<String, dynamic> exercise, bool isDark) {
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    final isExpanded = _expandedExerciseIndex == index;
+
+    final exerciseName = exercise['name'] ?? 'Unknown Exercise';
+    final muscleGroup = exercise['muscle_group'] ?? exercise['body_part'] ?? 'Unknown';
+    final equipmentUsed = exercise['equipment'] ?? 'Bodyweight';
+    final sets = exercise['sets'] ?? 3;
+    final reps = exercise['reps'] ?? 12;
+    final restSeconds = exercise['rest_seconds'] ?? 60;
+    final gifUrl = exercise['gif_url'] as String?;
+    final notes = exercise['notes'] ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            // Exercise header (tappable to expand)
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _expandedExerciseIndex = isExpanded ? null : index;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    // Exercise number badge OR GIF thumbnail
+                    if (gifUrl != null && gifUrl.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: CachedNetworkImage(
+                          imageUrl: gifUrl,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppColors.cyan, AppColors.teal],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppColors.cyan, AppColors.teal],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.cyan, AppColors.teal],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 12),
+
+                    // Exercise info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            exerciseName,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              _buildExerciseChip(
+                                Icons.fitness_center,
+                                muscleGroup,
+                                AppColors.cyan,
+                              ),
+                              _buildExerciseChip(
+                                Icons.sports_gymnastics,
+                                equipmentUsed,
+                                AppColors.purple,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Video badge (if has GIF)
+                    if (gifUrl != null && gifUrl.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_circle_outline, size: 12, color: AppColors.success),
+                            const SizedBox(width: 2),
+                            Text(
+                              'Video',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+
+                    // Expand/collapse icon
+                    Icon(
+                      isExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: textMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Sets/reps summary row
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: glassSurface.withOpacity(0.3),
+                border: Border(
+                  top: BorderSide(color: cardBorder.withOpacity(0.3)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  _buildSummaryChip(
+                    Icons.repeat,
+                    '$sets sets',
+                    AppColors.cyan,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildSummaryChip(
+                    Icons.fitness_center,
+                    '$reps reps',
+                    AppColors.purple,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildSummaryChip(
+                    Icons.timer_outlined,
+                    _formatRestTime(restSeconds),
+                    AppColors.orange,
+                  ),
+                ],
+              ),
+            ),
+
+            // Expanded content with GIF and instructions
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState:
+                  isExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              firstChild: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: glassSurface.withOpacity(0.5),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // GIF animation (if available)
+                    if (gifUrl != null && gifUrl.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: gifUrl,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: double.infinity,
+                            height: 200,
+                            color: glassSurface,
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.cyan,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: double.infinity,
+                            height: 200,
+                            color: glassSurface,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.videocam_off, size: 40, color: textMuted),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Video unavailable',
+                                  style: TextStyle(color: textMuted, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Instructions
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppColors.cyan,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'How to perform',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.cyan,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      notes.isNotEmpty ? notes : 'Focus on proper form and controlled movements.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              secondChild: const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(
+          delay: Duration(milliseconds: 400 + (index * 50)),
+          duration: 300.ms,
+        );
   }
 
   Widget _buildExerciseCard(int index, DemoExercise exercise, bool isDark) {
@@ -947,6 +1467,42 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
     return '${seconds}s rest';
   }
 
+  void _startWorkout() {
+    HapticFeedback.mediumImpact();
+    _trackConversion('start_workout');
+
+    // Prepare exercises list for active workout
+    List<Map<String, dynamic>> exercisesList;
+    if (_personalizedWorkout != null) {
+      exercisesList = _exercises.map((e) => e as Map<String, dynamic>).toList();
+    } else if (_currentWorkout != null) {
+      exercisesList = _currentWorkout!.exercises.map((e) => {
+        'name': e.name,
+        'sets': e.sets,
+        'reps': e.reps ?? 12,
+        'rest_seconds': e.restSeconds,
+        'muscle_group': e.muscleGroup,
+        'equipment': e.equipment,
+        'gif_url': e.gifUrl,
+        'notes': e.instructions,
+      }).toList();
+    } else {
+      return;
+    }
+
+    // Navigate to demo active workout
+    context.push('/demo-active-workout', extra: {
+      'workout': _workout ?? {
+        'name': _workoutName,
+        'description': _workoutDescription,
+        'type': _workoutType,
+        'difficulty': _difficulty,
+        'duration_minutes': _durationMinutes,
+      },
+      'exercises': exercisesList,
+    });
+  }
+
   Widget _buildCtaSection(bool isDark) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -956,6 +1512,40 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Column(
         children: [
+          // START WORKOUT BUTTON - Primary CTA
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              onPressed: _startWorkout,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.success,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shadowColor: AppColors.success.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.play_arrow_rounded, size: 28),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Start Workout',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ).animate().fadeIn(delay: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+
+          const SizedBox(height: 24),
+
           // Sign up prompt box
           Container(
             padding: const EdgeInsets.all(20),

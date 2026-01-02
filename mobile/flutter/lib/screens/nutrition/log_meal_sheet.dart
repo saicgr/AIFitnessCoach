@@ -8,8 +8,11 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../data/providers/guest_mode_provider.dart';
+import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/services/food_search_service.dart' hide FoodSearchResults;
 import 'widgets/food_search_bar.dart';
@@ -100,6 +103,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    // Check guest limits for photo scanning
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan = await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
+      if (!canScan) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.photoScan);
+        }
+        return;
+      }
+    }
+
     try {
       final picker = ImagePicker();
       final image = await picker.pickImage(
@@ -171,6 +187,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   Future<void> _logFromText() async {
     final description = _descriptionController.text.trim();
     if (description.isEmpty) return;
+
+    // Check guest limits for text describe
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canDescribe = await ref.read(guestUsageLimitsProvider.notifier).useTextDescribe();
+      if (!canDescribe) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.textDescribe);
+        }
+        return;
+      }
+    }
 
     setState(() {
       _isLoading = true;
@@ -589,6 +618,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
   Future<void> _handleBarcodeScan(String barcode) async {
     if (_hasScanned) return;
     _hasScanned = true;
+
+    // Check guest limits for barcode scanning
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan = await ref.read(guestUsageLimitsProvider.notifier).useBarcodeScan();
+      if (!canScan) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.barcodeScan);
+        }
+        return;
+      }
+    }
 
     setState(() {
       _isLoading = true;

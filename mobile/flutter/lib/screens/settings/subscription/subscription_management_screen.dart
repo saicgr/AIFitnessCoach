@@ -125,7 +125,7 @@ class _SubscriptionManagementScreenState
 
       if (userId != null) {
         await apiClient.post(
-          '/api/v1/subscriptions/$userId/pause',
+          '/subscriptions/$userId/pause',
           data: {'duration_days': durationDays},
         );
 
@@ -162,7 +162,7 @@ class _SubscriptionManagementScreenState
       final userId = await apiClient.getUserId();
 
       if (userId != null) {
-        await apiClient.post('/api/v1/subscriptions/$userId/resume');
+        await apiClient.post('/subscriptions/$userId/resume');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
