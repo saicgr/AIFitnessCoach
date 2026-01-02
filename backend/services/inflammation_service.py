@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 from services.gemini_service import GeminiService
 from services.user_context_service import UserContextService, EventType
 from models.inflammation import (
@@ -144,7 +144,7 @@ class InflammationService:
     async def _get_cached_analysis(self, barcode: str) -> Optional[Dict]:
         """Get cached analysis if exists and not expired."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
             result = client.table("food_inflammation_analyses")\
                 .select("*")\
                 .eq("barcode", barcode)\
@@ -164,7 +164,7 @@ class InflammationService:
         analysis: Dict,
     ) -> str:
         """Store analysis in database and return ID."""
-        client = get_supabase_client()
+        client = get_supabase().client
 
         data = {
             "barcode": barcode,
@@ -193,7 +193,7 @@ class InflammationService:
     async def _record_user_scan(self, user_id: str, analysis_id: str) -> None:
         """Record that a user scanned this product."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
             client.table("user_inflammation_scans").insert({
                 "user_id": user_id,
                 "analysis_id": analysis_id,
@@ -308,7 +308,7 @@ class InflammationService:
     ) -> List[UserInflammationScan]:
         """Get user's scan history."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
 
             query = client.table("user_inflammation_history")\
                 .select("*")\
@@ -354,7 +354,7 @@ class InflammationService:
     async def get_user_stats(self, user_id: str) -> UserInflammationStatsResponse:
         """Get aggregated stats for a user."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
 
             result = client.table("user_inflammation_stats")\
                 .select("*")\
@@ -393,7 +393,7 @@ class InflammationService:
     ) -> bool:
         """Update notes on a user's scan."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
             result = client.table("user_inflammation_scans")\
                 .update({"notes": notes})\
                 .eq("id", scan_id)\
@@ -412,7 +412,7 @@ class InflammationService:
     ) -> bool:
         """Toggle favorite status on a scan."""
         try:
-            client = get_supabase_client()
+            client = get_supabase().client
             result = client.table("user_inflammation_scans")\
                 .update({"is_favorited": is_favorited})\
                 .eq("id", scan_id)\

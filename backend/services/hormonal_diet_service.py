@@ -12,7 +12,7 @@ from models.hormonal_health import (
     HormoneGoal, CyclePhase, HormonalProfile,
     HormoneSupportiveFood, HormonalFoodRecommendation
 )
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 
 
 @dataclass
@@ -389,7 +389,7 @@ class HormonalDietService:
 
     def __init__(self):
         """Initialize the hormonal diet service."""
-        self.supabase = get_supabase_client()
+        self.supabase = get_supabase().client
 
     def get_testosterone_boosting_foods(self) -> List[HormonalFood]:
         """Get list of testosterone-boosting foods."""

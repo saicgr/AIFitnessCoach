@@ -14,7 +14,7 @@ from models.hormonal_health import (
     KegelStats, KegelExercise, KegelDailyGoal,
     KegelFocusArea, KegelLevel
 )
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 
 router = APIRouter(prefix="/kegel", tags=["Kegel/Pelvic Floor"])
 
@@ -29,7 +29,7 @@ async def get_kegel_preferences(user_id: UUID):
     print(f"🔍 [Kegel] Fetching preferences for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("kegel_preferences").select("*").eq("user_id", str(user_id)).execute()
 
         if not result.data:
@@ -50,7 +50,7 @@ async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesU
     print(f"🔍 [Kegel] Upserting preferences for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Prepare data, excluding None values
         pref_data = {k: v for k, v in preferences.dict().items() if v is not None}
@@ -91,7 +91,7 @@ async def delete_kegel_preferences(user_id: UUID):
     print(f"🔍 [Kegel] Deleting preferences for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         supabase.table("kegel_preferences").delete().eq("user_id", str(user_id)).execute()
         print(f"✅ [Kegel] Preferences deleted for user {user_id}")
         return {"message": "Preferences deleted successfully"}
@@ -111,7 +111,7 @@ async def create_kegel_session(user_id: UUID, session: KegelSessionCreate):
     print(f"🔍 [Kegel] Creating session for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         session_data = session.dict()
         session_data["user_id"] = str(user_id)
@@ -145,7 +145,7 @@ async def get_kegel_sessions(
     print(f"🔍 [Kegel] Fetching sessions for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         query = supabase.table("kegel_sessions").select("*").eq("user_id", str(user_id))
 
@@ -170,7 +170,7 @@ async def get_today_kegel_sessions(user_id: UUID):
     print(f"🔍 [Kegel] Fetching today's sessions for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("kegel_sessions").select("*").eq(
             "user_id", str(user_id)
         ).eq("session_date", date.today().isoformat()).order("session_time", desc=True).execute()
@@ -192,7 +192,7 @@ async def get_kegel_stats(user_id: UUID):
     print(f"🔍 [Kegel] Calculating stats for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get preferences
         prefs_result = supabase.table("kegel_preferences").select("*").eq("user_id", str(user_id)).execute()
@@ -280,7 +280,7 @@ async def check_daily_goal(user_id: UUID, check_date: date = Query(default=None)
     print(f"🔍 [Kegel] Checking daily goal for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         target_date = check_date or date.today()
 
@@ -324,7 +324,7 @@ async def get_kegel_exercises(
     print(f"🔍 [Kegel] Fetching exercises")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         query = supabase.table("kegel_exercises").select("*").eq("is_active", True)
 
@@ -364,7 +364,7 @@ async def get_kegel_exercise(exercise_id: UUID):
     print(f"🔍 [Kegel] Fetching exercise {exercise_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("kegel_exercises").select("*").eq("id", str(exercise_id)).execute()
 
         if not result.data:
@@ -385,7 +385,7 @@ async def get_kegel_exercise_by_name(name: str):
     print(f"🔍 [Kegel] Fetching exercise by name: {name}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("kegel_exercises").select("*").eq("name", name).execute()
 
         if not result.data:
@@ -413,7 +413,7 @@ async def get_kegels_for_workout(
     print(f"🔍 [Kegel] Getting kegels for {placement} for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Check preferences
         prefs_result = supabase.table("kegel_preferences").select("*").eq("user_id", str(user_id)).execute()
@@ -478,7 +478,7 @@ async def log_kegels_from_workout(
     print(f"🔍 [Kegel] Logging kegels from workout {workout_id} for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         session_data = {
             "user_id": str(user_id),

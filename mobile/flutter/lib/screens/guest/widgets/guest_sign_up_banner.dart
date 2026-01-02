@@ -75,12 +75,15 @@ class GuestSignUpBanner extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Get Your Personal Plan',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
+                          Flexible(
+                            child: Text(
+                              'Get Your Personal Plan',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),

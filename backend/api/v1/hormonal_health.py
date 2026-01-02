@@ -16,7 +16,7 @@ from models.hormonal_health import (
     HormoneSupportiveFood, HormonalFoodRecommendation,
     HormoneGoal
 )
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 
 router = APIRouter(prefix="/hormonal-health", tags=["Hormonal Health"])
 
@@ -142,7 +142,7 @@ async def get_hormonal_profile(user_id: UUID):
     print(f"🔍 [Hormonal] Fetching profile for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
 
         if not result.data:
@@ -163,7 +163,7 @@ async def upsert_hormonal_profile(user_id: UUID, profile: HormonalProfileUpdate)
     print(f"🔍 [Hormonal] Upserting profile for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Prepare data, excluding None values
         profile_data = {k: v for k, v in profile.dict().items() if v is not None}
@@ -206,7 +206,7 @@ async def delete_hormonal_profile(user_id: UUID):
     print(f"🔍 [Hormonal] Deleting profile for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         supabase.table("hormonal_profiles").delete().eq("user_id", str(user_id)).execute()
         print(f"✅ [Hormonal] Profile deleted for user {user_id}")
         return {"message": "Profile deleted successfully"}
@@ -226,7 +226,7 @@ async def create_hormone_log(user_id: UUID, log: HormoneLogCreate):
     print(f"🔍 [Hormonal] Creating log for user {user_id} on {log.log_date}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         log_data = log.dict()
         log_data["user_id"] = str(user_id)
@@ -280,7 +280,7 @@ async def get_hormone_logs(
     print(f"🔍 [Hormonal] Fetching logs for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         query = supabase.table("hormone_logs").select("*").eq("user_id", str(user_id))
 
@@ -305,7 +305,7 @@ async def get_today_hormone_log(user_id: UUID):
     print(f"🔍 [Hormonal] Fetching today's log for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("hormone_logs").select("*").eq(
             "user_id", str(user_id)
         ).eq("log_date", date.today().isoformat()).execute()
@@ -329,7 +329,7 @@ async def get_cycle_phase(user_id: UUID):
     print(f"🔍 [Hormonal] Getting cycle phase for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
 
         if not result.data:
@@ -405,7 +405,7 @@ async def log_period_start(user_id: UUID, period_date: date = Query(default=None
     print(f"🔍 [Hormonal] Logging period start for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         period_start = period_date or date.today()
 
@@ -451,7 +451,7 @@ async def get_hormone_supportive_foods(
     print(f"🔍 [Hormonal] Fetching hormone-supportive foods")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
         query = supabase.table("hormone_supportive_foods").select("*").eq("is_active", True)
 
         # Filter by goal
@@ -491,7 +491,7 @@ async def get_food_recommendations(user_id: UUID):
     print(f"🔍 [Hormonal] Getting food recommendations for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get user's hormonal profile
         profile_result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
@@ -594,7 +594,7 @@ async def get_hormonal_insights(user_id: UUID):
     print(f"🔍 [Hormonal] Getting comprehensive insights for user {user_id}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get profile
         profile_result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()

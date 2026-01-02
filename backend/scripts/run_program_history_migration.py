@@ -9,7 +9,7 @@ from pathlib import Path
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 
 def run_migration():
     """Execute the program_history table creation"""
@@ -21,7 +21,7 @@ def run_migration():
         sql = f.read()
     
     # Execute via Supabase
-    supabase = get_supabase_client()
+    supabase = get_supabase().client
     
     try:
         # Execute the SQL

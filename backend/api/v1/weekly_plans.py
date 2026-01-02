@@ -588,7 +588,7 @@ async def save_meal_suggestions_to_daily(
     plan_id: str,
     plan_date: str,
     user_id: str,
-    http_request: Request,
+    request: Request,
 ):
     """
     Generate and save meal suggestions directly to a daily entry.

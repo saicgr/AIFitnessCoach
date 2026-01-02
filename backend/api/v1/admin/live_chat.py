@@ -16,7 +16,7 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 
 from core.supabase_db import get_supabase_db
-from core.supabase_client import get_supabase_client
+from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from models.admin import (
@@ -81,7 +81,7 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
         token = authorization.replace("Bearer ", "")
 
         # Use Supabase to verify the token and get user
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Get user from token
         user_response = supabase.auth.get_user(token)
@@ -240,7 +240,7 @@ async def admin_login(request: AdminLoginRequest):
     logger.info(f"Admin login attempt for: {request.email}")
 
     try:
-        supabase = get_supabase_client()
+        supabase = get_supabase().client
 
         # Authenticate with Supabase
         auth_response = supabase.auth.sign_in_with_password({

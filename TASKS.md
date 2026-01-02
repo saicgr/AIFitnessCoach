@@ -15,7 +15,10 @@ ASAP:
 56. Strength Score and integration to social
 
 ISSUES:
-25. 
+25. Need back button to welcome screen in step1
+26. During preonbaording quiz when the user hits skip need a popup showing what would the default values be and then if user hits continue only then it will skip
+27. When I hit view full 4 week plan, why are all the exercises same for all the weeks?
+28. Google sign in still shows same old icon
 
 <!-- NEW FEATURES IN APP -->
 3. Hi ! I suspect it's complicated and certainly not on the Roadmap but it would be huge if we had training adapted to the women's cycle. Related to Apple health for example. A woman having phases where performance will differ.
