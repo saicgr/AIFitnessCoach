@@ -27,7 +27,7 @@ class PaywallPricingScreen extends ConsumerStatefulWidget {
 }
 
 class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
-  String _selectedPlan = 'ultra_yearly';
+  String _selectedPlan = 'premium_plus_yearly';
   String _selectedBillingCycle = 'yearly'; // 'yearly', 'monthly', or 'lifetime'
   bool _hasShownDiscount = false;
 
@@ -146,7 +146,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               isSelected: _selectedBillingCycle == 'yearly',
                               onTap: () => setState(() {
                                 _selectedBillingCycle = 'yearly';
-                                _selectedPlan = 'ultra_yearly';
+                                _selectedPlan = 'premium_plus_yearly';
                               }),
                               colors: colors,
                             ),
@@ -156,7 +156,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               isSelected: _selectedBillingCycle == 'monthly',
                               onTap: () => setState(() {
                                 _selectedBillingCycle = 'monthly';
-                                _selectedPlan = 'ultra_monthly';
+                                _selectedPlan = 'premium_plus_monthly';
                               }),
                               colors: colors,
                             ),
@@ -187,13 +187,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       else
                         Column(
                           children: [
-                            // Ultra plan (with rainbow border if yearly)
+                            // Premium Plus plan (with rainbow border if yearly)
                             if (_selectedBillingCycle == 'yearly')
                               _RainbowBorderCard(
-                                isSelected: _selectedPlan == 'ultra_yearly',
+                                isSelected: _selectedPlan == 'premium_plus_yearly',
                                 child: _TierPlanCard(
-                                  planId: 'ultra_yearly',
-                                  tierName: 'Ultra',
+                                  planId: 'premium_plus_yearly',
+                                  tierName: 'Premium Plus',
                                   badge: 'BEST VALUE',
                                   badgeColor: const Color(0xFF00D9FF),
                                   accentColor: const Color(0xFF00D9FF),
@@ -206,15 +206,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                     '⚡ Priority responses',
                                     '📊 Advanced analytics',
                                   ],
-                                  isSelected: _selectedPlan == 'ultra_yearly',
-                                  onTap: () => setState(() => _selectedPlan = 'ultra_yearly'),
+                                  isSelected: _selectedPlan == 'premium_plus_yearly',
+                                  onTap: () => setState(() => _selectedPlan = 'premium_plus_yearly'),
                                   colors: colors,
                                 ),
                               )
                             else
                               _TierPlanCard(
-                                planId: 'ultra_monthly',
-                                tierName: 'Ultra',
+                                planId: 'premium_plus_monthly',
+                                tierName: 'Premium Plus',
                                 badge: 'MOST POPULAR',
                                 badgeColor: const Color(0xFFAA66FF),
                                 accentColor: const Color(0xFFAA66FF),
@@ -227,8 +227,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                   '⚡ Priority responses',
                                   '📊 Advanced analytics',
                                 ],
-                                isSelected: _selectedPlan == 'ultra_monthly',
-                                onTap: () => setState(() => _selectedPlan = 'ultra_monthly'),
+                                isSelected: _selectedPlan == 'premium_plus_monthly',
+                                onTap: () => setState(() => _selectedPlan = 'premium_plus_monthly'),
                                 colors: colors,
                               ),
 
@@ -566,9 +566,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   Color _getButtonColor() {
     switch (_selectedPlan) {
-      case 'ultra_yearly':
+      case 'premium_plus_yearly':
         return const Color(0xFF00D9FF); // Cyan
-      case 'ultra_monthly':
+      case 'premium_plus_monthly':
         return const Color(0xFFAA66FF); // Purple
       case 'premium_yearly':
         return const Color(0xFF00CC66); // Green
@@ -692,16 +692,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   /// Get plan details by plan ID
   Map<String, dynamic> _getPlanDetails(String planId) {
     switch (planId) {
-      case 'ultra_yearly':
+      case 'premium_plus_yearly':
         return {
-          'name': 'Ultra Yearly',
+          'name': 'Premium Plus Yearly',
           'price': 79.99,
           'period': 'year',
           'monthlyPrice': 6.67,
         };
-      case 'ultra_monthly':
+      case 'premium_plus_monthly':
         return {
-          'name': 'Ultra Monthly',
+          'name': 'Premium Plus Monthly',
           'price': 9.99,
           'period': 'month',
           'monthlyPrice': 9.99,
@@ -741,11 +741,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _getCurrentPlanId(SubscriptionTier tier, SubscriptionState state) {
     // Estimate based on tier - in real app this would come from backend
     switch (tier) {
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         return state.subscriptionEndDate != null &&
                 state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
-            ? 'ultra_yearly'
-            : 'ultra_monthly';
+            ? 'premium_plus_yearly'
+            : 'premium_plus_monthly';
       case SubscriptionTier.premium:
         return state.subscriptionEndDate != null &&
                 state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
@@ -1579,7 +1579,7 @@ class _LifetimePlanCard extends StatelessWidget {
               padding: const EdgeInsets.only(left: 36),
               child: Column(
                 children: [
-                  _featureRow('🏆 Everything in Ultra', colors),
+                  _featureRow('🏆 Everything in Premium Plus', colors),
                   _featureRow('♾️ Lifetime updates & features', colors),
                   _featureRow('💎 Early access to new features', colors),
                   _featureRow('🎯 No recurring charges ever', colors),
@@ -1819,8 +1819,8 @@ class _CurrentPlanCard extends StatelessWidget {
 
   String _getTierName() {
     switch (tier) {
-      case SubscriptionTier.ultra:
-        return 'Ultra';
+      case SubscriptionTier.premiumPlus:
+        return 'Premium Plus';
       case SubscriptionTier.premium:
         return 'Premium';
       case SubscriptionTier.lifetime:

@@ -10,7 +10,7 @@ import '../constants/api_constants.dart';
 enum SubscriptionTier {
   free,
   premium,
-  ultra,
+  premiumPlus, // Formerly "ultra"
   lifetime,
 }
 
@@ -102,11 +102,11 @@ class SubscriptionState {
 
   bool get isPremiumOrHigher =>
     tier == SubscriptionTier.premium ||
-    tier == SubscriptionTier.ultra ||
+    tier == SubscriptionTier.premiumPlus ||
     tier == SubscriptionTier.lifetime;
 
-  bool get isUltraOrHigher =>
-    tier == SubscriptionTier.ultra ||
+  bool get isPremiumPlusOrHigher =>
+    tier == SubscriptionTier.premiumPlus ||
     tier == SubscriptionTier.lifetime;
 
   /// Whether this subscription ever expires (lifetime never does)
@@ -192,13 +192,13 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   // RevenueCat product IDs - must match App Store Connect / Google Play Console
   static const String premiumMonthlyId = 'premium_monthly';
   static const String premiumYearlyId = 'premium_yearly';
-  static const String ultraMonthlyId = 'ultra_monthly';
-  static const String ultraYearlyId = 'ultra_yearly';
+  static const String premiumPlusMonthlyId = 'premium_plus_monthly'; // Formerly ultra_monthly
+  static const String premiumPlusYearlyId = 'premium_plus_yearly'; // Formerly ultra_yearly
   static const String lifetimeId = 'lifetime';
 
   // RevenueCat entitlement IDs
   static const String premiumEntitlement = 'premium';
-  static const String ultraEntitlement = 'ultra';
+  static const String premiumPlusEntitlement = 'premium_plus'; // Formerly ultra
 
   /// Configure RevenueCat SDK (call once at app startup)
   static Future<void> configureRevenueCat() async {
@@ -275,9 +275,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     // Check entitlements
     final entitlements = customerInfo.entitlements.active;
 
-    if (entitlements.containsKey(ultraEntitlement)) {
-      tier = SubscriptionTier.ultra;
-      final entitlement = entitlements[ultraEntitlement]!;
+    if (entitlements.containsKey(premiumPlusEntitlement)) {
+      tier = SubscriptionTier.premiumPlus;
+      final entitlement = entitlements[premiumPlusEntitlement]!;
 
       // Check if it's a trial
       if (entitlement.periodType == PeriodType.trial) {
@@ -482,13 +482,13 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   /// Local feature check based on tier
   FeatureAccessResult _localFeatureCheck(String featureKey) {
     final premiumFeatures = ['food_scanning', 'advanced_analytics', 'custom_workouts'];
-    final ultraFeatures = ['workout_sharing', 'trainer_mode', 'priority_support'];
+    final premiumPlusFeatures = ['workout_sharing', 'trainer_mode', 'priority_support'];
 
-    if (ultraFeatures.contains(featureKey)) {
+    if (premiumPlusFeatures.contains(featureKey)) {
       return FeatureAccessResult(
-        hasAccess: state.isUltraOrHigher,
-        upgradeRequired: !state.isUltraOrHigher,
-        minimumTier: 'ultra',
+        hasAccess: state.isPremiumPlusOrHigher,
+        upgradeRequired: !state.isPremiumPlusOrHigher,
+        minimumTier: 'premium_plus',
       );
     }
 
@@ -572,9 +572,9 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           case premiumYearlyId:
             newTier = SubscriptionTier.premium;
             break;
-          case ultraMonthlyId:
-          case ultraYearlyId:
-            newTier = SubscriptionTier.ultra;
+          case premiumPlusMonthlyId:
+          case premiumPlusYearlyId:
+            newTier = SubscriptionTier.premiumPlus;
             break;
           case lifetimeId:
             newTier = SubscriptionTier.lifetime;
@@ -690,12 +690,12 @@ class ProductPricing {
       'savings': '33%',
       'trialDays': 7,
     },
-    'ultra_monthly': {
+    'premium_plus_monthly': {
       'price': 9.99,
       'period': 'month',
       'trialDays': 0,
     },
-    'ultra_yearly': {
+    'premium_plus_yearly': {
       'price': 79.99,
       'period': 'year',
       'monthlyEquivalent': 6.67,

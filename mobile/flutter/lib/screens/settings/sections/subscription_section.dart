@@ -222,8 +222,8 @@ class SubscriptionSection extends ConsumerWidget {
         return 'Free Plan';
       case SubscriptionTier.premium:
         return 'Premium Plan';
-      case SubscriptionTier.ultra:
-        return 'Ultra Plan';
+      case SubscriptionTier.premiumPlus:
+        return 'Premium Plus Plan';
       case SubscriptionTier.lifetime:
         return 'Lifetime Access';
     }
@@ -235,7 +235,7 @@ class SubscriptionSection extends ConsumerWidget {
         return AppColors.textMuted;
       case SubscriptionTier.premium:
         return AppColors.cyan;
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         return AppColors.purple;
       case SubscriptionTier.lifetime:
         return AppColors.purple;
@@ -248,7 +248,7 @@ class SubscriptionSection extends ConsumerWidget {
         return Icons.person_outline;
       case SubscriptionTier.premium:
         return Icons.workspace_premium;
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         return Icons.diamond_outlined;
       case SubscriptionTier.lifetime:
         return Icons.all_inclusive;

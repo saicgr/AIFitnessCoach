@@ -687,24 +687,24 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   ),
                 ),
               ),
-              Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
-              // Continue as Guest
-              TextButton(
-                onPressed: _continueAsGuest,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  'Guest Mode',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.purple,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              // Guest Mode disabled - Coming Soon based on user feedback
+              // Text('•', style: TextStyle(color: textSecondary, fontSize: 13)),
+              // TextButton(
+              //   onPressed: _continueAsGuest,
+              //   style: TextButton.styleFrom(
+              //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              //     minimumSize: Size.zero,
+              //     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              //   ),
+              //   child: Text(
+              //     'Guest Mode',
+              //     style: TextStyle(
+              //       fontSize: 13,
+              //       color: AppColors.purple,
+              //       fontWeight: FontWeight.w500,
+              //     ),
+              //   ),
+              // ),
             ],
           ).animate().fadeIn(delay: 600.ms),
 

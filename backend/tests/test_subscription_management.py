@@ -411,22 +411,22 @@ class TestRetentionOffers:
         assert len(pause_offers) == 0
 
     @pytest.mark.asyncio
-    async def test_get_retention_offers_ultra_includes_downgrade(
+    async def test_get_retention_offers_premium_plus_includes_downgrade(
         self, mock_supabase_client, sample_user_id
     ):
-        """Test that ultra users get downgrade offers."""
+        """Test that premium plus users get downgrade offers."""
         from api.v1.subscriptions import get_retention_offers
 
-        ultra_subscription = {
-            "id": "sub-ultra",
+        premium_plus_subscription = {
+            "id": "sub-premium-plus",
             "user_id": sample_user_id,
-            "tier": "ultra",
+            "tier": "premium_plus",
             "status": "active",
             "is_lifetime": False
         }
 
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data=ultra_subscription
+            data=premium_plus_subscription
         )
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.execute.return_value = MagicMock(
             data=[]
@@ -503,15 +503,15 @@ class TestAcceptOffer:
         """Test accepting a downgrade offer."""
         from api.v1.subscriptions import accept_retention_offer, AcceptOfferRequest
 
-        ultra_subscription = {
-            "id": "sub-ultra",
+        premium_plus_subscription = {
+            "id": "sub-premium-plus",
             "user_id": sample_user_id,
-            "tier": "ultra",
+            "tier": "premium_plus",
             "status": "active"
         }
 
         mock_supabase_client.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = MagicMock(
-            data=ultra_subscription
+            data=premium_plus_subscription
         )
         mock_supabase_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[{}])
         mock_supabase_client.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(data=[{}])

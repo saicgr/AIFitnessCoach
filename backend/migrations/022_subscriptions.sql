@@ -3,7 +3,7 @@
 
 -- Subscription tiers enum
 DO $$ BEGIN
-    CREATE TYPE subscription_tier AS ENUM ('free', 'premium', 'ultra', 'lifetime');
+    CREATE TYPE subscription_tier AS ENUM ('free', 'premium', 'premium_plus', 'lifetime');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS user_subscriptions (
 
     -- RevenueCat integration
     revenuecat_customer_id VARCHAR,
-    product_id VARCHAR, -- e.g., 'premium_yearly', 'ultra_monthly'
+    product_id VARCHAR, -- e.g., 'premium_yearly', 'premium_plus_monthly'
     entitlement_id VARCHAR,
 
     -- Trial info
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS feature_gates (
     -- Usage limits by tier (null = unlimited)
     free_limit INTEGER,
     premium_limit INTEGER,
-    ultra_limit INTEGER,
+    premium_plus_limit INTEGER,
 
     -- Feature flags
     is_enabled BOOLEAN DEFAULT TRUE,
@@ -182,15 +182,15 @@ CREATE TABLE IF NOT EXISTS feature_gates (
 );
 
 -- Insert default feature gates
-INSERT INTO feature_gates (feature_key, display_name, description, minimum_tier, free_limit, premium_limit, ultra_limit) VALUES
+INSERT INTO feature_gates (feature_key, display_name, description, minimum_tier, free_limit, premium_limit, premium_plus_limit) VALUES
     ('ai_chat', 'AI Coach Chat', 'Chat with AI fitness coach', 'free', 10, NULL, NULL),
     ('ai_workout_generation', 'AI Workout Generation', 'Generate personalized workouts', 'free', 3, NULL, NULL),
     ('food_scanning', 'AI Food Photo Scanning', 'Scan food photos for nutrition', 'premium', 0, 30, NULL),
     ('advanced_analytics', 'Advanced Progress Analytics', 'Detailed progress tracking', 'premium', NULL, NULL, NULL),
     ('custom_workouts', 'Custom Workout Builder', 'Create custom workouts', 'premium', 0, NULL, NULL),
-    ('workout_sharing', 'Social Workout Sharing', 'Share workouts on Instagram', 'ultra', 0, 0, NULL),
-    ('trainer_mode', 'Personal Trainer Mode', 'Advanced trainer features', 'ultra', 0, 0, NULL),
-    ('priority_support', 'Priority Support', '24h response time support', 'ultra', 0, 0, NULL)
+    ('workout_sharing', 'Social Workout Sharing', 'Share workouts on Instagram', 'premium_plus', 0, 0, NULL),
+    ('trainer_mode', 'Personal Trainer Mode', 'Advanced trainer features', 'premium_plus', 0, 0, NULL),
+    ('priority_support', 'Priority Support', '24h response time support', 'premium_plus', 0, 0, NULL)
 ON CONFLICT (feature_key) DO NOTHING;
 
 -- Feature usage tracking

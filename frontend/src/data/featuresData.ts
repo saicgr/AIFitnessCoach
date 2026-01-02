@@ -30,7 +30,7 @@ export type FeatureCategory =
   | 'diabetes'
   | 'hormonal-health';
 
-export type FeatureTier = 'free' | 'premium' | 'ultra' | 'lifetime' | 'all';
+export type FeatureTier = 'free' | 'premium' | 'premium_plus' | 'lifetime' | 'all';
 
 export interface Feature {
   id: string;
@@ -162,7 +162,7 @@ export const features: Feature[] = [
     title: 'Save as Template',
     description: 'Save your favorite workouts as templates for quick access and reuse.',
     category: 'workout',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['templates', 'favorites', 'save'],
   },
   {
@@ -328,7 +328,7 @@ export const features: Feature[] = [
   {
     id: 'chat-history',
     title: 'Extended Chat History',
-    description: 'Access your chat history - 7 days free, 90 days premium, forever for ultra/lifetime.',
+    description: 'Access your chat history - 7 days free, 90 days premium, forever for premium plus/lifetime.',
     category: 'ai-coach',
     tier: 'all',
     tags: ['history', 'chat', 'memory'],
@@ -542,7 +542,7 @@ export const features: Feature[] = [
     title: 'Muscle Analytics',
     description: 'Body heatmap showing training frequency, balance analysis, and volume per muscle.',
     category: 'progress',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['muscles', 'heatmap', 'balance', 'analytics'],
   },
   {
@@ -590,7 +590,7 @@ export const features: Feature[] = [
     title: 'Muscle Training Heatmap',
     description: 'Body diagram showing training intensity for each muscle group with colors.',
     category: 'progress',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['heatmap', 'muscles', 'visualization'],
   },
   {
@@ -598,7 +598,7 @@ export const features: Feature[] = [
     title: 'Muscle Balance Analysis',
     description: 'Push/pull ratio, upper/lower ratio, and overall balance score.',
     category: 'progress',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['balance', 'muscles', 'ratio'],
   },
   {
@@ -666,7 +666,7 @@ export const features: Feature[] = [
     title: 'Restaurant Menu Help',
     description: 'Get min/mid/max calorie estimates for restaurant meals.',
     category: 'nutrition',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['restaurant', 'eating out', 'estimates'],
   },
   {
@@ -674,7 +674,7 @@ export const features: Feature[] = [
     title: '40+ Micronutrient Tracking',
     description: 'Track vitamins, minerals, and fatty acids with three-tier goals.',
     category: 'nutrition',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['micronutrients', 'vitamins', 'minerals'],
   },
   {
@@ -715,7 +715,7 @@ export const features: Feature[] = [
     title: 'Ingredient Inflammation Analysis',
     description: 'AI-powered barcode ingredient analysis for inflammatory properties.',
     category: 'nutrition',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['inflammation', 'ingredients', 'health'],
     isNew: true,
   },
@@ -1431,7 +1431,7 @@ export const features: Feature[] = [
     title: 'Leaderboards',
     description: 'Global and friends-only weekly, monthly, all-time rankings.',
     category: 'social',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['leaderboards', 'competition', 'rankings'],
   },
   {
@@ -1439,7 +1439,7 @@ export const features: Feature[] = [
     title: 'Shareable Workout Links',
     description: 'Share your workouts with friends via unique links.',
     category: 'social',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['share', 'social', 'links'],
   },
   {
@@ -1590,7 +1590,7 @@ export const features: Feature[] = [
   {
     id: 'feature-comparison',
     title: 'Tier Feature Comparison',
-    description: 'Side-by-side comparison of Free, Premium, Ultra, and Lifetime features.',
+    description: 'Side-by-side comparison of Free, Premium, Premium Plus, and Lifetime features.',
     category: 'subscription',
     tier: 'free',
     tags: ['comparison', 'tiers', 'features'],
@@ -1803,7 +1803,7 @@ export const features: Feature[] = [
     title: 'CGM Device Integration',
     description: 'Sync with Dexcom, Libre, and Medtronic continuous glucose monitors.',
     category: 'diabetes',
-    tier: 'ultra',
+    tier: 'premium_plus',
     tags: ['cgm', 'integration', 'devices'],
   },
   {

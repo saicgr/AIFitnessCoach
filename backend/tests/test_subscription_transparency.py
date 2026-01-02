@@ -695,8 +695,8 @@ class TestTransparencyScenarios:
                 "user_id": sample_user_id,
                 "event_type": "upgraded",
                 "previous_tier": "free",
-                "new_tier": "ultra",
-                "product_id": "ultra_yearly",
+                "new_tier": "premium_plus",
+                "product_id": "premium_plus_yearly",
                 "price": 199.99,
                 "currency": "USD",
                 "created_at": "2025-01-15T10:00:00Z",
@@ -718,7 +718,7 @@ class TestTransparencyScenarios:
 
         # User can see the unwanted upgrade
         assert result.events[0].event_type == "upgraded"
-        assert result.events[0].event_description == "Upgraded from free to ultra"
+        assert result.events[0].event_description == "Upgraded from free to premium_plus"
         assert result.events[0].price == 199.99
 
     def test_user_checking_before_renewal(

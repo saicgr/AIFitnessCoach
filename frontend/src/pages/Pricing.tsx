@@ -69,7 +69,7 @@ const plans: PricingPlan[] = [
     cta: 'Start 7-Day Free Trial',
   },
   {
-    name: 'Ultra',
+    name: 'Premium Plus',
     description: 'Maximum features for serious athletes',
     monthlyPrice: '$9.99',
     yearlyPrice: '$6.67',
@@ -93,13 +93,13 @@ const plans: PricingPlan[] = [
   },
   {
     name: 'Lifetime',
-    description: 'All Ultra features, pay once',
+    description: 'All Premium Plus features, pay once',
     monthlyPrice: '$99.99',
     yearlyPrice: '$99.99',
     yearlyTotal: '$99.99',
     oneTimePrice: '$99.99',
     features: [
-      'All Ultra features forever',
+      'All Premium Plus features forever',
       'No renewal charges',
       'Lifetime member tier recognition',
       'Estimated value display',
@@ -112,17 +112,17 @@ const plans: PricingPlan[] = [
 ];
 
 const comparisonFeatures = [
-  { feature: 'AI Chat Messages', free: '5/day', premium: '30/day', ultra: '100+/day', lifetime: '100+/day' },
-  { feature: 'Workout Generation', free: '1/week', premium: 'Daily', ultra: 'Unlimited', lifetime: 'Unlimited' },
-  { feature: 'Food Photo Scans', free: '1/day', premium: '5/day', ultra: '10/day', lifetime: '10/day' },
-  { feature: 'Chat History', free: '7 days', premium: '90 days', ultra: 'Forever', lifetime: 'Forever' },
-  { feature: 'Macro Tracking', free: 'Calories only', premium: 'Full', ultra: 'Full', lifetime: 'Full' },
-  { feature: 'PR Tracking', free: '-', premium: 'Yes', ultra: 'Yes', lifetime: 'Yes' },
-  { feature: 'Favorite Workouts', free: '-', premium: '5', ultra: 'Unlimited', lifetime: 'Unlimited' },
-  { feature: 'Edit Workouts', free: '-', premium: 'Yes', ultra: 'Yes', lifetime: 'Yes' },
-  { feature: 'Shareable Links', free: '-', premium: '-', ultra: 'Yes', lifetime: 'Yes' },
-  { feature: 'Leaderboards', free: '-', premium: '-', ultra: 'Yes', lifetime: 'Yes' },
-  { feature: 'Ads', free: 'Yes', premium: 'No', ultra: 'No', lifetime: 'No' },
+  { feature: 'AI Chat Messages', free: '5/day', premium: '30/day', premiumPlus: '100+/day', lifetime: '100+/day' },
+  { feature: 'Workout Generation', free: '1/week', premium: 'Daily', premiumPlus: 'Unlimited', lifetime: 'Unlimited' },
+  { feature: 'Food Photo Scans', free: '1/day', premium: '5/day', premiumPlus: '10/day', lifetime: '10/day' },
+  { feature: 'Chat History', free: '7 days', premium: '90 days', premiumPlus: 'Forever', lifetime: 'Forever' },
+  { feature: 'Macro Tracking', free: 'Calories only', premium: 'Full', premiumPlus: 'Full', lifetime: 'Full' },
+  { feature: 'PR Tracking', free: '-', premium: 'Yes', premiumPlus: 'Yes', lifetime: 'Yes' },
+  { feature: 'Favorite Workouts', free: '-', premium: '5', premiumPlus: 'Unlimited', lifetime: 'Unlimited' },
+  { feature: 'Edit Workouts', free: '-', premium: 'Yes', premiumPlus: 'Yes', lifetime: 'Yes' },
+  { feature: 'Shareable Links', free: '-', premium: '-', premiumPlus: 'Yes', lifetime: 'Yes' },
+  { feature: 'Leaderboards', free: '-', premium: '-', premiumPlus: 'Yes', lifetime: 'Yes' },
+  { feature: 'Ads', free: 'Yes', premium: 'No', premiumPlus: 'No', lifetime: 'No' },
 ];
 
 const faqs = [
@@ -132,7 +132,7 @@ const faqs = [
   },
   {
     question: 'How does the 7-day free trial work?',
-    answer: 'You get full access to Premium or Ultra features for 7 days, no payment required. After the trial, you can choose to subscribe or continue with the Free plan.',
+    answer: 'You get full access to Premium or Premium Plus features for 7 days, no payment required. After the trial, you can choose to subscribe or continue with the Free plan.',
   },
   {
     question: 'Can I cancel anytime?',
@@ -144,7 +144,7 @@ const faqs = [
   },
   {
     question: 'Is the Lifetime plan really forever?',
-    answer: 'Yes! Once you purchase Lifetime, you have access to all Ultra features forever with no recurring charges. This includes all future updates and features.',
+    answer: 'Yes! Once you purchase Lifetime, you have access to all Premium Plus features forever with no recurring charges. This includes all future updates and features.',
   },
   {
     question: 'Can I upgrade or downgrade my plan?',
@@ -346,7 +346,7 @@ export default function Pricing() {
                   <th className="text-left py-4 px-4 text-[15px] font-semibold text-white">Feature</th>
                   <th className="text-center py-4 px-4 text-[15px] font-semibold text-white">Free</th>
                   <th className="text-center py-4 px-4 text-[15px] font-semibold text-emerald-400">Premium</th>
-                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-white">Ultra</th>
+                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-white">Premium Plus</th>
                   <th className="text-center py-4 px-4 text-[15px] font-semibold text-white">Lifetime</th>
                 </tr>
               </thead>
@@ -387,12 +387,12 @@ export default function Pricing() {
                       )}
                     </td>
                     <td className="py-4 px-4 text-center text-[14px] text-[#86868b]">
-                      {row.ultra === '-' ? (
+                      {row.premiumPlus === '-' ? (
                         <svg className="w-4 h-4 mx-auto text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                      ) : row.ultra === 'Yes' || row.ultra === 'No' ? (
-                        row.ultra === 'Yes' ? (
+                      ) : row.premiumPlus === 'Yes' || row.premiumPlus === 'No' ? (
+                        row.premiumPlus === 'Yes' ? (
                           <svg className="w-4 h-4 mx-auto text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -402,7 +402,7 @@ export default function Pricing() {
                           </svg>
                         )
                       ) : (
-                        row.ultra
+                        row.premiumPlus
                       )}
                     </td>
                     <td className="py-4 px-4 text-center text-[14px] text-[#86868b]">

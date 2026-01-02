@@ -1023,8 +1023,8 @@ class _SubscriptionManagementScreenState
         return 'Free';
       case SubscriptionTier.premium:
         return 'Premium';
-      case SubscriptionTier.ultra:
-        return 'Ultra';
+      case SubscriptionTier.premiumPlus:
+        return 'Premium Plus';
       case SubscriptionTier.lifetime:
         return 'Lifetime';
     }
@@ -1036,7 +1036,7 @@ class _SubscriptionManagementScreenState
         return AppColors.textMuted;
       case SubscriptionTier.premium:
         return AppColors.cyan;
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         return AppColors.purple;
       case SubscriptionTier.lifetime:
         return AppColors.purple;
@@ -1049,7 +1049,7 @@ class _SubscriptionManagementScreenState
         return Icons.person_outline;
       case SubscriptionTier.premium:
         return Icons.workspace_premium;
-      case SubscriptionTier.ultra:
+      case SubscriptionTier.premiumPlus:
         return Icons.diamond_outlined;
       case SubscriptionTier.lifetime:
         return Icons.all_inclusive;

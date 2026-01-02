@@ -3,6 +3,21 @@
 
 # FitWiz - Pricing & Cost Analysis
 
+---
+
+## Subscription Tiers Overview
+
+| Tier | Price | Billing Options | Best For |
+|------|-------|-----------------|----------|
+| **Free** | $0 | - | Trying the app, limited features |
+| **Premium** | $5.99/mo | Monthly or $47.99/year (33% off) | Regular users wanting core features |
+| **Premium Plus** | $9.99/mo | Monthly or $79.99/year (33% off) | Power users, unlimited everything |
+| **Lifetime** | $99.99 | One-time payment | Long-term commitment, best value |
+
+> **Note:** Guest Mode (try without account) - Coming Soon based on user feedback
+
+---
+
 ## Executive Summary
 
 **Total Estimated Monthly Cost for 1000 Users: $140 - $215/month**
@@ -41,8 +56,8 @@
 |------|---------|--------|----------|
 | Free | $0 | - | - |
 | Premium | $5.99 | $47.99 (33% off) | - |
-| Ultra | $9.99 | $79.99 (33% off) | - |
-| Lifetime (Ultra) | - | - | $99.99 |
+| Premium Plus | $9.99 | $79.99 (33% off) | - |
+| Lifetime (Premium Plus) | - | - | $99.99 |
 
 ### Competitor Comparison (Gravl)
 
@@ -58,7 +73,7 @@
 
 ## Tier Comparison
 
-| Feature | Free | Premium ($5.99/mo) | Ultra ($9.99/mo) | Lifetime ($99.99) |
+| Feature | Free | Premium ($5.99/mo) | Premium Plus ($9.99/mo) | Lifetime ($99.99) |
 |---------|:----:|:------------------:|:----------------:|:-----------------:|
 | **PRICING** | | | | |
 | Monthly | $0 | $5.99 | $9.99 | - |
@@ -135,8 +150,8 @@
 |------|-------|----------------------|-----------|--------|-------|
 | Premium Monthly | $5.99 | $5.09 | ~$0.15 | **$4.94** | Per month user stays |
 | Premium Yearly | $47.99 | $40.79 | ~$1.80 | **$38.99** | Locked in for year |
-| Ultra Monthly | $9.99 | $8.49 | ~$0.20 | **$8.29** | Per month user stays |
-| Ultra Yearly | $79.99 | $67.99 | ~$2.40 | **$65.59** | Locked in for year |
+| Premium Plus Monthly | $9.99 | $8.49 | ~$0.20 | **$8.29** | Per month user stays |
+| Premium Plus Yearly | $79.99 | $67.99 | ~$2.40 | **$65.59** | Locked in for year |
 | Lifetime | $99.99 | $84.99 | ~$6 (2yr) | **$79** | One-time |
 
 ### Monthly vs Yearly: The Churn Factor

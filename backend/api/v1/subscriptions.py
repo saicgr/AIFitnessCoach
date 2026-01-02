@@ -33,7 +33,7 @@ from core.activity_logger import log_user_activity, log_user_error
 class SubscriptionTier(str, Enum):
     free = "free"
     premium = "premium"
-    ultra = "ultra"
+    premium_plus = "premium_plus"
     lifetime = "lifetime"
 
 
@@ -208,8 +208,8 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest):
                 upgrade_required=False
             )
 
-        # Tier hierarchy: free < premium < ultra < lifetime
-        tier_levels = {"free": 0, "premium": 1, "ultra": 2, "lifetime": 3}
+        # Tier hierarchy: free < premium < premium_plus < lifetime
+        tier_levels = {"free": 0, "premium": 1, "premium_plus": 2, "lifetime": 3}
         user_level = tier_levels.get(user_tier, 0)
         required_level = tier_levels.get(gate["minimum_tier"], 0)
 
@@ -273,7 +273,7 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest):
 
 def _get_next_tier(current_tier: str) -> str:
     """Get the next tier for upgrade prompt."""
-    tiers = ["free", "premium", "ultra", "lifetime"]
+    tiers = ["free", "premium", "premium_plus", "lifetime"]
     try:
         idx = tiers.index(current_tier)
         if idx < len(tiers) - 1:
@@ -731,7 +731,7 @@ async def _handle_product_change(supabase, event: dict):
         .execute()
 
     # Determine event type
-    tier_levels = {"free": 0, "premium": 1, "ultra": 2, "lifetime": 3}
+    tier_levels = {"free": 0, "premium": 1, "premium_plus": 2, "lifetime": 3}
     event_type = "upgraded" if tier_levels.get(new_tier, 0) > tier_levels.get(old_tier, 0) else "downgraded"
 
     # Record in history
@@ -787,8 +787,8 @@ def _product_to_tier(product_id: str) -> str:
 
     if "lifetime" in product_id:
         return "lifetime"
-    elif "ultra" in product_id:
-        return "ultra"
+    elif "premium_plus" in product_id:
+        return "premium_plus"
     elif "premium" in product_id:
         return "premium"
     else:
@@ -2542,8 +2542,8 @@ async def get_retention_offers(user_id: str, reason: Optional[str] = None):
                 expires_in_hours=48
             ))
 
-        # Downgrade offer if on Ultra
-        if tier == "ultra" and "downgrade" not in accepted_types:
+        # Downgrade offer if on Premium Plus
+        if tier == "premium_plus" and "downgrade" not in accepted_types:
             offers.append(RetentionOffer(
                 id=f"downgrade_premium_{user_id}_{datetime.utcnow().timestamp()}",
                 type="downgrade",

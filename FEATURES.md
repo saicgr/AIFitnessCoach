@@ -4,6 +4,53 @@
 
 ---
 
+## Subscription Tiers & Feature Availability
+
+> **Note:** Guest Mode (try without account) - Coming Soon based on user feedback
+
+### Tier Pricing
+| Tier | Monthly | Yearly | One-Time |
+|------|---------|--------|----------|
+| **Free** | $0 | - | - |
+| **Premium** | $5.99 | $47.99 (33% off) | - |
+| **Premium Plus** | $9.99 | $79.99 (33% off) | - |
+| **Lifetime** | - | - | $99.99 |
+
+### Feature Availability by Tier
+
+| Feature Category | Free | Premium | Premium Plus | Lifetime |
+|------------------|:----:|:-------:|:------------:|:--------:|
+| **AI Chat** | 10/day | 30/day | 100/day | 100/day |
+| **AI Model** | GPT-5 nano | GPT-5 mini | GPT-5 mini | GPT-5 mini |
+| **Chat History** | 7 days | 90 days | Forever | Forever |
+| **Workout Generation** | 4/month | Daily | Unlimited | Unlimited |
+| **Edit Workouts** | - | Yes | Yes | Yes |
+| **Save Favorites** | - | 5 | Unlimited | Unlimited |
+| **Custom Templates** | - | - | Yes | Yes |
+| **Food Photo Scans** | - | 5/day | 10/day | 10/day |
+| **Full Macro Tracking** | - | Yes | Yes | Yes |
+| **Exercise Library** | 50 | Unlimited | Unlimited | Unlimited |
+| **Progress Tracking** | 7 days | Full | Full | Full |
+| **Fasting Tracker** | Yes | Yes | Yes | Yes |
+| **Streak Tracking** | Yes | Yes | Yes | Yes |
+| **1RM Calculator** | - | Yes | Yes | Yes |
+| **PR Tracking** | - | Yes | Yes | Yes |
+| **Strength Standards** | - | - | Yes | Yes |
+| **Social Sharing** | - | Yes | Yes | Yes |
+| **Friends/Leaderboards** | - | - | Yes | Yes |
+| **Export (CSV/PDF)** | - | Yes | Yes | Yes |
+| **Priority Support** | - | - | Yes | Yes |
+| **Ads** | Yes | No | No | No |
+
+### Tier Badges Used in This Document
+- `[FREE]` - Available to all users including free tier
+- `[PREMIUM]` - Requires Premium subscription or higher
+- `[PREMIUM PLUS]` - Requires Premium Plus or Lifetime subscription
+
+> **Note:** Most features are available to all tiers with quantity/time limits. See section-specific tier tables for details on limits per feature category. Features without limits are generally FREE to all users.
+
+---
+
 ## Addressing Common Fitness App Complaints
 
 This app specifically addresses issues commonly reported in competitor apps:
@@ -460,7 +507,7 @@ This addresses the frustration of workout logs showing incorrect data when you c
 - **Pre-Auth Pricing Preview**: "See Pricing" button on welcome screen shows all tiers and prices before sign-in:
   - Free: $0 (no credit card required)
   - Premium: $4.00/mo yearly ($47.99/yr) or $5.99/mo monthly
-  - Ultra: $6.67/mo yearly ($79.99/yr) or $9.99/mo monthly
+  - Premium Plus: $6.67/mo yearly ($79.99/yr) or $9.99/mo monthly
   - Lifetime: $99.99 one-time
 - **App Store Pricing Info**: Info tooltip in paywall confirms prices match App Store/Play Store
 - **7-day Trial Badge**: Prominent display of free trial availability on yearly plans
@@ -813,7 +860,7 @@ The definitive 12-week strength building program combining powerlifting fundamen
 **Lifetime Member Benefits:**
 - **Never Expires**: Database triggers prevent lifetime subscriptions from expiring (`current_period_end = NULL`)
 - **No Renewal Reminders**: Billing notifications automatically skipped for lifetime members
-- **All Features Unlocked**: Full Ultra feature access for life
+- **All Features Unlocked**: Full Premium Plus feature access for life
 - **Progress to Next Tier**: Shows days remaining until next tier level
 - **Estimated Value Display**: Shows value received based on months of membership (e.g., "$150 value after 15 months")
 - **Value Multiplier**: 1.5x lifetime purchase price after first year
@@ -2133,6 +2180,15 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 
 ### 1. Authentication & Onboarding (28 Features)
 
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Google/Apple Sign-In | Yes | Yes | Yes |
+| Onboarding Flow | Yes | Yes | Yes |
+| Coach Selection | Yes | Yes | Yes |
+| Custom Coach Creator | Yes | Yes | Yes |
+| Pre-Auth Quiz | Yes | Yes | Yes |
+
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
 | 1 | Google Sign-In | OAuth authentication with Google | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | App Launch → Sign In → Google Sign-In |
@@ -2165,6 +2221,15 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 28 | Environment Selection | Choose workout environment (gym, home, outdoor, etc.) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Environment Selection |
 
 ### 2. Home Screen (33 Features)
+
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Home Dashboard | Yes | Yes | Yes |
+| Streak Badge | Yes | Yes | Yes |
+| Quick Actions | Yes | Yes | Yes |
+| Layout Editor | Yes | Yes | Yes |
+| All 26 Tile Types | Yes | Yes | Yes |
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -2203,6 +2268,15 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 33 | Journey Half-Size Tile | Compact My Journey card variant for half-width grid display | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → My Journey (Compact) |
 
 ### 3. Workout Generation & Management (69 Features)
+
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Workout Generation | 4/month | Daily | Unlimited |
+| Edit Workouts | - | Yes | Yes |
+| Save as Template | - | - | Yes |
+| Import Workouts | - | Yes | Yes |
+| Save Favorites | - | 5 max | Unlimited |
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -2429,6 +2503,14 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 
 ### 5. Exercise Library (34 Features)
 
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Exercise Count | 50 | 1,722 | 1,722 |
+| HD Videos | Yes | Yes | Yes |
+| Search & Filter | Yes | Yes | Yes |
+| Favorites | - | Yes | Yes |
+
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
 | 1 | Exercise Database | 1,722 exercises with HD videos | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | Fully Implemented | User | Library → Exercises |
@@ -2589,6 +2671,15 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 
 ### 7. AI Coach Chat (30 Features)
 
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Messages per Day | 10 | 30 | 100 |
+| AI Model | GPT-5 nano | GPT-5 mini | GPT-5 mini |
+| Chat History | 7 days | 90 days | Forever |
+| All AI Agents | Yes | Yes | Yes |
+| Voice Input | Yes | Yes | Yes |
+
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
 | 1 | Floating Chat Bubble | Access AI coach from any screen | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Any Screen → Chat Bubble |
@@ -2623,6 +2714,16 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Backend system |
 
 ### 8. Nutrition Tracking (80 Features)
+
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Manual Food Logging | - | Yes | Yes |
+| Photo Scans per Day | - | 5 | 10 |
+| Barcode Scanning | - | Yes | Yes |
+| Full Macro Tracking | - | Yes | Yes |
+| Micronutrients (40+) | - | Yes | Yes |
+| Meal History | - | Yes | Yes |
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -2834,6 +2935,16 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 
 ### 11. Progress Photos & Body Tracking (35 Features)
 
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Progress Tracking | 7 days | Full | Full |
+| Progress Photos | - | Yes | Yes |
+| Body Measurements | - | Yes | Yes |
+| 1RM Calculator | - | Yes | Yes |
+| PR Tracking | - | Yes | Yes |
+| Strength Standards | - | - | Yes |
+
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
 | 1 | Progress Photo Capture | Take photos from app | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Progress → Photos → Capture |
@@ -2873,6 +2984,15 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 35 | Days Between Calculation | Auto-calculate days between | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | — |
 
 ### 12. Social & Community (36 Features)
+
+**Tier Availability:**
+| Feature | Free | Premium | Premium Plus/Lifetime |
+|---------|:----:|:-------:|:--------------:|
+| Activity Feed | - | Yes | Yes |
+| Share Workouts | - | Yes | Yes |
+| Friends | - | Basic | Full |
+| Leaderboards | - | - | Yes |
+| Challenges | - | - | Yes |
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -3235,7 +3355,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
 | 1 | RevenueCat | Subscription management integration | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | — |
-| 2 | Subscription Tiers | Free, Premium, Ultra, Lifetime with clear pricing | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Settings → Subscription |
+| 2 | Subscription Tiers | Free, Premium, Premium Plus, Lifetime with clear pricing | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Settings → Subscription |
 | 3 | Pricing Toggle | Monthly vs yearly billing with savings display | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 4 | Free Trial | 7-day trial on yearly plans | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 5 | Feature Comparison | Compare tier features side-by-side | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |

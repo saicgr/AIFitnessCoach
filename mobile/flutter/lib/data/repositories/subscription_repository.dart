@@ -353,7 +353,7 @@ class SubscriptionRepository {
         id: '2',
         eventType: SubscriptionEventType.upgraded,
         eventDate: DateTime.now().subtract(const Duration(days: 30)),
-        planName: 'Ultra Yearly',
+        planName: 'Premium Plus Yearly',
         pricePaid: 32.00,
         currency: 'USD',
         details: 'Prorated upgrade from Premium',
@@ -363,7 +363,7 @@ class SubscriptionRepository {
 
   UpcomingRenewal? _getMockUpcomingRenewal() {
     return UpcomingRenewal(
-      planName: 'Ultra Yearly',
+      planName: 'Premium Plus Yearly',
       amount: 79.99,
       currency: 'USD',
       renewalDate: DateTime.now().add(const Duration(days: 30)),

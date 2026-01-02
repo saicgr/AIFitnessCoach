@@ -1094,7 +1094,7 @@ async def send_refund_confirmation(
 
 def _is_upgrade(old_plan: str, new_plan: str) -> bool:
     """Determine if a plan change is an upgrade."""
-    tier_levels = {"free": 0, "premium": 1, "ultra": 2, "lifetime": 3}
+    tier_levels = {"free": 0, "premium": 1, "premium_plus": 2, "lifetime": 3}
     old_level = tier_levels.get(old_plan.lower(), 0)
     new_level = tier_levels.get(new_plan.lower(), 0)
     return new_level > old_level

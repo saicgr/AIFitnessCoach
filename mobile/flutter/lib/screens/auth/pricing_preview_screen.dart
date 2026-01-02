@@ -283,12 +283,12 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
 
     return Column(
       children: [
-        // Ultra plan with rainbow border for yearly
+        // Premium Plus plan with rainbow border for yearly
         if (isYearly)
           _RainbowBorderCard(
             controller: _rainbowController,
             child: _PricingTierCard(
-              tierName: 'Ultra',
+              tierName: 'Premium Plus',
               badge: 'BEST VALUE',
               badgeColor: const Color(0xFF00D9FF),
               accentColor: const Color(0xFF00D9FF),
@@ -307,7 +307,7 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
           ).animate().fadeIn(delay: 200.ms, duration: 400.ms)
         else
           _PricingTierCard(
-            tierName: 'Ultra',
+            tierName: 'Premium Plus',
             badge: 'MOST POPULAR',
             badgeColor: const Color(0xFFAA66FF),
             accentColor: const Color(0xFFAA66FF),
@@ -407,7 +407,7 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
             style: TextStyle(fontSize: 14, color: colors.textSecondary),
           ),
           const SizedBox(height: 16),
-          _buildFeatureRow('Everything in Ultra', accentColor, colors),
+          _buildFeatureRow('Everything in Premium Plus', accentColor, colors),
           _buildFeatureRow('Lifetime updates & features', accentColor, colors),
           _buildFeatureRow('Early access to new features', accentColor, colors),
           _buildFeatureRow('No recurring charges ever', accentColor, colors),

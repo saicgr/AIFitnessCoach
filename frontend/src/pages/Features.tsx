@@ -26,7 +26,7 @@ const stagger = {
 const tierColors: Record<FeatureTier, string> = {
   free: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   premium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  ultra: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  premium_plus: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   lifetime: 'bg-lime-500/20 text-lime-400 border-lime-500/30',
   all: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
 };
@@ -34,7 +34,7 @@ const tierColors: Record<FeatureTier, string> = {
 const tierLabels: Record<FeatureTier, string> = {
   free: 'Free',
   premium: 'Premium',
-  ultra: 'Ultra',
+  premium_plus: 'Premium Plus',
   lifetime: 'Lifetime',
   all: 'All Tiers',
 };
@@ -285,7 +285,7 @@ export default function Features() {
                       <option value="all">All Tiers</option>
                       <option value="free">Free</option>
                       <option value="premium">Premium</option>
-                      <option value="ultra">Ultra</option>
+                      <option value="premium_plus">Premium Plus</option>
                       <option value="lifetime">Lifetime</option>
                     </select>
                   </div>

@@ -278,11 +278,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null; // Allow demo/preview screens for all users
       }
 
-      // Allow guest mode routes for users in guest mode
+      // Guest Mode disabled - Coming Soon based on user feedback
+      // Guest routes now redirect to sign-up flow instead
       if (isGuestRoute) {
-        if (isGuestMode) {
-          return null; // Allow - user is in guest mode
-        }
+        // Guest mode disabled - redirect all guest routes to sign-up
+        // if (isGuestMode) {
+        //   return null; // Allow - user is in guest mode
+        // }
         // Not in guest mode, redirect to appropriate location
         if (isLoggedIn) {
           return getHomeRoute();
@@ -290,24 +292,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/stats-welcome';
       }
 
-      // Guest mode now gets FULL app UI access with restrictions
-      // Allow guests to access main app shell routes (/home, /chat, /nutrition, etc.)
-      // Usage limits are enforced at the feature level, not the route level
-      if (isGuestMode && !isLoggedIn) {
-        // Allow main app routes for guests
-        final mainAppRoutes = ['/home', '/chat', '/nutrition', '/progress', '/library', '/settings'];
-        final isMainAppRoute = mainAppRoutes.any((route) => state.matchedLocation.startsWith(route));
-
-        if (isMainAppRoute || isGuestRoute || isOnDemoWorkout || isOnPlanPreview ||
-            isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
-          return null; // Allow - guests can access full app UI
-        }
-
-        // For other routes, redirect to home (main app shell)
-        if (!isOnSplash && !isOnStatsWelcome) {
-          return '/home';
-        }
-      }
+      // Guest Mode disabled - Coming Soon based on user feedback
+      // Guests now must sign up to access the app (email required)
+      // Keeping code commented for easy re-enable when ready
+      //
+      // if (isGuestMode && !isLoggedIn) {
+      //   // Allow main app routes for guests
+      //   final mainAppRoutes = ['/home', '/chat', '/nutrition', '/progress', '/library', '/settings'];
+      //   final isMainAppRoute = mainAppRoutes.any((route) => state.matchedLocation.startsWith(route));
+      //
+      //   if (isMainAppRoute || isGuestRoute || isOnDemoWorkout || isOnPlanPreview ||
+      //       isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
+      //     return null; // Allow - guests can access full app UI
+      //   }
+      //
+      //   // For other routes, redirect to home (main app shell)
+      //   if (!isOnSplash && !isOnStatsWelcome) {
+      //     return '/home';
+      //   }
+      // }
 
       // Allow pre-auth quiz, preview, sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)

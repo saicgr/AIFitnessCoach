@@ -54,7 +54,7 @@ def non_lifetime_subscription():
     """Sample non-lifetime subscription data."""
     return {
         "user_id": str(uuid4()),
-        "tier": "ultra_monthly",
+        "tier": "premium_plus_monthly",
         "is_lifetime": False,
         "lifetime_purchase_date": None,
         "lifetime_original_price": None,

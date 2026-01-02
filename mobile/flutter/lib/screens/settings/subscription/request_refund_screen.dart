@@ -49,8 +49,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
         _planName = 'Premium';
         _price = 5.99;
         break;
-      case SubscriptionTier.ultra:
-        _planName = 'Ultra';
+      case SubscriptionTier.premiumPlus:
+        _planName = 'Premium Plus';
         _price = 9.99;
         break;
       case SubscriptionTier.lifetime:
