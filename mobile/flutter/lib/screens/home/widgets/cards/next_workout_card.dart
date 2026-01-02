@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/difficulty_utils.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -68,6 +69,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     // If a new workout was returned, refresh the list
     if (newWorkout != null && mounted) {
       await ref.read(workoutsProvider.notifier).refresh();
+      // Invalidate provider to force UI rebuild with fresh data
+      ref.invalidate(workoutsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -114,6 +117,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
 
       if (success && mounted) {
         await ref.read(workoutsProvider.notifier).refresh();
+        // Invalidate provider to force UI rebuild with fresh data
+        ref.invalidate(workoutsProvider);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -283,7 +288,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            (workout.difficulty ?? 'Medium').capitalize(),
+                            DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,

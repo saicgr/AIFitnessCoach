@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/widgets/program_card.dart';
-import 'package:ai_fitness_coach/data/models/program.dart';
+import 'package:fitwiz/screens/library/widgets/program_card.dart';
+import 'package:fitwiz/data/models/program.dart';
 
 void main() {
   group('ProgramCard', () {

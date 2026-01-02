@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/widgets/warmup_phase_screen.dart';
-import 'package:ai_fitness_coach/screens/workout/models/workout_state.dart';
+import 'package:fitwiz/screens/workout/widgets/warmup_phase_screen.dart';
+import 'package:fitwiz/screens/workout/models/workout_state.dart';
 
 void main() {
   Widget buildTestWidget({

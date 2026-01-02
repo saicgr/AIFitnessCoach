@@ -1,4 +1,4 @@
--- AI Fitness Coach - Subscription & Payment Tables
+-- FitWiz - Subscription & Payment Tables
 -- Migration 022: Subscriptions and payment tracking
 
 -- Subscription tiers enum

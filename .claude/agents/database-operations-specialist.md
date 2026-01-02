@@ -249,7 +249,7 @@ SELECT * FROM pg_roles WHERE rolname = 'service_role';
 
 ## Project-Specific Considerations
 
-For this AI Fitness Coach project:
+For this FitWiz project:
 - Prioritize workout and user data integrity
 - Ensure proper indexing on frequently queried workout fields
 - Handle exercise embeddings in ChromaDB efficiently

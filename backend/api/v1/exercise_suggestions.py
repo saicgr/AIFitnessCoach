@@ -54,6 +54,7 @@ class SuggestionRequest(BaseModel):
     user_equipment: Optional[List[str]] = None
     user_injuries: Optional[List[str]] = None
     user_fitness_level: Optional[str] = "intermediate"
+    avoided_exercises: Optional[List[str]] = None  # Exercises user wants to avoid
 
 
 class ExerciseSuggestion(BaseModel):
@@ -107,6 +108,7 @@ async def get_exercise_suggestions(http_request: Request, request: SuggestionReq
             "user_equipment": request.user_equipment,
             "user_injuries": request.user_injuries,
             "user_fitness_level": request.user_fitness_level,
+            "avoided_exercises": request.avoided_exercises,  # Pass avoided exercises to filter
             # Will be filled by nodes
             "swap_reason": None,
             "target_muscle_group": None,

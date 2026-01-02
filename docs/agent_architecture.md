@@ -1,8 +1,8 @@
-# AI Fitness Coach - Multi-Agent Architecture
+# FitWiz - Multi-Agent Architecture
 
 ## Overview
 
-The AI Fitness Coach uses a **multi-agent architecture** where specialized domain agents handle different aspects of fitness coaching. Each agent can both **use tools** (database operations) and **reason autonomously** (answer questions without tools).
+The FitWiz uses a **multi-agent architecture** where specialized domain agents handle different aspects of fitness coaching. Each agent can both **use tools** (database operations) and **reason autonomously** (answer questions without tools).
 
 ## High-Level Architecture
 

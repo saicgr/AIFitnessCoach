@@ -287,6 +287,16 @@ class TilePickerSheet extends StatelessWidget {
         return Icons.bedtime;
       case TileType.restDayTip:
         return Icons.spa;
+      case TileType.quickStart:
+        return Icons.play_circle_filled;
+      case TileType.myJourney:
+        return Icons.route;
+      case TileType.progressCharts:
+        return Icons.show_chart;
+      case TileType.roiSummary:
+        return Icons.trending_up;
+      case TileType.weeklyPlan:
+        return Icons.calendar_view_week;
     }
   }
 

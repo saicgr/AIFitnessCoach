@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../models/feature_request.dart';
 import '../../data/providers/feature_provider.dart';
 import 'widgets/suggest_feature_sheet.dart';

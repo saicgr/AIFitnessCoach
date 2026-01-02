@@ -77,7 +77,7 @@ class SettingSwitchTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: enabled ? onChanged : null,
-            activeColor: AppColors.cyan,
+            activeThumbColor: AppColors.cyan,
           ),
         ],
       ),

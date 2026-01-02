@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nutrition_preferences.dart';
-import '../models/fasting.dart';
 import '../services/api_client.dart';
 
 /// Nutrition preferences repository provider
@@ -77,9 +76,19 @@ class NutritionPreferencesRepository {
     int? customCarbPercent,
     int? customProteinPercent,
     int? customFatPercent,
+    // Pre-calculated values from frontend to ensure consistency
+    int? calculatedBmr,
+    int? calculatedTdee,
+    int? targetCalories,
+    int? targetProteinG,
+    int? targetCarbsG,
+    int? targetFatG,
   }) async {
     try {
       debugPrint('🎓 [NutritionPrefs] Completing onboarding for $userId with ${goals.length} goals');
+      if (targetCalories != null) {
+        debugPrint('🎓 [NutritionPrefs] Sending frontend-calculated values: $targetCalories cal');
+      }
 
       // Send both nutrition_goals (array) and nutrition_goal (legacy, primary goal)
       final primaryGoal = goals.isNotEmpty ? goals.first : NutritionGoal.maintain;
@@ -105,6 +114,13 @@ class NutritionPreferencesRepository {
           if (customProteinPercent != null)
             'custom_protein_percent': customProteinPercent,
           if (customFatPercent != null) 'custom_fat_percent': customFatPercent,
+          // Send pre-calculated values to ensure consistency with what user saw
+          if (calculatedBmr != null) 'calculated_bmr': calculatedBmr,
+          if (calculatedTdee != null) 'calculated_tdee': calculatedTdee,
+          if (targetCalories != null) 'target_calories': targetCalories,
+          if (targetProteinG != null) 'target_protein_g': targetProteinG,
+          if (targetCarbsG != null) 'target_carbs_g': targetCarbsG,
+          if (targetFatG != null) 'target_fat_g': targetFatG,
         },
       );
 
@@ -351,6 +367,221 @@ class NutritionPreferencesRepository {
       debugPrint('✅ [NutritionPrefs] Response saved');
     } catch (e) {
       debugPrint('❌ [NutritionPrefs] Error responding to recommendation: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Nutrition UI Preferences
+  // ============================================
+
+  /// Get user's nutrition UI preferences
+  Future<NutritionUIPreferences> getUIPreferences(String userId) async {
+    try {
+      debugPrint('🔍 [NutritionPrefs] Getting UI preferences for $userId');
+      final response = await _client.get('/nutrition/ui-preferences/$userId');
+      if (response.data == null || (response.data is Map && response.data.isEmpty)) {
+        return NutritionUIPreferences.defaultPreferences(userId);
+      }
+      return NutritionUIPreferences.fromJson(response.data);
+    } catch (e) {
+      if (e.toString().contains('404')) {
+        debugPrint('ℹ️ [NutritionPrefs] No UI preferences found, returning defaults');
+        return NutritionUIPreferences.defaultPreferences(userId);
+      }
+      debugPrint('❌ [NutritionPrefs] Error getting UI preferences: $e');
+      rethrow;
+    }
+  }
+
+  /// Update nutrition UI preferences
+  Future<NutritionUIPreferences> updateUIPreferences(NutritionUIPreferences prefs) async {
+    try {
+      debugPrint('💾 [NutritionPrefs] Updating UI preferences for ${prefs.userId}');
+      final response = await _client.put(
+        '/nutrition/ui-preferences/${prefs.userId}',
+        data: prefs.toJson(),
+      );
+      debugPrint('✅ [NutritionPrefs] UI preferences updated');
+      return NutritionUIPreferences.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error updating UI preferences: $e');
+      rethrow;
+    }
+  }
+
+  /// Reset UI preferences to defaults
+  Future<NutritionUIPreferences> resetUIPreferences(String userId) async {
+    try {
+      debugPrint('🔄 [NutritionPrefs] Resetting UI preferences for $userId');
+      final response = await _client.post('/nutrition/ui-preferences/$userId/reset');
+      debugPrint('✅ [NutritionPrefs] UI preferences reset');
+      return NutritionUIPreferences.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error resetting UI preferences: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Meal Templates
+  // ============================================
+
+  /// Get meal templates (optionally filter by meal_type)
+  Future<List<MealTemplate>> getTemplates({String? mealType}) async {
+    try {
+      debugPrint('🔍 [NutritionPrefs] Getting meal templates${mealType != null ? ' for $mealType' : ''}');
+      final queryParams = <String, dynamic>{};
+      if (mealType != null) queryParams['meal_type'] = mealType;
+
+      final response = await _client.get(
+        '/nutrition/templates',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      final data = response.data as List;
+      debugPrint('✅ [NutritionPrefs] Retrieved ${data.length} templates');
+      return data.map((json) => MealTemplate.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error getting templates: $e');
+      rethrow;
+    }
+  }
+
+  /// Create a new meal template
+  Future<MealTemplate> createTemplate(MealTemplate template) async {
+    try {
+      debugPrint('➕ [NutritionPrefs] Creating template: ${template.name}');
+      final response = await _client.post(
+        '/nutrition/templates',
+        data: template.toJson(),
+      );
+      debugPrint('✅ [NutritionPrefs] Template created');
+      return MealTemplate.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error creating template: $e');
+      rethrow;
+    }
+  }
+
+  /// Update an existing meal template
+  Future<MealTemplate> updateTemplate(MealTemplate template) async {
+    try {
+      if (template.id == null) {
+        throw ArgumentError('Template ID is required for update');
+      }
+      debugPrint('✏️ [NutritionPrefs] Updating template: ${template.id}');
+      final response = await _client.put(
+        '/nutrition/templates/${template.id}',
+        data: template.toJson(),
+      );
+      debugPrint('✅ [NutritionPrefs] Template updated');
+      return MealTemplate.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error updating template: $e');
+      rethrow;
+    }
+  }
+
+  /// Delete a meal template
+  Future<void> deleteTemplate(String templateId) async {
+    try {
+      debugPrint('🗑️ [NutritionPrefs] Deleting template: $templateId');
+      await _client.delete('/nutrition/templates/$templateId');
+      debugPrint('✅ [NutritionPrefs] Template deleted');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error deleting template: $e');
+      rethrow;
+    }
+  }
+
+  /// Log a template as a meal
+  Future<void> logTemplate(
+    String templateId, {
+    String? mealType,
+    double servings = 1.0,
+  }) async {
+    try {
+      debugPrint('📝 [NutritionPrefs] Logging template: $templateId');
+      await _client.post(
+        '/nutrition/templates/$templateId/log',
+        data: {
+          if (mealType != null) 'meal_type': mealType,
+          'servings': servings,
+        },
+      );
+      debugPrint('✅ [NutritionPrefs] Template logged');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error logging template: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Quick Logging
+  // ============================================
+
+  /// Quick log a saved food (bypasses AI)
+  Future<void> quickLog(
+    String savedFoodId,
+    String mealType, {
+    double servings = 1.0,
+  }) async {
+    try {
+      debugPrint('⚡ [NutritionPrefs] Quick logging food: $savedFoodId');
+      await _client.post(
+        '/nutrition/saved-foods/$savedFoodId/quick-log',
+        data: {
+          'meal_type': mealType,
+          'servings': servings,
+        },
+      );
+      debugPrint('✅ [NutritionPrefs] Quick log complete');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error quick logging: $e');
+      rethrow;
+    }
+  }
+
+  /// Get quick suggestions based on time/history
+  Future<List<QuickSuggestion>> getQuickSuggestions({String? mealType}) async {
+    try {
+      debugPrint('🔍 [NutritionPrefs] Getting quick suggestions${mealType != null ? ' for $mealType' : ''}');
+      final queryParams = <String, dynamic>{};
+      if (mealType != null) queryParams['meal_type'] = mealType;
+
+      final response = await _client.get(
+        '/nutrition/quick-suggestions',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      final data = response.data as List;
+      debugPrint('✅ [NutritionPrefs] Retrieved ${data.length} suggestions');
+      return data.map((json) => QuickSuggestion.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error getting suggestions: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Food Search
+  // ============================================
+
+  /// Search foods with caching
+  Future<List<FoodSearchResult>> searchFoods(String query, {int limit = 20}) async {
+    try {
+      debugPrint('🔍 [NutritionPrefs] Searching foods: "$query"');
+      final response = await _client.get(
+        '/nutrition/foods/search',
+        queryParameters: {
+          'query': query,
+          'limit': limit,
+        },
+      );
+      final data = response.data as List;
+      debugPrint('✅ [NutritionPrefs] Found ${data.length} foods');
+      return data.map((json) => FoodSearchResult.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error searching foods: $e');
       rethrow;
     }
   }

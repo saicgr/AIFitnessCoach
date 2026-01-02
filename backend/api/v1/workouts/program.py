@@ -3,11 +3,14 @@ Program customization API endpoints.
 
 This module handles workout program customization:
 - POST /update-program - Update program preferences and delete future workouts
+- POST /quick-regenerate - Regenerate workouts with current settings (no wizard)
 """
 import json
 from datetime import date, datetime
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -17,6 +20,20 @@ from .utils import get_workout_rag_service
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+class QuickRegenerateRequest(BaseModel):
+    """Request model for quick workout regeneration."""
+    user_id: str
+    reason: Optional[str] = None  # Optional reason for analytics
+
+
+class QuickRegenerateResponse(BaseModel):
+    """Response model for quick regeneration."""
+    success: bool
+    message: str
+    workouts_deleted: int
+    workouts_generated: int
 
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
@@ -185,4 +202,102 @@ async def update_program(request: UpdateProgramRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update program: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/quick-regenerate", response_model=QuickRegenerateResponse)
+async def quick_regenerate_workouts(request: QuickRegenerateRequest):
+    """
+    Quick regenerate workouts using current program settings.
+
+    This endpoint:
+    1. Deletes future incomplete workouts (same as update-program)
+    2. Triggers streaming workout generation with existing preferences
+    3. Logs the action for analytics
+
+    Use this when users want fresh workouts without changing their settings.
+    """
+    logger.info(f"Quick regenerating workouts for user {request.user_id}")
+    if request.reason:
+        logger.info(f"  Reason: {request.reason}")
+
+    # Log for analytics: User reset program mid-week
+    logger.info(f"ANALYTICS: User {request.user_id} reset program mid-week via quick regenerate")
+
+    try:
+        db = get_supabase_db()
+
+        # Verify user exists
+        user = db.get_user(request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Delete only future incomplete workouts (same logic as update-program)
+        today = date.today().isoformat()
+        all_workouts = db.list_workouts(request.user_id, limit=1000)
+
+        workouts_to_delete = []
+        for w in all_workouts:
+            scheduled_date = w.get("scheduled_date")
+            is_completed = w.get("is_completed", False)
+
+            if hasattr(scheduled_date, 'isoformat'):
+                scheduled_date = scheduled_date.isoformat()
+            elif hasattr(scheduled_date, 'strftime'):
+                scheduled_date = scheduled_date.strftime('%Y-%m-%d')
+
+            if not is_completed and scheduled_date and scheduled_date >= today:
+                workouts_to_delete.append(w)
+
+        logger.info(f"Found {len(workouts_to_delete)} future incomplete workouts to delete")
+
+        # Delete workout changes first (FK constraint)
+        for w in workouts_to_delete:
+            try:
+                db.delete_workout_changes_by_workout(w["id"])
+            except Exception as e:
+                logger.warning(f"Could not delete workout changes for {w['id']}: {e}")
+
+        # Delete the workouts
+        deleted_count = 0
+        for w in workouts_to_delete:
+            try:
+                db.delete_workout(w["id"])
+                deleted_count += 1
+            except Exception as e:
+                logger.error(f"Failed to delete workout {w['id']}: {e}")
+
+        logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
+
+        # Log to user_activity for analytics if the table exists
+        try:
+            activity_data = {
+                "user_id": request.user_id,
+                "activity_type": "program_quick_reset",
+                "activity_data": {
+                    "workouts_deleted": deleted_count,
+                    "reason": request.reason or "quick_reset_button",
+                    "timestamp": datetime.now().isoformat(),
+                },
+            }
+            db.client.table("user_activity").insert(activity_data).execute()
+            logger.info(f"Logged quick reset activity for user {request.user_id}")
+        except Exception as e:
+            # Table might not exist or other error - don't fail the operation
+            logger.warning(f"Could not log activity: {e}")
+
+        # Note: Actual workout generation is done by the frontend using streaming endpoint
+        # This endpoint just clears the old workouts and returns success
+
+        return QuickRegenerateResponse(
+            success=True,
+            message=f"Cleared {deleted_count} workouts. Ready for regeneration.",
+            workouts_deleted=deleted_count,
+            workouts_generated=0  # Frontend will generate via streaming
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to quick regenerate: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -28,8 +28,9 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
   void initState() {
     super.initState();
     // Fetch workouts on screen load
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workoutsProvider.notifier).refresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(workoutsProvider.notifier).refresh();
+      ref.invalidate(workoutsProvider);
     });
   }
 
@@ -85,7 +86,10 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
       onNavTap: _onNavTap,
       title: 'Home',
       body: RefreshIndicator(
-        onRefresh: () => workoutsNotifier.refresh(),
+        onRefresh: () async {
+          await workoutsNotifier.refresh();
+          ref.invalidate(workoutsProvider);
+        },
         color: AppColors.cyan,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),

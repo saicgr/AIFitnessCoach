@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/home/widgets/cards/workout_state_cards.dart';
+import 'package:fitwiz/screens/home/widgets/cards/workout_state_cards.dart';
 import '../../test_helpers.dart';
 
 void main() {

@@ -63,6 +63,11 @@ class NotificationService:
     TYPE_AI_COACH = "ai_coach"
     TYPE_STREAK_ALERT = "streak_alert"
     TYPE_WEEKLY_SUMMARY = "weekly_summary"
+    TYPE_BILLING_REMINDER = "billing_reminder"
+    TYPE_MOVEMENT_REMINDER = "movement_reminder"
+    TYPE_LIVE_CHAT_MESSAGE = "live_chat_message"
+    TYPE_LIVE_CHAT_CONNECTED = "live_chat_connected"
+    TYPE_LIVE_CHAT_ENDED = "live_chat_ended"
     TYPE_TEST = "test"
 
     # Android notification channel IDs (must match Flutter side)
@@ -73,11 +78,52 @@ class NotificationService:
         TYPE_STREAK_ALERT: "streak_coach",
         TYPE_WEEKLY_SUMMARY: "progress_coach",
         TYPE_AI_COACH: "ai_coach",
+        TYPE_BILLING_REMINDER: "billing_coach",
+        TYPE_MOVEMENT_REMINDER: "movement_coach",
+        TYPE_LIVE_CHAT_MESSAGE: "live_chat",
+        TYPE_LIVE_CHAT_CONNECTED: "live_chat",
+        TYPE_LIVE_CHAT_ENDED: "live_chat",
         TYPE_TEST: "test_notifications",
     }
 
+    # Movement reminder message templates (variety to avoid notification fatigue)
+    MOVEMENT_REMINDER_TEMPLATES = [
+        {
+            "title": "Time to move!",
+            "body": "You've only taken {steps} steps this hour. A short walk can boost your energy!",
+        },
+        {
+            "title": "Stand up and stretch!",
+            "body": "Your body will thank you. Take 2 minutes to move around!",
+        },
+        {
+            "title": "Quick walk?",
+            "body": "Just {steps} steps this hour. A quick walk improves circulation and focus.",
+        },
+        {
+            "title": "Get moving!",
+            "body": "Reduce sedentary time - every step counts! You're at {steps}/{threshold} steps.",
+        },
+        {
+            "title": "Movement check!",
+            "body": "Time to shake off the stiffness. Stand up and take a quick walk!",
+        },
+        {
+            "title": "Desk break time!",
+            "body": "Walking improves your mood and productivity. You've taken {steps} steps this hour.",
+        },
+        {
+            "title": "Walk break!",
+            "body": "Get up and get those steps in! Small movements add up over time.",
+        },
+        {
+            "title": "Stretch it out!",
+            "body": "Only {steps} steps so far. Stand up and move around for a few minutes!",
+        },
+    ]
+
     # Default channel
-    DEFAULT_CHANNEL_ID = "ai_fitness_coach_notifications"
+    DEFAULT_CHANNEL_ID = "fitwiz_notifications"
 
     def __init__(self):
         """Initialize the notification service"""
@@ -370,6 +416,265 @@ class NotificationService:
             body=body,
             notification_type=self.TYPE_TEST,
         )
+
+    # ─────────────────────────────────────────────────────────────────
+    # Movement Reminder (NEAT) Methods
+    # ─────────────────────────────────────────────────────────────────
+
+    async def send_movement_reminder(
+        self,
+        fcm_token: str,
+        current_steps: int = 0,
+        threshold: int = 250,
+        template_index: Optional[int] = None,
+    ) -> bool:
+        """
+        Send a movement reminder notification to encourage the user to move.
+
+        Args:
+            fcm_token: The device's FCM token
+            current_steps: Number of steps taken this hour
+            threshold: Step threshold for the hour (default 250)
+            template_index: Optional index to use specific template, otherwise random
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        import random
+
+        # Select a template (random or specified)
+        if template_index is not None:
+            template_idx = template_index % len(self.MOVEMENT_REMINDER_TEMPLATES)
+        else:
+            template_idx = random.randint(0, len(self.MOVEMENT_REMINDER_TEMPLATES) - 1)
+
+        template = self.MOVEMENT_REMINDER_TEMPLATES[template_idx]
+
+        # Format the message with step data
+        title = template["title"]
+        body = template["body"].format(steps=current_steps, threshold=threshold)
+
+        logger.info(f"🚶 [Movement] Sending reminder: {title} - {body}")
+
+        return await self.send_notification(
+            fcm_token=fcm_token,
+            title=title,
+            body=body,
+            notification_type=self.TYPE_MOVEMENT_REMINDER,
+            data={
+                "action": "open_home",
+                "current_steps": str(current_steps),
+                "threshold": str(threshold),
+            },
+        )
+
+    async def send_movement_reminder_to_user(
+        self,
+        user_id: str,
+        current_steps: int = 0,
+        threshold: int = 250,
+    ) -> bool:
+        """
+        Send a movement reminder to a user by their user_id.
+
+        Looks up the FCM token and sends the reminder.
+
+        Args:
+            user_id: The user's ID
+            current_steps: Steps taken this hour
+            threshold: Step threshold
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        from core.supabase_db import get_supabase_db
+
+        try:
+            db = get_supabase_db()
+            user = db.get_user(user_id)
+
+            if not user:
+                logger.warning(f"🚶 [Movement] User not found: {user_id}")
+                return False
+
+            fcm_token = user.get("fcm_token")
+            if not fcm_token:
+                logger.warning(f"🚶 [Movement] No FCM token for user: {user_id}")
+                return False
+
+            return await self.send_movement_reminder(
+                fcm_token=fcm_token,
+                current_steps=current_steps,
+                threshold=threshold,
+            )
+
+        except Exception as e:
+            logger.error(f"❌ [Movement] Error sending reminder to user {user_id}: {e}")
+            return False
+
+    # ─────────────────────────────────────────────────────────────────
+    # Live Chat Support Notification Methods
+    # ─────────────────────────────────────────────────────────────────
+
+    async def send_live_chat_message_notification(
+        self,
+        user_id: str,
+        agent_name: str,
+        message_preview: str,
+        ticket_id: str,
+    ) -> bool:
+        """
+        Send a notification when a support agent sends a new message in live chat.
+
+        Args:
+            user_id: The user's ID
+            agent_name: Name of the support agent
+            message_preview: Preview of the message (truncated)
+            ticket_id: The support ticket/chat ID
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        from core.supabase_db import get_supabase_db
+
+        try:
+            db = get_supabase_db()
+            user = db.get_user(user_id)
+
+            if not user:
+                logger.warning(f"💬 [LiveChat] User not found: {user_id}")
+                return False
+
+            fcm_token = user.get("fcm_token")
+            if not fcm_token:
+                logger.warning(f"💬 [LiveChat] No FCM token for user: {user_id}")
+                return False
+
+            # Truncate message preview if too long
+            preview = message_preview[:100] + "..." if len(message_preview) > 100 else message_preview
+
+            title = f"New message from {agent_name}"
+            body = preview
+
+            return await self.send_notification(
+                fcm_token=fcm_token,
+                title=title,
+                body=body,
+                notification_type=self.TYPE_LIVE_CHAT_MESSAGE,
+                data={
+                    "action": "open_live_chat",
+                    "ticket_id": ticket_id,
+                    "agent_name": agent_name,
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"❌ [LiveChat] Error sending message notification to user {user_id}: {e}")
+            return False
+
+    async def send_live_chat_connected_notification(
+        self,
+        user_id: str,
+        agent_name: str,
+        ticket_id: str,
+    ) -> bool:
+        """
+        Send a notification when a support agent is assigned to the user's chat.
+
+        Args:
+            user_id: The user's ID
+            agent_name: Name of the support agent
+            ticket_id: The support ticket/chat ID
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        from core.supabase_db import get_supabase_db
+
+        try:
+            db = get_supabase_db()
+            user = db.get_user(user_id)
+
+            if not user:
+                logger.warning(f"💬 [LiveChat] User not found: {user_id}")
+                return False
+
+            fcm_token = user.get("fcm_token")
+            if not fcm_token:
+                logger.warning(f"💬 [LiveChat] No FCM token for user: {user_id}")
+                return False
+
+            title = "Support agent connected!"
+            body = f"{agent_name} has joined your chat and is ready to help."
+
+            return await self.send_notification(
+                fcm_token=fcm_token,
+                title=title,
+                body=body,
+                notification_type=self.TYPE_LIVE_CHAT_CONNECTED,
+                data={
+                    "action": "open_live_chat",
+                    "ticket_id": ticket_id,
+                    "agent_name": agent_name,
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"❌ [LiveChat] Error sending connected notification to user {user_id}: {e}")
+            return False
+
+    async def send_live_chat_ended_notification(
+        self,
+        user_id: str,
+        resolution_note: str,
+        ticket_id: str,
+    ) -> bool:
+        """
+        Send a notification when a support agent ends the chat session.
+
+        Args:
+            user_id: The user's ID
+            resolution_note: Note about how the issue was resolved
+            ticket_id: The support ticket/chat ID
+
+        Returns:
+            True if sent successfully, False otherwise
+        """
+        from core.supabase_db import get_supabase_db
+
+        try:
+            db = get_supabase_db()
+            user = db.get_user(user_id)
+
+            if not user:
+                logger.warning(f"💬 [LiveChat] User not found: {user_id}")
+                return False
+
+            fcm_token = user.get("fcm_token")
+            if not fcm_token:
+                logger.warning(f"💬 [LiveChat] No FCM token for user: {user_id}")
+                return False
+
+            title = "Chat session ended"
+            # Truncate resolution note if too long
+            note_preview = resolution_note[:100] + "..." if len(resolution_note) > 100 else resolution_note
+            body = f"Your support chat has been resolved. {note_preview}"
+
+            return await self.send_notification(
+                fcm_token=fcm_token,
+                title=title,
+                body=body,
+                notification_type=self.TYPE_LIVE_CHAT_ENDED,
+                data={
+                    "action": "open_live_chat",
+                    "ticket_id": ticket_id,
+                    "chat_ended": "true",
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"❌ [LiveChat] Error sending ended notification to user {user_id}: {e}")
+            return False
 
 
 # Singleton instance

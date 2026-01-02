@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/profile/widgets/profile_header.dart';
+import 'package:fitwiz/screens/profile/widgets/profile_header.dart';
 
 void main() {
   group('ProfileHeader', () {

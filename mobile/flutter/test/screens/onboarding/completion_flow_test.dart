@@ -8,6 +8,7 @@
 /// 5. Navigation to paywall occurs after completion
 ///
 /// Run: flutter test test/screens/onboarding/completion_flow_test.dart
+library;
 import 'package:flutter_test/flutter_test.dart';
 
 // ============ Completion Message Detection Tests ============

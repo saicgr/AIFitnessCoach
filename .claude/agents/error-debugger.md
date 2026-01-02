@@ -273,7 +273,7 @@ When encountering unfamiliar errors:
 
 ## Project-Specific Considerations
 
-For this AI Fitness Coach project:
+For this FitWiz project:
 - Check Gemini API response parsing for JSON errors
 - Verify Supabase connection and auth token issues
 - Check Riverpod provider initialization

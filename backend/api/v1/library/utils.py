@@ -161,21 +161,33 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
 
 
 def row_to_library_program(row: dict) -> LibraryProgram:
-    """Convert a Supabase row to LibraryProgram model."""
+    """Convert a Supabase row from branded_programs table to LibraryProgram model.
+
+    branded_programs fields: name, category, difficulty_level, duration_weeks,
+    sessions_per_week, description, goals, tagline, split_type, is_featured,
+    is_premium, requires_gym, icon_name, color_hex
+    """
+    # Calculate approximate session duration based on sessions per week
+    sessions_per_week = row.get("sessions_per_week", 4)
+    session_duration = 45 if sessions_per_week <= 4 else 60  # Default estimates
+
+    # Use goals as tags since branded_programs doesn't have a separate tags field
+    goals = row.get("goals") if isinstance(row.get("goals"), list) else []
+
     return LibraryProgram(
         id=row.get("id"),
-        name=row.get("program_name", ""),
-        category=row.get("program_category", ""),
-        subcategory=row.get("program_subcategory"),
+        name=row.get("name", ""),  # branded_programs uses 'name' not 'program_name'
+        category=row.get("category", ""),  # branded_programs uses 'category' not 'program_category'
+        subcategory=row.get("split_type"),  # Map split_type to subcategory
         difficulty_level=row.get("difficulty_level"),
         duration_weeks=row.get("duration_weeks"),
-        sessions_per_week=row.get("sessions_per_week"),
-        session_duration_minutes=row.get("session_duration_minutes"),
-        tags=row.get("tags") if isinstance(row.get("tags"), list) else [],
-        goals=row.get("goals") if isinstance(row.get("goals"), list) else [],
+        sessions_per_week=sessions_per_week,
+        session_duration_minutes=session_duration,
+        tags=goals,  # Use goals as tags
+        goals=goals,
         description=row.get("description"),
-        short_description=row.get("short_description"),
-        celebrity_name=row.get("celebrity_name"),
+        short_description=row.get("tagline"),  # Map tagline to short_description
+        celebrity_name=None,  # branded_programs doesn't have celebrity_name
     )
 
 

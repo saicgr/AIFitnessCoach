@@ -40,6 +40,7 @@ class User extends Equatable {
   @JsonKey(name: 'updated_at')
   final String? updatedAt;
   final String? timezone; // IANA timezone identifier (e.g., America/New_York)
+  final String? role; // 'user', 'admin', or 'super_admin'
 
   const User({
     required this.id,
@@ -64,6 +65,7 @@ class User extends Equatable {
     this.createdAt,
     this.updatedAt,
     this.timezone,
+    this.role,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -127,6 +129,12 @@ class User extends Equatable {
 
   /// Check if paywall has been completed (shown/dismissed)
   bool get isPaywallComplete => paywallCompleted == true;
+
+  /// Check if user is an admin
+  bool get isAdmin => role == 'admin' || role == 'super_admin';
+
+  /// Check if user is a super admin
+  bool get isSuperAdmin => role == 'super_admin';
 
   /// Get photo URL (placeholder for now - would come from auth provider)
   String? get photoUrl => null;
@@ -356,6 +364,7 @@ class User extends Equatable {
         coachSelected,
         paywallCompleted,
         timezone,
+        role,
       ];
 
   User copyWith({
@@ -381,6 +390,7 @@ class User extends Equatable {
     String? createdAt,
     String? updatedAt,
     String? timezone,
+    String? role,
   }) {
     return User(
       id: id ?? this.id,
@@ -405,6 +415,7 @@ class User extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       timezone: timezone ?? this.timezone,
+      role: role ?? this.role,
     );
   }
 }

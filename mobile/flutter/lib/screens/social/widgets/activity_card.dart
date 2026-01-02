@@ -1088,7 +1088,7 @@ class _ActivityCardState extends State<ActivityCard> {
                 style: DefaultTextStyle.of(context).style,
                 children: [
                   TextSpan(
-                    text: '${widget.userName}',
+                    text: widget.userName,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const TextSpan(text: ' crushed '),

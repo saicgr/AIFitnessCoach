@@ -1,5 +1,5 @@
 """
-AI Fitness Coach Backend - Main Entry Point
+FitWiz Backend - Main Entry Point
 
 Local development:
     uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -145,7 +145,7 @@ async def lifespan(app: FastAPI):
     Startup and shutdown events.
     Initializes services on startup, cleans up on shutdown.
     """
-    logger.info("Starting AI Fitness Coach Backend...")
+    logger.info("Starting FitWiz Backend...")
     logger.info(f"🤖 Gemini Model: {settings.gemini_model}")
     logger.info(f"📊 Embedding Model: {settings.gemini_embedding_model}")
 
@@ -232,9 +232,9 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="AI Fitness Coach API",
+    title="FitWiz API",
     description="""
-    Backend API for the AI Fitness Coach mobile app.
+    Backend API for the FitWiz mobile app.
 
     ## Features
     - AI-powered fitness coaching with GPT-4
@@ -285,7 +285,7 @@ app.include_router(v1_router, prefix="/api")
 async def root():
     """Root endpoint - basic info."""
     return {
-        "service": "AI Fitness Coach Backend",
+        "service": "FitWiz Backend",
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/api/v1/health/",

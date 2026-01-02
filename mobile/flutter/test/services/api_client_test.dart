@@ -1,8 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ai_fitness_coach/data/services/api_client.dart';
+import 'package:fitwiz/data/services/api_client.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {

@@ -120,12 +120,14 @@ enum WorkoutType {
 class TrainingPreferencesState {
   final ProgressionPace progressionPace;
   final WorkoutType workoutType;
+  final String trainingSplit;
   final bool isLoading;
   final String? error;
 
   const TrainingPreferencesState({
     this.progressionPace = ProgressionPace.medium,
     this.workoutType = WorkoutType.strength,
+    this.trainingSplit = 'dont_know',
     this.isLoading = false,
     this.error,
   });
@@ -133,12 +135,14 @@ class TrainingPreferencesState {
   TrainingPreferencesState copyWith({
     ProgressionPace? progressionPace,
     WorkoutType? workoutType,
+    String? trainingSplit,
     bool? isLoading,
     String? error,
   }) {
     return TrainingPreferencesState(
       progressionPace: progressionPace ?? this.progressionPace,
       workoutType: workoutType ?? this.workoutType,
+      trainingSplit: trainingSplit ?? this.trainingSplit,
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -186,12 +190,14 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
           final workoutType = WorkoutType.fromString(
             prefsMap['workout_type_preference']?.toString(),
           );
+          final trainingSplit = prefsMap['training_split']?.toString() ?? 'dont_know';
           state = TrainingPreferencesState(
             progressionPace: progressionPace,
             workoutType: workoutType,
+            trainingSplit: trainingSplit,
           );
           debugPrint(
-            '   [TrainingPrefs] Loaded: pace=${progressionPace.value}, type=${workoutType.value}',
+            '   [TrainingPrefs] Loaded: pace=${progressionPace.value}, type=${workoutType.value}, split=$trainingSplit',
           );
           return;
         }
@@ -276,8 +282,38 @@ class TrainingPreferencesNotifier extends StateNotifier<TrainingPreferencesState
           workoutType: WorkoutType.fromString(
             prefsMap['workout_type_preference']?.toString(),
           ),
+          trainingSplit: prefsMap['training_split']?.toString() ?? 'dont_know',
         );
       }
+    }
+  }
+
+  /// Set training split and sync to backend
+  Future<void> setTrainingSplit(String split) async {
+    if (split == state.trainingSplit) return;
+
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final apiClient = _ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId != null) {
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {'training_split': split},
+        );
+        debugPrint('   [TrainingPrefs] Synced training_split: $split');
+      }
+
+      // Refresh user to get updated data
+      await _ref.read(authStateProvider.notifier).refreshUser();
+
+      state = state.copyWith(trainingSplit: split, isLoading: false);
+      debugPrint('   [TrainingPrefs] Updated training_split to: $split');
+    } catch (e) {
+      debugPrint('   [TrainingPrefs] Update error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }

@@ -56,6 +56,7 @@ from .workout_agent import build_workout_agent_graph
 from .injury_agent import build_injury_agent_graph
 from .hydration_agent import build_hydration_agent_graph
 from .coach_agent import build_coach_agent_graph
+from .plan_agent import build_plan_agent_graph
 
 logger = get_logger(__name__)
 
@@ -72,7 +73,7 @@ class RouterState(TypedDict):
     image_base64: Optional[str]
 
     # Routing
-    selected_agent: Optional[str]  # "nutrition", "workout", "injury", "hydration", "coach"
+    selected_agent: Optional[str]  # "nutrition", "workout", "injury", "hydration", "coach", "plan"
     mentioned_agent: Optional[str]
 
     # Intent extraction
@@ -100,6 +101,7 @@ AGENT_MENTION_PATTERNS = {
     r"@injury\b": "injury",
     r"@hydration\b": "hydration",
     r"@coach\b": "coach",
+    r"@plan\b": "plan",
 }
 
 # Intent to agent mapping
@@ -120,6 +122,9 @@ INTENT_TO_AGENT = {
     CoachIntent.QUESTION: "coach",
     CoachIntent.CHANGE_SETTING: "coach",
     CoachIntent.NAVIGATE: "coach",
+    CoachIntent.GENERATE_WEEKLY_PLAN: "plan",
+    CoachIntent.ADJUST_PLAN: "plan",
+    CoachIntent.EXPLAIN_PLAN: "plan",
 }
 
 # Keyword patterns for fallback routing
@@ -128,6 +133,7 @@ DOMAIN_KEYWORDS = {
     "workout": ["exercise", "workout", "training", "gym", "lift", "muscle", "sets", "reps"],
     "injury": ["hurt", "pain", "injury", "sore", "strain", "recovery", "rehab"],
     "hydration": ["water", "hydration", "drink", "thirsty", "glasses"],
+    "plan": ["weekly plan", "full plan", "holistic plan", "plan my week", "create plan", "generate plan"],
 }
 
 
@@ -295,6 +301,23 @@ def build_agent_state(state: RouterState, agent: str) -> Dict[str, Any]:
         base["setting_value"] = extraction.get("setting_value")
         base["destination"] = extraction.get("destination")
 
+    elif agent == "plan":
+        # Plan agent needs user profile for workout days, fasting, nutrition targets
+        base["current_plan"] = None
+        base["workout_days"] = []
+        base["fasting_protocol"] = None
+        base["nutrition_strategy"] = None
+        base["nutrition_targets"] = None
+        base["preferred_workout_time"] = None
+        base["generated_plan"] = None
+        base["daily_entries"] = []
+        base["meal_suggestions"] = []
+        base["coordination_notes"] = []
+        base["tool_calls"] = []
+        base["tool_results"] = []
+        base["tool_messages"] = []
+        base["messages"] = []
+
     return base
 
 
@@ -313,6 +336,7 @@ def get_agent_graphs():
             "injury": build_injury_agent_graph(),
             "hydration": build_hydration_agent_graph(),
             "coach": build_coach_agent_graph(),
+            "plan": build_plan_agent_graph(),
         }
         logger.info("[Router] All agent graphs built")
     return _agent_graphs
@@ -388,6 +412,20 @@ async def run_coach_agent(state: RouterState) -> Dict[str, Any]:
     }
 
 
+async def run_plan_agent(state: RouterState) -> Dict[str, Any]:
+    """Run the plan agent for holistic weekly planning."""
+    logger.info("[Router] Running plan agent...")
+    graphs = get_agent_graphs()
+    agent_state = build_agent_state(state, "plan")
+    result = await graphs["plan"].ainvoke(agent_state)
+    return {
+        "final_response": result.get("final_response", ""),
+        "action_data": result.get("action_data"),
+        "agent_type": AgentType.PLAN,
+        "selected_agent": "plan",
+    }
+
+
 def build_router_graph():
     """
     Build the multi-agent router graph.
@@ -410,6 +448,7 @@ def build_router_graph():
     graph.add_node("injury", run_injury_agent)
     graph.add_node("hydration", run_hydration_agent)
     graph.add_node("coach", run_coach_agent)
+    graph.add_node("plan", run_plan_agent)
 
     # Flow: START -> extract_intent -> route to agent -> END
     graph.add_edge(START, "extract_intent")
@@ -424,6 +463,7 @@ def build_router_graph():
             "injury": "injury",
             "hydration": "hydration",
             "coach": "coach",
+            "plan": "plan",
         }
     )
 
@@ -433,6 +473,7 @@ def build_router_graph():
     graph.add_edge("injury", END)
     graph.add_edge("hydration", END)
     graph.add_edge("coach", END)
+    graph.add_edge("plan", END)
 
     compiled = graph.compile()
     logger.info("[Router] Multi-agent router graph built successfully")

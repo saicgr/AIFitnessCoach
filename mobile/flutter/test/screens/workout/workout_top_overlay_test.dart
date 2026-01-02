@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/widgets/workout_top_overlay.dart';
-import 'package:ai_fitness_coach/screens/workout/controllers/workout_timer_controller.dart';
+import 'package:fitwiz/screens/workout/widgets/workout_top_overlay.dart';
+import 'package:fitwiz/screens/workout/controllers/workout_timer_controller.dart';
 
 void main() {
   Widget buildTestWidget({

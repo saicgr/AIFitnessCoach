@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
 /// Header for the conversational onboarding screen.

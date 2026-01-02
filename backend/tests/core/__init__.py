@@ -1,3 +1,3 @@
 """
-Core module tests for AI Fitness Coach backend.
+Core module tests for FitWiz backend.
 """

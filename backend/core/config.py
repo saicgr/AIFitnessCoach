@@ -1,5 +1,5 @@
 """
-Configuration settings for the AI Fitness Coach backend.
+Configuration settings for the FitWiz backend.
 Easy to modify - just update the Settings class or .env file.
 """
 from pydantic_settings import BaseSettings
@@ -63,10 +63,23 @@ class Settings(BaseSettings):
     revcat_api_key: Optional[str] = None
     revenuecat_webhook_secret: Optional[str] = None
 
+    # USDA FoodData Central API Configuration
+    # Get API key from: https://fdc.nal.usda.gov/api-key-signup.html
+    usda_api_key: Optional[str] = None
+    usda_cache_ttl_seconds: int = 3600  # Cache USDA results for 1 hour
+
+    # Webhook Configuration (for admin notifications)
+    # Slack webhook URL for support chat notifications
+    slack_support_webhook: Optional[str] = None
+    # Discord webhook URL for support chat notifications (optional)
+    discord_support_webhook: Optional[str] = None
+    # Admin dashboard URL for action buttons in webhook messages
+    admin_dashboard_url: str = "https://fitwiz-admin.example.com"
+
     # CORS (for Flutter app)
     # Specific allowed origins - do not use ["*"] with allow_credentials=True
     cors_origins: list[str] = [
-        "https://aifitnesscoach-zqi3.onrender.com",
+        "https://fitwiz-zqi3.onrender.com",
         "http://localhost:3000",
         "http://localhost:8000",
     ]

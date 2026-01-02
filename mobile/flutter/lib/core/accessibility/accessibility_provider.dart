@@ -155,13 +155,13 @@ class AccessibilityNotifier extends StateNotifier<AccessibilitySettings> {
     if (_apiClient == null) return;
 
     try {
-      final userId = await _apiClient!.getUserId();
+      final userId = await _apiClient.getUserId();
       if (userId == null) {
         debugPrint('♿ [Accessibility] No user ID, skipping backend sync');
         return;
       }
 
-      await _apiClient!.put(
+      await _apiClient.put(
         '${ApiConstants.users}/$userId',
         data: {
           'accessibility_mode': state.mode.name,
@@ -179,10 +179,10 @@ class AccessibilityNotifier extends StateNotifier<AccessibilitySettings> {
     if (_apiClient == null) return;
 
     try {
-      final userId = await _apiClient!.getUserId();
+      final userId = await _apiClient.getUserId();
       if (userId == null) return;
 
-      final response = await _apiClient!.get('${ApiConstants.users}/$userId');
+      final response = await _apiClient.get('${ApiConstants.users}/$userId');
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data as Map<String, dynamic>;
         final modeStr = data['accessibility_mode'] as String?;

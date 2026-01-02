@@ -21,6 +21,7 @@ class UserSearchResultCard extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final name = user['name'] as String? ?? 'Unknown';
+    final username = user['username'] as String?;
     final avatarUrl = user['avatar_url'] as String?;
     final bio = user['bio'] as String?;
     final totalWorkouts = user['total_workouts'] as int? ?? 0;
@@ -69,14 +70,27 @@ class UserSearchResultCard extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (username != null && username.isNotEmpty)
+                            Text(
+                              '@$username',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (isFriend)

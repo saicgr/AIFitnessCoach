@@ -174,8 +174,12 @@ class ChatMessage extends Equatable {
       actionData!['action'] == 'generate_quick_workout' &&
       actionData!['workout_id'] != null;
 
-  /// Get the workout ID if available
-  String? get workoutId => actionData?['workout_id'] as String?;
+  /// Get the workout ID if available (handles both int and String from backend)
+  String? get workoutId {
+    final id = actionData?['workout_id'];
+    if (id == null) return null;
+    return id.toString(); // Converts int or String to String
+  }
 
   /// Get the workout name if available
   String? get workoutName => actionData?['workout_name'] as String?;

@@ -86,7 +86,7 @@ class GeminiService:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|generate_quick_workout|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
@@ -109,6 +109,7 @@ INTENT DEFINITIONS:
 - start_workout: User wants to START their workout NOW (e.g., "start my workout", "let's go", "begin workout", "I'm ready")
 - complete_workout: User wants to FINISH/COMPLETE their workout (e.g., "I'm done", "finished", "completed my workout", "mark as done")
 - log_hydration: User wants to LOG water intake (e.g., "log 8 glasses of water", "I drank 3 cups", "track my water")
+- generate_quick_workout: User wants to CREATE/GENERATE a new workout (e.g., "give me a quick workout", "create a 15-minute workout", "make me a cardio workout", "I need a short workout", "new workout please")
 - question: General fitness question or unclear intent
 
 SETTING EXTRACTION:
@@ -654,6 +655,162 @@ IMPORTANT:
         print(f"❌ [Gemini] All JSON parsing attempts failed. Content preview: {original_content[:200]}")
         return None
 
+    async def analyze_ingredient_inflammation(
+        self,
+        ingredients_text: str,
+        product_name: Optional[str] = None,
+    ) -> Optional[Dict]:
+        """
+        Analyze ingredients for inflammatory properties using Gemini AI.
+
+        Args:
+            ingredients_text: Raw ingredients list from Open Food Facts
+            product_name: Optional product name for context
+
+        Returns:
+            Dictionary with overall_score, category, ingredient_analyses, etc.
+        """
+        product_context = f"Product: {product_name}\n" if product_name else ""
+
+        prompt = f'''You are a nutrition scientist specializing in inflammation and food science. Analyze the following ingredients list and determine the inflammatory properties of each ingredient and the product overall.
+
+{product_context}Ingredients: {ingredients_text}
+
+INFLAMMATION SCORING CRITERIA:
+
+HIGHLY INFLAMMATORY (Score 1-2):
+- Refined sugars, high-fructose corn syrup
+- Trans fats, partially hydrogenated oils
+- Heavily processed seed/vegetable oils (soybean oil, corn oil, canola oil)
+- Artificial sweeteners (aspartame, sucralose)
+- MSG, artificial colors, artificial preservatives
+- Refined carbohydrates, white flour
+
+MODERATELY INFLAMMATORY (Score 3-4):
+- Excessive saturated fats from processed meats
+- Refined grains (some white rice, white bread ingredients)
+- Excessive sodium compounds
+- Some preservatives (sodium benzoate, potassium sorbate)
+- Conventional dairy in excess
+
+NEUTRAL (Score 5-6):
+- Water, salt in moderate amounts
+- Natural flavors (depends on source)
+- Many starches
+- Unprocessed ingredients with no known inflammatory effect
+
+ANTI-INFLAMMATORY (Score 7-8):
+- Whole grains (oats, quinoa, brown rice)
+- Legumes, beans
+- Many vegetables and fruits
+- Olive oil, avocado oil
+- Nuts and seeds
+- Natural herbs and spices
+
+HIGHLY ANTI-INFLAMMATORY (Score 9-10):
+- Turmeric/curcumin
+- Omega-3 rich foods (fish oil, flaxseed)
+- Green leafy vegetables
+- Berries (blueberries, strawberries)
+- Ginger, garlic
+- Green tea extract
+
+Return ONLY valid JSON in this exact format (no markdown, no explanation):
+{{
+  "overall_score": 5,
+  "overall_category": "neutral",
+  "summary": "Plain language summary of the product's inflammatory profile in 1-2 sentences.",
+  "recommendation": "Brief actionable recommendation for the consumer.",
+  "analysis_confidence": 0.85,
+  "ingredient_analyses": [
+    {{
+      "name": "ingredient name",
+      "category": "inflammatory|anti_inflammatory|neutral|additive|unknown",
+      "score": 5,
+      "reason": "Brief explanation why this ingredient has this score",
+      "is_inflammatory": false,
+      "is_additive": false,
+      "scientific_notes": null
+    }}
+  ],
+  "inflammatory_ingredients": ["ingredient1", "ingredient2"],
+  "anti_inflammatory_ingredients": ["ingredient3", "ingredient4"],
+  "additives_found": ["additive1", "additive2"]
+}}
+
+IMPORTANT RULES:
+1. Score each ingredient individually from 1-10
+2. Calculate overall_score as a weighted average (inflammatory ingredients weigh more heavily)
+3. overall_category must be one of: highly_inflammatory, moderately_inflammatory, neutral, anti_inflammatory, highly_anti_inflammatory
+4. is_inflammatory = true if score <= 4
+5. is_additive = true for preservatives, colorings, emulsifiers, stabilizers
+6. Keep the summary consumer-friendly, avoid jargon
+7. If you cannot identify an ingredient, use category "unknown" with score 5
+8. List ALL inflammatory ingredients (score 1-4) in inflammatory_ingredients
+9. List ALL anti-inflammatory ingredients (score 7-10) in anti_inflammatory_ingredients
+10. List ALL additives/preservatives in additives_found'''
+
+        try:
+            print(f"🔍 [Gemini] Analyzing ingredient inflammation for: {product_name or 'Unknown product'}")
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    max_output_tokens=4000,
+                    temperature=0.2,  # Low temperature for consistent classification
+                ),
+            )
+
+            content = response.text.strip() if response.text else ""
+
+            if not content:
+                print("⚠️ [Gemini] Empty response from inflammation analysis")
+                return None
+
+            # Parse with robust JSON extraction
+            result = self._extract_json_robust(content)
+
+            if not result:
+                print(f"⚠️ [Gemini] Failed to parse inflammation response: {content[:200]}")
+                return None
+
+            # Validate and fix overall_category
+            valid_categories = [
+                "highly_inflammatory", "moderately_inflammatory",
+                "neutral", "anti_inflammatory", "highly_anti_inflammatory"
+            ]
+            if result.get("overall_category") not in valid_categories:
+                # Derive from score
+                score = result.get("overall_score", 5)
+                if score <= 2:
+                    result["overall_category"] = "highly_inflammatory"
+                elif score <= 4:
+                    result["overall_category"] = "moderately_inflammatory"
+                elif score <= 6:
+                    result["overall_category"] = "neutral"
+                elif score <= 8:
+                    result["overall_category"] = "anti_inflammatory"
+                else:
+                    result["overall_category"] = "highly_anti_inflammatory"
+
+            # Ensure required fields exist
+            result.setdefault("ingredient_analyses", [])
+            result.setdefault("inflammatory_ingredients", [])
+            result.setdefault("anti_inflammatory_ingredients", [])
+            result.setdefault("additives_found", [])
+            result.setdefault("summary", "Analysis complete.")
+            result.setdefault("recommendation", None)
+            result.setdefault("analysis_confidence", 0.8)
+
+            print(f"✅ [Gemini] Inflammation analysis complete: score={result.get('overall_score')}, category={result.get('overall_category')}")
+            return result
+
+        except Exception as e:
+            print(f"❌ [Gemini] Ingredient inflammation analysis failed: {e}")
+            logger.exception("Full traceback:")
+            return None
+
     def _get_holiday_theme(self, workout_date: Optional[str] = None) -> Optional[str]:
         """
         Check if workout date is near a holiday and return themed naming suggestions.
@@ -715,6 +872,13 @@ IMPORTANT:
         custom_exercises: Optional[List[Dict]] = None,
         workout_environment: Optional[str] = None,
         equipment_details: Optional[List[Dict]] = None,
+        avoided_exercises: Optional[List[str]] = None,
+        avoided_muscles: Optional[Dict] = None,
+        staple_exercises: Optional[List[str]] = None,
+        comeback_context: Optional[str] = None,
+        progression_philosophy: Optional[str] = None,
+        workout_patterns_context: Optional[str] = None,
+        neat_context: Optional[str] = None,
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -736,6 +900,18 @@ IMPORTANT:
             workout_environment: Optional workout environment (commercial_gym, home_gym, home, outdoors, hotel, etc.)
             equipment_details: Optional detailed equipment info with quantities and weights
                                [{"name": "dumbbells", "quantity": 2, "weights": [15, 25, 40], "weight_unit": "lbs"}]
+            avoided_exercises: Optional list of exercise names the user wants to avoid (e.g., injuries, preferences)
+            avoided_muscles: Optional dict with 'avoid' (completely skip) and 'reduce' (minimize) muscle groups
+            staple_exercises: Optional list of exercises that should always be included when appropriate
+            comeback_context: Optional context string for users returning from extended breaks (includes specific
+                            adjustments for volume, intensity, rest periods, and age-specific modifications)
+            progression_philosophy: Optional progression philosophy prompt section for leverage-based progressions
+                                  and user rep preferences. Built by build_progression_philosophy_prompt().
+            workout_patterns_context: Optional context string with user's historical workout patterns including
+                                     set/rep limits and exercise-specific averages. Built by get_user_workout_patterns().
+            neat_context: Optional NEAT (Non-Exercise Activity Thermogenesis) context string with user's daily
+                         activity patterns, step goals, streaks, and sedentary habits. Built by
+                         user_context_service.get_neat_context_for_ai().
 
         Returns:
             Dict with workout structure including name, type, difficulty, exercises
@@ -762,16 +938,32 @@ IMPORTANT:
         holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
 
         # Build age and activity level context
+        # Import senior-specific prompt additions from adaptive_workout_service
+        from services.adaptive_workout_service import get_senior_workout_prompt_additions
+
         age_activity_context = ""
+        senior_critical_instruction = ""  # For seniors 60+, this adds critical limits
         if age:
-            if age < 25:
-                age_activity_context += f"\n- Age: {age} (young adult - can handle higher intensity and explosive movements)"
-            elif age < 40:
-                age_activity_context += f"\n- Age: {age} (adult - balanced approach to intensity)"
-            elif age < 55:
-                age_activity_context += f"\n- Age: {age} (middle-aged - focus on joint-friendly exercises, longer warm-ups)"
+            if age < 30:
+                age_activity_context += f"\n- Age: {age} (young adult - can handle higher intensity, explosive movements, max 25 reps/exercise)"
+            elif age < 45:
+                age_activity_context += f"\n- Age: {age} (adult - balanced approach to intensity, max 20 reps/exercise)"
+            elif age < 60:
+                age_activity_context += f"\n- Age: {age} (middle-aged - focus on joint-friendly exercises, longer warm-ups, max 16 reps/exercise)"
             else:
-                age_activity_context += f"\n- Age: {age} (senior - prioritize low-impact, balance exercises, avoid high-impact jumping)"
+                # Senior users (60+) - get detailed safety instructions
+                senior_prompt_data = get_senior_workout_prompt_additions(age)
+                if senior_prompt_data:
+                    age_activity_context += f"\n- Age: {age} ({senior_prompt_data['age_bracket']} - REDUCED INTENSITY REQUIRED)"
+                    # Add critical senior instructions to the prompt
+                    senior_critical_instruction = senior_prompt_data["critical_instructions"]
+                    # Also append movement guidance
+                    movements_to_avoid = ", ".join(senior_prompt_data.get("movements_to_avoid", [])[:5])
+                    movement_priorities = ", ".join(senior_prompt_data.get("movement_priorities", [])[:5])
+                    senior_critical_instruction += f"\n- PRIORITIZE: {movement_priorities}"
+                    senior_critical_instruction += f"\n- AVOID: {movements_to_avoid}"
+                else:
+                    age_activity_context += f"\n- Age: {age} (senior - prioritize low-impact, balance exercises, max 12 reps/exercise)"
 
         if activity_level:
             activity_descriptions = {
@@ -977,6 +1169,90 @@ The user has specified exact equipment with quantities and weights. Use ONLY the
 When recommending weights for exercises, select from the user's available weights listed above.
 If user has multiple weight options, pick appropriate weights based on fitness level and exercise type."""
 
+        # Build user preference constraints (avoided exercises, avoided muscles, staple exercises)
+        preference_constraints_instruction = ""
+
+        # Avoided exercises - CRITICAL constraint
+        if avoided_exercises and len(avoided_exercises) > 0:
+            logger.info(f"🚫 [Gemini Service] User has {len(avoided_exercises)} avoided exercises: {avoided_exercises[:5]}...")
+            preference_constraints_instruction += f"""
+
+🚫 CRITICAL - EXERCISES TO AVOID:
+The user has EXPLICITLY requested to avoid these exercises. Do NOT include ANY of them:
+{chr(10).join(f'  - {ex}' for ex in avoided_exercises)}
+
+This is a HARD CONSTRAINT. If you include any of these exercises, the workout will be rejected.
+Find suitable alternatives that work the same muscle groups."""
+
+        # Avoided muscles - CRITICAL constraint
+        if avoided_muscles:
+            avoid_completely = avoided_muscles.get("avoid", [])
+            reduce_usage = avoided_muscles.get("reduce", [])
+
+            if avoid_completely:
+                logger.info(f"🚫 [Gemini Service] User avoiding muscles: {avoid_completely}")
+                preference_constraints_instruction += f"""
+
+🚫 CRITICAL - MUSCLE GROUPS TO AVOID:
+The user has requested to COMPLETELY AVOID these muscle groups (e.g., due to injury):
+{chr(10).join(f'  - {muscle}' for muscle in avoid_completely)}
+
+Do NOT include exercises that primarily target these muscles.
+If the workout focus conflicts with this (e.g., "chest day" but avoiding chest), prioritize safety and adjust."""
+
+            if reduce_usage:
+                logger.info(f"⚠️ [Gemini Service] User reducing muscles: {reduce_usage}")
+                preference_constraints_instruction += f"""
+
+⚠️ MUSCLE GROUPS TO MINIMIZE:
+The user prefers to minimize exercises for these muscle groups:
+{chr(10).join(f'  - {muscle}' for muscle in reduce_usage)}
+
+Include at most 1 exercise targeting these muscles, and prefer compound movements over isolation."""
+
+        # Staple exercises - exercises user wants to always include when appropriate
+        if staple_exercises and len(staple_exercises) > 0:
+            logger.info(f"⭐ [Gemini Service] User has {len(staple_exercises)} staple exercises: {staple_exercises}")
+            preference_constraints_instruction += f"""
+
+⭐ USER'S STAPLE EXERCISES:
+The user has marked these as their preferred exercises. Include them when they match the workout focus:
+{chr(10).join(f'  - {ex}' for ex in staple_exercises)}
+
+If any staple exercises match today's muscle group focus, prioritize including them."""
+
+        # Build comeback instruction for users returning from extended breaks
+        comeback_instruction = ""
+        if comeback_context and comeback_context.strip():
+            logger.info(f"🔄 [Gemini Service] User is in comeback mode - applying reduced intensity instructions")
+            comeback_instruction = f"""
+
+{comeback_context}
+
+🔄 COMEBACK WORKOUT REQUIREMENTS:
+Based on the comeback context above, you MUST:
+1. REDUCE the number of sets compared to normal (typically 2-3 sets max)
+2. REDUCE the number of reps per set
+3. INCREASE rest periods between sets
+4. AVOID explosive or high-intensity movements
+5. INCLUDE joint mobility exercises where appropriate
+6. Focus on controlled movements and proper form
+7. Keep the workout SHORTER than normal duration
+
+This is a RETURN-TO-TRAINING workout - safety and gradual progression are CRITICAL."""
+
+        # Build progression philosophy instruction for leverage-based progressions
+        progression_philosophy_instruction = ""
+        if progression_philosophy and progression_philosophy.strip():
+            logger.info(f"[Gemini Service] Including progression philosophy context for leverage-based progressions")
+            progression_philosophy_instruction = progression_philosophy
+
+        # Build workout patterns context with historical data and set/rep limits
+        workout_patterns_instruction = ""
+        if workout_patterns_context and workout_patterns_context.strip():
+            logger.info(f"[Gemini Service] Including workout patterns context with set/rep limits and historical data")
+            workout_patterns_instruction = workout_patterns_context
+
         # Build focus area instruction based on the training split/focus
         focus_instruction = ""
         if focus_areas and len(focus_areas) > 0:
@@ -1015,11 +1291,14 @@ If user has multiple weight options, pick appropriate weights based on fitness l
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Available Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
 - Focus Areas: {', '.join(focus_areas) if focus_areas else 'Full body'}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}
 You MUST follow this focus area strictly. Do NOT give random exercises that don't match the focus.
+EXAMPLE: If focus is LEGS, you MUST include squats, lunges, leg press - NOT push-ups or bench press!
+If focus is PUSH, include chest/shoulder/tricep exercises - NOT squats or rows!
+{senior_critical_instruction}
 
 Return a valid JSON object with this exact structure:
 {{
@@ -1109,14 +1388,20 @@ FORMAT: [Adjective/Action] + [Animal/Mythic/Theme] + [Body Part]
 {holiday_instruction}{avoid_instruction}
 
 Requirements:
-- Include 5-8 exercises appropriate for {fitness_level} fitness level
+- MUST include AT LEAST 5 exercises (minimum 5, ideally 6-8) appropriate for {fitness_level} fitness level
+- EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
 - ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
 - For beginners: focus on form, include more rest, simpler movements
 - For intermediate: balanced challenge, compound movements
 - For advanced: higher intensity, complex movements, less rest
 - Align exercise selection with goals: {', '.join(goals) if goals else 'general fitness'}
 - Include variety - don't repeat the same movement pattern
-- Each exercise should have helpful form notes"""
+- Each exercise should have helpful form notes
+
+⚠️ VALIDATION: Before finalizing, verify that ALL exercises match the focus area.
+If focus is "legs" - every exercise should target quads, hamstrings, glutes, or calves.
+If focus is "push" - every exercise should target chest, shoulders, or triceps.
+If focus is "pull" - every exercise should target back or biceps."""
 
         # Log the full prompt for debugging
         logger.info("=" * 80)
@@ -1177,7 +1462,11 @@ Requirements:
         age: Optional[int] = None,
         activity_level: Optional[str] = None,
         intensity_preference: Optional[str] = None,
-        custom_prompt_override: Optional[str] = None
+        custom_prompt_override: Optional[str] = None,
+        avoided_exercises: Optional[List[str]] = None,
+        avoided_muscles: Optional[Dict] = None,
+        staple_exercises: Optional[List[str]] = None,
+        progression_philosophy: Optional[str] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -1188,6 +1477,7 @@ Requirements:
         Args:
             custom_prompt_override: If provided, use this prompt instead of
                                     building the default workout prompt.
+            progression_philosophy: Optional progression philosophy prompt for leverage-based progressions.
 
         Yields:
             str: JSON chunks as they arrive from Gemini
@@ -1210,16 +1500,26 @@ Requirements:
             holiday_theme = self._get_holiday_theme(workout_date)
             holiday_instruction = f"\n\n{holiday_theme}" if holiday_theme else ""
 
+            # Import senior-specific prompt additions
+            from services.adaptive_workout_service import get_senior_workout_prompt_additions
+
             age_activity_context = ""
+            senior_instruction = ""  # For seniors 60+, this adds critical limits
             if age:
-                if age < 25:
-                    age_activity_context += f"\n- Age: {age} (young adult)"
-                elif age < 40:
-                    age_activity_context += f"\n- Age: {age} (adult)"
-                elif age < 55:
-                    age_activity_context += f"\n- Age: {age} (middle-aged - joint-friendly)"
+                if age < 30:
+                    age_activity_context += f"\n- Age: {age} (young adult, max 25 reps)"
+                elif age < 45:
+                    age_activity_context += f"\n- Age: {age} (adult, max 20 reps)"
+                elif age < 60:
+                    age_activity_context += f"\n- Age: {age} (middle-aged - joint-friendly, max 16 reps)"
                 else:
-                    age_activity_context += f"\n- Age: {age} (senior - low-impact)"
+                    # Senior users (60+) - get detailed safety instructions
+                    senior_prompt_data = get_senior_workout_prompt_additions(age)
+                    if senior_prompt_data:
+                        age_activity_context += f"\n- Age: {age} ({senior_prompt_data['age_bracket']} - REDUCED INTENSITY)"
+                        senior_instruction = f"\n\n🧓 SENIOR SAFETY (age {age}): Max {senior_prompt_data['max_reps']} reps, Max {senior_prompt_data['max_sets']} sets, {senior_prompt_data['extra_rest_percent']}% more rest. AVOID high-impact/explosive moves."
+                    else:
+                        age_activity_context += f"\n- Age: {age} (senior - low-impact, max 12 reps)"
 
             if activity_level:
                 activity_descriptions = {
@@ -1231,11 +1531,37 @@ Requirements:
                 activity_desc = activity_descriptions.get(activity_level, activity_level)
                 age_activity_context += f"\n- Activity Level: {activity_desc}"
 
+            # Build preference constraints for streaming
+            preference_constraints = ""
+
+            if avoided_exercises and len(avoided_exercises) > 0:
+                logger.info(f"🚫 [Streaming] User has {len(avoided_exercises)} avoided exercises")
+                preference_constraints += f"\n\n🚫 EXERCISES TO AVOID (CRITICAL - DO NOT INCLUDE): {', '.join(avoided_exercises[:10])}"
+
+            if avoided_muscles:
+                avoid_completely = avoided_muscles.get("avoid", [])
+                reduce_usage = avoided_muscles.get("reduce", [])
+                if avoid_completely:
+                    logger.info(f"🚫 [Streaming] User avoiding muscles: {avoid_completely}")
+                    preference_constraints += f"\n🚫 MUSCLES TO AVOID (injury/preference): {', '.join(avoid_completely)}"
+                if reduce_usage:
+                    preference_constraints += f"\n⚠️ MUSCLES TO MINIMIZE: {', '.join(reduce_usage)}"
+
+            if staple_exercises and len(staple_exercises) > 0:
+                logger.info(f"⭐ [Streaming] User has {len(staple_exercises)} staple exercises")
+                preference_constraints += f"\n⭐ USER'S PREFERRED EXERCISES (include if matching focus): {', '.join(staple_exercises[:5])}"
+
+            # Add progression philosophy if provided
+            progression_instruction = ""
+            if progression_philosophy and progression_philosophy.strip():
+                logger.info(f"[Streaming] Including progression philosophy for leverage-based progressions")
+                progression_instruction = progression_philosophy
+
             prompt = f"""Generate a {duration_minutes}-minute workout for:
 - Fitness Level: {fitness_level}
 - Goals: {', '.join(goals) if goals else 'General fitness'}
 - Equipment: {', '.join(equipment) if equipment else 'Bodyweight only'}
-- Focus: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}
+- Focus: {', '.join(focus_areas) if focus_areas else 'Full body'}{age_activity_context}{preference_constraints}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -1251,7 +1577,7 @@ Return ONLY valid JSON (no markdown):
 }}
 
 Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment) if equipment else 'bodyweight'}
-{holiday_instruction}{avoid_instruction}"""
+{senior_instruction}{holiday_instruction}{avoid_instruction}{progression_instruction}"""
 
             logger.info(f"[Streaming] Starting workout generation for {fitness_level} user")
 
@@ -1286,7 +1612,8 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
         activity_level: Optional[str] = None,
         intensity_preference: Optional[str] = None,
         custom_program_description: Optional[str] = None,
-        workout_type_preference: Optional[str] = None
+        workout_type_preference: Optional[str] = None,
+        comeback_context: Optional[str] = None,
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -1308,6 +1635,7 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
             intensity_preference: Optional intensity preference (easy, medium, hard)
             custom_program_description: Optional user's custom program description (e.g., "Train for HYROX")
             workout_type_preference: Optional workout type preference (strength, cardio, mixed)
+            comeback_context: Optional context string for users returning from extended breaks
 
         Returns:
             Dict with workout structure
@@ -1346,8 +1674,26 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
         if custom_program_description and custom_program_description.strip():
             custom_program_context = f"\n- Custom Training Goal: {custom_program_description}"
 
+        # Add age context for appropriate naming and notes
+        age_context = ""
+        if age:
+            if age >= 75:
+                age_context = f"\n- Age: {age} (elderly - focus on gentle, supportive movements)"
+            elif age >= 60:
+                age_context = f"\n- Age: {age} (senior - prioritize low-impact, balance-focused exercises)"
+            elif age >= 45:
+                age_context = f"\n- Age: {age} (middle-aged - joint-friendly approach)"
+            else:
+                age_context = f"\n- Age: {age}"
+
         # Determine workout type
         workout_type = workout_type_preference if workout_type_preference else "strength"
+
+        # Build comeback instruction
+        comeback_instruction = ""
+        if comeback_context and comeback_context.strip():
+            logger.info(f"🔄 [Gemini Service] Library workout - user in comeback mode")
+            comeback_instruction = f"\n\n🔄 COMEBACK NOTE: User is returning from an extended break. Include comeback/return-to-training themes in the name (e.g., 'Comeback', 'Return', 'Fresh Start')."
 
         # Format exercises for the prompt
         exercise_list = "\n".join([
@@ -1361,7 +1707,7 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
 
 User profile:
 - Fitness Level: {fitness_level}
-- Goals: {', '.join(goals) if goals else 'General fitness'}{custom_program_context}{safety_instruction}
+- Goals: {', '.join(goals) if goals else 'General fitness'}{age_context}{custom_program_context}{safety_instruction}
 
 Create a CREATIVE and MOTIVATING workout name (3-4 words) that reflects the user's training focus.
 
@@ -1370,7 +1716,7 @@ Examples of good names:
 - "Phoenix Power Chest"
 - "Savage Wolf Back"
 - "Iron Storm Arms"
-{holiday_instruction}{avoid_instruction}
+{holiday_instruction}{avoid_instruction}{comeback_instruction}
 
 Return a JSON object with:
 {{
@@ -1481,6 +1827,490 @@ Return a JSON object with:
             print(f"Error generating workout summary with agent: {e}")
             raise  # No fallback - let errors propagate
 
+    async def generate_exercise_reasoning(
+        self,
+        workout_name: str,
+        exercises: List[Dict],
+        user_profile: Dict,
+        program_preferences: Dict,
+        workout_type: str = "strength",
+        difficulty: str = "intermediate",
+    ) -> Dict:
+        """
+        Generate AI-powered reasoning for why each exercise was selected.
+
+        Args:
+            workout_name: Name of the workout
+            exercises: List of exercises with their details
+            user_profile: User's profile (goals, fitness_level, equipment, injuries)
+            program_preferences: Program preferences (training_split, focus_areas)
+            workout_type: Type of workout
+            difficulty: Difficulty level
+
+        Returns:
+            Dict with 'workout_reasoning' (str) and 'exercise_reasoning' (list of dicts)
+        """
+        try:
+            # Extract relevant data
+            exercise_list = []
+            for ex in exercises[:8]:  # Limit to 8 exercises for token efficiency
+                exercise_list.append({
+                    "name": ex.get("name", "Unknown"),
+                    "muscle": ex.get("muscle_group") or ex.get("primary_muscle") or "general",
+                    "equipment": ex.get("equipment", "bodyweight"),
+                    "sets": ex.get("sets", 3),
+                    "reps": ex.get("reps", "8-12"),
+                })
+
+            user_goals = user_profile.get("goals", [])
+            fitness_level = user_profile.get("fitness_level", "intermediate")
+            user_equipment = user_profile.get("equipment", [])
+            injuries = user_profile.get("injuries", [])
+            training_split = program_preferences.get("training_split", "full_body")
+            focus_areas = program_preferences.get("focus_areas", [])
+
+            prompt = f"""You are a certified personal trainer explaining workout design to a client.
+
+WORKOUT: {workout_name}
+TYPE: {workout_type}
+DIFFICULTY: {difficulty}
+TRAINING SPLIT: {training_split}
+
+USER PROFILE:
+- Fitness Level: {fitness_level}
+- Goals: {', '.join(user_goals) if user_goals else 'general fitness'}
+- Equipment Available: {', '.join(user_equipment) if user_equipment else 'various'}
+- Injuries/Limitations: {', '.join(injuries) if injuries else 'none noted'}
+- Focus Areas: {', '.join(focus_areas) if focus_areas else 'balanced'}
+
+EXERCISES:
+{chr(10).join([f"- {ex['name']} ({ex['muscle']}, {ex['sets']}x{ex['reps']}, {ex['equipment']})" for ex in exercise_list])}
+
+Generate personalized reasoning. Return ONLY valid JSON:
+
+{{
+    "workout_reasoning": "1-2 sentences explaining the overall workout design philosophy and how it matches the user's goals",
+    "exercise_reasoning": [
+        {{
+            "exercise_name": "exact exercise name",
+            "reasoning": "1 sentence explaining why THIS exercise was chosen for THIS user (mention specific goals, equipment match, or how it fits their level)"
+        }}
+    ]
+}}
+
+RULES:
+1. Be specific - mention actual goals, equipment, or fitness level
+2. Each exercise reasoning should be unique and personal
+3. Reference the training split/focus if relevant
+4. Keep each reasoning to ONE focused sentence
+5. Avoid generic phrases like "great exercise" or "builds strength"
+"""
+
+            response = await self.model.generate_content_async(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    temperature=0.7,
+                    max_output_tokens=1000,
+                ),
+            )
+
+            content = response.text.strip()
+
+            # Extract JSON from response
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0].strip()
+            elif "```" in content:
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1].strip()
+                    if content.startswith(("json", "JSON")):
+                        content = content[4:].strip()
+
+            import json
+            result = json.loads(content)
+
+            return {
+                "workout_reasoning": result.get("workout_reasoning", ""),
+                "exercise_reasoning": result.get("exercise_reasoning", []),
+            }
+
+        except Exception as e:
+            print(f"Error generating exercise reasoning: {e}")
+            # Return empty result - caller should use fallback
+            return {
+                "workout_reasoning": "",
+                "exercise_reasoning": [],
+            }
+
+    async def generate_weekly_holistic_plan(
+        self,
+        user_profile: Dict,
+        workout_days: List[int],
+        fasting_protocol: str,
+        nutrition_strategy: str,
+        nutrition_targets: Dict,
+        week_start_date: str,
+        preferred_workout_time: str = "17:00",
+    ) -> Dict:
+        """
+        Generate a complete weekly holistic plan integrating workouts, nutrition, and fasting.
+
+        Args:
+            user_profile: User's fitness profile (level, goals, equipment, age, restrictions)
+            workout_days: Days of week for training (0=Monday, 6=Sunday)
+            fasting_protocol: Fasting protocol (16:8, 18:6, OMAD, etc.)
+            nutrition_strategy: Strategy (workout_aware, static, cutting, bulking, maintenance)
+            nutrition_targets: Base nutrition targets (calories, protein_g, carbs_g, fat_g)
+            week_start_date: Start date of the week (YYYY-MM-DD)
+            preferred_workout_time: Preferred workout time (HH:MM)
+
+        Returns:
+            Dict with weekly plan structure including daily entries
+        """
+        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        workout_day_names = [day_names[d] for d in workout_days]
+
+        prompt = f'''Generate a complete weekly holistic fitness plan coordinating workouts, nutrition, and fasting.
+
+USER PROFILE:
+- Fitness Level: {user_profile.get('fitness_level', 'intermediate')}
+- Goals: {', '.join(user_profile.get('goals', ['general fitness']))}
+- Equipment: {', '.join(user_profile.get('equipment', ['dumbbells', 'bodyweight']))}
+- Age: {user_profile.get('age', 30)}
+- Dietary Restrictions: {', '.join(user_profile.get('dietary_restrictions', []))}
+
+WORKOUT SCHEDULE:
+- Training Days: {workout_day_names} (indices: {workout_days})
+- Preferred Workout Time: {preferred_workout_time}
+- Week Starting: {week_start_date}
+
+NUTRITION TARGETS (base):
+- Daily Calories: {nutrition_targets.get('calories', 2000)}
+- Protein: {nutrition_targets.get('protein_g', 150)}g
+- Carbs: {nutrition_targets.get('carbs_g', 200)}g
+- Fat: {nutrition_targets.get('fat_g', 65)}g
+
+NUTRITION STRATEGY: {nutrition_strategy}
+- If workout_aware: Increase calories by 200-400 on training days, boost protein +20-30g, boost carbs +30-50g
+- If cutting: Reduce rest day calories by 200-300
+- If bulking: Increase all days by 300-500 calories
+- If maintenance/static: Keep targets consistent
+
+FASTING PROTOCOL: {fasting_protocol}
+- 16:8: 16 hour fast, 8 hour eating window (typical: 12pm-8pm)
+- 18:6: 18 hour fast, 6 hour eating window (typical: 12pm-6pm)
+- OMAD: One meal a day, 1-2 hour eating window
+- None: No fasting restrictions
+
+COORDINATION RULES:
+1. On training days, ensure eating window includes time for pre-workout and post-workout meals
+2. Pre-workout meal should be 2-3 hours before workout
+3. Post-workout meal should be within 1-2 hours after workout
+4. If workout falls during fasting period, note this as a warning
+5. If OMAD or extended fasting with intense workout, suggest BCAA supplementation
+
+Return ONLY valid JSON (no markdown, no explanation) in this exact format:
+{{
+  "daily_entries": [
+    {{
+      "day_index": 0,
+      "day_name": "Monday",
+      "day_type": "training",
+      "workout_time": "17:00",
+      "workout_focus": "Upper Body Push",
+      "workout_duration_minutes": 45,
+      "calorie_target": 2400,
+      "protein_target_g": 180,
+      "carbs_target_g": 250,
+      "fat_target_g": 70,
+      "fiber_target_g": 30,
+      "eating_window_start": "11:00",
+      "eating_window_end": "19:00",
+      "fasting_start_time": "19:00",
+      "fasting_duration_hours": 16,
+      "meal_suggestions": [
+        {{
+          "meal_type": "pre_workout",
+          "suggested_time": "14:00",
+          "foods": [
+            {{"name": "Oatmeal with banana", "amount": "1 bowl", "calories": 350, "protein_g": 12, "carbs_g": 60, "fat_g": 8}}
+          ],
+          "notes": "Light carbs for energy"
+        }},
+        {{
+          "meal_type": "post_workout",
+          "suggested_time": "18:30",
+          "foods": [
+            {{"name": "Grilled chicken breast", "amount": "200g", "calories": 330, "protein_g": 62, "carbs_g": 0, "fat_g": 7}},
+            {{"name": "Brown rice", "amount": "1 cup", "calories": 215, "protein_g": 5, "carbs_g": 45, "fat_g": 2}}
+          ],
+          "notes": "High protein for muscle recovery"
+        }}
+      ],
+      "coordination_notes": []
+    }},
+    {{
+      "day_index": 1,
+      "day_name": "Tuesday",
+      "day_type": "rest",
+      "workout_time": null,
+      "workout_focus": null,
+      "workout_duration_minutes": 0,
+      "calorie_target": 2000,
+      "protein_target_g": 150,
+      "carbs_target_g": 180,
+      "fat_target_g": 65,
+      "fiber_target_g": 30,
+      "eating_window_start": "12:00",
+      "eating_window_end": "20:00",
+      "fasting_start_time": "20:00",
+      "fasting_duration_hours": 16,
+      "meal_suggestions": [
+        {{
+          "meal_type": "lunch",
+          "suggested_time": "12:30",
+          "foods": [...],
+          "notes": "..."
+        }}
+      ],
+      "coordination_notes": []
+    }}
+  ],
+  "weekly_summary": {{
+    "total_training_days": 4,
+    "total_rest_days": 3,
+    "avg_daily_calories": 2200,
+    "weekly_protein_total": 1120,
+    "focus_areas": ["Upper Body", "Lower Body", "Core"],
+    "notes": "Balanced week with adequate recovery"
+  }}
+}}
+
+Generate entries for ALL 7 days of the week (Monday through Sunday).
+Ensure meal suggestions total approximately match the daily calorie/macro targets.
+Include 2-4 meals per day that fit within the eating window.
+Add coordination_notes array with warnings if any conflicts exist (e.g., workout during fast).
+'''
+
+        try:
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a fitness and nutrition planning AI. Return only valid JSON.",
+                    max_output_tokens=8000,
+                    temperature=0.7,
+                ),
+            )
+
+            # Extract JSON from response
+            text = response.text.strip()
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+
+            return json.loads(text.strip())
+
+        except Exception as e:
+            logger.error(f"Error generating weekly holistic plan: {e}")
+            raise
+
+    async def generate_daily_meal_plan(
+        self,
+        nutrition_targets: Dict,
+        eating_window_start: str,
+        eating_window_end: str,
+        workout_time: Optional[str],
+        day_type: str,
+        dietary_restrictions: List[str],
+        preferences: Dict,
+    ) -> List[Dict]:
+        """
+        Generate AI meal suggestions for a specific day.
+
+        Args:
+            nutrition_targets: Daily nutrition targets (calories, protein_g, carbs_g, fat_g)
+            eating_window_start: Start of eating window (HH:MM)
+            eating_window_end: End of eating window (HH:MM)
+            workout_time: Workout time if training day (HH:MM or None)
+            day_type: Type of day (training, rest, active_recovery)
+            dietary_restrictions: User's dietary restrictions
+            preferences: User's food preferences (cuisine, dislikes, etc.)
+
+        Returns:
+            List of meal suggestions with foods and macros
+        """
+        workout_context = ""
+        if day_type == "training" and workout_time:
+            workout_context = f"""
+WORKOUT TIMING:
+- Workout at: {workout_time}
+- Include a pre-workout meal 2-3 hours before
+- Include a post-workout meal within 1-2 hours after
+- Pre-workout: Moderate carbs, some protein, low fat
+- Post-workout: High protein (30-40g), fast-digesting carbs
+"""
+
+        restrictions_text = ", ".join(dietary_restrictions) if dietary_restrictions else "None"
+        cuisine_pref = preferences.get("preferred_cuisines", ["varied"])
+        dislikes = preferences.get("dislikes", [])
+
+        prompt = f'''Generate a practical daily meal plan for the following requirements:
+
+NUTRITION TARGETS:
+- Calories: {nutrition_targets.get('calories', 2000)}
+- Protein: {nutrition_targets.get('protein_g', 150)}g
+- Carbs: {nutrition_targets.get('carbs_g', 200)}g
+- Fat: {nutrition_targets.get('fat_g', 65)}g
+
+EATING WINDOW:
+- Start: {eating_window_start}
+- End: {eating_window_end}
+
+DAY TYPE: {day_type}
+{workout_context}
+
+DIETARY RESTRICTIONS: {restrictions_text}
+PREFERRED CUISINES: {', '.join(cuisine_pref)}
+DISLIKES: {', '.join(dislikes) if dislikes else 'None specified'}
+
+Generate 3-4 meals that:
+1. Fit within the eating window times
+2. Total approximately the target macros
+3. Are practical and easy to prepare
+4. Respect dietary restrictions
+5. Include pre/post workout meals if training day
+
+Return ONLY valid JSON (no markdown) as an array:
+[
+  {{
+    "meal_type": "breakfast|lunch|dinner|snack|pre_workout|post_workout",
+    "suggested_time": "HH:MM",
+    "foods": [
+      {{"name": "Food name", "amount": "serving size", "calories": 300, "protein_g": 25, "carbs_g": 30, "fat_g": 10}}
+    ],
+    "total_calories": 450,
+    "total_protein_g": 35,
+    "total_carbs_g": 45,
+    "total_fat_g": 15,
+    "prep_time_minutes": 15,
+    "notes": "Quick and high protein"
+  }}
+]
+'''
+
+        try:
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a nutrition planning AI. Generate practical, healthy meal suggestions. Return only valid JSON.",
+                    max_output_tokens=4000,
+                    temperature=0.7,
+                ),
+            )
+
+            # Extract JSON from response
+            text = response.text.strip()
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+
+            return json.loads(text.strip())
+
+        except Exception as e:
+            logger.error(f"Error generating daily meal plan: {e}")
+            raise
+
+    async def regenerate_meal_for_day(
+        self,
+        meal_type: str,
+        current_day_totals: Dict,
+        remaining_targets: Dict,
+        eating_window_end: str,
+        dietary_restrictions: List[str],
+        reason: str = "user_request",
+    ) -> Dict:
+        """
+        Regenerate a single meal while maintaining macro balance.
+
+        Args:
+            meal_type: Type of meal to regenerate (lunch, dinner, etc.)
+            current_day_totals: What's already been consumed/planned
+            remaining_targets: Remaining macros to hit
+            eating_window_end: When eating window ends
+            dietary_restrictions: User's dietary restrictions
+            reason: Why regenerating (user_request, dislike, variety)
+
+        Returns:
+            Single meal suggestion dict
+        """
+        prompt = f'''Generate a replacement {meal_type} meal.
+
+REMAINING NUTRITION TARGETS (what this meal should approximately hit):
+- Calories: {remaining_targets.get('calories', 500)}
+- Protein: {remaining_targets.get('protein_g', 40)}g
+- Carbs: {remaining_targets.get('carbs_g', 50)}g
+- Fat: {remaining_targets.get('fat_g', 20)}g
+
+ALREADY CONSUMED TODAY:
+- Calories: {current_day_totals.get('calories', 0)}
+- Protein: {current_day_totals.get('protein_g', 0)}g
+
+CONSTRAINTS:
+- Must finish by: {eating_window_end}
+- Dietary restrictions: {', '.join(dietary_restrictions) if dietary_restrictions else 'None'}
+- Reason for regeneration: {reason}
+
+Generate a single meal that helps hit the remaining targets.
+
+Return ONLY valid JSON (no markdown):
+{{
+  "meal_type": "{meal_type}",
+  "suggested_time": "HH:MM",
+  "foods": [
+    {{"name": "Food name", "amount": "serving size", "calories": 300, "protein_g": 25, "carbs_g": 30, "fat_g": 10}}
+  ],
+  "total_calories": 500,
+  "total_protein_g": 40,
+  "total_carbs_g": 50,
+  "total_fat_g": 20,
+  "prep_time_minutes": 20,
+  "notes": "High protein dinner option"
+}}
+'''
+
+        try:
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a nutrition planning AI. Return only valid JSON.",
+                    max_output_tokens=2000,
+                    temperature=0.8,
+                ),
+            )
+
+            text = response.text.strip()
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+
+            return json.loads(text.strip())
+
+        except Exception as e:
+            logger.error(f"Error regenerating meal: {e}")
+            raise
+
     def get_agent_personality(self, agent_type: str = "coach") -> dict:
         """
         Get agent-specific personality settings.
@@ -1496,7 +2326,7 @@ Return a JSON object with:
             "coach": {
                 "name": "AI Coach",
                 "emoji": "🏋️",
-                "greeting": "Hey there! I'm your AI Fitness Coach.",
+                "greeting": "Hey there! I'm your FitWiz.",
                 "personality": "motivating, supportive, and knowledgeable about all aspects of fitness",
                 "expertise": "workout planning, exercise form, fitness motivation, and overall wellness",
                 "color": "cyan",
@@ -1622,6 +2452,290 @@ RESPONSE FORMAT:
 - IMPORTANT: When mentioning workout dates, ALWAYS include the day of the week (e.g., "Friday, November 28th" or "this Friday (Nov 28)"), not just the raw date format
 
 Remember: You're a supportive coach, not a robot. Be human, be helpful, be motivating!'''
+
+
+# ============================================================================
+# HORMONAL HEALTH PROMPTS
+# Specialized prompts for hormone-supportive workout and nutrition recommendations
+# ============================================================================
+
+class HormonalHealthPrompts:
+    """
+    Prompts for hormonal health-aware AI coaching.
+
+    Provides context-aware prompts for:
+    - Menstrual cycle phase-based workout adjustments
+    - Testosterone optimization recommendations
+    - Estrogen balance support
+    - PCOS and menopause-friendly modifications
+    - Gender-specific exercise and nutrition guidance
+    """
+
+    @staticmethod
+    def get_cycle_phase_prompt(phase: str) -> str:
+        """Get coaching prompt for specific menstrual cycle phase."""
+        phase_prompts = {
+            "menstrual": """The user is in their MENSTRUAL phase (days 1-5):
+- Energy levels are typically lower due to hormone dip
+- Focus on gentle, restorative movements
+- Recommend: yoga, walking, light stretching, swimming
+- Avoid: high-intensity intervals, heavy lifting, inversions
+- Nutrition focus: iron-rich foods (spinach, lentils), anti-inflammatory foods (turmeric, ginger)
+- Be extra supportive and understanding about energy fluctuations
+- Suggest reducing workout intensity by 20-30% if they're feeling fatigued""",
+
+            "follicular": """The user is in their FOLLICULAR phase (days 6-13):
+- Estrogen is rising, energy and mood typically improving
+- Great time for challenging workouts and trying new exercises
+- Recommend: strength training, HIIT, new skill work, group classes
+- Can push harder and increase intensity
+- Nutrition focus: light, fresh foods, fermented foods, lean proteins
+- Encourage them to take on challenging goals and PR attempts
+- Body can handle more stress and recover faster""",
+
+            "ovulation": """The user is in their OVULATION phase (days 14-16):
+- Peak energy and strength - estrogen and testosterone at highest
+- Optimal time for personal records and competitions
+- Recommend: high-intensity workouts, PR attempts, challenging exercises
+- Social energy is high - great for group workouts
+- Nutrition focus: fiber-rich foods, antioxidants, raw vegetables
+- Encourage maximum effort and celebrate achievements
+- Be aware of slightly increased injury risk due to ligament laxity""",
+
+            "luteal": """The user is in their LUTEAL phase (days 17-28):
+- Progesterone rises then both hormones drop, may experience PMS
+- Focus on maintenance rather than PRs
+- Recommend: moderate cardio, pilates, strength maintenance, recovery work
+- Avoid: extreme endurance, new max attempts
+- Nutrition focus: complex carbs (serotonin support), magnesium, B vitamins
+- Be patient and understanding about mood fluctuations
+- Body temperature is slightly elevated - may fatigue faster"""
+        }
+        return phase_prompts.get(phase.lower(), "")
+
+    @staticmethod
+    def get_hormone_goal_prompt(goal: str) -> str:
+        """Get coaching prompt for specific hormone optimization goal."""
+        goal_prompts = {
+            "optimize_testosterone": """The user's goal is TESTOSTERONE OPTIMIZATION:
+- Prioritize compound movements: squats, deadlifts, bench press, rows
+- Recommend higher intensity with adequate rest (2-3 min between heavy sets)
+- Include exercises that engage large muscle groups
+- Suggest adequate sleep (7-9 hours) for hormone production
+- Nutrition focus: zinc (oysters, beef), vitamin D, healthy fats, adequate protein
+- Foods: eggs, tuna, pomegranate, garlic, ginger
+- Avoid: excessive cardio, overtraining, alcohol
+- Stress management is crucial for testosterone levels""",
+
+            "balance_estrogen": """The user's goal is ESTROGEN BALANCE:
+- Include a mix of strength and cardio for overall hormonal health
+- Recommend exercises that support liver health (estrogen metabolism)
+- Nutrition focus: cruciferous vegetables (broccoli, cauliflower, kale)
+- Foods: flaxseeds (lignans), berries (antioxidants), turmeric
+- Include fiber for healthy estrogen elimination
+- Avoid: excessive alcohol, processed foods, environmental estrogens
+- Stress reduction is important for hormonal balance""",
+
+            "pcos_management": """The user has PCOS (Polycystic Ovary Syndrome):
+- Prioritize insulin sensitivity: strength training + moderate cardio
+- Recommend lower-intensity, consistent exercise over sporadic intense workouts
+- Include resistance training 3-4x per week
+- Nutrition focus: low glycemic foods, anti-inflammatory diet
+- Foods: salmon (omega-3s), leafy greens, nuts, cinnamon, olive oil
+- Avoid: refined carbs, sugar spikes, excessive high-intensity exercise
+- Weight management through sustainable exercise is key
+- Be supportive about symptoms like fatigue and mood changes""",
+
+            "menopause_support": """The user is managing MENOPAUSE symptoms:
+- Focus on bone health: weight-bearing exercises, resistance training
+- Include exercises for balance and fall prevention
+- Moderate intensity is usually better than high intensity
+- Nutrition focus: phytoestrogens (moderate soy), calcium, vitamin D
+- Foods: chickpeas, whole grains, leafy greens
+- Be aware of hot flashes - suggest workout timing and cooling strategies
+- Strength training helps with metabolism changes
+- Include flexibility and mobility work for joint health""",
+
+            "improve_fertility": """The user's goal is FERTILITY support:
+- Moderate, consistent exercise is best - avoid overtraining
+- Recommend stress-reducing activities: yoga, walking, swimming
+- Avoid: excessive high-intensity exercise, very low body fat
+- Nutrition focus: folate (spinach, citrus), antioxidants, omega-3s
+- Foods: leafy greens, berries, fatty fish, sweet potatoes
+- Adequate rest and recovery are essential
+- Support overall hormonal balance without extreme measures""",
+
+            "energy_optimization": """The user wants to OPTIMIZE ENERGY through hormonal support:
+- Balance between strength training and recovery
+- Include morning workouts when cortisol is naturally higher
+- Nutrition focus: B vitamins, iron, adaptogens
+- Foods: whole grains, lean proteins, leafy greens
+- Prioritize sleep quality and consistent sleep schedule
+- Manage stress through exercise without overtraining
+- Include both active recovery and complete rest days""",
+
+            "libido_enhancement": """The user wants to support healthy LIBIDO:
+- Include strength training for testosterone/hormone support
+- Cardiovascular health supports blood flow
+- Nutrition focus: zinc, vitamin D, healthy fats, omega-3s
+- Foods: oysters, dark chocolate, watermelon, nuts
+- Stress reduction is crucial
+- Adequate sleep for hormone production
+- Avoid: overtraining, excessive alcohol, chronic stress"""
+        }
+        return goal_prompts.get(goal.lower(), "")
+
+    @staticmethod
+    def build_hormonal_context_prompt(
+        hormonal_context: Dict,
+        include_food_recommendations: bool = True
+    ) -> str:
+        """
+        Build a comprehensive hormonal context prompt from user data.
+
+        Args:
+            hormonal_context: Dict with user's hormonal profile data
+            include_food_recommendations: Whether to include food suggestions
+
+        Returns:
+            Formatted prompt string for AI context
+        """
+        prompts = []
+
+        # Add cycle phase context if tracking
+        if hormonal_context.get("cycle_phase"):
+            phase_prompt = HormonalHealthPrompts.get_cycle_phase_prompt(
+                hormonal_context["cycle_phase"]
+            )
+            if phase_prompt:
+                prompts.append(phase_prompt)
+                if hormonal_context.get("cycle_day"):
+                    prompts.append(f"Current cycle day: {hormonal_context['cycle_day']}")
+
+        # Add hormone goal contexts
+        hormone_goals = hormonal_context.get("hormone_goals", [])
+        for goal in hormone_goals:
+            goal_prompt = HormonalHealthPrompts.get_hormone_goal_prompt(goal)
+            if goal_prompt:
+                prompts.append(goal_prompt)
+
+        # Add symptom awareness if present
+        symptoms = hormonal_context.get("symptoms", [])
+        if symptoms:
+            symptom_str = ", ".join(symptoms[:5])  # Limit to top 5
+            prompts.append(
+                f"User is currently experiencing: {symptom_str}. "
+                f"Be mindful of these symptoms when making exercise recommendations."
+            )
+
+        # Add energy level context
+        energy_level = hormonal_context.get("energy_level")
+        if energy_level is not None:
+            if energy_level <= 3:
+                prompts.append(
+                    "User reported LOW ENERGY today. Suggest lighter workouts, "
+                    "shorter duration, or active recovery."
+                )
+            elif energy_level >= 8:
+                prompts.append(
+                    "User reported HIGH ENERGY today. They may be ready for a "
+                    "challenging workout or PR attempt."
+                )
+
+        # Add kegel context if enabled
+        if hormonal_context.get("kegels_enabled"):
+            kegel_placement = []
+            if hormonal_context.get("include_kegels_in_warmup"):
+                kegel_placement.append("warmup")
+            if hormonal_context.get("include_kegels_in_cooldown"):
+                kegel_placement.append("cooldown")
+
+            if kegel_placement:
+                prompts.append(
+                    f"User has pelvic floor exercises (kegels) enabled. "
+                    f"Include them in: {', '.join(kegel_placement)}. "
+                    f"Level: {hormonal_context.get('kegel_current_level', 'beginner')}."
+                )
+
+        # Add food context if enabled
+        if include_food_recommendations and hormonal_context.get("hormonal_diet_enabled"):
+            prompts.append(
+                "User has hormone-supportive nutrition enabled. "
+                "Include relevant food recommendations based on their hormonal goals."
+            )
+
+        return "\n\n".join(prompts) if prompts else ""
+
+    @staticmethod
+    def get_hormonal_food_prompt(
+        hormone_goals: List[str],
+        cycle_phase: Optional[str] = None,
+        dietary_restrictions: Optional[List[str]] = None
+    ) -> str:
+        """
+        Get AI prompt for hormone-supportive food recommendations.
+
+        Args:
+            hormone_goals: List of hormone optimization goals
+            cycle_phase: Current menstrual cycle phase (if tracking)
+            dietary_restrictions: User's dietary restrictions
+
+        Returns:
+            Formatted prompt for food recommendations
+        """
+        prompt_parts = [
+            "Suggest hormone-supportive foods based on the following context:",
+            ""
+        ]
+
+        if hormone_goals:
+            prompt_parts.append(f"Hormone Goals: {', '.join(hormone_goals)}")
+
+        if cycle_phase:
+            prompt_parts.append(f"Current Cycle Phase: {cycle_phase}")
+
+        if dietary_restrictions:
+            prompt_parts.append(f"Dietary Restrictions: {', '.join(dietary_restrictions)}")
+
+        prompt_parts.extend([
+            "",
+            "Provide specific food recommendations that:",
+            "1. Support the user's hormone optimization goals",
+            "2. Are appropriate for their current cycle phase (if applicable)",
+            "3. Respect their dietary restrictions",
+            "4. Include practical meal and snack ideas",
+            "5. Explain WHY each food supports their hormonal health"
+        ])
+
+        return "\n".join(prompt_parts)
+
+    @staticmethod
+    def get_kegel_coaching_prompt(
+        level: str = "beginner",
+        focus_area: str = "general"
+    ) -> str:
+        """Get coaching prompt for kegel/pelvic floor exercises."""
+        focus_descriptions = {
+            "general": "balanced pelvic floor strengthening",
+            "male_specific": "male pelvic floor anatomy, prostate support, and urinary control",
+            "female_specific": "female pelvic floor anatomy, vaginal health, and bladder control",
+            "postpartum": "gentle postpartum pelvic floor recovery",
+            "prostate_health": "prostate health and urinary function support"
+        }
+
+        return f"""When discussing pelvic floor exercises with this user:
+- Their current level is: {level}
+- Their focus area is: {focus_descriptions.get(focus_area, focus_area)}
+
+Key coaching points for {level} level:
+{'- Start with basic holds (5-10 seconds)' if level == 'beginner' else ''}
+{'- Focus on mind-muscle connection' if level == 'beginner' else ''}
+{'- Progress to longer holds and more reps' if level == 'intermediate' else ''}
+{'- Include quick flick exercises' if level == 'intermediate' else ''}
+{'- Advanced holds with functional integration' if level == 'advanced' else ''}
+{'- Combine with breath work and core exercises' if level == 'advanced' else ''}
+
+Be encouraging and normalize pelvic floor health as an important part of overall fitness."""
 
 
 # Backward compatibility alias

@@ -15,6 +15,7 @@ class AgentType(str, Enum):
     WORKOUT = "workout"      # Workout planning and modification specialist
     INJURY = "injury"        # Injury management and recovery specialist
     HYDRATION = "hydration"  # Hydration tracking specialist
+    PLAN = "plan"            # Holistic weekly planning specialist
 
 
 class CoachIntent(str, Enum):
@@ -39,6 +40,12 @@ class CoachIntent(str, Enum):
     COMPLETE_WORKOUT = "complete_workout"
     # Quick logging intents
     LOG_HYDRATION = "log_hydration"
+    # Quick workout generation intent
+    GENERATE_QUICK_WORKOUT = "generate_quick_workout"
+    # Holistic planning intents
+    GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
+    ADJUST_PLAN = "adjust_plan"
+    EXPLAIN_PLAN = "explain_plan"
 
 
 class AISettings(BaseModel):

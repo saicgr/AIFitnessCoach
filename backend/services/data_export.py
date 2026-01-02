@@ -1,5 +1,5 @@
 """
-Data Export Service for AI Fitness Coach.
+Data Export Service for FitWiz.
 
 Exports user data to CSV files packaged in a ZIP archive.
 Supports export for data portability and re-import after account deletion.
@@ -540,3 +540,182 @@ def _export_metadata(
         writer.writerow([f"total_{key}", str(count)])
 
     return output.getvalue()
+
+
+def export_workout_logs_text(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> str:
+    """
+    Export workout logs as formatted plain text.
+
+    Args:
+        user_id: The user ID to export data for
+        start_date: Optional start date filter (YYYY-MM-DD format)
+        end_date: Optional end date filter (YYYY-MM-DD format)
+
+    Returns the formatted text string.
+    """
+    logger.info(f"Starting text export for user: {user_id}, date_range: {start_date} to {end_date}")
+
+    db = get_supabase_db()
+
+    # Verify user exists
+    user = db.get_user(user_id)
+    if not user:
+        raise ValueError(f"User {user_id} not found")
+
+    # Get workout logs
+    workout_logs = _get_filtered_workout_logs(db, user_id, start_date, end_date)
+
+    # Get performance logs (exercise sets)
+    performance_logs = _get_filtered_performance_logs(db, user_id, start_date, end_date)
+
+    # Build a lookup of performance logs by workout_log_id
+    perf_by_log: Dict[str, List[Dict[str, Any]]] = {}
+    for perf in performance_logs:
+        log_id = perf.get("workout_log_id")
+        if log_id:
+            if log_id not in perf_by_log:
+                perf_by_log[log_id] = []
+            perf_by_log[log_id].append(perf)
+
+    # Sort performance logs by set number within each workout
+    for log_id in perf_by_log:
+        perf_by_log[log_id].sort(key=lambda x: (x.get("exercise_name", ""), x.get("set_number", 0)))
+
+    # Build the text output
+    lines = []
+
+    # Header
+    generated_date = datetime.utcnow().strftime("%Y-%m-%d")
+    period_start = start_date if start_date else "All time"
+    period_end = end_date if end_date else generated_date
+
+    lines.append("=" * 68)
+    lines.append("AI FITNESS COACH - WORKOUT LOG EXPORT")
+    lines.append(f"Generated: {generated_date}")
+    lines.append(f"Period: {period_start} to {period_end}")
+    lines.append("=" * 68)
+    lines.append("")
+
+    if not workout_logs:
+        lines.append("No workout logs found for this period.")
+        lines.append("")
+        return "\n".join(lines)
+
+    # Sort workout logs by date (most recent first is already done by query,
+    # but let's reverse for chronological order in export)
+    workout_logs_sorted = sorted(
+        workout_logs,
+        key=lambda x: x.get("completed_at", ""),
+        reverse=False  # Oldest first for chronological reading
+    )
+
+    for log in workout_logs_sorted:
+        log_id = log.get("id", "")
+        workout_name = log.get("workout_name", "Workout")
+        completed_at = log.get("completed_at", "")
+        total_time_seconds = log.get("total_time_seconds", 0)
+        notes = log.get("notes", "")
+
+        # Parse the completion date
+        workout_date_str = "Unknown date"
+        if completed_at:
+            try:
+                if "T" in completed_at:
+                    dt = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                else:
+                    dt = datetime.strptime(completed_at[:10], "%Y-%m-%d")
+                workout_date_str = dt.strftime("%A, %B %d, %Y")
+            except (ValueError, AttributeError):
+                workout_date_str = completed_at[:10] if len(completed_at) >= 10 else completed_at
+
+        # Calculate duration in minutes
+        duration_minutes = (total_time_seconds // 60) if total_time_seconds else 0
+
+        # Get performance logs for this workout
+        perf_logs = perf_by_log.get(log_id, [])
+
+        # Calculate totals
+        total_sets = len(perf_logs)
+        total_reps = sum(p.get("reps_completed", 0) or 0 for p in perf_logs)
+        total_volume = sum(
+            (p.get("weight_kg", 0) or 0) * (p.get("reps_completed", 0) or 0)
+            for p in perf_logs
+        )
+
+        # Workout header
+        lines.append("-" * 68)
+        lines.append(f"WORKOUT: {workout_name}")
+        lines.append(f"Date: {workout_date_str}")
+
+        # Summary line
+        summary_parts = []
+        if duration_minutes > 0:
+            summary_parts.append(f"Duration: {duration_minutes} minutes")
+        summary_parts.append(f"Total Sets: {total_sets}")
+        summary_parts.append(f"Total Reps: {total_reps}")
+        if total_volume > 0:
+            summary_parts.append(f"Total Volume: {total_volume:.1f} kg")
+        lines.append(" | ".join(summary_parts))
+        lines.append("-" * 68)
+        lines.append("")
+
+        if not perf_logs:
+            lines.append("   No exercise data recorded.")
+            lines.append("")
+        else:
+            # Group by exercise name
+            exercises: Dict[str, List[Dict[str, Any]]] = {}
+            for p in perf_logs:
+                ex_name = p.get("exercise_name", "Unknown Exercise")
+                if ex_name not in exercises:
+                    exercises[ex_name] = []
+                exercises[ex_name].append(p)
+
+            exercise_num = 0
+            for ex_name, sets in exercises.items():
+                exercise_num += 1
+                lines.append(f"{exercise_num}. {ex_name}")
+
+                for s in sets:
+                    set_num = s.get("set_number", 0)
+                    reps = s.get("reps_completed", 0)
+                    weight = s.get("weight_kg")
+                    rpe = s.get("rpe")
+                    set_notes = s.get("notes", "")
+
+                    # Build set line
+                    set_parts = []
+                    if weight is not None and weight > 0:
+                        set_parts.append(f"{weight} kg")
+                    set_parts.append(f"{reps} reps")
+                    if rpe is not None:
+                        set_parts.append(f"(RPE {rpe})")
+
+                    set_line = f"   Set {set_num}: " + " x ".join(set_parts[:2])
+                    if len(set_parts) > 2:
+                        set_line += f" {set_parts[2]}"
+
+                    if set_notes:
+                        set_line += f" - {set_notes}"
+
+                    lines.append(set_line)
+
+                lines.append("")
+
+        # Workout notes
+        if notes:
+            lines.append(f"Notes: {notes}")
+            lines.append("")
+
+    # Footer
+    lines.append("=" * 68)
+    lines.append(f"Total Workouts: {len(workout_logs)}")
+    lines.append("=" * 68)
+
+    logger.info(f"Text export complete for user {user_id}: {len(workout_logs)} workouts")
+
+    return "\n".join(lines)

@@ -11,7 +11,6 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/onboarding_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../data/models/coach_persona.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'widgets/message_bubble.dart';
 import 'widgets/quick_reply_buttons.dart';
@@ -874,6 +873,7 @@ class _ConversationalOnboardingScreenState
       if (mounted) {
         setState(() => _showWorkoutLoading = false);
         // Navigate to paywall after onboarding
+        // Calibration will be offered after successful subscription
         context.go('/paywall-features');
       }
     } catch (e) {
@@ -960,8 +960,13 @@ class _ConversationalOnboardingScreenState
                               message.component == null &&
                               !_isLoading &&
                               _isCompletionMessage(message.content))
-                            Padding(
-                              padding: const EdgeInsets.only(left: 52, top: 12),
+                            Builder(
+                              builder: (context) {
+                                // Responsive margin: smaller on narrow screens
+                                final screenWidth = MediaQuery.of(context).size.width;
+                                final leftMargin = screenWidth < 380 ? 16.0 : 52.0;
+                                return Padding(
+                              padding: EdgeInsets.only(left: leftMargin, top: 12, right: 8),
                               child: GestureDetector(
                                 onTap: _handleLetsGo,
                                 child: Container(
@@ -997,6 +1002,8 @@ class _ConversationalOnboardingScreenState
                                   ),
                                 ),
                               ),
+                            );
+                              },
                             ),
 
                           // Day picker

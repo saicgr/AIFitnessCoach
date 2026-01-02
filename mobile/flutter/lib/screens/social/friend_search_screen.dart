@@ -219,7 +219,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
                 _performSearch(value);
               },
               decoration: InputDecoration(
-                hintText: 'Search by name...',
+                hintText: 'Search by name or username...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -301,7 +301,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Type a name to find users',
+              'Type a name or username to find users',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textMuted.withValues(alpha: 0.7),

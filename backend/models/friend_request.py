@@ -77,6 +77,7 @@ class UserSearchResult(BaseModel):
     """User search result with relationship info."""
     id: str
     name: str
+    username: Optional[str] = None  # Unique username for search/mention
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     total_workouts: int = 0

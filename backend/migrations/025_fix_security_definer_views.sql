@@ -65,13 +65,13 @@ SELECT
     instructions,
     CASE
         WHEN video_s3_path IS NOT NULL
-        THEN 'https://aifitnesscoach-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
+        THEN 'https://fitwiz-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
         ELSE NULL
     END as video_url,
     gif_url,
     CASE
         WHEN image_s3_path IS NOT NULL
-        THEN 'https://aifitnesscoach-videos.s3.us-west-1.amazonaws.com/' || image_s3_path
+        THEN 'https://fitwiz-videos.s3.us-west-1.amazonaws.com/' || image_s3_path
         ELSE NULL
     END as image_url,
     'stretch' as exercise_type
@@ -137,13 +137,13 @@ SELECT
     instructions,
     CASE
         WHEN video_s3_path IS NOT NULL
-        THEN 'https://aifitnesscoach-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
+        THEN 'https://fitwiz-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
         ELSE NULL
     END as video_url,
     gif_url,
     CASE
         WHEN image_s3_path IS NOT NULL
-        THEN 'https://aifitnesscoach-videos.s3.us-west-1.amazonaws.com/' || image_s3_path
+        THEN 'https://fitwiz-videos.s3.us-west-1.amazonaws.com/' || image_s3_path
         ELSE NULL
     END as image_url,
     'warmup' as exercise_type
@@ -344,7 +344,7 @@ SELECT
     gif_url,
     CASE
         WHEN video_s3_path IS NOT NULL
-        THEN 'https://aifitnesscoach-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
+        THEN 'https://fitwiz-videos.s3.us-west-1.amazonaws.com/' || video_s3_path
         ELSE NULL
     END as video_url
 FROM exercise_library

@@ -29,6 +29,11 @@ MICRONUTRIENT ENDPOINTS:
 - GET  /api/v1/nutrition/micronutrients/{user_id}/contributors/{nutrient} - Get top contributors
 - GET  /api/v1/nutrition/rdas - Get all RDA values
 - PUT  /api/v1/nutrition/pinned-nutrients/{user_id} - Update pinned nutrients
+
+COOKING CONVERSION ENDPOINTS:
+- GET  /api/v1/nutrition/cooking-conversions - List all cooking conversion factors
+- GET  /api/v1/nutrition/cooking-conversions/{food_category} - Get conversions by category
+- POST /api/v1/nutrition/convert-weight - Convert between raw and cooked weight
 """
 from datetime import datetime, timedelta
 from typing import List, Optional, AsyncGenerator
@@ -55,6 +60,7 @@ from models.schemas import (
 
 
 from services.food_database_service import get_food_database_service
+from services.cooking_conversion_service import get_cooking_conversion_service
 from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
 from services.saved_foods_rag_service import get_saved_foods_rag_service
@@ -655,6 +661,272 @@ async def log_food_from_barcode(request: LogBarcodeRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to log barcode {request.barcode}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# USDA FoodData Central Endpoints
+# ============================================
+
+from services.usda_food_service import get_usda_food_service, USDAFood, USDASearchResult
+
+
+class USDAFoodResponse(BaseModel):
+    """USDA food item response."""
+    fdc_id: int
+    description: str
+    data_type: str
+    brand_owner: Optional[str] = None
+    brand_name: Optional[str] = None
+    ingredients: Optional[str] = None
+    food_category: Optional[str] = None
+    gtin_upc: Optional[str] = None
+    nutrients: dict
+    nutrients_per_serving: Optional[dict] = None
+    score: Optional[float] = None
+
+
+class USDASearchResponse(BaseModel):
+    """USDA food search response."""
+    foods: List[USDAFoodResponse]
+    total_hits: int
+    current_page: int
+    total_pages: int
+    query: str
+
+
+class CombinedFoodSearchResponse(BaseModel):
+    """Combined food search from multiple sources."""
+    usda_foods: List[USDAFoodResponse]
+    usda_total_hits: int
+    source: str = "combined"
+    query: str
+
+
+@router.get("/food-search", response_model=USDASearchResponse)
+async def search_usda_foods(
+    query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
+    page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+    page: int = Query(default=1, ge=1, description="Page number"),
+    data_types: Optional[str] = Query(
+        default=None,
+        description="Comma-separated food types: Branded,Foundation,SR Legacy"
+    ),
+    brand_owner: Optional[str] = Query(
+        default=None,
+        max_length=200,
+        description="Filter by brand owner (for branded foods)"
+    ),
+):
+    """
+    Search USDA FoodData Central for foods.
+
+    This endpoint searches the comprehensive USDA food database which includes:
+    - **Branded Foods**: Packaged/processed foods from manufacturers
+    - **Foundation Foods**: Minimally processed foods with detailed nutrients
+    - **SR Legacy**: USDA Standard Reference database (basic foods)
+
+    Returns complete nutrient data including calories, macros, vitamins, and minerals.
+
+    **Rate Limits**: USDA API has rate limits. Results are cached for 1 hour.
+    """
+    logger.info(f"Searching USDA foods for: {query} (page {page}, size {page_size})")
+
+    try:
+        service = get_usda_food_service()
+
+        # Parse data types if provided
+        parsed_data_types = None
+        if data_types:
+            parsed_data_types = [dt.strip() for dt in data_types.split(",") if dt.strip()]
+
+        result = await service.search_foods(
+            query=query,
+            page_size=page_size,
+            page_number=page,
+            data_types=parsed_data_types,
+            brand_owner=brand_owner,
+        )
+
+        # Convert to response format
+        foods = []
+        for food in result.foods:
+            food_dict = food.to_dict()
+            foods.append(USDAFoodResponse(
+                fdc_id=food_dict["fdc_id"],
+                description=food_dict["description"],
+                data_type=food_dict["data_type"],
+                brand_owner=food_dict.get("brand_owner"),
+                brand_name=food_dict.get("brand_name"),
+                ingredients=food_dict.get("ingredients"),
+                food_category=food_dict.get("food_category"),
+                gtin_upc=food_dict.get("gtin_upc"),
+                nutrients=food_dict["nutrients"],
+                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
+                score=food_dict.get("score"),
+            ))
+
+        logger.info(f"Found {len(foods)} USDA foods for query: {query}")
+
+        return USDASearchResponse(
+            foods=foods,
+            total_hits=result.total_hits,
+            current_page=result.current_page,
+            total_pages=result.total_pages,
+            query=query,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to search USDA foods: {e}")
+        if "not configured" in str(e).lower():
+            raise HTTPException(
+                status_code=503,
+                detail="USDA food search is not available. Please configure USDA_API_KEY."
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/food/{fdc_id}", response_model=USDAFoodResponse)
+async def get_usda_food(fdc_id: int):
+    """
+    Get complete food details from USDA by FDC ID.
+
+    Returns full nutrient profile including:
+    - Macronutrients (calories, protein, carbs, fat, fiber, sugar)
+    - Vitamins (A, C, D, B12, folate)
+    - Minerals (sodium, potassium, calcium, iron, magnesium, zinc)
+    - Serving size information
+    """
+    logger.info(f"Fetching USDA food by FDC ID: {fdc_id}")
+
+    try:
+        service = get_usda_food_service()
+        food = await service.get_food(fdc_id)
+
+        if not food:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Food not found for FDC ID: {fdc_id}"
+            )
+
+        food_dict = food.to_dict()
+        return USDAFoodResponse(
+            fdc_id=food_dict["fdc_id"],
+            description=food_dict["description"],
+            data_type=food_dict["data_type"],
+            brand_owner=food_dict.get("brand_owner"),
+            brand_name=food_dict.get("brand_name"),
+            ingredients=food_dict.get("ingredients"),
+            food_category=food_dict.get("food_category"),
+            gtin_upc=food_dict.get("gtin_upc"),
+            nutrients=food_dict["nutrients"],
+            nutrients_per_serving=food_dict.get("nutrients_per_serving"),
+            score=None,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get USDA food {fdc_id}: {e}")
+        if "not configured" in str(e).lower():
+            raise HTTPException(
+                status_code=503,
+                detail="USDA food lookup is not available. Please configure USDA_API_KEY."
+            )
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/food-search/branded", response_model=USDASearchResponse)
+async def search_branded_foods(
+    query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
+    page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+):
+    """
+    Search only branded/packaged foods from USDA database.
+
+    Branded foods include products from manufacturers with UPC codes.
+    Ideal for searching packaged foods, snacks, beverages, etc.
+    """
+    logger.info(f"Searching USDA branded foods for: {query}")
+
+    try:
+        service = get_usda_food_service()
+        result = await service.search_branded_foods(query=query, page_size=page_size)
+
+        foods = []
+        for food in result.foods:
+            food_dict = food.to_dict()
+            foods.append(USDAFoodResponse(
+                fdc_id=food_dict["fdc_id"],
+                description=food_dict["description"],
+                data_type=food_dict["data_type"],
+                brand_owner=food_dict.get("brand_owner"),
+                brand_name=food_dict.get("brand_name"),
+                ingredients=food_dict.get("ingredients"),
+                food_category=food_dict.get("food_category"),
+                gtin_upc=food_dict.get("gtin_upc"),
+                nutrients=food_dict["nutrients"],
+                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
+                score=food_dict.get("score"),
+            ))
+
+        return USDASearchResponse(
+            foods=foods,
+            total_hits=result.total_hits,
+            current_page=result.current_page,
+            total_pages=result.total_pages,
+            query=query,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to search branded foods: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/food-search/whole-foods", response_model=USDASearchResponse)
+async def search_whole_foods(
+    query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
+    page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+):
+    """
+    Search foundation and SR Legacy foods from USDA database.
+
+    These are whole/basic foods like fruits, vegetables, meats, grains.
+    Foundation foods have the most detailed and accurate nutrient data.
+    """
+    logger.info(f"Searching USDA whole foods for: {query}")
+
+    try:
+        service = get_usda_food_service()
+        result = await service.search_all_types(query=query, page_size=page_size)
+
+        foods = []
+        for food in result.foods:
+            food_dict = food.to_dict()
+            foods.append(USDAFoodResponse(
+                fdc_id=food_dict["fdc_id"],
+                description=food_dict["description"],
+                data_type=food_dict["data_type"],
+                brand_owner=food_dict.get("brand_owner"),
+                brand_name=food_dict.get("brand_name"),
+                ingredients=food_dict.get("ingredients"),
+                food_category=food_dict.get("food_category"),
+                gtin_upc=food_dict.get("gtin_upc"),
+                nutrients=food_dict["nutrients"],
+                nutrients_per_serving=food_dict.get("nutrients_per_serving"),
+                score=food_dict.get("score"),
+            ))
+
+        return USDASearchResponse(
+            foods=foods,
+            total_hits=result.total_hits,
+            current_page=result.current_page,
+            total_pages=result.total_pages,
+            query=query,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to search whole foods: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -3321,6 +3593,15 @@ class NutritionOnboardingRequest(BaseModel):
     custom_protein_percent: Optional[int] = None
     custom_fat_percent: Optional[int] = None
 
+    # Pre-calculated values from frontend (optional - if provided, use these instead of recalculating)
+    # This ensures calorie displayed during onboarding matches what's saved
+    calculated_bmr: Optional[int] = None
+    calculated_tdee: Optional[int] = None
+    target_calories: Optional[int] = None
+    target_protein_g: Optional[int] = None
+    target_carbs_g: Optional[int] = None
+    target_fat_g: Optional[int] = None
+
     @property
     def primary_goal(self) -> str:
         """Get primary goal - first in goals list or legacy goal field"""
@@ -3449,18 +3730,32 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         target_carbs = int((target_calories * carb_pct / 100) / 4)
         target_fat = int((target_calories * fat_pct / 100) / 9)
 
+        # Use frontend-calculated values if provided (ensures consistency with what user saw)
+        # Otherwise use the values we just calculated above
+        final_bmr = request.calculated_bmr if request.calculated_bmr is not None else bmr
+        final_tdee = request.calculated_tdee if request.calculated_tdee is not None else tdee
+        final_calories = request.target_calories if request.target_calories is not None else target_calories
+        final_protein = request.target_protein_g if request.target_protein_g is not None else target_protein
+        final_carbs = request.target_carbs_g if request.target_carbs_g is not None else target_carbs
+        final_fat = request.target_fat_g if request.target_fat_g is not None else target_fat
+
+        if request.target_calories is not None:
+            logger.info(f"Using frontend-calculated values: calories={final_calories}, protein={final_protein}g")
+        else:
+            logger.info(f"Using backend-calculated values: calories={final_calories}, protein={final_protein}g")
+
         # Create/update nutrition preferences
         prefs_data = {
             "user_id": request.user_id,
             "nutrition_goals": request.all_goals,  # Multi-select goals array
             "nutrition_goal": request.primary_goal,  # Legacy single goal (primary)
             "rate_of_change": request.rate_of_change,
-            "calculated_bmr": bmr,
-            "calculated_tdee": tdee,
-            "target_calories": target_calories,
-            "target_protein_g": target_protein,
-            "target_carbs_g": target_carbs,
-            "target_fat_g": target_fat,
+            "calculated_bmr": final_bmr,
+            "calculated_tdee": final_tdee,
+            "target_calories": final_calories,
+            "target_protein_g": final_protein,
+            "target_carbs_g": final_carbs,
+            "target_fat_g": final_fat,
             "diet_type": request.diet_type,
             "custom_carb_percent": request.custom_carb_percent,
             "custom_protein_percent": request.custom_protein_percent,
@@ -4373,4 +4668,175 @@ async def generate_weekly_recommendation(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to generate weekly recommendation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# COOKING CONVERSION ENDPOINTS
+# ============================================================================
+
+class CookingConversionFactorResponse(BaseModel):
+    """Response model for a cooking conversion factor."""
+    food_name: str
+    food_category: str
+    raw_to_cooked_ratio: float
+    cooking_method: str
+    calories_retention: float
+    protein_retention: float
+    carbs_retention: float
+    fat_change: float
+    notes: Optional[str] = None
+
+
+class ConvertWeightRequest(BaseModel):
+    """Request to convert between raw and cooked weight."""
+    weight_g: float
+    food_name: str
+    from_state: str  # "raw" or "cooked"
+    cooking_method: Optional[str] = None
+    nutrients_per_100g: Optional[dict] = None  # {"calories": 100, "protein": 10, "carbs": 20, "fat": 5}
+
+
+class ConvertWeightResponse(BaseModel):
+    """Response after converting weight."""
+    original_weight_g: float
+    original_state: str
+    converted_weight_g: float
+    converted_state: str
+    food_name: str
+    cooking_method: str
+    raw_to_cooked_ratio: float
+    adjusted_calories_per_100g: Optional[float] = None
+    adjusted_protein_per_100g: Optional[float] = None
+    adjusted_carbs_per_100g: Optional[float] = None
+    adjusted_fat_per_100g: Optional[float] = None
+    notes: Optional[str] = None
+
+
+class CookingConversionsListResponse(BaseModel):
+    """Response with list of cooking conversions."""
+    conversions: List[CookingConversionFactorResponse]
+    total_count: int
+    categories: List[str]
+    cooking_methods: List[str]
+
+
+@router.get("/cooking-conversions", response_model=CookingConversionsListResponse)
+async def list_cooking_conversions(
+    category: Optional[str] = Query(None, description="Filter by food category (e.g., grains, meats, vegetables)"),
+    search: Optional[str] = Query(None, description="Search for specific foods"),
+):
+    """
+    List all available cooking conversion factors.
+
+    Use category to filter by food type (grains, legumes, meats, poultry, seafood, vegetables, eggs).
+    Use search to find specific foods by name.
+    """
+    try:
+        service = get_cooking_conversion_service()
+
+        if search:
+            # Search for specific foods
+            conversions = service.search_foods(search)
+        elif category:
+            # Filter by category
+            conversions = service.get_conversions_by_category(category)
+        else:
+            # Get all conversions
+            conversions = service.get_all_conversions()
+
+        return CookingConversionsListResponse(
+            conversions=[CookingConversionFactorResponse(**c) for c in conversions],
+            total_count=len(conversions),
+            categories=service.get_available_categories(),
+            cooking_methods=service.get_cooking_methods(),
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to list cooking conversions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/cooking-conversions/{food_category}", response_model=List[CookingConversionFactorResponse])
+async def get_cooking_conversions_by_category(food_category: str):
+    """
+    Get cooking conversion factors for a specific food category.
+
+    Categories: grains, legumes, meats, poultry, seafood, vegetables, eggs
+    """
+    try:
+        service = get_cooking_conversion_service()
+        conversions = service.get_conversions_by_category(food_category)
+
+        if not conversions:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No conversions found for category: {food_category}. "
+                       f"Valid categories: {', '.join(service.get_available_categories())}"
+            )
+
+        return [CookingConversionFactorResponse(**c) for c in conversions]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get cooking conversions by category: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/convert-weight", response_model=ConvertWeightResponse)
+async def convert_food_weight(request: ConvertWeightRequest):
+    """
+    Convert food weight between raw and cooked states.
+
+    Examples:
+    - Convert 100g raw rice to cooked weight: {"weight_g": 100, "food_name": "white_rice", "from_state": "raw"}
+    - Convert 240g cooked rice to raw weight: {"weight_g": 240, "food_name": "white_rice", "from_state": "cooked"}
+    - Convert with nutrients adjustment: include nutrients_per_100g to get adjusted nutrient values
+
+    Ratios:
+    - Grains/legumes have ratio > 1 (absorb water, increase in weight when cooked)
+    - Meats/seafood have ratio < 1 (lose moisture, decrease in weight when cooked)
+    """
+    try:
+        service = get_cooking_conversion_service()
+
+        result = service.convert_weight(
+            weight_g=request.weight_g,
+            food_name=request.food_name,
+            from_state=request.from_state,
+            cooking_method=request.cooking_method,
+            nutrients_per_100g=request.nutrients_per_100g,
+        )
+
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No conversion factor found for '{request.food_name}'. "
+                       f"Try searching with /cooking-conversions?search={request.food_name}"
+            )
+
+        # Log the conversion activity
+        await log_user_activity(
+            user_id="system",  # Could be updated if user_id is added to request
+            action="cooking_conversion",
+            endpoint="/api/v1/nutrition/convert-weight",
+            message=f"Converted {request.weight_g}g {request.from_state} {request.food_name} to {result.converted_weight_g:.1f}g {result.converted_state}",
+            metadata={
+                "food_name": request.food_name,
+                "from_state": request.from_state,
+                "original_weight_g": request.weight_g,
+                "converted_weight_g": result.converted_weight_g,
+                "cooking_method": result.cooking_method,
+                "ratio": result.raw_to_cooked_ratio,
+            },
+            status_code=200
+        )
+
+        return ConvertWeightResponse(**result.to_dict())
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to convert food weight: {e}")
         raise HTTPException(status_code=500, detail=str(e))

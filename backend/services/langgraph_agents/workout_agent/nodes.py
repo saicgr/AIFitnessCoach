@@ -346,7 +346,7 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
                     tool_call_id=tool_id,
                 ))
 
-                logger.info(f"[Workout Tool Executor] Result: {result.get('message', 'Done')}")
+                logger.info(f"[Workout Tool Executor] Result: success={result.get('success')}, action={result.get('action')}, workout_id={result.get('workout_id')}")
             except Exception as e:
                 logger.error(f"[Workout Tool Executor] Error: {e}")
                 error_result = {"success": False, "error": str(e)}
@@ -516,9 +516,18 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
     tool_results = state.get("tool_results", [])
     action_data = None
 
+    logger.info(f"[Workout Action Data] Processing {len(tool_results)} tool results")
+
     for result in tool_results:
+        # Only process successful tool results
+        if not result.get("success"):
+            logger.info(f"[Workout Action Data] Skipping failed result: {result.get('message', 'unknown error')}")
+            continue
+
         action = result.get("action")
         workout_id = result.get("workout_id")
+
+        logger.info(f"[Workout Action Data] Processing action={action}, workout_id={workout_id}")
 
         if action == "add_exercise":
             action_data = {
@@ -572,7 +581,9 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
                 "exercises_added": result.get("exercises_added", []),
                 "exercise_count": result.get("exercise_count"),
             }
+            logger.info(f"[Workout Action Data] Built generate_quick_workout action_data: workout_id={workout_id}")
 
+    logger.info(f"[Workout Action Data] Final action_data: {action_data}")
     return {"action_data": action_data}
 
 

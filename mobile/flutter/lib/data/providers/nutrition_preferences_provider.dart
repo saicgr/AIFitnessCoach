@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nutrition_preferences.dart';
 import '../repositories/nutrition_preferences_repository.dart';
-import '../services/api_client.dart';
 
 // ============================================
 // Nutrition Preferences State
@@ -92,9 +91,8 @@ class NutritionPreferencesState {
 /// Nutrition preferences state notifier
 class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesState> {
   final NutritionPreferencesRepository _repository;
-  final Ref _ref;
 
-  NutritionPreferencesNotifier(this._repository, this._ref)
+  NutritionPreferencesNotifier(this._repository)
       : super(const NutritionPreferencesState());
 
   /// Initialize nutrition preferences for a user
@@ -153,7 +151,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       );
 
       debugPrint(
-          '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=${isOnboardingCompleted}, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
+          '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$isOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Init error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -177,10 +175,20 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     int? customCarbPercent,
     int? customProteinPercent,
     int? customFatPercent,
+    // Pre-calculated values from frontend to ensure consistency
+    int? calculatedBmr,
+    int? calculatedTdee,
+    int? targetCalories,
+    int? targetProteinG,
+    int? targetCarbsG,
+    int? targetFatG,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       debugPrint('🎓 [NutritionPrefsProvider] Completing onboarding with ${goals.length} goals');
+      if (targetCalories != null) {
+        debugPrint('🎓 [NutritionPrefsProvider] Using frontend-calculated values: $targetCalories cal');
+      }
       final preferences = await _repository.completeOnboarding(
         userId: userId,
         goals: goals,
@@ -197,6 +205,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         customCarbPercent: customCarbPercent,
         customProteinPercent: customProteinPercent,
         customFatPercent: customFatPercent,
+        calculatedBmr: calculatedBmr,
+        calculatedTdee: calculatedTdee,
+        targetCalories: targetCalories,
+        targetProteinG: targetProteinG,
+        targetCarbsG: targetCarbsG,
+        targetFatG: targetFatG,
       );
 
       // Also get dynamic targets
@@ -391,7 +405,6 @@ final nutritionPreferencesProvider =
         (ref) {
   return NutritionPreferencesNotifier(
     ref.watch(nutritionPreferencesRepositoryProvider),
-    ref,
   );
 });
 
@@ -438,4 +451,228 @@ final nutritionStreakProvider = Provider<NutritionStreak?>((ref) {
 /// Dynamic targets provider
 final dynamicNutritionTargetsProvider = Provider<DynamicNutritionTargets?>((ref) {
   return ref.watch(nutritionPreferencesProvider).dynamicTargets;
+});
+
+// ============================================
+// Nutrition UI Preferences Providers
+// ============================================
+
+/// Nutrition UI preferences state
+class NutritionUIPreferencesState {
+  final NutritionUIPreferences? preferences;
+  final bool isLoading;
+  final String? error;
+
+  const NutritionUIPreferencesState({
+    this.preferences,
+    this.isLoading = false,
+    this.error,
+  });
+
+  NutritionUIPreferencesState copyWith({
+    NutritionUIPreferences? preferences,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+  }) {
+    return NutritionUIPreferencesState(
+      preferences: preferences ?? this.preferences,
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+    );
+  }
+
+  /// Get suggested meal type based on preferences and time
+  String get suggestedMealType =>
+      preferences?.suggestedMealType ?? 'breakfast';
+
+  /// Check if AI tips are disabled
+  bool get aiTipsDisabled => preferences?.disableAiTips ?? false;
+
+  /// Check if quick log mode is enabled
+  bool get quickLogEnabled => preferences?.quickLogMode ?? true;
+
+  /// Check if compact tracker view is enabled
+  bool get compactViewEnabled => preferences?.compactTrackerView ?? false;
+
+  /// Check if macros should be shown on log
+  bool get showMacrosOnLog => preferences?.showMacrosOnLog ?? true;
+}
+
+/// Nutrition UI preferences notifier
+class NutritionUIPreferencesNotifier extends StateNotifier<NutritionUIPreferencesState> {
+  final NutritionPreferencesRepository _repository;
+
+  NutritionUIPreferencesNotifier(this._repository)
+      : super(const NutritionUIPreferencesState());
+
+  /// Load UI preferences for a user
+  Future<void> load(String userId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      debugPrint('🔍 [NutritionUIPrefsProvider] Loading for $userId');
+      final prefs = await _repository.getUIPreferences(userId);
+      state = state.copyWith(preferences: prefs, isLoading: false);
+      debugPrint('✅ [NutritionUIPrefsProvider] Loaded');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Load error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Toggle AI tips on/off
+  Future<void> toggleAiTips(bool disabled) async {
+    if (state.preferences == null) return;
+    try {
+      debugPrint('🤖 [NutritionUIPrefsProvider] Setting AI tips disabled: $disabled');
+      final updated = state.preferences!.copyWith(disableAiTips: disabled);
+      final saved = await _repository.updateUIPreferences(updated);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] AI tips updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Set quick log mode
+  Future<void> setQuickLogMode(bool enabled) async {
+    if (state.preferences == null) return;
+    try {
+      debugPrint('⚡ [NutritionUIPrefsProvider] Setting quick log mode: $enabled');
+      final updated = state.preferences!.copyWith(quickLogMode: enabled);
+      final saved = await _repository.updateUIPreferences(updated);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] Quick log mode updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Set compact view mode
+  Future<void> setCompactView(bool compact) async {
+    if (state.preferences == null) return;
+    try {
+      debugPrint('📐 [NutritionUIPrefsProvider] Setting compact view: $compact');
+      final updated = state.preferences!.copyWith(compactTrackerView: compact);
+      final saved = await _repository.updateUIPreferences(updated);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] Compact view updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Set show macros on log
+  Future<void> setShowMacrosOnLog(bool show) async {
+    if (state.preferences == null) return;
+    try {
+      debugPrint('📊 [NutritionUIPrefsProvider] Setting show macros on log: $show');
+      final updated = state.preferences!.copyWith(showMacrosOnLog: show);
+      final saved = await _repository.updateUIPreferences(updated);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] Show macros updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Set default meal type
+  Future<void> setDefaultMealType(String mealType) async {
+    if (state.preferences == null) return;
+    try {
+      debugPrint('🍽️ [NutritionUIPrefsProvider] Setting default meal type: $mealType');
+      final updated = state.preferences!.copyWith(defaultMealType: mealType);
+      final saved = await _repository.updateUIPreferences(updated);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] Default meal type updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Update all preferences at once
+  Future<void> updatePreferences(NutritionUIPreferences prefs) async {
+    try {
+      debugPrint('💾 [NutritionUIPrefsProvider] Updating all preferences');
+      final saved = await _repository.updateUIPreferences(prefs);
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionUIPrefsProvider] Preferences updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Reset to defaults
+  Future<void> reset(String userId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      debugPrint('🔄 [NutritionUIPrefsProvider] Resetting to defaults');
+      final prefs = await _repository.resetUIPreferences(userId);
+      state = state.copyWith(preferences: prefs, isLoading: false);
+      debugPrint('✅ [NutritionUIPrefsProvider] Reset complete');
+    } catch (e) {
+      debugPrint('❌ [NutritionUIPrefsProvider] Reset error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+/// Nutrition UI preferences provider
+final nutritionUIPreferencesProvider =
+    StateNotifierProvider<NutritionUIPreferencesNotifier, NutritionUIPreferencesState>(
+        (ref) {
+  return NutritionUIPreferencesNotifier(
+    ref.watch(nutritionPreferencesRepositoryProvider),
+  );
+});
+
+/// Provider for meal templates
+final mealTemplatesProvider = FutureProvider.autoDispose.family<List<MealTemplate>, String?>((ref, mealType) async {
+  final repo = ref.watch(nutritionPreferencesRepositoryProvider);
+  return repo.getTemplates(mealType: mealType);
+});
+
+/// Provider for all meal templates (no filter)
+final allMealTemplatesProvider = FutureProvider.autoDispose<List<MealTemplate>>((ref) async {
+  final repo = ref.watch(nutritionPreferencesRepositoryProvider);
+  return repo.getTemplates();
+});
+
+/// Provider for quick suggestions
+final quickSuggestionsProvider = FutureProvider.autoDispose.family<List<QuickSuggestion>, String?>((ref, mealType) async {
+  final repo = ref.watch(nutritionPreferencesRepositoryProvider);
+  return repo.getQuickSuggestions(mealType: mealType);
+});
+
+/// Provider for food search results
+final foodSearchProvider = FutureProvider.autoDispose.family<List<FoodSearchResult>, String>((ref, query) async {
+  if (query.isEmpty || query.length < 2) return [];
+  final repo = ref.watch(nutritionPreferencesRepositoryProvider);
+  return repo.searchFoods(query);
+});
+
+/// Convenience provider for AI tips disabled state
+final aiTipsDisabledProvider = Provider<bool>((ref) {
+  return ref.watch(nutritionUIPreferencesProvider).aiTipsDisabled;
+});
+
+/// Convenience provider for quick log mode
+final quickLogModeProvider = Provider<bool>((ref) {
+  return ref.watch(nutritionUIPreferencesProvider).quickLogEnabled;
+});
+
+/// Convenience provider for compact view mode
+final compactTrackerViewProvider = Provider<bool>((ref) {
+  return ref.watch(nutritionUIPreferencesProvider).compactViewEnabled;
+});
+
+/// Convenience provider for suggested meal type
+final suggestedMealTypeProvider = Provider<String>((ref) {
+  return ref.watch(nutritionUIPreferencesProvider).suggestedMealType;
 });

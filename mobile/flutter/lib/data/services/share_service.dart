@@ -78,7 +78,7 @@ class ShareService {
       // For now, we'll use the system share as fallback
 
       // Method channel for Instagram Stories (iOS)
-      const platform = MethodChannel('com.aifitnesscoach/instagram_share');
+      const platform = MethodChannel('com.fitwiz/instagram_share');
 
       try {
         final result = await platform.invokeMethod('shareToInstagramStories', {
@@ -133,7 +133,7 @@ class ShareService {
       }
 
       // Android uses Intent to share to Instagram Stories
-      const platform = MethodChannel('com.aifitnesscoach/instagram_share');
+      const platform = MethodChannel('com.fitwiz/instagram_share');
 
       try {
         final result = await platform.invokeMethod('shareToInstagramStories', {

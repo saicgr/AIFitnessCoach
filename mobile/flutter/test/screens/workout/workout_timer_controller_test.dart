@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/controllers/workout_timer_controller.dart';
+import 'package:fitwiz/screens/workout/controllers/workout_timer_controller.dart';
 
 void main() {
   group('WorkoutTimerController', () {

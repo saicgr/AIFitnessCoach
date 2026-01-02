@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_intensity_provider.dart';
 import '../../../data/models/training_intensity.dart';
-import '../../../data/repositories/training_intensity_repository.dart';
 
 /// Screen for viewing and editing user's stored 1RMs
 class My1RMsScreen extends ConsumerStatefulWidget {

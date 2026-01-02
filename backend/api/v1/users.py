@@ -8,6 +8,7 @@ ENDPOINTS:
 - GET  /api/v1/users/{id} - Get user by ID
 - GET  /api/v1/users/{id}/program-preferences - Get user's program preferences
 - GET  /api/v1/users/{id}/export - Export all user data as ZIP
+- GET  /api/v1/users/{id}/export-text - Export workout logs as plain text
 - POST /api/v1/users/{id}/import - Import user data from ZIP
 - PUT  /api/v1/users/{id} - Update user
 - DELETE /api/v1/users/{id} - Delete user
@@ -31,6 +32,7 @@ from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
+from core.username_generator import generate_username_sync
 from models.schemas import User, UserCreate, UserUpdate
 
 
@@ -108,7 +110,7 @@ def row_to_user(row: dict) -> User:
 
     return User(
         id=row.get("id"),
-        username=row.get("email"),  # Use email as username
+        username=row.get("username"),  # Use actual username field
         name=row.get("name") or prefs_dict.get("name"),
         email=row.get("email"),  # Include email in response
         onboarding_completed=row.get("onboarding_completed", False),
@@ -174,12 +176,17 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
             return row_to_user(existing)
 
         # Create new user
+        # Generate unique username from name/email
+        unique_username = generate_username_sync(name=full_name, email=email)
+        logger.info(f"Generated unique username: {unique_username}")
+
         # Note: goals and equipment are VARCHAR columns, not JSONB,
         # so we need to pass them as JSON strings
         new_user_data = {
             "auth_id": supabase_user_id,
             "email": email,
             "name": full_name,
+            "username": unique_username,  # Auto-generated unique username
             "onboarding_completed": False,
             "fitness_level": "beginner",
             "goals": "[]",  # VARCHAR column - needs JSON string
@@ -885,6 +892,75 @@ async def export_user_data(
     except Exception as e:
         elapsed = time.time() - start_time
         logger.error(f"❌ Failed to export user data after {elapsed:.2f}s: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{user_id}/export-text")
+async def export_user_data_text(
+    user_id: str,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+):
+    """
+    Export workout logs as a plain text file.
+
+    Query parameters:
+    - start_date: Optional ISO date string (YYYY-MM-DD) for filtering data from this date
+    - end_date: Optional ISO date string (YYYY-MM-DD) for filtering data until this date
+
+    Returns a formatted plain text file with workout history including:
+    - Workout name, date, duration
+    - Each exercise with sets, reps, weight, RPE
+    - Notes if present
+    - Calculated totals (total sets, total reps, total volume)
+    """
+    import time
+    start_time = time.time()
+    logger.info(f"Starting text export for user: id={user_id}, date_range={start_date} to {end_date}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check if user exists
+        existing = db.get_user(user_id)
+        if not existing:
+            logger.warning(f"User not found for text export: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        logger.info(f"User verified, generating text export...")
+
+        # Import here to avoid circular imports
+        from services.data_export import export_workout_logs_text
+
+        # Generate text content with date filters
+        text_content = export_workout_logs_text(user_id, start_date=start_date, end_date=end_date)
+
+        # Create filename with date
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        filename = f"workout_log_{date_str}.txt"
+
+        elapsed = time.time() - start_time
+        logger.info(f"Text export complete for user {user_id} in {elapsed:.2f}s, size: {len(text_content)} chars")
+
+        # Return as plain text response
+        from fastapi.responses import Response
+        return Response(
+            content=text_content,
+            media_type="text/plain; charset=utf-8",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(len(text_content.encode('utf-8'))),
+            }
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Text export validation error: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        elapsed = time.time() - start_time
+        logger.error(f"Failed to export user data as text after {elapsed:.2f}s: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -3355,48 +3355,113 @@ async def get_workout_generation_params(workout_id: str):
         workout_type = workout_data.get("type", "strength")
         difficulty = workout_data.get("difficulty", "intermediate")
         target_muscles = parse_json_field(workout_data.get("target_muscles"), [])
+        workout_name = workout_data.get("name", "Workout")
 
-        # Generate reasoning explanations
+        # Try AI-powered reasoning first, fall back to static if it fails
         exercise_reasoning = []
-        for i, ex in enumerate(exercises):
-            ex_name = ex.get("name", f"Exercise {i+1}")
-            muscle_group = ex.get("muscle_group") or ex.get("primary_muscle") or ex.get("body_part", "general")
-            equipment = ex.get("equipment", "bodyweight")
-            sets = ex.get("sets", 3)
-            reps = ex.get("reps", "8-12")
+        workout_reasoning = ""
 
-            # Build reasoning for this exercise
-            reasoning = _build_exercise_reasoning(
-                exercise_name=ex_name,
-                muscle_group=muscle_group,
-                equipment=equipment,
-                sets=sets,
-                reps=reps,
+        try:
+            # Import and use the Gemini service for AI-powered reasoning
+            from services.gemini_service import GeminiService
+            gemini = GeminiService()
+
+            ai_reasoning = await gemini.generate_exercise_reasoning(
+                workout_name=workout_name,
+                exercises=exercises,
+                user_profile=user_profile,
+                program_preferences=program_preferences,
                 workout_type=workout_type,
                 difficulty=difficulty,
+            )
+
+            # Check if AI returned valid reasoning
+            if ai_reasoning.get("workout_reasoning") and ai_reasoning.get("exercise_reasoning"):
+                workout_reasoning = ai_reasoning["workout_reasoning"]
+                logger.info(f"✅ AI-generated workout reasoning for {workout_id}")
+
+                # Map AI reasoning to exercises (match by name)
+                ai_exercise_map = {
+                    r.get("exercise_name", "").lower(): r.get("reasoning", "")
+                    for r in ai_reasoning.get("exercise_reasoning", [])
+                }
+
+                for i, ex in enumerate(exercises):
+                    ex_name = ex.get("name", f"Exercise {i+1}")
+                    muscle_group = ex.get("muscle_group") or ex.get("primary_muscle") or ex.get("body_part", "general")
+                    equipment = ex.get("equipment", "bodyweight")
+
+                    # Use AI reasoning if available, otherwise fall back to static
+                    ai_reason = ai_exercise_map.get(ex_name.lower(), "")
+                    if ai_reason:
+                        reasoning = ai_reason
+                    else:
+                        # Fall back to static reasoning for this exercise
+                        reasoning = _build_exercise_reasoning(
+                            exercise_name=ex_name,
+                            muscle_group=muscle_group,
+                            equipment=equipment,
+                            sets=ex.get("sets", 3),
+                            reps=ex.get("reps", "8-12"),
+                            workout_type=workout_type,
+                            difficulty=difficulty,
+                            user_goals=user_profile.get("goals", []),
+                            user_fitness_level=user_profile.get("fitness_level", "intermediate"),
+                            user_equipment=user_profile.get("equipment", []),
+                        )
+
+                    exercise_reasoning.append({
+                        "exercise_name": ex_name,
+                        "reasoning": reasoning,
+                        "muscle_group": muscle_group,
+                        "equipment": equipment,
+                    })
+            else:
+                # AI returned empty - use static fallback
+                raise ValueError("AI returned empty reasoning")
+
+        except Exception as ai_error:
+            logger.warning(f"⚠️ AI reasoning failed, using static fallback: {ai_error}")
+
+            # Fall back to static reasoning generation
+            for i, ex in enumerate(exercises):
+                ex_name = ex.get("name", f"Exercise {i+1}")
+                muscle_group = ex.get("muscle_group") or ex.get("primary_muscle") or ex.get("body_part", "general")
+                equipment = ex.get("equipment", "bodyweight")
+                sets = ex.get("sets", 3)
+                reps = ex.get("reps", "8-12")
+
+                reasoning = _build_exercise_reasoning(
+                    exercise_name=ex_name,
+                    muscle_group=muscle_group,
+                    equipment=equipment,
+                    sets=sets,
+                    reps=reps,
+                    workout_type=workout_type,
+                    difficulty=difficulty,
+                    user_goals=user_profile.get("goals", []),
+                    user_fitness_level=user_profile.get("fitness_level", "intermediate"),
+                    user_equipment=user_profile.get("equipment", []),
+                )
+                exercise_reasoning.append({
+                    "exercise_name": ex_name,
+                    "reasoning": reasoning,
+                    "muscle_group": muscle_group,
+                    "equipment": equipment,
+                })
+
+            # Build static workout reasoning
+            workout_reasoning = _build_workout_reasoning(
+                workout_name=workout_name,
+                workout_type=workout_type,
+                difficulty=difficulty,
+                target_muscles=target_muscles,
+                exercise_count=len(exercises),
+                duration_minutes=workout_data.get("duration_minutes", 45),
                 user_goals=user_profile.get("goals", []),
                 user_fitness_level=user_profile.get("fitness_level", "intermediate"),
-                user_equipment=user_profile.get("equipment", []),
+                training_split=program_preferences.get("training_split"),
             )
-            exercise_reasoning.append({
-                "exercise_name": ex_name,
-                "reasoning": reasoning,
-                "muscle_group": muscle_group,
-                "equipment": equipment,
-            })
-
-        # Build overall workout reasoning
-        workout_reasoning = _build_workout_reasoning(
-            workout_name=workout_data.get("name", "Workout"),
-            workout_type=workout_type,
-            difficulty=difficulty,
-            target_muscles=target_muscles,
-            exercise_count=len(exercises),
-            duration_minutes=workout_data.get("duration_minutes", 45),
-            user_goals=user_profile.get("goals", []),
-            user_fitness_level=user_profile.get("fitness_level", "intermediate"),
-            training_split=program_preferences.get("training_split"),
-        )
 
         return {
             "workout_id": workout_id,

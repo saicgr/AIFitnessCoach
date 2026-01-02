@@ -29,6 +29,10 @@ EQUIPMENT_INCREMENTS: Dict[str, float] = {
     "ez bar": 2.5,        # kg - Alias with space
     "resistance_band": 0, # Variable resistance, no fixed increment
     "resistance band": 0, # Alias with space
+    "medicine_ball": 2.0, # kg (4-5 lb) - Standard medicine ball jumps
+    "medicine ball": 2.0, # kg - Alias with space
+    "slam_ball": 2.0,     # kg (4-5 lb) - Standard slam ball jumps
+    "slam ball": 2.0,     # kg - Alias with space
 }
 
 # Standard dumbbell weights available in most commercial gyms (kg)

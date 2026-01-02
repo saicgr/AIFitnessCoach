@@ -8,7 +8,7 @@ import '../repositories/nutrition_repository.dart';
 /// Headless service for widget actions (no UI dependencies)
 /// Can run without BuildContext - perfect for background Flutter engine
 class WidgetActionHeadlessService {
-  static const platform = MethodChannel('com.aifitnesscoach.app/widget_actions');
+  static const platform = MethodChannel('com.fitwiz.app/widget_actions');
 
   final Ref _ref;
   bool _initialized = false;

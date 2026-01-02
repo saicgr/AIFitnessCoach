@@ -32,10 +32,6 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
   @override
   Widget build(BuildContext context) {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     if (widget.isLoading) {
       return _NutrientLoadingSkeleton(isDark: widget.isDark);
@@ -158,9 +154,6 @@ class _NutrientScoreCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     final score = summary.overallScore;
     final optimalCount = summary.optimalNutrients.length;
@@ -416,7 +409,6 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return GestureDetector(
@@ -687,11 +679,8 @@ class NutrientDetailSheet extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     final statusColor = _getStatusColor(nutrient.statusEnum);
-    final percentage = nutrient.percentage.clamp(0.0, 200.0);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -1167,7 +1156,6 @@ class _ThreeTierProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     // Calculate the max value for the bar (150% of target or ceiling, whichever is higher)
@@ -1185,7 +1173,6 @@ class _ThreeTierProgressBar extends StatelessWidget {
     Color deficientColor = const Color(0xFFEF5350); // Red - below floor
     Color lowColor = const Color(0xFFFFC107); // Yellow - between floor and target
     Color optimalColor = const Color(0xFF4CAF50); // Green - at target or above
-    Color highColor = const Color(0xFFFF9800); // Orange - approaching ceiling
     Color excessiveColor = const Color(0xFFF44336); // Red - over ceiling
 
     return Column(

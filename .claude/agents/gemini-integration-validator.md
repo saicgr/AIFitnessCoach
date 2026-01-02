@@ -151,7 +151,7 @@ Your validation report must follow this structure:
 
 ## Project-Specific Requirements
 
-For this AI Fitness Coach project, pay special attention to:
+For this FitWiz project, pay special attention to:
 - Workout plan generation parsing (complex JSON structures)
 - Chat conversation handling (streaming preferred with generateContentStream)
 - 120-second minimum timeout for Gemini Pro workout generation

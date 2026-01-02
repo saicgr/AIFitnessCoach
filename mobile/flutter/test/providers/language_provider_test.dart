@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ai_fitness_coach/core/providers/language_provider.dart';
+import 'package:fitwiz/core/providers/language_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

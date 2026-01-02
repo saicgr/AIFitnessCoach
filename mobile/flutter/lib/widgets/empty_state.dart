@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
-import '../core/theme/theme_provider.dart';
 import 'lottie_animations.dart';
 
 /// Reusable empty state widget with illustration and message

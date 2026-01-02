@@ -1,4 +1,4 @@
-"""LangGraph agents for AI Fitness Coach.
+"""LangGraph agents for FitWiz.
 
 This package contains dedicated domain agents:
 - Nutrition Agent: Food analysis, dietary advice
@@ -6,6 +6,7 @@ This package contains dedicated domain agents:
 - Injury Agent: Injury tracking, recovery advice
 - Hydration Agent: Water intake tracking, hydration tips
 - Coach Agent: General fitness coaching, app navigation
+- Plan Agent: Holistic weekly planning (workouts + nutrition + fasting)
 
 Also includes legacy main graph for backwards compatibility.
 """
@@ -19,6 +20,7 @@ from .workout_agent import WorkoutAgentState, build_workout_agent_graph
 from .injury_agent import InjuryAgentState, build_injury_agent_graph
 from .hydration_agent import HydrationAgentState, build_hydration_agent_graph
 from .coach_agent import CoachAgentState, build_coach_agent_graph
+from .plan_agent import PlanAgentState, build_plan_agent_graph
 
 # Base state
 from .base_state import BaseAgentState
@@ -44,4 +46,7 @@ __all__ = [
     # Coach
     "CoachAgentState",
     "build_coach_agent_graph",
+    # Plan
+    "PlanAgentState",
+    "build_plan_agent_graph",
 ]

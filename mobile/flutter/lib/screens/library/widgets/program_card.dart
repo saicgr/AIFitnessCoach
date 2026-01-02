@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/program.dart';
 import 'info_badge.dart';
 import '../components/program_detail_sheet.dart';
@@ -119,9 +120,8 @@ class ProgramCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           InfoBadge(
                             icon: Icons.signal_cellular_alt,
-                            text: program.difficultyLevel!,
-                            color: AppColors.getDifficultyColor(
-                                program.difficultyLevel!),
+                            text: DifficultyUtils.getDisplayName(program.difficultyLevel!),
+                            color: DifficultyUtils.getColor(program.difficultyLevel!),
                           ),
                         ],
                       ],

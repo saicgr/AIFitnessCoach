@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition.dart';
@@ -13,7 +11,6 @@ import '../../data/models/recipe.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../data/services/deep_link_service.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/nutrition/health_metrics_card.dart';
 import '../../widgets/nutrition/food_mood_analytics_card.dart';
@@ -24,6 +21,8 @@ import 'nutrition_onboarding/nutrition_welcome_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
+import 'widgets/quick_add_fab.dart';
+import 'widgets/quick_add_sheet.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   const NutritionScreen({super.key});
@@ -42,6 +41,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   bool _isLoadingMicronutrients = false;
   bool _hasCheckedOnboarding = false;
   bool _hasSkippedOnboarding = false;
+  bool _onboardingJustCompleted = false;  // Guard flag to prevent redirect loop
 
   @override
   void initState() {
@@ -76,11 +76,20 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
       _loadMicronutrients(userId, dateStr);
       _loadRecipes(userId);
+
+      // Prefetch quick add suggestions for instant access
+      ref.invalidate(quickAddSuggestionsProvider(userId));
     }
   }
 
   Future<void> _checkAndShowOnboarding() async {
     if (!mounted) return;
+
+    // CRITICAL: Skip if we just completed onboarding to prevent redirect loop
+    if (_onboardingJustCompleted) {
+      debugPrint('⚠️ [NutritionScreen] Skipping onboarding check - just completed');
+      return;
+    }
 
     final prefsState = ref.read(nutritionPreferencesProvider);
 
@@ -110,10 +119,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ref.read(floatingNavBarVisibleProvider.notifier).state = true;
       }
 
-      // If onboarding was completed, reload data
+      // If onboarding was completed
       if (result == true && mounted) {
-        debugPrint('✅ [NutritionScreen] Onboarding completed, reloading data');
-        _loadData();
+        debugPrint('✅ [NutritionScreen] Onboarding completed successfully');
+        // Set guard flag BEFORE any data reload to prevent loop
+        _onboardingJustCompleted = true;
+
+        // The provider already has the correct state from completeOnboarding()
+        // Just reload nutrition data without re-initializing preferences
+        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
+        ref.read(nutritionProvider.notifier).loadTargets(_userId!);
+        ref.read(nutritionProvider.notifier).loadRecentLogs(_userId!);
+        _loadMicronutrients(_userId!, dateStr);
+        _loadRecipes(_userId!);
+
+        // Trigger rebuild with the already-updated provider state
+        setState(() {});
       } else if (mounted) {
         // User skipped - remember this so we don't ask again during this session
         debugPrint('⏭️ [NutritionScreen] User skipped onboarding');
@@ -371,6 +393,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
         ],
       ),
+      // Quick Add FAB - only visible when quickLogMode is enabled
+      floatingActionButton: _userId != null
+          ? QuickAddFABSimple(
+              userId: _userId!,
+              onMealLogged: _loadData,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -667,6 +697,7 @@ class _DailyTab extends ConsumerStatefulWidget {
 class _DailyTabState extends ConsumerState<_DailyTab> {
   List<SavedFood> _favorites = [];
   bool _isLoadingFavorites = false;
+  bool _analyticsExpanded = false;
 
   @override
   void initState() {
@@ -747,6 +778,8 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
   @override
   Widget build(BuildContext context) {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final prefsState = ref.watch(nutritionPreferencesProvider);
+    final compactMode = prefsState.preferences?.compactTrackerViewEnabled ?? false;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -754,112 +787,567 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
         widget.onRefresh();
       },
       color: teal,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Energy Balance Card (MacroFactor style) - supports calm mode
-            _EnergyBalanceCard(
-              consumed: widget.summary?.totalCalories ?? 0,
-              target: widget.targets?.dailyCalorieTarget ?? 2000,
-              isDark: widget.isDark,
-              calmMode: widget.calmMode,
-            ).animate().fadeIn().scale(),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Compact Energy Header with Quick Add (prioritized at top)
+                _CompactEnergyHeader(
+                  consumed: widget.summary?.totalCalories ?? 0,
+                  target: widget.targets?.dailyCalorieTarget ?? 2000,
+                  onQuickAdd: widget.onLogMeal,
+                  isDark: widget.isDark,
+                  calmMode: widget.calmMode,
+                ).animate().fadeIn().scale(),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Nutrition Streak Card
-            _NutritionStreakCard(
-              userId: widget.userId,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 50.ms),
+                // MEAL SECTIONS - MOVED TO TOP for easy logging
+                _MealSections(
+                  meals: widget.summary?.meals ?? [],
+                  onLogMeal: widget.onLogMeal,
+                  onDeleteMeal: widget.onDeleteMeal,
+                  isDark: widget.isDark,
+                ).animate().fadeIn(delay: 50.ms),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Macronutrient Cards Row (hidden in calm mode)
-            if (!widget.calmMode)
-              _MacrosRow(
-                summary: widget.summary,
-                targets: widget.targets,
-                isDark: widget.isDark,
-              ).animate().fadeIn(delay: 100.ms),
+                // Quick Favorites Bar (inline with meals for quick logging)
+                if (_favorites.isNotEmpty || _isLoadingFavorites) ...[
+                  _QuickFavoritesBar(
+                    favorites: _favorites,
+                    isLoading: _isLoadingFavorites,
+                    onTap: _logFavorite,
+                    isDark: widget.isDark,
+                  ).animate().fadeIn(delay: 75.ms),
+                  const SizedBox(height: 16),
+                ],
 
-            if (!widget.calmMode) const SizedBox(height: 16),
+                // Macros Summary (compact row)
+                if (!widget.calmMode)
+                  _MacrosRow(
+                    summary: widget.summary,
+                    targets: widget.targets,
+                    isDark: widget.isDark,
+                  ).animate().fadeIn(delay: 100.ms),
 
-            // Weight Tracking Card
-            _WeightTrackingCard(
-              userId: widget.userId,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 110.ms),
+                if (!widget.calmMode) const SizedBox(height: 16),
 
-            const SizedBox(height: 16),
+                // Pinned Micronutrients (if available)
+                if (widget.micronutrients != null &&
+                    widget.micronutrients!.pinned.isNotEmpty) ...[
+                  _PinnedNutrientsCard(
+                    pinned: widget.micronutrients!.pinned,
+                    isDark: widget.isDark,
+                  ).animate().fadeIn(delay: 110.ms),
+                  const SizedBox(height: 16),
+                ],
 
-            // Weekly Check-in Card (Adaptive TDEE)
-            _WeeklyCheckinCard(
-              userId: widget.userId,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 115.ms),
+                // VIEW ANALYTICS - Expandable section to reduce scrolling
+                _ViewAnalyticsSection(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                  initiallyExpanded: !compactMode && _analyticsExpanded,
+                  onExpandChanged: (expanded) {
+                    setState(() => _analyticsExpanded = expanded);
+                  },
+                ).animate().fadeIn(delay: 125.ms),
 
-            const SizedBox(height: 16),
-
-            // Health Metrics Card (Blood Glucose & Insulin)
-            HealthMetricsCard(
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 120.ms),
-
-            const SizedBox(height: 16),
-
-            // Food & Mood Analytics Card
-            FoodMoodAnalyticsCard(
-              userId: widget.userId,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 122.ms),
-
-            const SizedBox(height: 16),
-
-            // Quick Log Button
-            _QuickLogButton(
-              onTap: widget.onLogMeal,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 125.ms),
-
-            const SizedBox(height: 16),
-
-            // Pinned Micronutrients (if available)
-            if (widget.micronutrients != null &&
-                widget.micronutrients!.pinned.isNotEmpty) ...[
-              _PinnedNutrientsCard(
-                pinned: widget.micronutrients!.pinned,
-                isDark: widget.isDark,
-              ).animate().fadeIn(delay: 150.ms),
-              const SizedBox(height: 16),
-            ],
-
-            // Quick Favorites Bar
-            if (_favorites.isNotEmpty || _isLoadingFavorites) ...[
-              _QuickFavoritesBar(
-                favorites: _favorites,
-                isLoading: _isLoadingFavorites,
-                onTap: _logFavorite,
-                isDark: widget.isDark,
-              ).animate().fadeIn(delay: 175.ms),
-              const SizedBox(height: 16),
-            ],
-
-            // Meal Sections
-            _MealSections(
-              meals: widget.summary?.meals ?? [],
-              onLogMeal: widget.onLogMeal,
-              onDeleteMeal: widget.onDeleteMeal,
-              isDark: widget.isDark,
-            ).animate().fadeIn(delay: 200.ms),
-
-            const SizedBox(height: 100),
-          ],
-        ),
+                const SizedBox(height: 100),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Compact Energy Header - Horizontal bar with progress + quick add
+// ─────────────────────────────────────────────────────────────────
+
+class _CompactEnergyHeader extends StatelessWidget {
+  final int consumed;
+  final int target;
+  final VoidCallback onQuickAdd;
+  final bool isDark;
+  final bool calmMode;
+
+  const _CompactEnergyHeader({
+    required this.consumed,
+    required this.target,
+    required this.onQuickAdd,
+    required this.isDark,
+    this.calmMode = false,
+  });
+
+  int get remaining => target - consumed;
+  double get percentage => (consumed / target).clamp(0.0, 1.5);
+  bool get isOver => consumed > target;
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final overColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final progressColor = calmMode ? purple : (isOver ? overColor : teal);
+
+    // Calm mode shows a simpler mindful display
+    if (calmMode) {
+      return _buildCalmModeHeader(
+        elevated: elevated,
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+        progressColor: purple,
+        glassSurface: glassSurface,
+        cardBorder: cardBorder,
+        teal: teal,
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: progressColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          // Main row: Eaten | Progress | Remaining | Quick Add
+          Row(
+            children: [
+              // Eaten
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$consumed',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: progressColor,
+                      ),
+                    ),
+                    Text(
+                      'eaten',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Center: Visual progress indicator
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: percentage.clamp(0.0, 1.0),
+                        minHeight: 10,
+                        backgroundColor: glassSurface,
+                        color: progressColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${(percentage * 100).toInt()}%',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Remaining
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      isOver ? '+${consumed - target}' : '$remaining',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: isOver ? overColor : teal,
+                      ),
+                    ),
+                    Text(
+                      isOver ? 'over' : 'left',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Quick Add Button - More prominent with label
+              Material(
+                color: teal,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: onQuickAdd,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Log',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Goal label
+          Text(
+            'Goal: $target kcal',
+            style: TextStyle(
+              fontSize: 12,
+              color: textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalmModeHeader({
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color progressColor,
+    required Color glassSurface,
+    required Color cardBorder,
+    required Color teal,
+  }) {
+    // Determine the message based on how much was eaten
+    final String message;
+    final IconData icon;
+
+    if (consumed == 0) {
+      message = "Ready to nourish";
+      icon = Icons.wb_sunny_rounded;
+    } else if (percentage < 0.5) {
+      message = "Taking it easy";
+      icon = Icons.spa_rounded;
+    } else if (percentage >= 0.5 && percentage < 0.85) {
+      message = "Nourishing well";
+      icon = Icons.favorite_rounded;
+    } else if (percentage >= 0.85 && percentage <= 1.1) {
+      message = "Well balanced";
+      icon = Icons.check_circle_rounded;
+    } else {
+      message = "Enjoying food";
+      icon = Icons.restaurant_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: progressColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: progressColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 24, color: progressColor),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: percentage.clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: glassSurface,
+                    color: progressColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Quick Add Button - More prominent with label
+          Material(
+            color: teal,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onQuickAdd,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Log',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// View Analytics Section - Expandable section for analytics cards
+// ─────────────────────────────────────────────────────────────────
+
+class _ViewAnalyticsSection extends StatefulWidget {
+  final String userId;
+  final bool isDark;
+  final bool initiallyExpanded;
+  final ValueChanged<bool>? onExpandChanged;
+
+  const _ViewAnalyticsSection({
+    required this.userId,
+    required this.isDark,
+    this.initiallyExpanded = false,
+    this.onExpandChanged,
+  });
+
+  @override
+  State<_ViewAnalyticsSection> createState() => _ViewAnalyticsSectionState();
+}
+
+class _ViewAnalyticsSectionState extends State<_ViewAnalyticsSection>
+    with SingleTickerProviderStateMixin {
+  late bool _isExpanded;
+  late AnimationController _controller;
+  late Animation<double> _iconTurns;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _iconTurns = Tween<double>(begin: 0.0, end: 0.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    if (_isExpanded) {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+      widget.onExpandChanged?.call(_isExpanded);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Column(
+      children: [
+        // Expandable Header
+        Material(
+          color: elevated,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: _handleTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cardBorder),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.analytics_outlined,
+                      color: teal,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Analytics & Insights',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Streak, weight, check-in, metrics',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  RotationTransition(
+                    turns: _iconTurns,
+                    child: Icon(
+                      Icons.expand_more,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Expandable Content
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Column(
+              children: [
+                // Nutrition Streak Card
+                _NutritionStreakCard(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Weight Tracking Card
+                _WeightTrackingCard(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Weekly Check-in Card (Adaptive TDEE)
+                _WeeklyCheckinCard(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Health Metrics Card (Blood Glucose & Insulin)
+                HealthMetricsCard(
+                  isDark: widget.isDark,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Food & Mood Analytics Card
+                FoodMoodAnalyticsCard(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
+              ],
+            ),
+          ),
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
+      ],
     );
   }
 }
@@ -880,7 +1368,6 @@ class _QuickLogButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Material(
       color: teal,
@@ -1817,10 +2304,6 @@ class _MealItem extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     final coral = isDark ? AppColors.coral : AppColorsLight.coral;
@@ -1980,12 +2463,6 @@ class _RecipesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return RefreshIndicator(
       onRefresh: () async => onRefresh(),
@@ -2062,8 +2539,6 @@ class _RecipeCard extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     return Container(
@@ -2172,11 +2647,9 @@ class _EmptyRecipesState extends StatelessWidget {
   Widget build(BuildContext context) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Center(
       child: Padding(
@@ -2323,7 +2796,6 @@ class _NutritionErrorState extends StatelessWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final errorColor = isDark ? AppColors.error : AppColorsLight.error;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Center(
       child: Padding(
@@ -3240,7 +3712,7 @@ class _MiniWeightChart extends StatelessWidget {
                     return const SizedBox.shrink();
                   }
                   return Text(
-                    '${value.toStringAsFixed(1)}',
+                    value.toStringAsFixed(1),
                     style: TextStyle(fontSize: 10, color: textMuted),
                   );
                 },

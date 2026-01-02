@@ -877,7 +877,7 @@ class _FastingOnboardingScreenState
                   Switch(
                     value: _notificationsEnabled,
                     onChanged: (v) => setState(() => _notificationsEnabled = v),
-                    activeColor: purple,
+                    activeThumbColor: purple,
                   ),
                 ],
               ),
@@ -924,7 +924,7 @@ class _FastingOnboardingScreenState
                   Switch(
                     value: _mealRemindersEnabled,
                     onChanged: (v) => setState(() => _mealRemindersEnabled = v),
-                    activeColor: purple,
+                    activeThumbColor: purple,
                   ),
                 ],
               ),

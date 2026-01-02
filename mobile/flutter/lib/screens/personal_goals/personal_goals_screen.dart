@@ -8,6 +8,7 @@ import 'widgets/goal_card.dart';
 import 'widgets/suggestion_carousel.dart';
 import 'widgets/suggestion_card.dart';
 import 'widgets/goal_leaderboard_sheet.dart';
+import 'widgets/goal_history_sheet.dart';
 import 'create_goal_sheet.dart';
 import 'record_attempt_dialog.dart';
 
@@ -230,6 +231,18 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     );
   }
 
+  void _showHistorySheet(Map<String, dynamic> goal) {
+    final goalType = PersonalGoalType.fromString(goal['goal_type'] ?? 'single_max');
+
+    showGoalHistorySheet(
+      context,
+      exerciseName: goal['exercise_name'] ?? 'Exercise',
+      goalType: goalType,
+      currentValue: goal['current_value'] as int?,
+      personalBest: goal['personal_best'] as int?,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -367,6 +380,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
                       onFriendsTap: (goal['friends_count'] ?? 0) > 0
                           ? () => _showLeaderboardSheet(goal)
                           : null,
+                      onHistoryTap: () => _showHistorySheet(goal),
                     ),
                   )),
 

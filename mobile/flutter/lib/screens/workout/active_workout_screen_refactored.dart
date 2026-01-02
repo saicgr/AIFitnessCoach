@@ -12,32 +12,24 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/api_constants.dart';
 import '../../core/services/weight_suggestion_service.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../data/services/challenges_service.dart';
-import '../../data/providers/social_provider.dart';
 import '../../data/rest_messages.dart';
 import '../../widgets/log_1rm_sheet.dart';
 import '../ai_settings/ai_settings_screen.dart';
-import '../challenges/widgets/challenge_quit_dialog.dart';
 
 // Import modular components
 import 'controllers/workout_timer_controller.dart';
@@ -96,7 +88,7 @@ class _ActiveWorkoutScreenRefactoredState
 
   // Set tracking
   final Map<int, List<SetLog>> _completedSets = {};
-  int _totalCaloriesBurned = 0;
+  final int _totalCaloriesBurned = 0;
 
   // Input controllers
   late TextEditingController _repsController;
@@ -105,7 +97,7 @@ class _ActiveWorkoutScreenRefactoredState
 
   // Set tracking overlay
   bool _showSetOverlay = true;
-  Map<int, List<Map<String, dynamic>>> _previousSets = {};
+  final Map<int, List<Map<String, dynamic>>> _previousSets = {};
   final Map<int, int> _totalSetsPerExercise = {};
   int _viewingExerciseIndex = 0;
 
@@ -113,12 +105,12 @@ class _ActiveWorkoutScreenRefactoredState
   late List<WorkoutExercise> _exercises;
 
   // Tracking state
-  int _totalDrinkIntakeMl = 0;
+  final int _totalDrinkIntakeMl = 0;
   bool _isActiveRowExpanded = true;
   final List<Map<String, dynamic>> _restIntervals = [];
   DateTime? _lastSetCompletedAt;
   DateTime? _lastExerciseStartedAt;
-  bool _lastSetWasFast = false;
+  final bool _lastSetWasFast = false;
   final Map<int, int> _exerciseTimeSeconds = {};
   DateTime? _currentExerciseStartTime;
   bool _isDoneButtonPressed = false;
@@ -130,7 +122,7 @@ class _ActiveWorkoutScreenRefactoredState
   int? _lastSetRpe;
   int? _lastSetRir;
   WeightSuggestion? _currentWeightSuggestion;
-  bool _showRpeSelector = false;
+  final bool _showRpeSelector = false;
   bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
   SetLog? _pendingSetLog; // Set waiting for RPE/RIR input
 

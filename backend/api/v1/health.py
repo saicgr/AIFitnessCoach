@@ -9,7 +9,7 @@ router = APIRouter()
 @router.get("/")
 async def health_check():
     """Basic health check."""
-    return {"status": "healthy", "service": "AI Fitness Coach Backend"}
+    return {"status": "healthy", "service": "FitWiz Backend"}
 
 
 @router.get("/ready")

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/onboarding/widgets/quiz_equipment.dart';
+import 'package:fitwiz/screens/onboarding/widgets/quiz_equipment.dart';
 
 void main() {
   group('QuizEquipment', () {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'sheet_theme_colors.dart';
-import 'section_title.dart';
 
 /// A widget for selecting workout duration with a slider
 class DurationSlider extends StatelessWidget {

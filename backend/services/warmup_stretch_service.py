@@ -16,6 +16,62 @@ settings = get_settings()
 # Initialize Gemini client
 client = genai.Client(api_key=settings.gemini_api_key)
 
+# Movement type classification for warmup ordering
+# Static holds should come EARLY, followed by dynamic movements
+# This addresses user feedback: "warm-ups should have static holds early, not intermixed with kinetic moves"
+STATIC_EXERCISE_KEYWORDS = [
+    "hold", "plank", "wall sit", "dead hang", "isometric", "static",
+    "l-sit", "hollow", "bridge hold", "superman hold", "glute bridge hold"
+]
+
+DYNAMIC_EXERCISE_KEYWORDS = [
+    "jumping", "circles", "swings", "jacks", "high knees", "butt kicks",
+    "skips", "march", "rotation", "twist", "lunge walk", "inchworm",
+    "mountain climber", "bear crawl", "carioca", "shuffle"
+]
+
+
+def classify_movement_type(exercise_name: str) -> str:
+    """Classify an exercise as 'static' or 'dynamic' based on name."""
+    name_lower = exercise_name.lower()
+    for keyword in STATIC_EXERCISE_KEYWORDS:
+        if keyword in name_lower:
+            return "static"
+    for keyword in DYNAMIC_EXERCISE_KEYWORDS:
+        if keyword in name_lower:
+            return "dynamic"
+    # Default to dynamic for warmups (safer assumption)
+    return "dynamic"
+
+
+def order_warmup_exercises(exercises: list) -> list:
+    """
+    Order warmup exercises with static holds EARLY, then dynamic movements.
+
+    The user feedback was: "warm-ups should have static holds early, not intermixed
+    with kinetic moves, I'm trying to gradually increase my heart rate through movement"
+
+    Order: Static holds first -> Dynamic movements (to build heart rate)
+    """
+    static_exercises = []
+    dynamic_exercises = []
+
+    for ex in exercises:
+        name = ex.get("name", "")
+        movement_type = classify_movement_type(name)
+        if movement_type == "static":
+            static_exercises.append(ex)
+        else:
+            dynamic_exercises.append(ex)
+
+    # Return: static first, then dynamic
+    ordered = static_exercises + dynamic_exercises
+
+    logger.info(f"🔄 Ordered warmup: {len(static_exercises)} static exercises first, then {len(dynamic_exercises)} dynamic exercises")
+
+    return ordered
+
+
 # Muscle group keywords for matching exercises from library
 MUSCLE_KEYWORDS = {
     "chest": ["chest", "pectoral", "pec"],
@@ -363,7 +419,9 @@ class WarmupStretchService:
                 limit=4
             )
             if library_warmups and len(library_warmups) >= 3:
-                logger.info(f"📹 Using {len(library_warmups)} warmup exercises from library with videos")
+                # Order library warmups: static first, then dynamic
+                library_warmups = order_warmup_exercises(library_warmups)
+                logger.info(f"📹 Using {len(library_warmups)} warmup exercises from library with videos (ordered)")
                 return library_warmups
             else:
                 logger.info("⚠️ Not enough warmup exercises from library, falling back to AI generation")
@@ -444,7 +502,10 @@ Return ONLY valid JSON."""
             result = json.loads(content.strip())
             warmups = result.get("exercises", [])
 
-            logger.info(f"✅ Generated {len(warmups)} warm-up exercises")
+            # Order warmups: static holds first, then dynamic movements
+            warmups = order_warmup_exercises(warmups)
+
+            logger.info(f"✅ Generated {len(warmups)} warm-up exercises (ordered: static first, dynamic after)")
             return warmups
 
         except Exception as e:
@@ -580,6 +641,10 @@ Return ONLY valid JSON."""
         user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Generate and store warmup for a workout with SCD2 versioning and variety tracking."""
+        # Extract target muscles for logging
+        target_muscles = self.get_target_muscles(exercises)
+        logger.info(f"🎯 [Warmup Generation] Target muscles from workout: {target_muscles}")
+
         # Get recently used warmups for variety if user_id provided
         avoid_exercises = None
         if user_id:
@@ -595,6 +660,7 @@ Return ONLY valid JSON."""
                 "workout_id": workout_id,
                 "exercises_json": warmup_exercises,
                 "duration_minutes": duration_minutes,
+                "target_muscles": target_muscles,  # Store target muscles for visibility
                 "version_number": 1,
                 "is_current": True,
                 "valid_from": now,
@@ -603,7 +669,7 @@ Return ONLY valid JSON."""
                 "superseded_by": None
             }).execute()
 
-            logger.info(f"✅ Created warmup for workout {workout_id}")
+            logger.info(f"✅ Created warmup for workout {workout_id} targeting: {target_muscles}")
             return result.data[0] if result.data else None
         except Exception as e:
             logger.error(f"❌ Failed to save warmup: {e}")
@@ -618,6 +684,10 @@ Return ONLY valid JSON."""
         user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Generate and store stretches for a workout with SCD2 versioning and variety tracking."""
+        # Extract target muscles for logging
+        target_muscles = self.get_target_muscles(exercises)
+        logger.info(f"🎯 [Stretch Generation] Target muscles from workout: {target_muscles}")
+
         # Get recently used stretches for variety if user_id provided
         avoid_exercises = None
         if user_id:
@@ -633,6 +703,7 @@ Return ONLY valid JSON."""
                 "workout_id": workout_id,
                 "exercises_json": stretch_exercises,
                 "duration_minutes": duration_minutes,
+                "target_muscles": target_muscles,  # Store target muscles for visibility
                 "version_number": 1,
                 "is_current": True,
                 "valid_from": now,
@@ -641,7 +712,7 @@ Return ONLY valid JSON."""
                 "superseded_by": None
             }).execute()
 
-            logger.info(f"✅ Created stretches for workout {workout_id}")
+            logger.info(f"✅ Created stretches for workout {workout_id} targeting: {target_muscles}")
             return result.data[0] if result.data else None
         except Exception as e:
             logger.error(f"❌ Failed to save stretches: {e}")

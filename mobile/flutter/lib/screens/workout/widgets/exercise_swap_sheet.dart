@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/library_repository.dart';
+import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
 
 /// Shows exercise swap sheet with AI suggestions
@@ -77,12 +78,27 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     try {
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
+      final prefsRepo = ref.read(exercisePreferencesRepositoryProvider);
+
+      // Get avoided exercises to filter from suggestions
+      List<String> avoidedExerciseNames = [];
+      try {
+        final avoided = await prefsRepo.getAvoidedExercises(userId!);
+        avoidedExerciseNames = avoided
+            .where((a) => a.isActive)
+            .map((a) => a.exerciseName)
+            .toList();
+        debugPrint('🚫 [Swap] Filtering ${avoidedExerciseNames.length} avoided exercises');
+      } catch (e) {
+        debugPrint('⚠️ [Swap] Could not fetch avoided exercises: $e');
+      }
 
       final suggestions = await repo.getExerciseSuggestions(
         workoutId: widget.workoutId,
         exercise: widget.exercise,
         userId: userId!,
         reason: _selectedReason,
+        avoidedExercises: avoidedExerciseNames,
       );
 
       if (mounted) {

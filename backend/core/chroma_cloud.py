@@ -1,5 +1,5 @@
 """
-Chroma Cloud client for AI Fitness Coach.
+Chroma Cloud client for FitWiz.
 Uses Chroma Cloud v2 API with CloudClient.
 """
 import chromadb

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import 'log_meal_sheet.dart';
 
 /// Shows a quick log meal overlay that appears immediately from widgets
 /// Has a "Go to App" button to navigate to full nutrition screen

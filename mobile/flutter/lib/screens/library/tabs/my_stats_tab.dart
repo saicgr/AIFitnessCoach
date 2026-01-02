@@ -250,7 +250,7 @@ class _ExerciseHistoryCard extends StatelessWidget {
                   if (item.maxWeight != null && item.maxWeight! > 0)
                     StatBadge(
                       icon: Icons.monitor_weight_outlined,
-                      value: '${item.maxWeight!.toStringAsFixed(1)}',
+                      value: item.maxWeight!.toStringAsFixed(1),
                       label: 'kg max',
                       color: cyan,
                     ),
@@ -259,7 +259,7 @@ class _ExerciseHistoryCard extends StatelessWidget {
                   if (item.estimated1rm != null && item.estimated1rm! > 0)
                     StatBadge(
                       icon: Icons.emoji_events_outlined,
-                      value: '${item.estimated1rm!.toStringAsFixed(1)}',
+                      value: item.estimated1rm!.toStringAsFixed(1),
                       label: '1RM',
                       color: success,
                     ),

@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ai_fitness_coach/data/repositories/workout_repository.dart';
-import 'package:ai_fitness_coach/data/services/api_client.dart';
-import 'package:ai_fitness_coach/data/models/workout.dart';
+import 'package:fitwiz/data/repositories/workout_repository.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {

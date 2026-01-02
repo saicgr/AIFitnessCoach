@@ -165,6 +165,7 @@ class ExperienceOptions {
 /// Options for equipment
 class EquipmentOptions {
   static const List<Map<String, String>> all = [
+    {'label': 'Full Gym', 'value': 'full_gym'},
     {'label': 'Bodyweight Only', 'value': 'bodyweight'},
     {'label': 'Dumbbells', 'value': 'dumbbells'},
     {'label': 'Barbell', 'value': 'barbell'},
@@ -172,7 +173,6 @@ class EquipmentOptions {
     {'label': 'Pull-up Bar', 'value': 'pull_up_bar'},
     {'label': 'Kettlebell', 'value': 'kettlebell'},
     {'label': 'Cable Machine', 'value': 'cable_machine'},
-    {'label': 'Full Gym', 'value': 'full_gym'},
   ];
 }
 

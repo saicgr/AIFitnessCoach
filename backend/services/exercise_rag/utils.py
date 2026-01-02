@@ -68,6 +68,7 @@ def infer_equipment_from_name(exercise_name: str) -> str:
         (["machine", "lat pulldown", "leg press", "leg curl", "leg extension",
           "chest press machine", "shoulder press machine"], "Machine"),
         (["trx", "suspension"], "TRX"),
+        (["slam ball"], "Slam Ball"),
         (["medicine ball", "med ball"], "Medicine Ball"),
         (["stability ball", "swiss ball", "exercise ball"], "Stability Ball"),
         (["rope ", " rope", "battle rope"], "Rope"),

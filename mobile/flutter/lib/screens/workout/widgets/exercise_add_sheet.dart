@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/library_repository.dart';
+import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
 
 /// Shows exercise add sheet with AI suggestions and library search
@@ -82,6 +83,20 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
     try {
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
+      final prefsRepo = ref.read(exercisePreferencesRepositoryProvider);
+
+      // Get avoided exercises to filter from suggestions
+      List<String> avoidedExerciseNames = [];
+      try {
+        final avoided = await prefsRepo.getAvoidedExercises(userId!);
+        avoidedExerciseNames = avoided
+            .where((a) => a.isActive)
+            .map((a) => a.exerciseName)
+            .toList();
+        debugPrint('🚫 [Add] Filtering ${avoidedExerciseNames.length} avoided exercises');
+      } catch (e) {
+        debugPrint('⚠️ [Add] Could not fetch avoided exercises: $e');
+      }
 
       // Use a generic message to get complementary exercises for this workout
       final message = _selectedCategory != null
@@ -93,6 +108,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         exercise: _createPlaceholderExercise(),
         userId: userId!,
         reason: message,
+        avoidedExercises: avoidedExerciseNames,
       );
 
       // Filter out exercises already in the workout

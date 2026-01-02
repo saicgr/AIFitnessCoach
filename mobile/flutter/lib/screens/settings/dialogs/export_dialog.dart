@@ -19,14 +19,24 @@ enum ExportTimeRange {
   custom,
 }
 
+/// Export format options.
+enum ExportFormat {
+  csvZip,
+  plainText,
+}
+
 /// Shows the export data dialog.
 void showExportDialog(BuildContext context, WidgetRef ref) {
   showDialog(
     context: context,
     builder: (context) => _ExportDataDialog(
-      onExport: (startDate, endDate) async {
+      onExport: (startDate, endDate, format) async {
         Navigator.pop(context);
-        await _exportData(context, ref, startDate: startDate, endDate: endDate);
+        if (format == ExportFormat.plainText) {
+          await _exportDataAsText(context, ref, startDate: startDate, endDate: endDate);
+        } else {
+          await _exportData(context, ref, startDate: startDate, endDate: endDate);
+        }
       },
     ),
   );
@@ -190,8 +200,168 @@ Future<void> _exportData(
   }
 }
 
+Future<void> _exportDataAsText(
+  BuildContext context,
+  WidgetRef ref, {
+  String? startDate,
+  String? endDate,
+}) async {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final navigator = Navigator.of(context);
+  final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+  // Show loading dialog with message
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: AppColors.cyan),
+          const SizedBox(height: 16),
+          Text(
+            'Exporting your data as text...',
+            style: TextStyle(
+              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This may take a few seconds',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  bool dialogDismissed = false;
+
+  void dismissDialog() {
+    if (!dialogDismissed) {
+      dialogDismissed = true;
+      navigator.pop();
+    }
+  }
+
+  try {
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+
+    if (userId == null) {
+      throw Exception('User not found');
+    }
+
+    // Build query parameters for date filter
+    final queryParams = <String, String>{};
+    if (startDate != null) queryParams['start_date'] = startDate;
+    if (endDate != null) queryParams['end_date'] = endDate;
+
+    final queryString = queryParams.isNotEmpty
+        ? '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '';
+
+    // Call backend to export user data as text (returns plain text)
+    final response = await apiClient.dio.get(
+      '${ApiConstants.users}/$userId/export-text$queryString',
+      options: Options(
+        responseType: ResponseType.plain,
+        receiveTimeout: const Duration(seconds: 120),
+        sendTimeout: const Duration(seconds: 30),
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
+
+    // Close loading dialog FIRST
+    dismissDialog();
+
+    // Handle error responses
+    if (response.statusCode == 404) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('User data not found. Please try logging out and back in.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    } else if (response.statusCode != 200) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Server error: ${response.statusCode}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (response.data != null) {
+      final textContent = response.data as String;
+
+      // Save to temporary file
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateTime.now().toIso8601String().split('T')[0];
+      final filePath = '${tempDir.path}/fitness_data_$timestamp.txt';
+      final file = File(filePath);
+      await file.writeAsString(textContent);
+
+      // Share the file
+      await Share.shareXFiles(
+        [XFile(filePath)],
+        subject: 'FitWiz Data Export',
+        text: 'My fitness data exported on $timestamp',
+      );
+
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Data exported as text successfully!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('No data received from server'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  } on DioException catch (e) {
+    dismissDialog();
+
+    String errorMessage = 'Export failed';
+    if (e.type == DioExceptionType.receiveTimeout || e.type == DioExceptionType.connectionTimeout) {
+      errorMessage = 'Export timed out. Please try again.';
+    } else if (e.type == DioExceptionType.connectionError) {
+      errorMessage = 'No internet connection';
+    } else if (e.response?.statusCode == 404) {
+      errorMessage = 'User data not found';
+    }
+
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  } catch (e) {
+    dismissDialog();
+
+    scaffoldMessenger.showSnackBar(
+      SnackBar(
+        content: Text('Export failed: ${e.toString()}'),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+}
+
 class _ExportDataDialog extends StatefulWidget {
-  final Future<void> Function(String? startDate, String? endDate) onExport;
+  final Future<void> Function(String? startDate, String? endDate, ExportFormat format) onExport;
 
   const _ExportDataDialog({required this.onExport});
 
@@ -201,6 +371,7 @@ class _ExportDataDialog extends StatefulWidget {
 
 class _ExportDataDialogState extends State<_ExportDataDialog> {
   ExportTimeRange _selectedRange = ExportTimeRange.allTime;
+  ExportFormat _selectedFormat = ExportFormat.csvZip;
   DateTime? _customStartDate;
   DateTime? _customEndDate;
 
@@ -387,6 +558,98 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
 
             const SizedBox(height: 20),
 
+            // Export format selector
+            Text(
+              'Export Format',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Format selection chips
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.folder_zip_outlined,
+                        size: 16,
+                        color: _selectedFormat == ExportFormat.csvZip
+                            ? Colors.white
+                            : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'CSV/ZIP',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _selectedFormat == ExportFormat.csvZip
+                              ? Colors.white
+                              : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  selected: _selectedFormat == ExportFormat.csvZip,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedFormat = ExportFormat.csvZip);
+                    }
+                  },
+                  selectedColor: AppColors.cyan,
+                  backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  side: BorderSide.none,
+                ),
+                ChoiceChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.description_outlined,
+                        size: 16,
+                        color: _selectedFormat == ExportFormat.plainText
+                            ? Colors.white
+                            : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Plain Text',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _selectedFormat == ExportFormat.plainText
+                              ? Colors.white
+                              : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  selected: _selectedFormat == ExportFormat.plainText,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _selectedFormat = ExportFormat.plainText);
+                    }
+                  },
+                  selectedColor: AppColors.cyan,
+                  backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  side: BorderSide.none,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             Text(
               'Data to export:',
               style: TextStyle(
@@ -418,7 +681,9 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
 
             const SizedBox(height: 12),
             Text(
-              'Your data will be exported as a ZIP file.',
+              _selectedFormat == ExportFormat.csvZip
+                  ? 'Your data will be exported as a ZIP file containing CSV files.'
+                  : 'Your data will be exported as a readable plain text file.',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -440,7 +705,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
         TextButton(
           onPressed: () {
             final (startDate, endDate) = _getDateRange();
-            widget.onExport(startDate, endDate);
+            widget.onExport(startDate, endDate, _selectedFormat);
           },
           child: Text(
             'Export',

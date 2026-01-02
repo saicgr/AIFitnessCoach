@@ -5,11 +5,13 @@ This module provides a unified router that combines all library-related endpoint
 from the following submodules:
 - exercises: Exercise library operations
 - programs: Program library operations
+- logging: User interaction logging for AI preference learning
 """
 from fastapi import APIRouter
 
 from .exercises import router as exercises_router
 from .programs import router as programs_router
+from .logging import router as logging_router
 
 # Create the combined router
 router = APIRouter()
@@ -17,6 +19,7 @@ router = APIRouter()
 # Include all sub-routers
 router.include_router(exercises_router)
 router.include_router(programs_router)
+router.include_router(logging_router)
 
 # Re-export models and utilities
 from .models import (

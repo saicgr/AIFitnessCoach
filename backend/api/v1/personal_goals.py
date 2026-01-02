@@ -32,6 +32,7 @@ from models.weekly_personal_goals import (
     WeeklyPersonalGoal, GoalAttempt, PersonalGoalRecord,
     GoalsResponse, GoalHistoryResponse, PersonalRecordsResponse, GoalSummary,
     GoalType, GoalStatus,
+    WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
 )
 from models.goal_suggestions import (
     GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
@@ -580,6 +581,170 @@ async def get_goals_summary(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get goals summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================
+# WORKOUT SYNC - Auto-update goals after workout completion
+# ============================================================
+
+@router.post("/workout-sync", response_model=WorkoutSyncResponse)
+async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
+    """
+    Sync a completed workout with weekly personal goals.
+
+    After a workout is completed, this endpoint automatically:
+    1. Finds active weekly_volume goals matching exercises in the workout
+    2. Adds the reps from the workout to those goals (case-insensitive matching)
+    3. Updates goal progress and checks for PR/completion
+
+    Note: Only updates weekly_volume goals. single_max goals require explicit attempts.
+
+    Returns list of goals that were updated with their new progress.
+    """
+    logger.info(f"Syncing workout with goals: user={user_id}, workout_log_id={request.workout_log_id}")
+    logger.info(f"Exercises in workout: {[e.exercise_name for e in request.exercises]}")
+
+    try:
+        db = get_supabase_db()
+        today = date.today()
+        week_start, _ = get_iso_week_boundaries(today)
+
+        # Get all active weekly_volume goals for this user in current week
+        goals_result = db.client.table("weekly_personal_goals").select("*").eq(
+            "user_id", user_id
+        ).eq("week_start", week_start.isoformat()).eq(
+            "status", "active"
+        ).eq("goal_type", "weekly_volume").execute()
+
+        active_goals = goals_result.data if goals_result.data else []
+        logger.info(f"Found {len(active_goals)} active weekly_volume goals")
+
+        if not active_goals:
+            return WorkoutSyncResponse(
+                synced_goals=[],
+                total_goals_updated=0,
+                total_volume_added=0,
+                new_prs=0,
+                message="No active weekly_volume goals to sync"
+            )
+
+        # Build a map of exercise name (lowercase) -> goal for quick lookup
+        goal_map = {}
+        for goal in active_goals:
+            exercise_lower = goal["exercise_name"].lower().strip()
+            goal_map[exercise_lower] = goal
+
+        synced_goals = []
+        total_volume_added = 0
+        new_prs = 0
+
+        # Process each exercise from the workout
+        for exercise in request.exercises:
+            exercise_lower = exercise.exercise_name.lower().strip()
+
+            # Check for matching goal (case-insensitive)
+            matching_goal = goal_map.get(exercise_lower)
+            if not matching_goal:
+                logger.debug(f"No matching goal for exercise: {exercise.exercise_name}")
+                continue
+
+            goal_id = matching_goal["id"]
+            volume_to_add = exercise.total_reps
+            if volume_to_add <= 0:
+                continue
+
+            # Calculate new values
+            old_value = matching_goal["current_value"]
+            new_value = old_value + volume_to_add
+            target = matching_goal["target_value"]
+            personal_best = matching_goal["personal_best"]
+
+            updates = {
+                "current_value": new_value,
+            }
+
+            # Check if PR beaten
+            is_new_pr = False
+            if personal_best is None or new_value > personal_best:
+                updates["is_pr_beaten"] = True
+                is_new_pr = True
+                new_prs += 1
+
+            # Check if goal completed
+            is_now_completed = False
+            if new_value >= target:
+                updates["status"] = "completed"
+                updates["completed_at"] = datetime.now(timezone.utc).isoformat()
+                is_now_completed = True
+
+            # Update the goal
+            db.client.table("weekly_personal_goals").update(updates).eq("id", goal_id).execute()
+
+            # Calculate progress percentage
+            progress_pct = min(100.0, (new_value / target) * 100) if target > 0 else 0.0
+
+            synced_goals.append(SyncedGoalUpdate(
+                goal_id=goal_id,
+                exercise_name=matching_goal["exercise_name"],
+                goal_type=GoalType.weekly_volume,
+                volume_added=volume_to_add,
+                new_current_value=new_value,
+                target_value=target,
+                is_now_completed=is_now_completed,
+                is_new_pr=is_new_pr,
+                progress_percentage=progress_pct,
+            ))
+
+            total_volume_added += volume_to_add
+            logger.info(f"Updated goal for {matching_goal['exercise_name']}: +{volume_to_add} reps (now {new_value}/{target})")
+
+        # Log the sync activity
+        if synced_goals:
+            await log_user_activity(
+                user_id=user_id,
+                action="workout_goal_sync",
+                endpoint="/api/v1/personal-goals/workout-sync",
+                message=f"Synced workout with {len(synced_goals)} goals, added {total_volume_added} total reps",
+                metadata={
+                    "workout_log_id": request.workout_log_id,
+                    "goals_updated": len(synced_goals),
+                    "total_volume_added": total_volume_added,
+                    "new_prs": new_prs,
+                    "goal_ids": [g.goal_id for g in synced_goals],
+                },
+                status_code=200
+            )
+
+        # Build response message
+        if synced_goals:
+            completed_count = sum(1 for g in synced_goals if g.is_now_completed)
+            message_parts = [f"Updated {len(synced_goals)} goal{'s' if len(synced_goals) > 1 else ''}"]
+            if completed_count > 0:
+                message_parts.append(f"{completed_count} completed!")
+            if new_prs > 0:
+                message_parts.append(f"{new_prs} new PR{'s' if new_prs > 1 else ''}!")
+            message = " - ".join(message_parts)
+        else:
+            message = "No matching goals found for workout exercises"
+
+        return WorkoutSyncResponse(
+            synced_goals=synced_goals,
+            total_goals_updated=len(synced_goals),
+            total_volume_added=total_volume_added,
+            new_prs=new_prs,
+            message=message,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to sync workout with goals: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="workout_goal_sync",
+            error=e,
+            endpoint="/api/v1/personal-goals/workout-sync",
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1187,3 +1352,159 @@ def _extract_friends_preview(source_data: dict) -> list:
     # In a real implementation, we'd fetch friend details
     # For now, return empty - the full data will come from goal_social endpoints
     return []
+
+
+# ============================================================
+# WORKOUT SYNC - Auto-update goals from completed workouts
+# ============================================================
+
+@router.post("/workout-sync", response_model=WorkoutSyncResponse)
+async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest):
+    """
+    Sync workout data with personal weekly goals.
+
+    After completing a workout, this endpoint:
+    1. Finds active weekly_volume goals matching exercises done
+    2. Adds the reps from the workout to those goals
+    3. Checks if any PRs were beaten or goals completed
+
+    This enables the "Challenges of the Week" feature where users
+    set goals like "500 push-ups this week" and have workout reps
+    automatically count towards their goal.
+
+    Args:
+        user_id: User ID
+        request: Workout performance data with exercise names and reps
+
+    Returns:
+        List of goals that were updated with progress info
+    """
+    logger.info(f"Syncing workout with goals for user: {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Get current week boundaries
+        today = date.today()
+        week_start, _ = get_iso_week_boundaries(today)
+
+        # Get user's active weekly_volume goals for this week
+        active_goals_result = db.client.table("weekly_personal_goals").select("*").eq(
+            "user_id", user_id
+        ).eq("week_start", week_start.isoformat()).eq(
+            "status", "active"
+        ).eq("goal_type", "weekly_volume").execute()
+
+        active_goals = {g["exercise_name"].lower(): g for g in active_goals_result.data}
+
+        if not active_goals:
+            logger.info(f"No active weekly_volume goals found for user {user_id}")
+            return WorkoutSyncResponse(
+                message="No active weekly volume goals to sync",
+                total_goals_updated=0,
+            )
+
+        synced_updates = []
+        total_volume_added = 0
+        new_prs = 0
+
+        # Match exercises from workout to goals (case-insensitive)
+        for exercise_perf in request.exercises:
+            exercise_key = exercise_perf.exercise_name.lower()
+
+            # Try to find matching goal
+            goal = active_goals.get(exercise_key)
+
+            if not goal:
+                # Try partial matching (e.g., "Push-ups" matches "Push-ups (Standard)")
+                for goal_name, g in active_goals.items():
+                    if exercise_key in goal_name or goal_name in exercise_key:
+                        goal = g
+                        break
+
+            if goal and exercise_perf.total_reps > 0:
+                goal_id = goal["id"]
+                old_value = goal["current_value"]
+                new_value = old_value + exercise_perf.total_reps
+
+                updates = {
+                    "current_value": new_value,
+                }
+
+                # Check if PR beaten
+                is_pr = False
+                if goal["personal_best"] is None or new_value > goal["personal_best"]:
+                    updates["is_pr_beaten"] = True
+                    is_pr = True
+                    new_prs += 1
+
+                # Check if goal completed
+                is_completed = new_value >= goal["target_value"]
+                if is_completed and goal["status"] != "completed":
+                    updates["status"] = "completed"
+                    updates["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+                # Update the goal
+                db.client.table("weekly_personal_goals").update(updates).eq("id", goal_id).execute()
+
+                # Calculate progress
+                progress_pct = min(100.0, (new_value / goal["target_value"]) * 100)
+
+                synced_updates.append(SyncedGoalUpdate(
+                    goal_id=goal_id,
+                    exercise_name=goal["exercise_name"],
+                    goal_type=GoalType.weekly_volume,
+                    volume_added=exercise_perf.total_reps,
+                    new_current_value=new_value,
+                    target_value=goal["target_value"],
+                    is_now_completed=is_completed,
+                    is_new_pr=is_pr,
+                    progress_percentage=progress_pct,
+                ))
+
+                total_volume_added += exercise_perf.total_reps
+
+                logger.info(
+                    f"✅ Updated goal {goal_id}: {goal['exercise_name']} "
+                    f"+{exercise_perf.total_reps} reps ({new_value}/{goal['target_value']})"
+                )
+
+        # Log the sync activity
+        if synced_updates:
+            await log_user_activity(
+                user_id=user_id,
+                action="goals_workout_sync",
+                endpoint="/api/v1/personal-goals/workout-sync",
+                message=f"Synced {len(synced_updates)} goals from workout",
+                metadata={
+                    "workout_log_id": request.workout_log_id,
+                    "goals_updated": len(synced_updates),
+                    "total_volume_added": total_volume_added,
+                    "new_prs": new_prs,
+                    "synced_goals": [u.goal_id for u in synced_updates],
+                },
+                status_code=200
+            )
+
+        message = f"Updated {len(synced_updates)} goal{'s' if len(synced_updates) != 1 else ''}"
+        if new_prs > 0:
+            message += f" with {new_prs} new PR{'s' if new_prs != 1 else ''}!"
+
+        return WorkoutSyncResponse(
+            synced_goals=synced_updates,
+            total_goals_updated=len(synced_updates),
+            total_volume_added=total_volume_added,
+            new_prs=new_prs,
+            message=message,
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to sync workout with goals: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="goals_workout_sync",
+            error=e,
+            endpoint="/api/v1/personal-goals/workout-sync",
+            status_code=500
+        )
+        raise HTTPException(status_code=500, detail=str(e))

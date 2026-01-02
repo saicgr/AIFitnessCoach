@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/widgets/workout_bottom_bar.dart';
-import 'package:ai_fitness_coach/data/models/exercise.dart';
+import 'package:fitwiz/screens/workout/widgets/workout_bottom_bar.dart';
+import 'package:fitwiz/data/models/exercise.dart';
 
 void main() {
   WorkoutExercise createTestExercise({

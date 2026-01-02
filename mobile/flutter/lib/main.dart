@@ -90,7 +90,7 @@ void main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const AiFitnessCoachApp(),
+      child: const FitWizApp(),
     ),
   );
 }

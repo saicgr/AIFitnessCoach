@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/fasting.dart';
 import '../repositories/fasting_repository.dart';
-import '../services/api_client.dart';
 
 // ============================================
 // Fasting State
@@ -90,10 +89,9 @@ class FastingState {
 /// Fasting state notifier for managing all fasting state
 class FastingNotifier extends StateNotifier<FastingState> {
   final FastingRepository _repository;
-  final Ref _ref;
   Timer? _refreshTimer;
 
-  FastingNotifier(this._repository, this._ref) : super(const FastingState());
+  FastingNotifier(this._repository) : super(const FastingState());
 
   /// Initialize fasting state for a user
   Future<void> initialize(String userId) async {
@@ -337,7 +335,6 @@ class FastingNotifier extends StateNotifier<FastingState> {
 final fastingProvider = StateNotifierProvider<FastingNotifier, FastingState>((ref) {
   return FastingNotifier(
     ref.watch(fastingRepositoryProvider),
-    ref,
   );
 });
 

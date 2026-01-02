@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/models/exercises_state.dart';
-import 'package:ai_fitness_coach/data/models/exercise.dart';
+import 'package:fitwiz/screens/library/models/exercises_state.dart';
+import 'package:fitwiz/data/models/exercise.dart';
 
 void main() {
   group('ExercisesState', () {

@@ -8,6 +8,7 @@ This module handles warmup and cool-down stretch operations:
 - POST /{workout_id}/stretches - Create cool-down stretches
 - POST /{workout_id}/warmup-and-stretches - Create both
 """
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from core.supabase_db import get_supabase_db
@@ -18,6 +19,44 @@ from .utils import parse_json_field
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Default durations for warmup and stretch (in minutes)
+DEFAULT_WARMUP_DURATION = 5
+DEFAULT_STRETCH_DURATION = 5
+
+
+def get_user_warmup_stretch_preferences(user_id: str) -> tuple[int, int]:
+    """
+    Get user's preferred warmup and stretch durations from their preferences.
+
+    Args:
+        user_id: The user's ID
+
+    Returns:
+        Tuple of (warmup_duration_minutes, stretch_duration_minutes)
+    """
+    try:
+        db = get_supabase_db()
+        user = db.get_user(user_id)
+
+        if not user:
+            return DEFAULT_WARMUP_DURATION, DEFAULT_STRETCH_DURATION
+
+        # Parse preferences JSON
+        preferences = parse_json_field(user.get("preferences"), {})
+
+        warmup_duration = preferences.get("warmup_duration_minutes", DEFAULT_WARMUP_DURATION)
+        stretch_duration = preferences.get("stretch_duration_minutes", DEFAULT_STRETCH_DURATION)
+
+        # Validate ranges (1-15 minutes)
+        warmup_duration = max(1, min(15, int(warmup_duration)))
+        stretch_duration = max(1, min(15, int(stretch_duration)))
+
+        return warmup_duration, stretch_duration
+
+    except Exception as e:
+        logger.warning(f"Error reading user preferences for warmup/stretch duration: {e}")
+        return DEFAULT_WARMUP_DURATION, DEFAULT_STRETCH_DURATION
 
 
 @router.get("/{workout_id}/warmup")
@@ -61,8 +100,11 @@ async def get_workout_stretches(workout_id: str):
 
 
 @router.post("/{workout_id}/warmup")
-async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
-    """Generate and create warmup exercises for an existing workout with variety tracking."""
+async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int] = None):
+    """Generate and create warmup exercises for an existing workout with variety tracking.
+
+    If duration_minutes is not provided, uses the user's preference or default (5 minutes).
+    """
     logger.info(f"Creating warmup for workout {workout_id}")
     try:
         db = get_supabase_db()
@@ -74,6 +116,13 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
         user_id = workout.get("user_id")
+
+        # Use provided duration or get from user preferences
+        if duration_minutes is None and user_id:
+            warmup_pref, _ = get_user_warmup_stretch_preferences(user_id)
+            duration_minutes = warmup_pref
+        elif duration_minutes is None:
+            duration_minutes = DEFAULT_WARMUP_DURATION
 
         service = get_warmup_stretch_service()
         warmup = await service.create_warmup_for_workout(
@@ -93,8 +142,11 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5):
 
 
 @router.post("/{workout_id}/stretches")
-async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
-    """Generate and create cool-down stretches for an existing workout with variety tracking."""
+async def create_workout_stretches(workout_id: str, duration_minutes: Optional[int] = None):
+    """Generate and create cool-down stretches for an existing workout with variety tracking.
+
+    If duration_minutes is not provided, uses the user's preference or default (5 minutes).
+    """
     logger.info(f"Creating stretches for workout {workout_id}")
     try:
         db = get_supabase_db()
@@ -106,6 +158,13 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
         user_id = workout.get("user_id")
+
+        # Use provided duration or get from user preferences
+        if duration_minutes is None and user_id:
+            _, stretch_pref = get_user_warmup_stretch_preferences(user_id)
+            duration_minutes = stretch_pref
+        elif duration_minutes is None:
+            duration_minutes = DEFAULT_STRETCH_DURATION
 
         service = get_warmup_stretch_service()
         stretches = await service.create_stretches_for_workout(
@@ -127,10 +186,13 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5):
 @router.post("/{workout_id}/warmup-and-stretches")
 async def create_workout_warmup_and_stretches(
     workout_id: str,
-    warmup_duration: int = 5,
-    stretch_duration: int = 5
+    warmup_duration: Optional[int] = None,
+    stretch_duration: Optional[int] = None
 ):
-    """Generate and create both warmup and stretches for an existing workout with variety tracking."""
+    """Generate and create both warmup and stretches for an existing workout with variety tracking.
+
+    If warmup_duration or stretch_duration is not provided, uses the user's preference or defaults.
+    """
     logger.info(f"Creating warmup and stretches for workout {workout_id}")
     try:
         db = get_supabase_db()
@@ -142,6 +204,19 @@ async def create_workout_warmup_and_stretches(
 
         exercises = parse_json_field(workout.get("exercises_json") or workout.get("exercises"), [])
         user_id = workout.get("user_id")
+
+        # Use provided durations or get from user preferences
+        if (warmup_duration is None or stretch_duration is None) and user_id:
+            warmup_pref, stretch_pref = get_user_warmup_stretch_preferences(user_id)
+            if warmup_duration is None:
+                warmup_duration = warmup_pref
+            if stretch_duration is None:
+                stretch_duration = stretch_pref
+        else:
+            if warmup_duration is None:
+                warmup_duration = DEFAULT_WARMUP_DURATION
+            if stretch_duration is None:
+                stretch_duration = DEFAULT_STRETCH_DURATION
 
         service = get_warmup_stretch_service()
         result = await service.generate_warmup_and_stretches_for_workout(

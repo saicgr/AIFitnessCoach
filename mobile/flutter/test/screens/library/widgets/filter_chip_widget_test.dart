@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/widgets/filter_chip_widget.dart';
+import 'package:fitwiz/screens/library/widgets/filter_chip_widget.dart';
 
 void main() {
   group('FilterChipWidget', () {

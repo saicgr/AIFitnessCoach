@@ -5,14 +5,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'package:ai_fitness_coach/data/services/api_client.dart';
-import 'package:ai_fitness_coach/data/models/user.dart';
-import 'package:ai_fitness_coach/data/models/workout.dart';
-import 'package:ai_fitness_coach/data/models/exercise.dart';
-import 'package:ai_fitness_coach/data/models/chat_message.dart';
-import 'package:ai_fitness_coach/data/models/achievement.dart';
-import 'package:ai_fitness_coach/data/models/hydration.dart';
-import 'package:ai_fitness_coach/data/models/nutrition.dart';
+import 'package:fitwiz/data/services/api_client.dart';
+import 'package:fitwiz/data/models/user.dart';
+import 'package:fitwiz/data/models/workout.dart';
+import 'package:fitwiz/data/models/exercise.dart';
+import 'package:fitwiz/data/models/chat_message.dart';
+import 'package:fitwiz/data/models/achievement.dart';
+import 'package:fitwiz/data/models/hydration.dart';
+import 'package:fitwiz/data/models/nutrition.dart';
 
 // Mock classes
 class MockDio extends Mock implements Dio {}

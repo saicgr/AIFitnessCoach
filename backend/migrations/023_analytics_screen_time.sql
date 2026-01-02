@@ -1,4 +1,4 @@
--- AI Fitness Coach - Analytics & Screen Time Tracking
+-- FitWiz - Analytics & Screen Time Tracking
 -- Migration 023: User analytics and screen time tracking
 
 -- Session tracking (app sessions)

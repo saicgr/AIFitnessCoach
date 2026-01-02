@@ -348,7 +348,7 @@ class _MetricsDashboardScreenState
             Expanded(
               child: _MetricCard(
                 label: 'Weight',
-                value: '${metrics.weightKg?.toStringAsFixed(1) ?? '--'}',
+                value: metrics.weightKg?.toStringAsFixed(1) ?? '--',
                 unit: 'kg',
                 icon: Icons.monitor_weight,
                 color: AppColors.cyan,
@@ -359,7 +359,7 @@ class _MetricsDashboardScreenState
             Expanded(
               child: _MetricCard(
                 label: 'Body Fat',
-                value: '${metrics.bodyFatPercent?.toStringAsFixed(1) ?? '--'}',
+                value: metrics.bodyFatPercent?.toStringAsFixed(1) ?? '--',
                 unit: '%',
                 icon: Icons.percent,
                 color: AppColors.purple,
@@ -374,7 +374,7 @@ class _MetricsDashboardScreenState
             Expanded(
               child: _MetricCard(
                 label: 'BMI',
-                value: '${metrics.bmi?.toStringAsFixed(1) ?? '--'}',
+                value: metrics.bmi?.toStringAsFixed(1) ?? '--',
                 unit: '',
                 icon: Icons.speed,
                 color: _getBmiColor(metrics.bmi),

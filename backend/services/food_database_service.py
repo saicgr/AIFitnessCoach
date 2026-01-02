@@ -10,7 +10,7 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 OFF_API_BASE_URL = "https://world.openfoodfacts.org/api/v2"
-OFF_USER_AGENT = "AIFitnessCoach/1.0 (contact@aifitnesscoach.com)"
+OFF_USER_AGENT = "AIFitnessCoach/1.0 (contact@fitwiz.com)"
 
 
 @dataclass

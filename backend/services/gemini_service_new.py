@@ -765,7 +765,7 @@ Return a JSON object with:
             "coach": {
                 "name": "AI Coach",
                 "emoji": "🏋️",
-                "greeting": "Hey there! I'm your AI Fitness Coach.",
+                "greeting": "Hey there! I'm your FitWiz.",
                 "personality": "motivating, supportive, and knowledgeable about all aspects of fitness",
                 "expertise": "workout planning, exercise form, fitness motivation, and overall wellness",
                 "color": "cyan",

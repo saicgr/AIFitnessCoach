@@ -1,4 +1,4 @@
-# ai_fitness_coach
+# fitwiz
 
 A new Flutter project.
 

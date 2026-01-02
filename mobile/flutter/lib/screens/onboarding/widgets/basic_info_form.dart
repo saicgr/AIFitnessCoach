@@ -165,13 +165,16 @@ class _BasicInfoFormState extends State<BasicInfoForm> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Responsive margin: smaller on narrow screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 16.0 : 52.0;
 
     // Animation delay starts after the message bubble animation completes
     const baseDelay = Duration(milliseconds: 500);
     const fieldStagger = Duration(milliseconds: 80);
 
     return Container(
-      margin: const EdgeInsets.only(left: 52, top: 8),
+      margin: EdgeInsets.only(left: leftMargin, top: 8, right: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.glassSurface,

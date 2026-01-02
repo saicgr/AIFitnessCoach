@@ -237,8 +237,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             ),
             // Workouts for the day
             if (dayWorkouts.isEmpty)
-              Container(
-                margin: const EdgeInsets.only(left: 60, bottom: 8),
+              Builder(
+                builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
+                  return Container(
+                    margin: EdgeInsets.only(left: leftMargin, bottom: 8),
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 decoration: BoxDecoration(
                   color: colors.elevated,
@@ -256,9 +260,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         color: colors.textMuted,
                       ),
                     ),
-                  ],
-                ),
-              )
+                    ],
+                  ),
+                );
+              },
+            )
             else
               ...dayWorkouts.map((workout) => _AgendaWorkoutCard(
                 workout: workout,
@@ -429,8 +435,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       final success = await repository.rescheduleWorkout(workout.id!, newDateStr);
 
       if (success) {
-        // Refresh workouts
+        // Refresh workouts and invalidate to force UI rebuild
         await ref.read(workoutsProvider.notifier).refresh();
+        ref.invalidate(workoutsProvider);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -823,11 +830,14 @@ class _AgendaWorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
     final isCompleted = workout.isCompleted ?? false;
+    // Responsive margin: smaller on narrow screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 40.0 : 60.0;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(left: 60, bottom: 8),
+        margin: EdgeInsets.only(left: leftMargin, bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isCompleted

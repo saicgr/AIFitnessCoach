@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/providers/library_providers.dart';
-import 'package:ai_fitness_coach/screens/library/models/exercises_state.dart';
+import 'package:fitwiz/screens/library/providers/library_providers.dart';
+import 'package:fitwiz/screens/library/models/exercises_state.dart';
 
 void main() {
   group('Library Providers', () {

@@ -722,7 +722,7 @@ async def generate_workout_feedback(
     )
 
     # Generate feedback using Gemini
-    system_prompt = """You are a TOUGH military drill sergeant AI Fitness Coach. You give SHORT, HONEST, no-BS feedback after workouts.
+    system_prompt = """You are a TOUGH military drill sergeant FitWiz. You give SHORT, HONEST, no-BS feedback after workouts.
 
 YOUR PERSONALITY:
 - Direct and blunt like a drill sergeant

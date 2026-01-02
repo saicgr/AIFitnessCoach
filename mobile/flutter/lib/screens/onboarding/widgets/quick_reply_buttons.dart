@@ -84,8 +84,12 @@ class _QuickReplyButtonsState extends State<QuickReplyButtons> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Responsive margin: smaller on narrow screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 16.0 : 52.0;
+
     return Padding(
-      padding: const EdgeInsets.only(left: 52, top: 8),
+      padding: EdgeInsets.only(left: leftMargin, top: 8, right: 8),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,

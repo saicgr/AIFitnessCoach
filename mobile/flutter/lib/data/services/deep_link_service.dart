@@ -7,19 +7,19 @@ import '../../navigation/app_router.dart';
 /// Service for handling deep links from home screen widgets.
 ///
 /// Supports the following deep link schemes:
-/// - aifitnesscoach://workout/{id} - Open workout detail
-/// - aifitnesscoach://workout/start/{id} - Start workout immediately
-/// - aifitnesscoach://hydration/add?amount={ml} - Quick add water
-/// - aifitnesscoach://nutrition/log?meal={type}&mode={input} - Log food
-/// - aifitnesscoach://chat?prompt={text}&agent={type} - Open chat
-/// - aifitnesscoach://challenges - Open challenges
-/// - aifitnesscoach://achievements - Open achievements
-/// - aifitnesscoach://goals - Open personal goals
-/// - aifitnesscoach://schedule - Open calendar
-/// - aifitnesscoach://stats - Open stats dashboard
-/// - aifitnesscoach://social/share?type={workout|achievement} - Share
+/// - fitwiz://workout/{id} - Open workout detail
+/// - fitwiz://workout/start/{id} - Start workout immediately
+/// - fitwiz://hydration/add?amount={ml} - Quick add water
+/// - fitwiz://nutrition/log?meal={type}&mode={input} - Log food
+/// - fitwiz://chat?prompt={text}&agent={type} - Open chat
+/// - fitwiz://challenges - Open challenges
+/// - fitwiz://achievements - Open achievements
+/// - fitwiz://goals - Open personal goals
+/// - fitwiz://schedule - Open calendar
+/// - fitwiz://stats - Open stats dashboard
+/// - fitwiz://social/share?type={workout|achievement} - Share
 class DeepLinkService {
-  static const String scheme = 'aifitnesscoach';
+  static const String scheme = 'fitwiz';
 
   /// Initialize deep link listening from home widgets
   static void initialize(WidgetRef ref) {

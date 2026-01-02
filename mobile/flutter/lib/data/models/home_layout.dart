@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:json_annotation/json_annotation.dart';
 
 part 'home_layout.g.dart';
@@ -5,6 +7,8 @@ part 'home_layout.g.dart';
 /// Tile types available for home screen customization
 enum TileType {
   // Existing tiles
+  @JsonValue('quickStart')
+  quickStart,
   @JsonValue('nextWorkout')
   nextWorkout,
   @JsonValue('fitnessScore')
@@ -56,6 +60,14 @@ enum TileType {
   sleepScore,
   @JsonValue('restDayTip')
   restDayTip,
+  @JsonValue('myJourney')
+  myJourney,
+  @JsonValue('progressCharts')
+  progressCharts,
+  @JsonValue('roiSummary')
+  roiSummary,
+  @JsonValue('weeklyPlan')
+  weeklyPlan,
 }
 
 /// Extension to provide metadata for tile types
@@ -63,6 +75,8 @@ extension TileTypeExtension on TileType {
   /// Get human-readable display name
   String get displayName {
     switch (this) {
+      case TileType.quickStart:
+        return 'Quick Start';
       case TileType.nextWorkout:
         return 'Next Workout';
       case TileType.fitnessScore:
@@ -113,12 +127,22 @@ extension TileTypeExtension on TileType {
         return 'Sleep Quality';
       case TileType.restDayTip:
         return 'Rest Day Card';
+      case TileType.myJourney:
+        return 'My Journey';
+      case TileType.progressCharts:
+        return 'Progress Charts';
+      case TileType.roiSummary:
+        return 'Your Journey ROI';
+      case TileType.weeklyPlan:
+        return 'Weekly Plan';
     }
   }
 
   /// Get description for the tile
   String get description {
     switch (this) {
+      case TileType.quickStart:
+        return 'One-tap to start today\'s workout';
       case TileType.nextWorkout:
         return 'Your upcoming workout session';
       case TileType.fitnessScore:
@@ -169,12 +193,22 @@ extension TileTypeExtension on TileType {
         return 'Sleep quality from health app';
       case TileType.restDayTip:
         return 'Recovery tips for rest days';
+      case TileType.myJourney:
+        return 'Your fitness journey progress';
+      case TileType.progressCharts:
+        return 'Strength and volume charts over time';
+      case TileType.roiSummary:
+        return 'Total workouts, time invested, and milestones';
+      case TileType.weeklyPlan:
+        return 'Holistic plan with workouts, nutrition & fasting';
     }
   }
 
   /// Get icon name (Material Icons)
   String get iconName {
     switch (this) {
+      case TileType.quickStart:
+        return 'play_circle_filled';
       case TileType.nextWorkout:
         return 'fitness_center';
       case TileType.fitnessScore:
@@ -225,12 +259,21 @@ extension TileTypeExtension on TileType {
         return 'bedtime';
       case TileType.restDayTip:
         return 'spa';
+      case TileType.myJourney:
+        return 'route';
+      case TileType.progressCharts:
+        return 'show_chart';
+      case TileType.roiSummary:
+        return 'trending_up';
+      case TileType.weeklyPlan:
+        return 'calendar_view_week';
     }
   }
 
   /// Get category for the tile
   TileCategory get category {
     switch (this) {
+      case TileType.quickStart:
       case TileType.nextWorkout:
       case TileType.weekChanges:
       case TileType.upcomingWorkouts:
@@ -262,6 +305,12 @@ extension TileTypeExtension on TileType {
       case TileType.quickActions:
       case TileType.aiCoachTip:
         return TileCategory.tools;
+      case TileType.myJourney:
+      case TileType.progressCharts:
+      case TileType.roiSummary:
+        return TileCategory.progress;
+      case TileType.weeklyPlan:
+        return TileCategory.wellness;
     }
   }
 
@@ -269,6 +318,7 @@ extension TileTypeExtension on TileType {
   List<TileSize> get supportedSizes {
     switch (this) {
       // Full-only tiles
+      case TileType.quickStart:
       case TileType.nextWorkout:
       case TileType.moodPicker:
       case TileType.weeklyCalendar:
@@ -289,6 +339,10 @@ extension TileTypeExtension on TileType {
       case TileType.upcomingFeatures:
       case TileType.upcomingWorkouts:
       case TileType.restDayTip:
+      case TileType.myJourney:
+      case TileType.progressCharts:
+      case TileType.roiSummary:
+      case TileType.weeklyPlan:
         return [TileSize.full, TileSize.half];
       // Half and compact
       case TileType.streakCounter:
@@ -324,6 +378,7 @@ extension TileTypeExtension on TileType {
   /// Whether this is a new tile (not yet implemented)
   bool get isNew {
     switch (this) {
+      case TileType.quickStart:
       case TileType.nextWorkout:
       case TileType.fitnessScore:
       case TileType.moodPicker:
@@ -384,6 +439,24 @@ extension TileCategoryExtension on TileCategory {
         return '🧘';
       case TileCategory.tools:
         return '🛠️';
+    }
+  }
+
+  /// Get color for the category
+  Color get color {
+    switch (this) {
+      case TileCategory.workout:
+        return const Color(0xFF00BCD4); // Cyan
+      case TileCategory.progress:
+        return const Color(0xFF4CAF50); // Green
+      case TileCategory.nutrition:
+        return const Color(0xFFFF9800); // Orange
+      case TileCategory.social:
+        return const Color(0xFF9C27B0); // Purple
+      case TileCategory.wellness:
+        return const Color(0xFFFFEB3B); // Yellow
+      case TileCategory.tools:
+        return const Color(0xFF00BCD4); // Cyan
     }
   }
 }
@@ -582,6 +655,7 @@ class UpdateLayoutRequest {
 
 /// Default tile order for new users
 const List<TileType> defaultTileOrder = [
+  TileType.quickStart, // Quick start at the top for easy workout access
   TileType.nextWorkout,
   TileType.fitnessScore,
   TileType.moodPicker,

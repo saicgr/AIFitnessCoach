@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Profile header widget displaying user avatar, name, and email.
+/// Profile header widget displaying user avatar, name, username, and email.
 class ProfileHeader extends StatelessWidget {
   final String name;
+  final String? username;
   final String email;
   final String? photoUrl;
 
   const ProfileHeader({
     super.key,
     required this.name,
+    this.username,
     required this.email,
     this.photoUrl,
   });
@@ -21,6 +23,10 @@ class ProfileHeader extends StatelessWidget {
         _buildAvatar(),
         const SizedBox(height: 16),
         _buildName(context),
+        if (username != null && username!.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          _buildUsername(context),
+        ],
         const SizedBox(height: 4),
         _buildEmail(context),
       ],
@@ -64,6 +70,16 @@ class ProfileHeader extends StatelessWidget {
       name,
       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
+          ),
+    );
+  }
+
+  Widget _buildUsername(BuildContext context) {
+    return Text(
+      '@$username',
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.cyan,
+            fontWeight: FontWeight.w500,
           ),
     );
   }

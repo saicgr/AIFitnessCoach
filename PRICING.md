@@ -1,7 +1,7 @@
 <!-- We are transparent about being a premium-only app, and include this in our app images, app description, and website. We also surface this information in-app before the user ever gives us their email. Google Play displays all subscription apps that are not also pay-to-download as free in search, and this is not controlled by us. -->
 
 
-# AI Fitness Coach - Pricing & Cost Analysis
+# FitWiz - Pricing & Cost Analysis
 
 ## Executive Summary
 

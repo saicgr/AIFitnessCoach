@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/language_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/providers/guest_mode_provider.dart';
 
 /// Stats welcome screen with Rootd-style social proof, language selection, and sign-in
 class StatsWelcomeScreen extends ConsumerStatefulWidget {
@@ -206,6 +207,17 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
+  Future<void> _continueAsGuest() async {
+    HapticFeedback.lightImpact();
+
+    // Enter guest mode
+    await ref.read(guestModeProvider.notifier).enterGuestMode();
+
+    // Navigate to guest home
+    if (mounted) {
+      context.go('/guest-home');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +281,13 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                           ),
 
                           const SizedBox(height: 16),
+
+                          // Pricing transparency section - shows before signup
+                          if (!_showSignInButtons)
+                            _buildPricingTransparencySection(isDark),
+
+                          if (!_showSignInButtons)
+                            const SizedBox(height: 12),
 
                           // Bottom section: Language + buttons (fixed at bottom)
                           _buildBottomSection(isDark),
@@ -512,6 +531,94 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
     );
   }
 
+  /// Build a compact pricing transparency section showing key info before signup
+  Widget _buildPricingTransparencySection(bool isDark) {
+    final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final borderColor = isDark
+        ? AppColors.cardBorder.withOpacity(0.3)
+        : AppColors.cyan.withOpacity(0.15);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row with FREE FOREVER badge
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.teal, AppColors.cyan],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      'FREE FOREVER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                'No credit card needed',
+                style: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Pricing tiles row
+          Row(
+            children: [
+              Expanded(
+                child: _PricingInfoTile(
+                  label: 'Free Plan',
+                  price: '\$0',
+                  period: 'forever',
+                  accentColor: AppColors.teal,
+                  isDark: isDark,
+                  features: ['10 chats/day', '4 workouts/mo'],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PricingInfoTile(
+                  label: 'Premium',
+                  price: 'from \$4',
+                  period: '/month',
+                  accentColor: AppColors.purple,
+                  isDark: isDark,
+                  features: ['Unlimited', '7-day trial'],
+                  isPopular: true,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 400.ms);
+  }
+
   Widget _buildBottomSection(bool isDark) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final elevated = isDark ? AppColors.elevated : Colors.white;
@@ -530,6 +637,69 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
           _buildGetStartedButton(isDark),
           const SizedBox(height: 12),
         ],
+
+        // See Pricing link - shows pricing before sign up
+        if (!_showSignInButtons)
+          TextButton.icon(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('/pricing-preview');
+            },
+            icon: Icon(
+              Icons.visibility_outlined,
+              size: 16,
+              color: AppColors.cyan,
+            ),
+            label: Text(
+              'See Pricing',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.cyan,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ).animate().fadeIn(delay: 600.ms),
+
+        // Try Sample Workout - preview a workout before signing up
+        if (!_showSignInButtons)
+          TextButton.icon(
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('/demo-workout');
+            },
+            icon: Icon(
+              Icons.fitness_center,
+              size: 16,
+              color: AppColors.teal,
+            ),
+            label: Text(
+              'Try a Sample Workout',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.teal,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ).animate().fadeIn(delay: 650.ms),
+
+        // Continue as Guest - explore app without signing up
+        if (!_showSignInButtons)
+          TextButton.icon(
+            onPressed: _continueAsGuest,
+            icon: Icon(
+              Icons.explore_outlined,
+              size: 16,
+              color: AppColors.purple,
+            ),
+            label: Text(
+              'Continue as Guest',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.purple,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ).animate().fadeIn(delay: 680.ms),
 
         // Already have account - sign in section
         if (!_showSignInButtons)
@@ -1079,5 +1249,123 @@ class _FillingDotPainter extends CustomPainter {
         oldDelegate.activeColor != activeColor ||
         oldDelegate.inactiveColor != inactiveColor ||
         oldDelegate.isCurrent != isCurrent;
+  }
+}
+
+/// Compact pricing info tile for the welcome screen
+class _PricingInfoTile extends StatelessWidget {
+  final String label;
+  final String price;
+  final String period;
+  final Color accentColor;
+  final bool isDark;
+  final List<String> features;
+  final bool isPopular;
+
+  const _PricingInfoTile({
+    required this.label,
+    required this.price,
+    required this.period,
+    required this.accentColor,
+    required this.isDark,
+    this.features = const [],
+    this.isPopular = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: accentColor.withOpacity(0.2),
+          width: isPopular ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label with optional popular badge
+          Row(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (isPopular) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'POPULAR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 7,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Price
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                price,
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                period,
+                style: TextStyle(
+                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          // Features
+          if (features.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ...features.map((feature) => Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check,
+                    color: accentColor,
+                    size: 10,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    feature,
+                    style: TextStyle(
+                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                      fontSize: 9,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+        ],
+      ),
+    );
   }
 }

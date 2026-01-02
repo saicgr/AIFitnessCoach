@@ -91,8 +91,8 @@ class ExerciseSetTracker extends StatefulWidget {
 }
 
 class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
-  bool _isExpanded = true;
-  bool _showNotes = false;
+  final bool _isExpanded = true;
+  final bool _showNotes = false;
   final TextEditingController _notesController = TextEditingController();
 
   @override

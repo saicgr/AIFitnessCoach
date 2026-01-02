@@ -245,7 +245,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                           await _disconnect();
                         }
                       },
-                      activeColor: AppColors.success,
+                      activeThumbColor: AppColors.success,
                     ),
                 ],
               ),
@@ -406,7 +406,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           Switch(
             value: isEnabled,
             onChanged: onChanged,
-            activeColor: AppColors.cyan,
+            activeThumbColor: AppColors.cyan,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],

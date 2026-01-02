@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
-import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 /// Challenge History Screen - Shows all challenges with outcomes and retry options

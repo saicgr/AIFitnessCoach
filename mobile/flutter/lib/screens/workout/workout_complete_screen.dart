@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/lottie_animations.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
+import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/scores_provider.dart';
+import '../../data/providers/subjective_feedback_provider.dart';
+import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/share_workout_sheet.dart';
@@ -36,6 +38,9 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   // PRs detected by the backend during workout completion
   final List<PersonalRecordInfo>? personalRecords;
 
+  // Performance comparison data - improvements/setbacks vs previous session
+  final PerformanceComparisonInfo? performanceComparison;
+
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
@@ -51,6 +56,7 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.challengeId,
     this.challengeData,
     this.personalRecords,
+    this.performanceComparison,
   });
 
   @override
@@ -65,9 +71,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   bool _isLoadingSummary = true;
 
   // Per-exercise ratings (exercise index -> rating 1-5)
-  Map<int, int> _exerciseRatings = {};
+  final Map<int, int> _exerciseRatings = {};
   // Per-exercise difficulty (exercise index -> difficulty)
-  Map<int, String> _exerciseDifficulties = {};
+  final Map<int, String> _exerciseDifficulties = {};
   // Whether to show exercise feedback section
   bool _showExerciseFeedback = false;
 
@@ -77,10 +83,28 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   List<Map<String, dynamic>> _newPRs = [];
   bool _showExerciseProgress = false;
   Map<String, List<Map<String, dynamic>>> _exerciseProgressData = {};
-  Map<String, bool> _expandedExercises = {};
+  final Map<String, bool> _expandedExercises = {};
+
+  // Exercise progression suggestions
+  List<ProgressionSuggestion> _progressionSuggestions = [];
+  bool _isLoadingProgressions = true;
 
   // Confetti controller for celebrations
   late ConfettiController _confettiController;
+
+  // "Do More" / Extend workout state
+  bool _isExtendingWorkout = false;
+
+  // Subjective feedback state (post-workout mood/energy/confidence)
+  int? _moodAfter;
+  int? _energyAfter;
+  int? _confidenceLevel;
+  bool _feelingStronger = false;
+  bool _showSubjectiveFeedback = true; // Show by default
+
+  // Personal goals sync state
+  WorkoutSyncResult? _goalSyncResult;
+  bool _isLoadingGoalSync = false;
 
   @override
   void initState() {
@@ -111,6 +135,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
 
     _loadExerciseProgress();
+    _loadProgressionSuggestions();
+    _syncWorkoutWithGoals();
 
     // Complete challenge if this workout was from a challenge
     if (widget.challengeId != null && widget.workoutLogId != null) {
@@ -483,6 +509,235 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
+  /// Load progression suggestions for exercises the user has mastered
+  Future<void> _loadProgressionSuggestions() async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        setState(() => _isLoadingProgressions = false);
+        return;
+      }
+
+      debugPrint('Loading progression suggestions for user: $userId');
+      final suggestions = await workoutRepo.getProgressionSuggestions(userId: userId);
+
+      if (mounted) {
+        setState(() {
+          _progressionSuggestions = suggestions;
+          _isLoadingProgressions = false;
+        });
+
+        if (suggestions.isNotEmpty) {
+          debugPrint('Found ${suggestions.length} progression suggestions');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading progression suggestions: $e');
+      if (mounted) {
+        setState(() => _isLoadingProgressions = false);
+      }
+    }
+  }
+
+  /// Sync workout with personal weekly goals
+  ///
+  /// After workout completion, automatically updates any weekly_volume goals
+  /// that match exercises from this workout.
+  Future<void> _syncWorkoutWithGoals() async {
+    // Only sync if we have exercise performance data
+    if (widget.exercisesPerformance == null || widget.exercisesPerformance!.isEmpty) {
+      debugPrint('[GoalSync] No exercise performance data, skipping goal sync');
+      return;
+    }
+
+    setState(() => _isLoadingGoalSync = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        debugPrint('[GoalSync] No user ID, skipping goal sync');
+        setState(() => _isLoadingGoalSync = false);
+        return;
+      }
+
+      final goalsService = PersonalGoalsService(apiClient);
+
+      // Convert exercise performance data to the format expected by the service
+      final exercises = widget.exercisesPerformance!.map((ex) {
+        final name = ex['name'] ?? ex['exercise_name'] ?? '';
+        final sets = ex['sets_completed'] ?? ex['sets'] ?? 0;
+        final reps = ex['reps'] ?? ex['total_reps'] ?? 0;
+
+        // Calculate total reps: sets * reps (if reps is per set) or use total_reps directly
+        int totalReps = 0;
+        if (ex['total_reps'] != null) {
+          totalReps = ex['total_reps'] as int;
+        } else if (sets > 0 && reps > 0) {
+          totalReps = (sets as int) * (reps as int);
+        }
+
+        return ExercisePerformanceData(
+          exerciseName: name as String,
+          totalReps: totalReps,
+          totalSets: sets as int,
+          maxRepsInSet: reps as int,
+        );
+      }).toList();
+
+      debugPrint('[GoalSync] Syncing ${exercises.length} exercises with goals');
+
+      final result = await goalsService.syncWorkoutWithGoals(
+        userId: userId,
+        workoutLogId: widget.workoutLogId,
+        exercises: exercises,
+      );
+
+      if (mounted) {
+        setState(() {
+          _goalSyncResult = result;
+          _isLoadingGoalSync = false;
+        });
+
+        // Show notification if goals were updated
+        if (result.hasUpdates) {
+          debugPrint('[GoalSync] Updated ${result.totalGoalsUpdated} goals');
+
+          // Show a snackbar with the result
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(
+                    result.hasNewPrs ? Icons.emoji_events : Icons.flag,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      result.message,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: result.hasNewPrs ? AppColors.orange : AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'View Goals',
+                textColor: Colors.white,
+                onPressed: () {
+                  context.push('/goals');
+                },
+              ),
+            ),
+          );
+
+          // Play confetti if there are new PRs from goal sync
+          if (result.hasNewPrs) {
+            _confettiController.play();
+          }
+        } else {
+          debugPrint('[GoalSync] No matching goals found');
+        }
+      }
+    } catch (e) {
+      debugPrint('[GoalSync] Error syncing workout with goals: $e');
+      if (mounted) {
+        setState(() => _isLoadingGoalSync = false);
+      }
+      // Don't show error to user - this is a non-critical feature
+    }
+  }
+
+  /// Handle accepting a progression suggestion
+  Future<void> _acceptProgression(ProgressionSuggestion suggestion) async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) return;
+
+      final success = await workoutRepo.respondToProgressionSuggestion(
+        userId: userId,
+        exerciseName: suggestion.exerciseName,
+        newExerciseName: suggestion.suggestedNextVariant,
+        accepted: true,
+      );
+
+      if (success && mounted) {
+        // Remove from suggestions list
+        setState(() {
+          _progressionSuggestions.removeWhere(
+            (s) => s.exerciseName == suggestion.exerciseName
+          );
+        });
+
+        // Show success feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Great! ${suggestion.suggestedNextVariant} will be included in future workouts.',
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Play confetti for progression!
+        _confettiController.play();
+      }
+    } catch (e) {
+      debugPrint('Error accepting progression: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle declining a progression suggestion
+  Future<void> _declineProgression(ProgressionSuggestion suggestion, [String? reason]) async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) return;
+
+      await workoutRepo.respondToProgressionSuggestion(
+        userId: userId,
+        exerciseName: suggestion.exerciseName,
+        newExerciseName: suggestion.suggestedNextVariant,
+        accepted: false,
+        declineReason: reason,
+      );
+
+      if (mounted) {
+        // Remove from suggestions list
+        setState(() {
+          _progressionSuggestions.removeWhere(
+            (s) => s.exerciseName == suggestion.exerciseName
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('Error declining progression: $e');
+    }
+  }
+
   /// Show the share workout bottom sheet
   Future<void> _showShareSheet() async {
     HapticFeedback.mediumImpact();
@@ -521,6 +776,72 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     );
   }
 
+  /// Handle "Do More" - extend the workout with additional AI-generated exercises
+  Future<void> _extendWorkout() async {
+    setState(() => _isExtendingWorkout = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null || widget.workout.id == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to extend workout'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        setState(() => _isExtendingWorkout = false);
+        return;
+      }
+
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final extendedWorkout = await workoutRepo.extendWorkout(
+        workoutId: widget.workout.id!,
+        userId: userId,
+        additionalExercises: 3,
+        additionalDurationMinutes: 15,
+        focusSameMuscles: true,
+      );
+
+      setState(() => _isExtendingWorkout = false);
+
+      if (extendedWorkout != null) {
+        // Navigate to the active workout screen with the extended workout
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added ${extendedWorkout.exercises.length - widget.workout.exercises.length} more exercises!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          // Navigate to active workout with the extended workout
+          context.go('/workout/active', extra: extendedWorkout);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to extend workout. Please try again.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isExtendingWorkout = false);
+      debugPrint('❌ Error extending workout: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _submitFeedback() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -557,7 +878,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         }
 
         // Submit workout feedback to backend
-        debugPrint('📤 [Feedback] Submitting workout feedback: rating=$_rating, difficulty=$_difficulty');
+        debugPrint('[Feedback] Submitting workout feedback: rating=$_rating, difficulty=$_difficulty');
         await apiClient.post(
           '/v1/feedback/workout/${widget.workout.id}',
           data: {
@@ -570,11 +891,31 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             'exercise_feedback': exerciseFeedbackList,
           },
         );
+
+        // Submit subjective feedback (mood, energy, confidence) if provided
+        if (_moodAfter != null) {
+          debugPrint('[Subjective Feedback] Submitting: mood=$_moodAfter, energy=$_energyAfter, stronger=$_feelingStronger');
+          try {
+            final notifier = ref.read(subjectiveFeedbackProvider.notifier);
+            await notifier.createPostCheckin(
+              workoutId: widget.workout.id!,
+              moodAfter: _moodAfter!,
+              energyAfter: _energyAfter,
+              confidenceLevel: _confidenceLevel,
+              feelingStronger: _feelingStronger,
+            );
+            debugPrint('[Subjective Feedback] Successfully submitted');
+          } catch (e) {
+            debugPrint('[Subjective Feedback] Error (non-blocking): $e');
+            // Non-blocking - don't fail the whole submission
+          }
+        }
         debugPrint('✅ [Feedback] Workout feedback submitted successfully');
       }
 
-      // Refresh workouts
+      // Refresh workouts and invalidate provider to force UI update
       await ref.read(workoutsProvider.notifier).refresh();
+      ref.invalidate(workoutsProvider);
 
       // Refresh fitness scores (they are recalculated on the backend after workout completion)
       ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
@@ -842,10 +1183,26 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   ),
                 ).animate().fadeIn(delay: 520.ms),
 
+                // Post-Workout Subjective Feedback Section
+                const SizedBox(height: 24),
+                _buildSubjectiveFeedbackSection(),
+
+                // Progression Suggestions Section
+                if (_progressionSuggestions.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _buildProgressionSuggestionsSection(),
+                ],
+
                 // New PRs / Achievements Section
                 if (_newPRs.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   _buildNewPRsSection(),
+                ],
+
+                // Performance Comparison Section - Improvements/Setbacks
+                if (widget.performanceComparison != null) ...[
+                  const SizedBox(height: 24),
+                  _buildPerformanceComparisonSection(),
                 ],
 
                 // Exercise Progress Section (Minimizable graphs)
@@ -855,6 +1212,70 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 ],
 
                 const SizedBox(height: 32),
+
+                // Feedback importance banner
+                Builder(
+                  builder: (context) {
+                    final isDarkBanner = Theme.of(context).brightness == Brightness.dark;
+                    final elevatedBanner = isDarkBanner ? AppColors.elevated : AppColorsLight.elevated;
+                    final textSecondaryBanner = isDarkBanner ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: elevatedBanner,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.purple.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.purple.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.insights_rounded,
+                              color: AppColors.purple,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Your feedback matters!',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.purple,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Ratings help the AI personalize future workouts to better match your preferences and abilities.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: textSecondaryBanner,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ).animate().fadeIn(delay: 580.ms),
+
+                const SizedBox(height: 24),
 
                 // Rating Section
                 Text(
@@ -944,6 +1365,50 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                 const SizedBox(height: 24),
 
+                // "Do More" Button - Extend Workout with AI-generated exercises
+                // Addresses complaint: "Those few little baby exercises weren't enough"
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isExtendingWorkout ? null : _extendWorkout,
+                    icon: _isExtendingWorkout
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: LottieLoading(size: 20, useDots: true),
+                          )
+                        : const Icon(Icons.add_circle_outline, size: 20),
+                    label: Text(
+                      _isExtendingWorkout ? 'Generating...' : 'Do More',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: AppColors.cyan,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 720.ms).slideY(begin: 0.1),
+
+                const SizedBox(height: 12),
+
+                // Explanation text for "Do More"
+                Text(
+                  'Not enough? AI will add 3 more exercises',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.textSecondary
+                        : AppColorsLight.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 730.ms),
+
+                const SizedBox(height: 24),
+
                 // Challenge Friends Button
                 SizedBox(
                   width: double.infinity,
@@ -1027,6 +1492,525 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Build the post-workout subjective feedback section
+  /// Allows users to track mood, energy, and confidence after workout
+  Widget _buildSubjectiveFeedbackSection() {
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.cyan.withOpacity(0.1),
+                AppColors.purple.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with expand/collapse toggle
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _showSubjectiveFeedback = !_showSubjectiveFeedback;
+                  });
+                },
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.cyan.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.mood,
+                          size: 20,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'How do you feel now?',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.cyan,
+                              ),
+                            ),
+                            Text(
+                              'Track your mood to see your progress',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _showSubjectiveFeedback ? Icons.expand_less : Icons.expand_more,
+                        color: textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Expandable content
+              if (_showSubjectiveFeedback) ...[
+                Divider(height: 1, color: cardBorder.withOpacity(0.5)),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Mood after workout
+                      Text(
+                        'Mood',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(5, (index) {
+                          final level = index + 1;
+                          final isSelected = _moodAfter == level;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _moodAfter = level;
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? level.moodColor.withOpacity(0.2)
+                                    : elevated,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? level.moodColor : cardBorder,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  level.moodEmoji,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      if (_moodAfter != null) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            _moodAfter!.moodLabel,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: _moodAfter!.moodColor,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // Energy after workout
+                      Text(
+                        'Energy',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(5, (index) {
+                          final level = index + 1;
+                          final isSelected = _energyAfter == level;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _energyAfter = level;
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.orange.withOpacity(0.2)
+                                    : elevated,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.orange : cardBorder,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  level.energyEmoji,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      if (_energyAfter != null) ...[
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            _energyAfter!.energyLabel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // Feeling stronger toggle
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _feelingStronger = !_feelingStronger;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _feelingStronger
+                                ? AppColors.success.withOpacity(0.15)
+                                : elevated,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _feelingStronger
+                                  ? AppColors.success
+                                  : cardBorder,
+                              width: _feelingStronger ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: _feelingStronger
+                                      ? AppColors.success
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: _feelingStronger
+                                        ? AppColors.success
+                                        : textSecondary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: _feelingStronger
+                                    ? const Icon(
+                                        Icons.check,
+                                        size: 16,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Feeling stronger today!',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: _feelingStronger
+                                            ? AppColors.success
+                                            : textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Notice improvements in your strength or endurance?',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_feelingStronger)
+                                const Text(
+                                  '\u{1F4AA}',
+                                  style: TextStyle(fontSize: 24),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    ).animate().fadeIn(delay: 530.ms);
+  }
+
+  /// Build the exercise progression suggestions section
+  /// Shows when user has exercises ready to progress to harder variants
+  Widget _buildProgressionSuggestionsSection() {
+    return Builder(
+      builder: (context) {
+        final isDarkProg = Theme.of(context).brightness == Brightness.dark;
+        final elevatedProg = isDarkProg ? AppColors.elevated : AppColorsLight.elevated;
+        final textSecondaryProg = isDarkProg ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.purple.withOpacity(0.15),
+                AppColors.cyan.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.purple.withOpacity(0.4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.purple.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      size: 20,
+                      color: AppColors.purple,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'READY TO LEVEL UP!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.purple,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'You\'ve mastered these exercises. Try a harder variant?',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondaryProg,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ..._progressionSuggestions.map((suggestion) => _buildProgressionCard(suggestion)),
+            ],
+          ),
+        );
+      },
+    ).animate().fadeIn(delay: 525.ms).slideY(begin: 0.1);
+  }
+
+  /// Build individual progression suggestion card
+  Widget _buildProgressionCard(ProgressionSuggestion suggestion) {
+    return Builder(
+      builder: (context) {
+        final isDarkCard = Theme.of(context).brightness == Brightness.dark;
+        final elevatedCard = isDarkCard ? AppColors.elevated : AppColorsLight.elevated;
+        final textPrimaryCard = isDarkCard ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final textSecondaryCard = isDarkCard ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: elevatedCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.purple.withOpacity(0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Exercise progression path
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          suggestion.exerciseName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: textPrimaryCard,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 16,
+                              color: AppColors.purple.withOpacity(0.8),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                suggestion.suggestedNextVariant,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.purple,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Difficulty badge
+                  if (suggestion.difficultyIncrease != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        suggestion.difficultyIncreaseDescription,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Mastery info
+              Row(
+                children: [
+                  Icon(
+                    Icons.verified_rounded,
+                    size: 14,
+                    color: AppColors.success.withOpacity(0.8),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Marked as "too easy" ${suggestion.consecutiveEasySessions}x in a row',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondaryCard,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _declineProgression(suggestion, 'not_ready'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: textSecondaryCard,
+                        side: BorderSide(color: textSecondaryCard.withOpacity(0.3)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Not Yet'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _acceptProgression(suggestion),
+                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                      label: const Text('Level Up'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.purple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1173,7 +2157,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
             ],
           ),
         );
@@ -1183,6 +2167,458 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       duration: 400.ms,
       curve: Curves.elasticOut,
     );
+  }
+
+  /// Build the performance comparison section showing improvements/setbacks
+  Widget _buildPerformanceComparisonSection() {
+    final comparison = widget.performanceComparison;
+    if (comparison == null) return const SizedBox.shrink();
+
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+        final hasImprovements = comparison.improvedCount > 0;
+        final hasDeclines = comparison.declinedCount > 0;
+
+        // Choose accent color based on overall performance
+        Color accentColor;
+        IconData headerIcon;
+        String headerText;
+
+        if (hasImprovements && !hasDeclines) {
+          accentColor = AppColors.success;
+          headerIcon = Icons.trending_up;
+          headerText = 'ALL EXERCISES IMPROVED!';
+        } else if (hasDeclines && !hasImprovements) {
+          accentColor = AppColors.orange;
+          headerIcon = Icons.trending_down;
+          headerText = 'PERFORMANCE COMPARED TO LAST SESSION';
+        } else if (hasImprovements && hasDeclines) {
+          accentColor = AppColors.cyan;
+          headerIcon = Icons.compare_arrows;
+          headerText = 'PERFORMANCE COMPARISON';
+        } else {
+          accentColor = AppColors.cyan;
+          headerIcon = Icons.analytics;
+          headerText = 'PERFORMANCE MAINTAINED';
+        }
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accentColor.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        headerIcon,
+                        size: 20,
+                        color: accentColor,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            headerText,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          if (comparison.workoutComparison.hasPrevious)
+                            Text(
+                              'vs last ${comparison.workoutComparison.previousPerformedAt != null ? _formatRelativeDate(comparison.workoutComparison.previousPerformedAt!) : 'session'}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: textSecondary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Summary badges
+                    Row(
+                      children: [
+                        if (comparison.improvedCount > 0)
+                          _buildCountBadge(
+                            count: comparison.improvedCount,
+                            icon: Icons.arrow_upward,
+                            color: AppColors.success,
+                          ),
+                        if (comparison.declinedCount > 0) ...[
+                          const SizedBox(width: 8),
+                          _buildCountBadge(
+                            count: comparison.declinedCount,
+                            icon: Icons.arrow_downward,
+                            color: AppColors.error,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(height: 1, color: cardBorder),
+
+              // Exercise comparisons
+              ...comparison.exerciseComparisons.map((exComp) {
+                return _buildExerciseComparisonRow(exComp, textPrimary, textSecondary);
+              }),
+
+              // Overall workout comparison (if has previous)
+              if (comparison.workoutComparison.hasPrevious) ...[
+                Divider(height: 1, color: cardBorder),
+                _buildWorkoutTotalComparison(
+                  comparison.workoutComparison,
+                  textPrimary,
+                  textSecondary,
+                ),
+              ],
+            ],
+          ),
+        ).animate().fadeIn(delay: 560.ms);
+      },
+    );
+  }
+
+  Widget _buildCountBadge({
+    required int count,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseComparisonRow(
+    ExerciseComparisonInfo exComp,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    // Determine status icon and color
+    IconData statusIcon;
+    Color statusColor;
+    String statusText;
+
+    switch (exComp.status) {
+      case 'improved':
+        statusIcon = Icons.trending_up;
+        statusColor = AppColors.success;
+        statusText = exComp.formattedPercentDiff;
+        break;
+      case 'declined':
+        statusIcon = Icons.trending_down;
+        statusColor = AppColors.error;
+        statusText = exComp.formattedPercentDiff;
+        break;
+      case 'maintained':
+        statusIcon = Icons.remove;
+        statusColor = AppColors.cyan;
+        statusText = 'Same';
+        break;
+      default: // first_time
+        statusIcon = Icons.fiber_new;
+        statusColor = AppColors.purple;
+        statusText = 'New';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // Status indicator
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(statusIcon, size: 14, color: statusColor),
+          ),
+          const SizedBox(width: 12),
+
+          // Exercise name
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exComp.exerciseName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                if (exComp.hasPrevious) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    exComp.currentMaxWeightKg != null
+                        ? '${exComp.currentMaxWeightKg!.toStringAsFixed(1)} kg x ${exComp.currentReps} reps'
+                        : '${exComp.currentSets} sets, ${exComp.currentReps} reps',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Difference display
+          if (exComp.hasPrevious)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+                if (exComp.weightDiffKg != null && exComp.weightDiffKg != 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    exComp.formattedWeightDiff,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: statusColor.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+                if (exComp.timeDiffSeconds != null && exComp.timeDiffSeconds != 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    exComp.formattedTimeDiff,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: statusColor.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ],
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkoutTotalComparison(
+    WorkoutComparisonInfo workoutComp,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'TOTAL WORKOUT',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: textSecondary,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // Volume comparison
+              Expanded(
+                child: _buildComparisonStat(
+                  label: 'Volume',
+                  current: '${workoutComp.currentTotalVolumeKg.toStringAsFixed(0)} kg',
+                  diff: workoutComp.formattedVolumeDiff,
+                  diffPercent: workoutComp.volumeDiffPercent,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Duration comparison
+              Expanded(
+                child: _buildComparisonStat(
+                  label: 'Duration',
+                  current: _formatDuration(workoutComp.currentDurationSeconds ~/ 60),
+                  diff: workoutComp.formattedDurationDiff,
+                  diffPercent: workoutComp.durationDiffPercent,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Reps comparison
+              Expanded(
+                child: _buildComparisonStat(
+                  label: 'Total Reps',
+                  current: '${workoutComp.currentTotalReps}',
+                  diff: workoutComp.previousTotalReps != null
+                      ? '${workoutComp.currentTotalReps - workoutComp.previousTotalReps! >= 0 ? '+' : ''}${workoutComp.currentTotalReps - workoutComp.previousTotalReps!}'
+                      : null,
+                  diffPercent: null,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComparisonStat({
+    required String label,
+    required String current,
+    String? diff,
+    double? diffPercent,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    Color? diffColor;
+    if (diffPercent != null) {
+      if (diffPercent > 1) {
+        diffColor = AppColors.success;
+      } else if (diffPercent < -1) {
+        diffColor = AppColors.error;
+      } else {
+        diffColor = AppColors.cyan;
+      }
+    } else if (diff != null && diff.isNotEmpty) {
+      if (diff.startsWith('+')) {
+        diffColor = AppColors.success;
+      } else if (diff.startsWith('-')) {
+        diffColor = AppColors.error;
+      } else {
+        diffColor = AppColors.cyan;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          current,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textPrimary,
+          ),
+        ),
+        if (diff != null && diff.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            diff,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: diffColor,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _formatRelativeDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return 'today';
+    } else if (diff.inDays == 1) {
+      return 'yesterday';
+    } else if (diff.inDays < 7) {
+      return '${diff.inDays} days ago';
+    } else if (diff.inDays < 14) {
+      return 'last week';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays ~/ 7} weeks ago';
+    } else {
+      return '${diff.inDays ~/ 30} months ago';
+    }
   }
 
   /// Build the per-exercise feedback section (expandable)
@@ -1451,7 +2887,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 ...(_exerciseProgressData.entries.map((entry) => _buildExerciseProgressTile(
                   entry.key,
                   entry.value,
-                ))).toList(),
+                ))),
               ],
             ],
           ),

@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
-import '../data/models/coach_persona.dart';
+import '../data/providers/admin_provider.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/widget_action_service.dart';
+import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
-import 'floating_chat/floating_chat_provider.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
 /// Provider to control floating nav bar visibility
@@ -235,8 +235,11 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           ),
           ),
 
-          // Spacing between nav bar and AI button
+          // Spacing between nav bar and buttons
           const SizedBox(width: 8),
+
+          // Admin Support Button - only shown for admins
+          _AdminSupportButton(),
 
           // AI Coach Button - fixed position
           _AICoachButton(
@@ -247,6 +250,80 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Admin support button - only visible for admin users
+class _AdminSupportButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(isAdminProvider);
+    final unreadCount = ref.watch(adminUnreadCountProvider);
+
+    // Don't show for non-admin users
+    if (!isAdmin) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          context.push('/admin-support');
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.warning,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.warning.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.support_agent,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+            ),
+            // Unread badge
+            if (unreadCount > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.pureBlack, width: 2),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 18),
+                  child: Text(
+                    unreadCount > 99 ? '99+' : '$unreadCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/settings/sections/logout_section.dart';
-import 'package:ai_fitness_coach/core/constants/app_colors.dart';
+import 'package:fitwiz/screens/settings/sections/logout_section.dart';
+import 'package:fitwiz/core/constants/app_colors.dart';
 
 void main() {
   group('LogoutSection', () {

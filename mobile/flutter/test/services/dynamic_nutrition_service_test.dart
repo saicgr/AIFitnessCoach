@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/data/services/dynamic_nutrition_service.dart';
-import 'package:ai_fitness_coach/data/models/nutrition_preferences.dart';
-import 'package:ai_fitness_coach/data/models/fasting.dart';
-import 'package:ai_fitness_coach/data/models/workout.dart';
+import 'package:fitwiz/data/services/dynamic_nutrition_service.dart';
+import 'package:fitwiz/data/models/nutrition_preferences.dart';
+import 'package:fitwiz/data/models/fasting.dart';
+import 'package:fitwiz/data/models/workout.dart';
 
 void main() {
   group('DynamicNutritionService', () {

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import 'cards/cards.dart';
+import 'cards/roi_summary_card.dart';
+import 'cards/weekly_plan_card.dart';
 import 'daily_activity_card.dart';
 import 'components/components.dart';
 
@@ -16,6 +18,8 @@ class TileFactory {
     bool isDark = true,
   }) {
     switch (tile.type) {
+      case TileType.quickStart:
+        return QuickStartCard(isDark: isDark);
       case TileType.nextWorkout:
         return _buildNextWorkoutTile(context, ref, tile, isDark);
       case TileType.fitnessScore:
@@ -70,6 +74,14 @@ class TileFactory {
         return SleepScoreCard(size: tile.size, isDark: isDark);
       case TileType.restDayTip:
         return RestDayTipCard(size: tile.size, isDark: isDark);
+      case TileType.myJourney:
+        return MyJourneyCard(size: tile.size, isDark: isDark);
+      case TileType.progressCharts:
+        return ProgressChartsTile(size: tile.size, isDark: isDark);
+      case TileType.roiSummary:
+        return const ROISummaryCard();
+      case TileType.weeklyPlan:
+        return const WeeklyPlanCard();
     }
   }
 
@@ -358,6 +370,8 @@ class _PlaceholderCard extends StatelessWidget {
         return Icons.bedtime;
       case TileType.restDayTip:
         return Icons.spa;
+      case TileType.myJourney:
+        return Icons.route;
       default:
         return Icons.widgets;
     }

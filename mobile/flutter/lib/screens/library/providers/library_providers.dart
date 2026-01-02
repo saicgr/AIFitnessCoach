@@ -1,12 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/exceptions/app_exceptions.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/program.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../models/filter_option.dart';
 import '../models/exercises_state.dart';
+
+// Re-export exceptions for consumers
+export '../../../core/exceptions/app_exceptions.dart';
 
 // ============================================================================
 // EXERCISE FILTER PROVIDERS (Multi-select)
@@ -103,28 +107,47 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
       final response = await apiClient.get(url);
 
       if (response.statusCode == 200) {
-        final data = response.data as List;
-        final newExercises = data
-            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
-            .toList();
+        try {
+          final data = response.data as List;
+          final newExercises = data
+              .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+              .toList();
 
-        state = state.copyWith(
-          exercises:
-              refresh ? newExercises : [...state.exercises, ...newExercises],
-          isLoading: false,
-          hasMore: newExercises.length >= exercisesPageSize,
-          offset: newOffset + newExercises.length,
-        );
+          state = state.copyWith(
+            exercises:
+                refresh ? newExercises : [...state.exercises, ...newExercises],
+            isLoading: false,
+            hasMore: newExercises.length >= exercisesPageSize,
+            offset: newOffset + newExercises.length,
+          );
+        } catch (e) {
+          // JSON parsing error
+          debugPrint('❌ [Exercises] Parse error: $e');
+          final parseException = const ParseException();
+          state = state.copyWith(
+            isLoading: false,
+            error: parseException.userMessage,
+          );
+        }
       } else {
+        // API returned non-200 status
+        final apiException = ApiException(
+          message: 'Failed to load exercises',
+          statusCode: response.statusCode,
+        );
+        debugPrint('❌ [Exercises] API error: ${response.statusCode}');
         state = state.copyWith(
           isLoading: false,
-          error: 'Failed to load exercises',
+          error: apiException.userMessage,
         );
       }
     } catch (e) {
+      // Handle network and other errors
+      debugPrint('❌ [Exercises] Error: $e');
+      final appException = ExceptionHandler.handle(e);
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: appException.userMessage,
       );
     }
   }
@@ -155,14 +178,31 @@ final exercisesProvider = Provider<AsyncValue<List<LibraryExercise>>>((ref) {
 final filterOptionsProvider =
     FutureProvider.autoDispose<ExerciseFilterOptions>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-  final response =
-      await apiClient.get('${ApiConstants.library}/exercises/filter-options');
 
-  if (response.statusCode == 200) {
-    return ExerciseFilterOptions.fromJson(
-        response.data as Map<String, dynamic>);
+  try {
+    final response =
+        await apiClient.get('${ApiConstants.library}/exercises/filter-options');
+
+    if (response.statusCode == 200) {
+      try {
+        return ExerciseFilterOptions.fromJson(
+            response.data as Map<String, dynamic>);
+      } catch (e) {
+        debugPrint('❌ [FilterOptions] Parse error: $e');
+        throw const ParseException();
+      }
+    }
+
+    debugPrint('❌ [FilterOptions] API error: ${response.statusCode}');
+    throw ApiException(
+      message: 'Failed to load filter options',
+      statusCode: response.statusCode,
+    );
+  } catch (e) {
+    if (e is AppException) rethrow;
+    debugPrint('❌ [FilterOptions] Error: $e');
+    throw ExceptionHandler.handle(e);
   }
-  throw Exception('Failed to load filter options');
 });
 
 // ============================================================================
@@ -173,29 +213,63 @@ final filterOptionsProvider =
 final programsProvider =
     FutureProvider.autoDispose<List<LibraryProgram>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-  final response = await apiClient.get('${ApiConstants.library}/programs');
 
-  if (response.statusCode == 200) {
-    final data = response.data as List;
-    return data
-        .map((e) => LibraryProgram.fromJson(e as Map<String, dynamic>))
-        .toList();
+  try {
+    final response = await apiClient.get('${ApiConstants.library}/programs');
+
+    if (response.statusCode == 200) {
+      try {
+        final data = response.data as List;
+        return data
+            .map((e) => LibraryProgram.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        debugPrint('❌ [Programs] Parse error: $e');
+        throw const ParseException();
+      }
+    }
+
+    debugPrint('❌ [Programs] API error: ${response.statusCode}');
+    throw ApiException(
+      message: 'Failed to load programs',
+      statusCode: response.statusCode,
+    );
+  } catch (e) {
+    if (e is AppException) rethrow;
+    debugPrint('❌ [Programs] Error: $e');
+    throw ExceptionHandler.handle(e);
   }
-  throw Exception('Failed to load programs');
 });
 
 /// Program categories provider
 final programCategoriesProvider =
     FutureProvider.autoDispose<List<String>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-  final response =
-      await apiClient.get('${ApiConstants.library}/programs/categories');
 
-  if (response.statusCode == 200) {
-    final data = response.data as List;
-    return data.map((e) => e['name'] as String).toList();
+  try {
+    final response =
+        await apiClient.get('${ApiConstants.library}/programs/categories');
+
+    if (response.statusCode == 200) {
+      try {
+        final data = response.data as List;
+        return data.map((e) => e['name'] as String).toList();
+      } catch (e) {
+        debugPrint('❌ [Categories] Parse error: $e');
+        throw const ParseException();
+      }
+    }
+
+    debugPrint('❌ [Categories] API error: ${response.statusCode}');
+    throw ApiException(
+      message: 'Failed to load categories',
+      statusCode: response.statusCode,
+    );
+  } catch (e) {
+    if (e is AppException) rethrow;
+    debugPrint('❌ [Categories] Error: $e');
+    throw ExceptionHandler.handle(e);
   }
-  throw Exception('Failed to load categories');
 });
 
 /// Program search query
@@ -262,7 +336,6 @@ final categoryExercisesProvider =
 
   final result = <String, List<LibraryExercise>>{};
 
-  // Fetch ALL exercises first (the API returns normalized body parts)
   try {
     debugPrint('🎬 [Netflix] Fetching all exercises for categorization...');
     final allResponse = await apiClient.get(
@@ -270,66 +343,82 @@ final categoryExercisesProvider =
     );
 
     if (allResponse.statusCode == 200) {
-      final data = allResponse.data as List;
-      final allExercises = data
-          .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
-          .toList();
+      try {
+        final data = allResponse.data as List;
+        final allExercises = data
+            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+            .toList();
 
-      debugPrint('🎬 [Netflix] Loaded ${allExercises.length} total exercises');
+        debugPrint('🎬 [Netflix] Loaded ${allExercises.length} total exercises');
 
-      // Popular = first 20 exercises
-      result['Popular'] = allExercises.take(20).toList();
+        // Popular = first 20 exercises
+        result['Popular'] = allExercises.take(20).toList();
 
-      // Group by body part (the API returns normalized body_part field)
-      final Map<String, List<LibraryExercise>> byBodyPart = {};
-      for (final exercise in allExercises) {
-        final bodyPart = exercise.bodyPart ?? 'Other';
-        byBodyPart.putIfAbsent(bodyPart, () => []);
-        byBodyPart[bodyPart]!.add(exercise);
-      }
+        // Group by body part (the API returns normalized body_part field)
+        final Map<String, List<LibraryExercise>> byBodyPart = {};
+        for (final exercise in allExercises) {
+          final bodyPart = exercise.bodyPart ?? 'Other';
+          byBodyPart.putIfAbsent(bodyPart, () => []);
+          byBodyPart[bodyPart]!.add(exercise);
+        }
 
-      debugPrint('🎬 [Netflix] Body parts found: ${byBodyPart.keys.toList()}');
+        debugPrint('🎬 [Netflix] Body parts found: ${byBodyPart.keys.toList()}');
 
-      // Map to display categories
-      // Combine arm muscles into "Arms"
-      final armExercises = <LibraryExercise>[];
-      for (final key in ['Biceps', 'Triceps', 'Forearms']) {
-        armExercises.addAll(byBodyPart[key] ?? []);
-      }
-      if (armExercises.isNotEmpty) {
-        result['Arms'] = armExercises.take(20).toList();
-      }
+        // Map to display categories
+        // Combine arm muscles into "Arms"
+        final armExercises = <LibraryExercise>[];
+        for (final key in ['Biceps', 'Triceps', 'Forearms']) {
+          armExercises.addAll(byBodyPart[key] ?? []);
+        }
+        if (armExercises.isNotEmpty) {
+          result['Arms'] = armExercises.take(20).toList();
+        }
 
-      // Combine leg muscles into "Legs"
-      final legExercises = <LibraryExercise>[];
-      for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
-        legExercises.addAll(byBodyPart[key] ?? []);
-      }
-      if (legExercises.isNotEmpty) {
-        result['Legs'] = legExercises.take(20).toList();
-      }
+        // Combine leg muscles into "Legs"
+        final legExercises = <LibraryExercise>[];
+        for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
+          legExercises.addAll(byBodyPart[key] ?? []);
+        }
+        if (legExercises.isNotEmpty) {
+          result['Legs'] = legExercises.take(20).toList();
+        }
 
-      // Direct mappings for other categories
-      if (byBodyPart['Chest']?.isNotEmpty == true) {
-        result['Chest'] = byBodyPart['Chest']!.take(20).toList();
-      }
-      if (byBodyPart['Back']?.isNotEmpty == true) {
-        result['Back'] = byBodyPart['Back']!.take(20).toList();
-      }
-      if (byBodyPart['Shoulders']?.isNotEmpty == true) {
-        result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
-      }
-      if (byBodyPart['Core']?.isNotEmpty == true) {
-        result['Core'] = byBodyPart['Core']!.take(20).toList();
-      }
+        // Direct mappings for other categories
+        if (byBodyPart['Chest']?.isNotEmpty == true) {
+          result['Chest'] = byBodyPart['Chest']!.take(20).toList();
+        }
+        if (byBodyPart['Back']?.isNotEmpty == true) {
+          result['Back'] = byBodyPart['Back']!.take(20).toList();
+        }
+        if (byBodyPart['Shoulders']?.isNotEmpty == true) {
+          result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
+        }
+        if (byBodyPart['Core']?.isNotEmpty == true) {
+          result['Core'] = byBodyPart['Core']!.take(20).toList();
+        }
 
-      debugPrint('🎬 [Netflix] Categories built: ${result.keys.toList()}');
-      for (final entry in result.entries) {
-        debugPrint('🎬 [Netflix]   ${entry.key}: ${entry.value.length} exercises');
+        debugPrint('🎬 [Netflix] Categories built: ${result.keys.toList()}');
+        for (final entry in result.entries) {
+          debugPrint('🎬 [Netflix]   ${entry.key}: ${entry.value.length} exercises');
+        }
+      } catch (e) {
+        debugPrint('❌ [Netflix] Parse error: $e');
+        throw const ParseException();
       }
+    } else {
+      debugPrint('❌ [Netflix] API error: ${allResponse.statusCode}');
+      throw ApiException(
+        message: 'Failed to load exercises',
+        statusCode: allResponse.statusCode,
+      );
     }
   } catch (e) {
-    debugPrint('❌ [Netflix] Error loading exercises: $e');
+    if (e is AppException) {
+      debugPrint('❌ [Netflix] AppException: ${e.userMessage}');
+      rethrow;
+    }
+    debugPrint('❌ [Netflix] Error: $e');
+    throw ExceptionHandler.handle(e);
   }
 
   return result;

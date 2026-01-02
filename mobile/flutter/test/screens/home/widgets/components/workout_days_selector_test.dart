@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/home/widgets/components/workout_days_selector.dart';
+import 'package:fitwiz/screens/home/widgets/components/workout_days_selector.dart';
 import '../../test_helpers.dart';
 
 void main() {

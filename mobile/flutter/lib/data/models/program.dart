@@ -2,6 +2,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'program.g.dart';
 
+/// A workout program from the library.
+///
+/// This model is used for displaying programs in the Library tab.
+/// It maps to the branded_programs table in the backend.
 @JsonSerializable()
 class LibraryProgram {
   final String id;
@@ -24,6 +28,20 @@ class LibraryProgram {
   @JsonKey(name: 'celebrity_name')
   final String? celebrityName;
 
+  // Additional fields from branded_programs table
+  @JsonKey(name: 'is_featured')
+  final bool? isFeatured;
+  @JsonKey(name: 'is_premium')
+  final bool? isPremium;
+  @JsonKey(name: 'requires_gym')
+  final bool? requiresGym;
+  @JsonKey(name: 'icon_name')
+  final String? iconName;
+  @JsonKey(name: 'color_hex')
+  final String? colorHex;
+  @JsonKey(name: 'split_type')
+  final String? splitType;
+
   LibraryProgram({
     required this.id,
     required this.name,
@@ -38,6 +56,12 @@ class LibraryProgram {
     this.description,
     this.shortDescription,
     this.celebrityName,
+    this.isFeatured,
+    this.isPremium,
+    this.requiresGym,
+    this.iconName,
+    this.colorHex,
+    this.splitType,
   });
 
   factory LibraryProgram.fromJson(Map<String, dynamic> json) =>
@@ -46,13 +70,26 @@ class LibraryProgram {
   Map<String, dynamic> toJson() => _$LibraryProgramToJson(this);
 
   /// Get a display-friendly difficulty string
-  String get difficulty => difficultyLevel ?? 'Unknown';
+  String get difficulty => difficultyLevel ?? 'All Levels';
 
   /// Get duration display string
   String get durationDisplay =>
-      durationWeeks != null ? '$durationWeeks weeks' : 'Varies';
+      durationWeeks != null ? '$durationWeeks weeks' : 'Flexible';
 
   /// Get sessions display string
   String get sessionsDisplay =>
       sessionsPerWeek != null ? '$sessionsPerWeek days/week' : 'Flexible';
+
+  /// Get session duration display string
+  String get sessionDurationDisplay =>
+      sessionDurationMinutes != null ? '$sessionDurationMinutes min' : 'Varies';
+
+  /// Check if this is a featured program
+  bool get featured => isFeatured ?? false;
+
+  /// Check if this is a premium program
+  bool get premium => isPremium ?? false;
+
+  /// Check if this program requires gym equipment
+  bool get gymRequired => requiresGym ?? false;
 }

@@ -1,4 +1,4 @@
-# AI Fitness Coach - UX Review Report
+# FitWiz - UX Review Report
 
 **Reviewer:** Front-End UX Researcher
 **Date:** December 2024
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The AI Fitness Coach app demonstrates a **solid foundation** with modern Material 3 design patterns, good use of color-coding, and thoughtful animations. However, there are several areas where the UX can be improved to reduce cognitive load, improve discoverability, and create a more streamlined user experience.
+The FitWiz app demonstrates a **solid foundation** with modern Material 3 design patterns, good use of color-coding, and thoughtful animations. However, there are several areas where the UX can be improved to reduce cognitive load, improve discoverability, and create a more streamlined user experience.
 
 **Overall Rating:** 7/10
 
@@ -346,7 +346,7 @@ When opening Customize Program, there's a loading spinner with "Loading your pre
 
 Compared to leading fitness apps (Fitbod, Strong, Nike Training Club):
 
-| Feature | AI Fitness Coach | Industry Standard |
+| Feature | FitWiz | Industry Standard |
 |---------|-----------------|-------------------|
 | Onboarding Complexity | High (chat-based) | Medium (wizard) |
 | Customization Options | Very High | Medium |
@@ -360,7 +360,7 @@ Compared to leading fitness apps (Fitbod, Strong, Nike Training Club):
 
 ## Conclusion
 
-The AI Fitness Coach app has a **strong visual foundation** and **powerful features**. The main UX improvements needed are:
+The FitWiz app has a **strong visual foundation** and **powerful features**. The main UX improvements needed are:
 
 1. **Reduce cognitive load** by hiding complexity behind progressive disclosure
 2. **Improve discoverability** of key features like program customization

@@ -273,6 +273,18 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
+          // Billing Reminders (no time picker - server-side)
+          SettingSwitchTile(
+            icon: Icons.receipt_long,
+            title: 'Billing Reminders',
+            subtitle: 'Subscription renewal alerts',
+            value: notifPrefs.billingReminders,
+            onChanged: (value) {
+              ref.read(notificationPreferencesProvider.notifier).setBillingReminders(value);
+            },
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
           // Test Notification Button
           InkWell(
             onTap: _isSendingTest ? null : _sendTestNotification,
@@ -457,7 +469,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       setState(() => _expandedSection = null);
                     }
                   },
-                  activeColor: AppColors.cyan,
+                  activeThumbColor: AppColors.cyan,
                 ),
               ],
             ),
@@ -466,14 +478,20 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
         // Expandable time picker section
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
-          secondChild: Container(
-            margin: const EdgeInsets.only(left: 50, right: 16, bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: cardBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: timeWidget,
+          secondChild: Builder(
+            builder: (context) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final leftMargin = screenWidth < 380 ? 32.0 : 50.0;
+              return Container(
+                margin: EdgeInsets.only(left: leftMargin, right: 16, bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cardBackground,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: timeWidget,
+              );
+            },
           ),
           crossFadeState: isExpanded && value ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),

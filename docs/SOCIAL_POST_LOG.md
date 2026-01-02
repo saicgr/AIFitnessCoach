@@ -1,4 +1,4 @@
-# Social Media Post Log - AI Fitness Coach
+# Social Media Post Log - FitWiz
 
 Track all social media posts to avoid repetition and maintain consistency.
 
@@ -43,7 +43,7 @@ Ideas to post (move to Post History after posting):
 
 ### Build in Public Update
 ```
-Week [X] of building AI Fitness Coach:
+Week [X] of building FitWiz:
 
 What I shipped:
 - [Feature 1]
@@ -78,7 +78,7 @@ Anyone else dealt with this?
 ```
 [Milestone] achieved!
 
-After [X] weeks, AI Fitness Coach now:
+After [X] weeks, FitWiz now:
 - [Feature 1]
 - [Feature 2]
 - [Feature 3]

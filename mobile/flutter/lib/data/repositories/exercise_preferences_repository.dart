@@ -252,6 +252,94 @@ class AvoidedExercise {
   }
 }
 
+/// Model for a substitute exercise suggestion
+class SubstituteExercise {
+  final String name;
+  final String? muscleGroup;
+  final String? equipment;
+  final String? difficulty;
+  final bool isSafeForReason;
+  final String? libraryId;
+  final String? gifUrl;
+
+  const SubstituteExercise({
+    required this.name,
+    this.muscleGroup,
+    this.equipment,
+    this.difficulty,
+    this.isSafeForReason = true,
+    this.libraryId,
+    this.gifUrl,
+  });
+
+  factory SubstituteExercise.fromJson(Map<String, dynamic> json) {
+    return SubstituteExercise(
+      name: json['name'] as String,
+      muscleGroup: json['muscle_group'] as String?,
+      equipment: json['equipment'] as String?,
+      difficulty: json['difficulty'] as String?,
+      isSafeForReason: json['is_safe_for_reason'] as bool? ?? true,
+      libraryId: json['library_id'] as String?,
+      gifUrl: json['gif_url'] as String?,
+    );
+  }
+}
+
+/// Response model for substitute suggestions
+class SubstituteResponse {
+  final String originalExercise;
+  final String? reason;
+  final List<SubstituteExercise> substitutes;
+  final String message;
+
+  const SubstituteResponse({
+    required this.originalExercise,
+    this.reason,
+    required this.substitutes,
+    required this.message,
+  });
+
+  factory SubstituteResponse.fromJson(Map<String, dynamic> json) {
+    return SubstituteResponse(
+      originalExercise: json['original_exercise'] as String,
+      reason: json['reason'] as String?,
+      substitutes: (json['substitutes'] as List<dynamic>?)
+              ?.map((e) => SubstituteExercise.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
+/// Response model for injury-based exercise recommendations
+class InjuryExercisesResponse {
+  final String injuryType;
+  final List<String> exercisesToAvoid;
+  final Map<String, dynamic> safeAlternativesByMuscle;
+  final String message;
+
+  const InjuryExercisesResponse({
+    required this.injuryType,
+    required this.exercisesToAvoid,
+    required this.safeAlternativesByMuscle,
+    required this.message,
+  });
+
+  factory InjuryExercisesResponse.fromJson(Map<String, dynamic> json) {
+    return InjuryExercisesResponse(
+      injuryType: json['injury_type'] as String? ?? '',
+      exercisesToAvoid: (json['exercises_to_avoid'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      safeAlternativesByMuscle:
+          json['safe_alternatives_by_muscle'] as Map<String, dynamic>? ?? {},
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
 /// Model for an avoided muscle group
 class AvoidedMuscle {
   final String id;
@@ -1025,5 +1113,100 @@ class ExercisePreferencesRepository {
         'secondary': ['lower_back', 'upper_back', 'lats', 'traps', 'forearms'],
       };
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Exercise Substitute Suggestions
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Get suggested substitute exercises for an exercise being avoided
+  /// Takes exercise name and optional reason (e.g., "knee injury")
+  Future<SubstituteResponse> getSuggestedSubstitutes(
+    String exerciseName, {
+    String? reason,
+  }) async {
+    debugPrint('🔄 [ExercisePrefs] Getting substitutes for: $exerciseName, reason: $reason');
+
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/suggest-substitutes',
+        data: {
+          'exercise_name': exerciseName,
+          if (reason != null) 'reason': reason,
+        },
+      );
+
+      if (response.data != null) {
+        final result = SubstituteResponse.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Found ${result.substitutes.length} substitutes');
+        return result;
+      }
+
+      return SubstituteResponse(
+        originalExercise: exerciseName,
+        reason: reason,
+        substitutes: [],
+        message: 'No substitutes found',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error getting substitutes: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Get exercises to avoid for a specific injury type
+  /// Useful for bulk-adding avoidances based on injury
+  Future<InjuryExercisesResponse> getExercisesToAvoidForInjury(
+    String injuryType,
+  ) async {
+    debugPrint('🏥 [ExercisePrefs] Getting exercises to avoid for injury: $injuryType');
+
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '${ApiConstants.baseUrl}/api/v1/exercise-preferences/injury-exercises/${Uri.encodeComponent(injuryType)}',
+      );
+
+      if (response.data != null) {
+        final result = InjuryExercisesResponse.fromJson(response.data!);
+        debugPrint('✅ [ExercisePrefs] Found ${result.exercisesToAvoid.length} exercises to avoid');
+        return result;
+      }
+
+      return InjuryExercisesResponse(
+        injuryType: injuryType,
+        exercisesToAvoid: [],
+        safeAlternativesByMuscle: {},
+        message: 'No specific recommendations found',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ExercisePrefs] Error getting injury exercises: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Add an avoided exercise and get substitute suggestions
+  /// Returns the avoided exercise and suggested substitutes
+  Future<({AvoidedExercise avoided, SubstituteResponse substitutes})> addAvoidedExerciseWithSubstitutes(
+    String userId,
+    String exerciseName, {
+    String? reason,
+    bool isTemporary = false,
+    DateTime? endDate,
+  }) async {
+    // First add to avoid list
+    final avoided = await addAvoidedExercise(
+      userId,
+      exerciseName,
+      reason: reason,
+      isTemporary: isTemporary,
+      endDate: endDate,
+    );
+
+    // Then get substitutes
+    final substitutes = await getSuggestedSubstitutes(exerciseName, reason: reason);
+
+    return (avoided: avoided, substitutes: substitutes);
   }
 }

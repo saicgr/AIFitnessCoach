@@ -84,7 +84,7 @@ class SettingsCard extends ConsumerWidget {
                           onChanged: (value) {
                             ref.read(themeModeProvider.notifier).toggle();
                           },
-                          activeColor: AppColors.cyan,
+                          activeThumbColor: AppColors.cyan,
                         )
                       else if (item.trailing != null)
                         item.trailing!

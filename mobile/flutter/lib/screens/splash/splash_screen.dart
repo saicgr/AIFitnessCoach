@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 
 /// Splash screen shown while app initializes and checks auth state.
 /// This prevents the login screen flash when user is already authenticated.

@@ -540,6 +540,32 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          // Info tooltip explaining what this sheet does
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colors.cyan.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.cyan.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: colors.cyan, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Change your weekly schedule, equipment, or difficulty. Your workouts will be regenerated based on your new settings.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.cyan,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

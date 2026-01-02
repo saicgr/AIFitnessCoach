@@ -10,7 +10,7 @@
 
     <!-- Allow specific domains used by the app -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">aifitnesscoach-zqi3.onrender.com</domain>
+        <domain includeSubdomains="true">fitwiz-zqi3.onrender.com</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

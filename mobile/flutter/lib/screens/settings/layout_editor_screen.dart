@@ -89,6 +89,17 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
                   ],
                 ),
               ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(Icons.restore, size: 20),
+                    SizedBox(width: 12),
+                    Text('Reset to Default'),
+                  ],
+                ),
+              ),
               if ((allLayoutsState.value?.length ?? 0) > 1)
                 const PopupMenuItem(
                   value: 'delete',
@@ -619,6 +630,9 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
         final layout = ref.read(activeLayoutProvider).value;
         if (layout != null) _shareLayout(layout);
         break;
+      case 'reset':
+        _resetToDefault();
+        break;
       case 'delete':
         _deleteLayout();
         break;
@@ -655,6 +669,41 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
           .read(allLayoutsProvider.notifier)
           .renameLayout(currentLayout.id, name);
       ref.read(activeLayoutProvider.notifier).refresh();
+    }
+  }
+
+  void _resetToDefault() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset to Default'),
+        content: const Text(
+            'This will reset your home screen layout to the default configuration. Your customizations will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      HapticService.medium();
+      await ref.read(activeLayoutProvider.notifier).resetToDefault();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Layout reset to default'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -776,6 +825,16 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen> {
         return Icons.bedtime;
       case TileType.restDayTip:
         return Icons.spa;
+      case TileType.quickStart:
+        return Icons.play_circle_filled;
+      case TileType.myJourney:
+        return Icons.route;
+      case TileType.progressCharts:
+        return Icons.show_chart;
+      case TileType.roiSummary:
+        return Icons.trending_up;
+      case TileType.weeklyPlan:
+        return Icons.calendar_view_week;
     }
   }
 

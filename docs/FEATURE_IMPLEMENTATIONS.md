@@ -1,6 +1,6 @@
 # Feature Implementations: How They Connect to Your App
 
-This document maps differentiation features to your existing AI Fitness Coach architecture.
+This document maps differentiation features to your existing FitWiz architecture.
 
 ---
 

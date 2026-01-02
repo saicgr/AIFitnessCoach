@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/data/models/nutrition.dart';
-import 'package:ai_fitness_coach/data/models/micronutrients.dart';
-import 'package:ai_fitness_coach/data/models/recipe.dart';
 
 // Test widget wrapper with Material app
 Widget wrapWithMaterialApp(Widget child, {bool isDark = true}) {

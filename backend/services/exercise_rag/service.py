@@ -23,6 +23,8 @@ from .filters import (
     filter_by_equipment,
     is_similar_exercise,
     pre_filter_by_injuries,
+    filter_by_avoided_muscles,
+    parse_secondary_muscles,
 )
 from .search import build_search_query, build_search_query_with_custom_goals
 
@@ -105,20 +107,64 @@ def get_difficulty_numeric(difficulty_value) -> int:
     return DIFFICULTY_STRING_TO_NUM.get(difficulty_str, 5)
 
 
-def is_exercise_too_difficult(exercise_difficulty, user_fitness_level: str) -> bool:
+def get_adjusted_difficulty_ceiling(
+    user_fitness_level: str,
+    difficulty_adjustment: int = 0,
+) -> int:
+    """
+    Get the difficulty ceiling adjusted by user feedback.
+
+    The difficulty adjustment shifts the ceiling up or down based on
+    user feedback from recent workouts:
+    - +2: User finds workouts too easy, allow much harder exercises
+    - +1: User finds workouts somewhat easy, allow slightly harder
+    - 0: No adjustment needed (default)
+    - -1: User finds workouts somewhat hard, use easier exercises
+    - -2: User finds workouts too hard, use much easier exercises
+
+    Args:
+        user_fitness_level: User's fitness level
+        difficulty_adjustment: Adjustment from feedback (-2 to +2)
+
+    Returns:
+        Adjusted difficulty ceiling (clamped to 1-10)
+    """
+    validated_level = validate_fitness_level(user_fitness_level)
+    base_ceiling = DIFFICULTY_CEILING.get(validated_level, 6)
+
+    # Each adjustment point shifts the ceiling by 1
+    adjusted_ceiling = base_ceiling + difficulty_adjustment
+
+    # Clamp to valid range (1-10)
+    adjusted_ceiling = max(1, min(10, adjusted_ceiling))
+
+    if difficulty_adjustment != 0:
+        logger.info(
+            f"[Difficulty Adjustment] fitness_level={validated_level}, "
+            f"base_ceiling={base_ceiling}, adjustment={difficulty_adjustment:+d}, "
+            f"adjusted_ceiling={adjusted_ceiling}"
+        )
+
+    return adjusted_ceiling
+
+
+def is_exercise_too_difficult(
+    exercise_difficulty,
+    user_fitness_level: str,
+    difficulty_adjustment: int = 0,
+) -> bool:
     """
     Check if an exercise is too difficult for a user's fitness level.
 
     Args:
         exercise_difficulty: The exercise's difficulty (string or numeric)
         user_fitness_level: User's fitness level ("beginner", "intermediate", "advanced")
+        difficulty_adjustment: Adjustment from user feedback (-2 to +2)
 
     Returns:
         True if the exercise should be filtered out, False if OK
     """
-    # Validate fitness level to prevent None.lower() errors
-    validated_level = validate_fitness_level(user_fitness_level)
-    max_difficulty = DIFFICULTY_CEILING.get(validated_level, 6)
+    max_difficulty = get_adjusted_difficulty_ceiling(user_fitness_level, difficulty_adjustment)
     exercise_difficulty_num = get_difficulty_numeric(exercise_difficulty)
 
     return exercise_difficulty_num > max_difficulty
@@ -334,6 +380,9 @@ class ExerciseRAGService:
         avoided_muscles: Optional[Dict[str, List[str]]] = None,
         progression_pace: str = "medium",
         workout_type_preference: str = "strength",
+        readiness_score: Optional[int] = None,
+        user_mood: Optional[str] = None,
+        difficulty_adjustment: int = 0,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -361,6 +410,10 @@ class ExerciseRAGService:
             avoided_muscles: Dict with 'avoid' (completely skip) and 'reduce' (lower priority) muscle lists
             progression_pace: User's progression pace - "slow", "medium", or "fast"
             workout_type_preference: User's workout type - "strength", "cardio", "mixed", "mobility", "recovery"
+            readiness_score: User's readiness score (0-100) - affects workout intensity
+            user_mood: User's current mood - affects workout type recommendation
+            difficulty_adjustment: Feedback-based difficulty adjustment (-2 to +2).
+                                   Positive values allow harder exercises, negative use easier ones.
 
         Returns:
             List of selected exercises with full details
@@ -369,6 +422,18 @@ class ExerciseRAGService:
         logger.info(f"Equipment: {equipment}, Dumbbells: {dumbbell_count}, Kettlebells: {kettlebell_count}")
         logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
         logger.info(f"Progression pace: {progression_pace}, Workout type preference: {workout_type_preference}")
+
+        # Log readiness and mood for AI consistency tracking
+        if readiness_score is not None:
+            logger.info(f"🎯 [AI Consistency] Readiness score: {readiness_score}")
+            if readiness_score < 50:
+                logger.info(f"   -> Low readiness: Will adjust workout intensity DOWN")
+            elif readiness_score > 70:
+                logger.info(f"   -> High readiness: Can handle higher intensity")
+        if user_mood:
+            logger.info(f"🎯 [AI Consistency] User mood: {user_mood}")
+            if user_mood.lower() in ["tired", "stressed", "anxious"]:
+                logger.info(f"   -> {user_mood}: Will suggest recovery-focused exercises")
         if staple_exercises:
             logger.info(f"User has {len(staple_exercises)} staple exercises (never rotated)")
             # CRITICAL: Never put staples in avoid list - they should always be included
@@ -399,9 +464,15 @@ class ExerciseRAGService:
         if validated_fitness_level != fitness_level:
             logger.info(f"[Exercise Selection] Normalized fitness_level: '{fitness_level}' -> '{validated_fitness_level}'")
 
-        # Log difficulty filtering context
-        max_difficulty = DIFFICULTY_CEILING.get(validated_fitness_level, 6)
-        logger.info(f"[Exercise Selection] fitness_level={validated_fitness_level}, max_difficulty={max_difficulty} (1-10 scale)")
+        # Log difficulty filtering context (with feedback adjustment)
+        base_max_difficulty = DIFFICULTY_CEILING.get(validated_fitness_level, 6)
+        adjusted_max_difficulty = get_adjusted_difficulty_ceiling(validated_fitness_level, difficulty_adjustment)
+        if difficulty_adjustment != 0:
+            logger.info(
+                f"🎯 [Feedback Adjustment] Applying difficulty_adjustment={difficulty_adjustment:+d}, "
+                f"base_ceiling={base_max_difficulty} -> adjusted_ceiling={adjusted_max_difficulty}"
+            )
+        logger.info(f"[Exercise Selection] fitness_level={validated_fitness_level}, max_difficulty={adjusted_max_difficulty} (1-10 scale)")
 
         # Build search query (with custom goals if user_id provided)
         if user_id:
@@ -427,100 +498,119 @@ class ExerciseRAGService:
             logger.error("No exercises found in RAG")
             raise ValueError(f"No exercises found in RAG for focus_area={focus_area}")
 
-        # Format candidates
-        candidates = []
-        seen_exercises: List[str] = []
+        # Helper function to filter and format exercise candidates
+        def _filter_exercises(require_media: bool = True) -> tuple[list, list]:
+            """Filter exercises based on criteria. Returns (candidates, seen_exercises)."""
+            filtered_candidates = []
+            seen = []
+            no_media_count = 0
 
-        for i, doc_id in enumerate(results["ids"][0]):
-            meta = results["metadatas"][0][i]
-            distance = results["distances"][0][i]
-            similarity = 1 - (distance / 2)
+            for i, doc_id in enumerate(results["ids"][0]):
+                meta = results["metadatas"][0][i]
+                distance = results["distances"][0][i]
+                similarity = 1 - (distance / 2)
 
-            # Skip exercises to avoid
-            if avoid_exercises and meta.get("name", "").lower() in [e.lower() for e in avoid_exercises]:
-                continue
-
-            # Get equipment info
-            raw_ex_equipment = (meta.get("equipment", "") or "").lower().strip()
-            exercise_name_for_inference = meta.get("name", "")
-            if not raw_ex_equipment or raw_ex_equipment in ["bodyweight", "body weight", "none"]:
-                ex_equipment = infer_equipment_from_name(exercise_name_for_inference).lower()
-            else:
-                ex_equipment = raw_ex_equipment
-
-            # Filter by equipment
-            if not filter_by_equipment(ex_equipment, equipment, meta.get("name", "")):
-                logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
-                continue
-
-            # Filter out exercises without media
-            has_video = meta.get("has_video", "false") == "true"
-            gif_url = meta.get("gif_url", "")
-            video_url = meta.get("video_url", "")
-            image_url = meta.get("image_url", "")
-            has_media = has_video or bool(gif_url) or bool(video_url) or bool(image_url)
-            if not has_media:
-                continue
-
-            # Filter by single equipment compatibility
-            if dumbbell_count == 1 and "dumbbell" in ex_equipment:
-                single_db_friendly = meta.get("single_dumbbell_friendly", "false") == "true"
-                if not single_db_friendly:
+                # Skip exercises to avoid
+                if avoid_exercises and meta.get("name", "").lower() in [e.lower() for e in avoid_exercises]:
                     continue
 
-            if kettlebell_count == 1 and "kettlebell" in ex_equipment:
-                single_kb_friendly = meta.get("single_kettlebell_friendly", "false") == "true"
-                if not single_kb_friendly:
+                # Get equipment info
+                raw_ex_equipment = (meta.get("equipment", "") or "").lower().strip()
+                exercise_name_for_inference = meta.get("name", "")
+                if not raw_ex_equipment or raw_ex_equipment in ["bodyweight", "body weight", "none"]:
+                    ex_equipment = infer_equipment_from_name(exercise_name_for_inference).lower()
+                else:
+                    ex_equipment = raw_ex_equipment
+
+                # Filter by equipment
+                if not filter_by_equipment(ex_equipment, equipment, meta.get("name", "")):
+                    logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
                     continue
 
-            # Filter by difficulty - prevent advanced exercises for beginners
-            exercise_difficulty = meta.get("difficulty", "intermediate")
-            if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level):
-                logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
-                continue
+                # Filter out exercises without media (optional based on require_media flag)
+                has_video = meta.get("has_video", "false") == "true"
+                gif_url = meta.get("gif_url", "")
+                video_url = meta.get("video_url", "")
+                image_url = meta.get("image_url", "")
+                has_media = has_video or bool(gif_url) or bool(video_url) or bool(image_url)
+                if require_media and not has_media:
+                    no_media_count += 1
+                    logger.debug(f"Filtered out '{meta.get('name')}' - no media (video/gif/image)")
+                    continue
 
-            # Clean name for display
-            raw_name = meta.get("name", "Unknown")
-            exercise_name = clean_exercise_name_for_display(raw_name)
+                # Filter by single equipment compatibility
+                if dumbbell_count == 1 and "dumbbell" in ex_equipment:
+                    single_db_friendly = meta.get("single_dumbbell_friendly", "false") == "true"
+                    if not single_db_friendly:
+                        continue
 
-            # Skip similar exercises
-            is_duplicate = False
-            for seen_name in seen_exercises:
-                if is_similar_exercise(exercise_name, seen_name):
-                    is_duplicate = True
-                    break
+                if kettlebell_count == 1 and "kettlebell" in ex_equipment:
+                    single_kb_friendly = meta.get("single_kettlebell_friendly", "false") == "true"
+                    if not single_kb_friendly:
+                        continue
 
-            if is_duplicate:
-                continue
+                # Filter by difficulty - prevent advanced exercises for beginners
+                # Uses feedback-based difficulty_adjustment to shift ceiling
+                exercise_difficulty = meta.get("difficulty", "intermediate")
+                if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                    logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level} (adjusted)")
+                    continue
 
-            seen_exercises.append(exercise_name)
+                # Clean name for display
+                raw_name = meta.get("name", "Unknown")
+                exercise_name = clean_exercise_name_for_display(raw_name)
 
-            # Get equipment
-            raw_eq = meta.get("equipment", "")
-            if not raw_eq or raw_eq.lower() in ["bodyweight", "body weight", "none", ""]:
-                eq = infer_equipment_from_name(exercise_name)
-            else:
-                eq = raw_eq
+                # Skip similar exercises
+                is_duplicate = False
+                for seen_name in seen:
+                    if is_similar_exercise(exercise_name, seen_name):
+                        is_duplicate = True
+                        break
 
-            candidates.append({
-                "id": meta.get("exercise_id", ""),
-                "name": exercise_name,
-                "body_part": meta.get("body_part", ""),
-                "equipment": eq,
-                "target_muscle": meta.get("target_muscle", ""),
-                "difficulty": meta.get("difficulty", "intermediate"),
-                "gif_url": meta.get("gif_url", ""),
-                "video_url": meta.get("video_url", ""),
-                "image_url": meta.get("image_url", ""),
-                "instructions": meta.get("instructions", ""),
-                "similarity": similarity,
-                "single_dumbbell_friendly": meta.get("single_dumbbell_friendly", "false") == "true",
-                "single_kettlebell_friendly": meta.get("single_kettlebell_friendly", "false") == "true",
-                "alternating_hands": meta.get("single_dumbbell_friendly", "false") == "true",
-            })
+                if is_duplicate:
+                    continue
+
+                seen.append(exercise_name)
+
+                # Get equipment
+                raw_eq = meta.get("equipment", "")
+                if not raw_eq or raw_eq.lower() in ["bodyweight", "body weight", "none", ""]:
+                    eq = infer_equipment_from_name(exercise_name)
+                else:
+                    eq = raw_eq
+
+                filtered_candidates.append({
+                    "id": meta.get("exercise_id", ""),
+                    "name": exercise_name,
+                    "body_part": meta.get("body_part", ""),
+                    "equipment": eq,
+                    "target_muscle": meta.get("target_muscle", ""),
+                    "difficulty": meta.get("difficulty", "intermediate"),
+                    "gif_url": meta.get("gif_url", ""),
+                    "video_url": meta.get("video_url", ""),
+                    "image_url": meta.get("image_url", ""),
+                    "instructions": meta.get("instructions", ""),
+                    "similarity": similarity,
+                    "single_dumbbell_friendly": meta.get("single_dumbbell_friendly", "false") == "true",
+                    "single_kettlebell_friendly": meta.get("single_kettlebell_friendly", "false") == "true",
+                    "alternating_hands": meta.get("single_dumbbell_friendly", "false") == "true",
+                })
+
+            if require_media and no_media_count > 0:
+                logger.info(f"Filtered out {no_media_count} exercises due to missing media")
+
+            return filtered_candidates, seen
+
+        # First pass: require media
+        candidates, seen_exercises = _filter_exercises(require_media=True)
+
+        # If no candidates with media, try again without media requirement
+        if not candidates:
+            logger.warning(f"No exercises with media found for focus_area={focus_area}, trying without media requirement")
+            candidates, seen_exercises = _filter_exercises(require_media=False)
 
         if not candidates:
-            logger.error("No compatible exercises found after filtering")
+            logger.error("No compatible exercises found after filtering (even without media requirement)")
             raise ValueError(f"No compatible exercises found for focus_area={focus_area}, equipment={equipment}")
 
         # Pre-filter for injuries
@@ -532,53 +622,25 @@ class ExerciseRAGService:
             else:
                 logger.warning("Pre-filter removed all candidates, keeping original list")
 
-        # Filter by avoided muscles
+        # Filter by avoided muscles (now includes secondary muscles with >20% involvement)
         if avoided_muscles:
-            avoid_muscles_list = [m.lower() for m in avoided_muscles.get("avoid", [])]
-            reduce_muscles_list = [m.lower() for m in avoided_muscles.get("reduce", [])]
+            original_count = len(candidates)
+            candidates, primary_filtered, secondary_filtered = filter_by_avoided_muscles(
+                candidates, avoided_muscles
+            )
 
-            if avoid_muscles_list:
-                # Completely filter out exercises targeting avoided muscles
-                filtered_candidates = []
-                for candidate in candidates:
-                    target_muscle = (candidate.get("target_muscle") or "").lower()
-                    body_part = (candidate.get("body_part") or "").lower()
+            if primary_filtered > 0 or secondary_filtered > 0:
+                logger.info(
+                    f"Avoided muscles filter: {original_count} -> {len(candidates)} exercises "
+                    f"(primary: {primary_filtered}, secondary: {secondary_filtered} filtered)"
+                )
 
-                    # Check if exercise targets any avoided muscle
-                    targets_avoided = False
-                    for avoided in avoid_muscles_list:
-                        # Check target muscle and body part for matches
-                        if avoided in target_muscle or avoided in body_part:
-                            targets_avoided = True
-                            logger.debug(f"Filtered out '{candidate['name']}' - targets avoided muscle: {avoided}")
-                            break
+            if not candidates:
+                logger.warning("Avoided muscles filter removed all candidates, this should not happen")
+                # This is a safety net - the filter_by_avoided_muscles should handle this gracefully
 
-                    if not targets_avoided:
-                        filtered_candidates.append(candidate)
-
-                if filtered_candidates:
-                    logger.info(f"Avoided muscles filter: {len(candidates)} -> {len(filtered_candidates)} exercises")
-                    candidates = filtered_candidates
-                else:
-                    logger.warning("Avoided muscles filter removed all candidates, keeping original list")
-
-            if reduce_muscles_list:
-                # Reduce priority of exercises targeting "reduce" muscles (penalty instead of exclusion)
-                for candidate in candidates:
-                    target_muscle = (candidate.get("target_muscle") or "").lower()
-                    body_part = (candidate.get("body_part") or "").lower()
-
-                    for reduced in reduce_muscles_list:
-                        if reduced in target_muscle or reduced in body_part:
-                            # Apply 50% penalty (0.5x multiplier) to reduce priority
-                            original_sim = candidate["similarity"]
-                            candidate["similarity"] = candidate["similarity"] * 0.5
-                            candidate["reduced_muscle_penalty"] = True
-                            logger.debug(f"Reduced priority for '{candidate['name']}' - targets reduced muscle: {reduced} ({original_sim:.2f} -> {candidate['similarity']:.2f})")
-                            break
-
-                # Re-sort after penalty application
-                candidates.sort(key=lambda x: x["similarity"], reverse=True)
+            # Re-sort after penalty application (reduce muscles apply penalties)
+            candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
 
         # Apply workout type preference filtering
         # Different workout types prioritize different exercise categories
@@ -730,6 +792,52 @@ class ExerciseRAGService:
         # Staples and queued take priority
         remaining_count = count - len(staple_included) - len(queued_included)
 
+        # =============================================================================
+        # AI CONSISTENCY: Adjust workout params based on readiness and mood
+        # =============================================================================
+        adjusted_workout_params = workout_params or {}
+        if readiness_score is not None or user_mood:
+            # Apply readiness and mood adjustments to workout parameters
+            if readiness_score is not None:
+                if readiness_score < 50:
+                    # Low readiness - reduce intensity
+                    base_sets = adjusted_workout_params.get("sets", 3)
+                    base_reps = adjusted_workout_params.get("reps", 10)
+                    base_rest = adjusted_workout_params.get("rest_seconds", 60)
+
+                    adjusted_workout_params = dict(adjusted_workout_params)
+                    adjusted_workout_params["sets"] = max(2, int(base_sets * 0.8))
+                    adjusted_workout_params["reps"] = max(6, int(base_reps * 0.8) if isinstance(base_reps, int) else 8)
+                    adjusted_workout_params["rest_seconds"] = int(base_rest * 1.3)
+                    adjusted_workout_params["readiness_adjustment"] = "low_readiness"
+                    logger.info(f"🎯 [AI Consistency] Low readiness ({readiness_score}): Reduced sets/reps by 20%, increased rest by 30%")
+
+                elif readiness_score > 70:
+                    # High readiness - can push harder
+                    base_sets = adjusted_workout_params.get("sets", 3)
+                    base_reps = adjusted_workout_params.get("reps", 10)
+                    base_rest = adjusted_workout_params.get("rest_seconds", 60)
+
+                    adjusted_workout_params = dict(adjusted_workout_params)
+                    adjusted_workout_params["sets"] = min(5, int(base_sets * 1.1))
+                    adjusted_workout_params["reps"] = min(15, int(base_reps * 1.1) if isinstance(base_reps, int) else 12)
+                    adjusted_workout_params["rest_seconds"] = max(45, int(base_rest * 0.9))
+                    adjusted_workout_params["readiness_adjustment"] = "high_readiness"
+                    logger.info(f"🎯 [AI Consistency] High readiness ({readiness_score}): Increased intensity by 10%")
+
+            if user_mood and user_mood.lower() in ["tired", "stressed", "anxious"]:
+                # Further reduce for tired/stressed mood
+                current_sets = adjusted_workout_params.get("sets", 3)
+                current_reps = adjusted_workout_params.get("reps", 10)
+                current_rest = adjusted_workout_params.get("rest_seconds", 60)
+
+                adjusted_workout_params = dict(adjusted_workout_params)
+                adjusted_workout_params["sets"] = max(2, int(current_sets * 0.9))
+                adjusted_workout_params["reps"] = max(5, int(current_reps * 0.9) if isinstance(current_reps, int) else 8)
+                adjusted_workout_params["rest_seconds"] = int(current_rest * 1.2)
+                adjusted_workout_params["mood_adjustment"] = user_mood.lower()
+                logger.info(f"🎯 [AI Consistency] Mood ({user_mood}): Further reduced intensity")
+
         if remaining_count > 0:
             # Use AI to select remaining exercises
             selected = await self._ai_select_exercises(
@@ -739,7 +847,7 @@ class ExerciseRAGService:
                 goals=goals,
                 count=remaining_count,
                 injuries=injuries,
-                workout_params=workout_params,
+                workout_params=adjusted_workout_params,
                 strength_history=strength_history,
                 progression_pace=progression_pace,
             )
@@ -748,11 +856,11 @@ class ExerciseRAGService:
 
         # Format staple and queued exercises (AI-selected are already formatted)
         formatted_staples = [
-            self._format_exercise_for_workout(ex, fitness_level, workout_params, strength_history, progression_pace)
+            self._format_exercise_for_workout(ex, fitness_level, adjusted_workout_params, strength_history, progression_pace)
             for ex in staple_included
         ]
         formatted_queued = [
-            self._format_exercise_for_workout(ex, fitness_level, workout_params, strength_history, progression_pace)
+            self._format_exercise_for_workout(ex, fitness_level, adjusted_workout_params, strength_history, progression_pace)
             for ex in queued_included
         ]
 
@@ -775,6 +883,14 @@ class ExerciseRAGService:
             "consistency_boosted_count": sum(1 for ex in final_selection if ex.get("consistency_boosted")),
             "historical_weights_available": len(strength_history) if strength_history else 0,
             "variation_percentage": variation_percentage,
+            # AI consistency tracking
+            "readiness_score": readiness_score,
+            "readiness_adjustment": adjusted_workout_params.get("readiness_adjustment"),
+            "user_mood": user_mood,
+            "mood_adjustment": adjusted_workout_params.get("mood_adjustment"),
+            # Feedback-based difficulty adjustment
+            "difficulty_adjustment": difficulty_adjustment,
+            "difficulty_ceiling_used": adjusted_max_difficulty,
         }
 
         # Attach metadata to first exercise (will be extracted by generation.py)

@@ -140,3 +140,43 @@ class GoalSummary(BaseModel):
     completed_this_week: int = 0
     prs_this_week: int = 0
     total_volume_this_week: int = 0
+
+
+# ============================================================
+# WORKOUT SYNC MODELS
+# ============================================================
+
+class ExercisePerformance(BaseModel):
+    """Performance data for a single exercise from workout."""
+    exercise_name: str
+    total_reps: int = 0
+    total_sets: int = 0
+    max_reps_in_set: int = 0  # For single_max goals
+
+
+class WorkoutSyncRequest(BaseModel):
+    """Request to sync workout data with personal goals."""
+    workout_log_id: Optional[str] = Field(None, description="Workout log ID for tracking")
+    exercises: List[ExercisePerformance] = Field(..., description="List of exercises performed")
+
+
+class SyncedGoalUpdate(BaseModel):
+    """Information about a goal that was updated from workout sync."""
+    goal_id: str
+    exercise_name: str
+    goal_type: GoalType
+    volume_added: int = 0
+    new_current_value: int
+    target_value: int
+    is_now_completed: bool = False
+    is_new_pr: bool = False
+    progress_percentage: float = 0.0
+
+
+class WorkoutSyncResponse(BaseModel):
+    """Response from workout sync operation."""
+    synced_goals: List[SyncedGoalUpdate] = []
+    total_goals_updated: int = 0
+    total_volume_added: int = 0
+    new_prs: int = 0
+    message: str = ""

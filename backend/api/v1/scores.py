@@ -1009,7 +1009,7 @@ async def calculate_nutrition_score(
         "week_start", previous_week_start.isoformat()
     ).maybe_single().execute()
 
-    previous_score = previous_response.data.get("nutrition_score") if previous_response.data else None
+    previous_score = previous_response.data.get("nutrition_score") if previous_response and previous_response.data else None
 
     # Save to database
     record_data = {
@@ -1215,7 +1215,7 @@ async def calculate_fitness_score(
         "week_start", week_start.isoformat()
     ).maybe_single().execute()
 
-    nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response.data else 0
+    nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
 
     # 4. Get readiness score (7-day average)
     seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
@@ -1239,7 +1239,7 @@ async def calculate_fitness_score(
         "calculated_at", desc=True
     ).limit(1).maybe_single().execute()
 
-    previous_score = previous_response.data.get("overall_fitness_score") if previous_response.data else None
+    previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
 
     # 6. Calculate overall fitness score
     score = fitness_service.calculate_fitness_score(
@@ -1464,8 +1464,8 @@ async def get_scores_overview(
         "week_start", week_start.isoformat()
     ).maybe_single().execute()
 
-    nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response.data else None
-    nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response.data else None
+    nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response and nutrition_response.data else None
+    nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response and nutrition_response.data else None
 
     # Get latest fitness score
     fitness_response = db.client.table("fitness_scores").select(
@@ -1476,9 +1476,9 @@ async def get_scores_overview(
         "calculated_at", desc=True
     ).limit(1).maybe_single().execute()
 
-    overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response.data else None
-    fitness_level = fitness_response.data.get("fitness_level") if fitness_response.data else None
-    consistency_score = fitness_response.data.get("consistency_score") if fitness_response.data else None
+    overall_fitness_score = fitness_response.data.get("overall_fitness_score") if fitness_response and fitness_response.data else None
+    fitness_level = fitness_response.data.get("fitness_level") if fitness_response and fitness_response.data else None
+    consistency_score = fitness_response.data.get("consistency_score") if fitness_response and fitness_response.data else None
 
     return ScoresOverviewResponse(
         user_id=user_id,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-import 'theme_provider.dart';
 
 /// Theme-aware color accessor that simplifies getting the right color for current theme.
 ///

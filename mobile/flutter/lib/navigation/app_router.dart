@@ -7,6 +7,7 @@ import '../data/repositories/auth_repository.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
+import '../screens/auth/pricing_preview_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
 import '../screens/home/home_screen.dart';
@@ -30,6 +31,7 @@ import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';
+import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/help_screen.dart';
@@ -50,11 +52,17 @@ import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
 import '../screens/progress/progress_screen.dart';
+import '../screens/progress/milestones_screen.dart';
+import '../screens/progress/charts/progress_charts_screen.dart';
+import '../screens/progress/consistency_screen.dart';
+import '../screens/progress/exercise_history/exercise_history_screen.dart';
+import '../screens/progress/exercise_history/exercise_progress_detail_screen.dart';
+import '../screens/progress/muscle_analytics/muscle_analytics_screen.dart';
+import '../screens/progress/muscle_analytics/muscle_detail_screen.dart';
 import '../data/models/exercise.dart';
 import '../widgets/main_shell.dart';
 import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
-import '../data/services/deep_link_service.dart';
 import '../screens/nutrition/widget_log_trigger_screen.dart';
 import '../screens/nutrition/recipe_suggestions_screen.dart';
 import '../screens/mood/mood_history_screen.dart';
@@ -62,6 +70,42 @@ import '../screens/scores/scoring_screen.dart';
 import '../screens/custom_exercises/custom_exercises_screen.dart';
 import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
 import '../screens/settings/exercise_preferences/avoided_muscles_screen.dart';
+import '../screens/settings/support/support_tickets_screen.dart';
+import '../screens/settings/support/create_ticket_screen.dart';
+import '../screens/settings/support/ticket_detail_screen.dart';
+import '../screens/settings/subscription/subscription_history_screen.dart';
+import '../screens/settings/subscription/request_refund_screen.dart';
+import '../screens/settings/subscription/subscription_management_screen.dart';
+import '../screens/skills/skill_progressions_screen.dart';
+import '../screens/skills/chain_detail_screen.dart';
+import '../screens/demo/demo_workout_screen.dart';
+import '../screens/demo/plan_preview_screen.dart';
+import '../screens/tour/app_tour_screen.dart';
+import '../screens/guest/guest_home_screen.dart';
+import '../screens/guest/guest_library_screen.dart';
+import '../screens/programs/program_selection_screen.dart';
+import '../screens/cardio/log_cardio_screen.dart';
+import '../screens/neat/neat_dashboard_screen.dart';
+import '../screens/live_chat/live_chat_screen.dart';
+import '../screens/admin_support/admin_support_list_screen.dart';
+import '../screens/admin_support/admin_chat_screen.dart';
+import '../screens/calibration/calibration_intro_screen.dart';
+import '../screens/calibration/calibration_workout_screen.dart';
+import '../screens/calibration/calibration_results_screen.dart';
+import '../data/providers/guest_mode_provider.dart';
+import '../screens/injuries/injuries_list_screen.dart';
+import '../screens/injuries/report_injury_screen.dart';
+import '../screens/injuries/injury_detail_screen.dart';
+import '../screens/strain_prevention/strain_dashboard_screen.dart';
+import '../screens/strain_prevention/volume_history_screen.dart';
+import '../screens/strain_prevention/report_strain_screen.dart';
+import '../screens/settings/senior_fitness_screen.dart';
+import '../screens/settings/progression_pace_screen.dart';
+import '../screens/weekly_plan/weekly_plan_screen.dart';
+import '../screens/hormonal_health/hormonal_health_screen.dart';
+import '../screens/hormonal_health/hormonal_health_settings_screen.dart';
+import '../screens/kegel/kegel_session_screen.dart';
+import '../screens/habits/habit_tracker_screen.dart';
 
 /// Listenable for auth, language, and accessibility state changes to trigger router refresh
 class _AuthStateNotifier extends ChangeNotifier {
@@ -98,7 +142,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final languageState = ref.read(languageProvider);
       final accessibilitySettings = ref.read(accessibilityProvider);
 
-      // Handle widget deep links (aifitnesscoach://) that come through as path only
+      // Handle widget deep links (fitwiz://) that come through as path only
       // The full URI gets parsed and only the path portion reaches go_router
       final fullUri = state.uri;
       debugPrint('Router redirect - uri: $fullUri, matchedLocation: ${state.matchedLocation}');
@@ -148,11 +192,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
+      final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
       final isOnCoachSelection = state.matchedLocation == '/coach-selection';
       final isOnPaywallFeatures = state.matchedLocation == '/paywall-features';
       final isOnPaywallTimeline = state.matchedLocation == '/paywall-timeline';
       final isOnPaywallPricing = state.matchedLocation == '/paywall-pricing';
       final isOnPaywall = isOnPaywallFeatures || isOnPaywallTimeline || isOnPaywallPricing;
+      final isOnDemoWorkout = state.matchedLocation == '/demo-workout';
+      final isOnPlanPreview = state.matchedLocation == '/plan-preview';
+      final isOnGuestHome = state.matchedLocation == '/guest-home';
+      final isOnGuestLibrary = state.matchedLocation == '/guest-library';
+      final isGuestRoute = isOnGuestHome || isOnGuestLibrary;
+
+      // Check if user is in guest mode
+      final isGuestMode = ref.read(guestModeProvider).isGuestMode;
 
       // Helper to get the next step in onboarding flow for logged-in users
       String? getNextOnboardingStep(app_user.User user) {
@@ -200,14 +253,46 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null; // Stay on stats welcome
       }
 
-      // Allow pre-auth quiz, preview, sign-in screens for non-logged-in users
+      // Allow demo workout and plan preview screens for anyone (no auth required)
+      // This lets users preview workouts and their personalized plan before signing up
+      // Addressing user complaint: "After giving all personal info, it requires subscription to see the personal plan"
+      if (isOnDemoWorkout || isOnPlanPreview) {
+        return null; // Allow demo/preview screens for all users
+      }
+
+      // Allow guest mode routes for users in guest mode
+      if (isGuestRoute) {
+        if (isGuestMode) {
+          return null; // Allow - user is in guest mode
+        }
+        // Not in guest mode, redirect to appropriate location
+        if (isLoggedIn) {
+          return getHomeRoute();
+        }
+        return '/stats-welcome';
+      }
+
+      // If in guest mode and trying to access authenticated routes, redirect to guest home
+      if (isGuestMode && !isLoggedIn && !isOnSplash && !isOnStatsWelcome &&
+          !isOnPreAuthQuiz && !isOnPreview && !isOnSignIn && !isOnPricingPreview && !isOnDemoWorkout && !isOnPlanPreview) {
+        // Check if this is an allowed guest route
+        if (!isGuestRoute) {
+          return '/guest-home';
+        }
+      }
+
+      // Allow pre-auth quiz, preview, sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn) {
+      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
         if (isLoggedIn) {
           final user = authState.user;
           // Allow pre-auth quiz if user is starting over (coach not selected)
           if (isOnPreAuthQuiz && user != null && !user.isCoachSelected) {
             return null; // Allow - user is starting over
+          }
+          // Allow pricing preview for logged-in users too (they might want to see pricing)
+          if (isOnPricingPreview) {
+            return null; // Allow - user wants to see pricing
           }
           if (user != null) {
             final nextStep = getNextOnboardingStep(user);
@@ -280,6 +365,168 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stats-welcome',
         builder: (context, state) => const StatsWelcomeScreen(),
+      ),
+
+      // Pricing Preview - see pricing before creating account (pre-auth)
+      GoRoute(
+        path: '/pricing-preview',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PricingPreviewScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.1),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Demo Workout - sample workout preview before sign-up (no auth required)
+      GoRoute(
+        path: '/demo-workout',
+        pageBuilder: (context, state) {
+          // Optional workout type can be passed as query parameter
+          final workoutType = state.uri.queryParameters['type'];
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: DemoWorkoutScreen(workoutType: workoutType),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // App Tour - Interactive walkthrough of app features for new users
+      // Can be restarted from Settings > App Tour & Demo
+      GoRoute(
+        path: '/app-tour',
+        pageBuilder: (context, state) {
+          // Source can be passed as extra data (new_user, settings, deep_link)
+          final extra = state.extra as Map<String, dynamic>?;
+          final source = extra?['source'] as String? ?? 'new_user';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: AppTourScreen(source: source),
+            transitionDuration: const Duration(milliseconds: 500),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Plan Preview - Show full 4-week personalized workout plan BEFORE subscription
+      // This addresses user complaint: "After giving all personal info, it requires subscription to see the personal plan"
+      GoRoute(
+        path: '/plan-preview',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PlanPreviewScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                ),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Guest Home - limited preview for non-authenticated users
+      GoRoute(
+        path: '/guest-home',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const GuestHomeScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Guest Library - limited exercise library for non-authenticated users
+      GoRoute(
+        path: '/guest-library',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const GuestLibraryScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
 
       // Pre-Auth Quiz - 5 questions before sign-in
@@ -517,6 +764,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ChatScreen(),
       ),
 
+      // Live Chat - Human support
+      GoRoute(
+        path: '/live-chat',
+        builder: (context, state) => const LiveChatScreen(),
+      ),
+
+      // Admin Support - List of support chats (admin only)
+      GoRoute(
+        path: '/admin-support',
+        builder: (context, state) => const AdminSupportListScreen(),
+      ),
+
+      // Admin Support - Chat detail (admin only)
+      GoRoute(
+        path: '/admin-support/chat/:ticketId',
+        builder: (context, state) {
+          final ticketId = state.pathParameters['ticketId']!;
+          return AdminChatScreen(ticketId: ticketId);
+        },
+      ),
+
       // Workout detail
       GoRoute(
         path: '/workout/:id',
@@ -622,14 +890,57 @@ final routerProvider = Provider<GoRouter>((ref) {
             challengeId: data['challengeId'] as String?,
             challengeData: data['challengeData'] as Map<String, dynamic>?,
             personalRecords: data['personalRecords'] as List<PersonalRecordInfo>?,
+            performanceComparison: data['performanceComparison'] as PerformanceComparisonInfo?,
           );
         },
+      ),
+
+      // Custom Workout Builder - Create your own workout from scratch
+      GoRoute(
+        path: '/workout/build',
+        builder: (context, state) => const CustomWorkoutBuilderScreen(),
       ),
 
       // Achievements
       GoRoute(
         path: '/achievements',
         builder: (context, state) => const AchievementsScreen(),
+      ),
+
+      // Progress Milestones & ROI
+      GoRoute(
+        path: '/progress/milestones',
+        builder: (context, state) => const MilestonesScreen(),
+      ),
+
+      // Exercise History - Per-exercise workout history
+      GoRoute(
+        path: '/progress/exercise-history',
+        builder: (context, state) => const ExerciseHistoryScreen(),
+      ),
+
+      // Exercise Detail - Specific exercise progression
+      GoRoute(
+        path: '/progress/exercise-history/:exerciseName',
+        builder: (context, state) {
+          final exerciseName = Uri.decodeComponent(state.pathParameters['exerciseName'] ?? '');
+          return ExerciseProgressDetailScreen(exerciseName: exerciseName);
+        },
+      ),
+
+      // Muscle Analytics Dashboard - Heatmap, frequency, balance
+      GoRoute(
+        path: '/progress/muscle-analytics',
+        builder: (context, state) => const MuscleAnalyticsScreen(),
+      ),
+
+      // Muscle Detail - Specific muscle group analytics
+      GoRoute(
+        path: '/progress/muscle-analytics/:muscleGroup',
+        builder: (context, state) {
+          final muscleGroup = Uri.decodeComponent(state.pathParameters['muscleGroup'] ?? '');
+          return MuscleDetailScreen(muscleGroup: muscleGroup);
+        },
       ),
 
       // Feature Voting (Robinhood-style)
@@ -644,10 +955,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LibraryScreen(),
       ),
 
+      // Branded Programs Selection Screen
+      GoRoute(
+        path: '/programs',
+        builder: (context, state) => const ProgramSelectionScreen(),
+      ),
+
       // Hydration
       GoRoute(
         path: '/hydration',
         builder: (context, state) => const HydrationScreen(),
+      ),
+
+      // NEAT Dashboard - Daily Activity & Step Goals
+      GoRoute(
+        path: '/neat',
+        builder: (context, state) => const NeatDashboardScreen(),
       ),
 
       // Weekly Summaries
@@ -728,6 +1051,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HelpScreen(),
       ),
 
+      // Support Tickets - List all user tickets
+      GoRoute(
+        path: '/support-tickets',
+        builder: (context, state) => const SupportTicketsScreen(),
+      ),
+
+      // Support Tickets - Create new ticket
+      GoRoute(
+        path: '/support-tickets/create',
+        builder: (context, state) => const CreateTicketScreen(),
+      ),
+
+      // Support Tickets - View ticket detail
+      GoRoute(
+        path: '/support-tickets/:id',
+        builder: (context, state) {
+          final ticketId = state.pathParameters['id']!;
+          return TicketDetailScreen(ticketId: ticketId);
+        },
+      ),
+
       // AI Settings
       GoRoute(
         path: '/ai-settings',
@@ -792,6 +1136,364 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/mood-history',
         builder: (context, state) => const MoodHistoryScreen(),
+      ),
+
+      // Subscription History
+      GoRoute(
+        path: '/subscription-history',
+        builder: (context, state) => const SubscriptionHistoryScreen(),
+      ),
+
+      // Request Refund
+      GoRoute(
+        path: '/request-refund',
+        builder: (context, state) => const RequestRefundScreen(),
+      ),
+
+      // Subscription Management - Cancel, Pause, Resume
+      GoRoute(
+        path: '/subscription-management',
+        builder: (context, state) => const SubscriptionManagementScreen(),
+      ),
+
+      // Skill Progressions - List of all skill chains
+      GoRoute(
+        path: '/skills',
+        builder: (context, state) => const SkillProgressionsScreen(),
+      ),
+
+      // Skill Progression Detail - Individual chain with steps
+      GoRoute(
+        path: '/skills/:chainId',
+        builder: (context, state) {
+          final chainId = state.pathParameters['chainId']!;
+          return ChainDetailScreen(chainId: chainId);
+        },
+      ),
+
+      // Cardio Logging - Log cardio sessions (running, cycling, swimming, etc.)
+      GoRoute(
+        path: '/log-cardio',
+        builder: (context, state) {
+          // Optional workoutId can be passed as extra data
+          final workoutId = state.extra as String?;
+          return LogCardioScreen(workoutId: workoutId);
+        },
+      ),
+
+      // Progress Charts - Visual progress charts (strength over time, volume over time)
+      GoRoute(
+        path: '/progress-charts',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ProgressChartsScreen(),
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Consistency Insights - Streak tracking, patterns, and recovery
+      GoRoute(
+        path: '/consistency',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ConsistencyScreen(),
+          transitionDuration: const Duration(milliseconds: 300),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Calibration Intro - Introduction screen before calibration workout
+      GoRoute(
+        path: '/calibration/intro',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final fromOnboarding = extra?['fromOnboarding'] as bool? ?? false;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CalibrationIntroScreen(fromOnboarding: fromOnboarding),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Calibration Workout - The actual calibration exercises
+      GoRoute(
+        path: '/calibration/workout',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final fromOnboarding = extra?['fromOnboarding'] as bool? ?? false;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CalibrationWorkoutScreen(fromOnboarding: fromOnboarding),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Calibration Results - Shows calibration results and suggested adjustments
+      GoRoute(
+        path: '/calibration/results',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra == null) {
+            // Fallback if no data
+            return const NoTransitionPage(
+              child: Scaffold(
+                body: Center(child: Text('No calibration data')),
+              ),
+            );
+          }
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CalibrationResultsScreen(
+              fromOnboarding: extra['fromOnboarding'] as bool? ?? false,
+              calibrationId: extra['calibrationId'] as String,
+              exercises: extra['exercises'] as List<CalibrationExercise>,
+              result: extra['result'] as Map<String, dynamic>,
+              durationSeconds: extra['durationSeconds'] as int,
+            ),
+            transitionDuration: const Duration(milliseconds: 500),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Injuries List - View and manage all injuries
+      GoRoute(
+        path: '/injuries',
+        builder: (context, state) => const InjuriesListScreen(),
+      ),
+
+      // Report Injury - Report a new injury
+      GoRoute(
+        path: '/injuries/report',
+        builder: (context, state) => const ReportInjuryScreen(),
+      ),
+
+      // Injury Detail - View details of a specific injury
+      GoRoute(
+        path: '/injuries/:id',
+        builder: (context, state) {
+          final injuryId = state.pathParameters['id']!;
+          return InjuryDetailScreen(injuryId: injuryId);
+        },
+      ),
+
+      // Strain Prevention Dashboard - Volume tracking and strain prevention
+      GoRoute(
+        path: '/strain-prevention',
+        builder: (context, state) => const StrainDashboardScreen(),
+      ),
+
+      // Volume History - Historical volume data
+      GoRoute(
+        path: '/strain-prevention/history',
+        builder: (context, state) => const VolumeHistoryScreen(),
+      ),
+
+      // Report Strain - Report muscle strain or fatigue
+      GoRoute(
+        path: '/strain-prevention/report',
+        builder: (context, state) => const ReportStrainScreen(),
+      ),
+
+      // Senior Fitness Settings - Age-adapted workout settings (for users 60+)
+      GoRoute(
+        path: '/settings/senior-fitness',
+        builder: (context, state) => const SeniorFitnessScreen(),
+      ),
+
+      // Progression Pace Settings - Control weight progression speed
+      GoRoute(
+        path: '/settings/progression-pace',
+        builder: (context, state) => const ProgressionPaceScreen(),
+      ),
+
+      // Weekly Plan - Holistic planning with workouts, nutrition, and fasting
+      GoRoute(
+        path: '/weekly-plan',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const WeeklyPlanScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Hormonal Health - Dashboard and cycle tracking
+      GoRoute(
+        path: '/hormonal-health',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HormonalHealthScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
+      // Hormonal Health Settings - Profile and preferences
+      GoRoute(
+        path: '/hormonal-health/settings',
+        builder: (context, state) => const HormonalHealthSettingsScreen(),
+      ),
+
+      // Kegel Session - Guided pelvic floor workout with timer
+      GoRoute(
+        path: '/kegel-session',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: KegelSessionScreen(
+              exerciseId: extra?['exerciseId'] as String?,
+              fromWorkout: extra?['fromWorkout'] as bool? ?? false,
+              workoutId: extra?['workoutId'] as String?,
+            ),
+            transitionDuration: const Duration(milliseconds: 500),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
+      // Habit Tracker - Simple daily habit tracking (water, steps, no sugar, etc.)
+      GoRoute(
+        path: '/habits',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const HabitTrackerScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

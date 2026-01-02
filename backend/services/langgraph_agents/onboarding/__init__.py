@@ -1,5 +1,5 @@
 """
-Onboarding agent for AI Fitness Coach.
+Onboarding agent for FitWiz.
 
 Uses LangGraph to conduct natural, AI-driven conversations instead of hardcoded questions.
 """

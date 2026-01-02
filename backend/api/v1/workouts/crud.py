@@ -8,6 +8,7 @@ This module handles basic create, read, update, delete operations for workouts:
 - PUT /{id} - Update workout
 - DELETE /{id} - Delete workout
 - POST /{id}/complete - Mark workout as completed (with PR detection & strength recalc)
+- GET /{id}/comparison - Get performance comparison for a completed workout
 """
 import json
 from datetime import datetime, date, timedelta
@@ -33,6 +34,8 @@ from services.strength_calculator_service import StrengthCalculatorService, Musc
 from services.ai_insights_service import ai_insights_service
 from services.fitness_score_calculator_service import FitnessScoreCalculatorService
 from services.nutrition_calculator_service import NutritionCalculatorService
+from services.performance_comparison_service import PerformanceComparisonService
+from services.user_context_service import user_context_service
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -52,10 +55,87 @@ class PersonalRecordInfo(BaseModel):
     celebration_message: Optional[str] = None
 
 
+class ExerciseComparisonInfo(BaseModel):
+    """Comparison data for a single exercise vs previous session."""
+    exercise_name: str
+    exercise_id: Optional[str] = None
+
+    # Current session
+    current_sets: int = 0
+    current_reps: int = 0
+    current_volume_kg: float = 0.0
+    current_max_weight_kg: Optional[float] = None
+    current_1rm_kg: Optional[float] = None
+    current_time_seconds: Optional[int] = None
+
+    # Previous session
+    previous_sets: Optional[int] = None
+    previous_reps: Optional[int] = None
+    previous_volume_kg: Optional[float] = None
+    previous_max_weight_kg: Optional[float] = None
+    previous_1rm_kg: Optional[float] = None
+    previous_time_seconds: Optional[int] = None
+    previous_date: Optional[datetime] = None
+
+    # Differences
+    volume_diff_kg: Optional[float] = None
+    volume_diff_percent: Optional[float] = None
+    weight_diff_kg: Optional[float] = None
+    weight_diff_percent: Optional[float] = None
+    rm_diff_kg: Optional[float] = None
+    rm_diff_percent: Optional[float] = None
+    time_diff_seconds: Optional[int] = None
+    time_diff_percent: Optional[float] = None
+    reps_diff: Optional[int] = None
+    sets_diff: Optional[int] = None
+
+    # Status: 'improved', 'maintained', 'declined', 'first_time'
+    status: str = 'first_time'
+
+
+class WorkoutComparisonInfo(BaseModel):
+    """Comparison data for overall workout vs previous similar workout."""
+    # Current workout
+    current_duration_seconds: int = 0
+    current_total_volume_kg: float = 0.0
+    current_total_sets: int = 0
+    current_total_reps: int = 0
+    current_exercises: int = 0
+    current_calories: int = 0
+
+    # Previous workout
+    has_previous: bool = False
+    previous_duration_seconds: Optional[int] = None
+    previous_total_volume_kg: Optional[float] = None
+    previous_total_sets: Optional[int] = None
+    previous_total_reps: Optional[int] = None
+    previous_performed_at: Optional[datetime] = None
+
+    # Differences
+    duration_diff_seconds: Optional[int] = None
+    duration_diff_percent: Optional[float] = None
+    volume_diff_kg: Optional[float] = None
+    volume_diff_percent: Optional[float] = None
+
+    # Overall status
+    overall_status: str = 'first_time'
+
+
+class PerformanceComparisonInfo(BaseModel):
+    """Complete performance comparison for workout completion."""
+    workout_comparison: WorkoutComparisonInfo
+    exercise_comparisons: List[ExerciseComparisonInfo] = []
+    improved_count: int = 0
+    maintained_count: int = 0
+    declined_count: int = 0
+    first_time_count: int = 0
+
+
 class WorkoutCompletionResponse(BaseModel):
-    """Extended response for workout completion including PRs."""
+    """Extended response for workout completion including PRs and performance comparison."""
     workout: Workout
     personal_records: List[PersonalRecordInfo] = []
+    performance_comparison: Optional[PerformanceComparisonInfo] = None
     strength_scores_updated: bool = False
     fitness_score_updated: bool = False
     message: str = "Workout completed successfully"
@@ -409,6 +489,254 @@ async def complete_workout(
 
         await index_workout_to_rag(workout)
 
+        # =====================================================================
+        # Performance Comparison - Track improvements/setbacks vs previous session
+        # =====================================================================
+        performance_comparison: Optional[PerformanceComparisonInfo] = None
+
+        try:
+            comparison_service = PerformanceComparisonService()
+
+            # Build workout stats from the completed workout
+            total_volume = 0.0
+            total_sets = 0
+            total_reps = 0
+
+            exercises = existing.get("exercises") or existing.get("exercises_json") or []
+            if isinstance(exercises, str):
+                exercises = json.loads(exercises)
+
+            exercises_performance = []
+            for ex in exercises:
+                sets = ex.get("sets", [])
+                completed_sets = [s for s in sets if s.get("completed", True)]
+                ex_volume = sum(
+                    (s.get("reps", 0) or s.get("reps_completed", 0)) * s.get("weight_kg", 0)
+                    for s in completed_sets
+                )
+                ex_reps = sum(s.get("reps", 0) or s.get("reps_completed", 0) for s in completed_sets)
+                total_volume += ex_volume
+                total_sets += len(completed_sets)
+                total_reps += ex_reps
+
+                exercises_performance.append({
+                    "exercise_name": ex.get("name", ""),
+                    "exercise_id": ex.get("id") or ex.get("exercise_id"),
+                    "sets": sets,
+                })
+
+            # Get workout log for this workout (if exists)
+            workout_log_response = supabase.table("workout_logs").select(
+                "id, total_time_seconds"
+            ).eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()
+
+            workout_log_id = None
+            duration_seconds = 0
+            if workout_log_response.data:
+                workout_log_id = workout_log_response.data[0].get("id")
+                duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
+
+            # Build current workout stats
+            workout_stats = {
+                "workout_name": workout.name,
+                "workout_type": workout.type,
+                "total_sets": total_sets,
+                "total_reps": total_reps,
+                "total_volume_kg": total_volume,
+                "duration_seconds": duration_seconds,
+                "calories": 0,  # Will be calculated from duration
+                "new_prs_count": len(detected_prs),
+                "completed_at": datetime.now(),
+            }
+
+            # Build and store performance summaries
+            if workout_log_id:
+                workout_summary, exercise_summaries = comparison_service.build_performance_summary(
+                    workout_log_id=workout_log_id,
+                    user_id=user_id,
+                    workout_id=workout_id,
+                    exercises_performance=exercises_performance,
+                    workout_stats=workout_stats,
+                )
+
+                # Store workout performance summary
+                try:
+                    supabase.table("workout_performance_summary").upsert(
+                        workout_summary,
+                        on_conflict="workout_log_id"
+                    ).execute()
+                except Exception as e:
+                    logger.warning(f"Failed to store workout summary: {e}")
+
+                # Store exercise performance summaries
+                for ex_summary in exercise_summaries:
+                    try:
+                        supabase.table("exercise_performance_summary").upsert(
+                            ex_summary,
+                            on_conflict="workout_log_id,exercise_name"
+                        ).execute()
+                    except Exception as e:
+                        logger.warning(f"Failed to store exercise summary: {e}")
+
+            # Calculate comparisons for each exercise
+            exercise_comparisons: List[ExerciseComparisonInfo] = []
+
+            for ex_perf in exercises_performance:
+                ex_name = ex_perf.get("exercise_name", "")
+                if not ex_name:
+                    continue
+
+                # Get previous performance for this exercise
+                prev_response = supabase.rpc(
+                    "get_previous_exercise_performance",
+                    {
+                        "p_user_id": user_id,
+                        "p_exercise_name": ex_name,
+                        "p_current_workout_log_id": workout_log_id,
+                        "p_limit": 1,
+                    }
+                ).execute()
+
+                previous_performances = prev_response.data if prev_response.data else []
+
+                # Build current performance dict
+                sets = ex_perf.get("sets", [])
+                completed_sets = [s for s in sets if s.get("completed", True)]
+                weights = [s.get("weight_kg", 0) for s in completed_sets if s.get("weight_kg", 0) > 0]
+                reps_list = [s.get("reps", 0) or s.get("reps_completed", 0) for s in completed_sets]
+
+                current_perf = {
+                    "exercise_id": ex_perf.get("exercise_id"),
+                    "total_sets": len(completed_sets),
+                    "total_reps": sum(reps_list),
+                    "total_volume_kg": sum(r * w for r, w in zip(reps_list, weights) if w > 0),
+                    "max_weight_kg": max(weights) if weights else None,
+                    "estimated_1rm_kg": None,  # Will be calculated
+                }
+
+                # Calculate 1RM
+                if completed_sets:
+                    best_1rm = 0
+                    for s in completed_sets:
+                        reps = s.get("reps", 0) or s.get("reps_completed", 0)
+                        weight = s.get("weight_kg", 0)
+                        if weight > 0 and 0 < reps < 37:
+                            set_1rm = weight * (36 / (37 - reps))
+                            best_1rm = max(best_1rm, set_1rm)
+                    if best_1rm > 0:
+                        current_perf["estimated_1rm_kg"] = round(best_1rm, 2)
+
+                comparison = comparison_service.compute_exercise_comparison(
+                    exercise_name=ex_name,
+                    current_performance=current_perf,
+                    previous_performances=previous_performances,
+                )
+
+                # Check if this exercise has a PR
+                comparison.is_pr = any(
+                    pr.exercise_name.lower() == ex_name.lower()
+                    for pr in detected_prs
+                )
+
+                exercise_comparisons.append(ExerciseComparisonInfo(
+                    exercise_name=comparison.exercise_name,
+                    exercise_id=comparison.exercise_id,
+                    current_sets=comparison.current_sets,
+                    current_reps=comparison.current_reps,
+                    current_volume_kg=comparison.current_volume_kg,
+                    current_max_weight_kg=comparison.current_max_weight_kg,
+                    current_1rm_kg=comparison.current_1rm_kg,
+                    current_time_seconds=comparison.current_time_seconds,
+                    previous_sets=comparison.previous_sets,
+                    previous_reps=comparison.previous_reps,
+                    previous_volume_kg=comparison.previous_volume_kg,
+                    previous_max_weight_kg=comparison.previous_max_weight_kg,
+                    previous_1rm_kg=comparison.previous_1rm_kg,
+                    previous_time_seconds=comparison.previous_time_seconds,
+                    previous_date=comparison.previous_date,
+                    volume_diff_kg=comparison.volume_diff_kg,
+                    volume_diff_percent=comparison.volume_diff_percent,
+                    weight_diff_kg=comparison.weight_diff_kg,
+                    weight_diff_percent=comparison.weight_diff_percent,
+                    rm_diff_kg=comparison.rm_diff_kg,
+                    rm_diff_percent=comparison.rm_diff_percent,
+                    time_diff_seconds=comparison.time_diff_seconds,
+                    time_diff_percent=comparison.time_diff_percent,
+                    reps_diff=comparison.reps_diff,
+                    sets_diff=comparison.sets_diff,
+                    status=comparison.status,
+                ))
+
+            # Count statuses
+            improved_count = sum(1 for e in exercise_comparisons if e.status == 'improved')
+            maintained_count = sum(1 for e in exercise_comparisons if e.status == 'maintained')
+            declined_count = sum(1 for e in exercise_comparisons if e.status == 'declined')
+            first_time_count = sum(1 for e in exercise_comparisons if e.status == 'first_time')
+
+            # Get previous workout for overall comparison
+            prev_workout_response = supabase.table("workout_performance_summary").select(
+                "*"
+            ).eq("user_id", user_id).neq(
+                "workout_log_id", workout_log_id or ""
+            ).order("performed_at", desc=True).limit(1).execute()
+
+            prev_workout_stats = prev_workout_response.data[0] if prev_workout_response.data else None
+
+            workout_comparison = comparison_service.compute_workout_comparison(
+                current_stats=workout_stats,
+                previous_stats=prev_workout_stats,
+            )
+
+            performance_comparison = PerformanceComparisonInfo(
+                workout_comparison=WorkoutComparisonInfo(
+                    current_duration_seconds=workout_comparison.current_duration_seconds,
+                    current_total_volume_kg=workout_comparison.current_total_volume_kg,
+                    current_total_sets=workout_comparison.current_total_sets,
+                    current_total_reps=workout_comparison.current_total_reps,
+                    current_exercises=workout_comparison.current_exercises,
+                    current_calories=workout_comparison.current_calories,
+                    has_previous=workout_comparison.has_previous,
+                    previous_duration_seconds=workout_comparison.previous_duration_seconds,
+                    previous_total_volume_kg=workout_comparison.previous_total_volume_kg,
+                    previous_total_sets=workout_comparison.previous_total_sets,
+                    previous_total_reps=workout_comparison.previous_total_reps,
+                    previous_performed_at=workout_comparison.previous_performed_at,
+                    duration_diff_seconds=workout_comparison.duration_diff_seconds,
+                    duration_diff_percent=workout_comparison.duration_diff_percent,
+                    volume_diff_kg=workout_comparison.volume_diff_kg,
+                    volume_diff_percent=workout_comparison.volume_diff_percent,
+                    overall_status=workout_comparison.overall_status,
+                ),
+                exercise_comparisons=exercise_comparisons,
+                improved_count=improved_count,
+                maintained_count=maintained_count,
+                declined_count=declined_count,
+                first_time_count=first_time_count,
+            )
+
+            logger.info(f"Performance comparison: {improved_count} improved, {declined_count} declined, {maintained_count} maintained")
+
+            # Log performance comparison view for analytics
+            try:
+                await user_context_service.log_performance_comparison_viewed(
+                    user_id=user_id,
+                    workout_id=str(workout_id),
+                    workout_log_id=workout_log_id or "",
+                    improved_count=improved_count,
+                    declined_count=declined_count,
+                    first_time_count=first_time_count,
+                    exercises_compared=len(exercise_comparisons),
+                    duration_diff_seconds=workout_comparison.duration_diff_seconds,
+                    volume_diff_percentage=workout_comparison.volume_diff_percent,
+                )
+            except Exception as log_error:
+                logger.warning(f"Failed to log performance comparison view: {log_error}")
+                # Non-critical, continue
+
+        except Exception as e:
+            logger.error(f"Error calculating performance comparison: {e}")
+            # Continue even if comparison fails
+
         # Build response message
         if detected_prs:
             pr_count = len(detected_prs)
@@ -419,6 +747,7 @@ async def complete_workout(
         return WorkoutCompletionResponse(
             workout=workout,
             personal_records=detected_prs,
+            performance_comparison=performance_comparison,
             strength_scores_updated=True,
             fitness_score_updated=True,
             message=message,
@@ -623,7 +952,7 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             "week_start", week_start.isoformat()
         ).maybe_single().execute()
 
-        nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response.data else 0
+        nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
 
         # 4. Get readiness score (7-day average)
         seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
@@ -647,7 +976,7 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             "calculated_at", desc=True
         ).limit(1).maybe_single().execute()
 
-        previous_score = previous_response.data.get("overall_fitness_score") if previous_response.data else None
+        previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
 
         # 6. Calculate overall fitness score
         score = fitness_service.calculate_fitness_score(

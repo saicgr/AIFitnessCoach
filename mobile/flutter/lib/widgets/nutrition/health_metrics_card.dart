@@ -727,7 +727,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '${reading.value.toStringAsFixed(0)}',
+                  reading.value.toStringAsFixed(0),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -803,7 +803,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '${dose.units.toStringAsFixed(1)}',
+                  dose.units.toStringAsFixed(1),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

@@ -1,5 +1,5 @@
 """
-Unified database facade for AI Fitness Coach.
+Unified database facade for FitWiz.
 
 Provides a single interface to all database operations while
 delegating to specialized modules for maintainability.

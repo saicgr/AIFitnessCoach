@@ -31,7 +31,7 @@ Be sure to check if the feature already exists for below request
 New feature recommendation
 
 "
-testorsterone, ostegrone, kegel, man and woman hormonal diet and exercises in library and generations and suggestions and preference to enable kegels etc and changes
+Simple Habit tracker (not eating outside, not doordashin, eating healthy, walking 10k steps etc)
 " 
 
 Compare and contrast every part of the reqest with this flutter app and see what needs improved and implemented.

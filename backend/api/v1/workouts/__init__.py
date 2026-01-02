@@ -13,6 +13,11 @@ from the following submodules:
 - exit_tracking: Workout exit/quit tracking
 - program: Program customization
 - program_history: Program history and snapshots
+- weight_suggestions: AI weight suggestions
+- set_adjustments: Set adjustment operations during active workouts
+- today: Today's workout for quick start widget
+- quick: Quick workouts (5-15 min) for busy users
+- modifications: Active workout modifications (body part exclusion, exercise replacement)
 """
 from fastapi import APIRouter
 
@@ -27,6 +32,10 @@ from .exit_tracking import router as exit_tracking_router
 from .program import router as program_router
 from .program_history import router as program_history_router
 from .weight_suggestions import router as weight_suggestions_router
+from .set_adjustments import router as set_adjustments_router
+from .today import router as today_router
+from .quick import router as quick_router
+from .modifications import router as modifications_router
 
 # Create the combined router
 router = APIRouter()
@@ -65,6 +74,18 @@ router.include_router(program_history_router)
 # AI weight suggestion endpoints
 router.include_router(weight_suggestions_router)
 
+# Set adjustment endpoints (tracking set modifications during workouts)
+router.include_router(set_adjustments_router)
+
+# Today's workout endpoint (quick start widget)
+router.include_router(today_router)
+
+# Quick workout endpoints (5-15 min workouts for busy users)
+router.include_router(quick_router)
+
+# Workout modification endpoints (body part exclusion, exercise replacement)
+router.include_router(modifications_router)
+
 # Re-export commonly used utilities
 from .utils import (
     row_to_workout,
@@ -77,6 +98,7 @@ from .utils import (
     calculate_monthly_dates,
     extract_name_words,
     get_workout_rag_service,
+    enrich_exercises_with_video_urls,
 )
 
 __all__ = [
@@ -91,4 +113,5 @@ __all__ = [
     'calculate_monthly_dates',
     'extract_name_words',
     'get_workout_rag_service',
+    'enrich_exercises_with_video_urls',
 ]

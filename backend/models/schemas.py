@@ -69,6 +69,35 @@ from models.notifications import (
     NotificationPreferencesUpdate,
 )
 
+from models.support import (
+    TicketCategory,
+    TicketPriority,
+    TicketStatus,
+    MessageSender,
+    SupportTicketMessageCreate,
+    SupportTicketMessage,
+    SupportTicketCreate,
+    SupportTicketUpdate,
+    SupportTicket,
+    SupportTicketWithMessages,
+    SupportTicketSummary,
+    SupportTicketReplyResponse,
+    SupportTicketCloseResponse,
+    SupportTicketStatsResponse,
+)
+
+from models.cardio_session import (
+    CardioType,
+    CardioLocation,
+    CardioSessionCreate,
+    CardioSessionUpdate,
+    CardioSession,
+    CardioSessionSummary,
+    CardioSessionsListResponse,
+    CardioTypeStats,
+    CardioSessionStatsResponse,
+)
+
 # Workout models - kept here as they are the most complex and heavily used
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -184,6 +213,20 @@ class AddExerciseRequest(BaseModel):
     sets: Optional[int] = Field(default=3, ge=1, le=10)
     reps: Optional[str] = Field(default="8-12", max_length=20)
     rest_seconds: Optional[int] = Field(default=60, ge=0, le=300)
+
+
+class ExtendWorkoutRequest(BaseModel):
+    """Request to extend a workout with additional AI-generated exercises.
+
+    Used when users feel the workout wasn't enough and want to "do more".
+    The AI will generate complementary exercises based on the existing workout.
+    """
+    workout_id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    additional_exercises: Optional[int] = Field(default=3, ge=1, le=6, description="Number of exercises to add (1-6)")
+    additional_duration_minutes: Optional[int] = Field(default=15, ge=5, le=30, description="Additional minutes to add (5-30)")
+    focus_same_muscles: Optional[bool] = Field(default=True, description="If true, add exercises for same muscle groups; if false, add complementary muscle groups")
+    intensity: Optional[str] = Field(default=None, max_length=20, description="Override intensity: 'lighter', 'same', 'harder'")
 
 
 class RegenerateWorkoutRequest(BaseModel):
@@ -552,3 +595,188 @@ class UpdateWarmupExercisesRequest(BaseModel):
 
 class UpdateStretchExercisesRequest(BaseModel):
     exercises: List[StretchExercise] = Field(..., max_length=20)
+
+
+# ============================================
+# Set Adjustment Models
+# ============================================
+
+class AdjustmentType(str):
+    """Valid types of set adjustments."""
+    SET_REMOVED = "set_removed"
+    SET_SKIPPED = "set_skipped"
+    SETS_REDUCED = "sets_reduced"
+    EXERCISE_ENDED_EARLY = "exercise_ended_early"
+    SET_EDITED = "set_edited"
+    SET_DELETED = "set_deleted"
+
+
+class AdjustmentReason(str):
+    """Common reasons for set adjustments."""
+    FATIGUE = "fatigue"
+    TIME_CONSTRAINT = "time_constraint"
+    PAIN = "pain"
+    EQUIPMENT_ISSUE = "equipment_issue"
+    OTHER = "other"
+
+
+class SetAdjustmentRequest(BaseModel):
+    """Request to adjust sets during an active workout."""
+    exercise_index: int = Field(..., ge=0, description="Index of the exercise in the workout")
+    exercise_id: Optional[str] = Field(default=None, max_length=100, description="Optional exercise ID for tracking")
+    exercise_name: str = Field(..., max_length=200, description="Name of the exercise being adjusted")
+    adjustment_type: str = Field(
+        ...,
+        max_length=50,
+        description="Type of adjustment: set_removed, set_skipped, sets_reduced, exercise_ended_early, set_edited, set_deleted"
+    )
+    original_sets: int = Field(..., ge=1, le=20, description="Original number of sets planned")
+    adjusted_sets: int = Field(..., ge=0, le=20, description="New number of sets after adjustment")
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=50,
+        description="Reason for adjustment: fatigue, time_constraint, pain, equipment_issue, other"
+    )
+    reason_details: Optional[str] = Field(default=None, max_length=500, description="Additional details about the reason")
+    set_number: Optional[int] = Field(default=None, ge=1, le=20, description="Specific set number for individual set operations")
+    metadata: Optional[dict] = Field(default=None, description="Additional metadata for the adjustment")
+
+
+class SetAdjustmentResponse(BaseModel):
+    """Response after recording a set adjustment."""
+    adjustment_id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    adjustment_type: str = Field(..., max_length=50)
+    original_sets: int = Field(..., ge=1, le=20)
+    adjusted_sets: int = Field(..., ge=0, le=20)
+    recorded_at: datetime
+    message: str = Field(..., max_length=500)
+
+
+class EditSetRequest(BaseModel):
+    """Request to edit a completed set's reps/weight."""
+    exercise_index: int = Field(..., ge=0, description="Index of the exercise in the workout")
+    exercise_name: str = Field(..., max_length=200, description="Name of the exercise")
+    new_reps: int = Field(..., ge=0, le=100, description="New number of reps")
+    new_weight: float = Field(..., ge=0, le=1000, description="New weight in kg")
+    previous_reps: int = Field(..., ge=0, le=100, description="Previous number of reps before edit")
+    previous_weight: float = Field(..., ge=0, le=1000, description="Previous weight in kg before edit")
+
+
+class EditSetResponse(BaseModel):
+    """Response after editing a completed set."""
+    success: bool
+    workout_id: str = Field(..., max_length=100)
+    set_number: int = Field(..., ge=1, le=20)
+    exercise_name: str = Field(..., max_length=200)
+    previous_reps: int = Field(..., ge=0)
+    previous_weight: float = Field(..., ge=0)
+    new_reps: int = Field(..., ge=0)
+    new_weight: float = Field(..., ge=0)
+    edited_at: datetime
+    message: str = Field(..., max_length=500)
+
+
+class DeleteSetResponse(BaseModel):
+    """Response after deleting a completed set."""
+    success: bool
+    workout_id: str = Field(..., max_length=100)
+    set_number: int = Field(..., ge=1, le=20)
+    exercise_name: str = Field(..., max_length=200)
+    exercise_index: int = Field(..., ge=0)
+    deleted_at: datetime
+    message: str = Field(..., max_length=500)
+
+
+class SetAdjustmentRecord(BaseModel):
+    """A recorded set adjustment for a workout."""
+    id: str = Field(..., max_length=100)
+    workout_id: str = Field(..., max_length=100)
+    user_id: str = Field(..., max_length=100)
+    exercise_index: int = Field(..., ge=0)
+    exercise_id: Optional[str] = Field(default=None, max_length=100)
+    exercise_name: str = Field(..., max_length=200)
+    adjustment_type: str = Field(..., max_length=50)
+    original_sets: int = Field(..., ge=1, le=20)
+    adjusted_sets: int = Field(..., ge=0, le=20)
+    reason: Optional[str] = Field(default=None, max_length=50)
+    reason_details: Optional[str] = Field(default=None, max_length=500)
+    set_number: Optional[int] = Field(default=None, ge=1, le=20)
+    metadata: Optional[dict] = None
+    recorded_at: datetime
+
+
+class WorkoutAdjustmentsResponse(BaseModel):
+    """All adjustments made during a workout."""
+    workout_id: str = Field(..., max_length=100)
+    adjustments: List[SetAdjustmentRecord] = Field(default=[], max_length=100)
+    total_adjustments: int = Field(default=0, ge=0)
+    adjustment_summary: Optional[dict] = None
+
+
+class ExerciseAdjustmentPattern(BaseModel):
+    """Pattern analysis for a specific exercise."""
+    exercise_name: str = Field(..., max_length=200)
+    exercise_id: Optional[str] = Field(default=None, max_length=100)
+    total_adjustments: int = Field(default=0, ge=0)
+    avg_sets_reduced: float = Field(default=0, ge=0)
+    most_common_reason: Optional[str] = Field(default=None, max_length=50)
+    reason_distribution: Optional[dict] = None
+    adjustment_type_distribution: Optional[dict] = None
+    last_adjustment_date: Optional[datetime] = None
+
+
+class UserSetAdjustmentPatternsResponse(BaseModel):
+    """User's set adjustment patterns for AI personalization."""
+    user_id: str = Field(..., max_length=100)
+    analysis_period_days: int = Field(default=90, ge=1, le=365)
+    total_workouts_analyzed: int = Field(default=0, ge=0)
+    total_adjustments: int = Field(default=0, ge=0)
+
+    # Overall patterns
+    avg_adjustments_per_workout: float = Field(default=0, ge=0)
+    most_common_adjustment_type: Optional[str] = Field(default=None, max_length=50)
+    most_common_reason: Optional[str] = Field(default=None, max_length=50)
+
+    # Per-exercise patterns
+    frequently_adjusted_exercises: List[ExerciseAdjustmentPattern] = Field(default=[], max_length=50)
+
+    # Reason analysis
+    reason_distribution: Optional[dict] = None
+
+    # Time patterns
+    adjustments_by_workout_duration: Optional[dict] = None
+    adjustments_by_time_of_day: Optional[dict] = None
+
+    # Recommendations based on patterns
+    ai_recommendations: Optional[List[str]] = Field(default=None, max_length=10)
+
+
+# ============================================
+# Quick Workout Models
+# ============================================
+
+class QuickWorkoutRequest(BaseModel):
+    """Request to generate a quick workout for busy users."""
+    user_id: str = Field(..., max_length=100)
+    duration: int = Field(
+        default=10,
+        ge=5,
+        le=15,
+        description="Workout duration in minutes (5, 10, or 15)"
+    )
+    focus: Optional[str] = Field(
+        default=None,
+        max_length=50,
+        description="Optional focus: cardio, strength, stretch, or full_body"
+    )
+
+
+class QuickWorkoutResponse(BaseModel):
+    """Response containing the generated quick workout."""
+    workout: Workout
+    message: str = Field(..., max_length=500)
+    duration_minutes: int = Field(..., ge=5, le=15)
+    focus: Optional[str] = Field(default=None, max_length=50)
+    exercises_count: int = Field(..., ge=0)

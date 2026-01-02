@@ -994,7 +994,86 @@ PROGRAMS = [
         "description": "Elite athletic conditioning program for men seeking peak performance.",
         "short_description": "Elite conditioning"
     },
+
+    # ============================================================
+    # ULTIMATE STRENGTH BUILDER PROGRAM (Complete Strength Mastery)
+    # ============================================================
+    {
+        "program_name": "Ultimate Strength Builder",
+        "program_category": "Goal-Based",
+        "program_subcategory": "Muscle Building",
+        "country": ["Global"],
+        "celebrity_name": None,
+        "difficulty_level": "Intermediate",
+        "duration_weeks": 12,
+        "sessions_per_week": 4,
+        "session_duration_minutes": 60,
+        "tags": ["strength", "powerlifting", "compound", "progressive overload", "periodization"],
+        "goals": ["Build Strength", "Build Muscle", "Increase 1RM"],
+        "description": "The definitive strength building program combining powerlifting fundamentals, progressive overload, and periodization. Master the big 3 lifts (squat, bench, deadlift) while building total body strength through compound movements. Features 4 distinct phases: Foundation (weeks 1-3), Volume (weeks 4-6), Intensity (weeks 7-9), and Peak (weeks 10-12).",
+        "short_description": "Complete 12-week strength mastery program with periodized training"
+    },
+    {
+        "program_name": "Ultimate Strength Builder - Easy",
+        "program_category": "Goal-Based",
+        "program_subcategory": "Muscle Building",
+        "country": ["Global"],
+        "celebrity_name": None,
+        "difficulty_level": "Beginner",
+        "duration_weeks": 12,
+        "sessions_per_week": 3,
+        "session_duration_minutes": 45,
+        "tags": ["strength", "beginner", "compound", "foundation"],
+        "goals": ["Build Strength", "Learn Fundamentals", "Build Muscle"],
+        "description": "A beginner-friendly version of the Ultimate Strength Builder program. Focus on learning proper form for the big 3 lifts while building a solid strength foundation. Lower volume and intensity with emphasis on technique mastery.",
+        "short_description": "Beginner-friendly strength foundation program"
+    },
+    {
+        "program_name": "Ultimate Strength Builder - Hard",
+        "program_category": "Goal-Based",
+        "program_subcategory": "Muscle Building",
+        "country": ["Global"],
+        "celebrity_name": None,
+        "difficulty_level": "Advanced",
+        "duration_weeks": 12,
+        "sessions_per_week": 5,
+        "session_duration_minutes": 75,
+        "tags": ["strength", "powerlifting", "advanced", "high volume", "periodization"],
+        "goals": ["Build Strength", "Maximize 1RM", "Competition Prep"],
+        "description": "An advanced variation of the Ultimate Strength Builder for experienced lifters. Higher volume, greater intensity, and more accessory work. Designed for those looking to push their limits and prepare for powerlifting competitions.",
+        "short_description": "Advanced high-intensity strength program"
+    },
+    {
+        "program_name": "Ultimate Strength Builder - 4 Week",
+        "program_category": "Goal-Based",
+        "program_subcategory": "Muscle Building",
+        "country": ["Global"],
+        "celebrity_name": None,
+        "difficulty_level": "Intermediate",
+        "duration_weeks": 4,
+        "sessions_per_week": 4,
+        "session_duration_minutes": 60,
+        "tags": ["strength", "powerlifting", "compound", "short program"],
+        "goals": ["Build Strength", "Build Muscle", "Quick Results"],
+        "description": "A condensed 4-week strength program based on the Ultimate Strength Builder methodology. Perfect for those with limited time or looking for a strength-focused mesocycle to insert into their training.",
+        "short_description": "Condensed 4-week strength boost program"
+    },
+    {
+        "program_name": "Ultimate Strength Builder - 8 Week",
+        "program_category": "Goal-Based",
+        "program_subcategory": "Muscle Building",
+        "country": ["Global"],
+        "celebrity_name": None,
+        "difficulty_level": "Intermediate",
+        "duration_weeks": 8,
+        "sessions_per_week": 4,
+        "session_duration_minutes": 60,
+        "tags": ["strength", "powerlifting", "compound", "periodization"],
+        "goals": ["Build Strength", "Build Muscle", "Increase 1RM"],
+        "description": "An 8-week strength program featuring two training phases: Foundation (weeks 1-4) and Intensity (weeks 5-8). Streamlined version of the full 12-week Ultimate Strength Builder.",
+        "short_description": "Streamlined 8-week strength building program"
+    },
 ]
 
 # Continuing with remaining categories...
-# Total so far: ~90 programs
+# Total so far: ~95 programs (added Ultimate Strength Builder variants)

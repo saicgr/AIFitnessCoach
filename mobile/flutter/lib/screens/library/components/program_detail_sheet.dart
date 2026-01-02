@@ -1,16 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/program.dart';
+import '../../../data/services/context_logging_service.dart';
 import '../widgets/info_badge.dart';
 
 /// Bottom sheet showing program details
-class ProgramDetailSheet extends StatelessWidget {
+class ProgramDetailSheet extends ConsumerStatefulWidget {
   final LibraryProgram program;
 
   const ProgramDetailSheet({
     super.key,
     required this.program,
   });
+
+  @override
+  ConsumerState<ProgramDetailSheet> createState() => _ProgramDetailSheetState();
+}
+
+class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
+  @override
+  void initState() {
+    super.initState();
+    // Log the program view for AI preference learning
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _logProgramView();
+    });
+  }
+
+  void _logProgramView() {
+    final program = widget.program;
+    ref.read(contextLoggingServiceProvider).logProgramViewed(
+      programId: program.id,
+      programName: program.name,
+      category: program.category,
+      difficulty: program.difficultyLevel,
+      durationWeeks: program.durationWeeks,
+    );
+  }
 
   Color _getCategoryColor(String category, bool isDark) {
     switch (category.toLowerCase()) {
@@ -40,6 +68,7 @@ class ProgramDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final program = widget.program;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetBackground =
         isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
@@ -155,9 +184,8 @@ class ProgramDetailSheet extends StatelessWidget {
                       DetailBadge(
                         icon: Icons.signal_cellular_alt,
                         label: 'Level',
-                        value: program.difficultyLevel!,
-                        color: AppColors.getDifficultyColor(
-                            program.difficultyLevel!),
+                        value: DifficultyUtils.getDisplayName(program.difficultyLevel!),
+                        color: DifficultyUtils.getColor(program.difficultyLevel!),
                       ),
                     if (program.durationWeeks != null)
                       DetailBadge(

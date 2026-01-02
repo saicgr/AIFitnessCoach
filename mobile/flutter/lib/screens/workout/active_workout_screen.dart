@@ -9,20 +9,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
-import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/providers/social_provider.dart';
+import '../../core/providers/tts_provider.dart';
 import '../../data/rest_messages.dart';
 import '../../widgets/log_1rm_sheet.dart';
+import '../../widgets/responsive_layout.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../challenges/widgets/challenge_quit_dialog.dart';
+import 'widgets/timed_exercise_timer.dart';
+import 'widgets/transition_countdown_overlay.dart';
+import 'widgets/set_adjustment_sheet.dart';
+import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/superset_pair_sheet.dart';
+import '../../data/repositories/superset_repository.dart';
 
 /// Log for a single set
 class SetLog {
@@ -30,13 +36,24 @@ class SetLog {
   final double weight;
   final DateTime completedAt;
   final String setType; // 'working', 'warmup', 'failure', 'amrap'
+  final int targetReps; // Original planned/target reps for this set
 
   SetLog({
     required this.reps,
     required this.weight,
     DateTime? completedAt,
     this.setType = 'working',
+    this.targetReps = 0,
   }) : completedAt = completedAt ?? DateTime.now();
+
+  /// Whether the actual reps differ from the target
+  bool get differsFromTarget => targetReps > 0 && reps != targetReps;
+
+  /// Calculate accuracy percentage (actual / target * 100)
+  int get accuracyPercent => targetReps > 0 ? ((reps / targetReps) * 100).round() : 100;
+
+  /// Whether user met or exceeded the target
+  bool get metTarget => targetReps <= 0 || reps >= targetReps;
 }
 
 class ActiveWorkoutScreen extends ConsumerStatefulWidget {
@@ -55,7 +72,8 @@ class ActiveWorkoutScreen extends ConsumerStatefulWidget {
   ConsumerState<ActiveWorkoutScreen> createState() => _ActiveWorkoutScreenState();
 }
 
-class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
+class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
+    with ResponsiveMixin {
   // Warmup phase state
   bool _isInWarmupPhase = true; // Start with warmup
   int _currentWarmupIndex = 0;
@@ -96,7 +114,6 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   bool _isPaused = false;
   bool _isComplete = false;
   bool _showInstructions = false;
-  bool _showExerciseList = false;
 
   // Video state
   VideoPlayerController? _videoController;
@@ -127,16 +144,28 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   bool _showSetOverlay = true; // Show by default
 
   // Mock previous session data (will be fetched from API)
-  Map<int, List<Map<String, dynamic>>> _previousSets = {};
+  final Map<int, List<Map<String, dynamic>>> _previousSets = {};
 
   // Dynamic sets count per exercise (can add more sets)
   final Map<int, int> _totalSetsPerExercise = {};
+
+  // Original sets count per exercise (for tracking adjustments)
+  final Map<int, int> _originalSetsPerExercise = {};
+
+  // Set adjustments log (exercise index -> list of adjustments)
+  final Map<int, List<SetAdjustment>> _setAdjustments = {};
+
+  // Edited sets tracking (exercise index -> set index -> true if edited)
+  final Map<int, Set<int>> _editedSets = {};
 
   // Exercise navigation in Set Tracker (independent of video/main view)
   int _viewingExerciseIndex = 0;
 
   // Mutable exercise list for reordering
   late List<WorkoutExercise> _exercises;
+
+  // Mutable workout reference (can be updated after superset changes)
+  Workout? _workout;
 
   // Drink intake tracking (in ml)
   int _totalDrinkIntakeMl = 0;
@@ -164,10 +193,18 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   // Map of exercise name -> max weight ever lifted (for accurate PR detection)
   final Map<String, double> _exerciseMaxWeights = {};
 
+  // Transition countdown state (between exercises)
+  bool _isInTransition = false;
+  int _transitionSecondsRemaining = 0;
+  Timer? _transitionTimer;
+  static const int _transitionDuration = 7; // Configurable: 5-10 seconds
+  String? _nextExerciseImageUrl; // Cached image URL for next exercise
+
   @override
   void initState() {
     super.initState();
-    // Initialize mutable exercises list (for reordering)
+    // Initialize mutable workout and exercises list (for reordering and superset updates)
+    _workout = widget.workout;
     _exercises = List.from(widget.workout.exercises);
     // Initialize input controllers with default values from first exercise
     final firstExercise = _exercises[0];
@@ -178,7 +215,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     for (int i = 0; i < _exercises.length; i++) {
       _completedSets[i] = [];
       final exercise = _exercises[i];
-      _totalSetsPerExercise[i] = exercise.sets ?? 3;
+      final sets = exercise.sets ?? 3;
+      _totalSetsPerExercise[i] = sets;
+      _originalSetsPerExercise[i] = sets; // Track original for adjustment detection
+      _setAdjustments[i] = [];
+      _editedSets[i] = {};
       // Initialize with empty data - will be populated from API
       _previousSets[i] = [];
     }
@@ -304,6 +345,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     _restTimer?.cancel();
     _warmupTimer?.cancel();
     _stretchTimer?.cancel();
+    _transitionTimer?.cancel();
     _videoController?.dispose();
     _repsController.dispose();
     _weightController.dispose();
@@ -1214,6 +1256,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       _currentRestMessage = message;
     });
 
+    // Voice announcement for rest start
+    ref.read(voiceAnnouncementsProvider.notifier).announceRestStartIfEnabled(seconds);
+
     _restTimer?.cancel();
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused && _restSecondsRemaining > 0) {
@@ -1224,10 +1269,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
           HapticFeedback.lightImpact();
         } else if (_restSecondsRemaining == 3) {
           HapticFeedback.mediumImpact();
+          // Voice countdown for last 3 seconds
+          ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(3);
         } else if (_restSecondsRemaining == 2) {
           HapticFeedback.mediumImpact();
+          ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(2);
         } else if (_restSecondsRemaining == 1) {
           HapticFeedback.mediumImpact();
+          ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(1);
         }
 
         if (_restSecondsRemaining == 0) _endRest();
@@ -1245,6 +1294,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       _isRestingBetweenExercises = false;
       _restSecondsRemaining = 0;
     });
+
+    // Voice announcement for rest end
+    ref.read(voiceAnnouncementsProvider.notifier).announceRestEndIfEnabled();
+
     // Strong haptic feedback when rest ends
     HapticFeedback.heavyImpact();
     // Additional vibration pattern for better notification
@@ -1255,10 +1308,75 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       HapticFeedback.mediumImpact();
     });
 
-    // If we were resting between exercises, move to the next exercise now
+    // If we were resting between exercises, start transition countdown
     if (wasRestingBetweenExercises) {
-      _moveToNextExercise();
+      _startTransitionCountdown();
     }
+  }
+
+  /// Start transition countdown before moving to next exercise
+  void _startTransitionCountdown() {
+    // Check if there's actually a next exercise
+    if (_currentExerciseIndex >= _exercises.length - 1) {
+      // No next exercise, complete workout
+      _completeWorkout();
+      return;
+    }
+
+    final nextExercise = _exercises[_currentExerciseIndex + 1];
+
+    // Pre-fetch image URL for next exercise
+    _nextExerciseImageUrl = nextExercise.gifUrl ?? nextExercise.imageS3Path;
+
+    // Voice announcement for next exercise transition
+    ref.read(voiceAnnouncementsProvider.notifier).announceNextExerciseIfEnabled(nextExercise.name);
+
+    setState(() {
+      _isInTransition = true;
+      _transitionSecondsRemaining = _transitionDuration;
+    });
+
+    // Initial haptic feedback
+    HapticFeedback.mediumImpact();
+
+    _transitionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_transitionSecondsRemaining > 1) {
+        setState(() => _transitionSecondsRemaining--);
+        // Haptic feedback each second
+        if (_transitionSecondsRemaining <= 3) {
+          // Stronger feedback in last 3 seconds
+          HapticFeedback.mediumImpact();
+        } else {
+          HapticFeedback.lightImpact();
+        }
+      } else {
+        _endTransition();
+      }
+    });
+  }
+
+  /// End transition countdown and move to next exercise
+  void _endTransition() {
+    _transitionTimer?.cancel();
+    setState(() {
+      _isInTransition = false;
+      _transitionSecondsRemaining = 0;
+      _nextExerciseImageUrl = null;
+    });
+    // Strong haptic when transition ends
+    HapticFeedback.heavyImpact();
+    _moveToNextExercise();
+  }
+
+  /// Skip the transition countdown
+  void _skipTransition() {
+    HapticFeedback.mediumImpact();
+    _endTransition();
   }
 
   void _completeSet() {
@@ -1288,9 +1406,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     }
 
     // Log the set (always stored in kg)
+    // Store the target reps (planned reps from exercise definition)
+    final targetReps = exercise.reps ?? 10;
     final completedSetIndex = _completedSets[_currentExerciseIndex]!.length;
     setState(() {
-      _completedSets[_currentExerciseIndex]!.add(SetLog(reps: reps, weight: weight));
+      _completedSets[_currentExerciseIndex]!.add(SetLog(
+        reps: reps,
+        weight: weight,
+        targetReps: targetReps,
+      ));
       // Trigger burst animation for this set
       _justCompletedSetIndex = completedSetIndex;
 
@@ -1615,10 +1739,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                       reps: newReps,
                       weight: newWeight,
                       completedAt: setData.completedAt,
+                      targetReps: setData.targetReps, // Preserve original target
                     );
+                    // Mark this set as edited for visual feedback
+                    _editedSets[exerciseIndex]?.add(setIndex);
                   });
                   Navigator.pop(context);
                   HapticFeedback.mediumImpact();
+                  debugPrint('✅ [Workout] Edited set ${setIndex + 1} for exercise $exerciseIndex: $newWeight kg x $newReps');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.cyan,
@@ -1641,6 +1769,311 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         ),
       ),
     );
+  }
+
+  /// Handle remove set button press
+  void _handleRemoveSet(int exerciseIndex, int totalSets, int completedSetsCount) async {
+    final remainingSets = totalSets - completedSetsCount;
+
+    // If sets have been completed, show confirmation
+    if (completedSetsCount > 0) {
+      final result = await showSetAdjustmentSheet(
+        context: context,
+        title: 'Remove Set',
+        subtitle: 'You have already completed $completedSetsCount set${completedSetsCount > 1 ? 's' : ''}',
+      );
+
+      if (result != null) {
+        final (reason, notes) = result;
+        setState(() {
+          _totalSetsPerExercise[exerciseIndex] = totalSets - 1;
+          _setAdjustments[exerciseIndex]?.add(SetAdjustment(
+            reason: reason,
+            notes: notes,
+            exerciseIndex: exerciseIndex,
+            originalSets: _originalSetsPerExercise[exerciseIndex] ?? totalSets,
+            newSets: totalSets - 1,
+            timestamp: DateTime.now(),
+          ));
+        });
+        HapticFeedback.mediumImpact();
+        debugPrint('✅ [Workout] Removed set from exercise $exerciseIndex: ${reason.name} - $notes');
+      }
+    } else {
+      // No sets completed, just remove
+      setState(() {
+        _totalSetsPerExercise[exerciseIndex] = totalSets - 1;
+      });
+      HapticFeedback.mediumImpact();
+      debugPrint('✅ [Workout] Removed set from exercise $exerciseIndex (no completed sets)');
+    }
+  }
+
+  /// Handle skip remaining sets button press
+  void _handleSkipRemainingSets(
+    int exerciseIndex,
+    String exerciseName,
+    int totalSets,
+    int completedSetsCount,
+  ) async {
+    final result = await showSkipRemainingSetsSheet(
+      context: context,
+      exerciseName: exerciseName,
+      completedSets: completedSetsCount,
+      totalSets: totalSets,
+    );
+
+    if (result != null) {
+      final (reason, notes) = result;
+
+      setState(() {
+        // Set total sets to completed count (effectively skip remaining)
+        _totalSetsPerExercise[exerciseIndex] = completedSetsCount;
+
+        // Log the adjustment
+        _setAdjustments[exerciseIndex]?.add(SetAdjustment(
+          reason: reason,
+          notes: notes,
+          exerciseIndex: exerciseIndex,
+          originalSets: _originalSetsPerExercise[exerciseIndex] ?? totalSets,
+          newSets: completedSetsCount,
+          timestamp: DateTime.now(),
+        ));
+      });
+
+      HapticFeedback.mediumImpact();
+      debugPrint('✅ [Workout] Skipped remaining sets for $exerciseName: ${reason.name} - $notes');
+
+      // Automatically move to next exercise since we're done with this one
+      if (exerciseIndex == _currentExerciseIndex) {
+        _moveToNextExercise();
+      }
+    }
+  }
+
+  /// Handle comprehensive set editing - opens sheet to modify all sets
+  void _handleEditAllSets(int exerciseIndex) async {
+    final exercise = _exercises[exerciseIndex];
+    final completedSets = _completedSets[exerciseIndex] ?? [];
+    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
+    final originalSets = _originalSetsPerExercise[exerciseIndex] ?? totalSets;
+
+    // Build initial sets data
+    final List<EditableSetData> initialSets = [];
+
+    // Add completed sets
+    for (int i = 0; i < completedSets.length; i++) {
+      final set = completedSets[i];
+      initialSets.add(EditableSetData(
+        reps: set.reps,
+        weight: _useKg ? set.weight : set.weight / 0.453592, // Convert to lbs if needed
+        isCompleted: true,
+      ));
+    }
+
+    // Add remaining incomplete sets
+    final defaultReps = exercise.reps ?? 10;
+    final defaultWeight = exercise.weight ?? 0.0;
+    for (int i = completedSets.length; i < totalSets; i++) {
+      initialSets.add(EditableSetData(
+        reps: defaultReps,
+        weight: _useKg ? defaultWeight : defaultWeight / 0.453592,
+        isCompleted: false,
+      ));
+    }
+
+    // Current set index (0-based)
+    final currentSetIndex = completedSets.length;
+
+    final result = await showInWorkoutSetEditingSheet(
+      context: context,
+      exerciseName: exercise.name,
+      initialSets: initialSets,
+      originalSetCount: originalSets,
+      currentSetIndex: currentSetIndex,
+      defaultWeight: _useKg ? defaultWeight : defaultWeight / 0.453592,
+      defaultReps: defaultReps,
+      useKg: _useKg,
+    );
+
+    if (result != null) {
+      setState(() {
+        // Update total sets count
+        _totalSetsPerExercise[exerciseIndex] = result.newSetCount;
+
+        // Log adjustment if sets were reduced
+        if (result.wasReduced && result.adjustmentReason != null) {
+          _setAdjustments[exerciseIndex]?.add(SetAdjustment(
+            reason: result.adjustmentReason!,
+            notes: result.notes,
+            exerciseIndex: exerciseIndex,
+            originalSets: originalSets,
+            newSets: result.newSetCount,
+            timestamp: DateTime.now(),
+          ));
+
+          // Record adjustment to backend for pattern tracking
+          final repository = ref.read(workoutRepositoryProvider);
+          repository.recordSetAdjustment(
+            exerciseName: exercise.name,
+            originalSets: originalSets,
+            actualSets: result.newSetCount,
+            reason: result.adjustmentReason!.name,
+            notes: result.notes,
+            workoutId: widget.workout.id,
+            exerciseIndex: exerciseIndex,
+          );
+        }
+
+        // Update weight/reps for incomplete sets if they were edited
+        // Note: We update the current exercise's expected weight/reps
+        for (int i = 0; i < result.sets.length; i++) {
+          final setData = result.sets[i];
+          if (!setData.isCompleted && i == currentSetIndex) {
+            // Update current set's values in the input controllers
+            _repsController.text = setData.reps.toString();
+            final weight = _useKg ? setData.weight : setData.weight * 0.453592;
+            _weightController.text = weight.toStringAsFixed(1);
+          }
+        }
+      });
+
+      HapticFeedback.mediumImpact();
+      debugPrint('✅ [Workout] Updated sets for ${exercise.name}: ${result.originalSetCount} -> ${result.newSetCount}');
+    }
+  }
+
+  /// Show delete confirmation dialog for a completed set
+  Future<bool> _showDeleteSetConfirmation(int exerciseIndex, int setIndex) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                color: AppColors.error,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Delete Set ${setIndex + 1}?',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'This will remove the set from your workout log. This action cannot be undone.',
+          style: TextStyle(
+            fontSize: 14,
+            color: textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Delete',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
+  /// Delete a completed set with confirmation
+  void _deleteCompletedSetWithConfirmation(int exerciseIndex, int setIndex) async {
+    final confirmed = await _showDeleteSetConfirmation(exerciseIndex, setIndex);
+    if (confirmed) {
+      _deleteCompletedSet(exerciseIndex, setIndex);
+      debugPrint('✅ [Workout] Deleted set ${setIndex + 1} from exercise $exerciseIndex');
+    }
+  }
+
+  /// Complete a timed set (for timed/isometric exercises)
+  void _completeTimedSet({
+    required int exerciseIndex,
+    required int setIndex,
+    required int durationSeconds,
+  }) {
+    setState(() {
+      // Add a completed set log for the timed exercise
+      _completedSets[exerciseIndex]?.add(SetLog(
+        reps: 1, // 1 "rep" for a completed hold
+        weight: 0, // No weight for timed exercises
+        setType: 'timed',
+        targetReps: 1, // For timed exercises, 1 complete = target met
+      ));
+
+      // Trigger burst animation
+      _justCompletedSetIndex = setIndex;
+
+      // Update current set if this is the current exercise
+      if (exerciseIndex == _currentExerciseIndex) {
+        final exercise = _exercises[exerciseIndex];
+        final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
+        final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+
+        if (completedCount >= totalSets) {
+          // All sets completed, trigger rest between exercises
+          _isRestingBetweenExercises = true;
+          _startRestTimer(exercise.restSeconds ?? 90);
+        } else {
+          // Still have sets remaining, trigger rest between sets
+          _isRestingBetweenExercises = false;
+          _startRestTimer(exercise.restSeconds ?? 60);
+        }
+      }
+    });
+
+    // Clear animation after delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() => _justCompletedSetIndex = null);
+      }
+    });
+
+    debugPrint('✅ [Workout] Completed timed set ${setIndex + 1} for exercise $exerciseIndex (${durationSeconds}s)');
   }
 
   /// Update controllers when switching exercises
@@ -1870,15 +2303,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
             const SizedBox(height: 12),
 
-            // Replace with similar
+            // Replace with similar (uses AI-powered swap sheet)
             _ExerciseOptionTile(
               icon: Icons.swap_horiz,
               title: 'Replace Exercise',
-              subtitle: 'Choose a similar exercise',
+              subtitle: 'AI-powered alternatives',
               color: AppColors.purple,
-              onTap: () {
-                Navigator.pop(context);
-                _showReplaceExerciseDialog(ctx, index);
+              onTap: () async {
+                Navigator.pop(context); // Close this sheet
+                await _showReplaceExerciseDialog(ctx, index);
               },
             ),
 
@@ -1897,6 +2330,51 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               },
             ),
 
+            const SizedBox(height: 12),
+
+            // Superset options
+            if (exercise.isInSuperset) ...[
+              // Remove from superset
+              _ExerciseOptionTile(
+                icon: Icons.link_off,
+                title: 'Remove from Superset',
+                subtitle: 'Break the superset pair',
+                color: AppColors.error,
+                onTap: () async {
+                  Navigator.pop(context);
+                  Navigator.pop(ctx);
+                  await _removeFromSuperset(index);
+                },
+              ),
+            ] else ...[
+              // Create superset with next exercise
+              if (index < _exercises.length - 1 && !_exercises[index + 1].isInSuperset)
+                _ExerciseOptionTile(
+                  icon: Icons.link,
+                  title: 'Pair with Next Exercise',
+                  subtitle: 'Create superset with ${_exercises[index + 1].name}',
+                  color: AppColors.purple,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    Navigator.pop(ctx);
+                    await _createSupersetPair(index, index + 1);
+                  },
+                ),
+              const SizedBox(height: 12),
+              // Create superset (choose exercise)
+              _ExerciseOptionTile(
+                icon: Icons.add_link,
+                title: 'Create Superset',
+                subtitle: 'Choose exercise to pair with',
+                color: AppColors.purple,
+                onTap: () async {
+                  Navigator.pop(context);
+                  Navigator.pop(ctx);
+                  await _showSupersetCreationSheet(index);
+                },
+              ),
+            ],
+
             const SizedBox(height: 20),
           ],
         ),
@@ -1904,86 +2382,161 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     );
   }
 
-  /// Show dialog to replace exercise with similar one
-  void _showReplaceExerciseDialog(BuildContext ctx, int index) {
-    final exercise = _exercises[index];
-    final muscleGroup = exercise.muscleGroup ?? exercise.bodyPart ?? 'Unknown';
+  /// Create a superset pair between two exercises
+  Future<void> _createSupersetPair(int index1, int index2) async {
+    if (_workout?.id == null) return;
 
-    // Mock similar exercises - in real implementation, would fetch from API
-    final similarExercises = [
-      '${muscleGroup} Alternative 1',
-      '${muscleGroup} Alternative 2',
-      '${muscleGroup} Alternative 3',
-      'Dumbbell ${exercise.name}',
-      'Cable ${exercise.name}',
-    ];
+    try {
+      final repo = ref.read(supersetRepositoryProvider);
+      await repo.createSupersetPair(_workout!.id!, index1, index2);
 
-    showDialog(
-      context: ctx,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
-        title: const Text(
-          'Replace Exercise',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Similar exercises for ${exercise.name}:',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...similarExercises.map((name) => ListTile(
-                    dense: true,
-                    title: Text(
-                      name,
-                      style: const TextStyle(color: AppColors.textPrimary),
-                    ),
-                    trailing: const Icon(Icons.chevron_right, color: AppColors.cyan),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pop(ctx); // Close the exercise list
-                      _replaceExercise(index, name);
-                    },
-                  )),
-            ],
+      // Refresh workout data
+      await _refreshWorkoutFromServer();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Superset created: ${_exercises[index1].name} + ${_exercises[index2].name}',
+            ),
+            backgroundColor: AppColors.success,
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error creating superset: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create superset: $e'),
+            backgroundColor: AppColors.error,
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
-  /// Replace exercise at index with a new exercise
-  void _replaceExercise(int index, String newExerciseName) {
-    final oldExercise = _exercises[index];
+  /// Remove exercise from its superset
+  Future<void> _removeFromSuperset(int index) async {
+    if (_workout?.id == null) return;
 
-    setState(() {
-      // Create new exercise with same structure but different name
-      _exercises[index] = oldExercise.copyWith(nameValue: newExerciseName);
+    final exercise = _exercises[index];
+    if (!exercise.isInSuperset || exercise.supersetGroup == null) return;
 
-      // Reset completed sets for this exercise
-      _completedSets[index] = [];
-    });
+    try {
+      final repo = ref.read(supersetRepositoryProvider);
+      await repo.removeSupersetPair(_workout!.id!, exercise.supersetGroup!);
 
-    // If this was the current exercise, reload media
-    if (index == _currentExerciseIndex) {
-      _fetchMediaForExercise(_exercises[index]);
+      // Refresh workout data
+      await _refreshWorkoutFromServer();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Superset removed'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error removing superset: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove superset: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
+  }
 
-    HapticFeedback.mediumImpact();
+  /// Show the superset creation sheet
+  Future<void> _showSupersetCreationSheet(int preselectedIndex) async {
+    final result = await showSupersetPairSheet(
+      context,
+      ref,
+      workoutExercises: _exercises,
+      preselectedExercise: _exercises[preselectedIndex],
+    );
+
+    if (result != null && mounted) {
+      // Find the indices of the selected exercises
+      final index1 = _exercises.indexWhere((e) => e.name == result.exercise1.name);
+      final index2 = _exercises.indexWhere((e) => e.name == result.exercise2.name);
+
+      if (index1 != -1 && index2 != -1) {
+        await _createSupersetPair(index1, index2);
+      }
+    }
+  }
+
+  /// Refresh workout data from server after superset changes
+  Future<void> _refreshWorkoutFromServer() async {
+    if (_workout?.id == null) return;
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await workoutRepo.getWorkout(_workout!.id!);
+
+      if (updatedWorkout != null && mounted) {
+        setState(() {
+          _workout = updatedWorkout;
+          _exercises = updatedWorkout.exercises.toList() ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error refreshing workout: $e');
+    }
+  }
+
+  /// Show exercise swap sheet with AI suggestions
+  Future<void> _showReplaceExerciseDialog(BuildContext ctx, int index) async {
+    final exercise = _exercises[index];
+
+    // Close the exercise options sheet first
+    Navigator.pop(ctx);
+
+    // Show the proper exercise swap sheet with AI suggestions
+    final updatedWorkout = await showExerciseSwapSheet(
+      context,
+      ref,
+      workoutId: widget.workout.id!,
+      exercise: exercise,
+    );
+
+    if (updatedWorkout != null && mounted) {
+      // Find the new exercise that replaced the old one
+      final updatedExercises = updatedWorkout.exercises ?? [];
+
+      setState(() {
+        // Update the exercises list with new data
+        for (int i = 0; i < updatedExercises.length && i < _exercises.length; i++) {
+          _exercises[i] = updatedExercises[i];
+        }
+
+        // Reset completed sets for the swapped exercise
+        _completedSets[index] = [];
+      });
+
+      // If this was the current exercise, reload media
+      if (index == _currentExerciseIndex) {
+        _fetchMediaForExercise(_exercises[index]);
+      }
+
+      HapticFeedback.mediumImpact();
+
+      // Show confirmation
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Exercise replaced with ${_exercises[index].name}'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// Start the stretch phase after workout exercises are complete
@@ -2089,6 +2642,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   Future<void> _finalizeWorkoutCompletion() async {
     setState(() => _isComplete = true);
 
+    // Voice announcement for workout completion
+    ref.read(voiceAnnouncementsProvider.notifier).announceWorkoutCompleteIfEnabled();
+
     // Variables to pass to workout complete screen for AI Coach feedback
     String? workoutLogId;
     int totalCompletedSets = 0;
@@ -2097,6 +2653,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     int totalRestSeconds = 0;
     double avgRestSeconds = 0.0;
     List<PersonalRecordInfo>? personalRecords;
+    PerformanceComparisonInfo? performanceComparison;
 
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
@@ -2183,7 +2740,13 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         // Store PRs from the response
         if (completionResponse != null && completionResponse.hasPRs) {
           personalRecords = completionResponse.personalRecords;
-          debugPrint('🏆 Got ${personalRecords!.length} PRs from completion API');
+          debugPrint('🏆 Got ${personalRecords.length} PRs from completion API');
+        }
+
+        // Store performance comparison from the response
+        if (completionResponse != null && completionResponse.performanceComparison != null) {
+          performanceComparison = completionResponse.performanceComparison;
+          debugPrint('📊 Got performance comparison: ${performanceComparison!.improvedCount} improved, ${performanceComparison.declinedCount} declined');
         }
 
         // 7. Build exercises performance data for social post
@@ -2251,6 +2814,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
       debugPrint('🏋️ [Complete] exercisesPerformance: ${exercisesPerformance.length} exercises');
       debugPrint('🏋️ [Complete] totalSets: $totalCompletedSets, totalReps: $totalReps, totalVolumeKg: $totalVolumeKg');
       debugPrint('🏋️ [Complete] personalRecords: ${personalRecords?.length ?? 0} PRs');
+      debugPrint('🏋️ [Complete] performanceComparison: ${performanceComparison != null ? "${performanceComparison.improvedCount} improved, ${performanceComparison.declinedCount} declined" : "null"}');
 
       context.go('/workout-complete', extra: {
         'workout': widget.workout,
@@ -2271,6 +2835,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
         'challengeData': widget.challengeData,
         // PRs detected from workout completion
         'personalRecords': personalRecords,
+        // Performance comparison (improvements/setbacks vs previous sessions)
+        'performanceComparison': performanceComparison,
       });
     }
   }
@@ -3660,8 +4226,14 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 child: _buildRestOverlay(),
               ),
 
+            // Transition countdown overlay (between exercises)
+            if (_isInTransition && _currentExerciseIndex < _exercises.length - 1)
+              Positioned.fill(
+                child: _buildTransitionOverlay(),
+              ),
+
             // Set tracking table overlay (in middle of screen)
-            if (_showSetOverlay && !_isResting)
+            if (_showSetOverlay && !_isResting && !_isInTransition)
               Positioned(
                 left: 16,
                 right: 16,
@@ -3760,14 +4332,22 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   }
 
   Widget _buildTopOverlay(WorkoutExercise exercise, double progress) {
+    // Responsive adjustments for split screen / narrow windows
+    final isCompact = isInSplitScreen || isNarrowLayout;
+    final horizontalPadding = isCompact ? 8.0 : 12.0;
+    final verticalPadding = isCompact ? 6.0 : 10.0;
+    final buttonSize = isCompact ? 28.0 : 36.0;
+    final titleFontSize = isCompact ? 14.0 : 16.0;
+    final spacing = isCompact ? 4.0 : 8.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, verticalPadding, horizontalPadding, 8),
       child: Column(
         children: [
-          // Challenge banner (if this is a challenge workout)
-          if (widget.challengeId != null && widget.challengeData != null) ...[
+          // Challenge banner (if this is a challenge workout) - hide in very compact mode
+          if (widget.challengeId != null && widget.challengeData != null && !isNarrowLayout) ...[
             _buildChallengeBanner(),
-            const SizedBox(height: 8),
+            SizedBox(height: spacing),
           ],
 
           // Top row: Close, title, pause - more compact
@@ -3776,10 +4356,10 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
               _GlassButton(
                 icon: Icons.close,
                 onTap: _showQuitDialog,
-                size: 32,
+                size: isCompact ? 28.0 : 32.0,
                 isSubdued: true,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: spacing),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -3787,11 +4367,11 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                   children: [
                     Text(
                       exercise.name,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
+                        shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -3799,31 +4379,34 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                     Text(
                       '${_currentExerciseIndex + 1}/${_exercises.length}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: isCompact ? 10.0 : 11.0,
                         color: Colors.white.withOpacity(0.7),
                       ),
                     ),
                   ],
                 ),
               ),
-              _GlassButton(
-                icon: Icons.list_alt,
-                onTap: _showExerciseListDrawer,
-                size: 36,
-              ),
-              const SizedBox(width: 6),
+              // Hide list button in very narrow mode
+              if (!isNarrowLayout) ...[
+                _GlassButton(
+                  icon: Icons.list_alt,
+                  onTap: _showExerciseListDrawer,
+                  size: buttonSize,
+                ),
+                SizedBox(width: spacing * 0.75),
+              ],
               _GlassButton(
                 icon: _showSetOverlay ? Icons.table_chart : Icons.table_chart_outlined,
                 onTap: () => setState(() => _showSetOverlay = !_showSetOverlay),
                 isHighlighted: _showSetOverlay,
-                size: 36,
+                size: buttonSize,
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: spacing * 0.75),
               _GlassButton(
                 icon: _isPaused ? Icons.play_arrow : Icons.pause,
                 onTap: _togglePause,
                 isHighlighted: _isPaused,
-                size: 36,
+                size: buttonSize,
               ),
             ],
           ),
@@ -4504,6 +5087,24 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     ).animate().fadeIn(duration: 200.ms);
   }
 
+  /// Build the transition countdown overlay (shown before moving to next exercise)
+  Widget _buildTransitionOverlay() {
+    // Safety check
+    if (_currentExerciseIndex >= _exercises.length - 1) {
+      return const SizedBox.shrink();
+    }
+
+    final nextExercise = _exercises[_currentExerciseIndex + 1];
+
+    return TransitionCountdownOverlay(
+      secondsRemaining: _transitionSecondsRemaining,
+      initialDuration: _transitionDuration,
+      nextExercise: nextExercise,
+      nextExerciseImageUrl: _nextExerciseImageUrl,
+      onSkip: _skipTransition,
+    );
+  }
+
   /// Build the set tracking table overlay (Strong app style on top of video)
   Widget _buildSetTrackingOverlay() {
     final viewingExercise = _exercises[_viewingExerciseIndex];
@@ -4514,19 +5115,12 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
 
     // Theme-aware colors
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final overlayBg = isDark
-        ? AppColors.pureBlack.withOpacity(0.92)
-        : AppColorsLight.elevated.withOpacity(0.98);
-    final overlayBorder = isDark
-        ? AppColors.cardBorder.withOpacity(0.4)
-        : AppColorsLight.cardBorder.withOpacity(0.5);
     final headerBg = isDark
         ? AppColors.elevated.withOpacity(0.6)
         : AppColorsLight.glassSurface.withOpacity(0.8);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final inputBg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final rowBorder = isDark
         ? AppColors.cardBorder.withOpacity(0.2)
         : AppColorsLight.cardBorder.withOpacity(0.3);
@@ -4721,56 +5315,128 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             ),
           ),
 
-          // Table header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.elevated.withOpacity(0.3)
-                  : AppColorsLight.glassSurface.withOpacity(0.6),
+          // For timed exercises (planks, holds, wall sits), show the timer UI
+          if (viewingExercise.isTimedExercise) ...[
+            // Timed exercise header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.elevated.withOpacity(0.3)
+                    : AppColorsLight.glassSurface.withOpacity(0.6),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.timer, size: 16, color: AppColors.cyan),
+                  const SizedBox(width: 8),
+                  Text(
+                    'TIMED EXERCISE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.cyan,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'PAUSEABLE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.cyan,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                SizedBox(width: 36, child: Center(child: Text('SET', style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                )))),
-                Expanded(flex: 3, child: Center(child: Text('PREVIOUS', style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                )))),
-                Expanded(flex: 4, child: Center(child: Text(_useKg ? 'KG' : 'LBS', style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.cyan,
-                  letterSpacing: 0.5,
-                )))),
-                const SizedBox(width: 8), // Gap between KG and REPS
-                Expanded(flex: 4, child: Center(child: Text('REPS', style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.purple,
-                  letterSpacing: 0.5,
-                )))),
-                const SizedBox(width: 50), // Match max checkmark button width
-              ],
+            // Timed set rows with pause/resume
+            ...List.generate(totalSets, (index) {
+              final isCompleted = index < completedSetsForExercise.length;
+              final isCurrent = isViewingCurrent && index == completedSetsForExercise.length;
+
+              return TimedSetRow(
+                key: ValueKey('timed_set_${_viewingExerciseIndex}_$index'),
+                durationSeconds: viewingExercise.timerDurationSeconds,
+                setNumber: index + 1,
+                isCurrentSet: isCurrent,
+                isCompleted: isCompleted,
+                onComplete: () {
+                  // Log the completed timed set
+                  _completeTimedSet(
+                    exerciseIndex: _viewingExerciseIndex,
+                    setIndex: index,
+                    durationSeconds: viewingExercise.timerDurationSeconds ?? 30,
+                  );
+                  HapticFeedback.heavyImpact();
+                },
+                onTimeUpdate: (remaining) {
+                  // Could log partial time if needed
+                },
+              );
+            }),
+          ] else ...[
+            // Standard weight-based exercise UI
+            // Table header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.elevated.withOpacity(0.3)
+                    : AppColorsLight.glassSurface.withOpacity(0.6),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(width: 36, child: Center(child: Text('SET', style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: textMuted,
+                    letterSpacing: 0.5,
+                  )))),
+                  Expanded(flex: 3, child: Center(child: Text('PREVIOUS', style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: textMuted,
+                    letterSpacing: 0.5,
+                  )))),
+                  Expanded(flex: 4, child: Center(child: Text(_useKg ? 'KG' : 'LBS', style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.cyan,
+                    letterSpacing: 0.5,
+                  )))),
+                  const SizedBox(width: 8), // Gap between KG and REPS
+                  Expanded(flex: 4, child: Center(child: Text('REPS', style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.purple,
+                    letterSpacing: 0.5,
+                  )))),
+                  const SizedBox(width: 50), // Match max checkmark button width
+                ],
+              ),
             ),
-          ),
 
-          // Warmup set rows (2 warmup sets displayed with "W" label)
-          ...List.generate(2, (warmupIndex) => _buildWarmupSetRow(
-            setLabel: 'W',
-            repRange: _getRepRange(viewingExercise),
-            rowBorder: rowBorder,
-            textMuted: textMuted,
-            textSecondary: textSecondary,
-          )),
+            // Warmup set rows (2 warmup sets displayed with "W" label)
+            ...List.generate(2, (warmupIndex) => _buildWarmupSetRow(
+              setLabel: 'W',
+              repRange: _getRepRange(viewingExercise),
+              rowBorder: rowBorder,
+              textMuted: textMuted,
+              textSecondary: textSecondary,
+            )),
+          ],
 
-          // Working set rows
+          // Working set rows (only for non-timed exercises)
+          if (!viewingExercise.isTimedExercise)
           ...List.generate(totalSets, (index) {
             final isCompleted = index < completedSetsForExercise.length;
             // Only show current set indicator if viewing the current exercise
@@ -4784,6 +5450,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             if (isCompleted) {
               completedSetData = completedSetsForExercise[index];
             }
+
+            // Check if this set was edited
+            final isEdited = _editedSets[_viewingExerciseIndex]?.contains(index) ?? false;
 
             // Format previous session data
             String prevDisplay = '-';
@@ -4835,7 +5504,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                         )
                       : null,
                   color: isCompleted
-                      ? AppColors.success.withOpacity(0.08)
+                      ? (isEdited
+                          ? AppColors.orange.withOpacity(0.12) // Edited sets show orange tint
+                          : AppColors.success.withOpacity(0.08))
                       : isCurrent
                           ? null // Using gradient
                           : Colors.transparent,
@@ -4923,18 +5594,43 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              // REPS section
+                              // REPS section with target indicator
                               Expanded(
                                 child: Column(
                                   children: [
-                                    Text(
-                                      'REPS',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.purple,
-                                        letterSpacing: 1,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'REPS',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.purple,
+                                            letterSpacing: 1,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        // Target indicator
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.purple.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: AppColors.purple.withOpacity(0.3),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Target: ${viewingExercise.reps ?? 10}',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.purple,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     const SizedBox(height: 8),
                                     _buildExpandedInput(
@@ -4942,6 +5638,9 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                       isDecimal: false,
                                       accentColor: AppColors.purple,
                                     ),
+                                    // Quick preset buttons for reps
+                                    const SizedBox(height: 8),
+                                    _buildRepsPresetButtons(viewingExercise.reps ?? 10),
                                   ],
                                 ),
                               ),
@@ -5025,17 +5724,34 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                                       isActive: true,
                                       accentColor: AppColors.cyan,
                                     )
-                                  : Text(
-                                      isCompleted
-                                          ? (_useKg
-                                              ? completedSetData!.weight.toStringAsFixed(0)
-                                              : (completedSetData!.weight * 2.20462).toStringAsFixed(0))
-                                          : '-',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.normal,
-                                        color: isCompleted ? AppColors.success : textMuted,
-                                      ),
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          isCompleted
+                                              ? (_useKg
+                                                  ? completedSetData!.weight.toStringAsFixed(0)
+                                                  : (completedSetData!.weight * 2.20462).toStringAsFixed(0))
+                                              : '-',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.normal,
+                                            color: isCompleted
+                                                ? (isEdited ? AppColors.orange : AppColors.success)
+                                                : textMuted,
+                                          ),
+                                        ),
+                                        // Show edit indicator
+                                        if (isEdited)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 2),
+                                            child: Icon(
+                                              Icons.edit,
+                                              size: 10,
+                                              color: AppColors.orange,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                             ),
                           ),
@@ -5047,20 +5763,36 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                             flex: 4,
                             child: Center(
                               child: isCurrent
-                                  ? _buildInlineInput(
-                                      controller: _repsController,
-                                      isDecimal: false,
-                                      isActive: true,
-                                      accentColor: AppColors.purple,
+                                  ? Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Target indicator above input
+                                        Text(
+                                          'Target: ${viewingExercise.reps ?? 10}',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            color: AppColors.purple.withOpacity(0.7),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        _buildInlineInput(
+                                          controller: _repsController,
+                                          isDecimal: false,
+                                          isActive: true,
+                                          accentColor: AppColors.purple,
+                                        ),
+                                      ],
                                     )
-                                  : Text(
-                                      isCompleted ? completedSetData!.reps.toString() : '-',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.normal,
-                                        color: isCompleted ? AppColors.success : textMuted,
-                                      ),
-                                    ),
+                                  : isCompleted
+                                      ? _buildCompletedRepsDisplay(completedSetData!, isEdited)
+                                      : Text(
+                                          '-',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.normal,
+                                            color: textMuted,
+                                          ),
+                                        ),
                             ),
                           ),
 
@@ -5280,54 +6012,234 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             }
           }),
 
-          // Add Set button - distinct card
+          // Set adjustment indicator (if sets were reduced)
+          if (_totalSetsPerExercise[_viewingExerciseIndex]! < _originalSetsPerExercise[_viewingExerciseIndex]!)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.orange.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: AppColors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${completedSetsForExercise.length}/${_originalSetsPerExercise[_viewingExerciseIndex]} sets (reduced from ${_originalSetsPerExercise[_viewingExerciseIndex]})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.orange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Add/Edit/Remove Set buttons row
           Container(
             margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _totalSetsPerExercise[_viewingExerciseIndex] = totalSets + 1;
-                });
-                // Satisfying haptic for adding a set
-                HapticFeedback.mediumImpact();
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.cyan.withOpacity(0.4),
-                    width: 1.5,
+            child: Row(
+              children: [
+                // Add Set button
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _totalSetsPerExercise[_viewingExerciseIndex] = totalSets + 1;
+                      });
+                      // Satisfying haptic for adding a set
+                      HapticFeedback.mediumImpact();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.cyan.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.cyan.withOpacity(0.15),
+                            ),
+                            child: const Icon(Icons.add, size: 14, color: AppColors.cyan),
+                          ),
+                          const SizedBox(width: 6),
+                          const Flexible(
+                            child: Text(
+                              '+1 Set',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.cyan,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 26,
-                      height: 26,
+                const SizedBox(width: 6),
+                // Edit All Sets button - comprehensive editing
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _handleEditAllSets(_viewingExerciseIndex),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.cyan.withOpacity(0.15),
-                        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                        color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.purple.withOpacity(0.4),
+                          width: 1.5,
+                        ),
                       ),
-                      child: const Icon(Icons.add, size: 16, color: AppColors.cyan),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Add Set',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.purple.withOpacity(0.15),
+                            ),
+                            child: const Icon(Icons.tune, size: 14, color: AppColors.purple),
+                          ),
+                          const SizedBox(width: 6),
+                          const Flexible(
+                            child: Text(
+                              'Edit All',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.purple,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // Remove Set button - only show if more than 1 set remaining
+                if (totalSets - completedSetsForExercise.length > 1)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _handleRemoveSet(
+                        _viewingExerciseIndex,
+                        totalSets,
+                        completedSetsForExercise.length,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.orange.withOpacity(0.4),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.orange.withOpacity(0.15),
+                              ),
+                              child: const Icon(Icons.remove, size: 14, color: AppColors.orange),
+                            ),
+                            const SizedBox(width: 6),
+                            const Flexible(
+                              child: Text(
+                                '-1 Set',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.orange,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // Skip Remaining Sets button - only show if viewing current exercise and there are remaining sets
+          if (isViewingCurrent && totalSets - completedSetsForExercise.length > 0)
+            Container(
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: GestureDetector(
+                onTap: () => _handleSkipRemainingSets(
+                  _viewingExerciseIndex,
+                  viewingExercise.name,
+                  totalSets,
+                  completedSetsForExercise.length,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: textMuted.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.skip_next_rounded,
+                        size: 18,
+                        color: textMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "I'm done with this exercise",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
           const SizedBox(height: 24),
 
@@ -5768,6 +6680,142 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
     );
   }
 
+  /// Build quick preset buttons for reps (Target, -5, -2)
+  Widget _buildRepsPresetButtons(int targetReps) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildPresetButton(
+          label: 'Target',
+          value: targetReps,
+          color: AppColors.purple,
+          isPrimary: true,
+        ),
+        _buildPresetButton(
+          label: '-5',
+          value: targetReps - 5,
+          color: AppColors.orange,
+        ),
+        _buildPresetButton(
+          label: '-2',
+          value: targetReps - 2,
+          color: AppColors.orange,
+        ),
+      ],
+    );
+  }
+
+  /// Build a single preset button
+  Widget _buildPresetButton({
+    required String label,
+    required int value,
+    required Color color,
+    bool isPrimary = false,
+  }) {
+    final safeValue = value.clamp(0, 999);
+    return GestureDetector(
+      onTap: () {
+        _repsController.text = safeValue.toString();
+        HapticFeedback.selectionClick();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isPrimary ? 12 : 10,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: color.withOpacity(isPrimary ? 0.2 : 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withOpacity(isPrimary ? 0.5 : 0.3),
+          ),
+        ),
+        child: Text(
+          isPrimary ? '$label ($safeValue)' : label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isPrimary ? FontWeight.bold : FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build completed reps display with planned vs actual indicator
+  Widget _buildCompletedRepsDisplay(SetLog setData, bool isEdited) {
+    final actualReps = setData.reps;
+    final targetReps = setData.targetReps;
+    final differsFromTarget = setData.differsFromTarget;
+    final metTarget = setData.metTarget;
+
+    // Determine color based on performance
+    Color repsColor;
+    if (isEdited) {
+      repsColor = AppColors.orange;
+    } else if (differsFromTarget && !metTarget) {
+      // Under target - show orange/warning
+      repsColor = AppColors.orange;
+    } else {
+      repsColor = AppColors.success;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Actual reps (bold)
+        Text(
+          actualReps.toString(),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: repsColor,
+          ),
+        ),
+        // Show target comparison if differs
+        if (differsFromTarget) ...[
+          const SizedBox(width: 3),
+          Text(
+            '/$targetReps',
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textMuted.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Accuracy badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: metTarget
+                  ? AppColors.success.withOpacity(0.15)
+                  : AppColors.orange.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '${setData.accuracyPercent}%',
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                color: metTarget ? AppColors.success : AppColors.orange,
+              ),
+            ),
+          ),
+        ],
+        // Edit indicator
+        if (isEdited)
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Icon(
+              Icons.edit,
+              size: 10,
+              color: AppColors.orange,
+            ),
+          ),
+      ],
+    );
+  }
+
   /// Build expanded complete button for the Set Tracker
   Widget _buildExpandedCompleteButton() {
     return GestureDetector(
@@ -5899,20 +6947,29 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
   Widget _buildBottomSection(WorkoutExercise currentExercise, WorkoutExercise? nextExercise) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Responsive adjustments for split screen / narrow windows
+    final isCompact = isInSplitScreen || isNarrowLayout;
+    final horizontalMargin = isCompact ? 10.0 : 16.0;
+    final contentPadding = isCompact ? 12.0 : 16.0;
+    final buttonSize = isCompact ? 38.0 : 44.0;
+    final iconSize = isCompact ? 16.0 : 20.0;
+    final fontSize = isCompact ? 12.0 : 14.0;
+
     return SafeArea(
       top: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Collapsible instructions panel
+          // Collapsible instructions panel - hide completely in very narrow mode
+          if (!isNarrowLayout)
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             height: _showInstructions ? null : 0,
             child: _showInstructions
                 ? Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
+                    margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
+                    padding: EdgeInsets.all(contentPadding),
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.elevated.withOpacity(0.95)
@@ -5984,16 +7041,21 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
                 : const SizedBox.shrink(),
           ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: isCompact ? 4 : 8),
 
           // Simplified bottom bar - navigation only
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: EdgeInsets.fromLTRB(
+              horizontalMargin,
+              isCompact ? 8 : 12,
+              horizontalMargin,
+              isCompact ? 4 : 8,
+            ),
             decoration: BoxDecoration(
               color: isDark
                   ? AppColors.nearBlack.withOpacity(0.95)
                   : AppColorsLight.elevated.withOpacity(0.98),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(isCompact ? 16 : 20)),
               border: isDark ? null : Border(
                 top: BorderSide(color: AppColorsLight.cardBorder.withOpacity(0.3)),
               ),
@@ -6007,20 +7069,24 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen> {
             ),
             child: Row(
               children: [
-                // Expand/collapse info button
-                _GlassButton(
-                  icon: _showInstructions ? Icons.expand_more : Icons.expand_less,
-                  onTap: () => setState(() => _showInstructions = !_showInstructions),
-                  size: 44,
-                ),
-
-                const SizedBox(width: 12),
+                // Expand/collapse info button - hide in very narrow mode
+                if (!isNarrowLayout) ...[
+                  _GlassButton(
+                    icon: _showInstructions ? Icons.expand_more : Icons.expand_less,
+                    onTap: () => setState(() => _showInstructions = !_showInstructions),
+                    size: buttonSize,
+                  ),
+                  SizedBox(width: isCompact ? 8 : 12),
+                ],
 
                 // Next exercise indicator - MORE PROMINENT sticky drawer style
                 Expanded(
                   child: nextExercise != null
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 10 : 14,
+                            vertical: isCompact ? 8 : 12,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.centerLeft,

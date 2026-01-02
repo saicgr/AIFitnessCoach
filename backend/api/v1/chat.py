@@ -87,15 +87,22 @@ async def send_message(
         # The chat_history table stores user_message + ai_response per row
         try:
             db = get_supabase_db()
+            # Build context_json with action_data for "Go to Workout" button
+            context_dict = {
+                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
+                "rag_context_used": response.rag_context_used,
+            }
+            # Include action_data if present (for workout generation, modifications, etc.)
+            if response.action_data:
+                context_dict["action_data"] = response.action_data
+                logger.debug(f"Saving action_data to context_json: {response.action_data}")
+
             chat_data = {
                 "user_id": request.user_id,
                 "user_message": request.message,
                 "ai_response": response.message,
-                "context_json": json.dumps({
-                    "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
-                    "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
-                    "rag_context_used": response.rag_context_used,
-                }) if response.intent else None,
+                "context_json": json.dumps(context_dict) if response.intent else None,
             }
             db.create_chat_message(chat_data)
             logger.debug(f"Chat message saved to database for user {request.user_id}, intent={response.intent}, agent={response.agent_type}")
@@ -195,10 +202,13 @@ async def get_chat_history(request: Request, user_id: str, limit: int = 100):
             if row.get("context_json"):
                 try:
                     context = json.loads(row.get("context_json"))
-                    action_data = context
+                    # Extract nested action_data if present (for "Go to Workout" button)
+                    action_data = context.get("action_data")
                     agent_type = context.get("agent_type")
-                except:
-                    pass
+                    if action_data:
+                        logger.debug(f"Loaded action_data from history: {action_data.get('action')}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse context_json: {e}")
 
             # Add user message
             if row.get("user_message"):

@@ -1805,4 +1805,161 @@ export const updateNotificationPreferences = async (
   return data;
 };
 
+// ============================================
+// Admin Dashboard APIs
+// ============================================
+
+import type {
+  AdminSession,
+  AdminUser,
+  DashboardStats,
+  LiveChat,
+  LiveChatMessage,
+  RecentActivity,
+} from '../store/adminStore';
+
+export interface AdminLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AdminLoginResponse {
+  session: AdminSession;
+}
+
+/**
+ * Admin login endpoint.
+ */
+export const adminLogin = async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
+  const { data } = await api.post<AdminLoginResponse>('/admin/login', credentials);
+  return data;
+};
+
+/**
+ * Admin logout endpoint.
+ */
+export const adminLogout = async (): Promise<void> => {
+  await api.post('/admin/logout');
+};
+
+/**
+ * Verify admin session is still valid.
+ */
+export const verifyAdminSession = async (): Promise<AdminUser> => {
+  const { data } = await api.get<AdminUser>('/admin/me');
+  return data;
+};
+
+/**
+ * Get dashboard statistics.
+ */
+export const getAdminDashboardStats = async (): Promise<DashboardStats> => {
+  const { data } = await api.get<DashboardStats>('/admin/dashboard/stats');
+  return data;
+};
+
+/**
+ * Get recent activity for dashboard.
+ */
+export const getAdminRecentActivity = async (limit: number = 20): Promise<RecentActivity[]> => {
+  const { data } = await api.get<RecentActivity[]>(`/admin/dashboard/activity?limit=${limit}`);
+  return data;
+};
+
+/**
+ * Get active live chats (queue).
+ */
+export const getActiveLiveChats = async (
+  status?: 'waiting' | 'active' | 'all'
+): Promise<LiveChat[]> => {
+  const params = status && status !== 'all' ? `?status=${status}` : '';
+  const { data } = await api.get<LiveChat[]>(`/admin/live-chats${params}`);
+  return data;
+};
+
+/**
+ * Get a specific live chat with full message history.
+ */
+export const getLiveChat = async (chatId: string): Promise<LiveChat> => {
+  const { data } = await api.get<LiveChat>(`/admin/live-chats/${chatId}`);
+  return data;
+};
+
+/**
+ * Claim/assign a chat to current admin.
+ */
+export const claimLiveChat = async (chatId: string): Promise<LiveChat> => {
+  const { data } = await api.post<LiveChat>(`/admin/live-chats/${chatId}/claim`);
+  return data;
+};
+
+/**
+ * Send a reply to a live chat as admin.
+ */
+export const sendAdminReply = async (
+  chatId: string,
+  message: string
+): Promise<LiveChatMessage> => {
+  const { data } = await api.post<LiveChatMessage>(`/admin/live-chats/${chatId}/reply`, {
+    content: message,
+  });
+  return data;
+};
+
+/**
+ * Mark a chat as resolved.
+ */
+export const resolveLiveChat = async (
+  chatId: string,
+  resolution_notes?: string
+): Promise<LiveChat> => {
+  const { data } = await api.post<LiveChat>(`/admin/live-chats/${chatId}/resolve`, {
+    resolution_notes,
+  });
+  return data;
+};
+
+/**
+ * Escalate a chat to a higher tier.
+ */
+export const escalateLiveChat = async (
+  chatId: string,
+  reason: string
+): Promise<LiveChat> => {
+  const { data } = await api.post<LiveChat>(`/admin/live-chats/${chatId}/escalate`, {
+    reason,
+  });
+  return data;
+};
+
+/**
+ * Transfer a chat to another agent.
+ */
+export const transferLiveChat = async (
+  chatId: string,
+  targetAgentId: string
+): Promise<LiveChat> => {
+  const { data } = await api.post<LiveChat>(`/admin/live-chats/${chatId}/transfer`, {
+    target_agent_id: targetAgentId,
+  });
+  return data;
+};
+
+/**
+ * Get online agents list.
+ */
+export const getOnlineAgents = async (): Promise<AdminUser[]> => {
+  const { data } = await api.get<AdminUser[]>('/admin/agents/online');
+  return data;
+};
+
+/**
+ * Update agent status (online/offline/busy).
+ */
+export const updateAgentStatus = async (
+  status: 'online' | 'offline' | 'busy'
+): Promise<void> => {
+  await api.put('/admin/agents/status', { status });
+};
+
 export default api;

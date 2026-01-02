@@ -1,4 +1,4 @@
--- AI Fitness Coach - Warmups and Stretches Tables Migration
+-- FitWiz - Warmups and Stretches Tables Migration
 -- This creates tables for storing warmup and cooldown exercises linked to workouts
 
 -- Warmups table - stores warm-up exercises for workouts

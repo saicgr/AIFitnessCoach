@@ -13,6 +13,7 @@ class GoalCard extends StatelessWidget {
   final List<FriendGoalProgress>? friends;
   final int friendsCount;
   final VoidCallback? onFriendsTap;
+  final VoidCallback? onHistoryTap;
 
   const GoalCard({
     super.key,
@@ -23,6 +24,7 @@ class GoalCard extends StatelessWidget {
     this.friends,
     this.friendsCount = 0,
     this.onFriendsTap,
+    this.onHistoryTap,
   });
 
   @override
@@ -267,6 +269,19 @@ class GoalCard extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
+                // History button
+                if (onHistoryTap != null)
+                  IconButton(
+                    onPressed: onHistoryTap,
+                    icon: Icon(
+                      Icons.show_chart,
+                      size: 20,
+                      color: textSecondary,
+                    ),
+                    tooltip: 'View Progress History',
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
                 // Action button
                 if (isActive)
                   TextButton.icon(

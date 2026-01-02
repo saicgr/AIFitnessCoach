@@ -26,7 +26,7 @@ class EmailService:
             logger.info("✅ Email service initialized with Resend")
 
         # Default sender email (must be verified in Resend)
-        self.from_email = os.getenv("RESEND_FROM_EMAIL", "AI Fitness Coach <onboarding@resend.dev>")
+        self.from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <onboarding@resend.dev>")
 
     def is_configured(self) -> bool:
         """Check if the email service is properly configured."""
@@ -175,7 +175,7 @@ class EmailService:
                 </p>
             </div>
             <div class="footer">
-                <p>AI Fitness Coach - Your Personal Training Assistant</p>
+                <p>FitWiz - Your Personal Training Assistant</p>
                 <p>You received this email because you have workout reminders enabled.</p>
             </div>
         </body>

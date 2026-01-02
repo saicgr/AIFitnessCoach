@@ -1,6 +1,7 @@
 #!/bin/bash
-# Render build script - FAST deployment
+# Render build script - Full test suite deployment
 # Set SKIP_TESTS=true in Render env vars to skip tests
+# Set RUN_CRITICAL_ONLY=true to run only critical tests (faster)
 
 set -e  # Exit on first error
 
@@ -15,14 +16,37 @@ if [ "$SKIP_TESTS" = "true" ]; then
     echo "============================================"
     echo "⚡ SKIPPING TESTS (SKIP_TESTS=true)"
     echo "============================================"
+elif [ "$RUN_CRITICAL_ONLY" = "true" ]; then
+    echo ""
+    echo "============================================"
+    echo "Running critical tests only..."
+    echo "============================================"
+    pip install pytest pytest-asyncio httpx
+
+    # Run only critical tests for faster deployment
+    python -m pytest \
+        tests/test_scores_api.py \
+        tests/test_onboarding.py \
+        tests/test_health_api.py \
+        tests/core/test_weight_utils.py \
+        -v --tb=short -x -m "not slow" \
+        --ignore=tests/test_quick_replies_e2e.py
 else
     echo ""
     echo "============================================"
-    echo "Running tests..."
+    echo "Running ALL tests..."
     echo "============================================"
-    pip install pytest pytest-asyncio
-    # Run fast tests only (exclude slow API tests)
-    python -m pytest tests/test_onboarding.py tests/test_quick_replies_e2e.py -v --tb=short -x -m "not slow"
+    pip install pytest pytest-asyncio httpx
+
+    # Run all tests except slow ones and e2e tests that require external services
+    python -m pytest tests/ \
+        -v --tb=short \
+        -m "not slow" \
+        --ignore=tests/test_quick_replies_e2e.py \
+        --ignore=tests/test_streaming_speed.py \
+        --ignore=tests/test_workout_generation_integration.py \
+        --ignore=tests/test_pr_detection_integration.py \
+        -x
 fi
 
 echo ""

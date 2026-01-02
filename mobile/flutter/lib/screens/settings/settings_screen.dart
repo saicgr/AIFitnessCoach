@@ -169,6 +169,98 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'add cardio', 'cardio workouts', 'strength training',
     'mixed workouts', 'progression speed', 'weight jumps',
   ],
+  // Superset settings
+  'superset': [
+    // Direct keywords
+    'superset', 'supersets', 'pair', 'pairs', 'pairing',
+    'antagonist', 'compound set', 'back to back', 'circuit',
+    // Natural language
+    'exercise pairs', 'pair exercises', 'superset exercises',
+    'combine exercises', 'exercises together', 'no rest between',
+    'chest and back', 'biceps triceps', 'save time', 'faster workouts',
+    'add superset', 'create superset', 'favorite pairs',
+  ],
+  // Voice announcements - TTS during workouts
+  'voice_announcements': [
+    // Direct keywords
+    'voice', 'announcements', 'tts', 'text to speech', 'speak',
+    'audio', 'sound', 'speech', 'announce', 'say',
+    // Natural language
+    'voice coach', 'hear exercise', 'speak exercise names',
+    'audio announcements', 'workout voice', 'exercise voice',
+    'announce next exercise', 'voice during workout',
+    'enable voice', 'turn on voice', 'audio guide',
+  ],
+  // Audio settings - background music, ducking, volume
+  'audio_settings': [
+    // Direct keywords
+    'audio', 'music', 'background', 'spotify', 'ducking', 'volume',
+    'sound', 'tts', 'mute', 'silent', 'quiet',
+    // Natural language
+    'background music', 'keep music playing', 'spotify playing',
+    'audio ducking', 'lower music', 'music volume', 'voice volume',
+    'mute during video', 'music settings', 'sound settings',
+    'interrupt music', 'pause music', 'stop music',
+  ],
+  // Warmup and stretch duration settings
+  'warmup_settings': [
+    // Direct keywords
+    'warmup', 'warm up', 'warm-up', 'stretch', 'stretching', 'cooldown',
+    'cool down', 'cool-down', 'duration', 'minutes', 'time',
+    // Natural language
+    'warmup time', 'stretch time', 'warmup duration', 'stretch duration',
+    'how long warmup', 'how long stretch', 'warmup length', 'cooldown length',
+    'before workout', 'after workout', 'pre workout', 'post workout',
+    'longer warmup', 'shorter warmup', 'skip warmup', 'quick warmup',
+  ],
+  // Subscription management - billing, plans, cancel, pause
+  'subscription': [
+    // Direct keywords
+    'subscription', 'billing', 'payment', 'plan', 'premium', 'upgrade',
+    'downgrade', 'cancel', 'pause', 'resume', 'refund', 'price', 'pricing',
+    'lifetime', 'monthly', 'yearly', 'annual', 'trial', 'free trial',
+    // Natural language
+    'cancel subscription', 'pause subscription', 'resume subscription',
+    'manage subscription', 'change plan', 'upgrade plan', 'downgrade plan',
+    'billing history', 'payment history', 'subscription status',
+    'cancel membership', 'pause membership', 'renew subscription',
+    'subscription price', 'how much', 'cancel auto renew', 'stop billing',
+    'request refund', 'get refund', 'money back',
+  ],
+  // App Tour & Demo - interactive walkthrough and demo features
+  'app_tour': [
+    // Direct keywords
+    'tour', 'demo', 'guide', 'walkthrough', 'tutorial', 'help', 'learn',
+    'app tour', 'demo workout', 'sample', 'preview', 'how to use',
+    // Natural language
+    'show me around', 'how to use', 'getting started', 'learn the app',
+    'restart tour', 'see demo', 'try demo', 'app guide', 'new user guide',
+    'what can this app do', 'feature tour', 'app features', 'explore app',
+    'sample workout', 'preview plan', 'try before', 'test app',
+  ],
+  // Email preferences - unsubscribe from emails
+  'email_preferences': [
+    // Direct keywords
+    'email', 'emails', 'unsubscribe', 'subscribe', 'subscription',
+    'newsletter', 'marketing', 'promotional', 'inbox', 'mail',
+    // Natural language
+    'stop emails', 'unsubscribe from emails', 'email preferences',
+    'email settings', 'marketing emails', 'promotional emails',
+    'too many emails', 'spam', 'mailing list', 'email notifications',
+    'weekly email', 'workout email', 'coach email', 'product email',
+    'cant unsubscribe', 'find unsubscribe', 'where unsubscribe',
+  ],
+  // Calibration - strength assessment and baselines
+  'calibration': [
+    // Direct keywords
+    'calibration', 'calibrate', 'test', 'assessment', 'baseline', 'baselines',
+    'strength test', 'strength assessment', '1rm', 'one rep max', 'max',
+    // Natural language
+    'test my strength', 'assess my strength', 'calibrate workout',
+    'strength baselines', 'weight suggestions', 'how strong am i',
+    'recalibrate', 'redo test', 'strength levels', 'fitness test',
+    'workout test', 'test workout', 'calibration workout',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -341,6 +433,245 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  /// Build the "Popular Settings" quick access section
+  Widget _buildPopularSettingsSection(BuildContext context, bool isDark) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Row(
+          children: [
+            Text(
+              'POPULAR SETTINGS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'Quick Access',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.cyan,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Frequently used settings for quick adjustments',
+          style: TextStyle(
+            fontSize: 12,
+            color: textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Quick access grid
+        Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            children: [
+              _buildQuickAccessTile(
+                context: context,
+                icon: Icons.fitness_center,
+                title: 'My Equipment',
+                subtitle: 'Set available gear',
+                color: AppColors.cyan,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  // Navigate to equipment selector or scroll to training section
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Scroll down to Training section'),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: elevated,
+                    ),
+                  );
+                },
+              ),
+              Divider(height: 1, color: cardBorder, indent: 56),
+              _buildQuickAccessTile(
+                context: context,
+                icon: Icons.notifications_outlined,
+                title: 'Workout Reminders',
+                subtitle: 'Set notification times',
+                color: AppColors.orange,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Scroll down to Notifications section'),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: elevated,
+                    ),
+                  );
+                },
+              ),
+              Divider(height: 1, color: cardBorder, indent: 56),
+              _buildQuickAccessTile(
+                context: context,
+                icon: Icons.trending_up,
+                title: 'Progression Pace',
+                subtitle: 'How fast weights increase',
+                color: AppColors.purple,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Scroll down to Training section'),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: elevated,
+                    ),
+                  );
+                },
+              ),
+              Divider(height: 1, color: cardBorder, indent: 56),
+              _buildQuickAccessTile(
+                context: context,
+                icon: Icons.dark_mode_outlined,
+                title: 'Theme',
+                subtitle: 'Light or dark mode',
+                color: AppColors.success,
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Scroll down to Preferences section'),
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: elevated,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build a quick access tile
+  Widget _buildQuickAccessTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: textMuted,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build a section group header with description
+  Widget _buildSectionGroupHeader({
+    required String title,
+    required String description,
+    required bool isDark,
+  }) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 12,
+              color: textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -392,7 +723,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 bottom: 80 + bottomPadding, // Space for floating search bar
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Popular Settings section (only when not searching)
+                  if (_searchQuery.isEmpty)
+                    _buildPopularSettingsSection(context, isDark)
+                        .animate()
+                        .fadeIn(delay: 30.ms),
+
+                  if (_searchQuery.isEmpty)
+                    const SizedBox(height: 32),
+
                   // AI Coach section (shown when searching for AI-related terms)
                   if (_sectionMatches('ai_coach'))
                     _buildAICoachSection(context, isDark, textPrimary, textMuted)
@@ -402,6 +743,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('ai_coach'))
                     const SizedBox(height: 24),
 
+                  // --- APPEARANCE & EXPERIENCE GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('preferences') || _sectionMatches('haptics') || _sectionMatches('voice_announcements') || _sectionMatches('audio_settings') || _sectionMatches('app_mode') || _sectionMatches('accessibility'))
+                    _buildSectionGroupHeader(
+                      title: 'Appearance & Experience',
+                      description: 'Customize how the app looks and feels',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 48.ms),
+
                   // Preferences section
                   if (_sectionMatches('preferences'))
                     const PreferencesSection().animate().fadeIn(delay: 50.ms),
@@ -409,25 +758,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('preferences'))
                     const SizedBox(height: 24),
 
-                  // Training Preferences section (progression pace, workout type)
-                  if (_sectionMatches('training'))
-                    const TrainingPreferencesSection().animate().fadeIn(delay: 51.ms),
-
-                  if (_sectionMatches('training'))
-                    const SizedBox(height: 24),
-
-                  // My Custom Content section (equipment, exercises, workouts)
-                  if (_sectionMatches('custom_content'))
-                    const CustomContentSection().animate().fadeIn(delay: 52.ms),
-
-                  if (_sectionMatches('custom_content'))
-                    const SizedBox(height: 24),
-
                   // Haptics section
                   if (_sectionMatches('haptics'))
                     const HapticsSection().animate().fadeIn(delay: 55.ms),
 
                   if (_sectionMatches('haptics'))
+                    const SizedBox(height: 24),
+
+                  // Voice Announcements section
+                  if (_sectionMatches('voice_announcements'))
+                    const VoiceAnnouncementsSection().animate().fadeIn(delay: 56.ms),
+
+                  if (_sectionMatches('voice_announcements'))
+                    const SizedBox(height: 24),
+
+                  // Audio Settings section (background music, ducking, volume)
+                  if (_sectionMatches('audio_settings'))
+                    const AudioSettingsSection().animate().fadeIn(delay: 56.5.ms),
+
+                  if (_sectionMatches('audio_settings'))
                     const SizedBox(height: 24),
 
                   // App Mode section (Standard, Senior, Kids)
@@ -442,7 +791,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const AccessibilitySection().animate().fadeIn(delay: 57.ms),
 
                   if (_sectionMatches('accessibility'))
+                    const SizedBox(height: 32),
+
+                  // --- WORKOUT & TRAINING GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('training') || _sectionMatches('warmup_settings') || _sectionMatches('custom_content') || _sectionMatches('calibration'))
+                    _buildSectionGroupHeader(
+                      title: 'Workout & Training',
+                      description: 'Configure how workouts are generated',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 50.ms),
+
+                  // Training Preferences section (progression pace, workout type)
+                  if (_sectionMatches('training'))
+                    const TrainingPreferencesSection().animate().fadeIn(delay: 51.ms),
+
+                  if (_sectionMatches('training'))
                     const SizedBox(height: 24),
+
+                  // Superset Settings section
+                  if (_sectionMatches('superset'))
+                    const SupersetSettingsSection().animate().fadeIn(delay: 51.2.ms),
+
+                  if (_sectionMatches('superset'))
+                    const SizedBox(height: 24),
+
+                  // Warmup & Cooldown Settings section
+                  if (_sectionMatches('warmup_settings'))
+                    const WarmupSettingsSection().animate().fadeIn(delay: 51.5.ms),
+
+                  if (_sectionMatches('warmup_settings'))
+                    const SizedBox(height: 24),
+
+                  // Calibration section (strength assessment and baselines)
+                  if (_sectionMatches('calibration'))
+                    const CalibrationSection().animate().fadeIn(delay: 51.8.ms),
+
+                  if (_sectionMatches('calibration'))
+                    const SizedBox(height: 24),
+
+                  // My Custom Content section (equipment, exercises, workouts)
+                  if (_sectionMatches('custom_content'))
+                    const CustomContentSection().animate().fadeIn(delay: 52.ms),
+
+                  if (_sectionMatches('custom_content'))
+                    const SizedBox(height: 32),
+
+                  // --- CONNECTIONS & DATA GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('health_sync') || _sectionMatches('notifications') || _sectionMatches('email_preferences') || _sectionMatches('social_privacy'))
+                    _buildSectionGroupHeader(
+                      title: 'Connections & Data',
+                      description: 'Manage integrations and privacy',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 58.ms),
 
                   // Health Connect / Apple Health section
                   if (_sectionMatches('health_sync'))
@@ -458,12 +858,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('notifications'))
                     const SizedBox(height: 24),
 
+                  // Email Preferences section
+                  if (_sectionMatches('email_preferences'))
+                    const EmailPreferencesSection().animate().fadeIn(delay: 80.ms),
+
+                  if (_sectionMatches('email_preferences'))
+                    const SizedBox(height: 24),
+
                   // Social & Privacy section
                   if (_sectionMatches('social_privacy'))
                     const SocialPrivacySection().animate().fadeIn(delay: 85.ms),
 
                   if (_sectionMatches('social_privacy'))
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
+
+                  // --- ABOUT & SUPPORT GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('support') || _sectionMatches('app_tour') || _sectionMatches('app_info'))
+                    _buildSectionGroupHeader(
+                      title: 'About & Support',
+                      description: 'Help, legal info, and app details',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 95.ms),
 
                   // Support section
                   if (_sectionMatches('support'))
@@ -472,12 +887,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (_sectionMatches('support'))
                     const SizedBox(height: 24),
 
+                  // App Tour & Demo section
+                  if (_sectionMatches('app_tour'))
+                    const AppTourSection().animate().fadeIn(delay: 125.ms),
+
+                  if (_sectionMatches('app_tour'))
+                    const SizedBox(height: 24),
+
                   // App Info section
                   if (_sectionMatches('app_info'))
                     const AppInfoSection().animate().fadeIn(delay: 150.ms),
 
                   if (_sectionMatches('app_info'))
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
+
+                  // --- SUBSCRIPTION GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('subscription'))
+                    _buildSectionGroupHeader(
+                      title: 'Subscription',
+                      description: 'Manage your plan and billing',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 160.ms),
+
+                  // Subscription section
+                  if (_sectionMatches('subscription'))
+                    const SubscriptionSection().animate().fadeIn(delay: 165.ms),
+
+                  if (_sectionMatches('subscription'))
+                    const SizedBox(height: 32),
+
+                  // --- DATA & ACCOUNT GROUP ---
+                  if (_searchQuery.isEmpty || _sectionMatches('data_management') || _sectionMatches('danger_zone') || _sectionMatches('logout'))
+                    _buildSectionGroupHeader(
+                      title: 'Data & Account',
+                      description: 'Export data, reset, or delete account',
+                      isDark: isDark,
+                    ).animate().fadeIn(delay: 170.ms),
 
                   // Data Management section
                   if (_sectionMatches('data_management'))

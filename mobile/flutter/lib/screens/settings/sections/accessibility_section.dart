@@ -342,7 +342,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             value: accessibilitySettings.highContrast,
-            activeColor: AppColors.cyan,
+            activeThumbColor: AppColors.cyan,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleHighContrast();
             },
@@ -358,7 +358,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             value: accessibilitySettings.largeButtons,
-            activeColor: AppColors.cyan,
+            activeThumbColor: AppColors.cyan,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleLargeButtons();
             },
@@ -374,7 +374,7 @@ class _AccessibilitySettingsCard extends ConsumerWidget {
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             value: accessibilitySettings.reduceAnimations,
-            activeColor: AppColors.cyan,
+            activeThumbColor: AppColors.cyan,
             onChanged: (_) {
               ref.read(accessibilityProvider.notifier).toggleReduceAnimations();
             },

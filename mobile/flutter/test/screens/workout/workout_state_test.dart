@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/models/workout_state.dart';
+import 'package:fitwiz/screens/workout/models/workout_state.dart';
 
 void main() {
   group('SetLog', () {

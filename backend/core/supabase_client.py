@@ -1,5 +1,5 @@
 """
-Supabase client wrapper for AI Fitness Coach.
+Supabase client wrapper for FitWiz.
 Provides database and auth functionality via Supabase.
 """
 from supabase import create_client, Client

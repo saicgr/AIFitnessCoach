@@ -93,7 +93,7 @@ final uiTourProvider = StateNotifierProvider<UiTourNotifier, UiTourState>
 | 1 | Next Workout Card | "Your Workouts" | "Your AI-generated workout plan is ready! Tap to see today's exercises and start training." |
 | 2 | Quick Actions Row | "Quick Actions" | "One-tap access to log meals, track water intake, and record body measurements." |
 | 3 | Weekly Progress | "Weekly Progress" | "See your activity streak, completed workouts, and weekly goals at a glance." |
-| 4 | Chat Bubble | "AI Fitness Coach" | "Have questions about workouts, nutrition, or injuries? Chat with your personal AI coach anytime!" |
+| 4 | Chat Bubble | "FitWiz" | "Have questions about workouts, nutrition, or injuries? Chat with your personal AI coach anytime!" |
 | 5 | Bottom Navigation | "Explore the App" | "Navigate to Nutrition tracking, Stats & analytics, Social challenges, and your Profile." |
 | 6 | Features Banner (if visible) | "Premium Features" | "Unlock AI chat, meal photo analysis, personalized plans, and detailed analytics!" |
 

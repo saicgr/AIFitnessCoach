@@ -368,6 +368,14 @@ class NutritionPreferences {
   @JsonKey(name: 'adjust_calories_for_rest')
   final bool adjustCaloriesForRest;
 
+  // Logging & Display settings
+  @JsonKey(name: 'quick_log_mode_enabled')
+  final bool quickLogModeEnabled;
+  @JsonKey(name: 'compact_tracker_view_enabled')
+  final bool compactTrackerViewEnabled;
+  @JsonKey(name: 'show_macros_on_log')
+  final bool showMacrosOnLog;
+
   // Tracking
   @JsonKey(name: 'nutrition_onboarding_completed')
   final bool nutritionOnboardingCompleted;
@@ -413,6 +421,9 @@ class NutritionPreferences {
     this.showWeeklyInsteadOfDaily = false,
     this.adjustCaloriesForTraining = true,
     this.adjustCaloriesForRest = false,
+    this.quickLogModeEnabled = false,
+    this.compactTrackerViewEnabled = false,
+    this.showMacrosOnLog = true,
     this.nutritionOnboardingCompleted = false,
     this.onboardingCompletedAt,
     this.lastRecalculatedAt,
@@ -490,6 +501,9 @@ class NutritionPreferences {
     bool? showWeeklyInsteadOfDaily,
     bool? adjustCaloriesForTraining,
     bool? adjustCaloriesForRest,
+    bool? quickLogModeEnabled,
+    bool? compactTrackerViewEnabled,
+    bool? showMacrosOnLog,
     bool? nutritionOnboardingCompleted,
     DateTime? onboardingCompletedAt,
     DateTime? lastRecalculatedAt,
@@ -533,6 +547,11 @@ class NutritionPreferences {
           adjustCaloriesForTraining ?? this.adjustCaloriesForTraining,
       adjustCaloriesForRest:
           adjustCaloriesForRest ?? this.adjustCaloriesForRest,
+      quickLogModeEnabled:
+          quickLogModeEnabled ?? this.quickLogModeEnabled,
+      compactTrackerViewEnabled:
+          compactTrackerViewEnabled ?? this.compactTrackerViewEnabled,
+      showMacrosOnLog: showMacrosOnLog ?? this.showMacrosOnLog,
       nutritionOnboardingCompleted:
           nutritionOnboardingCompleted ?? this.nutritionOnboardingCompleted,
       onboardingCompletedAt:
@@ -1018,4 +1037,512 @@ class WeeklyRecommendation {
     'user_modified': userModified,
     'modified_calories': modifiedCalories,
   };
+}
+
+// ============================================
+// Nutrition UI Preferences
+// ============================================
+
+/// UI preferences for nutrition tracking experience
+@JsonSerializable()
+class NutritionUIPreferences {
+  final String? id;
+  @JsonKey(name: 'user_id')
+  final String userId;
+
+  /// Toggle to hide AI suggestions after logging
+  @JsonKey(name: 'disable_ai_tips')
+  final bool disableAiTips;
+
+  /// Default meal type: auto, breakfast, lunch, dinner, snack
+  @JsonKey(name: 'default_meal_type')
+  final String defaultMealType;
+
+  /// Enable/disable quick add button
+  @JsonKey(name: 'quick_log_mode')
+  final bool quickLogMode;
+
+  /// Show macro breakdown on log confirmation
+  @JsonKey(name: 'show_macros_on_log')
+  final bool showMacrosOnLog;
+
+  /// Use compact nutrition tracker layout
+  @JsonKey(name: 'compact_tracker_view')
+  final bool compactTrackerView;
+
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+
+  @JsonKey(name: 'updated_at')
+  final DateTime? updatedAt;
+
+  const NutritionUIPreferences({
+    this.id,
+    required this.userId,
+    this.disableAiTips = false,
+    this.defaultMealType = 'auto',
+    this.quickLogMode = true,
+    this.showMacrosOnLog = true,
+    this.compactTrackerView = false,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  factory NutritionUIPreferences.fromJson(Map<String, dynamic> json) =>
+      _$NutritionUIPreferencesFromJson(json);
+
+  Map<String, dynamic> toJson() => _$NutritionUIPreferencesToJson(this);
+
+  NutritionUIPreferences copyWith({
+    String? id,
+    String? userId,
+    bool? disableAiTips,
+    String? defaultMealType,
+    bool? quickLogMode,
+    bool? showMacrosOnLog,
+    bool? compactTrackerView,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return NutritionUIPreferences(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      disableAiTips: disableAiTips ?? this.disableAiTips,
+      defaultMealType: defaultMealType ?? this.defaultMealType,
+      quickLogMode: quickLogMode ?? this.quickLogMode,
+      showMacrosOnLog: showMacrosOnLog ?? this.showMacrosOnLog,
+      compactTrackerView: compactTrackerView ?? this.compactTrackerView,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  /// Create default preferences for a user
+  static NutritionUIPreferences defaultPreferences(String userId) {
+    return NutritionUIPreferences(
+      userId: userId,
+      disableAiTips: false,
+      defaultMealType: 'auto',
+      quickLogMode: true,
+      showMacrosOnLog: true,
+      compactTrackerView: false,
+    );
+  }
+
+  /// Check if using auto meal type detection
+  bool get isAutoMealType => defaultMealType == 'auto';
+
+  /// Get suggested meal type based on current time
+  String get suggestedMealType {
+    if (!isAutoMealType) return defaultMealType;
+
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) return 'breakfast';
+    if (hour >= 11 && hour < 15) return 'lunch';
+    if (hour >= 15 && hour < 18) return 'snack';
+    if (hour >= 18 && hour < 22) return 'dinner';
+    return 'snack'; // Late night
+  }
+}
+
+// ============================================
+// Meal Templates
+// ============================================
+
+/// A food item within a meal template
+@JsonSerializable()
+class TemplateFoodItem {
+  final String name;
+  final int calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  @JsonKey(name: 'sodium_mg')
+  final double? sodiumMg;
+  final String? amount;
+  final String? unit;
+
+  const TemplateFoodItem({
+    required this.name,
+    required this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.sodiumMg,
+    this.amount,
+    this.unit,
+  });
+
+  factory TemplateFoodItem.fromJson(Map<String, dynamic> json) =>
+      _$TemplateFoodItemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TemplateFoodItemToJson(this);
+
+  TemplateFoodItem copyWith({
+    String? name,
+    int? calories,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+    double? fiberG,
+    double? sodiumMg,
+    String? amount,
+    String? unit,
+  }) {
+    return TemplateFoodItem(
+      name: name ?? this.name,
+      calories: calories ?? this.calories,
+      proteinG: proteinG ?? this.proteinG,
+      carbsG: carbsG ?? this.carbsG,
+      fatG: fatG ?? this.fatG,
+      fiberG: fiberG ?? this.fiberG,
+      sodiumMg: sodiumMg ?? this.sodiumMg,
+      amount: amount ?? this.amount,
+      unit: unit ?? this.unit,
+    );
+  }
+}
+
+/// A saved meal template for quick logging
+@JsonSerializable()
+class MealTemplate {
+  final String? id;
+  @JsonKey(name: 'user_id')
+  final String? userId;
+  final String name;
+  @JsonKey(name: 'meal_type')
+  final String mealType;
+  @JsonKey(name: 'food_items')
+  final List<TemplateFoodItem> foodItems;
+  @JsonKey(name: 'total_calories')
+  final int? totalCalories;
+  @JsonKey(name: 'total_protein_g')
+  final double? totalProteinG;
+  @JsonKey(name: 'total_carbs_g')
+  final double? totalCarbsG;
+  @JsonKey(name: 'total_fat_g')
+  final double? totalFatG;
+  @JsonKey(name: 'is_system_template')
+  final bool isSystemTemplate;
+  @JsonKey(name: 'use_count')
+  final int useCount;
+  @JsonKey(name: 'last_used_at')
+  final DateTime? lastUsedAt;
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  final String? description;
+  final List<String>? tags;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+
+  const MealTemplate({
+    this.id,
+    this.userId,
+    required this.name,
+    required this.mealType,
+    this.foodItems = const [],
+    this.totalCalories,
+    this.totalProteinG,
+    this.totalCarbsG,
+    this.totalFatG,
+    this.isSystemTemplate = false,
+    this.useCount = 0,
+    this.lastUsedAt,
+    this.createdAt,
+    this.description,
+    this.tags,
+    this.imageUrl,
+  });
+
+  factory MealTemplate.fromJson(Map<String, dynamic> json) =>
+      _$MealTemplateFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MealTemplateToJson(this);
+
+  MealTemplate copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? mealType,
+    List<TemplateFoodItem>? foodItems,
+    int? totalCalories,
+    double? totalProteinG,
+    double? totalCarbsG,
+    double? totalFatG,
+    bool? isSystemTemplate,
+    int? useCount,
+    DateTime? lastUsedAt,
+    DateTime? createdAt,
+    String? description,
+    List<String>? tags,
+    String? imageUrl,
+  }) {
+    return MealTemplate(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      mealType: mealType ?? this.mealType,
+      foodItems: foodItems ?? this.foodItems,
+      totalCalories: totalCalories ?? this.totalCalories,
+      totalProteinG: totalProteinG ?? this.totalProteinG,
+      totalCarbsG: totalCarbsG ?? this.totalCarbsG,
+      totalFatG: totalFatG ?? this.totalFatG,
+      isSystemTemplate: isSystemTemplate ?? this.isSystemTemplate,
+      useCount: useCount ?? this.useCount,
+      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+      createdAt: createdAt ?? this.createdAt,
+      description: description ?? this.description,
+      tags: tags ?? this.tags,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
+
+  /// Calculate total calories from food items if not set
+  int get calculatedCalories =>
+      totalCalories ??
+      foodItems.fold(0, (sum, item) => sum + item.calories);
+
+  /// Calculate total protein from food items if not set
+  double get calculatedProtein =>
+      totalProteinG ??
+      foodItems.fold(0.0, (sum, item) => sum + (item.proteinG ?? 0));
+
+  /// Calculate total carbs from food items if not set
+  double get calculatedCarbs =>
+      totalCarbsG ??
+      foodItems.fold(0.0, (sum, item) => sum + (item.carbsG ?? 0));
+
+  /// Calculate total fat from food items if not set
+  double get calculatedFat =>
+      totalFatG ??
+      foodItems.fold(0.0, (sum, item) => sum + (item.fatG ?? 0));
+
+  /// Check if this is a user-created template
+  bool get isUserTemplate => !isSystemTemplate;
+
+  /// Get display name with meal type emoji
+  String get displayName {
+    final emoji = _mealTypeEmoji;
+    return '$emoji $name';
+  }
+
+  String get _mealTypeEmoji {
+    switch (mealType.toLowerCase()) {
+      case 'breakfast':
+        return '🌅';
+      case 'lunch':
+        return '☀️';
+      case 'dinner':
+        return '🌙';
+      case 'snack':
+        return '🍎';
+      default:
+        return '🍽️';
+    }
+  }
+}
+
+// ============================================
+// Quick Suggestions
+// ============================================
+
+/// A quick food suggestion based on user history and time of day
+@JsonSerializable()
+class QuickSuggestion {
+  @JsonKey(name: 'food_name')
+  final String foodName;
+  @JsonKey(name: 'meal_type')
+  final String mealType;
+  final int calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'log_count')
+  final int logCount;
+  @JsonKey(name: 'time_of_day_bucket')
+  final String? timeOfDayBucket;
+  @JsonKey(name: 'saved_food_id')
+  final String? savedFoodId;
+  @JsonKey(name: 'template_id')
+  final String? templateId;
+  @JsonKey(name: 'last_logged_at')
+  final DateTime? lastLoggedAt;
+  @JsonKey(name: 'avg_servings')
+  final double? avgServings;
+  final String? description;
+
+  const QuickSuggestion({
+    required this.foodName,
+    required this.mealType,
+    required this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.logCount = 0,
+    this.timeOfDayBucket,
+    this.savedFoodId,
+    this.templateId,
+    this.lastLoggedAt,
+    this.avgServings,
+    this.description,
+  });
+
+  factory QuickSuggestion.fromJson(Map<String, dynamic> json) =>
+      _$QuickSuggestionFromJson(json);
+
+  Map<String, dynamic> toJson() => _$QuickSuggestionToJson(this);
+
+  /// Check if this is a frequently logged item
+  bool get isFrequent => logCount >= 3;
+
+  /// Check if this is a recent item
+  bool get isRecent {
+    if (lastLoggedAt == null) return false;
+    final daysSinceLog = DateTime.now().difference(lastLoggedAt!).inDays;
+    return daysSinceLog <= 7;
+  }
+
+  /// Get relevance score for sorting (higher = more relevant)
+  double get relevanceScore {
+    double score = 0;
+
+    // Frequency bonus
+    score += logCount.clamp(0, 10) * 2;
+
+    // Recency bonus
+    if (lastLoggedAt != null) {
+      final daysSinceLog = DateTime.now().difference(lastLoggedAt!).inDays;
+      if (daysSinceLog <= 1) {
+        score += 20;
+      } else if (daysSinceLog <= 3) {
+        score += 15;
+      } else if (daysSinceLog <= 7) {
+        score += 10;
+      } else if (daysSinceLog <= 14) {
+        score += 5;
+      }
+    }
+
+    // Time of day match bonus
+    final currentBucket = _getCurrentTimeOfDayBucket();
+    if (timeOfDayBucket == currentBucket) {
+      score += 15;
+    }
+
+    return score;
+  }
+
+  static String _getCurrentTimeOfDayBucket() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) return 'morning';
+    if (hour >= 11 && hour < 15) return 'midday';
+    if (hour >= 15 && hour < 18) return 'afternoon';
+    if (hour >= 18 && hour < 22) return 'evening';
+    return 'night';
+  }
+
+  /// Get display subtitle
+  String get subtitle {
+    final parts = <String>[];
+    parts.add('$calories cal');
+    if (proteinG != null) parts.add('${proteinG!.round()}g protein');
+    return parts.join(' | ');
+  }
+
+  /// Check if this suggestion is from a template
+  bool get isFromTemplate => templateId != null;
+
+  /// Check if this suggestion is from a saved food
+  bool get isFromSavedFood => savedFoodId != null;
+}
+
+// ============================================
+// Food Search Result
+// ============================================
+
+/// Food search result for the search functionality
+@JsonSerializable()
+class FoodSearchResult {
+  final String id;
+  final String name;
+  final String? brand;
+  final String? category;
+  @JsonKey(name: 'serving_size')
+  final String? servingSize;
+  @JsonKey(name: 'serving_unit')
+  final String? servingUnit;
+  final int calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  final String? barcode;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'source_type')
+  final String? sourceType;
+  @JsonKey(name: 'is_verified')
+  final bool isVerified;
+
+  const FoodSearchResult({
+    required this.id,
+    required this.name,
+    this.brand,
+    this.category,
+    this.servingSize,
+    this.servingUnit,
+    required this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.barcode,
+    this.imageUrl,
+    this.sourceType,
+    this.isVerified = false,
+  });
+
+  factory FoodSearchResult.fromJson(Map<String, dynamic> json) =>
+      _$FoodSearchResultFromJson(json);
+
+  Map<String, dynamic> toJson() => _$FoodSearchResultToJson(this);
+
+  /// Get display name with brand if available
+  String get displayName {
+    if (brand != null && brand!.isNotEmpty) {
+      return '$name ($brand)';
+    }
+    return name;
+  }
+
+  /// Get serving info string
+  String get servingInfo {
+    if (servingSize != null && servingUnit != null) {
+      return '$servingSize $servingUnit';
+    }
+    if (servingSize != null) return servingSize!;
+    return '1 serving';
+  }
+
+  /// Get macro summary string
+  String get macroSummary {
+    final parts = <String>[];
+    if (proteinG != null) parts.add('P: ${proteinG!.round()}g');
+    if (carbsG != null) parts.add('C: ${carbsG!.round()}g');
+    if (fatG != null) parts.add('F: ${fatG!.round()}g');
+    return parts.join(' | ');
+  }
 }

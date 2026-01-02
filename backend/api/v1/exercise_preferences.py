@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import logging
+import json
 
 from core.supabase_db import get_supabase_db
 
@@ -377,6 +378,160 @@ async def update_variation_preference(request: VariationPreferenceUpdate):
         raise
     except Exception as e:
         logger.error(f"Error updating variation preference: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# Sets/Reps Limits Endpoints
+# =============================================================================
+
+class SetsLimitsUpdate(BaseModel):
+    """Request to update sets/reps limits preferences."""
+    user_id: str
+    max_sets_per_exercise: int = Field(default=4, ge=1, le=10)
+    min_sets_per_exercise: int = Field(default=2, ge=1, le=10)
+    max_reps_ceiling: Optional[int] = Field(default=None, ge=1, le=50)
+    enforce_rep_ceiling: bool = False
+
+
+class SetsLimitsResponse(BaseModel):
+    """Response for sets/reps limits."""
+    max_sets_per_exercise: int
+    min_sets_per_exercise: int
+    max_reps_ceiling: Optional[int]
+    enforce_rep_ceiling: bool
+    description: str
+
+
+@router.get("/sets-limits/{user_id}", response_model=SetsLimitsResponse)
+async def get_sets_limits(user_id: str):
+    """
+    Get user's sets/reps limits preferences.
+
+    These limits control:
+    - max_sets_per_exercise: Maximum sets per exercise (1-10, default 4)
+    - min_sets_per_exercise: Minimum sets per exercise (1-10, default 2)
+    - max_reps_ceiling: Hard cap on reps if enforce_rep_ceiling is True
+    - enforce_rep_ceiling: Whether to strictly enforce the max_reps_ceiling
+    """
+    logger.info(f"Getting sets limits for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("users").select("preferences").eq("id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        preferences = result.data[0].get("preferences") or {}
+        if isinstance(preferences, str):
+            try:
+                preferences = json.loads(preferences)
+            except json.JSONDecodeError:
+                preferences = {}
+
+        max_sets = preferences.get("max_sets_per_exercise", 4)
+        min_sets = preferences.get("min_sets_per_exercise", 2)
+        max_reps_ceiling = preferences.get("max_reps_ceiling")
+        enforce_rep_ceiling = preferences.get("enforce_rep_ceiling", False)
+
+        # Generate description
+        description = f"{min_sets}-{max_sets} sets per exercise"
+        if enforce_rep_ceiling and max_reps_ceiling:
+            description += f", max {max_reps_ceiling} reps"
+
+        return SetsLimitsResponse(
+            max_sets_per_exercise=max_sets,
+            min_sets_per_exercise=min_sets,
+            max_reps_ceiling=max_reps_ceiling,
+            enforce_rep_ceiling=enforce_rep_ceiling,
+            description=description
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting sets limits: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/sets-limits", response_model=SetsLimitsResponse)
+async def update_sets_limits(request: SetsLimitsUpdate):
+    """
+    Update user's sets/reps limits preferences.
+
+    These settings control workout generation:
+    - max_sets_per_exercise: Maximum sets per exercise (1-10, default 4)
+    - min_sets_per_exercise: Minimum sets per exercise (1-10, default 2)
+    - max_reps_ceiling: Hard cap on reps (only applies if enforce_rep_ceiling is True)
+    - enforce_rep_ceiling: Whether to strictly enforce the max_reps_ceiling
+
+    Example use cases:
+    - User wants shorter workouts: max_sets=3, min_sets=2
+    - User prefers strength training: max_reps_ceiling=8, enforce_rep_ceiling=True
+    - User wants high volume: max_sets=6, min_sets=4
+    """
+    logger.info(
+        f"Updating sets limits for user {request.user_id}: "
+        f"max_sets={request.max_sets_per_exercise}, min_sets={request.min_sets_per_exercise}, "
+        f"max_reps_ceiling={request.max_reps_ceiling}, enforce_rep_ceiling={request.enforce_rep_ceiling}"
+    )
+
+    try:
+        db = get_supabase_db()
+
+        # Validate min <= max for sets
+        if request.min_sets_per_exercise > request.max_sets_per_exercise:
+            raise HTTPException(
+                status_code=400,
+                detail="min_sets_per_exercise cannot be greater than max_sets_per_exercise"
+            )
+
+        # Get existing preferences
+        result = db.client.table("users").select("preferences").eq("id", request.user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        existing_preferences = result.data[0].get("preferences") or {}
+        if isinstance(existing_preferences, str):
+            try:
+                existing_preferences = json.loads(existing_preferences)
+            except json.JSONDecodeError:
+                existing_preferences = {}
+
+        # Update preferences
+        existing_preferences["max_sets_per_exercise"] = request.max_sets_per_exercise
+        existing_preferences["min_sets_per_exercise"] = request.min_sets_per_exercise
+        existing_preferences["max_reps_ceiling"] = request.max_reps_ceiling
+        existing_preferences["enforce_rep_ceiling"] = request.enforce_rep_ceiling
+
+        # Save updated preferences
+        update_result = db.client.table("users").update({
+            "preferences": json.dumps(existing_preferences)
+        }).eq("id", request.user_id).execute()
+
+        if not update_result.data:
+            raise HTTPException(status_code=500, detail="Failed to update preferences")
+
+        # Generate description
+        description = f"{request.min_sets_per_exercise}-{request.max_sets_per_exercise} sets per exercise"
+        if request.enforce_rep_ceiling and request.max_reps_ceiling:
+            description += f", max {request.max_reps_ceiling} reps"
+
+        return SetsLimitsResponse(
+            max_sets_per_exercise=request.max_sets_per_exercise,
+            min_sets_per_exercise=request.min_sets_per_exercise,
+            max_reps_ceiling=request.max_reps_ceiling,
+            enforce_rep_ceiling=request.enforce_rep_ceiling,
+            description=description
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating sets limits: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -928,6 +1083,306 @@ async def get_muscle_groups():
                     "quadriceps", "hamstrings", "glutes", "calves"],
         "secondary": ["lower_back", "upper_back", "lats", "traps", "forearms",
                       "hip_flexors", "adductors", "abductors", "abs", "obliques"],
+    }
+
+
+# =============================================================================
+# Exercise Substitute Suggestions (for injuries/limitations)
+# =============================================================================
+
+class SubstituteRequest(BaseModel):
+    """Request for exercise substitutes."""
+    exercise_name: str = Field(..., min_length=1, max_length=200)
+    reason: Optional[str] = None  # e.g., "knee injury", "shoulder pain"
+
+
+class SubstituteExercise(BaseModel):
+    """A suggested substitute exercise."""
+    name: str
+    muscle_group: Optional[str] = None
+    equipment: Optional[str] = None
+    difficulty: Optional[str] = None
+    is_safe_for_reason: bool = True
+    library_id: Optional[str] = None
+    gif_url: Optional[str] = None
+
+
+class SubstituteResponse(BaseModel):
+    """Response with substitute suggestions."""
+    original_exercise: str
+    reason: Optional[str]
+    substitutes: List[SubstituteExercise]
+    message: str
+
+
+# Extended injury mappings for more comprehensive coverage
+INJURY_KEYWORDS = {
+    "knee": ["knee", "knees", "patella", "acl", "mcl", "meniscus"],
+    "shoulder": ["shoulder", "shoulders", "rotator", "deltoid"],
+    "lower_back": ["back", "lower back", "lumbar", "spine", "disc"],
+    "elbow": ["elbow", "elbows", "tennis elbow", "golfer"],
+    "wrist": ["wrist", "wrists", "carpal"],
+    "hip": ["hip", "hips", "hip flexor"],
+    "ankle": ["ankle", "ankles", "achilles"],
+    "neck": ["neck", "cervical"],
+}
+
+# Exercises to avoid per injury type (more comprehensive)
+INJURY_EXERCISE_CONTRAINDICATIONS = {
+    "knee": [
+        "squat", "lunge", "leg press", "leg extension", "leg curl",
+        "jump", "box jump", "step up", "pistol", "bulgarian",
+        "walking lunge", "reverse lunge", "goblet squat", "hack squat",
+        "sissy squat", "front squat", "back squat"
+    ],
+    "shoulder": [
+        "overhead press", "military press", "lateral raise", "front raise",
+        "bench press", "incline press", "dip", "upright row",
+        "arnold press", "push press", "handstand", "shoulder press"
+    ],
+    "lower_back": [
+        "deadlift", "barbell row", "good morning", "back squat",
+        "bent over row", "hyperextension", "seated row",
+        "romanian deadlift", "stiff leg deadlift"
+    ],
+    "elbow": [
+        "tricep pushdown", "skull crusher", "close grip bench",
+        "bicep curl", "hammer curl", "preacher curl", "french press"
+    ],
+    "wrist": [
+        "bench press", "push up", "front squat", "wrist curl",
+        "plank", "handstand"
+    ],
+    "hip": [
+        "hip thrust", "squat", "deadlift", "lunge", "leg raise",
+        "hip flexor stretch", "good morning"
+    ],
+    "ankle": [
+        "calf raise", "jump", "running", "box jump", "skip",
+        "squat", "lunge"
+    ],
+    "neck": [
+        "shoulder shrug", "upright row", "behind neck press"
+    ],
+}
+
+# Safe alternatives per muscle group (injury-friendly options)
+SAFE_ALTERNATIVES = {
+    "knee": {
+        "quadriceps": [
+            {"name": "Seated Leg Extension (Light)", "equipment": "machine", "note": "Use light weight, avoid full extension"},
+            {"name": "Wall Sit (Partial)", "equipment": "bodyweight", "note": "Don't go too deep"},
+            {"name": "Terminal Knee Extension", "equipment": "band", "note": "Rehab-friendly"},
+            {"name": "Straight Leg Raise", "equipment": "bodyweight", "note": "No knee stress"},
+        ],
+        "hamstrings": [
+            {"name": "Lying Leg Curl", "equipment": "machine", "note": "No knee loading"},
+            {"name": "Glute Ham Raise", "equipment": "bodyweight", "note": "Focus on hamstrings"},
+            {"name": "Nordic Curl (Assisted)", "equipment": "bodyweight", "note": "Use support"},
+        ],
+        "glutes": [
+            {"name": "Glute Bridge", "equipment": "bodyweight", "note": "Knee-friendly"},
+            {"name": "Hip Thrust", "equipment": "barbell", "note": "No knee stress"},
+            {"name": "Cable Kickback", "equipment": "cable", "note": "Isolation"},
+            {"name": "Clamshell", "equipment": "band", "note": "Rehab-friendly"},
+        ],
+    },
+    "shoulder": {
+        "chest": [
+            {"name": "Flat Dumbbell Press", "equipment": "dumbbells", "note": "Neutral grip"},
+            {"name": "Cable Fly", "equipment": "cable", "note": "Controlled movement"},
+            {"name": "Push-Up (Modified)", "equipment": "bodyweight", "note": "Don't go too deep"},
+            {"name": "Pec Deck Machine", "equipment": "machine", "note": "Fixed path"},
+        ],
+        "shoulders": [
+            {"name": "Face Pull", "equipment": "cable", "note": "External rotation focus"},
+            {"name": "Reverse Fly", "equipment": "dumbbells", "note": "Rear delts, shoulder-safe"},
+            {"name": "Band Pull Apart", "equipment": "band", "note": "Rehab-friendly"},
+        ],
+    },
+    "lower_back": {
+        "back": [
+            {"name": "Lat Pulldown", "equipment": "cable", "note": "Seated, no back stress"},
+            {"name": "Chest Supported Row", "equipment": "machine", "note": "Back supported"},
+            {"name": "Seated Cable Row", "equipment": "cable", "note": "Keep back neutral"},
+            {"name": "Single Arm Row (Bench)", "equipment": "dumbbell", "note": "One arm at a time"},
+        ],
+        "glutes": [
+            {"name": "Hip Thrust", "equipment": "barbell", "note": "Spine neutral"},
+            {"name": "Glute Bridge", "equipment": "bodyweight", "note": "No back loading"},
+            {"name": "Cable Kickback", "equipment": "cable", "note": "Isolation"},
+        ],
+    },
+}
+
+
+def detect_injury_type(reason: Optional[str]) -> Optional[str]:
+    """Detect injury type from reason text."""
+    if not reason:
+        return None
+
+    reason_lower = reason.lower()
+    for injury_type, keywords in INJURY_KEYWORDS.items():
+        if any(kw in reason_lower for kw in keywords):
+            return injury_type
+    return None
+
+
+def get_exercise_muscle_group(exercise_name: str) -> Optional[str]:
+    """Determine muscle group from exercise name."""
+    name_lower = exercise_name.lower()
+
+    if any(x in name_lower for x in ["squat", "leg press", "leg extension", "lunge"]):
+        return "quadriceps"
+    elif any(x in name_lower for x in ["leg curl", "hamstring", "romanian"]):
+        return "hamstrings"
+    elif any(x in name_lower for x in ["deadlift", "hip thrust", "glute"]):
+        return "glutes"
+    elif any(x in name_lower for x in ["bench", "chest", "push", "fly", "pec"]):
+        return "chest"
+    elif any(x in name_lower for x in ["row", "pulldown", "pull up", "lat"]):
+        return "back"
+    elif any(x in name_lower for x in ["press", "shoulder", "lateral", "raise"]):
+        return "shoulders"
+    elif any(x in name_lower for x in ["curl", "bicep"]):
+        return "biceps"
+    elif any(x in name_lower for x in ["tricep", "pushdown", "extension", "skull"]):
+        return "triceps"
+
+    return None
+
+
+@router.post("/suggest-substitutes", response_model=SubstituteResponse)
+async def suggest_exercise_substitutes(request: SubstituteRequest):
+    """
+    Get safe substitute exercises when avoiding a specific exercise.
+
+    Takes an exercise name and optional reason (e.g., "knee injury")
+    and returns appropriate alternatives that work the same muscles
+    while avoiding the problematic movement.
+    """
+    logger.info(f"Getting substitutes for: {request.exercise_name}, reason: {request.reason}")
+
+    try:
+        db = get_supabase_db()
+        substitutes = []
+
+        # Detect injury type from reason
+        injury_type = detect_injury_type(request.reason)
+        muscle_group = get_exercise_muscle_group(request.exercise_name)
+
+        # 1. First, try to get safe alternatives from our curated list
+        if injury_type and injury_type in SAFE_ALTERNATIVES:
+            injury_alternatives = SAFE_ALTERNATIVES[injury_type]
+            if muscle_group and muscle_group in injury_alternatives:
+                for alt in injury_alternatives[muscle_group]:
+                    substitutes.append(SubstituteExercise(
+                        name=alt["name"],
+                        equipment=alt.get("equipment"),
+                        is_safe_for_reason=True,
+                    ))
+
+        # 2. Get general substitutes from EXERCISE_SUBSTITUTES
+        from core.exercise_data import EXERCISE_SUBSTITUTES
+        exercise_lower = request.exercise_name.lower()
+
+        for key, subs in EXERCISE_SUBSTITUTES.items():
+            if key in exercise_lower:
+                for sub in subs:
+                    # Check if this substitute is safe for the injury
+                    is_safe = True
+                    if injury_type and injury_type in INJURY_EXERCISE_CONTRAINDICATIONS:
+                        contraindicated = INJURY_EXERCISE_CONTRAINDICATIONS[injury_type]
+                        is_safe = not any(c in sub.lower() for c in contraindicated)
+
+                    if is_safe:
+                        # Check if already added
+                        if not any(s.name.lower() == sub.lower() for s in substitutes):
+                            substitutes.append(SubstituteExercise(
+                                name=sub,
+                                is_safe_for_reason=is_safe,
+                            ))
+
+        # 3. Search exercise library for similar exercises
+        if muscle_group:
+            try:
+                library_result = db.client.table("exercise_library").select(
+                    "id", "name", "body_part", "equipment", "gif_url"
+                ).ilike("body_part", f"%{muscle_group}%").limit(10).execute()
+
+                for row in library_result.data or []:
+                    exercise_name_lib = row.get("name", "")
+
+                    # Skip if it's the original exercise
+                    if exercise_name_lib.lower() == request.exercise_name.lower():
+                        continue
+
+                    # Check if safe for injury
+                    is_safe = True
+                    if injury_type and injury_type in INJURY_EXERCISE_CONTRAINDICATIONS:
+                        contraindicated = INJURY_EXERCISE_CONTRAINDICATIONS[injury_type]
+                        is_safe = not any(c in exercise_name_lib.lower() for c in contraindicated)
+
+                    if is_safe:
+                        # Check if already added
+                        if not any(s.name.lower() == exercise_name_lib.lower() for s in substitutes):
+                            substitutes.append(SubstituteExercise(
+                                name=exercise_name_lib,
+                                muscle_group=row.get("body_part"),
+                                equipment=row.get("equipment"),
+                                library_id=row.get("id"),
+                                gif_url=row.get("gif_url"),
+                                is_safe_for_reason=is_safe,
+                            ))
+            except Exception as e:
+                logger.warning(f"Error searching exercise library: {e}")
+
+        # Limit to top 8 substitutes
+        substitutes = substitutes[:8]
+
+        # Generate helpful message
+        if injury_type:
+            message = f"Here are {len(substitutes)} safe alternatives that avoid {injury_type} stress"
+        elif substitutes:
+            message = f"Found {len(substitutes)} alternative exercises for {request.exercise_name}"
+        else:
+            message = "No specific substitutes found, but you can search the exercise library for alternatives"
+
+        return SubstituteResponse(
+            original_exercise=request.exercise_name,
+            reason=request.reason,
+            substitutes=substitutes,
+            message=message,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting substitutes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/injury-exercises/{injury_type}")
+async def get_exercises_to_avoid_for_injury(injury_type: str):
+    """
+    Get list of exercises to avoid for a specific injury type.
+
+    Useful when a user says "I have a knee problem" - this returns
+    all exercises they should consider avoiding.
+    """
+    injury_lower = injury_type.lower()
+
+    # Map common injury descriptions to types
+    detected_type = detect_injury_type(injury_lower)
+    if detected_type:
+        injury_lower = detected_type
+
+    exercises_to_avoid = INJURY_EXERCISE_CONTRAINDICATIONS.get(injury_lower, [])
+    safe_alternatives = SAFE_ALTERNATIVES.get(injury_lower, {})
+
+    return {
+        "injury_type": injury_lower,
+        "exercises_to_avoid": exercises_to_avoid,
+        "safe_alternatives_by_muscle": safe_alternatives,
+        "message": f"Found {len(exercises_to_avoid)} exercises that may stress your {injury_lower}"
     }
 
 

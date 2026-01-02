@@ -14,6 +14,55 @@ enum SubscriptionTier {
   lifetime,
 }
 
+/// Lifetime member tier for recognition badges
+enum LifetimeMemberTier {
+  veteran,    // 365+ days
+  loyal,      // 180+ days
+  established, // 90+ days
+  newMember,  // < 90 days
+}
+
+extension LifetimeMemberTierExtension on LifetimeMemberTier {
+  String get displayName {
+    switch (this) {
+      case LifetimeMemberTier.veteran:
+        return 'Veteran';
+      case LifetimeMemberTier.loyal:
+        return 'Loyal';
+      case LifetimeMemberTier.established:
+        return 'Established';
+      case LifetimeMemberTier.newMember:
+        return 'New';
+    }
+  }
+
+  int get level {
+    switch (this) {
+      case LifetimeMemberTier.veteran:
+        return 4;
+      case LifetimeMemberTier.loyal:
+        return 3;
+      case LifetimeMemberTier.established:
+        return 2;
+      case LifetimeMemberTier.newMember:
+        return 1;
+    }
+  }
+
+  String get badgeIcon {
+    switch (this) {
+      case LifetimeMemberTier.veteran:
+        return 'military_tech';
+      case LifetimeMemberTier.loyal:
+        return 'workspace_premium';
+      case LifetimeMemberTier.established:
+        return 'verified';
+      case LifetimeMemberTier.newMember:
+        return 'star';
+    }
+  }
+}
+
 /// Subscription state
 class SubscriptionState {
   final SubscriptionTier tier;
@@ -25,6 +74,14 @@ class SubscriptionState {
   final Map<String, dynamic> features;
   final bool isRevenueCatConfigured;
 
+  // Lifetime member specific fields
+  final bool isLifetimeMember;
+  final DateTime? lifetimePurchaseDate;
+  final int daysAsMember;
+  final LifetimeMemberTier? lifetimeMemberTier;
+  final double? estimatedValueReceived;
+  final double? valueMuliplier;
+
   const SubscriptionState({
     this.tier = SubscriptionTier.free,
     this.isTrialActive = false,
@@ -34,6 +91,13 @@ class SubscriptionState {
     this.error,
     this.features = const {},
     this.isRevenueCatConfigured = false,
+    // Lifetime fields
+    this.isLifetimeMember = false,
+    this.lifetimePurchaseDate,
+    this.daysAsMember = 0,
+    this.lifetimeMemberTier,
+    this.estimatedValueReceived,
+    this.valueMuliplier,
   });
 
   bool get isPremiumOrHigher =>
@@ -45,6 +109,16 @@ class SubscriptionState {
     tier == SubscriptionTier.ultra ||
     tier == SubscriptionTier.lifetime;
 
+  /// Whether this subscription ever expires (lifetime never does)
+  bool get canExpire => !isLifetimeMember && tier != SubscriptionTier.lifetime;
+
+  /// Whether to show renewal reminders (skip for lifetime)
+  bool get shouldShowRenewalReminder =>
+    canExpire &&
+    !isTrialActive &&
+    subscriptionEndDate != null &&
+    subscriptionEndDate!.difference(DateTime.now()).inDays <= 7;
+
   SubscriptionState copyWith({
     SubscriptionTier? tier,
     bool? isTrialActive,
@@ -54,6 +128,12 @@ class SubscriptionState {
     String? error,
     Map<String, dynamic>? features,
     bool? isRevenueCatConfigured,
+    bool? isLifetimeMember,
+    DateTime? lifetimePurchaseDate,
+    int? daysAsMember,
+    LifetimeMemberTier? lifetimeMemberTier,
+    double? estimatedValueReceived,
+    double? valueMuliplier,
   }) {
     return SubscriptionState(
       tier: tier ?? this.tier,
@@ -64,6 +144,12 @@ class SubscriptionState {
       error: error,
       features: features ?? this.features,
       isRevenueCatConfigured: isRevenueCatConfigured ?? this.isRevenueCatConfigured,
+      isLifetimeMember: isLifetimeMember ?? this.isLifetimeMember,
+      lifetimePurchaseDate: lifetimePurchaseDate ?? this.lifetimePurchaseDate,
+      daysAsMember: daysAsMember ?? this.daysAsMember,
+      lifetimeMemberTier: lifetimeMemberTier ?? this.lifetimeMemberTier,
+      estimatedValueReceived: estimatedValueReceived ?? this.estimatedValueReceived,
+      valueMuliplier: valueMuliplier ?? this.valueMuliplier,
     );
   }
 }
@@ -225,23 +311,92 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       }
     }
 
+    // Handle lifetime membership specially
+    final isLifetime = tier == SubscriptionTier.lifetime;
+
     state = state.copyWith(
       tier: tier,
       isTrialActive: isTrialActive,
       trialEndDate: trialEndDate,
-      subscriptionEndDate: subscriptionEndDate,
+      subscriptionEndDate: isLifetime ? null : subscriptionEndDate, // Lifetime never expires
+      isLifetimeMember: isLifetime,
     );
 
     // Save to local storage for offline access
     _saveToLocalStorage(tier);
 
-    debugPrint('✅ Subscription updated from RevenueCat: tier=$tier, trial=$isTrialActive');
+    // If lifetime, fetch additional details from backend
+    if (isLifetime && _apiClient != null) {
+      _fetchLifetimeStatus(_apiClient);
+    }
+
+    debugPrint('✅ Subscription updated from RevenueCat: tier=$tier, trial=$isTrialActive, lifetime=$isLifetime');
   }
 
   Future<void> _saveToLocalStorage(SubscriptionTier tier) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('subscription_tier', tier.name);
+    if (tier == SubscriptionTier.lifetime) {
+      await prefs.setBool('is_lifetime_member', true);
+    }
   }
+
+  /// Fetch lifetime status from backend
+  Future<void> _fetchLifetimeStatus(ApiClient apiClient) async {
+    if (_userId == null) return;
+
+    try {
+      final response = await apiClient.dio.get(
+        '/api/v1/subscriptions/$_userId/lifetime-status',
+      );
+
+      final data = response.data;
+      if (data['is_lifetime'] == true) {
+        // Parse lifetime member tier
+        LifetimeMemberTier? memberTier;
+        final tierString = data['member_tier'] as String?;
+        if (tierString != null) {
+          switch (tierString.toLowerCase()) {
+            case 'veteran':
+              memberTier = LifetimeMemberTier.veteran;
+              break;
+            case 'loyal':
+              memberTier = LifetimeMemberTier.loyal;
+              break;
+            case 'established':
+              memberTier = LifetimeMemberTier.established;
+              break;
+            default:
+              memberTier = LifetimeMemberTier.newMember;
+          }
+        }
+
+        state = state.copyWith(
+          isLifetimeMember: true,
+          tier: SubscriptionTier.lifetime,
+          lifetimePurchaseDate: data['purchase_date'] != null
+              ? DateTime.tryParse(data['purchase_date'])
+              : null,
+          daysAsMember: data['days_as_member'] ?? 0,
+          lifetimeMemberTier: memberTier,
+          estimatedValueReceived: (data['estimated_value_received'] as num?)?.toDouble(),
+          valueMuliplier: (data['value_multiplier'] as num?)?.toDouble(),
+          subscriptionEndDate: null, // Lifetime never expires
+        );
+
+        debugPrint('✅ Lifetime status fetched: tier=${memberTier?.displayName}, days=${data['days_as_member']}');
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch lifetime status: $e');
+      // Don't throw - lifetime status is supplementary info
+    }
+  }
+
+  /// Check if user is a lifetime member
+  bool get isLifetimeMember => state.isLifetimeMember || state.tier == SubscriptionTier.lifetime;
+
+  /// Get lifetime member tier (if applicable)
+  LifetimeMemberTier? get lifetimeMemberTier => state.lifetimeMemberTier;
 
   /// Fetch subscription status from backend
   Future<void> _fetchSubscriptionFromBackend(ApiClient apiClient) async {
@@ -466,7 +621,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       } else {
         // Refresh from backend
         if (_apiClient != null && _userId != null) {
-          await _fetchSubscriptionFromBackend(_apiClient!);
+          await _fetchSubscriptionFromBackend(_apiClient);
         }
         state = state.copyWith(isLoading: false);
         return false;

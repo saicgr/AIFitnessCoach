@@ -75,6 +75,21 @@ class SettingItemData {
   /// Whether this item is the avoided muscles management.
   final bool isAvoidedMusclesManager;
 
+  /// Whether this item is the downloaded videos manager.
+  final bool isDownloadedVideosManager;
+
+  /// Whether this item is the training split selector.
+  final bool isTrainingSplitSelector;
+
+  /// Whether this item is the workout days selector (quick day change).
+  final bool isWorkoutDaysSelector;
+
+  /// Whether this item navigates to the Progress Charts screen.
+  final bool isProgressChartsScreen;
+
+  /// Whether this item navigates to the Calibration Test screen.
+  final bool isCalibrationTestScreen;
+
   const SettingItemData({
     required this.icon,
     required this.title,
@@ -100,6 +115,11 @@ class SettingItemData {
     this.isCustomExercisesScreen = false,
     this.isAvoidedExercisesManager = false,
     this.isAvoidedMusclesManager = false,
+    this.isDownloadedVideosManager = false,
+    this.isTrainingSplitSelector = false,
+    this.isWorkoutDaysSelector = false,
+    this.isProgressChartsScreen = false,
+    this.isCalibrationTestScreen = false,
   });
 }
 

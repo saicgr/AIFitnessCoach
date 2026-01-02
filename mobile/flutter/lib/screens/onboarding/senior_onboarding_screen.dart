@@ -412,7 +412,7 @@ class _SeniorOnboardingScreenState
                 },
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

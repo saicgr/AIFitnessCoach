@@ -101,27 +101,33 @@ class TemplatePickerSheet extends ConsumerWidget {
                     ),
                   ),
                   data: (templates) {
-                    if (templates.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No templates available',
-                          style: TextStyle(color: textMuted),
-                        ),
-                      );
-                    }
+                    // Create built-in default template
+                    final defaultTemplate = HomeLayoutTemplate(
+                      id: 'default',
+                      name: 'Default Layout',
+                      description: 'The original FitWiz home screen experience',
+                      tiles: createDefaultTiles(),
+                      icon: 'dashboard',
+                      category: 'default',
+                    );
+
+                    // Add default template to the beginning
+                    final allTemplates = [defaultTemplate, ...templates];
 
                     return ListView.builder(
                       controller: scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: templates.length,
+                      itemCount: allTemplates.length,
                       itemBuilder: (context, index) {
-                        final template = templates[index];
+                        final template = allTemplates[index];
+                        final isDefault = template.id == 'default';
                         return _buildTemplateCard(
                           context,
                           template,
                           elevatedColor,
                           textColor,
                           textMuted,
+                          isDefault: isDefault,
                         );
                       },
                     );
@@ -140,8 +146,9 @@ class TemplatePickerSheet extends ConsumerWidget {
     HomeLayoutTemplate template,
     Color elevatedColor,
     Color textColor,
-    Color textMuted,
-  ) {
+    Color textMuted, {
+    bool isDefault = false,
+  }) {
     final iconData = _getIconForTemplate(template.icon);
     final iconColor = _getColorForCategory(template.category);
 
@@ -284,6 +291,8 @@ class TemplatePickerSheet extends ConsumerWidget {
 
   Color _getColorForCategory(String? category) {
     switch (category) {
+      case 'default':
+        return AppColors.cyan;
       case 'minimalist':
         return AppColors.green;
       case 'performance':

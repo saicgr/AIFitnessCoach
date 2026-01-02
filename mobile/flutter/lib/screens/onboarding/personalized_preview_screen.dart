@@ -736,6 +736,35 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
+          // View Full Plan button - See more before committing
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                context.push('/plan-preview');
+              },
+              icon: const Icon(Icons.visibility_outlined, size: 20),
+              label: const Text(
+                'View Full 4-Week Plan',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.cyan,
+                side: BorderSide(color: AppColors.cyan, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           // Main CTA
           SizedBox(
             width: double.infinity,
@@ -773,13 +802,34 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
 
           const SizedBox(height: 8),
 
-          // Subtext
-          Text(
-            'Free account • No credit card required',
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
+          // Subtext with FREE badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'FREE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'No credit card required',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+            ],
           ),
         ],
       ),

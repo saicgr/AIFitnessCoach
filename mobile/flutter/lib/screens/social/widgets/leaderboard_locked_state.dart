@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/services/leaderboard_service.dart';
 
 /// Locked state widget shown when global leaderboard is not unlocked
 class LeaderboardLockedState extends StatelessWidget {

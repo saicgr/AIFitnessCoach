@@ -1,5 +1,5 @@
 """
-Database modules for AI Fitness Coach.
+Database modules for FitWiz.
 
 This package contains modular database operations organized by domain:
 - user_db: User CRUD operations

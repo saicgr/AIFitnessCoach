@@ -493,3 +493,249 @@ class TestValidation:
         )
 
         assert response.status_code == 422  # Validation error
+
+
+# =============================================================================
+# Substitute Suggestion Tests
+# =============================================================================
+
+class TestSubstituteSuggestions:
+    """Tests for the exercise substitution suggestion feature."""
+
+    def test_suggest_substitutes_for_knee_injury(self, client, mock_supabase):
+        """Test that substitutes are suggested for knee-related exercises."""
+        # Mock the exercise library query
+        mock_result = MagicMock()
+        mock_result.data = [
+            {"name": "Leg Press", "target_muscle": "quadriceps", "equipment": "machine"},
+            {"name": "Wall Sit", "target_muscle": "quadriceps", "equipment": "bodyweight"},
+        ]
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.neq.return_value.limit.return_value.execute.return_value = mock_result
+
+        response = client.post(
+            "/api/v1/exercise-preferences/suggest-substitutes",
+            json={
+                "exercise_name": "Barbell Squat",
+                "reason": "knee injury"
+            }
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "substitutes" in data
+        assert data["original_exercise"] == "Barbell Squat"
+        assert "message" in data
+
+    def test_suggest_substitutes_without_reason(self, client, mock_supabase):
+        """Test that substitutes are suggested even without a reason."""
+        mock_result = MagicMock()
+        mock_result.data = [
+            {"name": "Dumbbell Bench Press", "target_muscle": "chest", "equipment": "dumbbell"},
+            {"name": "Push-up", "target_muscle": "chest", "equipment": "bodyweight"},
+        ]
+        mock_supabase.client.table.return_value.select.return_value.ilike.return_value.neq.return_value.limit.return_value.execute.return_value = mock_result
+
+        response = client.post(
+            "/api/v1/exercise-preferences/suggest-substitutes",
+            json={
+                "exercise_name": "Barbell Bench Press"
+            }
+        )
+
+        assert response.status_code == 200
+
+    def test_injury_exercises_endpoint(self, client, mock_supabase):
+        """Test getting exercises to avoid for a specific injury type."""
+        response = client.get(
+            "/api/v1/exercise-preferences/injury-exercises/knee"
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "injury_type" in data
+        assert "exercises_to_avoid" in data
+        assert isinstance(data["exercises_to_avoid"], list)
+        assert "safe_alternatives_by_muscle" in data
+
+    def test_injury_exercises_unknown_type(self, client, mock_supabase):
+        """Test getting exercises for an unknown injury type."""
+        response = client.get(
+            "/api/v1/exercise-preferences/injury-exercises/unknown_injury"
+        )
+
+        # Should still return 200 with empty lists
+        assert response.status_code == 200
+        data = response.json()
+        assert data["exercises_to_avoid"] == []
+
+
+class TestAutoSubstituteHelpers:
+    """Tests for auto-substitution helper functions."""
+
+    @pytest.mark.asyncio
+    async def test_get_substitute_exercise(self, mock_supabase):
+        """Test finding a substitute for an avoided exercise."""
+        from api.v1.workouts.utils import get_substitute_exercise
+
+        # Mock the exercise library query
+        mock_result = MagicMock()
+        mock_result.data = [
+            {"name": "Leg Extension", "target_muscle": "quadriceps", "body_part": "upper legs", "equipment": "machine"},
+            {"name": "Step Up", "target_muscle": "quadriceps", "body_part": "upper legs", "equipment": "bodyweight"},
+        ]
+        mock_supabase.client.table.return_value.select.return_value.or_.return_value.limit.return_value.execute.return_value = mock_result
+
+        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
+            result = await get_substitute_exercise(
+                exercise_name="Barbell Squat",
+                muscle_group="quadriceps",
+                user_id=MOCK_USER_ID,
+                avoided_exercises=["barbell squat", "lunge"],
+                equipment=["machine", "dumbbell"],
+            )
+
+        assert result is not None
+        assert result["name"] in ["Leg Extension", "Step Up"]
+        assert "substituted_for" in result
+        assert result["substituted_for"] == "Barbell Squat"
+
+    @pytest.mark.asyncio
+    async def test_get_substitute_filters_avoided(self, mock_supabase):
+        """Test that substitutes don't include other avoided exercises."""
+        from api.v1.workouts.utils import get_substitute_exercise
+
+        # Return exercises that include an avoided one
+        mock_result = MagicMock()
+        mock_result.data = [
+            {"name": "Lunge", "target_muscle": "quadriceps", "body_part": "upper legs", "equipment": "bodyweight"},
+            {"name": "Leg Press", "target_muscle": "quadriceps", "body_part": "upper legs", "equipment": "machine"},
+        ]
+        mock_supabase.client.table.return_value.select.return_value.or_.return_value.limit.return_value.execute.return_value = mock_result
+
+        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
+            result = await get_substitute_exercise(
+                exercise_name="Barbell Squat",
+                muscle_group="quadriceps",
+                user_id=MOCK_USER_ID,
+                avoided_exercises=["barbell squat", "lunge"],  # Lunge is also avoided
+                equipment=None,
+            )
+
+        # Should return Leg Press, not Lunge
+        assert result is not None
+        assert result["name"] == "Leg Press"
+
+    @pytest.mark.asyncio
+    async def test_auto_substitute_filtered_exercises(self, mock_supabase):
+        """Test auto-substituting multiple filtered exercises."""
+        from api.v1.workouts.utils import auto_substitute_filtered_exercises
+
+        # Mock substitutes
+        mock_result = MagicMock()
+        mock_result.data = [
+            {"name": "Goblet Squat", "target_muscle": "quadriceps", "body_part": "upper legs", "equipment": "dumbbell"},
+        ]
+        mock_supabase.client.table.return_value.select.return_value.or_.return_value.limit.return_value.execute.return_value = mock_result
+
+        exercises = [
+            {"name": "Bench Press", "muscle_group": "chest", "sets": 3, "reps": "10"},
+        ]
+        filtered = [
+            {"name": "Barbell Squat", "muscle_group": "quadriceps", "sets": 4, "reps": "8"},
+        ]
+
+        with patch("api.v1.workouts.utils.get_supabase_db", return_value=mock_supabase):
+            result = await auto_substitute_filtered_exercises(
+                exercises=exercises.copy(),
+                filtered_exercises=filtered,
+                user_id=MOCK_USER_ID,
+                avoided_exercises=["barbell squat"],
+                equipment=["dumbbell"],
+            )
+
+        # Should have added a substitute
+        assert len(result) == 2
+        substitute = next((ex for ex in result if ex.get("substituted_for")), None)
+        assert substitute is not None
+        assert substitute["substituted_for"] == "Barbell Squat"
+
+
+class TestInjuryMappings:
+    """Tests for injury detection and mapping functions."""
+
+    def test_detect_injury_type_knee(self):
+        """Test detecting knee injury from reason text."""
+        from api.v1.exercise_preferences import detect_injury_type
+
+        assert detect_injury_type("knee injury") == "knee"
+        assert detect_injury_type("my knee hurts") == "knee"
+        assert detect_injury_type("I have patella problems") == "knee"
+        assert detect_injury_type("ACL surgery recovery") == "knee"
+
+    def test_detect_injury_type_back(self):
+        """Test detecting back injury from reason text."""
+        from api.v1.exercise_preferences import detect_injury_type
+
+        assert detect_injury_type("lower back pain") == "back"
+        assert detect_injury_type("spine issues") == "back"
+        assert detect_injury_type("herniated disc") == "back"
+        assert detect_injury_type("lumbar problems") == "back"
+
+    def test_detect_injury_type_shoulder(self):
+        """Test detecting shoulder injury from reason text."""
+        from api.v1.exercise_preferences import detect_injury_type
+
+        assert detect_injury_type("shoulder injury") == "shoulder"
+        assert detect_injury_type("rotator cuff tear") == "shoulder"
+        assert detect_injury_type("deltoid strain") == "shoulder"
+
+    def test_detect_injury_type_no_match(self):
+        """Test that non-injury reasons return None."""
+        from api.v1.exercise_preferences import detect_injury_type
+
+        assert detect_injury_type("I just don't like it") is None
+        assert detect_injury_type("prefer other exercises") is None
+        assert detect_injury_type("") is None
+
+    def test_get_exercise_muscle_group(self):
+        """Test getting muscle group for common exercises."""
+        from api.v1.exercise_preferences import get_exercise_muscle_group
+
+        assert get_exercise_muscle_group("Barbell Squat") == "quadriceps"
+        assert get_exercise_muscle_group("Lunge") == "quadriceps"
+        assert get_exercise_muscle_group("Bench Press") == "chest"
+        assert get_exercise_muscle_group("Deadlift") == "back"
+        assert get_exercise_muscle_group("Shoulder Press") == "shoulders"
+
+
+class TestSwapSuggestionFiltering:
+    """Tests for filtering avoided exercises from swap suggestions."""
+
+    def test_suggestion_request_with_avoided_exercises(self, client, mock_supabase):
+        """Test that suggestion request accepts avoided_exercises parameter."""
+        # This tests the API schema accepts the new field
+        from api.v1.exercise_suggestions import SuggestionRequest
+
+        request = SuggestionRequest(
+            user_id=MOCK_USER_ID,
+            message="I want an alternative",
+            current_exercise={
+                "name": "Barbell Squat",
+                "sets": 3,
+                "reps": 10,
+            },
+            avoided_exercises=["Lunge", "Walking Lunge", "Bulgarian Split Squat"],
+        )
+
+        assert request.avoided_exercises is not None
+        assert len(request.avoided_exercises) == 3
+        assert "Lunge" in request.avoided_exercises
+
+    def test_state_includes_avoided_exercises(self):
+        """Test that suggestion state includes avoided_exercises field."""
+        from services.langgraph_agents.exercise_suggestion.state import ExerciseSuggestionState
+        import typing
+
+        # Check that avoided_exercises is in the TypedDict
+        hints = typing.get_type_hints(ExerciseSuggestionState)
+        assert "avoided_exercises" in hints

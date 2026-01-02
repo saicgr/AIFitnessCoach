@@ -22,6 +22,12 @@ LibraryProgram _$LibraryProgramFromJson(
   description: json['description'] as String?,
   shortDescription: json['short_description'] as String?,
   celebrityName: json['celebrity_name'] as String?,
+  isFeatured: json['is_featured'] as bool?,
+  isPremium: json['is_premium'] as bool?,
+  requiresGym: json['requires_gym'] as bool?,
+  iconName: json['icon_name'] as String?,
+  colorHex: json['color_hex'] as String?,
+  splitType: json['split_type'] as String?,
 );
 
 Map<String, dynamic> _$LibraryProgramToJson(LibraryProgram instance) =>
@@ -39,4 +45,10 @@ Map<String, dynamic> _$LibraryProgramToJson(LibraryProgram instance) =>
       'description': instance.description,
       'short_description': instance.shortDescription,
       'celebrity_name': instance.celebrityName,
+      'is_featured': instance.isFeatured,
+      'is_premium': instance.isPremium,
+      'requires_gym': instance.requiresGym,
+      'icon_name': instance.iconName,
+      'color_hex': instance.colorHex,
+      'split_type': instance.splitType,
     };

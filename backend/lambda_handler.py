@@ -1,5 +1,5 @@
 """
-Lambda handler for AI Fitness Coach API.
+Lambda handler for FitWiz API.
 Uses Mangum to wrap FastAPI for AWS Lambda compatibility.
 """
 from mangum import Mangum

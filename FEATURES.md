@@ -1,6 +1,6 @@
 # FitWiz - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
-> **Total Features: 1000+** across 25 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, and **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**)
+> **Total Features: 1035+** across 26 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, and **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**)
 
 ---
 
@@ -1324,6 +1324,238 @@ Users want to track progression for specific exercises (e.g., "How has my bench 
 - `test_exercise_history_api.py` - 15+ tests for history, charts, PRs, pagination
 - `test_muscle_analytics_api.py` - 12+ tests for heatmap, frequency, balance, muscle drill-down
 
+**Flutter UI Implementation:**
+- **Exercise History Screen** (`/progress/exercise-history`): Searchable list of most performed exercises with session counts, navigation to per-exercise details
+- **Exercise Progress Detail Screen** (`/progress/exercise-history/:exerciseName`): Two tabs - Progress (line charts, PRs) and History (paginated session list with pagination)
+- **Muscle Analytics Screen** (`/progress/muscle-analytics`): Three tabs - Heatmap (body muscle visualization), Frequency (horizontal bar chart), Balance (push/pull & upper/lower bars)
+- **Muscle Detail Screen** (`/progress/muscle-analytics/:muscleGroup`): Volume trend bar chart, exercises for muscle with contribution percentages
+- **Navigation Entry Points**: "Detailed Analytics" section on Progress screen with two cards linking to Exercise History and Muscle Analytics
+- **Widgets**: `MuscleHeatmapWidget`, `MuscleFrequencyChart`, `MuscleBalanceChart` for visualizations
+- **Repositories**: `ExerciseHistoryRepository`, `MuscleAnalyticsRepository` for API calls
+- **Providers**: Riverpod providers with time range filtering, pagination, and caching
+- **User Context Logging**: View duration tracked and logged to backend for AI personalization
+
+### 49. "Too slow and convoluted to track meals - useless AI food tips after each meal logged"
+✅ **SOLVED**: Complete nutrition tracking UX overhaul addressing speed, simplicity, and user control:
+
+**The Problem (from competitor review):**
+Users complained: "Too slow and convoluted to track meals. Need a way to disable the useless (and incorrect) AI food tips after each meal logged. Between that, the lag when searching for foods, and the various submenus for foods/meals/recipes, it's too much. Even saving common foods as a meal and selecting that every morning feels slower than other apps."
+
+**Our Solutions:**
+
+**1. Toggle to Disable AI Food Tips**
+- **New Setting**: "Disable AI Food Tips" toggle in Settings > Nutrition Settings
+- **Immediate Effect**: When enabled, no AI suggestions/warnings shown after logging meals
+- **User Control**: Users can re-enable anytime if they want feedback back
+- **Additional Settings**: Quick log mode, compact tracker view, show macros on log toggles
+- **Database**: `user_nutrition_preferences` table stores all UI preferences
+
+**2. Quick Add Button - Minimal-Tap Meal Logging**
+- **Floating Action Button**: Quick Add FAB appears on nutrition screen (when enabled)
+- **2-Tap Maximum**: Open sheet → tap food → logged (no confirmation needed)
+- **Quick Add Sheet Contents**:
+  - **Favorites Section**: Top 8 most-logged foods as tappable chips
+  - **Recent Section**: Last 5 logged meals with meal type, time, calories
+  - **Recipes Section**: User's meal templates for one-tap logging
+  - **Manual Entry**: "Log something else" opens full sheet only when needed
+- **Auto Meal Type**: Detects time of day (breakfast 5-11am, lunch 11am-3pm, snack 3-6pm, dinner 6pm+)
+- **Instant Feedback**: Brief snackbar "Logged: Coffee - 5 cal" then auto-closes
+
+**3. Instant Food Search with Debouncing & Caching**
+- **300ms Debounce**: Prevents API spam while typing
+- **LRU Memory Cache**: 50 items, 5-minute TTL for instant repeat searches
+- **Server-Side Cache**: `food_search_cache` table with 7-day TTL
+- **Parallel Search**: Searches saved foods, recent logs, and database simultaneously
+- **Performance**: First keystroke to results < 500ms for cached queries
+- **Search States**: Loading, results (categorized), error, initial states
+- **Material 3 Search Bar**: Animated focus, filter chips (All/Saved/Recent)
+
+**4. Unified Food Library (Single View for All Foods)**
+- **Consolidated Screen**: Foods, saved foods, and recipes in one tabbed view
+- **Three Tabs**: All | Saved | Recipes with counts
+- **Unified Search**: Search bar searches across all categories
+- **Sort Options**: By name, frequency (most used), or date added
+- **Quick Actions**:
+  - Tap: View nutrition details
+  - "Log" button: Quick log with meal type selector
+  - Swipe left: Delete with confirmation
+- **Empty States**: Helpful messages when sections are empty
+- **Pull to Refresh**: Update data without leaving screen
+
+**5. One-Tap Re-Log for Saved Meals (Bypass AI)**
+- **POST `/api/v1/nutrition/quick-log`**: Logs saved food without AI analysis
+- **Servings Multiplier**: Optional servings parameter (default 1.0)
+- **Pre-Calculated Nutrition**: Uses stored values, no API call to Gemini
+- **Quick Log History**: `quick_log_history` table tracks frequency for smart suggestions
+- **Time-of-Day Buckets**: morning/afternoon/evening/night for better suggestions
+
+**6. Redesigned Tracker Layout (Meals at Top)**
+- **Previous Layout Issues**: 11+ components, meals buried at bottom (#11)
+- **New Compact Energy Header**: Calories eaten | progress bar | remaining (single row)
+- **Meals Moved to Top**: Immediately after energy header
+- **Collapsible Analytics**: All analytics cards grouped under "View Analytics" section
+- **Compact Mode**: When enabled, analytics collapsed by default
+- **Quick Favorites**: Inline with meals section for easy access
+
+**7. Meal Templates (Breakfast/Lunch/Dinner Presets)**
+- **Create Templates**: Save common meals as templates with all nutrition data
+- **Template Properties**: Name, meal type, food items array, calculated totals
+- **System Templates**: Pre-made templates available to all users
+- **Usage Tracking**: `use_count` and `last_used_at` for smart sorting
+- **One-Tap Log**: POST `/api/v1/nutrition/templates/{id}/log` with optional servings
+- **CRUD Operations**: Create, read, update, delete endpoints
+
+**Database Migrations:**
+| File | Purpose |
+|------|---------|
+| `117_user_nutrition_preferences.sql` | UI preferences (disable_ai_tips, quick_log_mode, compact_view) |
+| `118_meal_templates.sql` | Meal templates with food items, totals, usage tracking |
+| `119_food_search_cache.sql` | Search result caching with 7-day TTL |
+| `120_quick_log_history.sql` | Quick log frequency tracking for suggestions |
+
+**Backend API Endpoints:**
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/v1/nutrition/preferences` | GET/PUT | Get/update nutrition UI preferences |
+| `/api/v1/nutrition/preferences/reset` | POST | Reset to default preferences |
+| `/api/v1/nutrition/quick-log` | POST | Quick log saved food (bypasses AI) |
+| `/api/v1/nutrition/quick-suggestions` | GET | Time-aware personalized suggestions |
+| `/api/v1/nutrition/templates` | GET/POST | List/create meal templates |
+| `/api/v1/nutrition/templates/{id}` | PUT/DELETE | Update/delete template |
+| `/api/v1/nutrition/templates/{id}/log` | POST | Log template as food entry |
+| `/api/v1/nutrition/search` | GET | Fast food search with caching |
+
+**Flutter Implementation:**
+| File | Purpose |
+|------|---------|
+| `lib/data/models/nutrition_preferences.dart` | NutritionUIPreferences, MealTemplate, QuickSuggestion models |
+| `lib/data/repositories/nutrition_preferences_repository.dart` | API calls for preferences, templates, quick log |
+| `lib/data/providers/nutrition_preferences_provider.dart` | State management for nutrition UI settings |
+| `lib/screens/nutrition/widgets/quick_add_fab.dart` | Floating action button for quick add |
+| `lib/screens/nutrition/widgets/quick_add_sheet.dart` | Bottom sheet with favorites, recent, recipes |
+| `lib/data/services/food_search_service.dart` | Debounced search with LRU cache |
+| `lib/screens/nutrition/widgets/food_search_bar.dart` | Material 3 search bar with filters |
+| `lib/screens/nutrition/widgets/food_search_results.dart` | Categorized results display |
+| `lib/screens/nutrition/food_library_screen.dart` | Unified food/recipe library |
+| `lib/screens/nutrition/nutrition_screen.dart` | Redesigned layout with meals at top |
+| `lib/screens/nutrition/nutrition_settings_screen.dart` | AI tips toggle, quick log mode settings |
+
+**User Context Logging:**
+All nutrition actions are logged for analytics:
+- `nutrition_preferences_updated` - Settings changes
+- `quick_log_used` - Quick log with food name, calories
+- `meal_template_created/logged/deleted` - Template actions
+- `food_search_performed` - Search queries with cache hit status
+- `ai_tips_disabled/enabled` - Toggle tracking
+- `compact_view_enabled/disabled` - Layout preference
+
+**Backend Tests:**
+- `test_nutrition_preferences.py` - 71 tests covering preferences, quick log, templates, search
+
+---
+
+### 50. "Need a holistic plan that coordinates workouts, nutrition, and fasting together"
+✅ **IMPLEMENTED**: Full Weekly Plan feature that tightly integrates workouts, nutrition targets, and fasting windows into a unified planning system.
+
+**The Problem:**
+Users with multiple fitness goals (strength training + fasting + nutrition tracking) had to manually coordinate between different app sections. There was no unified view showing how workout days affect nutrition needs or how fasting windows should align with training times. This led to:
+- Same calorie targets on training and rest days (inefficient)
+- Fasted training without warnings or supplementation guidance
+- Meal timing that didn't account for eating windows
+- No AI-generated meal suggestions to hit macro targets
+
+**Our Solution - Holistic Weekly Planning:**
+
+**1. Workout-Aware Nutrition Adjustments**
+Automatic daily calorie and macro adjustments based on training:
+| Day Type | Calorie Adjustment | Protein Adjustment | Carbs Adjustment |
+|----------|-------------------|-------------------|------------------|
+| **High Intensity Training** | +350 cal | +30g | +50g |
+| **Moderate Training** | +250 cal | +20g | +30g |
+| **Light Training/Active Recovery** | +150 cal | +15g | +20g |
+| **Rest Day** | Base targets | Base targets | Base targets |
+| **Cutting Phase Rest** | -200 cal | Base protein | Reduced carbs |
+
+**2. Fasting-Workout Coordination**
+Smart coordination warnings and scheduling:
+- **Optimal Timing Detection**: Identifies when workout fits within eating window
+- **Fasted Training Warnings**: Alerts with BCAA recommendations for morning workouts during 16:8 fasting
+- **Extended Fast Detection**: Extra warnings for workouts during 18:6, 20:4, or OMAD protocols
+- **Post-Workout Window**: Ensures time for post-workout nutrition before fast begins
+- **Automatic Window Adjustments**: Optional adjustment of eating window to match workout schedule
+
+**3. AI-Generated Meal Suggestions**
+Each day includes meal suggestions tailored to targets and timing:
+- **Training Day Meals**: Include pre-workout (2-3h before) and post-workout (within 2h) meals
+- **Macro Matching**: Total daily suggestions match calorie/protein targets
+- **Eating Window Compliance**: All meals fit within fasting eating window
+- **Food Preferences**: Respects dietary restrictions and cuisine preferences
+- **One-Tap Logging**: "Log this meal" button for quick tracking
+
+**4. Weekly Plan View**
+Unified calendar view showing the complete picture:
+- **7-Day Overview**: Training days, rest days, at a glance
+- **Daily Breakdown**: Tap any day to see full details
+- **Nutrition Progress**: Macro rings for each day
+- **Fasting Timeline**: Visual eating/fasting windows
+- **Coordination Notes**: Warnings and tips per day
+
+**5. Daily Plan Detail Sheet**
+Comprehensive daily view with:
+- **Workout Card**: Quick access to start today's workout
+- **Nutrition Targets**: Daily calories/protein/carbs/fat/fiber
+- **Fasting Window**: Visual timeline showing eating hours
+- **Meal Suggestions**: AI-generated meals with foods and macros
+- **Coordination Notes**: Tips for optimal timing
+
+**6. Home Screen Integration**
+New Weekly Plan home tile showing:
+- **Today's Summary**: Training vs rest, calories, fasting
+- **Mini Calendar**: 7-day view with workout indicators
+- **Quick Actions**: View full plan, start workout
+
+**7. Plan Agent (LangGraph)**
+Dedicated AI agent for plan-related conversations:
+- Intent routing for: generate_weekly_plan, adjust_plan, explain_plan
+- Understands natural language: "Create a plan for next week", "What should I eat on leg day?"
+- Integrates with existing nutrition/workout agents for seamless experience
+
+**Backend API Endpoints:**
+```
+POST /api/v1/weekly-plans/generate         - Generate AI weekly plan
+GET  /api/v1/weekly-plans/current          - Get current week's plan
+GET  /api/v1/weekly-plans/{week_start}     - Get specific week's plan
+PUT  /api/v1/weekly-plans/{id}             - Update plan settings
+DELETE /api/v1/weekly-plans/{id}           - Archive a plan
+GET  /api/v1/weekly-plans/{id}/daily/{date} - Get daily plan details
+PUT  /api/v1/weekly-plans/{id}/daily/{date} - Update daily entry
+POST /api/v1/meal-plans/generate           - Generate meal suggestions
+POST /api/v1/meal-plans/regenerate-meal    - Regenerate single meal
+```
+
+**Database Tables:**
+- `weekly_plans` - Weekly plan metadata with workout days, fasting protocol, nutrition strategy
+- `daily_plan_entries` - Daily targets, workout reference, fasting windows, meal suggestions
+- `meal_plan_templates` - Saved meal templates for quick reuse
+
+**Flutter Implementation:**
+- **Models**: `WeeklyPlan`, `DailyPlanEntry`, `MealSuggestion`, `CoordinationNote`, `NutritionStrategy`
+- **Repository**: `WeeklyPlanRepository` with full CRUD operations
+- **Provider**: `weeklyPlanProvider` with `todayPlanEntryProvider` for quick access
+- **Screens**: `WeeklyPlanScreen`, `DailyPlanDetailSheet`, `GeneratePlanSheet`
+- **Home Tile**: `WeeklyPlanCard` for home screen integration
+
+**User Context Events:**
+- `weekly_plan_generated` - Track plan generation
+- `weekly_plan_viewed` - Track plan views
+- `daily_plan_viewed` - Track daily detail views
+- `meal_suggestion_logged` - Track meal logging from suggestions
+- `meal_suggestion_regenerated` - Track meal regeneration requests
+- `plan_coordination_warning_viewed` - Track coordination note interactions
+
+**Backend Tests:**
+- `test_weekly_plans.py` - Comprehensive tests for plan generation, nutrition adjustments, fasting coordination, meal suggestions validation
+
 ---
 
 ## Comprehensive Competitor Analysis
@@ -2390,7 +2622,7 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 29 | Workout Modification | Modify today's workout via chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Active Workout |
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Backend system |
 
-### 8. Nutrition Tracking (71 Features)
+### 8. Nutrition Tracking (80 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -2465,6 +2697,15 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 69 | Barcode Cache | 24-hour caching of barcode lookups | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | — |
 | 70 | Missing Barcode Report | User reports of unavailable barcodes | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 | 71 | Manual Barcode Match | Match scanned barcode to alternative | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
+| 72 | Ingredient Inflammation Analysis | AI-powered barcode ingredient analysis for inflammatory properties | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
+| 73 | Color-Coded Inflammation Display | RED inflammatory, GREEN anti-inflammatory ingredient highlighting | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Scan |
+| 74 | Inflammation Score | Overall product inflammation score (1-10 scale) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
+| 75 | Inflammation Scan History | Track user's barcode scan history with inflammation data | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |
+| 76 | Inflammation Scan Favorites | Favorite/unfavorite scanned products | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |
+| 77 | Inflammation Scan Notes | Add personal notes to scanned products | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → History |
+| 78 | Inflammation Statistics | User's aggregated inflammation scan stats | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Stats |
+| 79 | Barcode Inflammation Cache | 90-day caching of barcode inflammation analyses | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | — |
+| 80 | AI Inflammation Recommendations | Personalized recommendations based on product ingredients | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
 
 ### 9. Hydration Tracking (8 Features)
 
@@ -2478,6 +2719,48 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 6 | History View | Browse by date | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | — |
 | 7 | Workout-Linked | Associate with workouts | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | Active Workout |
 | 8 | Entry Notes | Add notes per entry | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | — |
+
+### 9B. Simple Habit Tracking (35 Features) - NEW
+
+Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10k steps." Build and break habits with streak tracking, templates, and AI suggestions.
+
+| # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
+|---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
+| 1 | Habit Dashboard | Main screen showing today's habits with progress | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Habits |
+| 2 | Positive Habits | Track habits to build (drink water, meditate, exercise) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Add |
+| 3 | Negative Habits | Track habits to break (no DoorDash, no sugar, no alcohol) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Add |
+| 4 | Daily Frequency | Habits tracked every day | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 5 | Weekly Frequency | Habits tracked X times per week | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 6 | Specific Days | Habits for specific days (M/W/F only) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 7 | Quantitative Habits | Habits with targets (8 glasses, 10000 steps) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 8 | One-Tap Completion | Quick toggle to mark habit complete/incomplete | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits |
+| 9 | Current Streak | Track consecutive days completed | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 10 | Best Streak | Track longest streak ever | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 11 | Auto Streak Reset | Streak resets on missed day | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | — |
+| 12 | Category Organization | Organize by Nutrition, Activity, Health, Lifestyle | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 13 | Category Filter | Filter habits by category | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Habits |
+| 14 | Habit Templates | 16+ pre-built habits (water, steps, meditate, no sugar) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Templates |
+| 15 | Quick Template Add | Create habit from template with one tap | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 16 | Custom Habit Creation | Create habits with name, icon, color, target | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Create |
+| 17 | Custom Icons | 20+ icons (water, run, meditate, book, etc.) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
+| 18 | Custom Colors | 15+ color options for habits | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
+| 19 | Habit Reminders | Set reminder time for each habit | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 20 | Swipe to Archive | Swipe left to archive habit | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits |
+| 21 | Swipe to Delete | Swipe right to permanently delete | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits |
+| 22 | Edit Habit | Modify habit details after creation | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Tap → Edit |
+| 23 | Habit Reordering | Drag to reorder habits | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits |
+| 24 | Weekly Summary View | 7-day completion breakdown per habit | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Summary |
+| 25 | Completion Rate | 7-day completion percentage | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
+| 26 | Home Screen Card | Compact widget showing today's habits | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home |
+| 27 | Quick Toggle from Home | Toggle habits directly from home card | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home |
+| 28 | All Complete Celebration | Visual feedback when all habits completed | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
+| 29 | Streak Highlight | Display longest current streak on home | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home |
+| 30 | Progress Indicator | Circular progress showing today's completion | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
+| 31 | AI Habit Suggestions | Gemini suggests habits based on goals | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | In Development | User | Habits → AI Suggest |
+| 32 | AI Insights | Weekly AI-generated habit insights | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | In Development | User | Habits → Insights |
+| 33 | User Context Logging | Log habit activities for AI coaching | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | In Development | Dev | Backend system |
+| 34 | Habit History | View past completions calendar | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Tap → History |
+| 35 | Archived Habits | View and restore archived habits | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Habits → Archived |
 
 ### 10. Intermittent Fasting (65 Features)
 
@@ -2988,7 +3271,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | 35 | Lifetime Never Expires | Database triggers prevent lifetime subscriptions from expiring | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | — |
 | 36 | Lifetime AI Context | AI receives lifetime membership context for personalized responses | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Chat |
 
-### 23. Customer Support (10 Features)
+### 23. Customer Support (28 Features)
 
 | # | Feature | Description | Frontend | Backend | Gemini AI | RAG | DB Tables | Tests | Status | Focus | Navigation |
 |---|---------|-------------|----------|---------|-----------|-----|-----------|-------|--------|-------|-------|
@@ -3002,6 +3285,24 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | 8 | Ticket Detail Screen | Full conversation view with reply capability | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Settings → Support |
 | 9 | Close Ticket | User can close resolved tickets | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Settings → Support |
 | 10 | Ticket Timestamps | Created at, updated at, resolved at tracking | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Settings → Support |
+| 11 | **In-Chat Message Reporting** | Long-press AI messages to report problems directly from chat | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Chat → Long-press message |
+| 12 | Report Categories | Wrong advice, Inappropriate, Unhelpful, Outdated info, Other | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Chat → Report Sheet |
+| 13 | AI Report Analysis | Gemini analyzes why reported response was problematic | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Background task |
+| 14 | Report Status Tracking | Pending, Reviewed, Resolved, Dismissed statuses | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | — |
+| 15 | User Report History | View all submitted chat message reports | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Settings → Support |
+| 16 | Quick Report from Menu | "Report a Problem" option in chat 3-dot menu | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Chat → Menu |
+| 17 | **Live Chat Support** | Real-time chat with human support agents in-app | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Chat → Talk to Human |
+| 18 | Talk to Human Option | "Talk to Human Support" option in AI chat menu with category selection | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Chat → Menu |
+| 19 | AI-to-Human Handoff | Escalate from AI coach to human support with conversation context | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Chat → Escalate |
+| 20 | Queue Position Display | Shows queue position and estimated wait time while waiting | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Live Chat Screen |
+| 21 | Real-Time Messaging | Instant message delivery via Supabase Realtime subscriptions | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Live Chat Screen |
+| 22 | Typing Indicators | Shows when agent or user is typing | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Live Chat Screen |
+| 23 | Read Receipts | Messages show read status with timestamps | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Live Chat Screen |
+| 24 | Push Notifications | FCM alerts when agent sends message (app in background) | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | User | System notification |
+| 25 | Slack/Discord Webhooks | Instant alerts to support team when user starts chat or sends message | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | Dev | Backend webhook |
+| 26 | Admin Dashboard (Web) | React admin panel for support staff to view and reply to chats | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | Admin | /admin/chats |
+| 27 | Admin Authentication | Email/password login with role-based access (admin/super_admin) | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Admin | /admin/login |
+| 28 | Agent Presence Tracking | Track which support agents are online for queue routing | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Admin | Admin Dashboard |
 
 ### 24. Home Screen Widgets (11 Widgets, 33 Sizes) -- Needs more implementation and testing
 
@@ -3443,8 +3744,86 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | **Fasting + Workout Integration** | Combined in one app | No switching between apps - unique in the market |
 | **NEAT Improvement System** | Steps, hourly activity, movement reminders | Non-exercise activity tracking with gamification |
 | **Calibration Workouts** | Test actual vs reported fitness level | Validates self-assessment for accurate personalization |
+| **Hormonal Health Tracking** | Testosterone, estrogen, cycle phase tracking | Gender-specific workout optimization based on hormones |
+| **Kegel/Pelvic Floor Exercises** | 16 exercises with warmup/cooldown integration | Pelvic floor health for both men and women |
+| **Cycle-Aware Workouts** | Menstrual phase detection, intensity adjustment | Auto-adjusts workout intensity based on cycle phase |
+| **Hormonal Diet Recommendations** | Foods for testosterone, estrogen, PCOS, menopause | AI-powered nutrition for hormonal balance |
+
+---
+
+### 40. "App doesn't consider my hormones or menstrual cycle"
+✅ **SOLVED**: Comprehensive hormonal health tracking system:
+- **Hormonal Profile**: Set goals like testosterone optimization, estrogen balance, PCOS management, menopause support, fertility support, postpartum recovery
+- **Menstrual Cycle Tracking**: Log period start dates, automatic cycle phase calculation (menstrual, follicular, ovulation, luteal)
+- **Cycle-Aware Workouts**: AI automatically adjusts workout intensity based on cycle phase:
+  - **Menstrual phase (Days 1-5)**: Lower intensity, focus on recovery and gentle movement
+  - **Follicular phase (Days 6-13)**: Rising energy, good for strength building
+  - **Ovulation phase (Days 14-16)**: Peak energy and strength, great for PRs
+  - **Luteal phase (Days 17-28)**: Decreasing energy, moderate intensity recommended
+- **Symptom Tracking**: Log fatigue, cramps, mood swings, bloating, headaches - AI adjusts recommendations
+- **Hormone Logs**: Track energy levels, mood, sleep quality, symptoms daily
+- **Gender-Specific Recommendations**: Different advice for testosterone optimization (men) vs estrogen balance (women)
+- **API Endpoints**:
+  - `GET/PUT /hormonal-health/profile/{user_id}` - Get or update hormonal profile
+  - `POST /hormonal-health/logs/{user_id}` - Add hormone log entry
+  - `GET /hormonal-health/cycle-phase/{user_id}` - Get current cycle phase with recommendations
+  - `POST /hormonal-health/log-period/{user_id}` - Log period start date
+  - `GET /hormonal-health/insights/{user_id}` - Get comprehensive hormonal insights
+
+### 41. "No kegel exercises or pelvic floor training"
+✅ **SOLVED**: Complete kegel/pelvic floor exercise system:
+- **16 Kegel Exercises** in library with proper instructions:
+  - **General exercises**: Quick flicks, slow holds, elevator holds, endurance holds, reverse kegels
+  - **Male-specific**: Prostate holds, post-urination squeeze, PC muscle isolation
+  - **Female-specific**: Progressive holds, post-birth recovery, core connection breathwork
+- **Preferences System**:
+  - Enable/disable kegels globally
+  - Include in warmup and/or cooldown
+  - Set daily session target (default 3)
+  - Choose difficulty level (beginner, intermediate, advanced)
+  - Select focus area (general, male-specific, female-specific, postpartum, prostate health)
+- **Session Tracking**:
+  - Log duration, reps completed, hold duration
+  - Track when performed (warmup, cooldown, standalone, daily routine)
+  - Rate difficulty for adaptation
+- **Stats & Streaks**:
+  - Daily goal progress
+  - Current and longest streaks
+  - Total sessions and duration
+  - Weekly session count
+- **Workout Integration**:
+  - Automatically include in warmup/cooldown when enabled
+  - Log sessions directly from workout completion
+- **API Endpoints**:
+  - `GET/PUT /kegel/preferences/{user_id}` - Get or update kegel preferences
+  - `POST /kegel/sessions/{user_id}` - Log kegel session
+  - `GET /kegel/stats/{user_id}` - Get comprehensive kegel statistics
+  - `GET /kegel/daily-goal/{user_id}` - Check daily goal progress
+  - `GET /kegel/exercises` - Get all kegel exercises with filtering
+  - `POST /kegel/log-from-workout/{user_id}` - Log kegel from warmup/cooldown
+
+### 42. "No diet recommendations for hormone balance"
+✅ **SOLVED**: Comprehensive hormonal diet recommendation system:
+- **Foods by Hormonal Goal**:
+  - **Testosterone Optimization**: Oysters, beef, eggs, pomegranate, garlic, olive oil, cruciferous vegetables
+  - **Estrogen Balance**: Flaxseeds, soy, berries, citrus fruits, fatty fish, leafy greens
+  - **PCOS Management**: Anti-inflammatory foods, cinnamon, spearmint tea, low glycemic options
+  - **Menopause Support**: Phytoestrogen-rich foods, calcium, vitamin D sources
+  - **Fertility Support**: Folate-rich foods, zinc, omega-3s, antioxidants
+  - **Postpartum Recovery**: Iron-rich foods, protein, galactagogues for milk production
+- **Cycle Phase Nutrition**:
+  - **Menstrual phase**: Iron-rich foods (red meat, spinach, lentils), anti-inflammatory foods
+  - **Follicular phase**: Lean proteins, light grains, fermented foods, fresh vegetables
+  - **Ovulation phase**: High-fiber foods, antioxidant-rich fruits, anti-inflammatory omega-3s
+  - **Luteal phase**: Complex carbs for serotonin, magnesium-rich foods, B-vitamin foods
+- **AI Meal Plan Generation**: Gemini-powered personalized meal plans based on hormonal goals, dietary restrictions, and current cycle phase
+- **Foods Database**: 50+ hormone-supportive foods with nutritional benefits and usage tips
+- **API Endpoints**:
+  - `GET /hormonal-health/foods` - Get hormone-supportive foods with filtering
+  - `GET /hormonal-health/foods?goal=testosterone_optimization` - Filter by hormonal goal
+  - `GET /hormonal-health/foods?cycle_phase=luteal` - Get phase-specific recommendations
 
 ---
 
 
-*Last Updated: December 2025*
+*Last Updated: January 2026*

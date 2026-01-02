@@ -180,30 +180,37 @@ class RestTimerOverlay extends StatelessWidget {
   }
 
   Widget _buildProgressBar(bool isDark) {
-    return Container(
-      height: 6,
-      width: 200,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.15) : AppColorsLight.cardBorder,
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use responsive width: max 200px or 60% of available width
+        final screenWidth = MediaQuery.of(context).size.width;
+        final progressWidth = screenWidth < 380 ? screenWidth * 0.5 : 200.0;
+        return Container(
           height: 6,
-          width: 200 * restProgress,
+          width: progressWidth,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.purple,
-                AppColors.purple.withOpacity(0.7),
-              ],
-            ),
+            color: isDark ? Colors.white.withOpacity(0.15) : AppColorsLight.cardBorder,
             borderRadius: BorderRadius.circular(3),
           ),
-        ),
-      ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: 6,
+              width: progressWidth * restProgress,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.purple,
+                    AppColors.purple.withOpacity(0.7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

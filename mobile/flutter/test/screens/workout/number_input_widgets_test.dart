@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/workout/widgets/number_input_widgets.dart';
+import 'package:fitwiz/screens/workout/widgets/number_input_widgets.dart';
 
 void main() {
   group('InlineNumberInput', () {

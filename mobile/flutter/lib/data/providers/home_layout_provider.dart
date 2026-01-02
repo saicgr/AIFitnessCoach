@@ -25,7 +25,7 @@ final allLayoutsProvider =
     final repository = ref.watch(homeLayoutRepositoryProvider);
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
-    return AllLayoutsNotifier(repository, userId, ref);
+    return AllLayoutsNotifier(repository, userId);
   },
 );
 
@@ -247,15 +247,50 @@ class ActiveLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
     return state.value?.tiles.any((t) => t.type == type && t.isVisible) ??
         false;
   }
+
+  /// Reset layout to default tiles
+  /// This resets the current layout to the default tile configuration
+  Future<void> resetToDefault() async {
+    if (_userId == null) return;
+
+    final currentLayout = state.value;
+    if (currentLayout == null) return;
+
+    debugPrint('🔄 [ActiveLayout] Resetting to default layout...');
+
+    // Create default tiles
+    final defaultTiles = createDefaultTiles();
+
+    // Optimistic update
+    state = AsyncValue.data(currentLayout.copyWith(
+      tiles: defaultTiles,
+      updatedAt: DateTime.now(),
+    ));
+
+    try {
+      final updatedLayout = await _repository.updateLayout(
+        layoutId: currentLayout.id,
+        userId: _userId,
+        tiles: defaultTiles,
+        name: 'My Layout', // Reset name to default as well
+      );
+      state = AsyncValue.data(updatedLayout);
+      debugPrint('✅ [ActiveLayout] Reset to default complete');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ActiveLayout] Error resetting to default: $e');
+      // Rollback
+      state = AsyncValue.data(currentLayout);
+      state = AsyncValue.error(e, stackTrace);
+    }
+  }
 }
 
 /// All layouts state notifier
 class AllLayoutsNotifier extends StateNotifier<AsyncValue<List<HomeLayout>>> {
   final HomeLayoutRepository _repository;
   final String? _userId;
-  final Ref _ref;
 
-  AllLayoutsNotifier(this._repository, this._userId, this._ref)
+  AllLayoutsNotifier(this._repository, this._userId)
       : super(const AsyncValue.loading()) {
     if (_userId != null) {
       refresh();

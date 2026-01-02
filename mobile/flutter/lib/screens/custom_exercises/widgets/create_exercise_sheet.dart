@@ -47,7 +47,8 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
 
   final List<String> _equipmentOptions = [
     'bodyweight', 'dumbbell', 'barbell', 'kettlebell',
-    'cable', 'machine', 'resistance band', 'other',
+    'cable', 'machine', 'resistance band', 'medicine ball',
+    'slam ball', 'other',
   ];
 
   @override
@@ -620,7 +621,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
         ),
         value: value,
         onChanged: onChanged,
-        activeColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+        activeThumbColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
       ),
     );
   }

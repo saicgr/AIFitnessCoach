@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
@@ -1205,7 +1204,7 @@ class _AgentToggleItem extends StatelessWidget {
           Switch(
             value: isEnabled,
             onChanged: (_) => onChanged(),
-            activeColor: agent.primaryColor,
+            activeThumbColor: agent.primaryColor,
           ),
         ],
       ),
@@ -1415,7 +1414,7 @@ class _ToggleItem extends StatelessWidget {
         Switch(
           value: value,
           onChanged: (_) => onChanged(),
-          activeColor: AppColors.cyan,
+          activeThumbColor: AppColors.cyan,
         ),
       ],
     );

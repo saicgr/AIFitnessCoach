@@ -310,7 +310,7 @@ Status: [Building/Running/Failed]
 
 ## Project-Specific Notes
 
-For this AI Fitness Coach project:
+For this FitWiz project:
 - Default to running on Android emulator if available
 - Ensure environment variables are set before running
 - Watch for Gemini API key issues on first run

@@ -25,6 +25,7 @@ class CoachSelectionScreen extends ConsumerStatefulWidget {
 class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   CoachPersona? _selectedCoach;
   bool _isCustomMode = false;
+  bool _isLoading = false;
 
   // Custom coach settings
   String _customName = '';
@@ -74,9 +75,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   }
 
   Future<void> _continue() async {
+    if (_isLoading) return;
+
     HapticFeedback.mediumImpact();
 
-    // Save selected coach to AI settings
+    setState(() => _isLoading = true);
+
+    // Save selected coach to AI settings (synchronous, local state)
     final aiNotifier = ref.read(aiSettingsProvider.notifier);
 
     if (_isCustomMode) {
@@ -90,29 +95,37 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       aiNotifier.setCoachPersona(_selectedCoach!);
     }
 
-    // Mark coach as selected in user profile (backend + local state)
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId != null) {
-        await apiClient.put(
-          '${ApiConstants.users}/$userId',
-          data: {'coach_selected': true},
-        );
-      }
-      // Update local auth state
-      ref.read(authStateProvider.notifier).markCoachSelected();
-    } catch (e) {
-      debugPrint('❌ [CoachSelection] Failed to update coach_selected flag: $e');
-    }
+    // Update local auth state immediately for fast navigation
+    ref.read(authStateProvider.notifier).markCoachSelected();
 
     // Reset onboarding state so the new coach personality takes effect from the start
     ref.read(onboardingStateProvider.notifier).reset();
 
-    // Navigate to conversational onboarding
+    // Navigate to conversational onboarding immediately
     if (mounted) {
       context.go('/onboarding');
     }
+
+    // Update backend in background (fire-and-forget) - don't block navigation
+    _updateBackendCoachFlag();
+  }
+
+  /// Updates the coach_selected flag in backend without blocking UI
+  void _updateBackendCoachFlag() {
+    Future(() async {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = await apiClient.getUserId();
+        if (userId != null) {
+          await apiClient.put(
+            '${ApiConstants.users}/$userId',
+            data: {'coach_selected': true},
+          );
+        }
+      } catch (e) {
+        debugPrint('❌ [CoachSelection] Failed to update coach_selected flag: $e');
+      }
+    });
   }
 
   @override
@@ -492,6 +505,8 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   }
 
   Widget _buildContinueButton(bool isDark, bool canContinue) {
+    final isEnabled = canContinue && !_isLoading;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       decoration: BoxDecoration(
@@ -507,45 +522,54 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
       child: SafeArea(
         top: false,
         child: GestureDetector(
-          onTap: canContinue ? _continue : null,
+          onTap: isEnabled ? _continue : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              gradient: canContinue ? AppColors.cyanGradient : null,
-              color: canContinue ? null : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+              gradient: isEnabled ? AppColors.cyanGradient : null,
+              color: isEnabled ? null : (isDark ? AppColors.elevated : AppColorsLight.elevated),
               borderRadius: BorderRadius.circular(14),
-              border: canContinue
+              border: isEnabled
                   ? null
                   : Border.all(
                       color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                     ),
             ),
             child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: canContinue
-                          ? Colors.white
-                          : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isEnabled
+                                ? Colors.white
+                                : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 20,
+                          color: isEnabled
+                              ? Colors.white
+                              : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 20,
-                    color: canContinue
-                        ? Colors.white
-                        : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
-                  ),
-                ],
-              ),
             ),
           ),
         ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),

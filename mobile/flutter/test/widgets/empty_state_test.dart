@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/widgets/empty_state.dart';
+import 'package:fitwiz/widgets/empty_state.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {

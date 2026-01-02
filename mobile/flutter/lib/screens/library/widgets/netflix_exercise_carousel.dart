@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/video_cache_provider.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
@@ -105,15 +108,44 @@ class NetflixHeroSection extends ConsumerStatefulWidget {
   ConsumerState<NetflixHeroSection> createState() => _NetflixHeroSectionState();
 }
 
-class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
+class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
+    with SingleTickerProviderStateMixin {
   int _currentPage = 0;
   VideoPlayerController? _videoController;
   bool _videoInitialized = false;
   bool _isLoadingVideo = false;
 
+  /// Animation controller for fade-in effect
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
+  /// Whether reduced motion is enabled
+  bool _reducedMotion = false;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize fade animation
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+
+    // Check accessibility and load video after frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAccessibilityAndLoad();
+    });
+  }
+
+  void _checkAccessibilityAndLoad() {
+    final mediaQuery = MediaQuery.of(context);
+    _reducedMotion = mediaQuery.disableAnimations;
+
     // Load video for first exercise
     if (widget.exercises.isNotEmpty) {
       _loadVideoForExercise(widget.exercises[0]);
@@ -122,6 +154,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
 
   @override
   void dispose() {
+    _fadeController.dispose();
     _videoController?.dispose();
     super.dispose();
   }
@@ -130,14 +163,28 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
     // Dispose old video
     _videoController?.dispose();
     _videoController = null;
+    _fadeController.reset();
     setState(() {
       _videoInitialized = false;
       _isLoadingVideo = true;
     });
 
     final exerciseName = exercise.originalName ?? exercise.name;
+    final exerciseId =
+        exercise.id ?? exercise.name.toLowerCase().replaceAll(' ', '_');
 
     try {
+      // First check for cached video
+      final cacheNotifier = ref.read(videoCacheProvider.notifier);
+      final localPath = cacheNotifier.getLocalVideoPath(exerciseId);
+
+      if (localPath != null) {
+        debugPrint('Using cached video for hero: $exerciseName');
+        await _initializeVideoController(localPath, isLocal: true);
+        return;
+      }
+
+      // Fetch from API
       final apiClient = ref.read(apiClientProvider);
       final videoResponse = await apiClient.get(
         '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
@@ -146,25 +193,45 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
       if (videoResponse.statusCode == 200 && videoResponse.data != null) {
         final videoUrl = videoResponse.data['url'] as String?;
         if (videoUrl != null && mounted) {
-          _videoController =
-              VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-          await _videoController!.initialize();
-          _videoController!.setLooping(true);
-          _videoController!.setVolume(0);
-          _videoController!.play();
-
-          if (mounted) {
-            setState(() {
-              _videoInitialized = true;
-              _isLoadingVideo = false;
-            });
-          }
+          await _initializeVideoController(videoUrl, isLocal: false);
         }
       } else {
         if (mounted) setState(() => _isLoadingVideo = false);
       }
     } catch (e) {
       debugPrint('Error loading hero video: $e');
+      if (mounted) setState(() => _isLoadingVideo = false);
+    }
+  }
+
+  Future<void> _initializeVideoController(String source,
+      {required bool isLocal}) async {
+    try {
+      if (isLocal) {
+        _videoController = VideoPlayerController.file(File(source));
+      } else {
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(source));
+      }
+
+      await _videoController!.initialize();
+      _videoController!.setLooping(true);
+      _videoController!.setVolume(0);
+
+      // Auto-play unless reduced motion
+      if (!_reducedMotion) {
+        _videoController!.play();
+      }
+
+      if (mounted) {
+        setState(() {
+          _videoInitialized = true;
+          _isLoadingVideo = false;
+        });
+        // Fade in the video
+        _fadeController.forward();
+      }
+    } catch (e) {
+      debugPrint('Error initializing hero video: $e');
       if (mounted) setState(() => _isLoadingVideo = false);
     }
   }
@@ -236,12 +303,15 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
               children: [
                 // Video or gradient background
                 if (_videoInitialized && _videoController != null)
-                  FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: _videoController!.value.size.width,
-                      height: _videoController!.value.size.height,
-                      child: VideoPlayer(_videoController!),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _videoController!.value.size.width,
+                        height: _videoController!.value.size.height,
+                        child: VideoPlayer(_videoController!),
+                      ),
                     ),
                   )
                 else
@@ -258,7 +328,7 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
                     ),
                     child: Center(
                       child: _isLoadingVideo
-                          ? CircularProgressIndicator(color: cyan, strokeWidth: 2)
+                          ? _buildLoadingIndicator(cyan, purple)
                           : Icon(
                               _getBodyPartIcon(currentExercise.bodyPart),
                               size: 80,
@@ -316,9 +386,8 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
                           if (currentExercise.difficulty != null) ...[
                             const SizedBox(width: 8),
                             _HeroChip(
-                              label: currentExercise.difficulty!,
-                              color: AppColors.getDifficultyColor(
-                                  currentExercise.difficulty!),
+                              label: DifficultyUtils.getDisplayName(currentExercise.difficulty!),
+                              color: DifficultyUtils.getColor(currentExercise.difficulty!),
                             ),
                           ],
                         ],
@@ -402,6 +471,56 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection> {
           ),
 
         const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  /// Build loading indicator for hero video
+  Widget _buildLoadingIndicator(Color cyan, Color purple) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 50,
+          height: 50,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    cyan.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(cyan),
+                ),
+              ),
+              Icon(
+                Icons.play_arrow_rounded,
+                size: 20,
+                color: cyan.withValues(alpha: 0.7),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Loading...',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
@@ -571,7 +690,7 @@ class _NetflixCard extends StatelessWidget {
                         color: purple.withValues(alpha: 0.6),
                       ),
                     ),
-                    // Difficulty badge
+                    // Difficulty badge (first letter of display name)
                     if (exercise.difficulty != null)
                       Positioned(
                         top: 6,
@@ -582,13 +701,12 @@ class _NetflixCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.getDifficultyColor(
-                                    exercise.difficulty!)
+                            color: DifficultyUtils.getColor(exercise.difficulty!)
                                 .withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            exercise.difficulty![0], // First letter: B, I, A
+                            DifficultyUtils.getDisplayName(exercise.difficulty!)[0], // First letter: B, M, C, E
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

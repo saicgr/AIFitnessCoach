@@ -1,4 +1,4 @@
-# MacroFactor vs AI Fitness Coach: Nutrition Feature Comparison & Analysis
+# MacroFactor vs FitWiz: Nutrition Feature Comparison & Analysis
 
 ## Table of Contents
 1. [Executive Summary](#executive-summary)
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This document compares MacroFactor (a premium nutrition tracking app with 75,000+ subscribers) against the current AI Fitness Coach app's nutrition features and Supabase database schema.
+This document compares MacroFactor (a premium nutrition tracking app with 75,000+ subscribers) against the current FitWiz app's nutrition features and Supabase database schema.
 
 ---
 
@@ -30,7 +30,7 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ## Feature Comparison Matrix
 
-| Feature | MacroFactor | AI Fitness Coach | Gap Analysis |
+| Feature | MacroFactor | FitWiz | Gap Analysis |
 |---------|-------------|------------------|--------------|
 | **Food Logging - Text** | AI Describe (voice/text) | ✅ Gemini text parsing | Parity |
 | **Food Logging - Image** | AI Photo recognition (beta) | ✅ Gemini Vision | Parity |
@@ -55,7 +55,7 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ---
 
-## Current AI Fitness Coach Nutrition Architecture
+## Current FitWiz Nutrition Architecture
 
 ### Flutter Models (`lib/data/models/`)
 
@@ -119,13 +119,13 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ---
 
-## What AI Fitness Coach Does Better
+## What FitWiz Does Better
 
 ### 1. Integrated Workouts (Major Advantage)
-MacroFactor is nutrition-only; separate workout app coming 2026. AI Fitness Coach has **workout generation + tracking built-in**.
+MacroFactor is nutrition-only; separate workout app coming 2026. FitWiz has **workout generation + tracking built-in**.
 
 ### 2. Real-Time AI Coaching
-MacroFactor uses weekly automated check-ins. AI Fitness Coach has **real-time conversational AI** via Gemini chat.
+MacroFactor uses weekly automated check-ins. FitWiz has **real-time conversational AI** via Gemini chat.
 
 ### 3. Goal-Aligned Scoring
 - `goal_alignment_percentage` on every meal
@@ -134,7 +134,7 @@ MacroFactor uses weekly automated check-ins. AI Fitness Coach has **real-time co
 - **MacroFactor doesn't score individual meals**
 
 ### 4. Flexible Pricing Model
-MacroFactor has no free tier. AI Fitness Coach could offer freemium.
+MacroFactor has no free tier. FitWiz could offer freemium.
 
 ---
 

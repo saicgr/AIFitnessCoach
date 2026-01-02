@@ -105,6 +105,13 @@ def get_field_value(collected: Dict[str, Any], field: str) -> Any:
 
     camel_to_snake = {v: k for k, v in snake_to_camel.items()}
 
+    # Fields that have multiple valid keys (pre-quiz uses different names)
+    # selected_days can also be stored as workoutDays from pre-quiz
+    field_aliases = {
+        "selected_days": ["selectedDays", "workoutDays"],
+        "selectedDays": ["selected_days", "workoutDays"],
+    }
+
     # Try the field as-is first
     value = collected.get(field)
 
@@ -114,12 +121,23 @@ def get_field_value(collected: Dict[str, Any], field: str) -> Any:
         if alt_field:
             value = collected.get(alt_field)
 
+    # If still not found, check aliases (e.g., workoutDays for selected_days)
+    if value is None or value == "" or (isinstance(value, list) and len(value) == 0):
+        aliases = field_aliases.get(field, [])
+        for alias in aliases:
+            value = collected.get(alias)
+            if value is not None and value != "" and not (isinstance(value, list) and len(value) == 0):
+                break
+
     return value
 
 
 def detect_field_from_response(response: str) -> Optional[str]:
     """
     Detect which field the AI is asking about from response keywords.
+
+    This function must be coach-agnostic - it should detect fields regardless
+    of which coach persona is speaking (Coach Mike, Dr. Sarah, Sergeant Max, etc.)
 
     Args:
         response: The AI response text
@@ -131,27 +149,84 @@ def detect_field_from_response(response: str) -> Optional[str]:
 
     # Map keywords to fields - order matters (more specific patterns first)
     # NOTE: Put more specific multi-word patterns before generic single words
+    # IMPORTANT: These patterns must work for ALL coach personalities
     field_patterns = {
-        # Past programs - check first since AI may reference duration in same message
-        "past_programs": ["ever followed a program", "followed a program", "ppl", "bro split", "tried before", "starting strength", "stronglifts", "5x5", "push pull legs"],
-        # Selected days
-        "selected_days": ["which days", "what days", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "days of the week"],
+        # Training experience / history - check FIRST (most specific)
+        # Coach variations: "How long have you been lifting?", "What's your training history?",
+        # "Been at this long?", "Training background?", "How many years?"
+        "training_experience": [
+            "how long have you been", "been lifting", "been training", "training history",
+            "training background", "lifting experience", "gym experience", "workout experience",
+            "years of training", "years of lifting", "how many years", "experience with weights",
+            "new to lifting", "new to the gym", "new to training", "been at this",
+            "fitness journey", "training journey", "how experienced are you",
+        ],
+        # Past programs - what they've DONE before
+        # Coach variations: "Ever tried PPL?", "What programs have you followed?", "Done any structured programs?"
+        "past_programs": [
+            "ever followed a program", "followed a program", "programs have you", "tried before",
+            "done before", "what have you tried", "workout routine before", "ppl", "bro split",
+            "starting strength", "stronglifts", "5x5", "push pull legs", "structured program",
+            "followed any", "routine have you", "programs before",
+        ],
+        # Selected days - which specific days
+        "selected_days": [
+            "which days", "what days", "pick your days", "choose your days", "select days",
+            "days work for you", "days of the week", "prefer to train", "workout days",
+        ],
         # Workout duration - only match when specifically asking about duration
-        "workout_duration": ["how long per workout", "how long are your workouts", "workout length", "session length", "30, 45, 60", "30, 45, 60, 90"],
+        # Coach variations: "How long per session?", "30, 45, 60, or 90?", "Session length?"
+        "workout_duration": [
+            "how long per workout", "how long are your workouts", "workout length",
+            "session length", "30, 45, 60", "30, 45, 60, 90", "per session",
+            "minutes per workout", "time per workout", "how long do you want",
+            "how much time", "duration", "workout time",
+        ],
         # Target weight - ask about goal/target weight (check BEFORE focus_areas since "target" could conflict)
-        "target_weight_kg": ["target weight", "goal weight", "want to weigh", "want to be at", "drop to", "gain to", "happy where you are", "any target weight"],
+        # Coach variations: "Any weight goal?", "Target weight in mind?", "Happy where you are?"
+        "target_weight_kg": [
+            "target weight", "goal weight", "want to weigh", "want to be at", "drop to",
+            "gain to", "happy where you are", "any target weight", "weight goal",
+            "lose some weight", "gain some weight", "ideal weight", "weight in mind",
+            "pounds to lose", "pounds to gain", "kg to lose", "kg to gain",
+        ],
         # Workout variety - check BEFORE focus_areas because AI may say "full-body" when asking about variety
-        "workout_variety": ["same exercises", "mix it up", "for some variety", "stick with the same", "consistent routine", "fresh each week", "each week or"],
+        # Coach variations: "Same exercises or mix it up?", "Prefer consistency?", "Like variety?"
+        "workout_variety": [
+            "same exercises", "mix it up", "for some variety", "stick with the same",
+            "consistent routine", "fresh each week", "each week or", "variety or consistency",
+            "consistent or varied", "routine variety", "exercise variety", "switch things up",
+            "keep it fresh", "same workout", "different workouts",
+        ],
         # Focus areas - use specific patterns, NOT just "full body" which can appear in other contexts
-        "focus_areas": ["muscles you'd like to prioritize", "prioritize", "focus area", "target muscle", "muscle group", "any muscles to", "focus on which"],
-        # Biggest obstacle
-        "biggest_obstacle": ["obstacle", "barrier", "consistency", "struggle", "challenge", "biggest"],
+        # Coach variations: "Any muscles to prioritize?", "Focus areas?", "Target any muscle groups?"
+        "focus_areas": [
+            "muscles you'd like to prioritize", "prioritize", "focus area", "target muscle",
+            "muscle group", "any muscles to", "focus on which", "areas to focus",
+            "body parts", "muscle to work", "emphasize", "priority muscle",
+            "want to hit", "want to target",
+        ],
+        # Biggest obstacle - barriers to consistency
+        # Coach variations: "What's been holding you back?", "Biggest challenge?", "What stops you?"
+        "biggest_obstacle": [
+            "obstacle", "barrier", "holding you back", "struggle", "challenge", "biggest",
+            "stops you", "gets in the way", "hard time with", "difficulty with",
+            "trouble with", "issue with", "problem with",
+        ],
         # Equipment
-        "equipment": ["equipment", "gym access", "what do you have", "access to", "what gear"],
+        "equipment": [
+            "equipment", "gym access", "what do you have", "access to", "what gear",
+            "tools available", "what's available",
+        ],
         # Goals
-        "goals": ["goal", "achieve", "want to", "looking to", "aiming for"],
+        "goals": [
+            "goal", "achieve", "want to", "looking to", "aiming for", "objective",
+        ],
         # Fitness level
-        "fitness_level": ["experience level", "fitness level", "beginner", "intermediate", "advanced", "how experienced"],
+        "fitness_level": [
+            "experience level", "fitness level", "beginner", "intermediate", "advanced",
+            "how experienced", "skill level",
+        ],
     }
 
     for field, keywords in field_patterns.items():

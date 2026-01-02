@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'quick_log_overlay.dart';
 
 /// Screen that immediately shows the quick log overlay and stays on current screen

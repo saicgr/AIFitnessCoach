@@ -1,5 +1,5 @@
 """
-Data Import Service for AI Fitness Coach.
+Data Import Service for FitWiz.
 
 Imports user data from a previously exported ZIP file containing CSV files.
 Handles ID regeneration and relationship mapping for data portability.

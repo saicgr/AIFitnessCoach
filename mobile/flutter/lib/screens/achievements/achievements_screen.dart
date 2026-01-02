@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/achievement.dart';
 import '../../data/repositories/achievements_repository.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/lottie_animations.dart';
 
@@ -133,7 +131,7 @@ class _SummaryTab extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _StreakCard(streak: streak, isDark: isDark),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
           ],
 
@@ -145,7 +143,7 @@ class _SummaryTab extends StatelessWidget {
               return _AchievementCard(achievement: entry.value, isDark: isDark)
                   .animate()
                   .fadeIn(delay: (100 * entry.key).ms);
-            }).toList(),
+            }),
           ],
 
           // Categories

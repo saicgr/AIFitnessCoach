@@ -189,12 +189,17 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Free text fields
     free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
 
-    # Quiz fields that may be pre-filled
+    # Quiz fields that may be pre-filled (check multiple key variants)
     quiz_fields = [
         "goals", "equipment", "fitness_level", "days_per_week",
-        "motivation", "workoutDays", "training_experience", "workout_environment"
+        "motivation", "workoutDays", "selectedDays", "selected_days",
+        "training_experience", "workout_environment"
     ]
     prefilled_quiz_fields = [f for f in quiz_fields if f in collected and collected[f]]
+    # Also check workoutDays/selectedDays for selected_days
+    if collected.get("workoutDays") or collected.get("selectedDays"):
+        if "selected_days" not in prefilled_quiz_fields:
+            prefilled_quiz_fields.append("selected_days")
     logger.info(f"[Onboarding Agent] Pre-filled quiz fields: {prefilled_quiz_fields}")
 
     # Check for completion message

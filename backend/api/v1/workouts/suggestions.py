@@ -212,6 +212,66 @@ IMPORTANT: Return ONLY the JSON array, no markdown or explanations."""
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _generate_fallback_summary(
+    workout_name: str,
+    exercises: list,
+    duration_minutes: int,
+    workout_type: str = None,
+) -> str:
+    """
+    Generate a fallback summary when AI generation fails.
+    Returns a valid JSON string that matches the expected format.
+    """
+    # Determine workout focus from exercises
+    exercise_names = [ex.get("name", "") for ex in exercises[:3] if ex.get("name")]
+    exercises_preview = ", ".join(exercise_names) if exercise_names else "various exercises"
+
+    # Extract muscle groups
+    muscles = set()
+    for ex in exercises:
+        muscle = ex.get("primary_muscle") or ex.get("muscle_group") or ex.get("target")
+        if muscle:
+            muscles.add(muscle.lower())
+
+    muscle_focus = ", ".join(list(muscles)[:3]) if muscles else "full body"
+
+    # Determine headline based on workout type
+    type_headlines = {
+        "strength": "Build Strength Today!",
+        "hypertrophy": "Muscle Building Session!",
+        "cardio": "Heart-Pumping Cardio!",
+        "hiit": "High Intensity Burn!",
+        "flexibility": "Stretch & Recover!",
+        "endurance": "Endurance Challenge!",
+    }
+    headline = type_headlines.get(workout_type.lower() if workout_type else "", "Great Workout Ahead!")
+
+    # Build sections
+    sections = [
+        {
+            "icon": "🎯",
+            "title": "Focus",
+            "content": f"This workout targets {muscle_focus} with {len(exercises)} exercises",
+            "color": "cyan"
+        },
+        {
+            "icon": "💪",
+            "title": "Key Moves",
+            "content": f"Includes {exercises_preview} for comprehensive training",
+            "color": "purple"
+        },
+        {
+            "icon": "⏱️",
+            "title": "Duration",
+            "content": f"Complete in about {duration_minutes} minutes with proper rest periods",
+            "color": "orange"
+        }
+    ]
+
+    import json
+    return json.dumps({"headline": headline, "sections": sections})
+
+
 @router.get("/{workout_id}/summary")
 async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False):
     """
@@ -260,16 +320,36 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
         import time
         start_time = time.time()
 
-        summary = await generate_workout_insights(
-            workout_id=workout_id,
-            workout_name=workout_data.get("name", "Workout"),
-            exercises=exercises,
-            duration_minutes=workout_data.get("duration_minutes", 45),
-            workout_type=workout_data.get("type"),
-            difficulty=workout_data.get("difficulty"),
-            user_goals=user_goals,
-            fitness_level=fitness_level,
-        )
+        try:
+            summary = await generate_workout_insights(
+                workout_id=workout_id,
+                workout_name=workout_data.get("name", "Workout"),
+                exercises=exercises,
+                duration_minutes=workout_data.get("duration_minutes", 45),
+                workout_type=workout_data.get("type"),
+                difficulty=workout_data.get("difficulty"),
+                user_goals=user_goals,
+                fitness_level=fitness_level,
+            )
+
+            # Validate that we got a non-empty summary
+            if not summary or summary.strip() == "":
+                logger.warning(f"AI returned empty summary for workout {workout_id}, generating fallback")
+                summary = _generate_fallback_summary(
+                    workout_name=workout_data.get("name", "Workout"),
+                    exercises=exercises,
+                    duration_minutes=workout_data.get("duration_minutes", 45),
+                    workout_type=workout_data.get("type"),
+                )
+        except Exception as gen_error:
+            logger.error(f"AI summary generation failed for workout {workout_id}: {gen_error}")
+            # Generate a fallback summary instead of failing
+            summary = _generate_fallback_summary(
+                workout_name=workout_data.get("name", "Workout"),
+                exercises=exercises,
+                duration_minutes=workout_data.get("duration_minutes", 45),
+                workout_type=workout_data.get("type"),
+            )
 
         generation_time_ms = int((time.time() - start_time) * 1000)
 

@@ -4,14 +4,14 @@
 /* Apple Glassmorphism + Fitness-focused UI */
 
 @theme {
-  /* === PRIMARY PALETTE (Cool Tones) === */
-  --color-primary: #06B6D4;           /* Cyan - primary brand */
-  --color-primary-dark: #0891B2;      /* Darker cyan */
-  --color-primary-light: #22D3EE;     /* Lighter cyan */
-  --color-secondary: #3B82F6;         /* Electric blue */
-  --color-secondary-dark: #2563EB;
-  --color-accent: #14B8A6;            /* Teal - success */
-  --color-accent-dark: #0D9488;
+  /* === PRIMARY PALETTE (Green/Emerald Tones) === */
+  --color-primary: #10B981;           /* Emerald - primary brand */
+  --color-primary-dark: #059669;      /* Darker emerald */
+  --color-primary-light: #34D399;     /* Lighter emerald */
+  --color-secondary: #84CC16;         /* Lime green */
+  --color-secondary-dark: #65A30D;    /* Darker lime */
+  --color-accent: #22C55E;            /* Green - success */
+  --color-accent-dark: #16A34A;
 
   /* === ACCENT PALETTE (Warm Highlights) === */
   --color-orange: #F97316;            /* Warnings, streaks */
@@ -42,9 +42,9 @@
   --color-info: #06B6D4;
 
   /* === GLOW COLORS === */
-  --color-glow-primary: rgba(6, 182, 212, 0.4);
-  --color-glow-secondary: rgba(59, 130, 246, 0.4);
-  --color-glow-accent: rgba(20, 184, 166, 0.4);
+  --color-glow-primary: rgba(16, 185, 129, 0.4);    /* Emerald glow */
+  --color-glow-secondary: rgba(132, 204, 22, 0.4); /* Lime glow */
+  --color-glow-accent: rgba(34, 197, 94, 0.4);     /* Green glow */
   --color-glow-orange: rgba(249, 115, 22, 0.4);
   --color-glow-magenta: rgba(236, 72, 153, 0.4);
 
@@ -69,9 +69,9 @@ html.light-mode {
   --color-border-light: rgba(0, 0, 0, 0.08);
   --color-overlay: rgba(0, 0, 0, 0.5);
 
-  --color-glow-primary: rgba(6, 182, 212, 0.2);
-  --color-glow-secondary: rgba(59, 130, 246, 0.2);
-  --color-glow-accent: rgba(20, 184, 166, 0.2);
+  --color-glow-primary: rgba(16, 185, 129, 0.2);    /* Emerald glow */
+  --color-glow-secondary: rgba(132, 204, 22, 0.2); /* Lime glow */
+  --color-glow-accent: rgba(34, 197, 94, 0.2);     /* Green glow */
   --color-glow-orange: rgba(249, 115, 22, 0.2);
   --color-glow-magenta: rgba(236, 72, 153, 0.2);
 }
@@ -467,7 +467,7 @@ body {
 
 /* === WORKOUT TYPE GRADIENTS === */
 .workout-strength {
-  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  background: linear-gradient(135deg, #10B981, #059669);
 }
 
 .workout-cardio {
@@ -475,7 +475,7 @@ body {
 }
 
 .workout-flexibility {
-  background: linear-gradient(135deg, #14B8A6, #06B6D4);
+  background: linear-gradient(135deg, #22C55E, #10B981);
 }
 
 .workout-hiit {
@@ -483,7 +483,7 @@ body {
 }
 
 .workout-mixed {
-  background: linear-gradient(135deg, #3B82F6, #6366F1);
+  background: linear-gradient(135deg, #84CC16, #10B981);
 }
 
 /* === SCROLLBAR STYLING === */

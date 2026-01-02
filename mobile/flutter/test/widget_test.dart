@@ -1,4 +1,4 @@
-// AI Fitness Coach Widget Tests
+// FitWiz Widget Tests
 //
 // These tests verify the core widget functionality of the app.
 // Run with: flutter test
@@ -17,14 +17,14 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: Center(
-                child: Text('AI Fitness Coach'),
+                child: Text('FitWiz'),
               ),
             ),
           ),
         ),
       );
 
-      expect(find.text('AI Fitness Coach'), findsOneWidget);
+      expect(find.text('FitWiz'), findsOneWidget);
     });
 
     testWidgets('ProviderScope wraps app correctly', (tester) async {

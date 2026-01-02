@@ -62,6 +62,10 @@ NutritionPreferences _$NutritionPreferencesFromJson(
   adjustCaloriesForTraining:
       json['adjust_calories_for_training'] as bool? ?? true,
   adjustCaloriesForRest: json['adjust_calories_for_rest'] as bool? ?? false,
+  quickLogModeEnabled: json['quick_log_mode_enabled'] as bool? ?? false,
+  compactTrackerViewEnabled:
+      json['compact_tracker_view_enabled'] as bool? ?? false,
+  showMacrosOnLog: json['show_macros_on_log'] as bool? ?? true,
   nutritionOnboardingCompleted:
       json['nutrition_onboarding_completed'] as bool? ?? false,
   onboardingCompletedAt: json['onboarding_completed_at'] == null
@@ -113,6 +117,9 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'show_weekly_instead_of_daily': instance.showWeeklyInsteadOfDaily,
   'adjust_calories_for_training': instance.adjustCaloriesForTraining,
   'adjust_calories_for_rest': instance.adjustCaloriesForRest,
+  'quick_log_mode_enabled': instance.quickLogModeEnabled,
+  'compact_tracker_view_enabled': instance.compactTrackerViewEnabled,
+  'show_macros_on_log': instance.showMacrosOnLog,
   'nutrition_onboarding_completed': instance.nutritionOnboardingCompleted,
   'onboarding_completed_at': instance.onboardingCompletedAt?.toIso8601String(),
   'last_recalculated_at': instance.lastRecalculatedAt?.toIso8601String(),
@@ -181,4 +188,183 @@ Map<String, dynamic> _$NutritionStreakToJson(NutritionStreak instance) =>
       'weekly_goal_enabled': instance.weeklyGoalEnabled,
       'weekly_goal_days': instance.weeklyGoalDays,
       'days_logged_this_week': instance.daysLoggedThisWeek,
+    };
+
+NutritionUIPreferences _$NutritionUIPreferencesFromJson(
+  Map<String, dynamic> json,
+) => NutritionUIPreferences(
+  id: json['id'] as String?,
+  userId: json['user_id'] as String,
+  disableAiTips: json['disable_ai_tips'] as bool? ?? false,
+  defaultMealType: json['default_meal_type'] as String? ?? 'auto',
+  quickLogMode: json['quick_log_mode'] as bool? ?? true,
+  showMacrosOnLog: json['show_macros_on_log'] as bool? ?? true,
+  compactTrackerView: json['compact_tracker_view'] as bool? ?? false,
+  createdAt: json['created_at'] == null
+      ? null
+      : DateTime.parse(json['created_at'] as String),
+  updatedAt: json['updated_at'] == null
+      ? null
+      : DateTime.parse(json['updated_at'] as String),
+);
+
+Map<String, dynamic> _$NutritionUIPreferencesToJson(
+  NutritionUIPreferences instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'user_id': instance.userId,
+  'disable_ai_tips': instance.disableAiTips,
+  'default_meal_type': instance.defaultMealType,
+  'quick_log_mode': instance.quickLogMode,
+  'show_macros_on_log': instance.showMacrosOnLog,
+  'compact_tracker_view': instance.compactTrackerView,
+  'created_at': instance.createdAt?.toIso8601String(),
+  'updated_at': instance.updatedAt?.toIso8601String(),
+};
+
+TemplateFoodItem _$TemplateFoodItemFromJson(Map<String, dynamic> json) =>
+    TemplateFoodItem(
+      name: json['name'] as String,
+      calories: (json['calories'] as num).toInt(),
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
+      amount: json['amount'] as String?,
+      unit: json['unit'] as String?,
+    );
+
+Map<String, dynamic> _$TemplateFoodItemToJson(TemplateFoodItem instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'calories': instance.calories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'fiber_g': instance.fiberG,
+      'sodium_mg': instance.sodiumMg,
+      'amount': instance.amount,
+      'unit': instance.unit,
+    };
+
+MealTemplate _$MealTemplateFromJson(Map<String, dynamic> json) => MealTemplate(
+  id: json['id'] as String?,
+  userId: json['user_id'] as String?,
+  name: json['name'] as String,
+  mealType: json['meal_type'] as String,
+  foodItems:
+      (json['food_items'] as List<dynamic>?)
+          ?.map((e) => TemplateFoodItem.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  totalCalories: (json['total_calories'] as num?)?.toInt(),
+  totalProteinG: (json['total_protein_g'] as num?)?.toDouble(),
+  totalCarbsG: (json['total_carbs_g'] as num?)?.toDouble(),
+  totalFatG: (json['total_fat_g'] as num?)?.toDouble(),
+  isSystemTemplate: json['is_system_template'] as bool? ?? false,
+  useCount: (json['use_count'] as num?)?.toInt() ?? 0,
+  lastUsedAt: json['last_used_at'] == null
+      ? null
+      : DateTime.parse(json['last_used_at'] as String),
+  createdAt: json['created_at'] == null
+      ? null
+      : DateTime.parse(json['created_at'] as String),
+  description: json['description'] as String?,
+  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  imageUrl: json['image_url'] as String?,
+);
+
+Map<String, dynamic> _$MealTemplateToJson(MealTemplate instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'name': instance.name,
+      'meal_type': instance.mealType,
+      'food_items': instance.foodItems,
+      'total_calories': instance.totalCalories,
+      'total_protein_g': instance.totalProteinG,
+      'total_carbs_g': instance.totalCarbsG,
+      'total_fat_g': instance.totalFatG,
+      'is_system_template': instance.isSystemTemplate,
+      'use_count': instance.useCount,
+      'last_used_at': instance.lastUsedAt?.toIso8601String(),
+      'created_at': instance.createdAt?.toIso8601String(),
+      'description': instance.description,
+      'tags': instance.tags,
+      'image_url': instance.imageUrl,
+    };
+
+QuickSuggestion _$QuickSuggestionFromJson(Map<String, dynamic> json) =>
+    QuickSuggestion(
+      foodName: json['food_name'] as String,
+      mealType: json['meal_type'] as String,
+      calories: (json['calories'] as num).toInt(),
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
+      logCount: (json['log_count'] as num?)?.toInt() ?? 0,
+      timeOfDayBucket: json['time_of_day_bucket'] as String?,
+      savedFoodId: json['saved_food_id'] as String?,
+      templateId: json['template_id'] as String?,
+      lastLoggedAt: json['last_logged_at'] == null
+          ? null
+          : DateTime.parse(json['last_logged_at'] as String),
+      avgServings: (json['avg_servings'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+    );
+
+Map<String, dynamic> _$QuickSuggestionToJson(QuickSuggestion instance) =>
+    <String, dynamic>{
+      'food_name': instance.foodName,
+      'meal_type': instance.mealType,
+      'calories': instance.calories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'log_count': instance.logCount,
+      'time_of_day_bucket': instance.timeOfDayBucket,
+      'saved_food_id': instance.savedFoodId,
+      'template_id': instance.templateId,
+      'last_logged_at': instance.lastLoggedAt?.toIso8601String(),
+      'avg_servings': instance.avgServings,
+      'description': instance.description,
+    };
+
+FoodSearchResult _$FoodSearchResultFromJson(Map<String, dynamic> json) =>
+    FoodSearchResult(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      brand: json['brand'] as String?,
+      category: json['category'] as String?,
+      servingSize: json['serving_size'] as String?,
+      servingUnit: json['serving_unit'] as String?,
+      calories: (json['calories'] as num).toInt(),
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
+      fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      barcode: json['barcode'] as String?,
+      imageUrl: json['image_url'] as String?,
+      sourceType: json['source_type'] as String?,
+      isVerified: json['is_verified'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$FoodSearchResultToJson(FoodSearchResult instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'brand': instance.brand,
+      'category': instance.category,
+      'serving_size': instance.servingSize,
+      'serving_unit': instance.servingUnit,
+      'calories': instance.calories,
+      'protein_g': instance.proteinG,
+      'carbs_g': instance.carbsG,
+      'fat_g': instance.fatG,
+      'fiber_g': instance.fiberG,
+      'barcode': instance.barcode,
+      'image_url': instance.imageUrl,
+      'source_type': instance.sourceType,
+      'is_verified': instance.isVerified,
     };

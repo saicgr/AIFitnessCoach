@@ -41,6 +41,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<key>UISupportsMultipleScenes</key>
+	<true/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -66,10 +70,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.aifitnesscoach.app</string>
+			<string>com.fitwiz.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>aifitnesscoach</string>
+				<string>fitwiz</string>
 			</array>
 		</dict>
 	</array>

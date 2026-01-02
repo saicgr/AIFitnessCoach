@@ -12,8 +12,12 @@ import '../../../core/providers/timezone_provider.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/providers/variation_provider.dart';
 import '../../../core/providers/training_intensity_provider.dart';
+import '../../../core/providers/video_cache_provider.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../equipment/environment_list_screen.dart';
+import '../offline/downloaded_videos_screen.dart';
 import 'setting_tile.dart';
 
 /// A card container for grouping related settings items.
@@ -229,6 +233,168 @@ class SettingsCard extends ConsumerWidget {
     );
   }
 
+  void _showTrainingSplitSelector(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final trainingPrefs = ref.read(trainingPreferencesProvider);
+    final currentSplit = trainingPrefs.trainingSplit;
+
+    final splits = [
+      ('full_body', 'Full Body', '3 days • All muscle groups each workout', Icons.accessibility_new),
+      ('upper_lower', 'Upper/Lower', '4 days • Alternating upper and lower body', Icons.swap_vert),
+      ('push_pull_legs', 'Push/Pull/Legs', '5-6 days • Classic PPL split', Icons.fitness_center),
+      ('body_part', 'Body Part Split', '5-6 days • One muscle group per day', Icons.person),
+      ('phul', 'PHUL', '4 days • Power Hypertrophy Upper Lower', Icons.bolt),
+      ('arnold_split', 'Arnold Split', '6 days • Chest/Back, Shoulders/Arms, Legs', Icons.military_tech),
+      ('hyrox', 'HYROX', '4-5 days • Hybrid running + functional', Icons.directions_run),
+      ('dont_know', 'Let AI Decide', 'Auto-select based on your schedule', Icons.auto_awesome),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Training Split',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Choose how to structure your weekly workouts',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: splits.length,
+                  itemBuilder: (context, index) {
+                    final split = splits[index];
+                    final isSelected = split.$1 == currentSplit;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: isSelected
+                            ? (isDark ? AppColors.cyan.withOpacity(0.15) : AppColorsLight.cyan.withOpacity(0.15))
+                            : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () {
+                            ref.read(trainingPreferencesProvider.notifier).setTrainingSplit(split.$1);
+                            Navigator.pop(context);
+                            HapticFeedback.selectionClick();
+                            // Show regeneration hint
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Training split updated to ${split.$2}. Regenerate workouts to apply.'),
+                                backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                                        : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    split.$4,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        split.$2,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        split.$3,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                                    size: 24,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showEquipmentSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentEquipment = ref.read(environmentEquipmentProvider).equipment;
@@ -363,6 +529,19 @@ class SettingsCard extends ConsumerWidget {
     context.push('/settings/avoided-muscles');
   }
 
+  void _navigateToDownloadedVideos(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const DownloadedVideosScreen(),
+      ),
+    );
+  }
+
+  void _navigateToProgressCharts(BuildContext context) {
+    context.push('/progress-charts');
+  }
+
   void _showTrainingIntensitySelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIntensity = ref.read(trainingIntensityProvider).globalIntensityPercent;
@@ -382,6 +561,27 @@ class SettingsCard extends ConsumerWidget {
     );
   }
 
+  void _showWorkoutDaysSelector(BuildContext context, WidgetRef ref) {
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    final currentDays = user?.workoutDays ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.elevated
+          : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) => _WorkoutDaysSelectorSheet(
+        initialDays: currentDays,
+        userId: user?.id ?? '',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
@@ -395,6 +595,9 @@ class SettingsCard extends ConsumerWidget {
     final variationState = ref.watch(variationProvider);
     final intensityState = ref.watch(trainingIntensityProvider);
     final oneRMsState = ref.watch(userOneRMsProvider);
+    final videoCacheState = ref.watch(videoCacheProvider);
+    final authState = ref.watch(authStateProvider);
+    final currentUser = authState.user;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDarkModeActive = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
@@ -458,7 +661,7 @@ class SettingsCard extends ConsumerWidget {
                   );
                 }
               },
-              activeColor: AppColors.cyan,
+              activeThumbColor: AppColors.cyan,
             );
           } else if (item.isThemeToggle) {
             trailing = Switch(
@@ -470,7 +673,7 @@ class SettingsCard extends ConsumerWidget {
                         value ? ThemeMode.dark : ThemeMode.light,
                       );
                     },
-              activeColor: AppColors.cyan,
+              activeThumbColor: AppColors.cyan,
             );
           } else if (item.isProgressionPaceSelector) {
             trailing = Row(
@@ -573,6 +776,37 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _showConsistencyModeSelector(context, ref);
+          } else if (item.isTrainingSplitSelector) {
+            // Get display name for training split
+            final splitDisplayNames = {
+              'full_body': 'Full Body',
+              'upper_lower': 'Upper/Lower',
+              'push_pull_legs': 'Push/Pull/Legs',
+              'body_part': 'Body Part Split',
+              'phul': 'PHUL',
+              'arnold_split': 'Arnold Split',
+              'hyrox': 'HYROX',
+              'dont_know': 'AI Decides',
+            };
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  splitDisplayNames[trainingPrefs.trainingSplit] ?? trainingPrefs.trainingSplit,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showTrainingSplitSelector(context, ref);
           } else if (item.isFavoriteExercisesManager) {
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
@@ -741,6 +975,72 @@ class SettingsCard extends ConsumerWidget {
               ],
             );
             onTap = () => _navigateToAvoidedMuscles(context);
+          } else if (item.isDownloadedVideosManager) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  videoCacheState.cachedVideoCount > 0
+                      ? '${videoCacheState.cachedVideoCount} videos'
+                      : 'None',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToDownloadedVideos(context);
+          } else if (item.isWorkoutDaysSelector) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  currentUser?.workoutDaysFormatted ?? 'Not set',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _showWorkoutDaysSelector(context, ref);
+          } else if (item.isProgressChartsScreen) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => _navigateToProgressCharts(context);
+          } else if (item.isCalibrationTestScreen) {
+            trailing = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 20,
+                ),
+              ],
+            );
+            onTap = () => context.push('/calibration/intro');
           } else {
             trailing = item.trailing;
           }
@@ -771,7 +1071,12 @@ class SettingsCard extends ConsumerWidget {
                     !item.isTrainingIntensitySelector &&
                     !item.isCustomExercisesScreen &&
                     !item.isAvoidedExercisesManager &&
-                    !item.isAvoidedMusclesManager,
+                    !item.isAvoidedMusclesManager &&
+                    !item.isDownloadedVideosManager &&
+                    !item.isTrainingSplitSelector &&
+                    !item.isWorkoutDaysSelector &&
+                    !item.isProgressChartsScreen &&
+                    !item.isCalibrationTestScreen,
                 borderRadius: index == 0
                     ? const BorderRadius.vertical(top: Radius.circular(16))
                     : index == items.length - 1
@@ -1798,6 +2103,316 @@ class _VariationSliderSheetState extends State<_VariationSliderSheet> {
         ),
       ),
     );
+  }
+}
+
+/// A bottom sheet for selecting workout days with quick change capability.
+class _WorkoutDaysSelectorSheet extends ConsumerStatefulWidget {
+  final List<int> initialDays;
+  final String userId;
+
+  const _WorkoutDaysSelectorSheet({
+    required this.initialDays,
+    required this.userId,
+  });
+
+  @override
+  ConsumerState<_WorkoutDaysSelectorSheet> createState() =>
+      _WorkoutDaysSelectorSheetState();
+}
+
+class _WorkoutDaysSelectorSheetState
+    extends ConsumerState<_WorkoutDaysSelectorSheet> {
+  late Set<int> _selectedDays;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  static const _days = [
+    (label: 'M', full: 'Monday', short: 'Mon', value: 0),
+    (label: 'T', full: 'Tuesday', short: 'Tue', value: 1),
+    (label: 'W', full: 'Wednesday', short: 'Wed', value: 2),
+    (label: 'T', full: 'Thursday', short: 'Thu', value: 3),
+    (label: 'F', full: 'Friday', short: 'Fri', value: 4),
+    (label: 'S', full: 'Saturday', short: 'Sat', value: 5),
+    (label: 'S', full: 'Sunday', short: 'Sun', value: 6),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDays = Set.from(widget.initialDays);
+    if (_selectedDays.isEmpty) {
+      // Default to Mon, Wed, Fri if no days set
+      _selectedDays = {0, 2, 4};
+    }
+  }
+
+  void _toggleDay(int dayValue) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selectedDays.contains(dayValue)) {
+        // Don't allow removing if only 1 day selected
+        if (_selectedDays.length > 1) {
+          _selectedDays.remove(dayValue);
+        }
+      } else {
+        _selectedDays.add(dayValue);
+      }
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _saveWorkoutDays() async {
+    if (_selectedDays.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please select at least one workout day';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+
+      // Convert day indices to day names
+      final sortedDays = _selectedDays.toList()..sort();
+      final dayNamesList = sortedDays
+          .map((idx) => _days.firstWhere((d) => d.value == idx).short)
+          .toList();
+
+      // Call the quick day change API
+      await repo.quickDayChange(widget.userId, dayNamesList);
+
+      // Refresh user data
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Workout days updated to ${dayNamesList.join(", ")}'),
+            backgroundColor: AppColors.cyan,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to update workout days. Please try again.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final hasChanges =
+        !_setEquals(_selectedDays, Set.from(widget.initialDays));
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Workout Days',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Select which days you want to work out',
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Day selector grid
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: _days.map((day) {
+                final isSelected = _selectedDays.contains(day.value);
+
+                return GestureDetector(
+                  onTap: () => _toggleDay(day.value),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 44,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.cyan
+                          : (isDark ? AppColors.elevated : AppColorsLight.elevated),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? AppColors.cyan : cardBorder,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.cyan.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          day.label,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? Colors.white
+                                : (isDark
+                                    ? Colors.white
+                                    : AppColorsLight.textPrimary),
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+
+            // Selected count
+            Text(
+              '${_selectedDays.length} day${_selectedDays.length != 1 ? 's' : ''} selected',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.cyan,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Info banner
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.cyan.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.cyan,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Changing days will reschedule your upcoming workouts automatically.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Error message
+            if (_errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
+
+            // Save button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (_isLoading || !hasChanges) ? null : _saveWorkoutDays,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        hasChanges ? 'Save Changes' : 'No Changes',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Helper to compare sets
+  bool _setEquals<T>(Set<T> a, Set<T> b) {
+    if (a.length != b.length) return false;
+    for (final item in a) {
+      if (!b.contains(item)) return false;
+    }
+    return true;
   }
 }
 

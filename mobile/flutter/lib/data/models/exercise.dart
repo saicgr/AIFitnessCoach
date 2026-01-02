@@ -152,6 +152,15 @@ class WorkoutExercise extends Equatable {
     return '';
   }
 
+  /// Whether this is a timed exercise (planks, holds, cardio with duration)
+  bool get isTimedExercise =>
+      (durationSeconds != null && durationSeconds! > 0) ||
+      (holdSeconds != null && holdSeconds! > 0);
+
+  /// Get the timer duration in seconds (for timed exercises)
+  int get timerDurationSeconds =>
+      holdSeconds ?? durationSeconds ?? 30;
+
   /// Whether this is a unilateral (single-side) exercise
   bool get isSingleSide => isUnilateral == true || alternatingHands == true;
 
@@ -383,8 +392,8 @@ class LibraryExercise extends Equatable {
   String? get type => category;
 
   /// Get equipment as list (normalized)
-  List<String>? get equipment {
-    if (equipmentValue == null || equipmentValue!.isEmpty) return null;
+  List<String> get equipment {
+    if (equipmentValue == null || equipmentValue!.isEmpty) return [];
     return equipmentValue!.split(',').map((e) {
       final eq = e.trim();
       final lower = eq.toLowerCase();
@@ -397,8 +406,8 @@ class LibraryExercise extends Equatable {
   }
 
   /// Get instructions as list
-  List<String>? get instructions {
-    if (instructionsValue == null || instructionsValue!.isEmpty) return null;
+  List<String> get instructions {
+    if (instructionsValue == null || instructionsValue!.isEmpty) return [];
     // Try to split by numbered list or periods
     final lines = instructionsValue!
         .split(RegExp(r'(?:\d+\.\s*|\n|\.(?=\s+[A-Z]))'))
@@ -406,6 +415,35 @@ class LibraryExercise extends Equatable {
         .map((s) => s.trim())
         .toList();
     return lines.isNotEmpty ? lines : [instructionsValue!];
+  }
+
+  /// Check if this is a bodyweight exercise
+  bool get isBodyweight {
+    if (equipmentValue == null) return true;
+    final lower = equipmentValue!.toLowerCase();
+    return lower.contains('bodyweight') ||
+        lower.contains('body weight') ||
+        lower.contains('none') ||
+        lower.isEmpty;
+  }
+
+  /// Check if this is a compound exercise
+  bool get isCompound {
+    if (category == null) return false;
+    return category!.toLowerCase() == 'compound';
+  }
+
+  /// Get searchable text for filtering (lowercase)
+  String get searchableText {
+    final parts = <String>[
+      nameValue ?? '',
+      bodyPart ?? '',
+      targetMuscle ?? '',
+      category ?? '',
+      equipmentValue ?? '',
+      secondaryMuscles ?? '',
+    ];
+    return parts.join(' ').toLowerCase();
   }
 
   @override

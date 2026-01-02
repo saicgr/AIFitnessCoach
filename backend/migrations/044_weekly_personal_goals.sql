@@ -1,6 +1,6 @@
 -- Migration: 044_weekly_personal_goals.sql
 -- Description: Personal weekly challenges with single_max and weekly_volume goals
--- Author: AI Fitness Coach
+-- Author: FitWiz
 -- Date: 2025-12-26
 
 -- ============================================================

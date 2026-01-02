@@ -115,15 +115,16 @@ class _WeightGoalInputState extends State<WeightGoalInput> {
   void _incrementAmount() {
     HapticFeedback.selectionClick();
     final current = double.tryParse(_amountController.text) ?? 0;
-    final increment = _useLbs ? 5.0 : 2.0;
-    _amountController.text = (current + increment).round().toString();
+    // Use 1 lb or 1 kg increments for precision
+    final newValue = current + 1;
+    _amountController.text = newValue.round().toString();
   }
 
   void _decrementAmount() {
     HapticFeedback.selectionClick();
     final current = double.tryParse(_amountController.text) ?? 0;
-    final increment = _useLbs ? 5.0 : 2.0;
-    final newValue = (current - increment).round();
+    // Use 1 lb or 1 kg increments for precision
+    final newValue = (current - 1).round();
     if (newValue > 0) {
       _amountController.text = newValue.toString();
     }
@@ -132,9 +133,12 @@ class _WeightGoalInputState extends State<WeightGoalInput> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Responsive margin: smaller on narrow screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 16.0 : 52.0;
 
     return Container(
-      margin: const EdgeInsets.only(left: 52, top: 8),
+      margin: EdgeInsets.only(left: leftMargin, top: 8, right: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.glassSurface,
@@ -158,77 +162,63 @@ class _WeightGoalInputState extends State<WeightGoalInput> {
             color: colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // Lose/Gain buttons row
-        Row(
+        // Compact horizontal chip-style buttons
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: _buildDirectionButton(
-                colors: colors,
-                label: 'Lose weight',
-                emoji: '🔥',
-                value: 'lose',
-              ),
+            _buildDirectionChip(
+              colors: colors,
+              label: 'Lose',
+              emoji: '🔥',
+              value: 'lose',
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildDirectionButton(
-                colors: colors,
-                label: 'Gain weight',
-                emoji: '💪',
-                value: 'gain',
-              ),
+            _buildDirectionChip(
+              colors: colors,
+              label: 'Gain',
+              emoji: '💪',
+              value: 'gain',
+            ),
+            _buildDirectionChip(
+              colors: colors,
+              label: 'Maintain',
+              emoji: '✨',
+              value: '__skip__',
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-
-        // Happy where I am button
-        _buildDirectionButton(
-          colors: colors,
-          label: 'Happy where I am',
-          emoji: '✨',
-          value: '__skip__',
-          fullWidth: true,
         ),
       ],
     );
   }
 
-  Widget _buildDirectionButton({
+  Widget _buildDirectionChip({
     required ThemeColors colors,
     required String label,
     required String emoji,
     required String value,
-    bool fullWidth = false,
   }) {
     return GestureDetector(
       onTap: () => _selectDirection(value),
       child: Container(
-        width: fullWidth ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
         decoration: BoxDecoration(
           color: colors.glassSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.cardBorder),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: colors.cyan.withOpacity(0.5)),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 18)),
+            Text(emoji, style: const TextStyle(fontSize: 14)),
             const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
               ),
             ),
           ],

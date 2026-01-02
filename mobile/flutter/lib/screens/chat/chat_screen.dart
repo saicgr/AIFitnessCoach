@@ -3,11 +3,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../data/models/chat_message.dart';
+import '../../data/models/live_chat_session.dart';
+import '../../data/providers/live_chat_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
+import 'widgets/report_message_sheet.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -211,9 +213,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     if (index == messages.length && _isLoading) {
                       return const _TypingIndicator();
                     }
-                    return _MessageBubble(message: messages[index])
-                        .animate()
-                        .fadeIn(duration: 200.ms);
+                    final message = messages[index];
+                    // Find the previous user message for context when reporting
+                    String? previousUserMessage;
+                    if (message.role == 'assistant') {
+                      for (int i = index - 1; i >= 0; i--) {
+                        if (messages[i].role == 'user') {
+                          previousUserMessage = messages[i].content;
+                          break;
+                        }
+                      }
+                    }
+                    return _MessageBubble(
+                      message: message,
+                      previousUserMessage: previousUserMessage,
+                    ).animate().fadeIn(duration: 200.ms);
                   },
                 );
               },
@@ -253,6 +267,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
             ListTile(
+              leading: const Icon(Icons.support_agent, color: AppColors.cyan),
+              title: const Text('Talk to Human Support'),
+              subtitle: const Text(
+                'Connect with a real person',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                HapticService.selection();
+                _showEscalateToHumanDialog();
+              },
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
+              leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
+              title: const Text('Report a Problem'),
+              subtitle: const Text(
+                'Submit a support ticket',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                HapticService.selection();
+                context.push('/support-tickets');
+              },
+            ),
+            const Divider(height: 1, indent: 16, endIndent: 16),
+            ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
               title: const Text('Clear Chat History'),
               onTap: () {
@@ -272,6 +314,273 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEscalateToHumanDialog() {
+    // Track selected category
+    LiveChatCategory selectedCategory = LiveChatCategory.general;
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.elevated,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.cyan,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text('Talk to Human Support'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'You will be connected with a real support agent who can help with your questions.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Select a category:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Category selection
+                    ...LiveChatCategory.values.map((category) {
+                      return RadioListTile<LiveChatCategory>(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          category.displayName,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        value: category,
+                        groupValue: selectedCategory,
+                        activeColor: AppColors.cyan,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setDialogState(() {
+                              selectedCategory = value;
+                            });
+                          }
+                        },
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    // Show availability/wait time
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final availabilityAsync = ref.watch(liveChatAvailabilityProvider);
+                        return availabilityAsync.when(
+                          data: (availability) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: availability.isAvailable
+                                    ? AppColors.success.withOpacity(0.1)
+                                    : AppColors.warning.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: availability.isAvailable
+                                      ? AppColors.success.withOpacity(0.3)
+                                      : AppColors.warning.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    availability.isAvailable
+                                        ? Icons.check_circle_outline
+                                        : Icons.schedule,
+                                    size: 20,
+                                    color: availability.isAvailable
+                                        ? AppColors.success
+                                        : AppColors.warning,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          availability.formattedWaitTime,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: availability.isAvailable
+                                                ? AppColors.success
+                                                : AppColors.warning,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        if (availability.currentQueueSize > 0)
+                                          Text(
+                                            '${availability.currentQueueSize} people in queue',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.cyan,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Checking availability...',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          error: (_, __) => Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.textMuted.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: AppColors.textMuted,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Wait time unavailable',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLoading ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          setDialogState(() => isLoading = true);
+
+                          try {
+                            // Get last 10 messages from current AI chat as context
+                            final messagesState = ref.read(chatMessagesProvider);
+                            String aiContext = '';
+
+                            messagesState.whenData((messages) {
+                              final recentMessages = messages.length > 10
+                                  ? messages.sublist(messages.length - 10)
+                                  : messages;
+
+                              aiContext = recentMessages.map((m) {
+                                final role = m.role == 'user' ? 'User' : 'AI Coach';
+                                return '$role: ${m.content}';
+                              }).join('\n\n');
+                            });
+
+                            // Start live chat with escalation
+                            await ref.read(liveChatProvider.notifier).startChat(
+                                  category: selectedCategory.value,
+                                  initialMessage:
+                                      'Escalated from AI chat for ${selectedCategory.displayName.toLowerCase()} help.',
+                                  escalatedFromAi: true,
+                                  aiContext: aiContext.isNotEmpty ? aiContext : null,
+                                );
+
+                            // Get the session to retrieve ticket ID
+                            final session = ref.read(liveChatProvider).valueOrNull;
+
+                            if (mounted) {
+                              Navigator.pop(context);
+                              HapticService.success();
+
+                              // Navigate to live chat screen
+                              context.push('/live-chat');
+                            }
+                          } catch (e) {
+                            setDialogState(() => isLoading = false);
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to connect: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Connect'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -458,97 +767,120 @@ class _EmptyChat extends StatelessWidget {
 
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
+  final String? previousUserMessage;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    this.previousUserMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isUser = message.role == 'user';
 
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
-        ),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan : AppColors.elevated,
-          borderRadius: BorderRadius.circular(16).copyWith(
-            bottomRight: isUser ? const Radius.circular(4) : null,
-            bottomLeft: !isUser ? const Radius.circular(4) : null,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isUser)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppColors.cyan, AppColors.purple],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.smart_toy,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'AI Coach',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Text(
-              message.content,
-              style: TextStyle(
-                color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
-                fontSize: 15,
-                height: 1.4,
-              ),
-            ),
-            // Show "Go to workout" button if AI generated a workout
-            if (!isUser && message.hasGeneratedWorkout)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: _GoToWorkoutButton(
-                  workoutId: message.workoutId!,
-                  workoutName: message.workoutName,
-                ),
-              ),
-            // Always show timestamp - use "now" if not available
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                _formatTime(message.timestamp ?? DateTime.now()),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isUser
-                      ? AppColors.pureBlack.withOpacity(0.6)
-                      : AppColors.textMuted,
-                ),
-              ),
-            ),
-          ],
+    // Wrap AI messages with GestureDetector for long-press to report
+    Widget bubbleContent = Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.8,
+      ),
+      decoration: BoxDecoration(
+        color: isUser ? AppColors.cyan : AppColors.elevated,
+        borderRadius: BorderRadius.circular(16).copyWith(
+          bottomRight: isUser ? const Radius.circular(4) : null,
+          bottomLeft: !isUser ? const Radius.circular(4) : null,
         ),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.cyan, AppColors.purple],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.smart_toy,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'AI Coach',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Text(
+            message.content,
+            style: TextStyle(
+              color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+              fontSize: 15,
+              height: 1.4,
+            ),
+          ),
+          // Show "Go to workout" button if AI generated a workout
+          if (!isUser && message.hasGeneratedWorkout)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: _GoToWorkoutButton(
+                workoutId: message.workoutId!,
+                workoutName: message.workoutName,
+              ),
+            ),
+          // Always show timestamp - use "now" if not available
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              _formatTime(message.timestamp ?? DateTime.now()),
+              style: TextStyle(
+                fontSize: 10,
+                color: isUser
+                    ? AppColors.pureBlack.withOpacity(0.6)
+                    : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // For AI messages, wrap with GestureDetector for long-press to report
+    if (!isUser) {
+      bubbleContent = GestureDetector(
+        onLongPress: () {
+          HapticService.medium();
+          showReportMessageSheet(
+            context,
+            messageId: message.id,
+            originalUserMessage: previousUserMessage ?? '',
+            aiResponse: message.content,
+          );
+        },
+        child: bubbleContent,
+      );
+    }
+
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: bubbleContent,
     );
   }
 

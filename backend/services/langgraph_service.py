@@ -51,6 +51,7 @@ INTENT_TO_AGENT = {
     CoachIntent.DELETE_WORKOUT: AgentType.WORKOUT,
     CoachIntent.START_WORKOUT: AgentType.WORKOUT,
     CoachIntent.COMPLETE_WORKOUT: AgentType.WORKOUT,
+    CoachIntent.GENERATE_QUICK_WORKOUT: AgentType.WORKOUT,
 
     # Injury agent
     CoachIntent.REPORT_INJURY: AgentType.INJURY,
@@ -74,7 +75,9 @@ DOMAIN_KEYWORDS = {
     AgentType.WORKOUT: [
         "exercise", "workout", "training", "gym", "lift", "squat", "bench",
         "deadlift", "muscle", "strength", "cardio", "hiit", "sets", "reps",
-        "form", "technique", "how do i do"
+        "form", "technique", "how do i do", "quick", "create workout",
+        "generate workout", "make workout", "give me a workout", "new workout",
+        "short workout"
     ],
     AgentType.INJURY: [
         "hurt", "pain", "injury", "injured", "sore", "strain", "sprain",
@@ -362,16 +365,19 @@ class LangGraphCoachService:
             final_state = await agent_graph.ainvoke(agent_state)
 
             # 7. Build response
+            action_data = final_state.get("action_data")
+            logger.info(f"[LangGraph Service] Agent returned action_data: {action_data}")
+
             response = ChatResponse(
                 message=final_state.get("final_response", "I'm sorry, I couldn't process your request."),
                 intent=intent,
                 agent_type=selected_agent,
-                action_data=final_state.get("action_data"),
+                action_data=action_data,
                 rag_context_used=final_state.get("rag_context_used", rag_used),
                 similar_questions=final_state.get("similar_questions", similar_questions),
             )
 
-            logger.info(f"Response: intent={intent.value}, agent={selected_agent.value}")
+            logger.info(f"Response: intent={intent.value}, agent={selected_agent.value}, action_data={action_data is not None}")
             return response
 
         except Exception as e:

@@ -24,6 +24,11 @@ from services.workout_feedback_rag_service import (
     WorkoutFeedbackRAGService,
     generate_workout_feedback
 )
+from services.feedback_analysis_service import (
+    update_exercise_mastery,
+    get_exercises_ready_for_progression,
+    record_progression_response,
+)
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -141,6 +146,22 @@ async def submit_workout_feedback(workout_id: str, feedback: WorkoutFeedbackCrea
                         "difficulty_felt": ex_feedback.difficulty_felt or "just_right",
                         "would_do_again": ex_feedback.would_do_again,
                     })
+
+                    # Update exercise mastery for progression tracking
+                    difficulty_felt = ex_feedback.difficulty_felt or "just_right"
+                    try:
+                        await update_exercise_mastery(
+                            user_id=feedback.user_id,
+                            exercise_name=ex_feedback.exercise_name,
+                            difficulty_felt=difficulty_felt,
+                        )
+                        logger.debug(
+                            f"Updated mastery for {ex_feedback.exercise_name}: {difficulty_felt}"
+                        )
+                    except Exception as mastery_error:
+                        logger.warning(
+                            f"Failed to update mastery for {ex_feedback.exercise_name}: {mastery_error}"
+                        )
 
         # Index feedback in ChromaDB for AI adaptation
         try:
@@ -740,4 +761,147 @@ async def get_user_achievements(user_id: str):
 
     except Exception as e:
         logger.error(f"Failed to get user achievements: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# Progression Suggestion Endpoints
+# ============================================
+
+class ProgressionSuggestionResponse(BaseModel):
+    """Response model for progression suggestions."""
+    exercise_name: str
+    suggested_next_variant: str
+    consecutive_easy_sessions: int
+    difficulty_increase: Optional[float] = None
+    chain_id: Optional[str] = None
+
+
+class ProgressionResponseRequest(BaseModel):
+    """Request body for responding to a progression suggestion."""
+    user_id: str
+    exercise_name: str
+    new_exercise_name: str
+    accepted: bool
+    decline_reason: Optional[str] = None
+
+
+@router.get("/progression-suggestions/{user_id}", response_model=List[ProgressionSuggestionResponse])
+async def get_progression_suggestions(user_id: str):
+    """
+    Get exercise progression suggestions for a user.
+
+    Returns exercises where the user has rated difficulty as "too easy"
+    for 2+ consecutive sessions and a harder variant is available.
+
+    This endpoint is called after workout completion to show the user
+    opportunities to progress to more challenging exercise variations.
+
+    Important considerations:
+    - Only suggests once per exercise per week (cooldown period)
+    - Respects declined progressions (won't spam)
+    - Only returns exercises with valid next variants in chain
+    """
+    logger.info(f"Getting progression suggestions for user {user_id}")
+
+    try:
+        suggestions = await get_exercises_ready_for_progression(user_id)
+
+        return [
+            ProgressionSuggestionResponse(
+                exercise_name=s.exercise_name,
+                suggested_next_variant=s.suggested_next_variant,
+                consecutive_easy_sessions=s.consecutive_easy_sessions,
+                difficulty_increase=s.difficulty_increase,
+                chain_id=s.chain_id,
+            )
+            for s in suggestions
+            if s.suggested_next_variant  # Only include if we have a next variant
+        ]
+
+    except Exception as e:
+        logger.error(f"Failed to get progression suggestions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/progression-response")
+async def respond_to_progression(request: ProgressionResponseRequest):
+    """
+    Record user's response to a progression suggestion.
+
+    When a user accepts:
+    - The mastery counters are reset
+    - The progression is logged for analytics
+    - Future workouts can include the new variant
+
+    When a user declines:
+    - A cooldown period is applied (won't suggest again for 7 days)
+    - The decline reason is logged for improvement
+    - The suggestion won't appear again until cooldown expires
+
+    Args:
+        request: Contains user_id, exercise names, and accept/decline status
+
+    Returns:
+        Success status and any updated information
+    """
+    logger.info(
+        f"Recording progression response: {request.exercise_name} -> "
+        f"{request.new_exercise_name}, accepted={request.accepted}"
+    )
+
+    try:
+        success = await record_progression_response(
+            user_id=request.user_id,
+            exercise_name=request.exercise_name,
+            new_exercise_name=request.new_exercise_name,
+            accepted=request.accepted,
+            decline_reason=request.decline_reason,
+        )
+
+        if not success:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to record progression response"
+            )
+
+        # Log activity
+        action = "progression_accepted" if request.accepted else "progression_declined"
+        await log_user_activity(
+            user_id=request.user_id,
+            action=action,
+            endpoint="/api/v1/feedback/progression-response",
+            message=f"{'Accepted' if request.accepted else 'Declined'} progression: "
+                    f"{request.exercise_name} -> {request.new_exercise_name}",
+            metadata={
+                "from_exercise": request.exercise_name,
+                "to_exercise": request.new_exercise_name,
+                "accepted": request.accepted,
+                "decline_reason": request.decline_reason,
+            },
+            status_code=200
+        )
+
+        return {
+            "success": True,
+            "message": f"Progression {'accepted' if request.accepted else 'declined'}",
+            "from_exercise": request.exercise_name,
+            "to_exercise": request.new_exercise_name,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to record progression response: {e}")
+        await log_user_error(
+            user_id=request.user_id,
+            action="progression_response",
+            error=e,
+            endpoint="/api/v1/feedback/progression-response",
+            metadata={
+                "from_exercise": request.exercise_name,
+                "to_exercise": request.new_exercise_name,
+            },
+            status_code=500
+        )
         raise HTTPException(status_code=500, detail=str(e))

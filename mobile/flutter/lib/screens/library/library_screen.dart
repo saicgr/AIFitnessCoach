@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 import 'tabs/netflix_exercises_tab.dart';
 import 'tabs/programs_tab.dart';
+import 'tabs/skills_tab.dart';
 
 // Export providers and models for external use
 export 'providers/library_providers.dart';
@@ -26,7 +27,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -64,6 +65,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 children: const [
                   NetflixExercisesTab(),
                   ProgramsTab(),
+                  SkillsTab(),
                 ],
               ),
             ),
@@ -159,6 +161,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         tabs: const [
           Tab(text: 'Exercises'),
           Tab(text: 'Programs'),
+          Tab(text: 'Skill Progressions'),
         ],
       ),
     );

@@ -4,8 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../models/fasting.dart';
-import '../providers/fasting_provider.dart';
-import '../repositories/fasting_repository.dart';
 
 /// Fasting timer service provider
 final fastingTimerServiceProvider = Provider<FastingTimerService>((ref) {

@@ -120,6 +120,38 @@ class ChatRepository {
       rethrow;
     }
   }
+
+  /// Report an AI message for review
+  Future<void> reportMessage({
+    String? messageId,
+    required String category,
+    String? reason,
+    required String originalUserMessage,
+    required String aiResponse,
+  }) async {
+    try {
+      debugPrint('🚩 [Chat] Reporting message: category=$category');
+      final response = await _apiClient.post(
+        '${ApiConstants.chat}/report',
+        data: {
+          'message_id': messageId,
+          'category': category,
+          'reason': reason,
+          'original_user_message': originalUserMessage,
+          'ai_response': aiResponse,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('✅ [Chat] Message reported successfully');
+      } else {
+        throw Exception('Failed to report message: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Chat] Error reporting message: $e');
+      rethrow;
+    }
+  }
 }
 
 /// Chat messages state notifier
@@ -195,10 +227,24 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   /// Send a message
   Future<void> sendMessage(String message) async {
-    if (_isLoading) return;
+    if (_isLoading) {
+      debugPrint('⚠️ [Chat] Already loading, ignoring message');
+      return;
+    }
 
     final userId = await _apiClient.getUserId();
-    if (userId == null) return;
+    if (userId == null) {
+      debugPrint('❌ [Chat] No user ID - user not authenticated');
+      // Add error message so user sees something
+      final errorMessage = ChatMessage(
+        role: 'assistant',
+        content: 'Please sign in to chat with your AI Coach.',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      final currentMessages = state.valueOrNull ?? [];
+      state = AsyncValue.data([...currentMessages, errorMessage]);
+      return;
+    }
 
     final currentMessages = state.valueOrNull ?? [];
 
@@ -314,6 +360,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // Process action_data if present (await to ensure refresh completes)
       await _processActionData(response.actionData);
 
+      // Debug logging for action_data (helps trace "Go to Workout" button issues)
+      if (response.actionData != null) {
+        debugPrint('🎯 [Chat] Response has action_data: ${response.actionData}');
+        debugPrint('🎯 [Chat] action_data[action]: ${response.actionData!['action']}');
+        debugPrint('🎯 [Chat] action_data[workout_id]: ${response.actionData!['workout_id']}');
+      } else {
+        debugPrint('🔍 [Chat] Response has no action_data');
+      }
+
       // Add assistant response with agent type AND action_data (for "Go to Workout" button)
       final assistantMessage = ChatMessage(
         role: 'assistant',
@@ -324,13 +379,35 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         actionData: response.actionData, // Include action_data for UI buttons
       );
 
+      // Debug: Check if hasGeneratedWorkout will be true
+      debugPrint('🎯 [Chat] assistantMessage.hasGeneratedWorkout: ${assistantMessage.hasGeneratedWorkout}');
+      if (assistantMessage.hasGeneratedWorkout) {
+        debugPrint('✅ [Chat] "Go to Workout" button should appear! workoutId: ${assistantMessage.workoutId}');
+      }
+
       final updatedMessages = state.valueOrNull ?? [];
       state = AsyncValue.data([...updatedMessages, assistantMessage]);
-    } catch (e) {
-      // Add error message
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Chat] Error sending message: $e');
+      debugPrint('❌ [Chat] Stack trace: $stackTrace');
+
+      // Determine error type for better user feedback
+      String errorContent;
+      if (e.toString().contains('timeout') || e.toString().contains('SocketException')) {
+        errorContent = 'Connection timed out. Please check your internet and try again.';
+      } else if (e.toString().contains('401') || e.toString().contains('403')) {
+        errorContent = 'Session expired. Please sign in again.';
+      } else if (e.toString().contains('429')) {
+        errorContent = 'Too many requests. Please wait a moment and try again.';
+      } else if (e.toString().contains('500') || e.toString().contains('503')) {
+        errorContent = 'Server is temporarily unavailable. Please try again in a moment.';
+      } else {
+        errorContent = 'Sorry, I encountered an error. Please try again.';
+      }
+
       final errorMessage = ChatMessage(
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: errorContent,
         createdAt: DateTime.now().toIso8601String(),
       );
       final updatedMessages = state.valueOrNull ?? [];
@@ -514,12 +591,23 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     final workoutId = actionData['workout_id'];
     final workoutName = actionData['workout_name'] as String?;
     final exerciseCount = actionData['exercise_count'] as int?;
-    debugPrint('🏋️ [Chat] Quick workout generated! workout_id: $workoutId, name: $workoutName, exercises: $exerciseCount');
+    final durationMinutes = actionData['duration_minutes'];
+    final workoutType = actionData['workout_type'] as String?;
+
+    debugPrint('🏋️ [Chat] ═══════════════════════════════════════════');
+    debugPrint('🏋️ [Chat] QUICK WORKOUT GENERATED SUCCESSFULLY!');
+    debugPrint('🏋️ [Chat] workout_id: $workoutId');
+    debugPrint('🏋️ [Chat] workout_name: $workoutName');
+    debugPrint('🏋️ [Chat] exercise_count: $exerciseCount');
+    debugPrint('🏋️ [Chat] duration_minutes: $durationMinutes');
+    debugPrint('🏋️ [Chat] workout_type: $workoutType');
+    debugPrint('🏋️ [Chat] ═══════════════════════════════════════════');
 
     // Refresh workouts to show the new quick workout
     debugPrint('🏋️ [Chat] Calling _workoutsNotifier.refresh()...');
     await _workoutsNotifier.refresh();
     debugPrint('🏋️ [Chat] Workouts refreshed successfully after quick workout generation');
+    debugPrint('🏋️ [Chat] NOTE: The "Go to Workout" button should now appear in chat UI');
   }
 
   /// Handle general workout modifications from AI

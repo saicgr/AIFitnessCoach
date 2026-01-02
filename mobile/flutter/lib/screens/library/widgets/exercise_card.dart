@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -220,17 +221,15 @@ class ExerciseCard extends ConsumerWidget {
                         if (exercise.difficulty != null)
                           InfoBadge(
                             icon: Icons.signal_cellular_alt,
-                            text: exercise.difficulty!,
-                            color: AppColors.getDifficultyColor(
-                                exercise.difficulty!),
+                            text: DifficultyUtils.getDisplayName(exercise.difficulty!),
+                            color: DifficultyUtils.getColor(exercise.difficulty!),
                           ),
                       ],
                     ),
-                    if (exercise.equipment != null &&
-                        exercise.equipment!.isNotEmpty) ...[
+                    if (exercise.equipment.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
-                        exercise.equipment!.take(2).join(', '),
+                        exercise.equipment.take(2).join(', '),
                         style: TextStyle(
                           fontSize: 11,
                           color: textMuted,
@@ -351,8 +350,9 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
       if (mounted) {
         Navigator.pop(context);
         if (updatedWorkout != null) {
-          // Refresh workout list and wait for it to complete
+          // Refresh workout list and invalidate to force UI rebuild
           await ref.read(workoutsProvider.notifier).refresh();
+          ref.invalidate(workoutsProvider);
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -1,4 +1,4 @@
--- AI Fitness Coach - Postgres Schema Migration
+-- FitWiz - Postgres Schema Migration
 -- This creates all tables in Supabase Postgres
 
 -- Enable UUID extension

@@ -248,11 +248,12 @@ class _NutritionOnboardingScreenState
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1.15,
+            // Use responsive aspect ratio based on screen width
+            childAspectRatio: MediaQuery.of(context).size.width < 360 ? 0.95 : 1.15,
           ),
           itemCount: goals.length,
           itemBuilder: (context, index) {
@@ -347,7 +348,7 @@ class _NutritionOnboardingScreenState
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
           borderRadius: BorderRadius.circular(16),
@@ -358,46 +359,49 @@ class _NutritionOnboardingScreenState
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Icon with selection indicator
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? accentColor.withValues(alpha: 0.2)
-                        : textMuted.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected ? accentColor : textMuted,
-                    size: 24,
-                  ),
-                ),
-                if (isSelected)
+            Flexible(
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
                   Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: isSelected
+                          ? accentColor.withValues(alpha: 0.2)
+                          : textMuted.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 12,
+                    child: Icon(
+                      icon,
+                      color: isSelected ? accentColor : textMuted,
+                      size: 22,
                     ),
                   ),
-              ],
+                  if (isSelected)
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 10,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             // Goal name
             Text(
               goal.displayName,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: isSelected ? accentColor : textPrimary,
               ),
@@ -410,7 +414,7 @@ class _NutritionOnboardingScreenState
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 color: textMuted,
               ),
               textAlign: TextAlign.center,
@@ -589,11 +593,12 @@ class _NutritionOnboardingScreenState
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: 0.85,
+            // Use responsive aspect ratio based on screen width
+            childAspectRatio: MediaQuery.of(context).size.width < 360 ? 0.70 : 0.85,
           ),
           itemCount: dietTypes.length,
           itemBuilder: (context, index) {
@@ -974,7 +979,7 @@ class _NutritionOnboardingScreenState
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected ? accentColor.withValues(alpha: 0.1) : elevated,
           borderRadius: BorderRadius.circular(16),
@@ -985,46 +990,49 @@ class _NutritionOnboardingScreenState
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Icon with selection indicator
-            Stack(
-              alignment: Alignment.topRight,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? accentColor.withValues(alpha: 0.2)
-                        : textMuted.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected ? accentColor : textMuted,
-                    size: 22,
-                  ),
-                ),
-                if (isSelected)
+            Flexible(
+              child: Stack(
+                alignment: Alignment.topRight,
+                children: [
                   Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: isSelected
+                          ? accentColor.withValues(alpha: 0.2)
+                          : textMuted.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 10,
+                    child: Icon(
+                      icon,
+                      color: isSelected ? accentColor : textMuted,
+                      size: 20,
                     ),
                   ),
-              ],
+                  if (isSelected)
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 8,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             // Pattern name
             Text(
               pattern.displayName,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: isSelected ? accentColor : textPrimary,
               ),
@@ -1037,7 +1045,7 @@ class _NutritionOnboardingScreenState
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 color: textMuted,
               ),
               textAlign: TextAlign.center,
@@ -1296,11 +1304,12 @@ class _NutritionOnboardingScreenState
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.3,
+            // Use responsive aspect ratio based on screen width
+            childAspectRatio: MediaQuery.of(context).size.width < 360 ? 1.0 : 1.3,
           ),
           itemCount: mealPatterns.length,
           itemBuilder: (context, index) {
@@ -1821,6 +1830,9 @@ class _NutritionOnboardingScreenState
       final user = await ref.read(authRepositoryProvider).getCurrentUser();
       if (user == null) throw Exception('Not authenticated');
 
+      // Get the calculated targets to send to backend (ensures consistency)
+      final targets = _calculatedTargets;
+
       await ref.read(nutritionPreferencesProvider.notifier).completeOnboarding(
         userId: user.id,
         goals: _selectedGoals.toList(),
@@ -1835,6 +1847,13 @@ class _NutritionOnboardingScreenState
         customCarbPercent: _selectedDietType == DietType.custom ? _customCarbPercent : null,
         customProteinPercent: _selectedDietType == DietType.custom ? _customProteinPercent : null,
         customFatPercent: _selectedDietType == DietType.custom ? _customFatPercent : null,
+        // Send pre-calculated values to ensure what user saw matches what's saved
+        calculatedBmr: targets?.calculatedBmr,
+        calculatedTdee: targets?.calculatedTdee,
+        targetCalories: targets?.targetCalories,
+        targetProteinG: targets?.targetProteinG,
+        targetCarbsG: targets?.targetCarbsG,
+        targetFatG: targets?.targetFatG,
       );
 
       if (!mounted) return;

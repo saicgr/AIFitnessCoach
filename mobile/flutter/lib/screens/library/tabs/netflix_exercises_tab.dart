@@ -5,7 +5,6 @@ import '../../../data/models/exercise.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
 import '../widgets/netflix_exercise_carousel.dart';
-import '../widgets/exercise_card.dart';
 
 /// Netflix-style exercises tab with horizontal carousels by category
 class NetflixExercisesTab extends ConsumerStatefulWidget {
@@ -182,25 +181,54 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       loading: () => Center(
         child: CircularProgressIndicator(color: cyan),
       ),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: isDark ? AppColors.error : AppColorsLight.error,
-              size: 48,
+      error: (error, _) {
+        // Get user-friendly error message
+        final errorMessage = error is AppException
+            ? error.userMessage
+            : ExceptionHandler.getUserMessage(error);
+        final isNetworkError = error is NetworkException ||
+            errorMessage.contains('internet') ||
+            errorMessage.contains('connection');
+
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isNetworkError ? Icons.wifi_off : Icons.error_outline,
+                  color: isDark ? AppColors.error : AppColorsLight.error,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  errorMessage,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => ref.invalidate(categoryExercisesProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try Again'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cyan,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text('Failed to load exercises'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => ref.invalidate(categoryExercisesProvider),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
       data: (categoryData) {
         if (categoryData.isEmpty) {
           return const Center(

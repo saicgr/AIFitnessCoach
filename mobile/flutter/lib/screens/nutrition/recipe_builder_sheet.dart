@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/recipe.dart';
-import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../widgets/nutrition/cooking_converter_sheet.dart';
 import '../../widgets/nutrition/batch_portioning_sheet.dart';
@@ -797,7 +796,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                         Switch(
                           value: _isPublic,
                           onChanged: (value) => setState(() => _isPublic = value),
-                          activeColor: teal,
+                          activeThumbColor: teal,
                         ),
                       ],
                     ),

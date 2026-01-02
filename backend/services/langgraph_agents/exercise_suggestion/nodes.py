@@ -154,6 +154,9 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
     user_message = state.get("user_message", "")
     swap_reason = state.get("swap_reason", "variety")
     user_equipment = state.get("user_equipment", [])
+    avoided_exercises = state.get("avoided_exercises", []) or []
+    # Normalize avoided exercises to lowercase for case-insensitive matching
+    avoided_exercises_lower = {ex.lower() for ex in avoided_exercises}
 
     try:
         # Get the RAG service (uses ChromaDB)
@@ -224,6 +227,11 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
             if lower_name in seen_names:
                 continue
             seen_names.add(lower_name)
+
+            # Skip avoided exercises (from user preferences)
+            if lower_name in avoided_exercises_lower:
+                logger.debug(f"[Search Node] Skipping avoided exercise: {exercise_name}")
+                continue
 
             # Get normalized body part
             body_part = normalize_body_part(meta.get("target_muscle") or meta.get("body_part", ""))

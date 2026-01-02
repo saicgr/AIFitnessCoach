@@ -1,6 +1,6 @@
 # Fitness & Gym Terminology Guide
 
-A comprehensive glossary of terms used by gym-goers, fitness professionals, and athletes. Each term includes whether it should be integrated into the AI Fitness Coach app.
+A comprehensive glossary of terms used by gym-goers, fitness professionals, and athletes. Each term includes whether it should be integrated into the FitWiz app.
 
 ---
 
@@ -669,4 +669,4 @@ A comprehensive glossary of terms used by gym-goers, fitness professionals, and 
 
 *Document Version: 1.0*
 *Created: 2025-12-08*
-*Purpose: Fitness terminology reference for AI Fitness Coach app development*
+*Purpose: Fitness terminology reference for FitWiz app development*

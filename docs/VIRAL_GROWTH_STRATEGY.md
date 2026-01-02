@@ -1,8 +1,8 @@
-# AI Fitness Coach - Viral Growth Strategy
+# FitWiz - Viral Growth Strategy
 
 ## Executive Summary
 
-This document outlines viral growth mechanisms to make AI Fitness Coach the most addictive and shareable fitness app in the market. The goal: **turn every workout into a social moment**.
+This document outlines viral growth mechanisms to make FitWiz the most addictive and shareable fitness app in the market. The goal: **turn every workout into a social moment**.
 
 ---
 
@@ -74,7 +74,7 @@ You: 156 reps    vs    Mike: 142 reps
 - **Monthly Marathons**: Consistency challenges
 
 ### Viral Mechanics
-- **Challenge Links**: `aifitnesscoach.com/battle/xyz123`
+- **Challenge Links**: `fitwiz.com/battle/xyz123`
 - **Instagram Stories Integration**: "I challenge @friend to beat my 45-min workout!"
 - **Victory Lap Posts**: Auto-share wins to social media
 - **Revenge Matches**: Losers get notification to rematch
@@ -256,8 +256,8 @@ Reward: Exclusive "Night Owl" Badge
 │                                    │
 │  [Share to Instagram] [Challenge]  │
 │                                    │
-│  AI Fitness Coach                  │
-│  aifitnesscoach.com/join/xyz       │
+│  FitWiz                  │
+│  fitwiz.com/join/xyz       │
 └────────────────────────────────────┘
 ```
 
@@ -717,8 +717,8 @@ WHEN YOU COMPLETE A HARD WORKOUT:
 │                                    │
 │          — Your AI Coach           │
 │                                    │
-│  🏋️ AI Fitness Coach              │
-│  aifitnesscoach.com               │
+│  🏋️ FitWiz              │
+│  fitwiz.com               │
 └────────────────────────────────────┘
 ```
 

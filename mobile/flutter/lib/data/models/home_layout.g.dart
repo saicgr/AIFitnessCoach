@@ -23,6 +23,7 @@ Map<String, dynamic> _$HomeTileToJson(HomeTile instance) => <String, dynamic>{
 };
 
 const _$TileTypeEnumMap = {
+  TileType.quickStart: 'quickStart',
   TileType.nextWorkout: 'nextWorkout',
   TileType.fitnessScore: 'fitnessScore',
   TileType.moodPicker: 'moodPicker',
@@ -48,6 +49,10 @@ const _$TileTypeEnumMap = {
   TileType.muscleHeatmap: 'muscleHeatmap',
   TileType.sleepScore: 'sleepScore',
   TileType.restDayTip: 'restDayTip',
+  TileType.myJourney: 'myJourney',
+  TileType.progressCharts: 'progressCharts',
+  TileType.roiSummary: 'roiSummary',
+  TileType.weeklyPlan: 'weeklyPlan',
 };
 
 const _$TileSizeEnumMap = {

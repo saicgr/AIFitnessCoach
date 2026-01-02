@@ -26,6 +26,44 @@ from api.v1 import exercise_preferences  # Staple exercises and variation contro
 from api.v1 import training_intensity  # Percentage-based 1RM training
 from api.v1 import layouts  # Home screen layout customization
 from api.v1 import recipe_suggestions  # AI recipe suggestions based on culture, body type, diet
+from api.v1 import support  # Support ticket system
+from api.v1 import skill_progressions  # Bodyweight skill progressions
+from api.v1 import cardio  # Heart rate zones and cardio metrics
+from api.v1 import flexibility  # Flexibility assessments and progress tracking
+from api.v1 import email_preferences  # Email subscription preferences
+from api.v1 import exercise_progressions  # Leverage-based exercise progressions
+from api.v1 import audio_preferences  # Audio settings for workouts (TTS, ducking, background music)
+from api.v1 import sound_preferences  # Sound effect customization (countdown, completion sounds)
+from api.v1 import demo  # Demo/trial preview endpoints for pre-signup experience
+from api.v1 import progress  # Visual progress charts (strength, volume, summary)
+from api.v1 import subjective_feedback  # Subjective results tracking (mood, energy, feel results)
+from api.v1 import scheduling  # Smart rescheduling for missed workouts
+from api.v1 import consistency  # Consistency insights, streaks, and workout patterns
+from api.v1 import milestones  # Progress milestones and ROI communication
+from api.v1 import subscription_transparency  # Subscription transparency tracking
+from api.v1 import subscription_context  # Subscription context for AI personalization
+from api.v1 import programs  # Branded workout programs and user program assignments
+from api.v1 import window_mode  # Window mode logging (split screen, PiP, freeform)
+from api.v1 import calibration  # Strength calibration workouts and baselines
+from api.v1 import neat  # NEAT (Non-Exercise Activity Thermogenesis) improvement system
+from api.v1 import supersets  # Superset preferences and manual pairing
+from api.v1 import strain_prevention  # Strain prevention and volume tracking
+from api.v1 import injuries  # Injury tracking and workout modifications
+from api.v1 import senior_fitness  # Senior fitness settings and modifications
+from api.v1 import progression_settings  # Progression pace preferences
+from api.v1 import fasting_impact  # Fasting impact analysis on weight, workouts, and goals
+from api.v1 import nutrition_preferences  # Nutrition preferences, quick logging, meal templates
+from api.v1 import diabetes  # Diabetes tracking (glucose, insulin, A1C, medications, alerts)
+from api.v1 import exercise_history  # Per-exercise workout history and PRs
+from api.v1 import muscle_analytics  # Muscle-level analytics, heatmap, balance analysis
+from api.v1 import hormonal_health  # Hormonal health tracking (testosterone, estrogen, cycle tracking)
+from api.v1 import kegel  # Kegel/pelvic floor exercises and preferences
+from api.v1 import weekly_plans  # Holistic weekly plans (workouts + nutrition + fasting)
+from api.v1 import chat_reports  # Chat message reporting for AI coach feedback quality
+from api.v1 import live_chat  # Live chat support with human agents
+from api.v1 import inflammation  # Food inflammation analysis from barcode scans
+from api.v1 import admin  # Admin backend for live chat management and support
+from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -144,3 +182,117 @@ router.include_router(layouts.router, tags=["Layouts"])
 
 # AI recipe suggestions based on body type, culture, diet
 router.include_router(recipe_suggestions.router, tags=["Recipe Suggestions"])
+
+# Support ticket system for user issues
+router.include_router(support.router, prefix="/support", tags=["Support"])
+
+# Bodyweight skill progressions (push-up, pull-up, squat progressions, etc.)
+router.include_router(skill_progressions.router, prefix="/skill-progressions", tags=["Skill Progressions"])
+
+# Heart rate zones and cardio metrics
+router.include_router(cardio.router, prefix="/cardio", tags=["Cardio"])
+
+# Flexibility assessments and progress tracking
+router.include_router(flexibility.router, prefix="/flexibility", tags=["Flexibility"])
+
+# Email subscription preferences
+router.include_router(email_preferences.router, prefix="/email-preferences", tags=["Email Preferences"])
+
+# Leverage-based exercise progressions (mastery tracking, progression suggestions)
+router.include_router(exercise_progressions.router, prefix="/exercise-progressions", tags=["Exercise Progressions"])
+
+# Audio preferences for workouts (TTS volume, audio ducking, background music)
+router.include_router(audio_preferences.router, prefix="/audio-preferences", tags=["Audio Preferences"])
+
+# Sound effect preferences (countdown beeps, completion sounds - NO applause)
+router.include_router(sound_preferences.router, tags=["Sound Preferences"])
+
+# Demo/trial endpoints for pre-signup preview experience (no auth required)
+router.include_router(demo.router, tags=["Demo"])
+
+# Visual progress charts (strength over time, volume over time, summary)
+router.include_router(progress.router, tags=["Progress"])
+
+# Subjective results tracking (mood, energy, "feel results")
+router.include_router(subjective_feedback.router, prefix="/subjective-feedback", tags=["Subjective Feedback"])
+
+# Smart rescheduling for missed workouts (reschedule, skip, AI suggestions)
+router.include_router(scheduling.router, prefix="/scheduling", tags=["Scheduling"])
+
+# Consistency insights, streaks, and workout patterns dashboard
+router.include_router(consistency.router, prefix="/consistency", tags=["Consistency"])
+
+# Progress milestones and ROI communication
+router.include_router(milestones.router, prefix="/progress", tags=["Progress Milestones"])
+
+# Subscription transparency tracking (pre-signup pricing views, trial status)
+router.include_router(subscription_transparency.router, tags=["Subscription Transparency"])
+
+# Subscription context logging for AI personalization
+router.include_router(subscription_context.router, tags=["Subscription Context"])
+
+# Branded workout programs and user program assignments
+router.include_router(programs.router, prefix="/programs", tags=["Programs"])
+
+# Window mode logging (split screen, PiP, freeform) for analytics
+router.include_router(window_mode.router, prefix="/window-mode", tags=["Window Mode"])
+
+# Strength calibration workouts for assessing user baselines
+router.include_router(calibration.router, tags=["Calibration"])
+
+# NEAT improvement system (step goals, hourly activity, NEAT scores, streaks, achievements)
+router.include_router(neat.router, prefix="/neat", tags=["NEAT"])
+
+# Superset preferences and manual pairing
+router.include_router(supersets.router, tags=["Supersets"])
+
+# Strain prevention and volume tracking (10% rule, risk assessment)
+router.include_router(strain_prevention.router, prefix="/strain-prevention", tags=["Strain Prevention"])
+
+# Injury tracking, recovery check-ins, workout modifications
+router.include_router(injuries.router, prefix="/injuries", tags=["Injuries"])
+
+# Senior fitness settings and age-appropriate modifications
+router.include_router(senior_fitness.router, prefix="/senior-fitness", tags=["Senior Fitness"])
+
+# Progression pace preferences and AI recommendations
+router.include_router(progression_settings.router, prefix="/progression-settings", tags=["Progression Settings"])
+
+# Fasting impact analysis on weight, workouts, and goals
+router.include_router(fasting_impact.router, prefix="/fasting-impact", tags=["Fasting Impact"])
+
+# Nutrition preferences, quick logging, meal templates, and food search
+router.include_router(nutrition_preferences.router, prefix="/nutrition", tags=["Nutrition Preferences"])
+
+# Diabetes tracking (glucose readings, insulin doses, A1C, medications, alerts)
+router.include_router(diabetes.router, tags=["Diabetes Tracking"])
+
+# Per-exercise workout history, progression charts, and personal records
+router.include_router(exercise_history.router, tags=["Exercise History"])
+
+# Muscle-level analytics: heatmap, training frequency, balance analysis
+router.include_router(muscle_analytics.router, tags=["Muscle Analytics"])
+
+# Hormonal health tracking (testosterone, estrogen, menstrual cycle, recommendations)
+router.include_router(hormonal_health.router, tags=["Hormonal Health"])
+
+# Kegel/pelvic floor exercises, preferences, and session tracking
+router.include_router(kegel.router, tags=["Kegel/Pelvic Floor"])
+
+# Holistic weekly plans (integrated workouts, nutrition, fasting)
+router.include_router(weekly_plans.router, prefix="/weekly-plans", tags=["Weekly Plans"])
+
+# Chat message reporting for AI coach feedback quality improvement
+router.include_router(chat_reports.router, prefix="/chat", tags=["Chat Reports"])
+
+# Live chat support with human agents
+router.include_router(live_chat.router, prefix="/live-chat", tags=["Live Chat"])
+
+# Food inflammation analysis from barcode scans
+router.include_router(inflammation.router, prefix="/inflammation", tags=["Inflammation Analysis"])
+
+# Admin backend for live chat management, support tickets, and reports
+router.include_router(admin.router, prefix="/admin", tags=["Admin"])
+
+# Simple habit tracking (not eating outside, no doordash, walking 10k steps, etc.)
+router.include_router(habits.router, prefix="/habits", tags=["Habits"])

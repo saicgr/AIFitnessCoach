@@ -26,11 +26,11 @@ async def search_users(
     limit: int = Query(20, ge=1, le=50, description="Maximum results to return"),
 ):
     """
-    Search users by name.
+    Search users by name or username.
 
     Args:
         user_id: Current user's ID (to exclude from results)
-        query: Search query string
+        query: Search query string (searches name and username)
         limit: Maximum number of results
 
     Returns:
@@ -42,10 +42,11 @@ async def search_users(
     try:
         supabase = get_supabase_client()
 
-        # Search users by name (case-insensitive)
+        # Search users by name OR username (case-insensitive)
+        # Use or filter to search both fields
         result = supabase.table("users").select(
-            "id, name, avatar_url, bio"
-        ).ilike("name", f"%{query}%").neq("id", user_id).limit(limit).execute()
+            "id, name, username, avatar_url, bio"
+        ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").neq("id", user_id).limit(limit).execute()
 
         if not result.data:
             return []
@@ -108,6 +109,7 @@ async def search_users(
             results.append(UserSearchResult(
                 id=uid,
                 name=user.get("name", "Unknown"),
+                username=user.get("username"),
                 avatar_url=user.get("avatar_url"),
                 bio=user.get("bio"),
                 total_workouts=workout_counts.get(uid, 0),

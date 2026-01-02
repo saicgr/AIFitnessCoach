@@ -61,141 +61,147 @@ class FastingTimerWidget extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Circular progress with timer
-          SizedBox(
-            width: 220,
-            height: 220,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Background circle
-                SizedBox(
-                  width: 220,
-                  height: 220,
-                  child: CircularProgressIndicator(
-                    value: 1.0,
-                    strokeWidth: 12,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
-                          .withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-                // Zone-colored progress
-                SizedBox(
-                  width: 220,
-                  height: 220,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: progress),
-                    duration: const Duration(milliseconds: 500),
-                    builder: (context, value, child) {
-                      return CustomPaint(
-                        painter: _ZoneProgressPainter(
-                          progress: value,
-                          currentZone: currentZone,
-                          strokeWidth: 12,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                // Center content
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          // Circular progress with timer - responsive size
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final timerSize = screenWidth < 380 ? 180.0 : 220.0;
+              return SizedBox(
+                width: timerSize,
+                height: timerSize,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    if (activeFast != null) ...[
-                      // Time elapsed
-                      Text(
-                        _formatTime(elapsedSeconds),
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                    // Background circle
+                    SizedBox(
+                      width: timerSize,
+                      height: timerSize,
+                      child: CircularProgressIndicator(
+                        value: 1.0,
+                        strokeWidth: screenWidth < 380 ? 10 : 12,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
+                              .withValues(alpha: 0.3),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      // Label
-                      Text(
-                        'elapsed',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Remaining time
-                      Text(
-                        _formatRemainingTime(
-                            activeFast!.goalDurationMinutes - elapsedMinutes),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: purple,
-                        ),
-                      ),
-                      Text(
-                        'remaining',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                        ),
-                      ),
-                    ] else ...[
-                      // Start Fast button in center when not fasting
-                      GestureDetector(
-                        onTap: onStartFast,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                purple,
-                                purple.withValues(alpha: 0.8),
-                              ],
+                    ),
+                    // Zone-colored progress
+                    SizedBox(
+                      width: timerSize,
+                      height: timerSize,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: progress),
+                        duration: const Duration(milliseconds: 500),
+                        builder: (context, value, child) {
+                          return CustomPaint(
+                            painter: _ZoneProgressPainter(
+                              progress: value,
+                              currentZone: currentZone,
+                              strokeWidth: screenWidth < 380 ? 10 : 12,
                             ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: purple.withValues(alpha: 0.4),
-                                blurRadius: 16,
-                                spreadRadius: 2,
+                          );
+                        },
+                      ),
+                    ),
+                    // Center content
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (activeFast != null) ...[
+                          // Time elapsed
+                          Text(
+                            _formatTime(elapsedSeconds),
+                            style: TextStyle(
+                              fontSize: screenWidth < 380 ? 28 : 36,
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          // Label
+                          Text(
+                            'elapsed',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Remaining time
+                          Text(
+                            _formatRemainingTime(
+                                activeFast!.goalDurationMinutes - elapsedMinutes),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: purple,
+                            ),
+                          ),
+                          Text(
+                            'remaining',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textMuted,
+                            ),
+                          ),
+                        ] else ...[
+                          // Start Fast button in center when not fasting
+                          GestureDetector(
+                            onTap: onStartFast,
+                            child: Container(
+                              width: screenWidth < 380 ? 64 : 80,
+                              height: screenWidth < 380 ? 64 : 80,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    purple,
+                                    purple.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: purple.withValues(alpha: 0.4),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: screenWidth < 380 ? 32 : 40,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 40,
+                          const SizedBox(height: 12),
+                          Text(
+                            'Start Fast',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Start Fast',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap to begin',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textMuted,
-                        ),
-                      ),
-                    ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tap to begin',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 24),
 

@@ -1,5 +1,5 @@
 """
-Supabase Database Service for AI Fitness Coach.
+Supabase Database Service for FitWiz.
 
 This module provides backward compatibility by re-exporting from the
 modular database package. New code should import directly from core.db.

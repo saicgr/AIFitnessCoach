@@ -26,6 +26,9 @@ class NotificationPrefsKeys {
   static const aiCoachMessages = 'notif_ai_coach_messages';
   static const streakAlerts = 'notif_streak_alerts';
   static const weeklySummary = 'notif_weekly_summary';
+  static const billingReminders = 'notif_billing_reminders';
+  static const movementReminders = 'notif_movement_reminders';
+  static const liveChatMessages = 'notif_live_chat_messages';
   static const quietHoursStart = 'notif_quiet_hours_start';
   static const quietHoursEnd = 'notif_quiet_hours_end';
   // Time preferences for scheduled notifications
@@ -39,6 +42,10 @@ class NotificationPrefsKeys {
   static const streakAlertTime = 'notif_streak_alert_time';
   static const weeklySummaryDay = 'notif_weekly_summary_day'; // 0=Sunday, 6=Saturday
   static const weeklySummaryTime = 'notif_weekly_summary_time';
+  // Movement reminder (NEAT) preferences
+  static const movementReminderStartTime = 'notif_movement_start_time';
+  static const movementReminderEndTime = 'notif_movement_end_time';
+  static const movementStepThreshold = 'notif_movement_step_threshold';
 }
 
 /// Notification preferences state
@@ -49,6 +56,9 @@ class NotificationPreferences {
   final bool aiCoachMessages;
   final bool streakAlerts;
   final bool weeklySummary;
+  final bool billingReminders;
+  final bool movementReminders;
+  final bool liveChatMessages;
   final String quietHoursStart;
   final String quietHoursEnd;
   // Time preferences for scheduled notifications
@@ -62,6 +72,10 @@ class NotificationPreferences {
   final String streakAlertTime;
   final int weeklySummaryDay; // 0=Sunday, 6=Saturday
   final String weeklySummaryTime;
+  // Movement reminder (NEAT) preferences
+  final String movementReminderStartTime;
+  final String movementReminderEndTime;
+  final int movementStepThreshold; // Steps per hour threshold (default 250)
 
   const NotificationPreferences({
     this.workoutReminders = true,
@@ -70,6 +84,9 @@ class NotificationPreferences {
     this.aiCoachMessages = true,
     this.streakAlerts = true,
     this.weeklySummary = true,
+    this.billingReminders = true,
+    this.movementReminders = true,
+    this.liveChatMessages = true,
     this.quietHoursStart = '22:00',
     this.quietHoursEnd = '08:00',
     // Default times
@@ -83,6 +100,10 @@ class NotificationPreferences {
     this.streakAlertTime = '18:00',
     this.weeklySummaryDay = 0, // Sunday
     this.weeklySummaryTime = '09:00',
+    // Movement reminder defaults (work hours)
+    this.movementReminderStartTime = '09:00',
+    this.movementReminderEndTime = '17:00',
+    this.movementStepThreshold = 250, // 250 steps per hour threshold
   });
 
   NotificationPreferences copyWith({
@@ -92,6 +113,9 @@ class NotificationPreferences {
     bool? aiCoachMessages,
     bool? streakAlerts,
     bool? weeklySummary,
+    bool? billingReminders,
+    bool? movementReminders,
+    bool? liveChatMessages,
     String? quietHoursStart,
     String? quietHoursEnd,
     String? workoutReminderTime,
@@ -104,6 +128,9 @@ class NotificationPreferences {
     String? streakAlertTime,
     int? weeklySummaryDay,
     String? weeklySummaryTime,
+    String? movementReminderStartTime,
+    String? movementReminderEndTime,
+    int? movementStepThreshold,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -112,6 +139,9 @@ class NotificationPreferences {
       aiCoachMessages: aiCoachMessages ?? this.aiCoachMessages,
       streakAlerts: streakAlerts ?? this.streakAlerts,
       weeklySummary: weeklySummary ?? this.weeklySummary,
+      billingReminders: billingReminders ?? this.billingReminders,
+      movementReminders: movementReminders ?? this.movementReminders,
+      liveChatMessages: liveChatMessages ?? this.liveChatMessages,
       quietHoursStart: quietHoursStart ?? this.quietHoursStart,
       quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
       workoutReminderTime: workoutReminderTime ?? this.workoutReminderTime,
@@ -124,6 +154,9 @@ class NotificationPreferences {
       streakAlertTime: streakAlertTime ?? this.streakAlertTime,
       weeklySummaryDay: weeklySummaryDay ?? this.weeklySummaryDay,
       weeklySummaryTime: weeklySummaryTime ?? this.weeklySummaryTime,
+      movementReminderStartTime: movementReminderStartTime ?? this.movementReminderStartTime,
+      movementReminderEndTime: movementReminderEndTime ?? this.movementReminderEndTime,
+      movementStepThreshold: movementStepThreshold ?? this.movementStepThreshold,
     );
   }
 
@@ -134,6 +167,9 @@ class NotificationPreferences {
         'ai_coach_messages': aiCoachMessages,
         'streak_alerts': streakAlerts,
         'weekly_summary': weeklySummary,
+        'billing_reminders': billingReminders,
+        'movement_reminders': movementReminders,
+        'live_chat_messages': liveChatMessages,
         'quiet_hours_start': quietHoursStart,
         'quiet_hours_end': quietHoursEnd,
         'workout_reminder_time': workoutReminderTime,
@@ -146,6 +182,9 @@ class NotificationPreferences {
         'streak_alert_time': streakAlertTime,
         'weekly_summary_day': weeklySummaryDay,
         'weekly_summary_time': weeklySummaryTime,
+        'movement_reminder_start_time': movementReminderStartTime,
+        'movement_reminder_end_time': movementReminderEndTime,
+        'movement_step_threshold': movementStepThreshold,
       };
 }
 
@@ -230,6 +269,18 @@ class NotificationService {
       description: 'Weekly summaries and progress updates',
       color: Color(0xFFA855F7), // Purple
     ),
+    'billing_reminder': _ChannelConfig(
+      id: 'billing_coach',
+      name: 'Billing Reminders',
+      description: 'Subscription renewal and billing notifications',
+      color: Color(0xFF10B981), // Emerald
+    ),
+    'movement_reminder': _ChannelConfig(
+      id: 'movement_coach',
+      name: 'Movement Coach',
+      description: 'Hourly movement reminders to reduce sedentary time',
+      color: Color(0xFFEAB308), // Yellow
+    ),
     'ai_coach': _ChannelConfig(
       id: 'ai_coach',
       name: 'AI Coach',
@@ -240,6 +291,30 @@ class NotificationService {
       id: 'test_notifications',
       name: 'Test Notifications',
       description: 'Test notifications',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'live_chat': _ChannelConfig(
+      id: 'live_chat',
+      name: 'Live Chat Support',
+      description: 'Messages from support agents',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'live_chat_message': _ChannelConfig(
+      id: 'live_chat',
+      name: 'Live Chat Support',
+      description: 'Messages from support agents',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'live_chat_connected': _ChannelConfig(
+      id: 'live_chat',
+      name: 'Live Chat Support',
+      description: 'Messages from support agents',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'live_chat_ended': _ChannelConfig(
+      id: 'live_chat',
+      name: 'Live Chat Support',
+      description: 'Messages from support agents',
       color: Color(0xFF00D9FF), // Cyan
     ),
   };
@@ -473,7 +548,7 @@ class NotificationService {
     // Show local notification with appropriate channel
     final notification = message.notification;
     if (notification != null) {
-      final title = notification.title ?? 'AI Fitness Coach';
+      final title = notification.title ?? 'FitWiz';
       final body = notification.body ?? '';
 
       _showLocalNotification(
@@ -561,7 +636,27 @@ class NotificationService {
     debugPrint('   Title: ${message.notification?.title}');
     debugPrint('   Data: ${message.data}');
 
-    // TODO: Navigate to relevant screen based on message data
+    // Get notification type from data payload
+    final notificationType = message.data['type'] as String?;
+
+    // Handle live chat notifications
+    if (notificationType == 'live_chat_message' ||
+        notificationType == 'live_chat_connected' ||
+        notificationType == 'live_chat_ended') {
+      final ticketId = message.data['ticket_id'] as String?;
+      final chatEnded = message.data['chat_ended'] == 'true';
+
+      debugPrint('💬 [FCM] Live chat notification opened: type=$notificationType, ticketId=$ticketId, ended=$chatEnded');
+
+      // Call the tap callback with the notification type for navigation
+      onNotificationTapped?.call(notificationType);
+      return;
+    }
+
+    // Handle other notification types
+    if (notificationType != null) {
+      onNotificationTapped?.call(notificationType);
+    }
   }
 
   /// Show an immediate local notification (for testing)
@@ -681,6 +776,7 @@ class NotificationService {
   static const int _hydrationBaseId = 3000;
   static const int _streakAlertId = 4000;
   static const int _weeklySummaryId = 5000;
+  static const int _movementReminderBaseId = 6000;
 
   /// Parse time string (e.g. "08:00") to hour and minute
   (int hour, int minute) _parseTime(String time) {
@@ -750,6 +846,10 @@ class NotificationService {
 
     if (prefs.weeklySummary) {
       await scheduleWeeklySummary(prefs.weeklySummaryDay, prefs.weeklySummaryTime);
+    }
+
+    if (prefs.movementReminders) {
+      await scheduleMovementReminders(prefs);
     }
 
     debugPrint('✅ [Schedule] All notifications scheduled');
@@ -972,6 +1072,156 @@ class NotificationService {
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // Movement Reminder Methods (NEAT - Non-Exercise Activity Thermogenesis)
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Schedule hourly movement reminder checks during work hours
+  /// These are scheduled locally and will check step count when triggered
+  Future<void> scheduleMovementReminders(NotificationPreferences prefs) async {
+    // Cancel existing movement reminders first
+    await cancelMovementReminders();
+
+    if (!prefs.movementReminders) {
+      debugPrint('🚶 [Movement] Movement reminders disabled, skipping schedule');
+      return;
+    }
+
+    final (startHour, startMinute) = _parseTime(prefs.movementReminderStartTime);
+    final (endHour, endMinute) = _parseTime(prefs.movementReminderEndTime);
+
+    final channelConfig = _channelConfigs['movement_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: channelConfig.color,
+    );
+
+    // Calculate number of hourly reminders to schedule
+    final startMinutes = startHour * 60 + startMinute;
+    final endMinutes = endHour * 60 + endMinute;
+
+    int reminderIndex = 0;
+    // Schedule one reminder per hour within the time range
+    for (int minutes = startMinutes; minutes <= endMinutes; minutes += 60) {
+      final hour = minutes ~/ 60;
+      final minute = minutes % 60;
+
+      await _localNotifications.zonedSchedule(
+        _movementReminderBaseId + reminderIndex,
+        _getMovementReminderTitle(reminderIndex),
+        _getMovementReminderBody(reminderIndex),
+        _nextInstanceOfTime(hour, minute),
+        NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        payload: 'movement_reminder',
+      );
+      reminderIndex++;
+    }
+
+    debugPrint('🚶 [Movement] $reminderIndex movement reminders scheduled from ${prefs.movementReminderStartTime} to ${prefs.movementReminderEndTime}');
+  }
+
+  /// Cancel all movement reminder notifications
+  Future<void> cancelMovementReminders() async {
+    // Cancel all potential movement reminder IDs (max 24 per day)
+    for (int i = 0; i < 24; i++) {
+      await _localNotifications.cancel(_movementReminderBaseId + i);
+    }
+    debugPrint('🚶 [Movement] All movement reminders cancelled');
+  }
+
+  /// Show an immediate movement reminder notification
+  /// Called when sedentary behavior is detected
+  Future<void> showMovementReminder({
+    required int stepsSoFar,
+    required int goal,
+  }) async {
+    final title = _getMovementReminderTitle(DateTime.now().hour);
+    final body = stepsSoFar == 0
+        ? 'You haven\'t moved this hour. Stand up and take a quick walk!'
+        : 'You\'ve taken only $stepsSoFar steps this hour. Try to hit $goal steps!';
+
+    await _showLocalNotification(
+      title: title,
+      body: body,
+      notificationType: 'movement_reminder',
+      storeInInbox: true,
+    );
+
+    debugPrint('🚶 [Movement] Movement reminder shown: $stepsSoFar/$goal steps');
+  }
+
+  /// Get variety of movement reminder titles to avoid notification fatigue
+  String _getMovementReminderTitle(int index) {
+    final titles = [
+      'Time to move!',
+      'Stand up and stretch!',
+      'Quick break?',
+      'Get moving!',
+      'Movement check!',
+      'Desk break time!',
+      'Walk break!',
+      'Stretch it out!',
+    ];
+    return titles[index % titles.length];
+  }
+
+  /// Get variety of movement reminder body messages
+  String _getMovementReminderBody(int index) {
+    final bodies = [
+      'A short walk can boost your energy and focus.',
+      'Your body will thank you. Take 2 minutes to move!',
+      'Stand up, stretch, and take a quick walk.',
+      'Reduce sedentary time - every step counts!',
+      'Time to shake off the stiffness. Move around!',
+      'Walking improves circulation and mood.',
+      'Get up and get those steps in!',
+      'Small movements add up. Start now!',
+    ];
+    return bodies[index % bodies.length];
+  }
+
+  /// Check if current time is within movement reminder hours
+  bool isWithinMovementReminderHours(NotificationPreferences prefs) {
+    final now = DateTime.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    final (startHour, startMinute) = _parseTime(prefs.movementReminderStartTime);
+    final (endHour, endMinute) = _parseTime(prefs.movementReminderEndTime);
+
+    final startMinutes = startHour * 60 + startMinute;
+    final endMinutes = endHour * 60 + endMinute;
+
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+
+  /// Check if current time is within quiet hours
+  bool isWithinQuietHours(NotificationPreferences prefs) {
+    final now = DateTime.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    final (startHour, startMinute) = _parseTime(prefs.quietHoursStart);
+    final (endHour, endMinute) = _parseTime(prefs.quietHoursEnd);
+
+    final startMinutes = startHour * 60 + startMinute;
+    final endMinutes = endHour * 60 + endMinute;
+
+    // Handle overnight quiet hours (e.g., 22:00 to 08:00)
+    if (startMinutes > endMinutes) {
+      // Quiet hours span midnight
+      return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+    } else {
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // Debug & Testing Methods
   // ─────────────────────────────────────────────────────────────────
 
@@ -1065,6 +1315,47 @@ class NotificationService {
       'tzOffset': tzNow.timeZoneOffset.toString(),
     };
   }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Live Chat Navigation Helpers
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Check if a notification type is a live chat notification
+  static bool isLiveChatNotification(String? notificationType) {
+    return notificationType == 'live_chat_message' ||
+        notificationType == 'live_chat_connected' ||
+        notificationType == 'live_chat_ended';
+  }
+
+  /// Get the navigation route for a notification type
+  /// Returns the route path to navigate to when the notification is tapped
+  static String? getNavigationRouteForNotification(String? notificationType) {
+    switch (notificationType) {
+      case 'live_chat_message':
+      case 'live_chat_connected':
+      case 'live_chat_ended':
+        return '/live-chat';
+      case 'workout_reminder':
+        return '/workout';
+      case 'nutrition_reminder':
+        return '/nutrition';
+      case 'hydration_reminder':
+        return '/hydration';
+      case 'streak_alert':
+        return '/progress';
+      case 'weekly_summary':
+        return '/progress';
+      case 'movement_reminder':
+        return '/home';
+      default:
+        return null;
+    }
+  }
+
+  /// Check if a live chat notification indicates the chat has ended
+  static bool isLiveChatEndedNotification(String? notificationType) {
+    return notificationType == 'live_chat_ended';
+  }
 }
 
 /// Callback type for syncing preferences to backend
@@ -1099,6 +1390,9 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       aiCoachMessages: _prefs.getBool(NotificationPrefsKeys.aiCoachMessages) ?? true,
       streakAlerts: _prefs.getBool(NotificationPrefsKeys.streakAlerts) ?? true,
       weeklySummary: _prefs.getBool(NotificationPrefsKeys.weeklySummary) ?? true,
+      billingReminders: _prefs.getBool(NotificationPrefsKeys.billingReminders) ?? true,
+      movementReminders: _prefs.getBool(NotificationPrefsKeys.movementReminders) ?? true,
+      liveChatMessages: _prefs.getBool(NotificationPrefsKeys.liveChatMessages) ?? true,
       quietHoursStart: _prefs.getString(NotificationPrefsKeys.quietHoursStart) ?? '22:00',
       quietHoursEnd: _prefs.getString(NotificationPrefsKeys.quietHoursEnd) ?? '08:00',
       // Time preferences
@@ -1112,6 +1406,10 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       streakAlertTime: _prefs.getString(NotificationPrefsKeys.streakAlertTime) ?? '18:00',
       weeklySummaryDay: _prefs.getInt(NotificationPrefsKeys.weeklySummaryDay) ?? 0,
       weeklySummaryTime: _prefs.getString(NotificationPrefsKeys.weeklySummaryTime) ?? '09:00',
+      // Movement reminder preferences
+      movementReminderStartTime: _prefs.getString(NotificationPrefsKeys.movementReminderStartTime) ?? '09:00',
+      movementReminderEndTime: _prefs.getString(NotificationPrefsKeys.movementReminderEndTime) ?? '17:00',
+      movementStepThreshold: _prefs.getInt(NotificationPrefsKeys.movementStepThreshold) ?? 250,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -1168,6 +1466,20 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     await _prefs.setBool(NotificationPrefsKeys.weeklySummary, value);
     state = state.copyWith(weeklySummary: value);
     await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setBillingReminders(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.billingReminders, value);
+    state = state.copyWith(billingReminders: value);
+    // Billing reminders are server-side, so sync is important
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setLiveChatMessages(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.liveChatMessages, value);
+    state = state.copyWith(liveChatMessages: value);
+    // Live chat messages are server-side, so sync is important
     await _syncPreferencesToBackend();
   }
 
@@ -1228,6 +1540,31 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     await _rescheduleNotifications();
     await _syncPreferencesToBackend();
   }
+
+  // Movement reminder setters
+  Future<void> setMovementReminders(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.movementReminders, value);
+    state = state.copyWith(movementReminders: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setMovementReminderTimes(String startTime, String endTime) async {
+    await _prefs.setString(NotificationPrefsKeys.movementReminderStartTime, startTime);
+    await _prefs.setString(NotificationPrefsKeys.movementReminderEndTime, endTime);
+    state = state.copyWith(
+      movementReminderStartTime: startTime,
+      movementReminderEndTime: endTime,
+    );
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setMovementStepThreshold(int threshold) async {
+    await _prefs.setInt(NotificationPrefsKeys.movementStepThreshold, threshold);
+    state = state.copyWith(movementStepThreshold: threshold);
+    await _syncPreferencesToBackend();
+  }
 }
 
 /// Providers
@@ -1271,6 +1608,8 @@ class NotificationPrefsSync {
         'push_hydration_reminders': prefs.hydrationReminders,
         'push_ai_coach_messages': prefs.aiCoachMessages,
         'push_nutrition_reminders': prefs.nutritionReminders,
+        'push_billing_reminders': prefs.billingReminders,
+        'push_live_chat_messages': prefs.liveChatMessages,
         'weekly_summary_enabled': prefs.weeklySummary,
         'weekly_summary_day': _dayIntToString(prefs.weeklySummaryDay),
         'weekly_summary_time': prefs.weeklySummaryTime,

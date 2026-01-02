@@ -52,6 +52,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 88),
           ProfileHeader(
             name: user?.displayName ?? 'User',
+            username: user?.username,
             email: user?.email ?? '',
             photoUrl: user?.photoUrl,
           ).animate().fadeIn().slideY(begin: 0.1),

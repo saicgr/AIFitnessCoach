@@ -15,6 +15,7 @@ class ExerciseSuggestionState(TypedDict):
     user_equipment: Optional[List[str]]  # User's available equipment
     user_injuries: Optional[List[str]]  # User's active injuries
     user_fitness_level: Optional[str]  # beginner/intermediate/advanced
+    avoided_exercises: Optional[List[str]]  # User's avoided exercises (from preferences)
 
     # Analysis results
     swap_reason: Optional[str]  # Why user wants to swap (equipment, injury, difficulty, etc.)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/profile/widgets/quick_access_card.dart';
-import 'package:ai_fitness_coach/core/constants/app_colors.dart';
+import 'package:fitwiz/screens/profile/widgets/quick_access_card.dart';
+import 'package:fitwiz/core/constants/app_colors.dart';
 
 void main() {
   group('QuickAccessCard', () {

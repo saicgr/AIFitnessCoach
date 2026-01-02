@@ -1,14 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
-import 'floating_chat_provider.dart';
 
 /// Global chat overlay that handles the modal chat UI
 /// The AI button is now in main_shell.dart (fixed position beside nav bar)
@@ -394,7 +391,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, {int index = 0}) {
+  Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.role == 'user';
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;

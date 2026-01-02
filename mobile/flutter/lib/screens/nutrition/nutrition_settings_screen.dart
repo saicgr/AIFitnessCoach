@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import 'food_library_screen.dart';
 
 /// Nutrition settings screen with toggles for calm mode, AI feedback, etc.
 class NutritionSettingsScreen extends ConsumerStatefulWidget {
@@ -132,12 +132,12 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
-                  // AI Feedback Section
+                  // AI Assistance Section
                   _buildSectionHeader(
                     context,
-                    'AI Coach Feedback',
+                    'AI Assistance',
                     Icons.auto_awesome,
-                    const Color(0xFFFF9500), // Orange
+                    const Color(0xFF5856D6), // Purple
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -149,14 +149,127 @@ class _NutritionSettingsScreenState
                     children: [
                       _buildSwitchTile(
                         context,
-                        title: 'Meal Feedback',
+                        title: 'Disable AI Food Tips',
                         subtitle:
-                            'Show AI tips and suggestions after logging meals',
-                        value: preferences.showAiFeedbackAfterLogging,
+                            'Hide nutrition suggestions after logging meals',
+                        value: !preferences.showAiFeedbackAfterLogging,
                         onChanged: (value) =>
-                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: value),
-                        icon: Icons.chat_bubble_rounded,
-                        iconColor: green,
+                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
+                        icon: Icons.lightbulb_outline_rounded,
+                        iconColor: const Color(0xFFFF9500), // Orange
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Logging Section
+                  _buildSectionHeader(
+                    context,
+                    'Logging',
+                    Icons.edit_note_rounded,
+                    const Color(0xFF34C759), // Green
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Quick Log Mode',
+                        subtitle:
+                            'Show quick add button for faster meal logging',
+                        value: preferences.quickLogModeEnabled,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, quickLogModeEnabled: value),
+                        icon: Icons.bolt_rounded,
+                        iconColor: const Color(0xFFFF9500), // Orange
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Show Macros on Log',
+                        subtitle:
+                            'Display macro breakdown when confirming a logged meal',
+                        value: preferences.showMacrosOnLog,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, showMacrosOnLog: value),
+                        icon: Icons.pie_chart_rounded,
+                        iconColor: const Color(0xFF007AFF), // Blue
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Food Library Section
+                  _buildSectionHeader(
+                    context,
+                    'Food Library',
+                    Icons.menu_book_rounded,
+                    const Color(0xFF8B5CF6), // Purple
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildNavigationCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    title: 'Saved Foods & Recipes',
+                    subtitle: 'Manage your food library for quick logging',
+                    icon: Icons.bookmark_rounded,
+                    iconColor: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const FoodLibraryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Display Section
+                  _buildSectionHeader(
+                    context,
+                    'Display',
+                    Icons.view_compact_rounded,
+                    const Color(0xFF00C7BE), // Teal
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Compact Tracker View',
+                        subtitle:
+                            'Use a condensed layout with meals at the top',
+                        value: preferences.compactTrackerViewEnabled,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, compactTrackerViewEnabled: value),
+                        icon: Icons.density_small_rounded,
+                        iconColor: const Color(0xFF5856D6), // Purple
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -604,6 +717,78 @@ class _NutritionSettingsScreenState
     );
   }
 
+  Widget _buildNavigationCard(
+    BuildContext context,
+    bool isDark,
+    Color elevated,
+    Color cardBorder,
+    Color textPrimary,
+    Color textMuted, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildInfoCard(
     BuildContext context,
     bool isDark,
@@ -727,7 +912,7 @@ class _NutritionSettingsScreenState
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      dynamicTargets!.adjustmentReason!,
+                      dynamicTargets!.adjustmentReason,
                       style: TextStyle(
                         fontSize: 13,
                         color: textMuted,
@@ -886,6 +1071,9 @@ class _NutritionSettingsScreenState
     bool? showAiFeedbackAfterLogging,
     bool? adjustCaloriesForTraining,
     bool? adjustCaloriesForRest,
+    bool? quickLogModeEnabled,
+    bool? compactTrackerViewEnabled,
+    bool? showMacrosOnLog,
   }) async {
     if (userId == null) return;
 
@@ -898,6 +1086,9 @@ class _NutritionSettingsScreenState
         showAiFeedbackAfterLogging: showAiFeedbackAfterLogging,
         adjustCaloriesForTraining: adjustCaloriesForTraining,
         adjustCaloriesForRest: adjustCaloriesForRest,
+        quickLogModeEnabled: quickLogModeEnabled,
+        compactTrackerViewEnabled: compactTrackerViewEnabled,
+        showMacrosOnLog: showMacrosOnLog,
       );
 
       await ref.read(nutritionPreferencesProvider.notifier).savePreferences(

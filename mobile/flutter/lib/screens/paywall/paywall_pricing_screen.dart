@@ -10,11 +10,17 @@ import '../../core/providers/subscription_provider.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/calibration_provider.dart';
+import '../settings/subscription/subscription_history_screen.dart';
 
 /// Paywall/Membership Screen
 /// Shows current plan status and upgrade/downgrade options
+/// Now includes "Preview Your Plan" to show users their personalized workout plan before subscribing
 class PaywallPricingScreen extends ConsumerStatefulWidget {
-  const PaywallPricingScreen({super.key});
+  /// If true, shows the "See Your Plan First" banner prominently
+  final bool showPlanPreview;
+
+  const PaywallPricingScreen({super.key, this.showPlanPreview = true});
 
   @override
   ConsumerState<PaywallPricingScreen> createState() => _PaywallPricingScreenState();
@@ -90,6 +96,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 const SizedBox(height: 16),
               ],
 
+              // "Your Plan is Ready" Banner - Show first for non-subscribers
+              if (!isSubscribed && widget.showPlanPreview)
+                _buildPlanReadyBanner(colors),
+
               // Title
               Text(
                 isSubscribed ? 'Change Plan' : 'Choose Your Plan',
@@ -103,9 +113,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               Text(
                 isSubscribed
                   ? 'Upgrade, downgrade, or cancel anytime'
-                  : 'Unlock your full fitness potential',
+                  : 'Your personalized plan is ready! Preview it free or subscribe for full access.',
                 style: TextStyle(fontSize: 14, color: colors.textSecondary),
+                textAlign: TextAlign.center,
               ),
+
+              // Free Features Section - Show what users get without paying
+              if (!isSubscribed) ...[
+                const SizedBox(height: 16),
+                _buildFreeFeaturesSection(colors),
+              ],
 
               const SizedBox(height: 16),
 
@@ -235,28 +252,116 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     ),
               ),
 
-              // Trial badge for new users
+              // Enhanced trial badge for new users - more prominent
               if (!isSubscribed && hasTrial)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.green.withOpacity(0.15),
+                        Colors.green.withOpacity(0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Column(
                     children: [
-                      Icon(Icons.check_circle, color: Colors.green, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Nothing due today • Cancel anytime',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              '7-DAY FREE TRIAL',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Use Wrap to prevent overflow on small screens
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        runSpacing: 6,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.green, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Nothing due today',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '•',
+                            style: TextStyle(color: Colors.green.withOpacity(0.5)),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.cancel_outlined, color: Colors.green, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Cancel anytime',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                ),
+
+              // App Store pricing note
+              if (!isSubscribed)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: GestureDetector(
+                    onTap: () => _showAppStorePricingInfo(context, colors),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 14,
+                          color: colors.textMuted,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'These prices match the App Store',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -322,6 +427,67 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
               const SizedBox(height: 10),
 
+              // Continue Free button - VERY visible for new users (addressing complaint)
+              if (!isSubscribed)
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton(
+                    onPressed: () => _skipToFree(context, ref),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.green, width: 2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      backgroundColor: Colors.green.withOpacity(0.08),
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 20,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Continue Free',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'No card needed',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 10),
+
               // Footer links
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -333,6 +499,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       style: TextStyle(fontSize: 14, color: colors.cyan),
                     ),
                   ),
+                  if (isSubscribed) ...[
+                    Text(' • ', style: TextStyle(color: colors.textSecondary)),
+                    GestureDetector(
+                      onTap: () => _navigateToSubscriptionHistory(context),
+                      child: Text(
+                        'History',
+                        style: TextStyle(fontSize: 14, color: colors.cyan),
+                      ),
+                    ),
+                  ],
                   if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
                     Text(' • ', style: TextStyle(color: colors.textSecondary)),
                     GestureDetector(
@@ -340,16 +516,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       child: Text(
                         'Cancel',
                         style: TextStyle(fontSize: 14, color: Colors.red.shade400),
-                      ),
-                    ),
-                  ],
-                  if (!isSubscribed) ...[
-                    Text(' • ', style: TextStyle(color: colors.textSecondary)),
-                    GestureDetector(
-                      onTap: () => _skipToFree(context, ref),
-                      child: Text(
-                        'Maybe later',
-                        style: TextStyle(fontSize: 14, color: colors.textSecondary),
                       ),
                     ),
                   ],
@@ -399,7 +565,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         final success = await ref.read(subscriptionProvider.notifier).purchase('lifetime_discount');
         if (success && context.mounted) {
           await _markPaywallComplete(ref);
-          context.go('/home');
+          await _navigateAfterPaywall(context, ref);
         }
         return;
       }
@@ -409,7 +575,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     await ref.read(subscriptionProvider.notifier).skipToFree();
     await _markPaywallComplete(ref);
     if (context.mounted) {
-      context.go('/home');
+      await _navigateAfterPaywall(context, ref);
     }
   }
 
@@ -429,6 +595,31 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
   }
 
+  /// Navigate to calibration intro if user hasn't completed/skipped calibration, otherwise go home
+  Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
+    try {
+      // Check calibration status
+      await ref.read(calibrationStatusProvider.notifier).refreshStatus();
+      final calibrationStatus = ref.read(calibrationStatusProvider);
+
+      if (context.mounted) {
+        // If calibration not completed and not skipped, offer calibration
+        final status = calibrationStatus.status;
+        if (status != null && !status.isCompleted && !status.isSkipped) {
+          context.go('/calibration/intro', extra: {'fromOnboarding': true});
+        } else {
+          context.go('/home');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Paywall] Error checking calibration status: $e');
+      // On error, just go home
+      if (context.mounted) {
+        context.go('/home');
+      }
+    }
+  }
+
   Future<bool?> _showDiscountPopup(BuildContext context) {
     final colors = context.colors;
     return showDialog<bool>(
@@ -439,6 +630,12 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   }
 
   Future<void> _handleAction(BuildContext context, WidgetRef ref, bool isSubscribed, SubscriptionTier currentTier) async {
+    // If user is already subscribed, show plan change confirmation dialog
+    if (isSubscribed && currentTier != SubscriptionTier.free) {
+      final confirmed = await _showPlanChangeConfirmation(context, currentTier);
+      if (confirmed != true) return;
+    }
+
     final success = await ref.read(subscriptionProvider.notifier).purchase(_selectedPlan);
     if (success && context.mounted) {
       if (isSubscribed) {
@@ -448,10 +645,137 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+        // Already subscribed users go directly home (no calibration prompt)
+        context.go('/home');
+      } else {
+        // New subscribers go through calibration flow
+        await _markPaywallComplete(ref);
+        await _navigateAfterPaywall(context, ref);
       }
-      await _markPaywallComplete(ref);
-      context.go('/home');
     }
+  }
+
+  /// Get plan details by plan ID
+  Map<String, dynamic> _getPlanDetails(String planId) {
+    switch (planId) {
+      case 'ultra_yearly':
+        return {
+          'name': 'Ultra Yearly',
+          'price': 79.99,
+          'period': 'year',
+          'monthlyPrice': 6.67,
+        };
+      case 'ultra_monthly':
+        return {
+          'name': 'Ultra Monthly',
+          'price': 9.99,
+          'period': 'month',
+          'monthlyPrice': 9.99,
+        };
+      case 'premium_yearly':
+        return {
+          'name': 'Premium Yearly',
+          'price': 47.99,
+          'period': 'year',
+          'monthlyPrice': 4.00,
+        };
+      case 'premium_monthly':
+        return {
+          'name': 'Premium Monthly',
+          'price': 5.99,
+          'period': 'month',
+          'monthlyPrice': 5.99,
+        };
+      case 'lifetime':
+        return {
+          'name': 'Lifetime',
+          'price': 99.99,
+          'period': 'one-time',
+          'monthlyPrice': 0.0,
+        };
+      default:
+        return {
+          'name': 'Unknown',
+          'price': 0.0,
+          'period': 'unknown',
+          'monthlyPrice': 0.0,
+        };
+    }
+  }
+
+  /// Get current plan ID from tier
+  String _getCurrentPlanId(SubscriptionTier tier, SubscriptionState state) {
+    // Estimate based on tier - in real app this would come from backend
+    switch (tier) {
+      case SubscriptionTier.ultra:
+        return state.subscriptionEndDate != null &&
+                state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
+            ? 'ultra_yearly'
+            : 'ultra_monthly';
+      case SubscriptionTier.premium:
+        return state.subscriptionEndDate != null &&
+                state.subscriptionEndDate!.difference(DateTime.now()).inDays > 60
+            ? 'premium_yearly'
+            : 'premium_monthly';
+      case SubscriptionTier.lifetime:
+        return 'lifetime';
+      default:
+        return 'free';
+    }
+  }
+
+  /// Show plan change confirmation dialog
+  Future<bool?> _showPlanChangeConfirmation(BuildContext context, SubscriptionTier currentTier) {
+    final colors = context.colors;
+    final subscriptionState = ref.read(subscriptionProvider);
+    final currentPlanId = _getCurrentPlanId(currentTier, subscriptionState);
+    final currentPlan = _getPlanDetails(currentPlanId);
+    final newPlan = _getPlanDetails(_selectedPlan);
+
+    final priceDiff = newPlan['price'] - currentPlan['price'];
+    final isUpgrade = priceDiff > 0;
+    final isDowngrade = priceDiff < 0;
+    final isSameTier = currentPlanId == _selectedPlan;
+
+    if (isSameTier) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You are already on this plan'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return Future.value(false);
+    }
+
+    // Calculate effective date (next billing cycle for downgrades, immediate for upgrades)
+    final effectiveDate = isDowngrade && subscriptionState.subscriptionEndDate != null
+        ? subscriptionState.subscriptionEndDate!
+        : DateTime.now();
+
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _PlanChangeConfirmationDialog(
+        colors: colors,
+        currentPlanName: currentPlan['name'] as String,
+        currentPlanPrice: currentPlan['price'] as double,
+        newPlanName: newPlan['name'] as String,
+        newPlanPrice: newPlan['price'] as double,
+        priceDiff: priceDiff,
+        isUpgrade: isUpgrade,
+        effectiveDate: effectiveDate,
+      ),
+    );
+  }
+
+  /// Navigate to subscription history
+  void _navigateToSubscriptionHistory(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SubscriptionHistoryScreen(),
+      ),
+    );
   }
 
   Future<void> _restorePurchases(BuildContext context, WidgetRef ref) async {
@@ -474,6 +798,297 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _showAppStorePricingInfo(BuildContext context, ThemeColors colors) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: colors.elevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.cardBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: colors.cyan.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.verified,
+                  color: colors.cyan,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Transparent Pricing',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'All prices shown here match exactly what you see in the App Store or Google Play Store. No hidden fees.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    _infoRow(Icons.cancel_outlined, 'Cancel anytime from device settings', colors),
+                    const SizedBox(height: 8),
+                    _infoRow(Icons.schedule, '7-day free trial for yearly plans', colors),
+                    const SizedBox(height: 8),
+                    _infoRow(Icons.lock_outline, 'Secure payment via Apple/Google', colors),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it!',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text, ThemeColors colors) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colors.cyan),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 13, color: colors.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Banner showing "Your Plan is Ready" with preview button
+  Widget _buildPlanReadyBanner(ThemeColors colors) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            colors.cyan.withOpacity(0.15),
+            Colors.green.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cyan.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          // Icon and title
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colors.cyan.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.auto_awesome,
+                  color: colors.cyan,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Personalized Plan is Ready!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'See your full 4-week workout plan before subscribing',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Preview button - most prominent
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () => context.push('/plan-preview'),
+              icon: const Icon(Icons.visibility_outlined, size: 20),
+              label: const Text(
+                'Preview Your Plan Free',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.cyan,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Try one workout free button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/demo-workout'),
+              icon: Icon(Icons.play_circle_outline, size: 20, color: Colors.green),
+              label: Text(
+                'Try One Workout Free',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.green.withOpacity(0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Section showing what users get for FREE
+  Widget _buildFreeFeaturesSection(ThemeColors colors) {
+    final freeFeatures = [
+      {'icon': Icons.fitness_center, 'text': 'Full workout plan preview'},
+      {'icon': Icons.play_circle_outline, 'text': 'Try 1 workout free'},
+      {'icon': Icons.search, 'text': 'Browse 1700+ exercises'},
+      {'icon': Icons.schedule, 'text': 'See your weekly schedule'},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'What You Get Free',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: freeFeatures.map((feature) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    feature['icon'] as IconData,
+                    size: 14,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    feature['text'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showWhyCostSheet(BuildContext context, ThemeColors colors) {
@@ -725,12 +1340,14 @@ class _TierPlanCard extends StatelessWidget {
                     : null,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  tierName,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
+                Flexible(
+                  child: Text(
+                    tierName,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
                   ),
                 ),
                 if (badge.isNotEmpty) ...[
@@ -751,8 +1368,9 @@ class _TierPlanCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                const Spacer(),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
@@ -781,29 +1399,36 @@ class _TierPlanCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            // Features in 2 columns
+            // Features in 2 columns - responsive width
             Padding(
               padding: const EdgeInsets.only(left: 32),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 4,
-                children: features.map((feature) => SizedBox(
-                  width: 140,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check, size: 14, color: accentColor),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          feature,
-                          style: TextStyle(fontSize: 11, color: colors.textPrimary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              child: Builder(
+                builder: (context) {
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  // On small screens, use single column
+                  final featureWidth = screenWidth < 380 ? double.infinity : 140.0;
+                  return Wrap(
+                    spacing: 16,
+                    runSpacing: 4,
+                    children: features.map((feature) => SizedBox(
+                      width: featureWidth,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check, size: 14, color: accentColor),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              feature,
+                              style: TextStyle(fontSize: 11, color: colors.textPrimary),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )).toList(),
+                    )).toList(),
+                  );
+                },
               ),
             ),
           ],
@@ -1389,6 +2014,308 @@ class _DiscountPopup extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Plan change confirmation dialog
+class _PlanChangeConfirmationDialog extends StatelessWidget {
+  final ThemeColors colors;
+  final String currentPlanName;
+  final double currentPlanPrice;
+  final String newPlanName;
+  final double newPlanPrice;
+  final double priceDiff;
+  final bool isUpgrade;
+  final DateTime effectiveDate;
+
+  const _PlanChangeConfirmationDialog({
+    required this.colors,
+    required this.currentPlanName,
+    required this.currentPlanPrice,
+    required this.newPlanName,
+    required this.newPlanPrice,
+    required this.priceDiff,
+    required this.isUpgrade,
+    required this.effectiveDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDowngrade = priceDiff < 0;
+    final accentColor = isUpgrade ? colors.cyan : Colors.orange;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: colors.elevated,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isUpgrade ? Icons.arrow_upward : Icons.arrow_downward,
+                color: accentColor,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              isUpgrade ? 'Confirm Upgrade' : 'Confirm Plan Change',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isUpgrade
+                  ? 'You will be upgraded immediately'
+                  : 'Changes will take effect at the end of your current billing period',
+              style: TextStyle(
+                fontSize: 14,
+                color: colors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Plan comparison
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colors.cardBorder),
+              ),
+              child: Column(
+                children: [
+                  // Current plan row
+                  _PlanComparisonRow(
+                    label: 'Current Plan',
+                    planName: currentPlanName,
+                    price: currentPlanPrice,
+                    isHighlighted: false,
+                    colors: colors,
+                  ),
+                  const SizedBox(height: 12),
+                  // Arrow
+                  Icon(
+                    Icons.arrow_downward,
+                    color: colors.textMuted,
+                    size: 24,
+                  ),
+                  const SizedBox(height: 12),
+                  // New plan row
+                  _PlanComparisonRow(
+                    label: 'New Plan',
+                    planName: newPlanName,
+                    price: newPlanPrice,
+                    isHighlighted: true,
+                    highlightColor: accentColor,
+                    colors: colors,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Price difference
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: (priceDiff > 0 ? Colors.red : Colors.green).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    priceDiff > 0 ? Icons.trending_up : Icons.trending_down,
+                    color: priceDiff > 0 ? Colors.red : Colors.green,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    priceDiff > 0
+                        ? '+\$${priceDiff.abs().toStringAsFixed(2)}'
+                        : '-\$${priceDiff.abs().toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: priceDiff > 0 ? Colors.red : Colors.green,
+                    ),
+                  ),
+                  Text(
+                    ' price difference',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Effective date
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: colors.textMuted,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Effective: ${DateFormat('MMM d, yyyy').format(effectiveDate)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // Buttons
+            Row(
+              children: [
+                // Cancel button
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.textSecondary,
+                        side: BorderSide(color: colors.cardBorder),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Confirm button
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Confirm Change',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Plan comparison row widget
+class _PlanComparisonRow extends StatelessWidget {
+  final String label;
+  final String planName;
+  final double price;
+  final bool isHighlighted;
+  final Color? highlightColor;
+  final ThemeColors colors;
+
+  const _PlanComparisonRow({
+    required this.label,
+    required this.planName,
+    required this.price,
+    required this.isHighlighted,
+    this.highlightColor,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: colors.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              planName,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isHighlighted ? (highlightColor ?? colors.cyan) : colors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isHighlighted
+                ? (highlightColor ?? colors.cyan).withValues(alpha: 0.15)
+                : colors.cardBorder.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '\$${price.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isHighlighted ? (highlightColor ?? colors.cyan) : colors.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

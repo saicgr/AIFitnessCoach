@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,14 +13,41 @@ import '../widgets/section_header.dart';
 class CustomContentSection extends StatelessWidget {
   const CustomContentSection({super.key});
 
+  /// Help items explaining custom content options
+  static const List<Map<String, dynamic>> _customContentHelpItems = [
+    {
+      'icon': Icons.fitness_center,
+      'title': 'My Equipment',
+      'description': 'Add equipment that is not in our standard list. The AI will then be able to suggest exercises using your custom equipment in your workouts.',
+      'color': AppColors.cyan,
+    },
+    {
+      'icon': Icons.sports_gymnastics,
+      'title': 'My Exercises',
+      'description': 'Create custom exercises or combine existing ones into supersets. These can be included in your AI-generated workouts alongside standard exercises.',
+      'color': AppColors.purple,
+    },
+    {
+      'icon': Icons.auto_awesome,
+      'title': 'How It Works',
+      'description': 'When the AI generates your workouts, it considers your custom equipment and exercises, mixing them with our exercise library to create personalized workouts.',
+      'color': AppColors.orange,
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        SectionHeader(title: 'MY CUSTOM CONTENT'),
-        SizedBox(height: 12),
-        _CustomContentCard(),
+      children: [
+        SectionHeader(
+          title: 'MY CUSTOM CONTENT',
+          subtitle: 'Add your own equipment and exercises',
+          helpTitle: 'Custom Content Explained',
+          helpItems: _customContentHelpItems,
+        ),
+        const SizedBox(height: 12),
+        const _CustomContentCard(),
       ],
     );
   }
@@ -366,7 +392,7 @@ class _CustomEquipmentManagerState
             // Parse JSON string
             try {
               final parsed = List<String>.from(
-                (customEquipmentData as String).isNotEmpty
+                (customEquipmentData).isNotEmpty
                     ? List.from(Uri.decodeComponent(customEquipmentData).split(','))
                     : [],
               );
@@ -1084,6 +1110,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
     'cable machine',
     'resistance band',
     'medicine ball',
+    'slam ball',
     'pull-up bar',
     'bench',
     'other',
@@ -1153,7 +1180,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
 
                 // Muscle Group
                 DropdownButtonFormField<String>(
-                  value: _selectedMuscle,
+                  initialValue: _selectedMuscle,
                   decoration: const InputDecoration(
                     labelText: 'Target Muscle *',
                   ),
@@ -1173,7 +1200,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
 
                 // Equipment
                 DropdownButtonFormField<String>(
-                  value: _selectedEquipment,
+                  initialValue: _selectedEquipment,
                   decoration: const InputDecoration(
                     labelText: 'Equipment *',
                   ),

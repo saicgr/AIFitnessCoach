@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/onboarding/widgets/quiz_progress_bar.dart';
+import 'package:fitwiz/screens/onboarding/widgets/quiz_progress_bar.dart';
 
 void main() {
   group('QuizProgressBar', () {

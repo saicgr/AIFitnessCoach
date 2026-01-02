@@ -436,6 +436,141 @@ class PersonalGoalsService {
       rethrow;
     }
   }
+
+  // ============================================================
+  // WORKOUT SYNC - Auto-update goals from completed workouts
+  // ============================================================
+
+  /// Sync workout data with personal goals
+  ///
+  /// After completing a workout, this syncs the exercise reps
+  /// with any matching weekly_volume goals.
+  Future<WorkoutSyncResult> syncWorkoutWithGoals({
+    required String userId,
+    String? workoutLogId,
+    required List<ExercisePerformanceData> exercises,
+  }) async {
+    try {
+      debugPrint('🎯 [PersonalGoals] Syncing workout with goals: ${exercises.length} exercises');
+
+      final response = await _apiClient.post(
+        '/personal-goals/workout-sync',
+        queryParameters: {'user_id': userId},
+        data: {
+          if (workoutLogId != null) 'workout_log_id': workoutLogId,
+          'exercises': exercises.map((e) => e.toJson()).toList(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [PersonalGoals] Synced ${data['total_goals_updated']} goals');
+        return WorkoutSyncResult.fromJson(data);
+      } else {
+        throw Exception('Failed to sync workout: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [PersonalGoals] Error syncing workout: $e');
+      rethrow;
+    }
+  }
+}
+
+// ============================================================
+// WORKOUT SYNC MODELS
+// ============================================================
+
+/// Exercise performance data for workout sync
+class ExercisePerformanceData {
+  final String exerciseName;
+  final int totalReps;
+  final int totalSets;
+  final int maxRepsInSet;
+
+  ExercisePerformanceData({
+    required this.exerciseName,
+    this.totalReps = 0,
+    this.totalSets = 0,
+    this.maxRepsInSet = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'exercise_name': exerciseName,
+    'total_reps': totalReps,
+    'total_sets': totalSets,
+    'max_reps_in_set': maxRepsInSet,
+  };
+}
+
+/// Result of syncing workout with goals
+class WorkoutSyncResult {
+  final List<SyncedGoalUpdate> syncedGoals;
+  final int totalGoalsUpdated;
+  final int totalVolumeAdded;
+  final int newPrs;
+  final String message;
+
+  WorkoutSyncResult({
+    this.syncedGoals = const [],
+    this.totalGoalsUpdated = 0,
+    this.totalVolumeAdded = 0,
+    this.newPrs = 0,
+    this.message = '',
+  });
+
+  factory WorkoutSyncResult.fromJson(Map<String, dynamic> json) {
+    return WorkoutSyncResult(
+      syncedGoals: (json['synced_goals'] as List<dynamic>?)
+          ?.map((e) => SyncedGoalUpdate.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      totalGoalsUpdated: json['total_goals_updated'] as int? ?? 0,
+      totalVolumeAdded: json['total_volume_added'] as int? ?? 0,
+      newPrs: json['new_prs'] as int? ?? 0,
+      message: json['message'] as String? ?? '',
+    );
+  }
+
+  bool get hasUpdates => totalGoalsUpdated > 0;
+  bool get hasNewPrs => newPrs > 0;
+}
+
+/// Individual goal update from workout sync
+class SyncedGoalUpdate {
+  final String goalId;
+  final String exerciseName;
+  final PersonalGoalType goalType;
+  final int volumeAdded;
+  final int newCurrentValue;
+  final int targetValue;
+  final bool isNowCompleted;
+  final bool isNewPr;
+  final double progressPercentage;
+
+  SyncedGoalUpdate({
+    required this.goalId,
+    required this.exerciseName,
+    required this.goalType,
+    this.volumeAdded = 0,
+    required this.newCurrentValue,
+    required this.targetValue,
+    this.isNowCompleted = false,
+    this.isNewPr = false,
+    this.progressPercentage = 0.0,
+  });
+
+  factory SyncedGoalUpdate.fromJson(Map<String, dynamic> json) {
+    return SyncedGoalUpdate(
+      goalId: json['goal_id'] as String,
+      exerciseName: json['exercise_name'] as String,
+      goalType: PersonalGoalType.fromString(json['goal_type'] as String),
+      volumeAdded: json['volume_added'] as int? ?? 0,
+      newCurrentValue: json['new_current_value'] as int,
+      targetValue: json['target_value'] as int,
+      isNowCompleted: json['is_now_completed'] as bool? ?? false,
+      isNewPr: json['is_new_pr'] as bool? ?? false,
+      progressPercentage: (json['progress_percentage'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }
 
 // ============================================================

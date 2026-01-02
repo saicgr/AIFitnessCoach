@@ -148,7 +148,7 @@ try {
 }
 ```
 
-### 6. Project-Specific Context (AI Fitness Coach)
+### 6. Project-Specific Context (FitWiz)
 
 Adhere to these project-specific requirements:
 - Test ALL API integrations before deployment

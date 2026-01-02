@@ -1,4 +1,4 @@
--- AI Fitness Coach - Nutrition Tracking Schema
+-- FitWiz - Nutrition Tracking Schema
 -- Adds food logs table and nutrition targets to users
 
 -- Add nutrition target columns to users table

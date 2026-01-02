@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/widgets/exercise_card.dart';
-import 'package:ai_fitness_coach/data/models/exercise.dart';
+import 'package:fitwiz/screens/library/widgets/exercise_card.dart';
+import 'package:fitwiz/data/models/exercise.dart';
 
 void main() {
   group('ExerciseCard', () {

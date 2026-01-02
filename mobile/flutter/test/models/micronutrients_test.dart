@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/data/models/micronutrients.dart';
+import 'package:fitwiz/data/models/micronutrients.dart';
 
 void main() {
   group('NutrientCategory', () {

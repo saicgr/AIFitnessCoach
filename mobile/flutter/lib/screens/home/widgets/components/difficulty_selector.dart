@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/utils/difficulty_utils.dart';
 import 'sheet_theme_colors.dart';
 import 'section_title.dart';
 
-/// Default list of difficulty levels
+/// Default list of difficulty levels (internal values)
 const List<String> defaultDifficulties = ['easy', 'medium', 'hard', 'hell'];
 
 /// A widget for selecting workout difficulty
@@ -52,7 +53,8 @@ class DifficultySelector extends StatelessWidget {
 
   /// Show warning dialog for beginners selecting hard difficulties
   void _showBeginnerWarning(BuildContext context, String difficulty, SheetColors colors) {
-    final isHell = difficulty.toLowerCase() == 'hell';
+    final isElite = difficulty.toLowerCase() == 'hell';
+    final displayName = DifficultyUtils.getDisplayName(difficulty);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -68,7 +70,7 @@ class DifficultySelector extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                isHell ? 'Extreme Difficulty' : 'High Difficulty',
+                isElite ? 'Elite Intensity' : 'High Intensity',
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -78,9 +80,9 @@ class DifficultySelector extends StatelessWidget {
           ],
         ),
         content: Text(
-          isHell
-              ? 'Hell mode is designed for advanced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Easy or Medium difficulty.'
-              : 'Hard mode may be challenging for beginners. Consider starting with Easy or Medium difficulty and progressing as you build strength and endurance.',
+          isElite
+              ? '$displayName mode is designed for experienced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Beginner or Moderate difficulty.'
+              : '$displayName mode may be intense for beginners. Consider starting with Beginner or Moderate difficulty and progressing as you build strength and endurance.',
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: 14,
@@ -103,7 +105,68 @@ class DifficultySelector extends StatelessWidget {
             child: Text(
               'Continue Anyway',
               style: TextStyle(
-                color: isHell ? colors.error : colors.orange,
+                color: isElite ? colors.error : colors.orange,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show difficulty description on long press
+  void _showDifficultyDescription(
+    BuildContext context,
+    String displayName,
+    String description,
+    Color color,
+    SheetColors colors,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                DifficultyUtils.getIcon(DifficultyUtils.getInternalValue(displayName)),
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              displayName,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          description,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 15,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Got it',
+              style: TextStyle(
+                color: color,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -131,69 +194,81 @@ class DifficultySelector extends StatelessWidget {
           Row(
             children: difficulties.map((difficulty) {
               final isSelected = selectedDifficulty == difficulty;
-              final color = getDifficultyColor(difficulty);
-              final icon = getDifficultyIcon(difficulty);
+              final color = DifficultyUtils.getColor(difficulty);
+              final icon = DifficultyUtils.getIcon(difficulty);
+              final displayName = DifficultyUtils.getDisplayName(difficulty);
+              final description = DifficultyUtils.getDescription(difficulty);
 
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
                     right: difficulty != difficulties.last ? 8 : 0,
                   ),
-                  child: GestureDetector(
-                    onTap: disabled
-                        ? null
-                        : () {
-                            final diff = difficulty.toLowerCase();
-                            // Show warning for beginners selecting hard/hell
-                            if (_isBeginner && (diff == 'hard' || diff == 'hell')) {
-                              _showBeginnerWarning(context, difficulty, colors);
-                            } else {
-                              onSelectionChanged(difficulty);
-                            }
-                          },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? color.withOpacity(0.2)
-                            : colors.glassSurface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
+                  child: Tooltip(
+                    message: description,
+                    preferBelow: true,
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: GestureDetector(
+                      onTap: disabled
+                          ? null
+                          : () {
+                              final diff = difficulty.toLowerCase();
+                              // Show warning for beginners selecting hard/hell
+                              if (_isBeginner && (diff == 'hard' || diff == 'hell')) {
+                                _showBeginnerWarning(context, difficulty, colors);
+                              } else {
+                                onSelectionChanged(difficulty);
+                              }
+                            },
+                      onLongPress: disabled
+                          ? null
+                          : () {
+                              // Show description on long press
+                              _showDifficultyDescription(context, displayName, description, color, colors);
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? color
-                              : colors.cardBorder.withOpacity(0.3),
-                          width: isSelected ? 2 : 1,
+                              ? color.withOpacity(0.2)
+                              : colors.glassSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? color
+                                : colors.cardBorder.withOpacity(0.3),
+                            width: isSelected ? 2 : 1,
+                          ),
                         ),
-                      ),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (showIcons) ...[
-                                _buildDifficultyIcon(
-                                  icon: icon,
-                                  color: isSelected ? color : colors.textSecondary,
-                                  isSelected: isSelected,
-                                  difficulty: difficulty,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (showIcons) ...[
+                                  _buildDifficultyIcon(
+                                    icon: icon,
+                                    color: isSelected ? color : colors.textSecondary,
+                                    isSelected: isSelected,
+                                    difficulty: difficulty,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    color: isSelected ? color : colors.textSecondary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
                               ],
-                              Text(
-                                difficulty[0].toUpperCase() +
-                                    difficulty.substring(1),
-                                style: TextStyle(
-                                  color: isSelected ? color : colors.textSecondary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -226,8 +301,8 @@ class DifficultySelector extends StatelessWidget {
                   Expanded(
                     child: Text(
                       selectedDifficulty.toLowerCase() == 'hell'
-                          ? 'Hell mode is very intense for beginners'
-                          : 'Hard mode may be challenging for beginners',
+                          ? 'Elite mode is very intense for beginners'
+                          : 'Challenging mode may be intense for beginners',
                       style: TextStyle(
                         color: colors.orange,
                         fontSize: 12,

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/data/models/exercise.dart';
+import 'package:fitwiz/data/models/exercise.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {

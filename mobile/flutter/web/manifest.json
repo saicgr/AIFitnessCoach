@@ -1,6 +1,6 @@
 {
-    "name": "ai_fitness_coach",
-    "short_name": "ai_fitness_coach",
+    "name": "fitwiz",
+    "short_name": "fitwiz",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

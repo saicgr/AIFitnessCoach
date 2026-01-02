@@ -11,6 +11,10 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
+import '../../data/services/food_search_service.dart' hide FoodSearchResults;
+import 'widgets/food_search_bar.dart';
+import 'widgets/food_search_results.dart';
+import 'widgets/inflammation_analysis_widget.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
@@ -638,44 +642,66 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         backgroundColor: nearBlack,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Found Product', style: TextStyle(color: textPrimary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              product.productName,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+            maxWidth: MediaQuery.of(context).size.width * 0.85,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.productName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                if (product.brand != null) ...[
+                  const SizedBox(height: 4),
+                  Text(product.brand!, style: TextStyle(color: textMuted)),
+                ],
+                const SizedBox(height: 16),
+                _NutritionInfoRow(
+                  label: 'Calories',
+                  value: '${product.caloriesPer100g.toInt()} kcal/100g',
+                  isDark: isDark,
+                ),
+                _NutritionInfoRow(
+                  label: 'Protein',
+                  value: '${product.proteinPer100g.toStringAsFixed(1)}g/100g',
+                  isDark: isDark,
+                ),
+                _NutritionInfoRow(
+                  label: 'Carbs',
+                  value: '${product.carbsPer100g.toStringAsFixed(1)}g/100g',
+                  isDark: isDark,
+                ),
+                _NutritionInfoRow(
+                  label: 'Fat',
+                  value: '${product.fatPer100g.toStringAsFixed(1)}g/100g',
+                  isDark: isDark,
+                ),
+                // Inflammation Analysis Section
+                if (product.ingredientsText != null &&
+                    product.ingredientsText!.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Divider(color: textMuted.withValues(alpha: 0.3)),
+                  const SizedBox(height: 12),
+                  InflammationAnalysisWidget(
+                    userId: widget.userId,
+                    barcode: product.barcode,
+                    ingredientsText: product.ingredientsText!,
+                    productName: product.productName,
+                    isDark: isDark,
+                  ),
+                ],
+              ],
             ),
-            if (product.brand != null) ...[
-              const SizedBox(height: 4),
-              Text(product.brand!, style: TextStyle(color: textMuted)),
-            ],
-            const SizedBox(height: 16),
-            _NutritionInfoRow(
-              label: 'Calories',
-              value: '${product.caloriesPer100g.toInt()} kcal/100g',
-              isDark: isDark,
-            ),
-            _NutritionInfoRow(
-              label: 'Protein',
-              value: '${product.proteinPer100g.toStringAsFixed(1)}g/100g',
-              isDark: isDark,
-            ),
-            _NutritionInfoRow(
-              label: 'Carbs',
-              value: '${product.carbsPer100g.toStringAsFixed(1)}g/100g',
-              isDark: isDark,
-            ),
-            _NutritionInfoRow(
-              label: 'Fat',
-              value: '${product.fatPer100g.toStringAsFixed(1)}g/100g',
-              isDark: isDark,
-            ),
-          ],
+          ),
         ),
         actions: [
           TextButton(
@@ -1483,6 +1509,10 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   String _progressMessage = '';
   String? _progressDetail;
 
+  // Search mode state
+  bool _showSearchResults = false;
+  FoodSearchFilter _selectedFilter = FoodSearchFilter.all;
+
   // Rainbow colors for nutrition values
   static const caloriesColor = Color(0xFFFF6B6B);
   static const proteinColor = Color(0xFFFFD93D);
@@ -1638,6 +1668,58 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     widget.controller.text += text;
   }
 
+  /// Handle when a saved/recent food is selected from search
+  Future<void> _handleSearchResultSelected(FoodSearchResult result) async {
+    debugPrint('FoodSearch: Selected ${result.name} (${result.source.label})');
+
+    // For saved foods with full nutrition data, we can log directly
+    if (result.originalData != null && result.calories > 0) {
+      // Create a LogFoodResponse from the saved food data
+      final foodItems = result.originalData!['food_items'] as List<dynamic>? ?? [
+        {
+          'name': result.name,
+          'calories': result.calories,
+          'protein_g': result.protein ?? 0,
+          'carbs_g': result.carbs ?? 0,
+          'fat_g': result.fat ?? 0,
+        }
+      ];
+
+      final response = LogFoodResponse(
+        success: true,
+        foodLogId: 'from-search-${result.id}',
+        foodItems: foodItems.map((e) => e as Map<String, dynamic>).toList(),
+        totalCalories: result.calories,
+        proteinG: result.protein ?? 0,
+        carbsG: result.carbs ?? 0,
+        fatG: result.fat ?? 0,
+        confidenceLevel: 'high',
+        confidenceScore: 1.0,
+        sourceType: result.source == FoodSearchSource.saved ? 'saved' : 'recent',
+      );
+
+      setState(() {
+        _analyzedResponse = response;
+        _showSearchResults = false;
+      });
+    } else {
+      // For partial matches, populate the text field and let user analyze
+      widget.controller.text = result.name;
+      if (result.brand != null) {
+        widget.controller.text += ' (${result.brand})';
+      }
+      setState(() {
+        _showSearchResults = false;
+      });
+    }
+  }
+
+  void _onSearchQueryChanged(String query) {
+    setState(() {
+      _showSearchResults = query.trim().isNotEmpty;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -1744,64 +1826,102 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       );
     }
 
-    // Otherwise show the input form
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'What did you eat?',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
-          ),
-          const SizedBox(height: 16),
-          TextField(
+    // Otherwise show the input form with instant search
+    return Column(
+      children: [
+        // Search bar with instant results
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _FoodSearchInput(
             controller: widget.controller,
-            maxLines: 5,
-            minLines: 3,
-            textAlignVertical: TextAlignVertical.top,
-            style: TextStyle(color: textPrimary),
-            decoration: InputDecoration(
-              hintText: 'e.g., 2 eggs, toast with butter, and a glass of orange juice',
-              hintStyle: TextStyle(color: textMuted),
-              filled: true,
-              fillColor: elevated,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.all(16),
-            ),
+            userId: widget.userId,
+            isDark: isDark,
+            onSearch: _onSearchQueryChanged,
+            onResultSelected: _handleSearchResultSelected,
+            selectedFilter: _selectedFilter,
+            onFilterChanged: (filter) => setState(() => _selectedFilter = filter),
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _QuickSuggestion(label: 'Coffee', onTap: () => _appendText('coffee'), isDark: isDark),
-              _QuickSuggestion(label: 'Eggs', onTap: () => _appendText('2 eggs'), isDark: isDark),
-              _QuickSuggestion(label: 'Toast', onTap: () => _appendText('toast'), isDark: isDark),
-              _QuickSuggestion(label: 'Salad', onTap: () => _appendText('salad'), isDark: isDark),
-              _QuickSuggestion(label: 'Chicken', onTap: () => _appendText('chicken breast'), isDark: isDark),
-              _QuickSuggestion(label: 'Rice', onTap: () => _appendText('1 cup rice'), isDark: isDark),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _handleAnalyze,
-              icon: const Icon(Icons.send, size: 18),
-              label: const Text(
-                'Analyze with AI',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: teal,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+
+        // Expandable content: either search results or regular input
+        Expanded(
+          child: _showSearchResults
+              ? FoodSearchResults(
+                  userId: widget.userId,
+                  onResultSelected: _handleSearchResultSelected,
+                  filter: _selectedFilter,
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Quick suggestions when search is empty
+                      Text(
+                        'Quick Add',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _QuickSuggestion(label: 'Coffee', onTap: () => _appendText('coffee'), isDark: isDark),
+                          _QuickSuggestion(label: 'Eggs', onTap: () => _appendText('2 eggs'), isDark: isDark),
+                          _QuickSuggestion(label: 'Toast', onTap: () => _appendText('toast'), isDark: isDark),
+                          _QuickSuggestion(label: 'Salad', onTap: () => _appendText('salad'), isDark: isDark),
+                          _QuickSuggestion(label: 'Chicken', onTap: () => _appendText('chicken breast'), isDark: isDark),
+                          _QuickSuggestion(label: 'Rice', onTap: () => _appendText('1 cup rice'), isDark: isDark),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Or describe manually section
+                      Text(
+                        'Or describe what you ate',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Type a detailed description and AI will estimate the nutrition.',
+                        style: TextStyle(fontSize: 13, color: textSecondary),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Analyze button
+                      if (widget.controller.text.trim().isNotEmpty)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _handleAnalyze,
+                            icon: const Icon(Icons.auto_awesome, size: 18),
+                            label: const Text(
+                              'Analyze with AI',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: teal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -2054,6 +2174,255 @@ class _QuickSuggestion extends StatelessWidget {
           border: Border.all(color: cardBorder),
         ),
         child: Text('+ $label', style: TextStyle(fontSize: 12, color: textSecondary)),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Food Search Input - Combines search bar with text input
+// ─────────────────────────────────────────────────────────────────
+
+class _FoodSearchInput extends ConsumerStatefulWidget {
+  final TextEditingController controller;
+  final String userId;
+  final bool isDark;
+  final Function(String query)? onSearch;
+  final Function(FoodSearchResult result)? onResultSelected;
+  final FoodSearchFilter selectedFilter;
+  final Function(FoodSearchFilter filter)? onFilterChanged;
+
+  const _FoodSearchInput({
+    required this.controller,
+    required this.userId,
+    required this.isDark,
+    this.onSearch,
+    this.onResultSelected,
+    required this.selectedFilter,
+    this.onFilterChanged,
+  });
+
+  @override
+  ConsumerState<_FoodSearchInput> createState() => _FoodSearchInputState();
+}
+
+class _FoodSearchInputState extends ConsumerState<_FoodSearchInput> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_handleFocusChange);
+
+    // Listen to controller changes for search
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    widget.controller.removeListener(_onTextChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
+
+  void _onTextChanged() {
+    final query = widget.controller.text.trim();
+    final searchService = ref.read(foodSearchServiceProvider);
+    searchService.search(query, widget.userId);
+    widget.onSearch?.call(query);
+  }
+
+  void _clearSearch() {
+    widget.controller.clear();
+    final searchService = ref.read(foodSearchServiceProvider);
+    searchService.cancel();
+    widget.onSearch?.call('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final searchState = ref.watch(foodSearchStateProvider);
+
+    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    final isLoading = searchState.maybeWhen(
+      data: (state) => state is FoodSearchLoading,
+      orElse: () => false,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Search/input bar
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _isFocused ? accentColor : borderColor,
+              width: _isFocused ? 2 : 1,
+            ),
+            boxShadow: _isFocused
+                ? [
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.2),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              // Search icon or loading indicator
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isLoading
+                      ? SizedBox(
+                          key: const ValueKey('loading'),
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                          ),
+                        )
+                      : Icon(
+                          key: const ValueKey('search'),
+                          Icons.search_rounded,
+                          color: _isFocused ? accentColor : textMuted,
+                          size: 22,
+                        ),
+                ),
+              ),
+
+              // Text field
+              Expanded(
+                child: TextField(
+                  controller: widget.controller,
+                  focusNode: _focusNode,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 16,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search foods or describe your meal...',
+                    hintStyle: TextStyle(
+                      color: textMuted,
+                      fontSize: 16,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                  ),
+                  textInputAction: TextInputAction.search,
+                  maxLines: 1,
+                ),
+              ),
+
+              // Clear button
+              if (widget.controller.text.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: textMuted,
+                    size: 20,
+                  ),
+                  onPressed: _clearSearch,
+                  splashRadius: 20,
+                )
+              else
+                const SizedBox(width: 8),
+            ],
+          ),
+        ),
+
+        // Filter chips
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 36,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: FoodSearchFilter.values.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final filter = FoodSearchFilter.values[index];
+              final isSelected = widget.selectedFilter == filter;
+
+              return _buildFilterChip(
+                label: filter.label,
+                isSelected: isSelected,
+                onTap: () => widget.onFilterChanged?.call(filter),
+                accentColor: accentColor,
+                isDark: isDark,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required Color accentColor,
+    required bool isDark,
+  }) {
+    final backgroundColor = isSelected
+        ? accentColor
+        : isDark
+            ? AppColors.elevated
+            : AppColorsLight.elevated;
+    final textColor = isSelected
+        ? Colors.white
+        : isDark
+            ? AppColors.textSecondary
+            : AppColorsLight.textSecondary;
+    final borderColor = isSelected
+        ? accentColor
+        : isDark
+            ? AppColors.cardBorder
+            : AppColorsLight.cardBorder;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -3637,15 +4006,14 @@ class _ConfidenceIndicator extends StatelessWidget {
                     ],
                   ],
                 ),
-                if (subText != null)
-                  Text(
-                    subText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                      fontStyle: FontStyle.italic,
-                    ),
+                Text(
+                  subText,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textMuted,
+                    fontStyle: FontStyle.italic,
                   ),
+                ),
               ],
             ),
           ),

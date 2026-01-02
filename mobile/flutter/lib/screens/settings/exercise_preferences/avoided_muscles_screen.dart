@@ -490,7 +490,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             if (!value) endDate = null;
                           });
                         },
-                        activeColor: AppColors.cyan,
+                        activeThumbColor: AppColors.cyan,
                       ),
                     ],
                   ),

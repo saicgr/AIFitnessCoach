@@ -6,7 +6,7 @@ import '../../screens/nutrition/quick_log_overlay.dart';
 /// Service that listens for widget action commands from native Android code
 /// This allows widgets to trigger UI actions without going through navigation
 class WidgetActionService {
-  static const platform = MethodChannel('com.aifitnesscoach.app/widget_actions');
+  static const platform = MethodChannel('com.fitwiz.app/widget_actions');
 
   BuildContext? _context;
   WidgetRef? _ref;

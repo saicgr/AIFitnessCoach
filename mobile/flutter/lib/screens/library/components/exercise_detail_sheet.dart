@@ -1,14 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/video_cache_provider.dart';
+import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/context_logging_service.dart';
+import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/log_1rm_sheet.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../widgets/info_badge.dart';
 
 /// Bottom sheet showing exercise details with video player
+/// Auto-plays video when sheet opens (respects reduced motion settings)
 class ExerciseDetailSheet extends ConsumerStatefulWidget {
   final LibraryExercise exercise;
 
@@ -22,20 +29,71 @@ class ExerciseDetailSheet extends ConsumerStatefulWidget {
       _ExerciseDetailSheetState();
 }
 
-class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
+class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
+    with SingleTickerProviderStateMixin {
   VideoPlayerController? _videoController;
   bool _isLoadingVideo = true;
   bool _videoInitialized = false;
   String? _videoError;
+  String? _videoUrl;
+
+  /// Animation controller for fade-in effect
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
+  /// Whether reduced motion is enabled (respects accessibility)
+  bool _reducedMotion = false;
 
   @override
   void initState() {
     super.initState();
-    _loadVideo();
+
+    // Initialize fade animation for smooth video appearance
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
+
+    // Check accessibility settings and start loading after sheet animation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAccessibilityAndLoad();
+      _logExerciseView();
+    });
+  }
+
+  /// Log the exercise view for AI preference learning
+  void _logExerciseView() {
+    final exercise = widget.exercise;
+    ref.read(contextLoggingServiceProvider).logExerciseViewed(
+      exerciseId: exercise.id ?? exercise.name.toLowerCase().replaceAll(' ', '_'),
+      exerciseName: exercise.name,
+      source: 'library_browse',
+      muscleGroup: exercise.muscleGroup,
+      difficulty: exercise.difficulty,
+      equipment: exercise.equipment,
+    );
+  }
+
+  /// Check reduced motion setting and load video with delay for sheet animation
+  void _checkAccessibilityAndLoad() {
+    final mediaQuery = MediaQuery.of(context);
+    _reducedMotion = mediaQuery.disableAnimations;
+
+    // Delay video load slightly to let sheet animation complete (300ms)
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _loadVideo();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _fadeController.dispose();
     _videoController?.dispose();
     super.dispose();
   }
@@ -52,7 +110,23 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
       return;
     }
 
+    // Get exercise ID for cache lookup
+    final exerciseId = widget.exercise.id ??
+        widget.exercise.name.toLowerCase().replaceAll(' ', '_');
+
     try {
+      // First check if video is cached locally
+      final cacheNotifier = ref.read(videoCacheProvider.notifier);
+      final localPath = cacheNotifier.getLocalVideoPath(exerciseId);
+
+      if (localPath != null) {
+        // Use cached video for faster loading
+        debugPrint('Using cached video for: $exerciseName');
+        await _initializeVideo(localPath, isLocal: true);
+        return;
+      }
+
+      // Fetch video URL from API
       final apiClient = ref.read(apiClientProvider);
       final videoResponse = await apiClient.get(
         '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
@@ -61,16 +135,8 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
       if (videoResponse.statusCode == 200 && videoResponse.data != null) {
         final videoUrl = videoResponse.data['url'] as String?;
         if (videoUrl != null && mounted) {
-          _videoController =
-              VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-          await _videoController!.initialize();
-          _videoController!.setLooping(true);
-          _videoController!.setVolume(0);
-          _videoController!.play();
-          setState(() {
-            _videoInitialized = true;
-            _isLoadingVideo = false;
-          });
+          _videoUrl = videoUrl;
+          await _initializeVideo(videoUrl, isLocal: false);
         }
       } else {
         setState(() {
@@ -89,6 +155,43 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
     }
   }
 
+  /// Initialize video controller with given path/URL
+  Future<void> _initializeVideo(String source, {required bool isLocal}) async {
+    try {
+      if (isLocal) {
+        _videoController = VideoPlayerController.file(File(source));
+      } else {
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(source));
+      }
+
+      await _videoController!.initialize();
+      _videoController!.setLooping(true);
+      _videoController!.setVolume(0);
+
+      // Auto-play unless reduced motion is enabled
+      if (!_reducedMotion) {
+        _videoController!.play();
+      }
+
+      if (mounted) {
+        setState(() {
+          _videoInitialized = true;
+          _isLoadingVideo = false;
+        });
+        // Trigger fade-in animation for smooth appearance
+        _fadeController.forward();
+      }
+    } catch (e) {
+      debugPrint('Error initializing video: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingVideo = false;
+          _videoError = 'Failed to play video';
+        });
+      }
+    }
+  }
+
   void _toggleVideo() {
     if (_videoController == null) return;
     if (_videoController!.value.isPlaying) {
@@ -101,64 +204,100 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
 
   Widget _buildVideoContent(Color cyan, Color textMuted, Color purple) {
     if (_isLoadingVideo) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: cyan),
-            const SizedBox(height: 12),
-            Text(
-              'Loading video...',
-              style: TextStyle(color: textMuted, fontSize: 12),
-            ),
-          ],
-        ),
-      );
+      return _buildLoadingIndicator(cyan, textMuted, purple);
     }
 
     if (_videoInitialized && _videoController != null) {
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          AspectRatio(
-            aspectRatio: _videoController!.value.aspectRatio,
-            child: VideoPlayer(_videoController!),
-          ),
-          // Play/Pause overlay
-          AnimatedOpacity(
-            opacity: _videoController!.value.isPlaying ? 0.0 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Icon(
-                Icons.play_arrow,
-                size: 48,
-                color: cyan,
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Video player
+            AspectRatio(
+              aspectRatio: _videoController!.value.aspectRatio,
+              child: VideoPlayer(_videoController!),
+            ),
+            // Play/Pause overlay - only show if paused or reduced motion
+            AnimatedOpacity(
+              opacity: _videoController!.value.isPlaying ? 0.0 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: cyan.withOpacity(0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Icon(
+                  Icons.play_arrow,
+                  size: 48,
+                  color: cyan,
+                ),
               ),
             ),
-          ),
-          // Muted indicator
-          Positioned(
-            bottom: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(
-                Icons.volume_off,
-                size: 16,
-                color: Colors.white70,
+            // Muted indicator
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.volume_off,
+                  size: 16,
+                  color: Colors.white70,
+                ),
               ),
             ),
-          ),
-        ],
+            // Auto-play indicator (briefly shown)
+            if (!_reducedMotion)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: AnimatedOpacity(
+                  opacity: _videoController!.value.isPlaying ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 500),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.play_circle_outline,
+                          size: 14,
+                          color: cyan,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Auto-play',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: cyan,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       );
     }
 
@@ -177,8 +316,107 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
             _videoError ?? 'Video not available',
             style: TextStyle(color: textMuted, fontSize: 12),
           ),
+          // Retry button for failed loads
+          if (_videoError != null) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isLoadingVideo = true;
+                  _videoError = null;
+                });
+                _loadVideo();
+              },
+              icon: Icon(Icons.refresh, color: cyan, size: 18),
+              label: Text(
+                'Retry',
+                style: TextStyle(color: cyan),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  /// Build an enhanced loading indicator with shimmer effect
+  Widget _buildLoadingIndicator(Color cyan, Color textMuted, Color purple) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Gradient background
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                purple.withOpacity(0.2),
+                cyan.withOpacity(0.1),
+              ],
+            ),
+          ),
+        ),
+        // Loading animation
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Animated loading indicator
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Outer ring
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        cyan.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                  // Inner ring (faster)
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(cyan),
+                    ),
+                  ),
+                  // Play icon in center
+                  Icon(
+                    Icons.play_arrow_rounded,
+                    size: 24,
+                    color: cyan.withOpacity(0.7),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading video...',
+              style: TextStyle(
+                color: textMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Will auto-play when ready',
+              style: TextStyle(
+                color: textMuted.withOpacity(0.7),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -276,9 +514,8 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                       DetailBadge(
                         icon: Icons.signal_cellular_alt,
                         label: 'Level',
-                        value: exercise.difficulty!,
-                        color: AppColors.getDifficultyColor(
-                            exercise.difficulty!),
+                        value: DifficultyUtils.getDisplayName(exercise.difficulty!),
+                        color: DifficultyUtils.getColor(exercise.difficulty!),
                       ),
                     if (exercise.type != null)
                       DetailBadge(
@@ -292,8 +529,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               ),
 
               // Equipment
-              if (exercise.equipment != null &&
-                  exercise.equipment!.isNotEmpty) ...[
+              if (exercise.equipment.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -313,7 +549,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: exercise.equipment!.map((eq) {
+                        children: exercise.equipment.map((eq) {
                           return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -354,8 +590,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
               ],
 
               // Instructions
-              if (exercise.instructions != null &&
-                  exercise.instructions!.isNotEmpty) ...[
+              if (exercise.instructions.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -372,7 +607,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...exercise.instructions!.asMap().entries.map((entry) {
+                      ...exercise.instructions.asMap().entries.map((entry) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
@@ -416,14 +651,32 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet> {
                 ),
               ],
 
-              // Log 1RM Button
+              // Action Buttons Row
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _Log1RMButton(
-                  exerciseName: exercise.name,
-                  exerciseId: exercise.id ??
-                      exercise.name.toLowerCase().replaceAll(' ', '_'),
+                child: Row(
+                  children: [
+                    // Download Video Button
+                    if (_videoUrl != null)
+                      Expanded(
+                        child: _DownloadVideoButton(
+                          exerciseId: exercise.id ??
+                              exercise.name.toLowerCase().replaceAll(' ', '_'),
+                          exerciseName: exercise.name,
+                          videoUrl: _videoUrl!,
+                        ),
+                      ),
+                    if (_videoUrl != null) const SizedBox(width: 12),
+                    // Log 1RM Button
+                    Expanded(
+                      child: _Log1RMButton(
+                        exerciseName: exercise.name,
+                        exerciseId: exercise.id ??
+                            exercise.name.toLowerCase().replaceAll(' ', '_'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -614,6 +867,247 @@ class _Log1RMButtonState extends ConsumerState<_Log1RMButton> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Button to download video for offline use
+class _DownloadVideoButton extends ConsumerWidget {
+  final String exerciseId;
+  final String exerciseName;
+  final String videoUrl;
+
+  const _DownloadVideoButton({
+    required this.exerciseId,
+    required this.exerciseName,
+    required this.videoUrl,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground =
+        isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    final downloadStatus = ref.watch(videoDownloadStatusProvider(exerciseId));
+    final downloadProgress = ref.watch(videoDownloadProgressProvider(exerciseId));
+
+    IconData icon;
+    Color iconColor;
+    String title;
+    String subtitle;
+    VoidCallback? onTap;
+
+    switch (downloadStatus) {
+      case VideoDownloadStatus.downloaded:
+        icon = Icons.download_done;
+        iconColor = AppColors.success;
+        title = 'Downloaded';
+        subtitle = 'Available offline';
+        onTap = () => _showDeleteDialog(context, ref);
+        break;
+      case VideoDownloadStatus.downloading:
+        icon = Icons.downloading;
+        iconColor = AppColors.cyan;
+        title = 'Downloading...';
+        subtitle = '${(downloadProgress * 100).toInt()}%';
+        onTap = () => _cancelDownload(context, ref);
+        break;
+      case VideoDownloadStatus.error:
+        icon = Icons.error_outline;
+        iconColor = AppColors.error;
+        title = 'Download Failed';
+        subtitle = 'Tap to retry';
+        onTap = () => _startDownload(context, ref);
+        break;
+      case VideoDownloadStatus.notDownloaded:
+        icon = Icons.download_for_offline_outlined;
+        iconColor = AppColors.cyan;
+        title = 'Download';
+        subtitle = 'Save for offline';
+        onTap = () => _startDownload(context, ref);
+        break;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon with optional progress indicator
+                if (downloadStatus == VideoDownloadStatus.downloading)
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: downloadProgress,
+                          strokeWidth: 3,
+                          backgroundColor: AppColors.cyan.withOpacity(0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppColors.cyan,
+                          ),
+                        ),
+                        Icon(
+                          Icons.pause,
+                          color: AppColors.cyan,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 24,
+                    ),
+                  ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: downloadStatus == VideoDownloadStatus.downloaded
+                              ? AppColors.success
+                              : textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _startDownload(BuildContext context, WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(videoCacheProvider.notifier).downloadVideo(
+          exerciseId: exerciseId,
+          exerciseName: exerciseName,
+          videoUrl: videoUrl,
+        );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Downloading video...'),
+          ],
+        ),
+        backgroundColor: AppColors.cyan,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _cancelDownload(BuildContext context, WidgetRef ref) {
+    HapticFeedback.lightImpact();
+    ref.read(videoCacheProvider.notifier).cancelDownload(exerciseId);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Download cancelled'),
+        backgroundColor: AppColors.textMuted,
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text(
+          'Delete Download?',
+          style: TextStyle(
+            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Remove the offline video for "$exerciseName"? You can re-download it anytime.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ref.read(videoCacheProvider.notifier).deleteVideo(exerciseId);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Download removed'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -30,13 +30,13 @@ async def get_program_categories():
     try:
         db = get_supabase_db()
 
-        # Get all programs
-        result = db.client.table("programs").select("program_category").execute()
+        # Get all programs from branded_programs table
+        result = db.client.table("branded_programs").select("category").eq("is_active", True).execute()
 
         # Count by category
         category_counts: Dict[str, int] = {}
         for row in result.data:
-            cat = row.get("program_category", "Other")
+            cat = row.get("category", "Other")
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
         # Sort by count descending
@@ -65,25 +65,25 @@ async def list_programs(
     """
     List programs from the library with optional filters.
 
-    - category: Filter by program category (e.g., "Celebrity Workout", "Goal-Based")
-    - difficulty: Filter by difficulty level (e.g., "Beginner", "Intermediate")
+    - category: Filter by program category (e.g., "strength", "fat_loss", "hypertrophy")
+    - difficulty: Filter by difficulty level (e.g., "beginner", "intermediate", "advanced")
     - search: Search by program name
     """
     try:
         db = get_supabase_db()
 
-        # Build query
-        query = db.client.table("programs").select("*")
+        # Build query on branded_programs table
+        query = db.client.table("branded_programs").select("*").eq("is_active", True)
 
         if category:
-            query = query.eq("program_category", category)
+            query = query.eq("category", category)
         if difficulty:
             query = query.ilike("difficulty_level", f"%{difficulty}%")
         if search:
-            query = query.ilike("program_name", f"%{search}%")
+            query = query.ilike("name", f"%{search}%")
 
         # Execute query
-        result = query.order("program_name").range(offset, offset + limit - 1).execute()
+        result = query.order("name").range(offset, offset + limit - 1).execute()
 
         programs = [row_to_library_program(row) for row in result.data]
 
@@ -106,8 +106,8 @@ async def get_programs_grouped(
     try:
         db = get_supabase_db()
 
-        # Get all programs
-        result = db.client.table("programs").select("*").execute()
+        # Get all active branded programs
+        result = db.client.table("branded_programs").select("*").eq("is_active", True).execute()
 
         # Group by category
         groups: Dict[str, List[LibraryProgram]] = {}
@@ -142,33 +142,41 @@ async def get_programs_grouped(
 
 @router.get("/programs/{program_id}", response_model=Dict[str, Any])
 async def get_program(program_id: str):
-    """Get a single program by ID with full details including workouts."""
+    """Get a single program by ID with full details."""
     try:
         db = get_supabase_db()
 
-        result = db.client.table("programs").select("*").eq("id", program_id).execute()
+        result = db.client.table("branded_programs").select("*").eq("id", program_id).eq("is_active", True).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Program not found")
 
         row = result.data[0]
 
-        # Return full program data including workouts
+        # Map branded_programs fields to API response format
+        # Calculate approximate session duration based on sessions per week
+        sessions_per_week = row.get("sessions_per_week", 4)
+        session_duration = 45 if sessions_per_week <= 4 else 60  # Default estimates
+
         return {
             "id": row.get("id"),
-            "name": row.get("program_name"),
-            "category": row.get("program_category"),
-            "subcategory": row.get("program_subcategory"),
+            "name": row.get("name"),
+            "category": row.get("category"),
+            "subcategory": row.get("split_type"),  # Map split_type to subcategory
             "difficulty_level": row.get("difficulty_level"),
             "duration_weeks": row.get("duration_weeks"),
-            "sessions_per_week": row.get("sessions_per_week"),
-            "session_duration_minutes": row.get("session_duration_minutes"),
-            "tags": row.get("tags"),
-            "goals": row.get("goals"),
+            "sessions_per_week": sessions_per_week,
+            "session_duration_minutes": session_duration,
+            "tags": row.get("goals", []),  # Use goals as tags
+            "goals": row.get("goals", []),
             "description": row.get("description"),
-            "short_description": row.get("short_description"),
-            "celebrity_name": row.get("celebrity_name"),
-            "workouts": row.get("workouts"),  # Include full workouts data
+            "short_description": row.get("tagline"),  # Map tagline to short_description
+            "celebrity_name": None,  # No celebrity in branded_programs
+            "is_featured": row.get("is_featured", False),
+            "is_premium": row.get("is_premium", False),
+            "requires_gym": row.get("requires_gym", True),
+            "icon_name": row.get("icon_name"),
+            "color_hex": row.get("color_hex"),
         }
 
     except HTTPException:

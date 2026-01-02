@@ -16,6 +16,9 @@ class UserPreferences(BaseModel):
     progression_pace: str = Field(default="medium", max_length=20)  # slow, medium, fast
     # Workout type preference - addresses competitor feedback about no cardio selection
     workout_type_preference: str = Field(default="strength", max_length=20)  # strength, cardio, mixed
+    # Warmup and stretch duration preferences (1-15 minutes each)
+    warmup_duration_minutes: int = Field(default=5, ge=1, le=15)
+    stretch_duration_minutes: int = Field(default=5, ge=1, le=15)
 
 
 class UserCreate(BaseModel):

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/providers/support_provider.dart';
 
 /// Help & Support screen with various support options.
 class HelpScreen extends ConsumerWidget {
@@ -94,6 +95,54 @@ class HelpScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: 24),
+
+              // My Support Tickets
+              Consumer(
+                builder: (context, ref, child) {
+                  final ticketsAsync = ref.watch(supportTicketsProvider);
+                  final hasUnread = ticketsAsync.when(
+                    data: (tickets) => tickets.any((t) => t.hasUnreadUpdates),
+                    loading: () => false,
+                    error: (_, __) => false,
+                  );
+                  final unreadCount = ticketsAsync.when(
+                    data: (tickets) => tickets.where((t) => t.hasUnreadUpdates).length,
+                    loading: () => 0,
+                    error: (_, __) => 0,
+                  );
+
+                  return _HelpOptionCard(
+                    icon: Icons.confirmation_number_outlined,
+                    iconColor: AppColors.purple,
+                    title: 'My Support Tickets',
+                    subtitle: 'View and manage your support requests',
+                    onTap: () => context.push('/support-tickets'),
+                    elevated: elevated,
+                    cardBorder: cardBorder,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    trailing: hasUnread
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.cyan,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '$unreadCount',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        : null,
+                  );
+                },
+              ),
+
+              const SizedBox(height: 12),
 
               // Chat with AI Support
               _HelpOptionCard(

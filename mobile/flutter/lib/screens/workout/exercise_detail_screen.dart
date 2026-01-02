@@ -198,7 +198,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   String _formatTime(int seconds) {
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
-    return '${mins}:${secs.toString().padLeft(2, '0')}';
+    return '$mins:${secs.toString().padLeft(2, '0')}';
   }
 
   String _getRepRange() {

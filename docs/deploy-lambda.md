@@ -1,4 +1,4 @@
-# Deploying AI Fitness Coach to AWS Lambda
+# Deploying FitWiz to AWS Lambda
 
 Complete guide for deploying the FastAPI backend to AWS Lambda using Terraform.
 

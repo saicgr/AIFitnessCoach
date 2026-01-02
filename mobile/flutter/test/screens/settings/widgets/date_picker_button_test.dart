@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/settings/widgets/date_picker_button.dart';
-import 'package:ai_fitness_coach/core/constants/app_colors.dart';
+import 'package:fitwiz/screens/settings/widgets/date_picker_button.dart';
+import 'package:fitwiz/core/constants/app_colors.dart';
 
 void main() {
   group('DatePickerButton', () {

@@ -1,4 +1,4 @@
-name: ai_fitness_coach
+name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
 version: 1.0.0+1
@@ -82,6 +82,12 @@ dependencies:
 
   # Gallery Saver (for saving workout images to device gallery)
   gal: ^2.3.0
+
+  # Text-to-Speech (for voice announcements during workouts)
+  flutter_tts: ^4.2.0
+
+  # Audio Session (for mixing with music apps like Spotify)
+  audio_session: ^0.1.21
 
   # Home Screen Widgets
   home_widget: ^0.7.0

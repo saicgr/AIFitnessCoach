@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/providers/window_mode_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'data/providers/admin_provider.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/notification_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'widgets/floating_chat/floating_chat_overlay.dart';
 
-class AiFitnessCoachApp extends ConsumerStatefulWidget {
-  const AiFitnessCoachApp({super.key});
+class FitWizApp extends ConsumerStatefulWidget {
+  const FitWizApp({super.key});
 
   @override
-  ConsumerState<AiFitnessCoachApp> createState() => _AiFitnessCoachAppState();
+  ConsumerState<FitWizApp> createState() => _FitWizAppState();
 }
 
-class _AiFitnessCoachAppState extends ConsumerState<AiFitnessCoachApp> {
+class _FitWizAppState extends ConsumerState<FitWizApp> {
   bool _syncCallbackSet = false;
   bool _notificationCallbackSet = false;
 
@@ -50,11 +52,14 @@ class _AiFitnessCoachAppState extends ConsumerState<AiFitnessCoachApp> {
       themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
-        // Wrap the entire app with FloatingChatOverlay for Messenger-style chat
-        // This ensures the bubble appears on ALL screens with keyboard-aware popup
-        return FloatingChatOverlay(
-          key: const ValueKey('floating_chat_overlay'),
-          child: child ?? const SizedBox.shrink(),
+        // Wrap the entire app with:
+        // 1. WindowModeObserver - Tracks split screen / multi-window mode changes
+        // 2. FloatingChatOverlay - Messenger-style chat bubble on all screens
+        return WindowModeObserver(
+          child: FloatingChatOverlay(
+            key: const ValueKey('floating_chat_overlay'),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );
@@ -133,6 +138,22 @@ class _AiFitnessCoachAppState extends ConsumerState<AiFitnessCoachApp> {
         break;
       case 'test':
         router.push('/notifications');
+        break;
+      case 'live_chat_message':
+      case 'live_chat_connected':
+      case 'live_chat_ended':
+        // Check if user is admin - route to admin support, otherwise live chat
+        final isAdmin = ref.read(isAdminProvider);
+        if (isAdmin) {
+          router.push('/admin-support');
+        } else {
+          router.push('/live-chat');
+        }
+        break;
+      case 'admin_new_chat':
+      case 'admin_new_message':
+        // Admin-specific notifications - route to admin support
+        router.push('/admin-support');
         break;
       default:
         // Default to notifications inbox

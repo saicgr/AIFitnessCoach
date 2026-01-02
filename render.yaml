@@ -1,18 +1,20 @@
 # Render deployment configuration
 # This file configures the deployment pipeline including pre-deploy tests
+#
+# Environment variables to control test behavior:
+# - SKIP_TESTS=true: Skip all tests (fastest deployment)
+# - RUN_CRITICAL_ONLY=true: Run only critical tests
+# - (default): Run ALL tests
 
 services:
   - type: web
-    name: aifitnesscoach-backend
+    name: fitwiz-backend
     env: python
     region: oregon
     plan: starter
     branch: main
     rootDir: backend
-    buildCommand: |
-      pip install -r requirements.txt
-      echo "Running pre-deploy tests..."
-      python -m pytest tests/test_onboarding.py tests/test_workout_generation.py -v --tb=short -x -m "not slow"
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
     envVars:

@@ -6,9 +6,8 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_provider.dart';
+import '../../core/utils/difficulty_utils.dart';
 import '../../data/models/workout.dart';
-import '../../data/models/exercise.dart';
 import '../../data/models/workout_generation_params.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -18,7 +17,6 @@ import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/expanded_exercise_card.dart';
 import 'package:flutter/services.dart';
-import '../../widgets/floating_chat/floating_chat_provider.dart';
 import '../../widgets/fasting_training_warning.dart';
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
@@ -86,7 +84,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
         // Resolve 'dont_know' to actual split based on workout days
         final resolvedSplit = _resolveTrainingSplit(
           prefs!.trainingSplit!,
-          prefs.workoutDays?.length ?? 3,
+          prefs.workoutDays.length ?? 3,
         );
         setState(() {
           _trainingSplit = resolvedSplit;
@@ -270,8 +268,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       // Difficulty Badge
                       _buildLabeledBadge(
                         label: 'Difficulty',
-                        value: (workout.difficulty ?? 'Medium').capitalize(),
-                        color: AppColors.getDifficultyColor(workout.difficulty ?? 'medium'),
+                        value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
+                        color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
                         backgroundColor: glassSurface,
                       ),
                       // Training Program Badge
@@ -1704,7 +1702,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       color: AppColors.purple,
                       items: [
                         if (params.programPreferences.difficulty != null)
-                          _ParamItem('Difficulty', params.programPreferences.difficulty!.capitalize()),
+                          _ParamItem('Difficulty', DifficultyUtils.getDisplayName(params.programPreferences.difficulty!)),
                         if (params.programPreferences.durationMinutes != null)
                           _ParamItem('Duration', '${params.programPreferences.durationMinutes} min'),
                         if (params.programPreferences.workoutType != null)
@@ -1728,7 +1726,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                       items: [
                         _ParamItem('Workout Name', params.workoutName ?? 'N/A'),
                         _ParamItem('Type', (params.workoutType ?? 'N/A').capitalize()),
-                        _ParamItem('Difficulty', (params.difficulty ?? 'N/A').capitalize()),
+                        _ParamItem('Difficulty', params.difficulty != null ? DifficultyUtils.getDisplayName(params.difficulty!) : 'N/A'),
                         _ParamItem('Duration', '${params.durationMinutes ?? 0} min'),
                         _ParamItem('Generation Method', (params.generationMethod ?? 'ai').toUpperCase()),
                         if (params.targetMuscles.isNotEmpty)

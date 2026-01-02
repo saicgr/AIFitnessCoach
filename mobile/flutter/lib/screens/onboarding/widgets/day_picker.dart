@@ -62,9 +62,13 @@ class _DayPickerState extends State<DayPicker> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // Responsive margin: smaller on narrow screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final leftMargin = screenWidth < 380 ? 16.0 : 52.0;
+
     return Container(
-      margin: const EdgeInsets.only(left: 52, top: 8),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(left: leftMargin, top: 8, right: 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: colors.glassSurface,
         borderRadius: BorderRadius.circular(20),
@@ -82,9 +86,10 @@ class _DayPickerState extends State<DayPicker> {
           ),
           const SizedBox(height: 12),
 
-          // Day grid
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          // Day grid - use Wrap for responsive layout on narrow screens
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: _days.map((day) {
               final isSelected = _selectedDays.contains(day.value);
               final isDisabled =
@@ -94,8 +99,8 @@ class _DayPickerState extends State<DayPicker> {
                 onTap: isDisabled ? null : () => _toggleDay(day.value),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 40,
-                  height: 40,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     gradient: isSelected ? colors.cyanGradient : null,
                     color: isSelected
@@ -103,7 +108,7 @@ class _DayPickerState extends State<DayPicker> {
                         : isDisabled
                             ? colors.glassSurface.withOpacity(0.3)
                             : colors.glassSurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: isSelected
                         ? null
                         : Border.all(
@@ -115,7 +120,7 @@ class _DayPickerState extends State<DayPicker> {
                         ? [
                             BoxShadow(
                               color: colors.cyan.withOpacity(0.5),
-                              blurRadius: 20,
+                              blurRadius: 16,
                               spreadRadius: 0,
                             ),
                           ]
@@ -125,7 +130,7 @@ class _DayPickerState extends State<DayPicker> {
                     child: Text(
                       day.label,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: isSelected
                             ? Colors.white

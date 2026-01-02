@@ -1,6 +1,6 @@
 # Frontend Design System
 
-A comprehensive, futuristic design system for the AI Fitness Coach app featuring Apple Glassmorphism, responsive layouts, and fitness-specific UI patterns.
+A comprehensive, futuristic design system for the FitWiz app featuring Apple Glassmorphism, responsive layouts, and fitness-specific UI patterns.
 
 ---
 

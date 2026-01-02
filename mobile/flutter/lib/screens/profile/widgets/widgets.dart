@@ -1,4 +1,5 @@
 /// Barrel file for profile widgets.
+library;
 export 'profile_header.dart';
 export 'stat_card.dart';
 export 'section_header.dart';

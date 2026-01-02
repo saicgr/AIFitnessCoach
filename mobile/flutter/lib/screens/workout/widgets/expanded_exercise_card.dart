@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/theme_provider.dart';
 import '../../../core/providers/week_comparison_provider.dart';
-import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 

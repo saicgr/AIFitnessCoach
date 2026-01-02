@@ -3,11 +3,20 @@ Exercise filtering utilities for equipment, injuries, and similarity detection.
 """
 
 import re
-from typing import List, Dict, Any, Optional, Set
+import json
+from typing import List, Dict, Any, Optional, Set, Tuple
 
 from core.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+# Default involvement threshold for secondary muscles to trigger AVOID filtering
+# Muscles with >20% involvement will be filtered out when the muscle is marked as "avoid"
+SECONDARY_MUSCLE_AVOID_THRESHOLD = 0.20
+
+# Penalty multiplier for exercises with secondary muscles in the "reduce" list
+SECONDARY_MUSCLE_REDUCE_PENALTY = 0.7
 
 
 # Full gym equipment list
@@ -15,7 +24,7 @@ FULL_GYM_EQUIPMENT = [
     "barbell", "dumbbell", "dumbbells", "cable", "cable machine",
     "machine", "kettlebell", "bench", "ez bar", "smith machine",
     "lat pulldown", "leg press", "pull-up bar", "pullup bar",
-    "resistance band", "medicine ball", "stability ball", "trx",
+    "resistance band", "medicine ball", "slam ball", "stability ball", "trx",
     "body weight", "bodyweight", "none"
 ]
 
@@ -267,3 +276,228 @@ def pre_filter_by_injuries(
             safe_candidates.append(candidate)
 
     return safe_candidates
+
+
+def parse_secondary_muscles(secondary_muscles_raw: Any) -> List[Dict[str, Any]]:
+    """
+    Parse secondary muscles from various formats into a list of dicts.
+
+    The secondary_muscles field may be:
+    - A JSON string like '["biceps", "forearms"]' (simple list)
+    - A JSON string like '[{"muscle": "biceps", "involvement": 0.3}]' (with involvement)
+    - An already-parsed list
+    - A comma-separated string like "biceps, forearms"
+    - None or empty
+
+    Returns:
+        List of dicts with 'muscle' and 'involvement' keys.
+        If involvement is not specified, defaults to 0.3 (30%).
+    """
+    DEFAULT_INVOLVEMENT = 0.30
+
+    if not secondary_muscles_raw:
+        return []
+
+    # Already a list
+    if isinstance(secondary_muscles_raw, list):
+        result = []
+        for item in secondary_muscles_raw:
+            if isinstance(item, dict):
+                result.append({
+                    "muscle": str(item.get("muscle", "")).lower().strip(),
+                    "involvement": float(item.get("involvement", DEFAULT_INVOLVEMENT))
+                })
+            elif isinstance(item, str):
+                result.append({
+                    "muscle": item.lower().strip(),
+                    "involvement": DEFAULT_INVOLVEMENT
+                })
+        return [r for r in result if r["muscle"]]  # Filter out empty muscles
+
+    # JSON string
+    if isinstance(secondary_muscles_raw, str):
+        secondary_muscles_raw = secondary_muscles_raw.strip()
+
+        # Try to parse as JSON
+        if secondary_muscles_raw.startswith("["):
+            try:
+                parsed = json.loads(secondary_muscles_raw)
+                # Recursively handle the parsed list
+                return parse_secondary_muscles(parsed)
+            except json.JSONDecodeError:
+                pass
+
+        # Handle comma-separated string
+        if "," in secondary_muscles_raw:
+            muscles = [m.strip().lower() for m in secondary_muscles_raw.split(",")]
+            return [{"muscle": m, "involvement": DEFAULT_INVOLVEMENT} for m in muscles if m]
+
+        # Single muscle name
+        if secondary_muscles_raw:
+            return [{"muscle": secondary_muscles_raw.lower(), "involvement": DEFAULT_INVOLVEMENT}]
+
+    return []
+
+
+def check_secondary_muscles_for_avoided(
+    secondary_muscles: List[Dict[str, Any]],
+    avoided_muscles: List[str],
+    threshold: float = SECONDARY_MUSCLE_AVOID_THRESHOLD,
+) -> Tuple[bool, Optional[str]]:
+    """
+    Check if any secondary muscle with significant involvement is in the avoided list.
+
+    Args:
+        secondary_muscles: Parsed list of secondary muscles with involvement
+        avoided_muscles: List of muscle names to avoid (lowercase)
+        threshold: Minimum involvement percentage to trigger avoidance (default 0.20 = 20%)
+
+    Returns:
+        Tuple of (should_filter, matched_muscle).
+        - should_filter: True if the exercise should be filtered out
+        - matched_muscle: The name of the avoided muscle that was matched (for logging)
+    """
+    for muscle_info in secondary_muscles:
+        muscle_name = muscle_info.get("muscle", "").lower()
+        involvement = muscle_info.get("involvement", 0.30)
+
+        # Skip muscles with low involvement
+        if involvement <= threshold:
+            continue
+
+        for avoided in avoided_muscles:
+            if avoided in muscle_name or muscle_name in avoided:
+                return True, muscle_name
+
+    return False, None
+
+
+def check_secondary_muscles_for_reduced(
+    secondary_muscles: List[Dict[str, Any]],
+    reduced_muscles: List[str],
+) -> Tuple[bool, Optional[str], float]:
+    """
+    Check if any secondary muscle is in the reduced list and calculate penalty.
+
+    Args:
+        secondary_muscles: Parsed list of secondary muscles with involvement
+        reduced_muscles: List of muscle names to reduce (lowercase)
+
+    Returns:
+        Tuple of (should_penalize, matched_muscle, penalty_factor).
+        - should_penalize: True if the exercise should be penalized
+        - matched_muscle: The name of the reduced muscle that was matched
+        - penalty_factor: The penalty multiplier to apply (based on involvement)
+    """
+    for muscle_info in secondary_muscles:
+        muscle_name = muscle_info.get("muscle", "").lower()
+        involvement = muscle_info.get("involvement", 0.30)
+
+        for reduced in reduced_muscles:
+            if reduced in muscle_name or muscle_name in reduced:
+                # Calculate penalty based on involvement
+                # Higher involvement = stronger penalty
+                # involvement=0.5 -> penalty=0.75 (25% reduction)
+                # involvement=0.3 -> penalty=0.85 (15% reduction)
+                penalty = 1.0 - (involvement * 0.5)
+                return True, muscle_name, penalty
+
+    return False, None, 1.0
+
+
+def filter_by_avoided_muscles(
+    candidates: List[Dict],
+    avoided_muscles: Dict[str, List[str]],
+) -> Tuple[List[Dict], int, int]:
+    """
+    Filter exercises based on avoided muscles, including secondary muscles.
+
+    This function filters out exercises that:
+    1. Have a primary target muscle in the "avoid" list
+    2. Have a body_part matching an "avoid" muscle
+    3. Have secondary muscles with >20% involvement in the "avoid" list
+
+    For "reduce" muscles, it applies a penalty to similarity scores instead of filtering.
+
+    Args:
+        candidates: List of exercise candidates
+        avoided_muscles: Dict with 'avoid' and 'reduce' lists
+
+    Returns:
+        Tuple of (filtered_candidates, primary_filtered_count, secondary_filtered_count)
+    """
+    avoid_muscles_list = [m.lower() for m in avoided_muscles.get("avoid", [])]
+    reduce_muscles_list = [m.lower() for m in avoided_muscles.get("reduce", [])]
+
+    if not avoid_muscles_list and not reduce_muscles_list:
+        return candidates, 0, 0
+
+    filtered_candidates = []
+    primary_filtered_count = 0
+    secondary_filtered_count = 0
+
+    for candidate in candidates:
+        target_muscle = (candidate.get("target_muscle") or "").lower()
+        body_part = (candidate.get("body_part") or "").lower()
+        secondary_muscles_raw = candidate.get("secondary_muscles", [])
+
+        # Parse secondary muscles
+        secondary_muscles = parse_secondary_muscles(secondary_muscles_raw)
+
+        should_filter = False
+        filter_reason = None
+
+        if avoid_muscles_list:
+            # Check primary muscle and body part
+            for avoided in avoid_muscles_list:
+                if avoided in target_muscle or avoided in body_part:
+                    should_filter = True
+                    filter_reason = f"primary muscle: {avoided}"
+                    primary_filtered_count += 1
+                    break
+
+            # Check secondary muscles if not already filtered
+            if not should_filter and secondary_muscles:
+                should_filter, matched_muscle = check_secondary_muscles_for_avoided(
+                    secondary_muscles, avoid_muscles_list
+                )
+                if should_filter:
+                    filter_reason = f"secondary muscle: {matched_muscle} (>20% involvement)"
+                    secondary_filtered_count += 1
+
+        if should_filter:
+            logger.debug(f"Filtered out '{candidate.get('name')}' - targets avoided {filter_reason}")
+            continue
+
+        # Apply reduce penalties (don't filter, just penalize)
+        if reduce_muscles_list:
+            # Check primary muscle and body part
+            primary_reduced = False
+            for reduced in reduce_muscles_list:
+                if reduced in target_muscle or reduced in body_part:
+                    original_sim = candidate.get("similarity", 1.0)
+                    candidate["similarity"] = original_sim * 0.5
+                    candidate["reduced_muscle_penalty"] = True
+                    candidate["reduced_muscle_reason"] = f"primary: {reduced}"
+                    primary_reduced = True
+                    logger.debug(f"Reduced priority for '{candidate.get('name')}' - targets reduced muscle: {reduced}")
+                    break
+
+            # Check secondary muscles if primary wasn't reduced
+            if not primary_reduced and secondary_muscles:
+                should_penalize, matched_muscle, penalty = check_secondary_muscles_for_reduced(
+                    secondary_muscles, reduce_muscles_list
+                )
+                if should_penalize:
+                    original_sim = candidate.get("similarity", 1.0)
+                    candidate["similarity"] = original_sim * penalty
+                    candidate["reduced_muscle_penalty"] = True
+                    candidate["reduced_muscle_reason"] = f"secondary: {matched_muscle}"
+                    logger.debug(
+                        f"Reduced priority for '{candidate.get('name')}' - "
+                        f"secondary muscle: {matched_muscle} (penalty={penalty:.2f})"
+                    )
+
+        filtered_candidates.append(candidate)
+
+    return filtered_candidates, primary_filtered_count, secondary_filtered_count

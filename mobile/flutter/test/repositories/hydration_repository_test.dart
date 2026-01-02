@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:ai_fitness_coach/data/repositories/hydration_repository.dart';
-import 'package:ai_fitness_coach/data/models/hydration.dart';
+import 'package:fitwiz/data/repositories/hydration_repository.dart';
+import 'package:fitwiz/data/models/hydration.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {

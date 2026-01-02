@@ -704,3 +704,239 @@ class InlineNumberInputWithLabel extends StatelessWidget {
     );
   }
 }
+
+/// Quick preset buttons for reps adjustment
+/// Shows Target, -5, -2 buttons for quickly setting reps values
+class RepsPresetButtons extends StatelessWidget {
+  /// Target reps value from exercise definition
+  final int targetReps;
+
+  /// Controller to update when a preset is tapped
+  final TextEditingController controller;
+
+  /// Optional accent color (defaults to purple)
+  final Color? accentColor;
+
+  /// Optional callback when value changes
+  final VoidCallback? onValueChanged;
+
+  const RepsPresetButtons({
+    super.key,
+    required this.targetReps,
+    required this.controller,
+    this.accentColor,
+    this.onValueChanged,
+  });
+
+  void _setReps(int value) {
+    final safeValue = value.clamp(0, 999);
+    controller.text = safeValue.toString();
+    onValueChanged?.call();
+    HapticFeedback.selectionClick();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accentColor ?? AppColors.purple;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        // Target button (primary)
+        _PresetButton(
+          label: 'Target ($targetReps)',
+          color: color,
+          isPrimary: true,
+          onTap: () => _setReps(targetReps),
+        ),
+        // -5 button
+        _PresetButton(
+          label: '-5',
+          color: AppColors.orange,
+          onTap: () => _setReps(targetReps - 5),
+        ),
+        // -2 button
+        _PresetButton(
+          label: '-2',
+          color: AppColors.orange,
+          onTap: () => _setReps(targetReps - 2),
+        ),
+      ],
+    );
+  }
+}
+
+/// Individual preset button
+class _PresetButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isPrimary;
+  final VoidCallback onTap;
+
+  const _PresetButton({
+    required this.label,
+    required this.color,
+    this.isPrimary = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isPrimary ? 12 : 10,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: color.withOpacity(isPrimary ? 0.2 : 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withOpacity(isPrimary ? 0.5 : 0.3),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isPrimary ? FontWeight.bold : FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget to display completed reps with target comparison
+/// Shows actual reps, target, and accuracy percentage badge
+class CompletedRepsDisplay extends StatelessWidget {
+  /// Actual reps completed
+  final int actualReps;
+
+  /// Target reps from exercise plan
+  final int targetReps;
+
+  /// Whether the set was edited by user
+  final bool isEdited;
+
+  const CompletedRepsDisplay({
+    super.key,
+    required this.actualReps,
+    required this.targetReps,
+    this.isEdited = false,
+  });
+
+  bool get differsFromTarget => targetReps > 0 && actualReps != targetReps;
+  bool get metTarget => targetReps <= 0 || actualReps >= targetReps;
+  int get accuracyPercent =>
+      targetReps > 0 ? ((actualReps / targetReps) * 100).round() : 100;
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine color based on performance
+    Color repsColor;
+    if (isEdited) {
+      repsColor = AppColors.orange;
+    } else if (differsFromTarget && !metTarget) {
+      repsColor = AppColors.orange;
+    } else {
+      repsColor = AppColors.success;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Actual reps (bold)
+        Text(
+          actualReps.toString(),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: repsColor,
+          ),
+        ),
+        // Show target comparison if differs
+        if (differsFromTarget) ...[
+          const SizedBox(width: 3),
+          Text(
+            '/$targetReps',
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textMuted.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Accuracy badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: metTarget
+                  ? AppColors.success.withOpacity(0.15)
+                  : AppColors.orange.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '$accuracyPercent%',
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                color: metTarget ? AppColors.success : AppColors.orange,
+              ),
+            ),
+          ),
+        ],
+        // Edit indicator
+        if (isEdited)
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Icon(
+              Icons.edit,
+              size: 10,
+              color: AppColors.orange,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Target indicator label widget
+class TargetRepsLabel extends StatelessWidget {
+  /// Target reps value
+  final int targetReps;
+
+  /// Accent color (defaults to purple)
+  final Color? color;
+
+  const TargetRepsLabel({
+    super.key,
+    required this.targetReps,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelColor = color ?? AppColors.purple;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: labelColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: labelColor.withOpacity(0.3),
+        ),
+      ),
+      child: Text(
+        'Target: $targetReps',
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: labelColor,
+        ),
+      ),
+    );
+  }
+}

@@ -427,3 +427,214 @@ class TestSuggestionsSummary:
             assert data["total_suggestions"] == 0
             assert data["categories_with_suggestions"] == 0
             assert data["has_friend_suggestions"] is False
+
+
+class TestWorkoutSync:
+    """Tests for POST /workout-sync endpoint."""
+
+    def test_sync_workout_updates_matching_goals(self, client, mock_supabase):
+        """Test that workout sync updates matching weekly_volume goals."""
+        mock_db, mock_client = mock_supabase
+
+        # Active weekly_volume goal for Push-ups
+        active_goals = [
+            {
+                "id": "goal1",
+                "user_id": "user123",
+                "exercise_name": "Push-ups",
+                "goal_type": "weekly_volume",
+                "target_value": 500,
+                "current_value": 100,
+                "personal_best": 400,
+                "status": "active",
+                "week_start": date.today().isoformat(),
+                "week_end": (date.today() + timedelta(days=6)).isoformat(),
+            }
+        ]
+
+        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+            mock_get_db.return_value = mock_db
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.update.return_value = mock_table
+            mock_table.execute.return_value = MagicMock(data=active_goals)
+
+            with patch("api.v1.personal_goals.log_user_activity"):
+                response = client.post(
+                    "/v1/personal-goals/workout-sync",
+                    params={"user_id": "user123"},
+                    json={
+                        "workout_log_id": "workout123",
+                        "exercises": [
+                            {"exercise_name": "Push-ups", "total_reps": 50, "total_sets": 5, "max_reps_in_set": 10},
+                            {"exercise_name": "Squats", "total_reps": 30, "total_sets": 3, "max_reps_in_set": 10},
+                        ]
+                    }
+                )
+
+            assert response.status_code == 200
+            data = response.json()
+
+            assert data["total_goals_updated"] == 1
+            assert data["total_volume_added"] == 50
+            assert len(data["synced_goals"]) == 1
+            assert data["synced_goals"][0]["exercise_name"] == "Push-ups"
+            assert data["synced_goals"][0]["volume_added"] == 50
+            assert data["synced_goals"][0]["new_current_value"] == 150
+
+    def test_sync_workout_case_insensitive_matching(self, client, mock_supabase):
+        """Test that exercise names are matched case-insensitively."""
+        mock_db, mock_client = mock_supabase
+
+        # Goal with different case
+        active_goals = [
+            {
+                "id": "goal1",
+                "user_id": "user123",
+                "exercise_name": "PUSH-UPS",
+                "goal_type": "weekly_volume",
+                "target_value": 500,
+                "current_value": 0,
+                "personal_best": None,
+                "status": "active",
+                "week_start": date.today().isoformat(),
+                "week_end": (date.today() + timedelta(days=6)).isoformat(),
+            }
+        ]
+
+        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+            mock_get_db.return_value = mock_db
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.update.return_value = mock_table
+            mock_table.execute.return_value = MagicMock(data=active_goals)
+
+            with patch("api.v1.personal_goals.log_user_activity"):
+                response = client.post(
+                    "/v1/personal-goals/workout-sync",
+                    params={"user_id": "user123"},
+                    json={
+                        "exercises": [
+                            {"exercise_name": "push-ups", "total_reps": 30, "total_sets": 3, "max_reps_in_set": 10},
+                        ]
+                    }
+                )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total_goals_updated"] == 1
+            assert data["synced_goals"][0]["exercise_name"] == "PUSH-UPS"
+
+    def test_sync_workout_no_matching_goals(self, client, mock_supabase):
+        """Test that workout sync handles no matching goals gracefully."""
+        mock_db, mock_client = mock_supabase
+
+        # Empty goals list
+        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+            mock_get_db.return_value = mock_db
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.execute.return_value = MagicMock(data=[])
+
+            response = client.post(
+                "/v1/personal-goals/workout-sync",
+                params={"user_id": "user123"},
+                json={
+                    "exercises": [
+                        {"exercise_name": "Burpees", "total_reps": 50, "total_sets": 5, "max_reps_in_set": 10},
+                    ]
+                }
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total_goals_updated"] == 0
+            assert data["synced_goals"] == []
+            assert "No active" in data["message"]
+
+    def test_sync_workout_goal_completion(self, client, mock_supabase):
+        """Test that reaching target value marks goal as completed."""
+        mock_db, mock_client = mock_supabase
+
+        # Goal that is close to completion
+        active_goals = [
+            {
+                "id": "goal1",
+                "user_id": "user123",
+                "exercise_name": "Push-ups",
+                "goal_type": "weekly_volume",
+                "target_value": 100,
+                "current_value": 80,
+                "personal_best": 90,
+                "status": "active",
+                "week_start": date.today().isoformat(),
+                "week_end": (date.today() + timedelta(days=6)).isoformat(),
+            }
+        ]
+
+        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+            mock_get_db.return_value = mock_db
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.update.return_value = mock_table
+            mock_table.execute.return_value = MagicMock(data=active_goals)
+
+            with patch("api.v1.personal_goals.log_user_activity"):
+                response = client.post(
+                    "/v1/personal-goals/workout-sync",
+                    params={"user_id": "user123"},
+                    json={
+                        "exercises": [
+                            {"exercise_name": "Push-ups", "total_reps": 30, "total_sets": 3, "max_reps_in_set": 10},
+                        ]
+                    }
+                )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total_goals_updated"] == 1
+            assert data["synced_goals"][0]["is_now_completed"] is True
+            assert data["synced_goals"][0]["new_current_value"] == 110
+            assert data["synced_goals"][0]["is_new_pr"] is True
+            assert data["new_prs"] == 1
+
+    def test_sync_workout_skips_single_max_goals(self, client, mock_supabase):
+        """Test that workout sync only updates weekly_volume goals, not single_max."""
+        mock_db, mock_client = mock_supabase
+
+        # The query filters for weekly_volume only, so empty result is expected
+        with patch("api.v1.personal_goals.get_supabase_db") as mock_get_db:
+            mock_get_db.return_value = mock_db
+
+            mock_table = MagicMock()
+            mock_client.table.return_value = mock_table
+            mock_table.select.return_value = mock_table
+            mock_table.eq.return_value = mock_table
+            mock_table.execute.return_value = MagicMock(data=[])  # No weekly_volume goals
+
+            response = client.post(
+                "/v1/personal-goals/workout-sync",
+                params={"user_id": "user123"},
+                json={
+                    "exercises": [
+                        {"exercise_name": "Push-ups", "total_reps": 50, "total_sets": 1, "max_reps_in_set": 50},
+                    ]
+                }
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            # Should not update any goals since single_max goals are excluded
+            assert data["total_goals_updated"] == 0

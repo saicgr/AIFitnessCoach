@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../core/constants/app_colors.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/models/scores.dart';
 import '../../data/providers/scores_provider.dart';
@@ -165,10 +165,55 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
 
             // Personal Records Summary Card
             PRSummaryCard(userId: _userId!),
+            const SizedBox(height: 16),
+
+            // Analytics Navigation Cards
+            _buildAnalyticsNavigationSection(),
             const SizedBox(height: 80), // Bottom padding for scroll
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAnalyticsNavigationSection() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detailed Analytics',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _AnalyticsNavCard(
+                icon: Icons.history,
+                title: 'Exercise History',
+                subtitle: 'Per-exercise progress & PRs',
+                color: colorScheme.primary,
+                onTap: () => context.push('/progress/exercise-history'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _AnalyticsNavCard(
+                icon: Icons.fitness_center,
+                title: 'Muscle Analytics',
+                subtitle: 'Training volume & balance',
+                color: colorScheme.secondary,
+                onTap: () => context.push('/progress/muscle-analytics'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1301,5 +1346,89 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       case PhotoViewType.back:
         return 'Turn your back to camera';
     }
+  }
+}
+
+/// Navigation card for analytics sections
+class _AnalyticsNavCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _AnalyticsNavCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'View',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward, size: 16, color: color),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

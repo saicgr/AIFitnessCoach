@@ -340,6 +340,701 @@ class FastingRepository {
       rethrow;
     }
   }
+
+  // ============================================
+  // Fasting Impact & Weight Correlation
+  // ============================================
+
+  /// Log weight with automatic fasting day detection
+  ///
+  /// The backend automatically correlates the weight entry with any
+  /// fasting record on that date.
+  Future<WeightLogWithFasting> logWeight({
+    required String userId,
+    required double weightKg,
+    required String date,
+    String? notes,
+    String? fastingRecordId,
+  }) async {
+    try {
+      debugPrint('⚖️ [Fasting] Logging weight $weightKg kg for $userId on $date');
+      final response = await _client.post(
+        '/fasting-impact/weight',
+        data: {
+          'user_id': userId,
+          'weight_kg': weightKg,
+          'date': date,
+          if (notes != null) 'notes': notes,
+          if (fastingRecordId != null) 'fasting_record_id': fastingRecordId,
+        },
+      );
+      debugPrint('✅ [Fasting] Weight logged successfully');
+      return WeightLogWithFasting.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error logging weight: $e');
+      rethrow;
+    }
+  }
+
+  /// Get weight logs with fasting correlation data
+  ///
+  /// Returns weight logs tagged with whether they were on fasting days,
+  /// along with summary statistics comparing fasting vs non-fasting days.
+  Future<WeightCorrelationResponse> getWeightCorrelation({
+    required String userId,
+    int days = 30,
+    bool includeNonFasting = true,
+  }) async {
+    try {
+      debugPrint('📊 [Fasting] Getting weight correlation for $userId (last $days days)');
+      final response = await _client.get(
+        '/fasting-impact/weight-correlation/$userId',
+        queryParameters: {
+          'days': days,
+          'include_non_fasting': includeNonFasting,
+        },
+      );
+      debugPrint('✅ [Fasting] Weight correlation retrieved');
+      return WeightCorrelationResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting weight correlation: $e');
+      rethrow;
+    }
+  }
+
+  /// Get fasting impact analysis
+  ///
+  /// Compares performance on fasting vs non-fasting days:
+  /// - Weight trends
+  /// - Workout completion rates
+  /// - Goal achievement rates
+  /// - Calculates correlation score
+  Future<FastingImpactAnalysis> getFastingImpactAnalysis({
+    required String userId,
+    String period = 'month', // 'week', 'month', '3months', 'all'
+  }) async {
+    try {
+      debugPrint('🎯 [Fasting] Getting fasting impact analysis for $userId (period: $period)');
+      final response = await _client.get(
+        '/fasting-impact/analysis/$userId',
+        queryParameters: {'period': period},
+      );
+      debugPrint('✅ [Fasting] Fasting impact analysis retrieved');
+      return FastingImpactAnalysis.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting fasting impact analysis: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AI-generated fasting insight
+  ///
+  /// Returns Gemini AI-generated insight about how fasting impacts the user's goals.
+  /// Results are cached for 24 hours on the backend.
+  Future<AIFastingInsight> getAIFastingInsight({
+    required String userId,
+    int days = 30,
+  }) async {
+    try {
+      debugPrint('🤖 [Fasting] Getting AI fasting insight for $userId (last $days days)');
+      final response = await _client.get(
+        '/fasting-impact/ai-insight/$userId',
+        queryParameters: {'days': days},
+      );
+      debugPrint('✅ [Fasting] AI fasting insight retrieved');
+      return AIFastingInsight.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting AI fasting insight: $e');
+      rethrow;
+    }
+  }
+
+  /// Force refresh AI fasting insight (bypasses cache)
+  ///
+  /// Use this when user wants latest analysis after logging new data.
+  Future<AIFastingInsight> refreshAIFastingInsight({
+    required String userId,
+    int days = 30,
+  }) async {
+    try {
+      debugPrint('🔄 [Fasting] Refreshing AI fasting insight for $userId');
+      final response = await _client.post(
+        '/fasting-impact/ai-insight/refresh/$userId',
+        queryParameters: {'days': days},
+      );
+      debugPrint('✅ [Fasting] AI fasting insight refreshed');
+      return AIFastingInsight.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error refreshing AI fasting insight: $e');
+      rethrow;
+    }
+  }
+
+  /// Get fasting calendar data for a specific month
+  ///
+  /// Each day shows:
+  /// - Fasting status (was it a fasting day?)
+  /// - Weight if logged
+  /// - Workout completed
+  /// - Goals hit vs total
+  Future<FastingCalendarResponse> getFastingCalendar({
+    required String userId,
+    required int month,
+    required int year,
+  }) async {
+    try {
+      debugPrint('📅 [Fasting] Getting fasting calendar for $userId ($month/$year)');
+      final response = await _client.get(
+        '/fasting-impact/calendar/$userId',
+        queryParameters: {
+          'month': month,
+          'year': year,
+        },
+      );
+      debugPrint('✅ [Fasting] Fasting calendar retrieved');
+      return FastingCalendarResponse.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting fasting calendar: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
+  // Historical Fasting Day Marking
+  // ============================================
+
+  /// Mark a historical date as a fasting day
+  ///
+  /// Use this when a user forgot to track a fast but wants to
+  /// retroactively mark a past day as a fasting day.
+  ///
+  /// Constraints:
+  /// - Date must be in the past (not today or future)
+  /// - Date cannot be more than 30 days in the past
+  /// - Cannot mark a date that already has a fasting record
+  Future<MarkFastingDayResult> markHistoricalFastingDay({
+    required String userId,
+    required DateTime date,
+    String? protocol,
+    double? estimatedHours,
+    String? notes,
+  }) async {
+    try {
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      debugPrint('📅 [Fasting] Marking historical fasting day: $dateStr for $userId');
+
+      final response = await _client.post(
+        '/fasting-impact/mark-fasting-day',
+        data: {
+          'user_id': userId,
+          'date': dateStr,
+          if (protocol != null) 'protocol': protocol,
+          if (estimatedHours != null) 'estimated_hours': estimatedHours,
+          if (notes != null) 'notes': notes,
+        },
+      );
+
+      debugPrint('✅ [Fasting] Historical fasting day marked successfully');
+      return MarkFastingDayResult.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error marking historical fasting day: $e');
+      rethrow;
+    }
+  }
+}
+
+// ============================================
+// Weight Log with Fasting Correlation Model
+// ============================================
+
+/// Weight log entry with fasting correlation data
+class WeightLogWithFasting {
+  final String id;
+  final String userId;
+  final double weightKg;
+  final String date;
+  final String? notes;
+  final String? fastingRecordId;
+  final bool isFastingDay;
+  final String? fastingProtocol;
+  final double? fastingCompletionPercent;
+  final String createdAt;
+
+  WeightLogWithFasting({
+    required this.id,
+    required this.userId,
+    required this.weightKg,
+    required this.date,
+    this.notes,
+    this.fastingRecordId,
+    required this.isFastingDay,
+    this.fastingProtocol,
+    this.fastingCompletionPercent,
+    required this.createdAt,
+  });
+
+  factory WeightLogWithFasting.fromJson(Map<String, dynamic> json) {
+    return WeightLogWithFasting(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      weightKg: (json['weight_kg'] as num).toDouble(),
+      date: json['date'] as String,
+      notes: json['notes'] as String?,
+      fastingRecordId: json['fasting_record_id'] as String?,
+      isFastingDay: json['is_fasting_day'] as bool? ?? false,
+      fastingProtocol: json['fasting_protocol'] as String?,
+      fastingCompletionPercent: (json['fasting_completion_percent'] as num?)?.toDouble(),
+      createdAt: json['created_at'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'weight_kg': weightKg,
+        'date': date,
+        'notes': notes,
+        'fasting_record_id': fastingRecordId,
+        'is_fasting_day': isFastingDay,
+        'fasting_protocol': fastingProtocol,
+        'fasting_completion_percent': fastingCompletionPercent,
+        'created_at': createdAt,
+      };
+}
+
+// ============================================
+// Weight Correlation Response Model
+// ============================================
+
+/// Response containing weight logs with fasting correlation data
+class WeightCorrelationResponse {
+  final String userId;
+  final int periodDays;
+  final List<WeightLogWithFasting> weightLogs;
+  final WeightCorrelationSummary summary;
+
+  WeightCorrelationResponse({
+    required this.userId,
+    required this.periodDays,
+    required this.weightLogs,
+    required this.summary,
+  });
+
+  factory WeightCorrelationResponse.fromJson(Map<String, dynamic> json) {
+    return WeightCorrelationResponse(
+      userId: json['user_id'] as String,
+      periodDays: json['period_days'] as int,
+      weightLogs: (json['weight_logs'] as List<dynamic>)
+          .map((e) => WeightLogWithFasting.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      summary: WeightCorrelationSummary.fromJson(json['summary'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'period_days': periodDays,
+        'weight_logs': weightLogs.map((e) => e.toJson()).toList(),
+        'summary': summary.toJson(),
+      };
+}
+
+/// Summary statistics for weight correlation
+class WeightCorrelationSummary {
+  final int totalLogs;
+  final int fastingDayLogs;
+  final int nonFastingDayLogs;
+  final double? avgWeightFastingDays;
+  final double? avgWeightNonFastingDays;
+  final double? weightDifference;
+
+  WeightCorrelationSummary({
+    required this.totalLogs,
+    required this.fastingDayLogs,
+    required this.nonFastingDayLogs,
+    this.avgWeightFastingDays,
+    this.avgWeightNonFastingDays,
+    this.weightDifference,
+  });
+
+  factory WeightCorrelationSummary.fromJson(Map<String, dynamic> json) {
+    return WeightCorrelationSummary(
+      totalLogs: json['total_logs'] as int? ?? 0,
+      fastingDayLogs: json['fasting_day_logs'] as int? ?? 0,
+      nonFastingDayLogs: json['non_fasting_day_logs'] as int? ?? 0,
+      avgWeightFastingDays: (json['avg_weight_fasting_days'] as num?)?.toDouble(),
+      avgWeightNonFastingDays: (json['avg_weight_non_fasting_days'] as num?)?.toDouble(),
+      weightDifference: (json['weight_difference'] as num?)?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'total_logs': totalLogs,
+        'fasting_day_logs': fastingDayLogs,
+        'non_fasting_day_logs': nonFastingDayLogs,
+        'avg_weight_fasting_days': avgWeightFastingDays,
+        'avg_weight_non_fasting_days': avgWeightNonFastingDays,
+        'weight_difference': weightDifference,
+      };
+}
+
+// ============================================
+// Fasting Impact Analysis Model
+// ============================================
+
+/// Fasting impact analysis response
+class FastingImpactAnalysis {
+  final String userId;
+  final String period;
+  final String analysisDate;
+
+  // Weight metrics
+  final double? avgWeightFastingDays;
+  final double? avgWeightNonFastingDays;
+  final String? weightTrendFasting;
+
+  // Workout metrics
+  final int workoutsOnFastingDays;
+  final int workoutsOnNonFastingDays;
+  final double? avgWorkoutCompletionFasting;
+  final double? avgWorkoutCompletionNonFasting;
+
+  // Goal metrics
+  final int goalsHitOnFastingDays;
+  final int goalsHitOnNonFastingDays;
+  final double? goalCompletionRateFasting;
+  final double? goalCompletionRateNonFasting;
+
+  // Correlation
+  final double? correlationScore;
+  final String? correlationInterpretation;
+
+  // Summary
+  final String fastingImpactSummary;
+  final List<String> recommendations;
+
+  FastingImpactAnalysis({
+    required this.userId,
+    required this.period,
+    required this.analysisDate,
+    this.avgWeightFastingDays,
+    this.avgWeightNonFastingDays,
+    this.weightTrendFasting,
+    this.workoutsOnFastingDays = 0,
+    this.workoutsOnNonFastingDays = 0,
+    this.avgWorkoutCompletionFasting,
+    this.avgWorkoutCompletionNonFasting,
+    this.goalsHitOnFastingDays = 0,
+    this.goalsHitOnNonFastingDays = 0,
+    this.goalCompletionRateFasting,
+    this.goalCompletionRateNonFasting,
+    this.correlationScore,
+    this.correlationInterpretation,
+    required this.fastingImpactSummary,
+    required this.recommendations,
+  });
+
+  factory FastingImpactAnalysis.fromJson(Map<String, dynamic> json) {
+    return FastingImpactAnalysis(
+      userId: json['user_id'] as String,
+      period: json['period'] as String,
+      analysisDate: json['analysis_date'] as String,
+      avgWeightFastingDays: (json['avg_weight_fasting_days'] as num?)?.toDouble(),
+      avgWeightNonFastingDays: (json['avg_weight_non_fasting_days'] as num?)?.toDouble(),
+      weightTrendFasting: json['weight_trend_fasting'] as String?,
+      workoutsOnFastingDays: json['workouts_on_fasting_days'] as int? ?? 0,
+      workoutsOnNonFastingDays: json['workouts_on_non_fasting_days'] as int? ?? 0,
+      avgWorkoutCompletionFasting: (json['avg_workout_completion_fasting'] as num?)?.toDouble(),
+      avgWorkoutCompletionNonFasting: (json['avg_workout_completion_non_fasting'] as num?)?.toDouble(),
+      goalsHitOnFastingDays: json['goals_hit_on_fasting_days'] as int? ?? 0,
+      goalsHitOnNonFastingDays: json['goals_hit_on_non_fasting_days'] as int? ?? 0,
+      goalCompletionRateFasting: (json['goal_completion_rate_fasting'] as num?)?.toDouble(),
+      goalCompletionRateNonFasting: (json['goal_completion_rate_non_fasting'] as num?)?.toDouble(),
+      correlationScore: (json['correlation_score'] as num?)?.toDouble(),
+      correlationInterpretation: json['correlation_interpretation'] as String?,
+      fastingImpactSummary: json['fasting_impact_summary'] as String? ?? '',
+      recommendations: (json['recommendations'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'period': period,
+        'analysis_date': analysisDate,
+        'avg_weight_fasting_days': avgWeightFastingDays,
+        'avg_weight_non_fasting_days': avgWeightNonFastingDays,
+        'weight_trend_fasting': weightTrendFasting,
+        'workouts_on_fasting_days': workoutsOnFastingDays,
+        'workouts_on_non_fasting_days': workoutsOnNonFastingDays,
+        'avg_workout_completion_fasting': avgWorkoutCompletionFasting,
+        'avg_workout_completion_non_fasting': avgWorkoutCompletionNonFasting,
+        'goals_hit_on_fasting_days': goalsHitOnFastingDays,
+        'goals_hit_on_non_fasting_days': goalsHitOnNonFastingDays,
+        'goal_completion_rate_fasting': goalCompletionRateFasting,
+        'goal_completion_rate_non_fasting': goalCompletionRateNonFasting,
+        'correlation_score': correlationScore,
+        'correlation_interpretation': correlationInterpretation,
+        'fasting_impact_summary': fastingImpactSummary,
+        'recommendations': recommendations,
+      };
+
+  /// Check if the weight trend is positive (decreasing)
+  bool get isWeightTrendPositive => weightTrendFasting == 'decreasing';
+
+  /// Check if correlation is positive
+  bool get hasPositiveCorrelation => (correlationScore ?? 0) > 0.1;
+
+  /// Get the difference in workout completion rate
+  double? get workoutCompletionDifference {
+    if (avgWorkoutCompletionFasting == null || avgWorkoutCompletionNonFasting == null) {
+      return null;
+    }
+    return avgWorkoutCompletionFasting! - avgWorkoutCompletionNonFasting!;
+  }
+
+  /// Get the difference in goal completion rate
+  double? get goalCompletionDifference {
+    if (goalCompletionRateFasting == null || goalCompletionRateNonFasting == null) {
+      return null;
+    }
+    return goalCompletionRateFasting! - goalCompletionRateNonFasting!;
+  }
+}
+
+// ============================================
+// AI Fasting Insight Model
+// ============================================
+
+/// AI-generated fasting insight from Gemini
+class AIFastingInsight {
+  final String id;
+  final String userId;
+  final String insightType; // 'positive', 'neutral', 'negative', 'needs_more_data'
+  final String title;
+  final String message;
+  final String recommendation;
+  final String? keyFinding;
+  final Map<String, dynamic> dataSummary;
+  final String createdAt;
+
+  AIFastingInsight({
+    required this.id,
+    required this.userId,
+    required this.insightType,
+    required this.title,
+    required this.message,
+    required this.recommendation,
+    this.keyFinding,
+    required this.dataSummary,
+    required this.createdAt,
+  });
+
+  factory AIFastingInsight.fromJson(Map<String, dynamic> json) {
+    return AIFastingInsight(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      insightType: json['insight_type'] as String,
+      title: json['title'] as String,
+      message: json['message'] as String,
+      recommendation: json['recommendation'] as String,
+      keyFinding: json['key_finding'] as String?,
+      dataSummary: json['data_summary'] as Map<String, dynamic>? ?? {},
+      createdAt: json['created_at'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'insight_type': insightType,
+        'title': title,
+        'message': message,
+        'recommendation': recommendation,
+        'key_finding': keyFinding,
+        'data_summary': dataSummary,
+        'created_at': createdAt,
+      };
+
+  /// Check if insight is positive
+  bool get isPositive => insightType == 'positive';
+
+  /// Check if insight is negative
+  bool get isNegative => insightType == 'negative';
+
+  /// Check if more data is needed
+  bool get needsMoreData => insightType == 'needs_more_data';
+
+  /// Check if insight is neutral
+  bool get isNeutral => insightType == 'neutral';
+}
+
+// ============================================
+// Fasting Calendar Response Model
+// ============================================
+
+/// Calendar view response with fasting, weight, workout, and goal data
+class FastingCalendarResponse {
+  final String userId;
+  final int month;
+  final int year;
+  final List<CalendarDayData> days;
+  final CalendarSummary summary;
+
+  FastingCalendarResponse({
+    required this.userId,
+    required this.month,
+    required this.year,
+    required this.days,
+    required this.summary,
+  });
+
+  factory FastingCalendarResponse.fromJson(Map<String, dynamic> json) {
+    return FastingCalendarResponse(
+      userId: json['user_id'] as String,
+      month: json['month'] as int,
+      year: json['year'] as int,
+      days: (json['days'] as List<dynamic>)
+          .map((e) => CalendarDayData.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      summary: CalendarSummary.fromJson(json['summary'] as Map<String, dynamic>),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'user_id': userId,
+        'month': month,
+        'year': year,
+        'days': days.map((e) => e.toJson()).toList(),
+        'summary': summary.toJson(),
+      };
+
+  /// Get a specific day's data by date
+  CalendarDayData? getDayData(DateTime date) {
+    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    try {
+      return days.firstWhere((d) => d.date == dateStr);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Get all fasting days
+  List<CalendarDayData> get fastingDays => days.where((d) => d.isFastingDay).toList();
+
+  /// Get all days with workouts
+  List<CalendarDayData> get workoutDays => days.where((d) => d.workoutCompleted).toList();
+}
+
+/// Data for a single calendar day
+class CalendarDayData {
+  final String date;
+  final bool isFastingDay;
+  final String? fastingProtocol;
+  final double? fastingCompletionPercent;
+  final String? fastingRecordId;
+  final double? weightLogged;
+  final bool workoutCompleted;
+  final String? workoutId;
+  final int goalsHit;
+  final int goalsTotal;
+
+  CalendarDayData({
+    required this.date,
+    required this.isFastingDay,
+    this.fastingProtocol,
+    this.fastingCompletionPercent,
+    this.fastingRecordId,
+    this.weightLogged,
+    this.workoutCompleted = false,
+    this.workoutId,
+    this.goalsHit = 0,
+    this.goalsTotal = 0,
+  });
+
+  factory CalendarDayData.fromJson(Map<String, dynamic> json) {
+    return CalendarDayData(
+      date: json['date'] as String,
+      isFastingDay: json['is_fasting_day'] as bool? ?? false,
+      fastingProtocol: json['fasting_protocol'] as String?,
+      fastingCompletionPercent: (json['fasting_completion_percent'] as num?)?.toDouble(),
+      fastingRecordId: json['fasting_record_id'] as String?,
+      weightLogged: (json['weight_logged'] as num?)?.toDouble(),
+      workoutCompleted: json['workout_completed'] as bool? ?? false,
+      workoutId: json['workout_id'] as String?,
+      goalsHit: json['goals_hit'] as int? ?? 0,
+      goalsTotal: json['goals_total'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'date': date,
+        'is_fasting_day': isFastingDay,
+        'fasting_protocol': fastingProtocol,
+        'fasting_completion_percent': fastingCompletionPercent,
+        'fasting_record_id': fastingRecordId,
+        'weight_logged': weightLogged,
+        'workout_completed': workoutCompleted,
+        'workout_id': workoutId,
+        'goals_hit': goalsHit,
+        'goals_total': goalsTotal,
+      };
+
+  /// Get goal completion percentage
+  double get goalCompletionPercent => goalsTotal > 0 ? (goalsHit / goalsTotal) * 100 : 0;
+
+  /// Check if all goals were hit
+  bool get allGoalsHit => goalsTotal > 0 && goalsHit == goalsTotal;
+
+  /// Parse the date string to DateTime
+  DateTime get dateTime => DateTime.parse(date);
+}
+
+/// Summary statistics for the calendar month
+class CalendarSummary {
+  final int totalDays;
+  final int fastingDays;
+  final int workoutDays;
+  final int totalGoalsHit;
+  final int daysWithWeightLogged;
+  final double fastingRate;
+
+  CalendarSummary({
+    required this.totalDays,
+    required this.fastingDays,
+    required this.workoutDays,
+    required this.totalGoalsHit,
+    required this.daysWithWeightLogged,
+    required this.fastingRate,
+  });
+
+  factory CalendarSummary.fromJson(Map<String, dynamic> json) {
+    return CalendarSummary(
+      totalDays: json['total_days'] as int? ?? 0,
+      fastingDays: json['fasting_days'] as int? ?? 0,
+      workoutDays: json['workout_days'] as int? ?? 0,
+      totalGoalsHit: json['total_goals_hit'] as int? ?? 0,
+      daysWithWeightLogged: json['days_with_weight_logged'] as int? ?? 0,
+      fastingRate: (json['fasting_rate'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'total_days': totalDays,
+        'fasting_days': fastingDays,
+        'workout_days': workoutDays,
+        'total_goals_hit': totalGoalsHit,
+        'days_with_weight_logged': daysWithWeightLogged,
+        'fasting_rate': fastingRate,
+      };
+
+  /// Get workout rate percentage
+  double get workoutRate => totalDays > 0 ? (workoutDays / totalDays) * 100 : 0;
+
+  /// Get weight logging rate percentage
+  double get weightLoggingRate => totalDays > 0 ? (daysWithWeightLogged / totalDays) * 100 : 0;
 }
 
 /// Result of safety screening check
@@ -377,4 +1072,66 @@ class SafetyScreeningResult {
         'warnings': warnings,
         'blocked_reasons': blockedReasons,
       };
+}
+
+// ============================================
+// Mark Historical Fasting Day Result Model
+// ============================================
+
+/// Result of marking a historical fasting day
+class MarkFastingDayResult {
+  final String id;
+  final String userId;
+  final String date;
+  final String? protocol;
+  final double? estimatedHours;
+  final String status;
+  final double completionPercentage;
+  final String? notes;
+  final String createdAt;
+  final String message;
+
+  MarkFastingDayResult({
+    required this.id,
+    required this.userId,
+    required this.date,
+    this.protocol,
+    this.estimatedHours,
+    required this.status,
+    required this.completionPercentage,
+    this.notes,
+    required this.createdAt,
+    required this.message,
+  });
+
+  factory MarkFastingDayResult.fromJson(Map<String, dynamic> json) {
+    return MarkFastingDayResult(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      date: json['date'] as String,
+      protocol: json['protocol'] as String?,
+      estimatedHours: (json['estimated_hours'] as num?)?.toDouble(),
+      status: json['status'] as String,
+      completionPercentage: (json['completion_percentage'] as num).toDouble(),
+      notes: json['notes'] as String?,
+      createdAt: json['created_at'] as String,
+      message: json['message'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'date': date,
+        'protocol': protocol,
+        'estimated_hours': estimatedHours,
+        'status': status,
+        'completion_percentage': completionPercentage,
+        'notes': notes,
+        'created_at': createdAt,
+        'message': message,
+      };
+
+  /// Parse the date string to DateTime
+  DateTime get dateTime => DateTime.parse(date);
 }

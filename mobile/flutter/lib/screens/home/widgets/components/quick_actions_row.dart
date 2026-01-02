@@ -7,6 +7,7 @@ import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../../../workout/widgets/quick_workout_sheet.dart';
 
 /// A compact row of quick action buttons for common tasks
 class QuickActionsRow extends ConsumerWidget {
@@ -57,12 +58,12 @@ class QuickActionsRow extends ConsumerWidget {
             _buildDivider(isDark),
             Expanded(
               child: _QuickActionButton(
-                icon: Icons.share_outlined,
-                label: 'Share',
-                color: AppColors.cyan,
+                icon: Icons.flash_on,
+                label: 'Quick',
+                color: AppColors.orange,
                 onTap: () {
                   HapticService.light();
-                  context.push('/social');
+                  showQuickWorkoutSheet(context);
                 },
                 isDark: isDark,
               ),

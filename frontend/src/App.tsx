@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './store';
+import { useAdminStore } from './store/adminStore';
 import { supabase } from './lib/supabase';
 import Landing from './pages/Landing';
+import MarketingLanding from './pages/MarketingLanding';
+import Features from './pages/Features';
+import Pricing from './pages/Pricing';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
 import ConversationalOnboarding from './pages/ConversationalOnboarding';
@@ -19,6 +23,19 @@ import Nutrition from './pages/Nutrition';
 import Library from './pages/Library';
 import Achievements from './pages/Achievements';
 import ChatWidget from './components/chat/ChatWidget';
+// Admin pages
+import { AdminLogin, AdminDashboard, LiveChatQueue } from './pages/admin';
+
+// Protected route component for admin pages
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAdminStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
   const { user, setSession, setUser } = useAppStore();
@@ -52,8 +69,12 @@ function App() {
   return (
     <>
       <Routes>
-        {/* Public landing page */}
-        <Route path="/" element={<Landing />} />
+        {/* Marketing pages - public */}
+        <Route path="/" element={<MarketingLanding />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/pricing" element={<Pricing />} />
+        {/* Legacy landing page */}
+        <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}
         <Route
           path="/home"
@@ -94,6 +115,27 @@ function App() {
         <Route path="/nutrition" element={<Nutrition />} />
         <Route path="/library" element={<Library />} />
         <Route path="/achievements" element={<Achievements />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminProtectedRoute>
+              <AdminDashboard />
+            </AdminProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/chats"
+          element={
+            <AdminProtectedRoute>
+              <LiveChatQueue />
+            </AdminProtectedRoute>
+          }
+        />
+        {/* Redirect /admin to /admin/dashboard */}
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       </Routes>
       {/* Global Chat Widget - renders via portal, only for authenticated users */}
       {isValidUser && <ChatWidget />}

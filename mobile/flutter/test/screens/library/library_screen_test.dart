@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ai_fitness_coach/screens/library/library_screen.dart';
+import 'package:fitwiz/screens/library/library_screen.dart';
 
 void main() {
   group('LibraryScreen', () {

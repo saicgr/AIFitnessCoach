@@ -8,8 +8,11 @@ import '../../models/program_history.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../models/mood.dart';
+import '../models/today_workout.dart';
 import '../models/workout_generation_params.dart';
 import '../services/api_client.dart';
+
+export '../models/today_workout.dart';
 
 /// Workout repository provider
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
@@ -813,6 +816,100 @@ class WorkoutRepository {
     }
   }
 
+  /// Quick regenerate workouts using current settings
+  /// This deletes future incomplete workouts and regenerates them
+  /// without requiring the user to go through the full customization wizard
+  Future<Map<String, dynamic>> quickRegenerateWorkouts() async {
+    try {
+      debugPrint('🔍 [Workout] Quick regenerating workouts with current settings');
+
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        return {
+          'success': false,
+          'message': 'User not logged in',
+        };
+      }
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/quick-regenerate',
+        data: {'user_id': userId},
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Quick regeneration complete: ${data['message']}');
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Workouts regenerated successfully!',
+          'workouts_deleted': data['workouts_deleted'],
+          'workouts_generated': data['workouts_generated'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to regenerate workouts: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error quick regenerating workouts: $e');
+      return {
+        'success': false,
+        'message': 'Error: $e',
+      };
+    }
+  }
+
+  /// Quick change workout days without regenerating all workouts
+  /// This reschedules existing workouts to the new days intelligently
+  Future<Map<String, dynamic>> quickDayChange(
+    String userId,
+    List<String> workoutDays,
+  ) async {
+    try {
+      debugPrint('🔍 [Workout] Quick day change to: $workoutDays');
+
+      final response = await _apiClient.patch(
+        '${ApiConstants.workouts}/quick-day-change',
+        data: {
+          'user_id': userId,
+          'workout_days': workoutDays,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Quick day change complete: ${data['message']}');
+        debugPrint('  - Rescheduled: ${data['rescheduled_count']} workouts');
+        debugPrint('  - Unchanged: ${data['unchanged_count']} workouts');
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Workout days updated!',
+          'rescheduled_count': data['rescheduled_count'] ?? 0,
+          'unchanged_count': data['unchanged_count'] ?? 0,
+          'old_days': data['old_days'] ?? [],
+          'new_days': data['new_days'] ?? [],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to update workout days: ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error quick day change: $e');
+      rethrow;
+    }
+  }
+
   /// Schedule remaining workouts for background generation
   /// This is called after generating the first week, to queue up the rest
   Future<void> scheduleRemainingWorkouts({
@@ -975,6 +1072,62 @@ class WorkoutRepository {
     }
   }
 
+  /// Get today's workout for quick start widget
+  ///
+  /// Returns today's scheduled workout if available, or the next upcoming
+  /// workout if today is a rest day.
+  Future<TodayWorkoutResponse?> getTodayWorkout() async {
+    try {
+      debugPrint('🔍 [Workout] Fetching today\'s workout for quick start');
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('❌ [Workout] User not logged in');
+        return null;
+      }
+
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/today',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        debugPrint('✅ [Workout] Today\'s workout fetched: has_workout=${data['has_workout_today']}');
+        return TodayWorkoutResponse.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching today\'s workout: $e');
+      return null;
+    }
+  }
+
+  /// Log quick start button tap for analytics
+  ///
+  /// This helps track:
+  /// - Quick start usage patterns
+  /// - Conversion from home screen to active workout
+  /// - Time of day preferences
+  Future<void> logQuickStart(String workoutId) async {
+    try {
+      debugPrint('🎯 [Workout] Logging quick start tap for workout: $workoutId');
+      final userId = await _apiClient.getUserId();
+      if (userId == null) return;
+
+      await _apiClient.post(
+        '${ApiConstants.workouts}/today/start',
+        queryParameters: {
+          'user_id': userId,
+          'workout_id': workoutId,
+        },
+      );
+      debugPrint('✅ [Workout] Quick start logged');
+    } catch (e) {
+      // Non-critical logging - don't fail the main operation
+      debugPrint('⚠️ [Workout] Failed to log quick start: $e');
+    }
+  }
+
   /// Reschedule a workout
   Future<bool> rescheduleWorkout(String workoutId, String newDate) async {
     try {
@@ -1021,9 +1174,21 @@ class WorkoutRepository {
   }
 
   /// Generate warmup exercises for a workout
-  Future<List<Map<String, dynamic>>> generateWarmup(String workoutId) async {
+  ///
+  /// If [durationMinutes] is null, uses the user's preference from backend (default 5 min).
+  Future<List<Map<String, dynamic>>> generateWarmup(
+    String workoutId, {
+    int? durationMinutes,
+  }) async {
     try {
-      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/warmup');
+      final queryParams = <String, dynamic>{};
+      if (durationMinutes != null) {
+        queryParams['duration_minutes'] = durationMinutes;
+      }
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/warmup',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
@@ -1036,9 +1201,21 @@ class WorkoutRepository {
   }
 
   /// Generate stretches for a workout
-  Future<List<Map<String, dynamic>>> generateStretches(String workoutId) async {
+  ///
+  /// If [durationMinutes] is null, uses the user's preference from backend (default 5 min).
+  Future<List<Map<String, dynamic>>> generateStretches(
+    String workoutId, {
+    int? durationMinutes,
+  }) async {
     try {
-      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/stretches');
+      final queryParams = <String, dynamic>{};
+      if (durationMinutes != null) {
+        queryParams['duration_minutes'] = durationMinutes;
+      }
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/stretches',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
@@ -1051,9 +1228,25 @@ class WorkoutRepository {
   }
 
   /// Generate both warmup and stretches
-  Future<Map<String, List<Map<String, dynamic>>>> generateWarmupAndStretches(String workoutId) async {
+  ///
+  /// If durations are null, uses the user's preferences from backend (default 5 min each).
+  Future<Map<String, List<Map<String, dynamic>>>> generateWarmupAndStretches(
+    String workoutId, {
+    int? warmupDurationMinutes,
+    int? stretchDurationMinutes,
+  }) async {
     try {
-      final response = await _apiClient.post('${ApiConstants.workouts}/$workoutId/warmup-and-stretches');
+      final queryParams = <String, dynamic>{};
+      if (warmupDurationMinutes != null) {
+        queryParams['warmup_duration'] = warmupDurationMinutes;
+      }
+      if (stretchDurationMinutes != null) {
+        queryParams['stretch_duration'] = stretchDurationMinutes;
+      }
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/warmup-and-stretches',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         return {
@@ -1074,6 +1267,7 @@ class WorkoutRepository {
     required WorkoutExercise exercise,
     required String userId,
     String? reason,
+    List<String>? avoidedExercises,
   }) async {
     try {
       // Build message based on reason
@@ -1099,6 +1293,9 @@ class WorkoutRepository {
       }
 
       debugPrint('🔍 [Workout] Getting suggestions for ${exercise.name} - reason: $reason');
+      if (avoidedExercises != null && avoidedExercises.isNotEmpty) {
+        debugPrint('🚫 [Workout] Filtering ${avoidedExercises.length} avoided exercises');
+      }
 
       final response = await _apiClient.post(
         '/exercise-suggestions/suggest',
@@ -1112,6 +1309,8 @@ class WorkoutRepository {
             'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle ?? exercise.bodyPart,
             'equipment': exercise.equipment,
           },
+          if (avoidedExercises != null && avoidedExercises.isNotEmpty)
+            'avoided_exercises': avoidedExercises,
         },
       );
       if (response.statusCode == 200) {
@@ -1179,6 +1378,87 @@ class WorkoutRepository {
       return null;
     } catch (e) {
       debugPrint('❌ [Workout] Error adding exercise: $e');
+      return null;
+    }
+  }
+
+  /// Extend a workout with additional AI-generated exercises
+  ///
+  /// Used when users feel the workout wasn't enough and want to "do more".
+  /// The AI will generate complementary exercises based on the existing workout.
+  Future<Workout?> extendWorkout({
+    required String workoutId,
+    required String userId,
+    int additionalExercises = 3,
+    int additionalDurationMinutes = 15,
+    bool focusSameMuscles = true,
+    String? intensity, // 'lighter', 'same', 'harder'
+  }) async {
+    try {
+      debugPrint('🔥 [Workout] Extending workout $workoutId with $additionalExercises exercises');
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/extend',
+        data: {
+          'workout_id': workoutId,
+          'user_id': userId,
+          'additional_exercises': additionalExercises,
+          'additional_duration_minutes': additionalDurationMinutes,
+          'focus_same_muscles': focusSameMuscles,
+          if (intensity != null) 'intensity': intensity,
+        },
+        options: Options(
+          receiveTimeout: const Duration(minutes: 2), // AI generation can take time
+        ),
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout extended successfully');
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error extending workout: $e');
+      return null;
+    }
+  }
+
+  /// Create a custom workout from scratch
+  ///
+  /// Addresses complaint: "It's much better to just use the Daily Strength app
+  /// and put together your own plan."
+  Future<Workout?> createCustomWorkout({
+    required String userId,
+    required String name,
+    required String workoutType,
+    required String difficulty,
+    required List<Map<String, dynamic>> exercises,
+    int durationMinutes = 45,
+    DateTime? scheduledDate,
+  }) async {
+    try {
+      debugPrint('🏋️ [Workout] Creating custom workout: $name with ${exercises.length} exercises');
+      final response = await _apiClient.post(
+        ApiConstants.workouts,
+        data: {
+          'user_id': userId,
+          'name': name,
+          'type': workoutType,
+          'difficulty': difficulty,
+          'scheduled_date': (scheduledDate ?? DateTime.now()).toIso8601String(),
+          'exercises_json': exercises,
+          'duration_minutes': durationMinutes,
+          'generation_method': 'manual',
+          'generation_source': 'custom_builder',
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Custom workout created successfully');
+        return Workout.fromJson(response.data as Map<String, dynamic>);
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error creating custom workout: $e');
       return null;
     }
   }
@@ -1844,6 +2124,520 @@ class WorkoutRepository {
       debugPrint('❌ [Workout] Error deleting program: $e');
       rethrow;
     }
+  }
+
+  // ==================== Active Workout Modification Methods ====================
+
+  /// Exclude body parts from an active workout
+  ///
+  /// This removes or skips exercises targeting the specified body parts.
+  /// Useful when user has injury or pain in specific areas and wants to
+  /// continue their workout without aggravating the issue.
+  ///
+  /// Returns [BodyPartExclusionResult] with details about removed exercises.
+  Future<BodyPartExclusionResult?> excludeBodyParts({
+    required String workoutId,
+    required List<String> bodyParts,
+  }) async {
+    try {
+      debugPrint('🏋️ [Workout] Excluding body parts: $bodyParts from workout $workoutId');
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('❌ [Workout] User not logged in');
+        return null;
+      }
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/exclude-body-parts',
+        data: {
+          'body_parts': bodyParts,
+          'user_id': userId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final result = BodyPartExclusionResult.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint('✅ [Workout] Excluded ${result.removedExercises.length} exercises');
+        return result;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error excluding body parts: $e');
+      return null;
+    }
+  }
+
+  /// Replace an exercise with a safe alternative
+  ///
+  /// Finds an alternative exercise that targets the same muscle group
+  /// but doesn't involve the body part the user wants to avoid.
+  ///
+  /// Returns [ExerciseReplaceResult] with the replacement details.
+  Future<ExerciseReplaceResult?> replaceExerciseSafe({
+    required String workoutId,
+    required String exerciseName,
+    required String reason,
+    String? bodyPartToAvoid,
+    String? exerciseId,
+  }) async {
+    try {
+      debugPrint('🔄 [Workout] Replacing exercise: $exerciseName, reason: $reason');
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('❌ [Workout] User not logged in');
+        return null;
+      }
+
+      final response = await _apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/replace-exercise',
+        data: {
+          'exercise_name': exerciseName,
+          'exercise_id': exerciseId,
+          'reason': reason,
+          'body_part_to_avoid': bodyPartToAvoid,
+          'user_id': userId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final result = ExerciseReplaceResult.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        if (result.replaced) {
+          debugPrint('✅ [Workout] Replaced with: ${result.replacement}');
+        } else if (result.skipped) {
+          debugPrint('⚠️ [Workout] Exercise skipped (no alternative found)');
+        }
+        return result;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error replacing exercise: $e');
+      return null;
+    }
+  }
+
+  /// Get modification history for a workout
+  ///
+  /// Returns a list of all modifications made to the workout including
+  /// body part exclusions, exercise replacements, and set adjustments.
+  Future<List<Map<String, dynamic>>> getWorkoutModificationHistory({
+    required String workoutId,
+    int limit = 20,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching modification history for workout: $workoutId');
+      final response = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId/modification-history',
+        queryParameters: {'limit': limit},
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final modifications = data['modifications'] as List? ?? [];
+        debugPrint('✅ [Workout] Got ${modifications.length} modifications');
+        return List<Map<String, dynamic>>.from(modifications);
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching modification history: $e');
+      return [];
+    }
+  }
+
+  // ==================== Set Management Methods ====================
+
+  /// Log a set adjustment (skipping sets, reducing sets, etc.)
+  Future<Map<String, dynamic>?> logSetAdjustment({
+    required String workoutLogId,
+    required String userId,
+    required String exerciseId,
+    required String exerciseName,
+    required String adjustmentType, // 'skip_remaining', 'remove_set', 'add_set'
+    required String reason, // 'fatigue', 'time', 'pain', 'equipment', 'other'
+    String? notes,
+    required int originalSets,
+    required int newSets,
+    int? exerciseIndex,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Logging set adjustment: $adjustmentType for $exerciseName');
+      final response = await _apiClient.post(
+        '/performance/set-adjustments',
+        data: {
+          'workout_log_id': workoutLogId,
+          'user_id': userId,
+          'exercise_id': exerciseId,
+          'exercise_name': exerciseName,
+          'adjustment_type': adjustmentType,
+          'reason': reason,
+          'notes': notes,
+          'original_sets': originalSets,
+          'new_sets': newSets,
+          'exercise_index': exerciseIndex,
+          'adjusted_at': DateTime.now().toIso8601String(),
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Set adjustment logged successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error logging set adjustment: $e');
+      return null;
+    }
+  }
+
+  /// Edit a completed set's weight and reps
+  Future<Map<String, dynamic>?> editSet({
+    required String workoutLogId,
+    required String userId,
+    required String exerciseId,
+    required String exerciseName,
+    required int setNumber,
+    required int newReps,
+    required double newWeightKg,
+    int? originalReps,
+    double? originalWeightKg,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Editing set $setNumber for $exerciseName');
+      final response = await _apiClient.patch(
+        '/performance/sets/$workoutLogId/$exerciseId/$setNumber',
+        data: {
+          'user_id': userId,
+          'exercise_name': exerciseName,
+          'new_reps': newReps,
+          'new_weight_kg': newWeightKg,
+          'original_reps': originalReps,
+          'original_weight_kg': originalWeightKg,
+          'edited_at': DateTime.now().toIso8601String(),
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Set edited successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error editing set: $e');
+      return null;
+    }
+  }
+
+  /// Delete a completed set from a workout
+  Future<bool> deleteSet({
+    required String workoutLogId,
+    required String userId,
+    required String exerciseId,
+    required int setNumber,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Deleting set $setNumber from exercise $exerciseId');
+      final response = await _apiClient.delete(
+        '/performance/sets/$workoutLogId/$exerciseId/$setNumber',
+        queryParameters: {
+          'user_id': userId,
+        },
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Set deleted successfully');
+        return true;
+      }
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error deleting set: $e');
+      return false;
+    }
+  }
+
+  /// Record a set adjustment with reason - convenience method for tracking
+  /// user behavior patterns in workout modifications
+  ///
+  /// This method tracks when users modify their prescribed sets, which helps
+  /// the AI learn user preferences and adjust future workout recommendations.
+  ///
+  /// Parameters:
+  /// - [exerciseName]: Name of the exercise being modified
+  /// - [originalSets]: The originally prescribed number of sets
+  /// - [actualSets]: The actual number of sets after adjustment
+  /// - [reason]: The reason for adjustment (fatigue, time, pain, equipment, other)
+  /// - [notes]: Optional additional notes from the user
+  /// - [workoutId]: Optional workout ID if available
+  /// - [exerciseIndex]: Optional index of exercise in the workout
+  Future<bool> recordSetAdjustment({
+    required String exerciseName,
+    required int originalSets,
+    required int actualSets,
+    required String reason,
+    String? notes,
+    String? workoutId,
+    int? exerciseIndex,
+  }) async {
+    try {
+      final userId = await _apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('⚠️ [Workout] Cannot record set adjustment - user not logged in');
+        return false;
+      }
+
+      debugPrint('📝 [Workout] Recording set adjustment for $exerciseName');
+      debugPrint('   Original: $originalSets sets -> Actual: $actualSets sets');
+      debugPrint('   Reason: $reason');
+      if (notes != null) debugPrint('   Notes: $notes');
+
+      // Determine adjustment type
+      String adjustmentType;
+      if (actualSets < originalSets) {
+        adjustmentType = actualSets == 0 ? 'skip_all' : 'reduce_sets';
+      } else if (actualSets > originalSets) {
+        adjustmentType = 'add_sets';
+      } else {
+        adjustmentType = 'no_change';
+      }
+
+      final response = await _apiClient.post(
+        '/performance/workout-patterns',
+        data: {
+          'user_id': userId,
+          'exercise_name': exerciseName,
+          'pattern_type': 'set_adjustment',
+          'adjustment_type': adjustmentType,
+          'original_sets': originalSets,
+          'actual_sets': actualSets,
+          'reason': reason,
+          'notes': notes,
+          'workout_id': workoutId,
+          'exercise_index': exerciseIndex,
+          'recorded_at': DateTime.now().toIso8601String(),
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        debugPrint('✅ [Workout] Set adjustment recorded successfully');
+        return true;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      // Non-critical operation - log error but don't throw
+      // This data is for analytics, not essential for workout completion
+      debugPrint('⚠️ [Workout] Error recording set adjustment (non-critical): $e');
+      return false;
+    }
+  }
+
+  /// Get all set adjustments for a workout
+  Future<List<Map<String, dynamic>>> getSetAdjustments({
+    required String workoutLogId,
+  }) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching set adjustments for workout: $workoutLogId');
+      final response = await _apiClient.get(
+        '/performance/set-adjustments/$workoutLogId',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        final adjustments = data['adjustments'] as List? ?? [];
+        debugPrint('✅ [Workout] Got ${adjustments.length} set adjustments');
+        return List<Map<String, dynamic>>.from(adjustments);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Workout] Error fetching set adjustments: $e');
+      return [];
+    }
+  }
+
+  // ==================== Exercise Progression Methods ====================
+
+  /// Get progression suggestions for exercises the user has mastered
+  /// Returns exercises with 2+ consecutive "too easy" ratings that have
+  /// available progression variants
+  Future<List<ProgressionSuggestion>> getProgressionSuggestions({
+    required String userId,
+  }) async {
+    try {
+      debugPrint('🎯 [Workout] Fetching progression suggestions for user: $userId');
+      final response = await _apiClient.get(
+        '/feedback/progression-suggestions/$userId',
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List;
+        final suggestions = data
+            .map((json) => ProgressionSuggestion.fromJson(json as Map<String, dynamic>))
+            .toList();
+        debugPrint('✅ [Workout] Got ${suggestions.length} progression suggestions');
+        return suggestions;
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('⚠️ [Workout] Error fetching progression suggestions: $e');
+      return [];
+    }
+  }
+
+  /// Respond to a progression suggestion (accept or decline)
+  /// When accepted, the user is agreeing to progress to a harder exercise variant
+  /// When declined, a cooldown is applied to avoid spamming
+  Future<bool> respondToProgressionSuggestion({
+    required String userId,
+    required String exerciseName,
+    required String newExerciseName,
+    required bool accepted,
+    String? declineReason,
+  }) async {
+    try {
+      debugPrint(
+        '🎯 [Workout] ${accepted ? "Accepting" : "Declining"} progression: '
+        '$exerciseName -> $newExerciseName'
+      );
+
+      final response = await _apiClient.post(
+        '/feedback/progression-response',
+        data: {
+          'user_id': userId,
+          'exercise_name': exerciseName,
+          'new_exercise_name': newExerciseName,
+          'accepted': accepted,
+          'decline_reason': declineReason,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Progression response recorded');
+        return true;
+      }
+
+      debugPrint('⚠️ [Workout] Unexpected status code: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error responding to progression: $e');
+      return false;
+    }
+  }
+}
+
+/// Result of body part exclusion operation
+/// Contains details about which exercises were removed from the workout
+class BodyPartExclusionResult {
+  final String workoutId;
+  final List<String> excludedBodyParts;
+  final List<String> removedExercises;
+  final int remainingExercises;
+  final bool success;
+  final String message;
+
+  BodyPartExclusionResult({
+    required this.workoutId,
+    required this.excludedBodyParts,
+    required this.removedExercises,
+    required this.remainingExercises,
+    this.success = true,
+    required this.message,
+  });
+
+  factory BodyPartExclusionResult.fromJson(Map<String, dynamic> json) {
+    return BodyPartExclusionResult(
+      workoutId: json['workout_id'] as String? ?? '',
+      excludedBodyParts: List<String>.from(json['excluded_body_parts'] as List? ?? []),
+      removedExercises: List<String>.from(json['removed_exercises'] as List? ?? []),
+      remainingExercises: json['remaining_exercises'] as int? ?? 0,
+      success: json['success'] as bool? ?? true,
+      message: json['message'] as String? ?? 'Exercises removed successfully',
+    );
+  }
+
+  /// Whether any exercises were actually removed
+  bool get hasRemovedExercises => removedExercises.isNotEmpty;
+}
+
+/// Result of exercise replacement operation
+/// Contains details about the original and replacement exercise
+class ExerciseReplaceResult {
+  final bool replaced;
+  final bool skipped;
+  final String original;
+  final String? replacement;
+  final String reason;
+  final String message;
+
+  ExerciseReplaceResult({
+    required this.replaced,
+    this.skipped = false,
+    required this.original,
+    this.replacement,
+    required this.reason,
+    required this.message,
+  });
+
+  factory ExerciseReplaceResult.fromJson(Map<String, dynamic> json) {
+    return ExerciseReplaceResult(
+      replaced: json['replaced'] as bool? ?? false,
+      skipped: json['skipped'] as bool? ?? false,
+      original: json['original'] as String? ?? '',
+      replacement: json['replacement'] as String?,
+      reason: json['reason'] as String? ?? '',
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
+/// Progression suggestion model
+/// Represents an exercise where the user is ready to progress to a harder variant
+class ProgressionSuggestion {
+  /// Current exercise name that user has mastered
+  final String exerciseName;
+
+  /// Suggested harder variant to progress to
+  final String suggestedNextVariant;
+
+  /// Number of consecutive sessions rated as "too easy"
+  final int consecutiveEasySessions;
+
+  /// Relative difficulty increase (e.g., 0.2 = 20% harder)
+  final double? difficultyIncrease;
+
+  /// ID of the progression chain this exercise belongs to
+  final String? chainId;
+
+  ProgressionSuggestion({
+    required this.exerciseName,
+    required this.suggestedNextVariant,
+    required this.consecutiveEasySessions,
+    this.difficultyIncrease,
+    this.chainId,
+  });
+
+  factory ProgressionSuggestion.fromJson(Map<String, dynamic> json) {
+    return ProgressionSuggestion(
+      exerciseName: json['exercise_name'] as String? ?? '',
+      suggestedNextVariant: json['suggested_next_variant'] as String? ?? '',
+      consecutiveEasySessions: json['consecutive_easy_sessions'] as int? ?? 0,
+      difficultyIncrease: (json['difficulty_increase'] as num?)?.toDouble(),
+      chainId: json['chain_id'] as String?,
+    );
+  }
+
+  /// Human-readable difficulty increase description
+  String get difficultyIncreaseDescription {
+    if (difficultyIncrease == null) return '';
+    final percent = (difficultyIncrease! * 100).toStringAsFixed(0);
+    return '+$percent% difficulty';
   }
 }
 

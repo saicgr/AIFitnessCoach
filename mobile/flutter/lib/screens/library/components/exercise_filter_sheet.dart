@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/services/context_logging_service.dart';
 import '../providers/library_providers.dart';
 import 'filter_section.dart';
 
@@ -121,6 +122,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                               newSet.remove(existing);
                             } else {
                               newSet.add(value);
+                              // Log filter usage for AI preference learning
+                              ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                filterType: 'body_part',
+                                filterValues: [value],
+                              );
                             }
                             ref.read(selectedMuscleGroupsProvider.notifier)
                                 .state = newSet;
@@ -147,6 +153,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                               newSet.remove(existing);
                             } else {
                               newSet.add(value);
+                              // Log filter usage for AI preference learning
+                              ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                filterType: 'equipment',
+                                filterValues: [value],
+                              );
                             }
                             ref.read(selectedEquipmentsProvider.notifier)
                                 .state = newSet;
@@ -172,6 +183,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                               newSet.remove(existing);
                             } else {
                               newSet.add(value);
+                              // Log filter usage for AI preference learning
+                              ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                filterType: 'exercise_type',
+                                filterValues: [value],
+                              );
                             }
                             ref.read(selectedExerciseTypesProvider.notifier)
                                 .state = newSet;
@@ -197,6 +213,11 @@ class ExerciseFilterSheet extends ConsumerWidget {
                               newSet.remove(existing);
                             } else {
                               newSet.add(value);
+                              // Log filter usage for AI preference learning
+                              ref.read(contextLoggingServiceProvider).logExerciseFilterUsed(
+                                filterType: 'goals',
+                                filterValues: [value],
+                              );
                             }
                             ref.read(selectedGoalsProvider.notifier).state =
                                 newSet;
