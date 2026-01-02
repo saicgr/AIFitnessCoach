@@ -1786,9 +1786,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     const Spacer(),
                     // Resize button (only if tile supports multiple sizes)
+                    // Wrapped in Listener to capture taps before ReorderableDelayedDragStartListener
                     if (tile.type.supportedSizes.length > 1)
-                      GestureDetector(
-                        onTap: () => _cycleTileSize(tile.id),
+                      Listener(
+                        onPointerDown: (_) {
+                          _cycleTileSize(tile.id);
+                        },
+                        behavior: HitTestBehavior.opaque,
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -1816,8 +1820,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                       ),
                     // Visibility toggle button
-                    GestureDetector(
-                      onTap: () => _toggleTileVisibility(tile.id),
+                    // Wrapped in Listener to capture taps before ReorderableDelayedDragStartListener
+                    Listener(
+                      onPointerDown: (_) {
+                        _toggleTileVisibility(tile.id);
+                      },
+                      behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(

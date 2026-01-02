@@ -54,9 +54,51 @@ from services.fitness_score_calculator_service import (
 from services.user_context_service import user_context_service, EventType
 
 import logging
+import json
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def get_user_body_info(user_data: dict) -> tuple[float, str]:
+    """
+    Extract bodyweight and gender from user data.
+
+    Primary source is the dedicated columns. Falls back to preferences JSON
+    for backwards compatibility with users who onboarded before the column
+    migration (run scripts/backfill_user_columns.py to fix these).
+
+    Args:
+        user_data: User row from database with weight_kg, gender, and preferences columns
+
+    Returns:
+        Tuple of (bodyweight_kg: float, gender: str) with defaults if not found
+    """
+    weight_kg = user_data.get("weight_kg")
+    gender_val = user_data.get("gender")
+
+    # Fallback to preferences JSON for backwards compatibility
+    if weight_kg is None or gender_val is None:
+        prefs = user_data.get("preferences")
+        if isinstance(prefs, str):
+            try:
+                prefs = json.loads(prefs)
+            except (json.JSONDecodeError, TypeError):
+                prefs = {}
+        elif not isinstance(prefs, dict):
+            prefs = {}
+
+        if weight_kg is None:
+            weight_kg = prefs.get("weight_kg")
+        if gender_val is None:
+            gender_val = prefs.get("gender")
+
+    return float(weight_kg or 70), gender_val or "male"
 
 
 # ============================================================================
@@ -397,7 +439,7 @@ async def get_readiness_for_date(
         "score_date", score_date.isoformat()
     ).maybe_single().execute()
 
-    if not response.data:
+    if not response or not response.data:
         return None
 
     record = response.data
@@ -496,17 +538,15 @@ async def get_all_strength_scores(
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
 
-    # Get user's bodyweight and gender
-    user_response = db.client.table("users").select("weight_kg, gender").eq(
+    # Get user's bodyweight and gender (check column first, then preferences JSON)
+    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user = user_response.data
-    bodyweight = float(user.get("weight_kg", 70))
-    gender = user.get("gender", "male")
+    bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get latest strength scores from database
     scores_response = db.from_("latest_strength_scores").select("*").eq(
@@ -515,7 +555,7 @@ async def get_all_strength_scores(
 
     muscle_scores = {}
 
-    if scores_response.data:
+    if scores_response and scores_response.data:
         for record in scores_response.data:
             muscle_scores[record["muscle_group"]] = StrengthScoreResponse(
                 id=record["id"],
@@ -571,17 +611,15 @@ async def get_strength_detail(
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid muscle group: {muscle_group}")
 
-    # Get user info
-    user_response = db.client.table("users").select("weight_kg, gender").eq(
+    # Get user info (check column first, then preferences JSON)
+    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user = user_response.data
-    bodyweight = float(user.get("weight_kg", 70))
-    gender = user.get("gender", "male")
+    bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get latest strength score
     score_response = db.from_("latest_strength_scores").select("*").eq(
@@ -645,17 +683,15 @@ async def calculate_strength_scores(
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
 
-    # Get user info
-    user_response = db.client.table("users").select("weight_kg, gender").eq(
+    # Get user info (check column first, then preferences JSON)
+    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
         "id", user_id
     ).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user = user_response.data
-    bodyweight = float(user.get("weight_kg", 70))
-    gender = user.get("gender", "male")
+    bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get workout data from last 90 days
     start_date = (date.today() - timedelta(days=90)).isoformat()
@@ -872,7 +908,7 @@ async def get_nutrition_score(
         "week_start", week_start.isoformat()
     ).maybe_single().execute()
 
-    if score_response.data:
+    if score_response and score_response.data:
         record = score_response.data
         return NutritionScoreResponse(
             id=record["id"],
@@ -932,7 +968,7 @@ async def calculate_nutrition_score(
         "id, daily_calories, protein_g, carbs_g, fat_g, fiber_g"
     ).eq("id", request.user_id).maybe_single().execute()
 
-    if not user_response.data:
+    if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
     user = user_response.data
@@ -1088,7 +1124,7 @@ async def get_fitness_score(
         "calculated_at", desc=True
     ).limit(1).maybe_single().execute()
 
-    if score_response.data:
+    if score_response and score_response.data:
         record = score_response.data
         fitness_score = FitnessScoreResponse(
             id=record["id"],
@@ -1164,7 +1200,7 @@ async def calculate_fitness_score(
         "muscle_group, strength_score"
     ).eq("user_id", user_id).execute()
 
-    if strength_response.data:
+    if strength_response and strength_response.data:
         score_objects = {
             r["muscle_group"]: type('obj', (object,), {'strength_score': r["strength_score"] or 0})()
             for r in strength_response.data
@@ -1528,7 +1564,7 @@ async def generate_ai_readiness_insight(
         ).maybe_single().execute()
 
         scheduled_workout = None
-        if workout_response.data:
+        if workout_response and workout_response.data:
             w = workout_response.data
             scheduled_workout = {
                 "name": w.get("name"),
@@ -1542,7 +1578,7 @@ async def generate_ai_readiness_insight(
         ).eq("id", user_id).maybe_single().execute()
 
         user_profile = {}
-        if user_response.data:
+        if user_response and user_response.data:
             u = user_response.data
             user_profile = {
                 "id": user_id,

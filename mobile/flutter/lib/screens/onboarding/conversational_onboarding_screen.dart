@@ -749,6 +749,12 @@ class _ConversationalOnboardingScreenState
         'date_of_birth': finalData['dateOfBirth'],  // Store at top level for database
         'age': finalData['age'],  // Store calculated age at top level
         'activity_level': finalData['activityLevel'] ?? 'lightly_active',  // Store activity level at top level
+        // Store personal info at top level for direct DB queries (scores, etc.)
+        'name': finalData['name'],
+        'gender': finalData['gender'],
+        'height_cm': finalData['heightCm'],
+        'weight_kg': finalData['weightKg'],
+        'target_weight_kg': finalData['targetWeightKg'],
       };
 
       await apiClient.put(
