@@ -892,6 +892,10 @@ class _ConversationalOnboardingScreenState
     final latestMessage =
         state.messages.isNotEmpty ? state.messages.last : null;
 
+    // Get the selected coach for message bubbles
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = aiSettings.getCurrentCoach();
+
     // Show BasicInfoForm on first AI question
     final showBasicInfoForm = latestMessage?.role == 'assistant' &&
         state.messages.length <= 2 &&
@@ -938,6 +942,7 @@ class _ConversationalOnboardingScreenState
                             content: message.content,
                             timestamp: message.timestamp,
                             animationIndex: messageIndex,
+                            coach: coach,
                           ),
 
                           // Quick replies for latest AI message
@@ -1070,14 +1075,15 @@ class _ConversationalOnboardingScreenState
 
   Widget _buildHeader(ThemeColors colors) {
     // Get the selected coach persona from AI settings
+    // Use the state's getCurrentCoach() which has proper fallback to default coach
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    final coach = aiSettings.getCurrentCoach();
 
-    // Use coach's colors and info, or defaults if no coach selected
-    final coachName = coach?.name ?? aiSettings.coachName ?? 'FitWiz';
-    final coachIcon = coach?.icon ?? Icons.auto_awesome;
-    final coachColor = coach?.primaryColor ?? colors.cyan;
-    final coachAccentColor = coach?.accentColor ?? colors.purple;
+    // Use coach's colors and info
+    final coachName = coach.name;
+    final coachIcon = coach.icon;
+    final coachColor = coach.primaryColor;
+    final coachAccentColor = coach.accentColor;
 
     return Container(
       padding: EdgeInsets.only(
@@ -1264,8 +1270,10 @@ class _ConversationalOnboardingScreenState
   void _resetAndGoBack() {
     // Reset onboarding conversation state (but keep quiz data)
     ref.read(onboardingStateProvider.notifier).reset();
-    // Go back to preview screen (don't sign out - user can continue from preview)
-    context.go('/preview');
+    // Reset coach selection so router allows going back to coach selection
+    ref.read(authStateProvider.notifier).markCoachNotSelected();
+    // Go back to coach selection so user can pick a different coach if desired
+    context.go('/coach-selection');
   }
 
   Widget _buildInputArea(ThemeColors colors) {

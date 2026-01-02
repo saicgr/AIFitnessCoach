@@ -146,6 +146,7 @@ def detect_field_from_response(response: str) -> Optional[str]:
         The detected field name, or None if not detected
     """
     response_lower = response.lower()
+    logger.info(f"[detect_field] Checking response: {response_lower[:100]}...")
 
     # Map keywords to fields - order matters (more specific patterns first)
     # NOTE: Put more specific multi-word patterns before generic single words
@@ -200,11 +201,18 @@ def detect_field_from_response(response: str) -> Optional[str]:
         ],
         # Focus areas - use specific patterns, NOT just "full body" which can appear in other contexts
         # Coach variations: "Any muscles to prioritize?", "Focus areas?", "Target any muscle groups?"
+        # Sergeant Max: "which muscles need work", "hit specific muscle"
+        # Dr. Sarah: "muscle groups to emphasize", "target areas"
+        # Hype Danny: "what we hitting", "areas you want to focus"
         "focus_areas": [
-            "muscles you'd like to prioritize", "prioritize", "focus area", "target muscle",
-            "muscle group", "any muscles to", "focus on which", "areas to focus",
-            "body parts", "muscle to work", "emphasize", "priority muscle",
-            "want to hit", "want to target",
+            "muscles you'd like to prioritize", "muscles you want to prioritize", "prioritize",
+            "focus area", "target muscle", "muscle group", "any muscles to", "focus on which",
+            "areas to focus", "body parts", "muscle to work", "emphasize", "priority muscle",
+            "want to hit", "want to target", "full-body focus", "full body focus",
+            "muscles to work on", "specific muscles", "any particular muscle",
+            "muscles need work", "need to hit", "which muscles", "what muscles",
+            "target areas", "areas you want", "muscle focus", "specific areas",
+            "full-body or", "specific focus",
         ],
         # Biggest obstacle - barriers to consistency
         # Coach variations: "What's been holding you back?", "Biggest challenge?", "What stops you?"
@@ -230,8 +238,11 @@ def detect_field_from_response(response: str) -> Optional[str]:
     }
 
     for field, keywords in field_patterns.items():
-        if any(kw in response_lower for kw in keywords):
-            return field
+        for kw in keywords:
+            if kw in response_lower:
+                logger.info(f"[detect_field] MATCHED: field={field}, keyword='{kw}'")
+                return field
+    logger.info(f"[detect_field] No field detected from response")
     return None
 
 

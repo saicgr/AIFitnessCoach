@@ -6,7 +6,7 @@ Contains the node that generates natural, human-like questions for onboarding.
 
 import json
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Tuple
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -21,6 +21,50 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Valid field types that AI can return
+VALID_FIELD_TYPES = {
+    "workout_duration", "target_weight_kg", "past_programs",
+    "focus_areas", "workout_variety", "biggest_obstacle",
+    "selected_days", "completion"
+}
+
+
+def parse_ai_response(response_content: str) -> Tuple[str, Optional[str]]:
+    """
+    Parse AI response to extract question text and field_type.
+
+    The AI should return JSON like:
+    {"question": "How long per workout?", "field_type": "workout_duration"}
+
+    Args:
+        response_content: Raw response from Gemini
+
+    Returns:
+        Tuple of (question_text, field_type)
+        If parsing fails, returns (response_content, None)
+    """
+    try:
+        # Try to parse as JSON
+        parsed = json.loads(response_content)
+        question_text = parsed.get("question", "")
+        field_type = parsed.get("field_type")
+
+        # Validate field_type
+        if field_type and field_type not in VALID_FIELD_TYPES:
+            logger.warning(f"[parse_ai_response] Unknown field_type: {field_type}")
+            field_type = None
+
+        if question_text:
+            logger.info(f"[parse_ai_response] Parsed JSON - question: {question_text[:50]}..., field_type: {field_type}")
+            return question_text, field_type
+        else:
+            logger.warning("[parse_ai_response] JSON parsed but no question field")
+            return response_content, None
+
+    except json.JSONDecodeError as e:
+        logger.warning(f"[parse_ai_response] JSON parse failed: {e}, using raw response")
+        return response_content, None
 
 
 async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
@@ -116,11 +160,13 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     messages.append(HumanMessage(content=user_message))
 
     # Call LLM to generate next question with retry logic
+    # Use JSON mode to get structured output with explicit field_type
     llm = ChatGoogleGenerativeAI(
         model=settings.gemini_model,
         google_api_key=settings.gemini_api_key,
         temperature=0.5,
         timeout=60,
+        model_kwargs={"response_mime_type": "application/json"},
     )
 
     # Retry with exponential backoff
@@ -176,7 +222,17 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
         logger.warning(f"[Onboarding Agent] response.content was {type(response_content)}")
         response_content = str(response_content) if response_content else ""
 
-    logger.info(f"[Onboarding Agent] AI question: {response_content[:100]}...")
+    logger.info(f"[Onboarding Agent] Raw AI response: {response_content[:200]}...")
+
+    # Parse JSON response to extract question and field_type
+    question_text, field_type = parse_ai_response(response_content)
+    logger.info(f"[Onboarding Agent] Parsed - question: {question_text[:100]}..., field_type: {field_type}")
+
+    # If JSON parsing failed or field_type is None, fall back to keyword detection
+    if field_type is None:
+        logger.info("[Onboarding Agent] No field_type from JSON, falling back to keyword detection")
+        field_type = detect_field_from_response(question_text)
+        logger.info(f"[Onboarding Agent] Keyword detection result: {field_type}")
 
     # Determine quick replies and component
     quick_replies = None
@@ -189,68 +245,60 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     # Free text fields
     free_text_fields = ["name", "age", "gender", "heightCm", "weightKg"]
 
-    # Quiz fields that may be pre-filled (check multiple key variants)
-    quiz_fields = [
-        "goals", "equipment", "fitness_level", "days_per_week",
-        "motivation", "workoutDays", "selectedDays", "selected_days",
-        "training_experience", "workout_environment"
-    ]
-    prefilled_quiz_fields = [f for f in quiz_fields if f in collected and collected[f]]
-    # Also check workoutDays/selectedDays for selected_days
-    if collected.get("workoutDays") or collected.get("selectedDays"):
-        if "selected_days" not in prefilled_quiz_fields:
-            prefilled_quiz_fields.append("selected_days")
-    logger.info(f"[Onboarding Agent] Pre-filled quiz fields: {prefilled_quiz_fields}")
-
-    # Check for completion message
-    response_lower = response_content.lower()
-    completion_phrases = [
-        "ready to crush it", "here's what i'm building", "let's do this",
-        "you're all set", "we're ready", "i'm building your", "your plan is ready",
-        "let's get started", "ready to get started", "got everything i need",
-        "i've got everything", "all set to build", "ready to create your",
-        "ready to build your", "let's crush it", "building your", "plan now",
-    ]
-    is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
-
-    # CRITICAL: selected_days check takes priority over completion message
+    # CRITICAL: selected_days check takes priority over everything
     # Even if AI says "building your plan", we still need to collect selected_days
     if "selected_days" in missing and collected.get("days_per_week"):
         component = "day_picker"
         logger.info(f"[Onboarding Agent] selected_days missing - showing day_picker")
-    elif is_completion_message:
-        # Completion message detected - NO quick replies, let user proceed
-        logger.info(f"[Onboarding Agent] Completion message detected - no quick replies (missing: {missing})")
+    elif field_type == "completion":
+        # Completion message - NO quick replies, let user proceed
+        logger.info(f"[Onboarding Agent] Completion field_type - no quick replies")
+    elif field_type:
+        # Use field_type directly to determine quick replies and component
+        logger.info(f"[Onboarding Agent] Using field_type: {field_type}")
+
+        if field_type == "selected_days":
+            component = "day_picker"
+        elif field_type == "target_weight_kg":
+            component = "weight_goal_input"
+            logger.info(f"[Onboarding Agent] target_weight_kg - showing weight goal input")
+        elif field_type in free_text_fields:
+            logger.info(f"[Onboarding Agent] Free text field ({field_type})")
+        elif field_type in QUICK_REPLIES:
+            quick_replies = QUICK_REPLIES[field_type]
+            is_multi_select = field_type in multi_select_fields
     else:
-        # Detect field from AI response
-        detected_field = detect_field_from_response(response_content)
+        # No field_type detected - check for completion phrases as last resort
+        response_lower = question_text.lower()
+        completion_phrases = [
+            "ready to crush it", "here's what i'm building", "let's do this",
+            "you're all set", "we're ready", "i'm building your", "your plan is ready",
+            "let's get started", "ready to get started", "got everything i need",
+            "i've got everything", "all set to build", "ready to create your",
+            "ready to build your", "let's crush it", "building your", "plan now",
+        ]
+        is_completion_message = any(phrase in response_lower for phrase in completion_phrases)
 
-        if detected_field:
-            logger.info(f"[Onboarding Agent] Detected field: {detected_field}")
-
-            if detected_field == "selected_days":
-                component = "day_picker"
-            elif detected_field == "target_weight_kg":
-                component = "weight_goal_input"
-                logger.info(f"[Onboarding Agent] target_weight_kg - showing weight goal input")
-            elif detected_field in free_text_fields:
-                logger.info(f"[Onboarding Agent] Free text field ({detected_field})")
-            elif detected_field in QUICK_REPLIES:
-                quick_replies = QUICK_REPLIES[detected_field]
-                is_multi_select = detected_field in multi_select_fields
+        if is_completion_message:
+            logger.info(f"[Onboarding Agent] Completion phrase detected - no quick replies")
         elif missing:
-            # Fallback to first non-prefilled missing field
+            # Fallback to first missing field (last resort)
+            logger.warning(f"[Onboarding Agent] No field_type, using first missing field as fallback")
+            quiz_fields = [
+                "goals", "equipment", "fitness_level", "days_per_week",
+                "motivation", "workoutDays", "selectedDays", "selected_days",
+                "training_experience", "workout_environment"
+            ]
+            prefilled_quiz_fields = [f for f in quiz_fields if f in collected and collected[f]]
+            if collected.get("workoutDays") or collected.get("selectedDays"):
+                if "selected_days" not in prefilled_quiz_fields:
+                    prefilled_quiz_fields.append("selected_days")
+
             next_field = None
             for field in FIELD_ORDER:
                 if field in missing and field not in prefilled_quiz_fields:
                     next_field = field
                     break
-
-            if not next_field:
-                for field in missing:
-                    if field not in prefilled_quiz_fields:
-                        next_field = field
-                        break
 
             if next_field:
                 logger.info(f"[Onboarding Agent] Fallback to missing field: {next_field}")
@@ -265,14 +313,16 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
     total_elapsed = time.time() - start_time
     logger.info("=" * 60)
     logger.info(f"[Onboarding Agent] COMPLETED in {total_elapsed:.2f}s")
+    logger.info(f"[Onboarding Agent] Question: {question_text[:100]}...")
+    logger.info(f"[Onboarding Agent] Field type: {field_type}")
     logger.info(f"[Onboarding Agent] Quick replies: {quick_replies is not None}")
     logger.info(f"[Onboarding Agent] Component: {component}")
     logger.info("=" * 60)
 
     return {
         "messages": messages + [response],
-        "next_question": response_content,
-        "final_response": response_content,
+        "next_question": question_text,
+        "final_response": question_text,
         "quick_replies": quick_replies,
         "multi_select": is_multi_select,
         "component": component,

@@ -42,7 +42,19 @@ STILL NEED: {missing_fields}
 "Perfect [NAME]! Building your [days]-day [goals] plan now. Let's crush it! 🔥"
 
 DON'T re-ask quiz data (goals, equipment, fitness_level, days_per_week, training_experience).
-DON'T ask about injuries - collected separately."""
+DON'T ask about injuries - collected separately.
+
+📤 RESPONSE FORMAT - Return ONLY valid JSON:
+{{"question": "Your conversational question here", "field_type": "the_field_you_are_asking_about"}}
+
+Valid field_type values: workout_duration, target_weight_kg, past_programs, focus_areas, workout_variety, biggest_obstacle, selected_days, completion
+
+Use "completion" when all fields are collected and you're giving the closing message.
+
+Examples:
+{{"question": "How long per workout - 30, 45, 60, or 90 min?", "field_type": "workout_duration"}}
+{{"question": "Any muscles to prioritize, or full body?", "field_type": "focus_areas"}}
+{{"question": "Perfect Sam! Building your 4-day muscle plan now. Let's crush it! 🔥", "field_type": "completion"}}"""
 
 
 DATA_EXTRACTION_SYSTEM_PROMPT = """Extract structured fitness onboarding data from the user's message.

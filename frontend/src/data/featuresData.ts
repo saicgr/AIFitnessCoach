@@ -17,7 +17,18 @@ export type FeatureCategory =
   | 'skill-progressions'
   | 'gamification'
   | 'customization'
-  | 'integration';
+  | 'integration'
+  | 'fasting'
+  | 'hydration'
+  | 'habits'
+  | 'photos-body'
+  | 'notifications'
+  | 'settings'
+  | 'support'
+  | 'widgets'
+  | 'health-devices'
+  | 'diabetes'
+  | 'hormonal-health';
 
 export type FeatureTier = 'free' | 'premium' | 'ultra' | 'lifetime' | 'all';
 
@@ -49,6 +60,17 @@ export const categoryLabels: Record<FeatureCategory, string> = {
   'gamification': 'Gamification',
   'customization': 'Customization',
   'integration': 'Integration',
+  'fasting': 'Intermittent Fasting',
+  'hydration': 'Hydration Tracking',
+  'habits': 'Habit Tracking',
+  'photos-body': 'Progress Photos & Body',
+  'notifications': 'Notifications',
+  'settings': 'Settings',
+  'support': 'Customer Support',
+  'widgets': 'Home Screen Widgets',
+  'health-devices': 'Health Devices',
+  'diabetes': 'Diabetes Management',
+  'hormonal-health': 'Hormonal Health',
 };
 
 export const categoryIcons: Record<FeatureCategory, string> = {
@@ -68,10 +90,23 @@ export const categoryIcons: Record<FeatureCategory, string> = {
   'gamification': 'M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172',
   'customization': 'M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75',
   'integration': 'M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z',
+  'fasting': 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
+  'hydration': 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418',
+  'habits': 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  'photos-body': 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
+  'notifications': 'M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0',
+  'settings': 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z',
+  'support': 'M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z',
+  'widgets': 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z',
+  'health-devices': 'M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z',
+  'diabetes': 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+  'hormonal-health': 'M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z',
 };
 
 export const features: Feature[] = [
-  // Workout Generation Features
+  // ==========================================
+  // WORKOUT GENERATION & MANAGEMENT FEATURES
+  // ==========================================
   {
     id: 'ai-workout-generation',
     title: 'AI-Powered Workout Generation',
@@ -146,8 +181,117 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['history', 'personalization', 'patterns'],
   },
+  {
+    id: 'branded-programs',
+    title: '12+ Branded Programs',
+    description: 'Ultimate Strength, Lean Machine, Power Builder, Beach Body Ready, and more pre-built programs.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['programs', 'branded', 'structured'],
+    isNew: true,
+    isPopular: true,
+  },
+  {
+    id: 'program-customization',
+    title: 'Program Name Customization',
+    description: 'Rename programs and create custom named programs.',
+    category: 'workout',
+    tier: 'premium',
+    tags: ['programs', 'customization', 'naming'],
+  },
+  {
+    id: 'calibration-workout',
+    title: 'Strength Calibration Workout',
+    description: 'Post-subscription assessment to validate your actual fitness level with AI analysis.',
+    category: 'workout',
+    tier: 'premium',
+    tags: ['calibration', 'assessment', 'strength'],
+    isNew: true,
+  },
+  {
+    id: 'exercise-countdown-timer',
+    title: 'Exercise Countdown Timer',
+    description: 'Transition timers between exercises with voice announcements and countdown alerts.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['timer', 'countdown', 'transitions'],
+  },
+  {
+    id: 'rest-period-timer',
+    title: 'Rest Period Timer',
+    description: 'Automatic rest timers between sets with customizable durations and audio alerts.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['rest', 'timer', 'recovery'],
+  },
+  {
+    id: 'exercise-swap',
+    title: 'Exercise Swap During Workout',
+    description: 'Swap exercises mid-workout with AI-suggested alternatives or library search.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['swap', 'alternatives', 'flexibility'],
+  },
+  {
+    id: 'workout-feedback',
+    title: 'Post-Exercise Feedback',
+    description: 'Rate exercises as too easy, just right, or too hard to improve future recommendations.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['feedback', 'ratings', 'personalization'],
+  },
+  {
+    id: 'actual-reps-logging',
+    title: 'Actual Reps Logging',
+    description: 'Log the reps you actually completed vs planned for accurate tracking.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['logging', 'reps', 'tracking'],
+  },
+  {
+    id: 'weight-tracking',
+    title: 'Weight Tracking Per Set',
+    description: 'Log weight used for each set with AI weight suggestions based on history.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['weight', 'tracking', 'progressive-overload'],
+  },
+  {
+    id: 'quick-regenerate',
+    title: 'Quick Regenerate Workouts',
+    description: 'One-tap regeneration of workouts using current settings without wizard.',
+    category: 'workout',
+    tier: 'premium',
+    tags: ['regenerate', 'quick', 'convenience'],
+  },
+  {
+    id: 'workout-notes',
+    title: 'Workout Notes',
+    description: 'Add notes to individual exercises or entire workout sessions.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['notes', 'logging', 'journal'],
+  },
+  {
+    id: 'superset-support',
+    title: 'Superset & Circuit Support',
+    description: 'Create and manage supersets, circuits, and compound exercise groupings.',
+    category: 'workout',
+    tier: 'premium',
+    tags: ['superset', 'circuit', 'advanced'],
+  },
+  {
+    id: 'workout-share',
+    title: 'Share Workout Completion',
+    description: 'Share workout summaries to social media with stats and achievements.',
+    category: 'workout',
+    tier: 'free',
+    tags: ['share', 'social', 'summary'],
+  },
 
-  // AI Coach Features
+  // ==========================================
+  // AI COACH FEATURES
+  // ==========================================
   {
     id: 'ai-coach-chat',
     title: '24/7 AI Coach Chat',
@@ -189,8 +333,67 @@ export const features: Feature[] = [
     tier: 'all',
     tags: ['history', 'chat', 'memory'],
   },
+  {
+    id: 'multi-agent-routing',
+    title: 'Multi-Agent AI Routing',
+    description: 'Automatic routing to specialized agents: Coach, Nutrition, Workout, Injury, Hydration.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['agents', 'routing', 'specialized'],
+    isNew: true,
+  },
+  {
+    id: 'mention-agents',
+    title: '@Mention Agent Routing',
+    description: 'Direct messages to specific agents using @coach, @nutrition, @workout, @injury.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['mention', 'agents', 'direct'],
+  },
+  {
+    id: 'streaming-responses',
+    title: 'Streaming AI Responses',
+    description: 'Real-time token streaming for faster AI response display.',
+    category: 'ai-coach',
+    tier: 'free',
+    tags: ['streaming', 'real-time', 'fast'],
+  },
+  {
+    id: 'chat-to-action',
+    title: 'Chat-to-Action Commands',
+    description: 'Execute app actions directly from chat like starting workouts or logging meals.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['actions', 'commands', 'integration'],
+  },
+  {
+    id: 'ai-persona-selection',
+    title: 'AI Persona Selection',
+    description: 'Choose your AI coach personality style for personalized interactions.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['persona', 'personality', 'customization'],
+  },
+  {
+    id: 'quick-workout-from-chat',
+    title: 'Generate Workout from Chat',
+    description: 'Ask AI to generate a quick workout and start it immediately from chat.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['generate', 'quick', 'chat'],
+  },
+  {
+    id: 'nutrition-logging-chat',
+    title: 'Log Meals via Chat',
+    description: 'Describe your meal in natural language and AI logs the nutrition.',
+    category: 'ai-coach',
+    tier: 'premium',
+    tags: ['nutrition', 'logging', 'natural-language'],
+  },
 
-  // Exercise Library Features
+  // ==========================================
+  // EXERCISE LIBRARY FEATURES
+  // ==========================================
   {
     id: 'exercise-library',
     title: '1700+ Exercise Library',
@@ -224,8 +427,66 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['history', 'tracking', 'progress'],
   },
+  {
+    id: 'exercise-videos',
+    title: 'HD Video Demonstrations',
+    description: 'High-quality video demos for every exercise with proper form guidance.',
+    category: 'exercise-library',
+    tier: 'free',
+    tags: ['videos', 'form', 'demonstrations'],
+  },
+  {
+    id: 'exercise-favorites',
+    title: 'Favorite Exercises',
+    description: 'Mark exercises as favorites for AI to prioritize in workout generation.',
+    category: 'exercise-library',
+    tier: 'free',
+    tags: ['favorites', 'preferences', 'personalization'],
+  },
+  {
+    id: 'exercise-queue',
+    title: 'Exercise Queue',
+    description: 'Queue specific exercises to be included in your next workout.',
+    category: 'exercise-library',
+    tier: 'premium',
+    tags: ['queue', 'planning', 'customization'],
+  },
+  {
+    id: 'staple-exercises',
+    title: 'Staple Exercises',
+    description: 'Mark core lifts like Squat, Bench, Deadlift that never rotate out of your program.',
+    category: 'exercise-library',
+    tier: 'premium',
+    tags: ['staples', 'core-lifts', 'consistency'],
+  },
+  {
+    id: 'exercises-to-avoid',
+    title: 'Exercises to Avoid',
+    description: 'Mark exercises to skip due to injury or preference with safe alternatives.',
+    category: 'exercise-library',
+    tier: 'free',
+    tags: ['avoid', 'injury', 'safety'],
+  },
+  {
+    id: 'custom-exercises',
+    title: 'Custom Exercises',
+    description: 'Create and add your own custom exercises to the library.',
+    category: 'exercise-library',
+    tier: 'premium',
+    tags: ['custom', 'create', 'personalization'],
+  },
+  {
+    id: 'offline-videos',
+    title: 'Offline Video Cache',
+    description: '500MB LRU cache for offline exercise video access.',
+    category: 'exercise-library',
+    tier: 'premium',
+    tags: ['offline', 'cache', 'videos'],
+  },
 
-  // Progress & Analytics Features
+  // ==========================================
+  // PROGRESS & ANALYTICS FEATURES
+  // ==========================================
   {
     id: 'progress-charts',
     title: 'Visual Progress Charts',
@@ -284,8 +545,82 @@ export const features: Feature[] = [
     tier: 'ultra',
     tags: ['muscles', 'heatmap', 'balance', 'analytics'],
   },
+  {
+    id: 'overall-fitness-score',
+    title: 'Overall Fitness Score',
+    description: 'Combined 0-100 score from strength, consistency, nutrition, and readiness.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['score', 'fitness', 'comprehensive'],
+  },
+  {
+    id: 'strength-score',
+    title: 'Strength Score',
+    description: 'Score based on workout performance and progressive overload achievements.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['strength', 'score', 'performance'],
+  },
+  {
+    id: 'nutrition-score',
+    title: 'Nutrition Score',
+    description: 'Weekly nutrition adherence score based on logging, calories, protein, and health.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['nutrition', 'score', 'adherence'],
+  },
+  {
+    id: 'consistency-score',
+    title: 'Consistency Score',
+    description: 'Workout completion rate percentage over time.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['consistency', 'score', 'completion'],
+  },
+  {
+    id: 'exercise-progression-charts',
+    title: 'Exercise Progression Charts',
+    description: 'Line charts showing max weight, volume, and estimated 1RM trends per exercise.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['charts', 'exercise', '1rm'],
+  },
+  {
+    id: 'muscle-heatmap',
+    title: 'Muscle Training Heatmap',
+    description: 'Body diagram showing training intensity for each muscle group with colors.',
+    category: 'progress',
+    tier: 'ultra',
+    tags: ['heatmap', 'muscles', 'visualization'],
+  },
+  {
+    id: 'muscle-balance',
+    title: 'Muscle Balance Analysis',
+    description: 'Push/pull ratio, upper/lower ratio, and overall balance score.',
+    category: 'progress',
+    tier: 'ultra',
+    tags: ['balance', 'muscles', 'ratio'],
+  },
+  {
+    id: 'estimated-1rm',
+    title: 'Estimated 1RM Calculation',
+    description: 'Automatic calculation of one-rep max using the Epley formula.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['1rm', 'calculation', 'strength'],
+  },
+  {
+    id: 'weekly-summary',
+    title: 'Weekly Summary Reports',
+    description: 'End-of-week recap with AI-generated insights and recommendations.',
+    category: 'progress',
+    tier: 'premium',
+    tags: ['summary', 'weekly', 'insights'],
+  },
 
-  // Nutrition Features
+  // ==========================================
+  // NUTRITION TRACKING FEATURES
+  // ==========================================
   {
     id: 'food-photo-scanning',
     title: 'Food Photo Scanning',
@@ -313,7 +648,7 @@ export const features: Feature[] = [
   {
     id: 'cooked-food-converter',
     title: 'Cooked Food Converter',
-    description: 'Convert raw ingredient weights to cooked portions automatically.',
+    description: 'Convert raw ingredient weights to cooked portions with 55+ food support.',
     category: 'nutrition',
     tier: 'premium',
     tags: ['cooking', 'conversion', 'portions'],
@@ -321,7 +656,7 @@ export const features: Feature[] = [
   {
     id: 'frequent-foods',
     title: 'Frequent Foods Quick Log',
-    description: 'Quick access to your most logged foods for faster meal tracking.',
+    description: 'One-tap re-logging of your most frequently eaten foods.',
     category: 'nutrition',
     tier: 'premium',
     tags: ['quick', 'favorites', 'logging'],
@@ -329,13 +664,340 @@ export const features: Feature[] = [
   {
     id: 'restaurant-help',
     title: 'Restaurant Menu Help',
-    description: 'Get macro estimates for restaurant meals and menu items.',
+    description: 'Get min/mid/max calorie estimates for restaurant meals.',
     category: 'nutrition',
     tier: 'ultra',
     tags: ['restaurant', 'eating out', 'estimates'],
   },
+  {
+    id: 'micronutrient-tracking',
+    title: '40+ Micronutrient Tracking',
+    description: 'Track vitamins, minerals, and fatty acids with three-tier goals.',
+    category: 'nutrition',
+    tier: 'ultra',
+    tags: ['micronutrients', 'vitamins', 'minerals'],
+  },
+  {
+    id: 'recipe-builder',
+    title: 'Recipe Builder',
+    description: 'Create custom recipes with automatic per-serving nutrition calculations.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['recipes', 'custom', 'cooking'],
+  },
+  {
+    id: 'ai-recipes',
+    title: 'AI-Generated Recipes',
+    description: 'Get personalized recipe suggestions based on body type, culture, and diet.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['ai', 'recipes', 'personalized'],
+    isNew: true,
+  },
+  {
+    id: 'diet-types',
+    title: '12 Diet Type Support',
+    description: 'Vegetarian, vegan, keto, flexitarian, pescatarian, and more diet types.',
+    category: 'nutrition',
+    tier: 'free',
+    tags: ['diet', 'vegetarian', 'vegan', 'keto'],
+  },
+  {
+    id: 'cuisine-preferences',
+    title: '20+ Cuisine Preferences',
+    description: 'Indian, Italian, Mexican, Japanese, and more cuisines for recipe suggestions.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['cuisine', 'cultural', 'preferences'],
+  },
+  {
+    id: 'inflammation-scanner',
+    title: 'Ingredient Inflammation Analysis',
+    description: 'AI-powered barcode ingredient analysis for inflammatory properties.',
+    category: 'nutrition',
+    tier: 'ultra',
+    tags: ['inflammation', 'ingredients', 'health'],
+    isNew: true,
+  },
+  {
+    id: 'calm-mode',
+    title: 'Calm Mode',
+    description: 'Hide calorie numbers and focus on food quality instead.',
+    category: 'nutrition',
+    tier: 'free',
+    tags: ['mental-health', 'calm', 'quality'],
+  },
+  {
+    id: 'food-mood',
+    title: 'Food-Mood Tracking',
+    description: 'Log how you feel after meals to identify food sensitivities.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['mood', 'feelings', 'sensitivity'],
+  },
+  {
+    id: 'tdee-calculation',
+    title: 'Adaptive TDEE Calculation',
+    description: 'Weekly recalculation of Total Daily Energy Expenditure based on data.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['tdee', 'calories', 'metabolism'],
+  },
+  {
+    id: 'training-day-calories',
+    title: 'Training Day Calories',
+    description: 'Automatically higher calorie targets on workout days.',
+    category: 'nutrition',
+    tier: 'premium',
+    tags: ['calories', 'workout', 'adjustment'],
+  },
 
-  // Scheduling Features
+  // ==========================================
+  // INTERMITTENT FASTING FEATURES
+  // ==========================================
+  {
+    id: 'fasting-timer',
+    title: 'Fasting Timer',
+    description: 'Start/stop fasting timer with circular dial and metabolic zone tracking.',
+    category: 'fasting',
+    tier: 'free',
+    tags: ['timer', 'fasting', 'tracking'],
+    isPopular: true,
+  },
+  {
+    id: 'fasting-protocols',
+    title: '10+ Fasting Protocols',
+    description: '12:12, 14:10, 16:8, 18:6, 20:4, OMAD, 5:2, ADF, and extended fasts.',
+    category: 'fasting',
+    tier: 'free',
+    tags: ['protocols', 'intermittent', 'fasting'],
+  },
+  {
+    id: 'metabolic-zones',
+    title: 'Metabolic Zone Tracking',
+    description: 'Track Fed, Fat Burning, Ketosis, and Deep Ketosis zones.',
+    category: 'fasting',
+    tier: 'premium',
+    tags: ['zones', 'ketosis', 'metabolism'],
+  },
+  {
+    id: 'fasting-streaks',
+    title: 'Fasting Streaks',
+    description: 'Track consecutive successful fasts with streak freeze option.',
+    category: 'fasting',
+    tier: 'free',
+    tags: ['streaks', 'consistency', 'motivation'],
+  },
+  {
+    id: 'fasting-safety',
+    title: 'Fasting Safety Screening',
+    description: '6 health questions with risk assessment and warning popups.',
+    category: 'fasting',
+    tier: 'free',
+    tags: ['safety', 'health', 'screening'],
+  },
+  {
+    id: 'fasting-impact',
+    title: 'Fasting Impact Analysis',
+    description: 'Analyze how fasting affects weight, goals, and workout performance.',
+    category: 'fasting',
+    tier: 'premium',
+    tags: ['impact', 'analysis', 'correlation'],
+    isNew: true,
+  },
+  {
+    id: 'fasting-calendar',
+    title: 'Fasting Calendar View',
+    description: 'Calendar showing fasting days, weight logs, and workouts per day.',
+    category: 'fasting',
+    tier: 'premium',
+    tags: ['calendar', 'history', 'visualization'],
+  },
+  {
+    id: 'eating-window-timer',
+    title: 'Eating Window Timer',
+    description: 'Countdown timer to eating window close with notifications.',
+    category: 'fasting',
+    tier: 'free',
+    tags: ['eating', 'window', 'timer'],
+  },
+  {
+    id: 'smart-meal-detection',
+    title: 'Smart Meal Detection',
+    description: 'Auto-end fast when logging food during fasting window.',
+    category: 'fasting',
+    tier: 'premium',
+    tags: ['smart', 'detection', 'automation'],
+  },
+  {
+    id: 'fasting-ai-insights',
+    title: 'AI Fasting Insights',
+    description: 'Gemini-generated personalized insights about your fasting impact.',
+    category: 'fasting',
+    tier: 'premium',
+    tags: ['ai', 'insights', 'personalized'],
+  },
+
+  // ==========================================
+  // HYDRATION FEATURES
+  // ==========================================
+  {
+    id: 'water-goal',
+    title: 'Daily Water Goal',
+    description: 'Customizable daily water intake target with progress tracking.',
+    category: 'hydration',
+    tier: 'free',
+    tags: ['water', 'goal', 'tracking'],
+  },
+  {
+    id: 'quick-water-log',
+    title: 'Quick Water Logging',
+    description: '8oz, 16oz, and custom amount quick add buttons.',
+    category: 'hydration',
+    tier: 'free',
+    tags: ['quick', 'logging', 'water'],
+  },
+  {
+    id: 'drink-types',
+    title: 'Multiple Drink Types',
+    description: 'Track water, protein shakes, coffee, and other beverages.',
+    category: 'hydration',
+    tier: 'free',
+    tags: ['drinks', 'variety', 'tracking'],
+  },
+
+  // ==========================================
+  // HABIT TRACKING FEATURES
+  // ==========================================
+  {
+    id: 'habit-dashboard',
+    title: 'Habit Dashboard',
+    description: 'Main screen showing today\'s habits with progress indicators.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['dashboard', 'habits', 'progress'],
+    isNew: true,
+  },
+  {
+    id: 'positive-habits',
+    title: 'Positive Habit Tracking',
+    description: 'Track habits to build like drink water, meditate, exercise.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['positive', 'building', 'habits'],
+  },
+  {
+    id: 'negative-habits',
+    title: 'Negative Habit Breaking',
+    description: 'Track habits to break like no DoorDash, no sugar, no alcohol.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['negative', 'breaking', 'habits'],
+  },
+  {
+    id: 'habit-streaks',
+    title: 'Habit Streak Tracking',
+    description: 'Current and best streak tracking with auto-reset on missed days.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['streaks', 'consistency', 'tracking'],
+  },
+  {
+    id: 'habit-templates',
+    title: '16+ Habit Templates',
+    description: 'Pre-built habits like water, steps, meditate, no sugar for quick setup.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['templates', 'quick', 'prebuilt'],
+  },
+  {
+    id: 'custom-habits',
+    title: 'Custom Habit Creation',
+    description: 'Create habits with custom name, icon, color, and target.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['custom', 'create', 'personalization'],
+  },
+  {
+    id: 'habit-reminders',
+    title: 'Habit Reminders',
+    description: 'Set reminder times for each individual habit.',
+    category: 'habits',
+    tier: 'free',
+    tags: ['reminders', 'notifications', 'habits'],
+  },
+  {
+    id: 'ai-habit-suggestions',
+    title: 'AI Habit Suggestions',
+    description: 'Gemini suggests habits based on your fitness goals.',
+    category: 'habits',
+    tier: 'premium',
+    tags: ['ai', 'suggestions', 'personalized'],
+  },
+
+  // ==========================================
+  // PROGRESS PHOTOS & BODY TRACKING
+  // ==========================================
+  {
+    id: 'progress-photos',
+    title: 'Progress Photo Capture',
+    description: 'Take and store front, side, and back view progress photos.',
+    category: 'photos-body',
+    tier: 'free',
+    tags: ['photos', 'progress', 'capture'],
+  },
+  {
+    id: 'before-after',
+    title: 'Before/After Comparison',
+    description: 'Side-by-side photo comparison with date and weight overlay.',
+    category: 'photos-body',
+    tier: 'premium',
+    tags: ['comparison', 'before-after', 'visualization'],
+  },
+  {
+    id: 'body-measurements',
+    title: '15 Body Measurements',
+    description: 'Track chest, waist, arms, legs, and more measurement points.',
+    category: 'photos-body',
+    tier: 'free',
+    tags: ['measurements', 'body', 'tracking'],
+  },
+  {
+    id: 'weight-logging',
+    title: 'Weight Logging',
+    description: 'Track weight over time with trend smoothing and analysis.',
+    category: 'photos-body',
+    tier: 'free',
+    tags: ['weight', 'logging', 'trends'],
+  },
+  {
+    id: 'body-fat-tracking',
+    title: 'Body Fat Percentage',
+    description: 'Track body composition changes over time.',
+    category: 'photos-body',
+    tier: 'premium',
+    tags: ['body-fat', 'composition', 'tracking'],
+  },
+  {
+    id: 'photo-editor',
+    title: 'Photo Editor',
+    description: 'Crop photos and add FitWiz logo overlay.',
+    category: 'photos-body',
+    tier: 'free',
+    tags: ['editor', 'crop', 'customize'],
+  },
+  {
+    id: 'measurement-graphs',
+    title: 'Measurement Trend Graphs',
+    description: 'Visual charts of all measurement trends over time.',
+    category: 'photos-body',
+    tier: 'premium',
+    tags: ['graphs', 'trends', 'visualization'],
+  },
+
+  // ==========================================
+  // SCHEDULING FEATURES
+  // ==========================================
   {
     id: 'smart-scheduling',
     title: 'Smart Scheduling',
@@ -369,8 +1031,26 @@ export const features: Feature[] = [
     tier: 'free',
     tags: ['rest', 'timers', 'recovery'],
   },
+  {
+    id: 'weekly-calendar',
+    title: 'Weekly Calendar View',
+    description: '7-day grid view with workout/rest day indicators.',
+    category: 'scheduling',
+    tier: 'free',
+    tags: ['calendar', 'weekly', 'view'],
+  },
+  {
+    id: 'agenda-view',
+    title: 'Agenda View',
+    description: 'List view of upcoming workouts with completion status.',
+    category: 'scheduling',
+    tier: 'free',
+    tags: ['agenda', 'list', 'upcoming'],
+  },
 
-  // Injury Prevention Features
+  // ==========================================
+  // INJURY PREVENTION FEATURES
+  // ==========================================
   {
     id: 'strain-prevention',
     title: '10% Rule Strain Prevention',
@@ -412,8 +1092,34 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['fatigue', 'ai', 'monitoring'],
   },
+  {
+    id: 'muscles-to-avoid',
+    title: 'Muscles to Avoid',
+    description: 'Skip or reduce exercises targeting specific muscle groups.',
+    category: 'injury-prevention',
+    tier: 'free',
+    tags: ['muscles', 'avoid', 'safety'],
+  },
+  {
+    id: 'temporary-avoidance',
+    title: 'Temporary Avoidance',
+    description: 'Set end date for temporary exercise/muscle avoidances.',
+    category: 'injury-prevention',
+    tier: 'premium',
+    tags: ['temporary', 'recovery', 'timeline'],
+  },
+  {
+    id: 'safe-substitutes',
+    title: 'Safe Substitute Suggestions',
+    description: 'View injury-safe alternatives when avoiding exercises.',
+    category: 'injury-prevention',
+    tier: 'premium',
+    tags: ['substitutes', 'alternatives', 'safe'],
+  },
 
-  // Skill Progressions Features
+  // ==========================================
+  // SKILL PROGRESSIONS FEATURES
+  // ==========================================
   {
     id: 'skill-chains',
     title: '7 Skill Progression Chains',
@@ -439,8 +1145,42 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['mastery', 'tracking', 'suggestions'],
   },
+  {
+    id: 'unlock-criteria',
+    title: 'Unlock Criteria System',
+    description: 'Each progression step has specific rep/hold/session requirements to unlock.',
+    category: 'skill-progressions',
+    tier: 'premium',
+    tags: ['unlock', 'criteria', 'requirements'],
+  },
+  {
+    id: 'skill-tree',
+    title: 'Visual Skill Tree',
+    description: 'Browse progression chains with visual locked/unlocked step display.',
+    category: 'skill-progressions',
+    tier: 'premium',
+    tags: ['visual', 'tree', 'progress'],
+  },
+  {
+    id: 'rep-range-preferences',
+    title: 'Rep Range Preferences',
+    description: 'Set preferred training focus: Strength 4-6, Hypertrophy 8-12, Endurance 15+.',
+    category: 'skill-progressions',
+    tier: 'premium',
+    tags: ['rep-range', 'preferences', 'training'],
+  },
+  {
+    id: 'avoid-high-reps',
+    title: 'Avoid High-Rep Toggle',
+    description: 'When enabled, caps all exercises at 12 reps maximum.',
+    category: 'skill-progressions',
+    tier: 'premium',
+    tags: ['high-reps', 'cap', 'preference'],
+  },
 
-  // Cardio Features
+  // ==========================================
+  // CARDIO & ENDURANCE FEATURES
+  // ==========================================
   {
     id: 'gradual-cardio',
     title: 'Gradual Cardio Progressions',
@@ -466,8 +1206,18 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['heart rate', 'zones', 'training'],
   },
+  {
+    id: 'treadmill-annotation',
+    title: 'Treadmill Run Annotation',
+    description: 'Mark runs as indoor/outdoor/treadmill for accurate tracking.',
+    category: 'cardio',
+    tier: 'free',
+    tags: ['treadmill', 'indoor', 'annotation'],
+  },
 
-  // Accessibility Features
+  // ==========================================
+  // ACCESSIBILITY FEATURES
+  // ==========================================
   {
     id: 'senior-mode',
     title: 'Senior Mode',
@@ -494,15 +1244,111 @@ export const features: Feature[] = [
     tags: ['low-impact', 'alternatives', 'safety'],
   },
   {
+    id: 'large-touch-targets',
+    title: 'Large Touch Targets',
+    description: 'Bigger buttons and touch areas for easier interaction.',
+    category: 'accessibility',
+    tier: 'free',
+    tags: ['touch', 'large', 'accessibility'],
+  },
+  {
+    id: 'high-contrast',
+    title: 'High Contrast Mode',
+    description: 'Improved visibility with high contrast color scheme.',
+    category: 'accessibility',
+    tier: 'free',
+    tags: ['contrast', 'visibility', 'accessibility'],
+  },
+  {
+    id: 'text-size',
+    title: 'Adjustable Text Size',
+    description: 'Customize text size for better readability.',
+    category: 'accessibility',
+    tier: 'free',
+    tags: ['text', 'size', 'readability'],
+  },
+  {
+    id: 'reduced-motion',
+    title: 'Reduced Motion',
+    description: 'Fewer animations for users sensitive to motion.',
+    category: 'accessibility',
+    tier: 'free',
+    tags: ['motion', 'animations', 'accessibility'],
+  },
+  {
+    id: 'voiceover-support',
+    title: 'VoiceOver/TalkBack Support',
+    description: 'Screen reader compatibility for visually impaired users.',
+    category: 'accessibility',
+    tier: 'free',
+    tags: ['voiceover', 'talkback', 'screen-reader'],
+  },
+
+  // ==========================================
+  // HORMONAL HEALTH FEATURES
+  // ==========================================
+  {
     id: 'hormonal-health',
     title: 'Hormonal Health Tracking',
     description: 'Menstrual cycle tracking with cycle-aware workout intensity adjustments.',
-    category: 'accessibility',
+    category: 'hormonal-health',
     tier: 'premium',
     tags: ['hormonal', 'cycle', 'women'],
+    isNew: true,
+  },
+  {
+    id: 'menstrual-cycle-tracking',
+    title: 'Menstrual Cycle Tracking',
+    description: 'Log period dates with automatic cycle phase calculation.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['menstrual', 'cycle', 'tracking'],
+  },
+  {
+    id: 'cycle-aware-workouts',
+    title: 'Cycle-Aware Workouts',
+    description: 'AI adjusts workout intensity based on menstrual/follicular/ovulation/luteal phases.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['cycle', 'workouts', 'adaptation'],
+  },
+  {
+    id: 'symptom-tracking',
+    title: 'Symptom Tracking',
+    description: 'Log fatigue, cramps, mood swings, bloating with AI adjustments.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['symptoms', 'tracking', 'adjustment'],
+  },
+  {
+    id: 'kegel-exercises',
+    title: '16 Kegel Exercises',
+    description: 'Pelvic floor training with male/female-specific exercises and tracking.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['kegel', 'pelvic', 'exercises'],
+    isNew: true,
+  },
+  {
+    id: 'hormonal-diet',
+    title: 'Hormonal Diet Recommendations',
+    description: '50+ hormone-supportive foods for testosterone, estrogen, PCOS, menopause.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['diet', 'hormones', 'nutrition'],
+  },
+  {
+    id: 'cycle-phase-nutrition',
+    title: 'Cycle Phase Nutrition',
+    description: 'Phase-specific food recommendations for menstrual, follicular, ovulation, luteal.',
+    category: 'hormonal-health',
+    tier: 'premium',
+    tags: ['cycle', 'nutrition', 'phases'],
   },
 
-  // Gamification Features
+  // ==========================================
+  // GAMIFICATION FEATURES
+  // ==========================================
   {
     id: 'achievement-badges',
     title: '30+ Achievement Badges',
@@ -536,8 +1382,58 @@ export const features: Feature[] = [
     tags: ['neat', 'steps', 'activity', 'gamification'],
     isNew: true,
   },
+  {
+    id: 'weekly-goals',
+    title: 'Weekly Personal Goals',
+    description: 'Set goals like "How many push-ups can I do?" or "500 push-ups this week".',
+    category: 'gamification',
+    tier: 'free',
+    tags: ['goals', 'weekly', 'challenges'],
+  },
+  {
+    id: 'goal-leaderboard',
+    title: 'Goal Leaderboard',
+    description: 'Compare with friends on the same weekly goals.',
+    category: 'gamification',
+    tier: 'premium',
+    tags: ['leaderboard', 'friends', 'competition'],
+  },
 
-  // Social Features
+  // ==========================================
+  // SOCIAL FEATURES
+  // ==========================================
+  {
+    id: 'activity-feed',
+    title: 'Activity Feed',
+    description: 'See workout posts from friends with likes and comments.',
+    category: 'social',
+    tier: 'premium',
+    tags: ['feed', 'activity', 'social'],
+  },
+  {
+    id: 'friend-system',
+    title: 'Friend System',
+    description: 'Find, add, and manage friends with request system.',
+    category: 'social',
+    tier: 'premium',
+    tags: ['friends', 'connections', 'social'],
+  },
+  {
+    id: 'challenges',
+    title: 'Fitness Challenges',
+    description: 'Create and join volume, reps, or workout challenges with friends.',
+    category: 'social',
+    tier: 'premium',
+    tags: ['challenges', 'competition', 'friends'],
+  },
+  {
+    id: 'leaderboards',
+    title: 'Leaderboards',
+    description: 'Global and friends-only weekly, monthly, all-time rankings.',
+    category: 'social',
+    tier: 'ultra',
+    tags: ['leaderboards', 'competition', 'rankings'],
+  },
   {
     id: 'shareable-workouts',
     title: 'Shareable Workout Links',
@@ -555,23 +1451,25 @@ export const features: Feature[] = [
     tags: ['instagram', 'social', 'sharing'],
   },
   {
-    id: 'leaderboards',
-    title: 'Leaderboards',
-    description: 'Compete with friends and the community on workout metrics.',
+    id: 'emoji-reactions',
+    title: 'Emoji Reactions',
+    description: '5 reaction types on posts from friends.',
     category: 'social',
-    tier: 'ultra',
-    tags: ['leaderboards', 'competition', 'social'],
+    tier: 'premium',
+    tags: ['reactions', 'emoji', 'engagement'],
   },
   {
-    id: 'friends-following',
-    title: 'Friends & Following',
-    description: 'Connect with friends and follow their fitness journey.',
+    id: 'feature-voting',
+    title: 'Feature Voting System',
+    description: 'Upvote and suggest new features for the app.',
     category: 'social',
-    tier: 'ultra',
-    tags: ['friends', 'following', 'social'],
+    tier: 'free',
+    tags: ['voting', 'features', 'community'],
   },
 
-  // Trial & Demo Features
+  // ==========================================
+  // TRIAL & DEMO FEATURES
+  // ==========================================
   {
     id: 'demo-day',
     title: '24-Hour Demo Day',
@@ -591,8 +1489,8 @@ export const features: Feature[] = [
   },
   {
     id: 'try-workout',
-    title: 'Try One Workout Free',
-    description: 'Complete one full workout from your plan before subscribing.',
+    title: 'Try 3 Workouts Free',
+    description: 'Complete 3 full workouts from your plan before subscribing.',
     category: 'trial-demo',
     tier: 'free',
     tags: ['try', 'workout', 'free'],
@@ -613,8 +1511,26 @@ export const features: Feature[] = [
     tier: 'free',
     tags: ['trial', 'free', 'premium'],
   },
+  {
+    id: 'guest-preview',
+    title: '10-Minute Guest Preview',
+    description: 'Guest session with limited home screen, 20 exercises, sample workouts.',
+    category: 'trial-demo',
+    tier: 'free',
+    tags: ['guest', 'preview', 'demo'],
+  },
+  {
+    id: 'pricing-preview',
+    title: 'Pre-Auth Pricing Preview',
+    description: 'See all pricing tiers before creating an account.',
+    category: 'trial-demo',
+    tier: 'free',
+    tags: ['pricing', 'preview', 'transparency'],
+  },
 
-  // Subscription Features
+  // ==========================================
+  // SUBSCRIPTION FEATURES
+  // ==========================================
   {
     id: 'subscription-pause',
     title: 'Subscription Pause',
@@ -642,13 +1558,47 @@ export const features: Feature[] = [
   {
     id: 'in-app-management',
     title: 'In-App Subscription Management',
-    description: 'Manage your subscription without going to App Store.',
+    description: 'Manage, pause, or cancel subscription without going to App Store.',
     category: 'subscription',
     tier: 'premium',
     tags: ['management', 'subscription', 'control'],
   },
+  {
+    id: 'subscription-history',
+    title: 'Subscription History',
+    description: 'Timeline view of all subscription changes, upgrades, downgrades.',
+    category: 'subscription',
+    tier: 'premium',
+    tags: ['history', 'timeline', 'changes'],
+  },
+  {
+    id: 'renewal-reminders',
+    title: 'Renewal Reminder Notifications',
+    description: 'Push notifications 5 days and 1 day before renewal.',
+    category: 'subscription',
+    tier: 'premium',
+    tags: ['renewal', 'reminders', 'notifications'],
+  },
+  {
+    id: 'refund-request',
+    title: 'In-App Refund Request',
+    description: 'Submit refund requests with reason selection and tracking ID.',
+    category: 'subscription',
+    tier: 'premium',
+    tags: ['refund', 'request', 'support'],
+  },
+  {
+    id: 'feature-comparison',
+    title: 'Tier Feature Comparison',
+    description: 'Side-by-side comparison of Free, Premium, Ultra, and Lifetime features.',
+    category: 'subscription',
+    tier: 'free',
+    tags: ['comparison', 'tiers', 'features'],
+  },
 
-  // Customization Features
+  // ==========================================
+  // CUSTOMIZATION FEATURES
+  // ==========================================
   {
     id: 'sound-customization',
     title: 'Sound Customization',
@@ -673,8 +1623,58 @@ export const features: Feature[] = [
     tier: 'free',
     tags: ['email', 'preferences', 'notifications'],
   },
+  {
+    id: 'theme-selector',
+    title: 'Theme Selector',
+    description: 'Light, Dark, or Auto theme based on system settings.',
+    category: 'customization',
+    tier: 'free',
+    tags: ['theme', 'dark-mode', 'appearance'],
+  },
+  {
+    id: 'haptic-feedback',
+    title: 'Haptic Feedback Settings',
+    description: 'Enable/disable vibration with light, medium, strong intensity options.',
+    category: 'customization',
+    tier: 'free',
+    tags: ['haptic', 'vibration', 'feedback'],
+  },
+  {
+    id: 'coaching-style',
+    title: 'AI Coaching Style',
+    description: 'Choose encouraging, scientific, motivational, or casual coaching tone.',
+    category: 'customization',
+    tier: 'premium',
+    tags: ['coaching', 'style', 'personality'],
+  },
+  {
+    id: 'weekly-variation',
+    title: 'Weekly Variation Slider',
+    description: 'Control exercise variety from 0-100% (default 30%).',
+    category: 'customization',
+    tier: 'premium',
+    tags: ['variation', 'variety', 'exercises'],
+  },
+  {
+    id: 'warmup-duration',
+    title: 'Warmup Duration Setting',
+    description: 'Set preferred warmup length from 1-15 minutes.',
+    category: 'customization',
+    tier: 'free',
+    tags: ['warmup', 'duration', 'setting'],
+  },
+  {
+    id: 'stretch-duration',
+    title: 'Stretch Duration Setting',
+    description: 'Set preferred post-workout stretch length from 1-15 minutes.',
+    category: 'customization',
+    tier: 'free',
+    tags: ['stretch', 'cooldown', 'duration'],
+  },
 
-  // Integration Features
+  // ==========================================
+  // INTEGRATION FEATURES
+  // ==========================================
   {
     id: 'split-screen',
     title: 'Split Screen Support',
@@ -709,36 +1709,319 @@ export const features: Feature[] = [
     tier: 'premium',
     tags: ['export', 'csv', 'pdf', 'data'],
   },
-
-  // Branded Programs
   {
-    id: 'branded-programs',
-    title: '12+ Branded Programs',
-    description: 'Ultimate Strength, Lean Machine, Power Builder, Beach Body Ready, and more.',
-    category: 'workout',
+    id: 'apple-health',
+    title: 'Apple HealthKit Sync',
+    description: 'Sync workouts, steps, calories, and body metrics with Apple Health.',
+    category: 'integration',
     tier: 'free',
-    tags: ['programs', 'branded', 'structured'],
-    isNew: true,
-    isPopular: true,
+    tags: ['apple', 'health', 'sync'],
   },
   {
-    id: 'program-customization',
-    title: 'Program Name Customization',
-    description: 'Rename programs and create custom named programs.',
-    category: 'workout',
-    tier: 'premium',
-    tags: ['programs', 'customization', 'naming'],
+    id: 'health-connect',
+    title: 'Health Connect (Android)',
+    description: 'Sync with Android Health Connect for unified health data.',
+    category: 'integration',
+    tier: 'free',
+    tags: ['android', 'health', 'sync'],
   },
 
-  // Calibration
+  // ==========================================
+  // HEALTH DEVICE FEATURES
+  // ==========================================
   {
-    id: 'calibration-workout',
-    title: 'Strength Calibration Workout',
-    description: 'Post-subscription assessment to validate your actual fitness level with AI analysis.',
-    category: 'workout',
+    id: 'step-tracking',
+    title: 'Daily Step Count',
+    description: 'Read and sync daily step count from health apps.',
+    category: 'health-devices',
+    tier: 'free',
+    tags: ['steps', 'tracking', 'health'],
+  },
+  {
+    id: 'heart-rate-sync',
+    title: 'Heart Rate & HRV Sync',
+    description: 'Read heart rate and heart rate variability from wearables.',
+    category: 'health-devices',
     tier: 'premium',
-    tags: ['calibration', 'assessment', 'strength'],
+    tags: ['heart-rate', 'hrv', 'wearables'],
+  },
+  {
+    id: 'body-metrics-sync',
+    title: 'Body Metrics Sync',
+    description: 'Sync weight, body fat, and BMI from smart scales.',
+    category: 'health-devices',
+    tier: 'premium',
+    tags: ['weight', 'body-fat', 'scales'],
+  },
+  {
+    id: 'workout-write-back',
+    title: 'Workout Write-Back',
+    description: 'Sync completed workouts back to Apple Health and Health Connect.',
+    category: 'health-devices',
+    tier: 'free',
+    tags: ['sync', 'workouts', 'write'],
+  },
+
+  // ==========================================
+  // DIABETES MANAGEMENT FEATURES
+  // ==========================================
+  {
+    id: 'glucose-tracking',
+    title: 'Blood Glucose Tracking',
+    description: 'Log glucose readings with meal context and color-coded status.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['glucose', 'diabetes', 'tracking'],
     isNew: true,
+  },
+  {
+    id: 'insulin-logging',
+    title: 'Insulin Dose Logging',
+    description: 'Log rapid and long-acting insulin doses with history.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['insulin', 'logging', 'diabetes'],
+  },
+  {
+    id: 'a1c-tracking',
+    title: 'A1C Tracking',
+    description: 'Log lab A1C results and calculate estimated A1C from readings.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['a1c', 'tracking', 'diabetes'],
+  },
+  {
+    id: 'carb-counting',
+    title: 'Carbohydrate Counting',
+    description: 'Track carb intake by meal with daily totals.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['carbs', 'counting', 'diabetes'],
+  },
+  {
+    id: 'cgm-integration',
+    title: 'CGM Device Integration',
+    description: 'Sync with Dexcom, Libre, and Medtronic continuous glucose monitors.',
+    category: 'diabetes',
+    tier: 'ultra',
+    tags: ['cgm', 'integration', 'devices'],
+  },
+  {
+    id: 'time-in-range',
+    title: 'Time In Range Analysis',
+    description: 'Calculate percentage of time in, below, and above target range.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['time-in-range', 'analysis', 'glucose'],
+  },
+  {
+    id: 'pre-workout-glucose',
+    title: 'Pre-Workout Glucose Check',
+    description: 'Assess glucose safety before starting exercise.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['pre-workout', 'glucose', 'safety'],
+  },
+  {
+    id: 'diabetes-ai-coach',
+    title: 'Diabetes AI Coach',
+    description: 'AI coaching with diabetes-aware recommendations and insights.',
+    category: 'diabetes',
+    tier: 'premium',
+    tags: ['ai', 'coach', 'diabetes'],
+  },
+
+  // ==========================================
+  // NOTIFICATION FEATURES
+  // ==========================================
+  {
+    id: 'workout-reminders',
+    title: 'Workout Reminders',
+    description: 'Scheduled push notifications for upcoming workouts.',
+    category: 'notifications',
+    tier: 'free',
+    tags: ['reminders', 'workouts', 'push'],
+  },
+  {
+    id: 'nutrition-reminders',
+    title: 'Nutrition Reminders',
+    description: 'Breakfast, lunch, and dinner logging reminders.',
+    category: 'notifications',
+    tier: 'free',
+    tags: ['reminders', 'nutrition', 'meals'],
+  },
+  {
+    id: 'streak-alerts',
+    title: 'Streak Alerts',
+    description: 'Don\'t break your streak reminder notifications.',
+    category: 'notifications',
+    tier: 'free',
+    tags: ['streak', 'alerts', 'reminders'],
+  },
+  {
+    id: 'quiet-hours',
+    title: 'Quiet Hours',
+    description: 'Do not disturb time range for notifications.',
+    category: 'notifications',
+    tier: 'free',
+    tags: ['quiet', 'dnd', 'schedule'],
+  },
+  {
+    id: 'social-notifications',
+    title: 'Social Notifications',
+    description: 'Friend activity, likes, and comment notifications.',
+    category: 'notifications',
+    tier: 'premium',
+    tags: ['social', 'friends', 'notifications'],
+  },
+  {
+    id: 'challenge-notifications',
+    title: 'Challenge Notifications',
+    description: 'Real-time updates on challenge progress.',
+    category: 'notifications',
+    tier: 'premium',
+    tags: ['challenges', 'updates', 'notifications'],
+  },
+
+  // ==========================================
+  // SETTINGS FEATURES
+  // ==========================================
+  {
+    id: 'ai-settings',
+    title: 'AI Settings Screen',
+    description: 'Dedicated configuration for AI coaching style, tone, and agents.',
+    category: 'settings',
+    tier: 'premium',
+    tags: ['ai', 'settings', 'configuration'],
+  },
+  {
+    id: 'environment-management',
+    title: '8 Workout Environments',
+    description: 'Configure equipment for gym, home, outdoor, hotel, and more.',
+    category: 'settings',
+    tier: 'free',
+    tags: ['environments', 'equipment', 'locations'],
+  },
+  {
+    id: 'equipment-quantities',
+    title: 'Equipment Quantities',
+    description: 'Set quantity and weight ranges per equipment piece.',
+    category: 'settings',
+    tier: 'free',
+    tags: ['equipment', 'quantities', 'weights'],
+  },
+  {
+    id: 'custom-equipment',
+    title: 'Custom Equipment',
+    description: 'Add your own custom equipment to environments.',
+    category: 'settings',
+    tier: 'premium',
+    tags: ['custom', 'equipment', 'personalization'],
+  },
+  {
+    id: 'ai-settings-search',
+    title: 'AI-Powered Settings Search',
+    description: 'Natural language search to find settings quickly.',
+    category: 'settings',
+    tier: 'free',
+    tags: ['search', 'ai', 'settings'],
+  },
+  {
+    id: 'delete-account',
+    title: 'Delete Account',
+    description: 'Permanently remove your account and all data.',
+    category: 'settings',
+    tier: 'free',
+    tags: ['delete', 'account', 'privacy'],
+  },
+  {
+    id: 'data-privacy',
+    title: 'Privacy Controls',
+    description: 'Control profile visibility and data sharing settings.',
+    category: 'settings',
+    tier: 'free',
+    tags: ['privacy', 'visibility', 'data'],
+  },
+
+  // ==========================================
+  // CUSTOMER SUPPORT FEATURES
+  // ==========================================
+  {
+    id: 'support-tickets',
+    title: 'Support Ticket System',
+    description: 'Create, view, and track support tickets with unique IDs.',
+    category: 'support',
+    tier: 'free',
+    tags: ['tickets', 'support', 'help'],
+  },
+  {
+    id: 'ticket-categories',
+    title: 'Ticket Categories',
+    description: 'Billing, Technical, Account, Feature Request, Other categories.',
+    category: 'support',
+    tier: 'free',
+    tags: ['categories', 'tickets', 'organization'],
+  },
+  {
+    id: 'live-chat-support',
+    title: 'Live Chat Support',
+    description: 'Real-time chat with human support agents in-app.',
+    category: 'support',
+    tier: 'premium',
+    tags: ['live-chat', 'human', 'support'],
+    isNew: true,
+  },
+  {
+    id: 'ai-to-human-handoff',
+    title: 'AI-to-Human Handoff',
+    description: 'Escalate from AI coach to human support with conversation context.',
+    category: 'support',
+    tier: 'premium',
+    tags: ['escalate', 'human', 'handoff'],
+  },
+  {
+    id: 'message-reporting',
+    title: 'In-Chat Message Reporting',
+    description: 'Long-press AI messages to report problems directly.',
+    category: 'support',
+    tier: 'free',
+    tags: ['report', 'messages', 'feedback'],
+  },
+  {
+    id: 'faq',
+    title: 'FAQ Section',
+    description: 'Frequently asked questions accessible in settings.',
+    category: 'support',
+    tier: 'free',
+    tags: ['faq', 'help', 'questions'],
+  },
+
+  // ==========================================
+  // HOME SCREEN WIDGETS
+  // ==========================================
+  {
+    id: 'workout-widget',
+    title: 'Today\'s Workout Widget',
+    description: 'Home screen widget for quick workout access.',
+    category: 'widgets',
+    tier: 'free',
+    tags: ['widget', 'workout', 'quick'],
+  },
+  {
+    id: 'goals-widget',
+    title: 'Personal Goals Widget',
+    description: 'Widget showing weekly goal progress.',
+    category: 'widgets',
+    tier: 'premium',
+    tags: ['widget', 'goals', 'progress'],
+  },
+  {
+    id: 'widget-deep-links',
+    title: 'Widget Deep Links',
+    description: 'Tap widgets to navigate directly to app screens.',
+    category: 'widgets',
+    tier: 'free',
+    tags: ['deep-links', 'navigation', 'widgets'],
   },
 ];
 

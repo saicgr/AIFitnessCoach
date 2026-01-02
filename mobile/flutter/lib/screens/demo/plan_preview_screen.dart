@@ -951,67 +951,265 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
     final baseSets = 3 + (weekIndex ~/ 2);
     final baseReps = 10 + weekIndex;
 
+    // Exercise variations per week to show program variety
+    final pushExercises = [
+      // Week 1 - Foundation
+      [
+        {'name': 'Flat Bench Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
+        {'name': 'Dumbbell Shoulder Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
+        {'name': 'Incline Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Upper Chest'},
+        {'name': 'Tricep Pushdowns', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
+        {'name': 'Lateral Raises', 'setsReps': '3 x 15', 'muscle': 'Shoulders'},
+      ],
+      // Week 2 - Volume Increase
+      [
+        {'name': 'Incline Dumbbell Press', 'setsReps': '4 x 10', 'muscle': 'Upper Chest'},
+        {'name': 'Barbell Overhead Press', 'setsReps': '3 x 8', 'muscle': 'Shoulders'},
+        {'name': 'Flat Dumbbell Flyes', 'setsReps': '3 x 12', 'muscle': 'Chest'},
+        {'name': 'Skull Crushers', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
+        {'name': 'Front Raises', 'setsReps': '3 x 12', 'muscle': 'Shoulders'},
+      ],
+      // Week 3 - Intensity
+      [
+        {'name': 'Decline Bench Press', 'setsReps': '4 x 8', 'muscle': 'Lower Chest'},
+        {'name': 'Arnold Press', 'setsReps': '4 x 10', 'muscle': 'Shoulders'},
+        {'name': 'Cable Crossovers', 'setsReps': '3 x 15', 'muscle': 'Chest'},
+        {'name': 'Overhead Tricep Ext.', 'setsReps': '4 x 10', 'muscle': 'Triceps'},
+        {'name': 'Cable Lateral Raises', 'setsReps': '3 x 15', 'muscle': 'Shoulders'},
+      ],
+      // Week 4 - Peak
+      [
+        {'name': 'Flat Barbell Press', 'setsReps': '5 x 5', 'muscle': 'Chest'},
+        {'name': 'Push Press', 'setsReps': '4 x 6', 'muscle': 'Shoulders'},
+        {'name': 'Incline DB Press', 'setsReps': '4 x 8', 'muscle': 'Upper Chest'},
+        {'name': 'Close Grip Bench', 'setsReps': '4 x 8', 'muscle': 'Triceps'},
+        {'name': 'Rear Delt Flyes', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
+      ],
+    ];
+
+    final pullExercises = [
+      // Week 1
+      [
+        {'name': 'Conventional Deadlift', 'setsReps': '3 x 8', 'muscle': 'Back'},
+        {'name': 'Lat Pulldowns', 'setsReps': '3 x 12', 'muscle': 'Lats'},
+        {'name': 'Seated Cable Rows', 'setsReps': '3 x 12', 'muscle': 'Back'},
+        {'name': 'Face Pulls', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
+        {'name': 'Dumbbell Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+      ],
+      // Week 2
+      [
+        {'name': 'Barbell Rows', 'setsReps': '4 x 8', 'muscle': 'Back'},
+        {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Lats'},
+        {'name': 'Single Arm DB Row', 'setsReps': '3 x 10 each', 'muscle': 'Back'},
+        {'name': 'Reverse Flyes', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
+        {'name': 'Hammer Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+      ],
+      // Week 3
+      [
+        {'name': 'Sumo Deadlift', 'setsReps': '4 x 6', 'muscle': 'Back/Legs'},
+        {'name': 'Weighted Pull-Ups', 'setsReps': '4 x 6', 'muscle': 'Lats'},
+        {'name': 'T-Bar Rows', 'setsReps': '4 x 8', 'muscle': 'Mid Back'},
+        {'name': 'Cable Face Pulls', 'setsReps': '4 x 12', 'muscle': 'Rear Delts'},
+        {'name': 'Incline DB Curls', 'setsReps': '3 x 10', 'muscle': 'Biceps'},
+      ],
+      // Week 4
+      [
+        {'name': 'Rack Pulls', 'setsReps': '4 x 5', 'muscle': 'Back'},
+        {'name': 'Chin-Ups', 'setsReps': '4 x 8', 'muscle': 'Lats/Biceps'},
+        {'name': 'Pendlay Rows', 'setsReps': '4 x 6', 'muscle': 'Back'},
+        {'name': 'Rear Delt Machine', 'setsReps': '4 x 12', 'muscle': 'Rear Delts'},
+        {'name': 'Barbell Curls', 'setsReps': '4 x 8', 'muscle': 'Biceps'},
+      ],
+    ];
+
+    final legExercises = [
+      // Week 1
+      [
+        {'name': 'Back Squats', 'setsReps': '3 x 10', 'muscle': 'Quads'},
+        {'name': 'Romanian Deadlift', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
+        {'name': 'Leg Press', 'setsReps': '3 x 12', 'muscle': 'Legs'},
+        {'name': 'Walking Lunges', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
+      ],
+      // Week 2
+      [
+        {'name': 'Front Squats', 'setsReps': '4 x 8', 'muscle': 'Quads'},
+        {'name': 'Stiff Leg Deadlift', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
+        {'name': 'Hack Squats', 'setsReps': '3 x 12', 'muscle': 'Quads'},
+        {'name': 'Bulgarian Split Squats', 'setsReps': '3 x 8 each', 'muscle': 'Legs'},
+        {'name': 'Seated Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
+      ],
+      // Week 3
+      [
+        {'name': 'Pause Squats', 'setsReps': '4 x 6', 'muscle': 'Quads'},
+        {'name': 'Good Mornings', 'setsReps': '3 x 10', 'muscle': 'Hamstrings'},
+        {'name': 'Leg Extensions', 'setsReps': '4 x 12', 'muscle': 'Quads'},
+        {'name': 'Lying Leg Curls', 'setsReps': '4 x 10', 'muscle': 'Hamstrings'},
+        {'name': 'Standing Calf Raises', 'setsReps': '5 x 12', 'muscle': 'Calves'},
+      ],
+      // Week 4
+      [
+        {'name': 'Heavy Back Squats', 'setsReps': '5 x 5', 'muscle': 'Quads'},
+        {'name': 'Sumo Deadlift', 'setsReps': '4 x 6', 'muscle': 'Hams/Glutes'},
+        {'name': 'Single Leg Press', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Step Ups', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Donkey Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
+      ],
+    ];
+
+    final upperExercises = [
+      // Week 1
+      [
+        {'name': 'Flat Bench Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
+        {'name': 'Barbell Rows', 'setsReps': '3 x 10', 'muscle': 'Back'},
+        {'name': 'DB Shoulder Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
+        {'name': 'Lat Pulldowns', 'setsReps': '3 x 12', 'muscle': 'Lats'},
+        {'name': 'Dips', 'setsReps': '3 x 10', 'muscle': 'Chest/Triceps'},
+      ],
+      // Week 2
+      [
+        {'name': 'Incline DB Press', 'setsReps': '4 x 10', 'muscle': 'Upper Chest'},
+        {'name': 'Seated Cable Rows', 'setsReps': '4 x 10', 'muscle': 'Back'},
+        {'name': 'Arnold Press', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
+        {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Lats'},
+        {'name': 'Tricep Pushdowns', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
+      ],
+      // Week 3
+      [
+        {'name': 'Close Grip Bench', 'setsReps': '4 x 8', 'muscle': 'Triceps'},
+        {'name': 'T-Bar Rows', 'setsReps': '4 x 8', 'muscle': 'Back'},
+        {'name': 'Military Press', 'setsReps': '4 x 8', 'muscle': 'Shoulders'},
+        {'name': 'Weighted Pull-Ups', 'setsReps': '4 x 6', 'muscle': 'Lats'},
+        {'name': 'Cable Flyes', 'setsReps': '3 x 15', 'muscle': 'Chest'},
+      ],
+      // Week 4
+      [
+        {'name': 'Flat Barbell Press', 'setsReps': '5 x 5', 'muscle': 'Chest'},
+        {'name': 'Pendlay Rows', 'setsReps': '5 x 5', 'muscle': 'Back'},
+        {'name': 'Push Press', 'setsReps': '4 x 6', 'muscle': 'Shoulders'},
+        {'name': 'Chin-Ups', 'setsReps': '4 x 8', 'muscle': 'Lats/Biceps'},
+        {'name': 'Weighted Dips', 'setsReps': '4 x 6', 'muscle': 'Chest/Triceps'},
+      ],
+    ];
+
+    final fullBodyExercises = [
+      // Week 1
+      [
+        {'name': 'Goblet Squats', 'setsReps': '3 x 12', 'muscle': 'Legs'},
+        {'name': 'Push-Ups', 'setsReps': '3 x 15', 'muscle': 'Chest'},
+        {'name': 'Dumbbell Rows', 'setsReps': '3 x 12', 'muscle': 'Back'},
+        {'name': 'Reverse Lunges', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Plank', 'setsReps': '3 x 30s', 'muscle': 'Core'},
+      ],
+      // Week 2
+      [
+        {'name': 'Dumbbell Squats', 'setsReps': '3 x 12', 'muscle': 'Legs'},
+        {'name': 'Incline Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Chest'},
+        {'name': 'Bent Over Rows', 'setsReps': '3 x 12', 'muscle': 'Back'},
+        {'name': 'Step Ups', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Dead Bug', 'setsReps': '3 x 10 each', 'muscle': 'Core'},
+      ],
+      // Week 3
+      [
+        {'name': 'Sumo Squats', 'setsReps': '4 x 10', 'muscle': 'Legs'},
+        {'name': 'Pike Push-Ups', 'setsReps': '3 x 10', 'muscle': 'Shoulders'},
+        {'name': 'Single Arm Rows', 'setsReps': '4 x 10 each', 'muscle': 'Back'},
+        {'name': 'Bulgarian Split Squats', 'setsReps': '3 x 8 each', 'muscle': 'Legs'},
+        {'name': 'Bicycle Crunches', 'setsReps': '3 x 20', 'muscle': 'Core'},
+      ],
+      // Week 4
+      [
+        {'name': 'Jump Squats', 'setsReps': '4 x 10', 'muscle': 'Legs'},
+        {'name': 'Diamond Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
+        {'name': 'Renegade Rows', 'setsReps': '3 x 8 each', 'muscle': 'Back/Core'},
+        {'name': 'Walking Lunges', 'setsReps': '3 x 12 each', 'muscle': 'Legs'},
+        {'name': 'Hollow Body Hold', 'setsReps': '3 x 30s', 'muscle': 'Core'},
+      ],
+    ];
+
+    final hiitExercises = [
+      // Week 1
+      [
+        {'name': 'Jumping Jacks', 'setsReps': '30s x 4', 'muscle': 'Full Body'},
+        {'name': 'Mountain Climbers', 'setsReps': '30s x 4', 'muscle': 'Core'},
+        {'name': 'Bodyweight Squats', 'setsReps': '30s x 4', 'muscle': 'Legs'},
+        {'name': 'High Knees', 'setsReps': '30s x 4', 'muscle': 'Cardio'},
+        {'name': 'Plank Jacks', 'setsReps': '30s x 4', 'muscle': 'Core'},
+      ],
+      // Week 2
+      [
+        {'name': 'Burpees', 'setsReps': '30s x 4', 'muscle': 'Full Body'},
+        {'name': 'Skaters', 'setsReps': '30s x 4', 'muscle': 'Legs'},
+        {'name': 'Push-Up to T', 'setsReps': '30s x 4', 'muscle': 'Chest/Core'},
+        {'name': 'Tuck Jumps', 'setsReps': '30s x 4', 'muscle': 'Power'},
+        {'name': 'Spider Climbers', 'setsReps': '30s x 4', 'muscle': 'Core'},
+      ],
+      // Week 3
+      [
+        {'name': 'Box Jumps', 'setsReps': '30s x 5', 'muscle': 'Power'},
+        {'name': 'Battle Ropes', 'setsReps': '30s x 5', 'muscle': 'Full Body'},
+        {'name': 'Kettlebell Swings', 'setsReps': '30s x 5', 'muscle': 'Hips'},
+        {'name': 'Burpee Box Jumps', 'setsReps': '30s x 4', 'muscle': 'Full Body'},
+        {'name': 'Bear Crawls', 'setsReps': '30s x 4', 'muscle': 'Core'},
+      ],
+      // Week 4
+      [
+        {'name': 'Devil Press', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
+        {'name': 'Assault Bike', 'setsReps': '40s x 4', 'muscle': 'Cardio'},
+        {'name': 'Thrusters', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
+        {'name': 'Rowing Sprints', 'setsReps': '40s x 4', 'muscle': 'Full Body'},
+        {'name': 'Sled Push', 'setsReps': '40s x 4', 'muscle': 'Legs'},
+      ],
+    ];
+
+    final cardioExercises = [
+      // Week 1
+      [
+        {'name': 'Steady State Run', 'setsReps': '20 min', 'muscle': 'Cardio'},
+        {'name': 'Rowing', 'setsReps': '10 min', 'muscle': 'Full Body'},
+        {'name': 'Cycling', 'setsReps': '10 min', 'muscle': 'Legs'},
+      ],
+      // Week 2
+      [
+        {'name': 'Incline Treadmill Walk', 'setsReps': '25 min', 'muscle': 'Cardio'},
+        {'name': 'Elliptical', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'Stair Climber', 'setsReps': '10 min', 'muscle': 'Legs'},
+      ],
+      // Week 3
+      [
+        {'name': 'Tempo Run', 'setsReps': '25 min', 'muscle': 'Cardio'},
+        {'name': 'Rowing Intervals', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'Jump Rope', 'setsReps': '10 min', 'muscle': 'Cardio'},
+      ],
+      // Week 4
+      [
+        {'name': 'Interval Sprints', 'setsReps': '20 min', 'muscle': 'Cardio'},
+        {'name': 'Assault Bike', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'Swimming', 'setsReps': '15 min', 'muscle': 'Full Body'},
+      ],
+    ];
+
     switch (workoutId) {
       case 'push':
-        return [
-          {'name': 'Bench Press', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Chest'},
-          {'name': 'Overhead Press', 'setsReps': '$baseSets x ${baseReps - 2}', 'muscle': 'Shoulders'},
-          {'name': 'Incline Dumbbell Press', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Upper Chest'},
-          {'name': 'Tricep Dips', 'setsReps': '$baseSets x ${baseReps + 2}', 'muscle': 'Triceps'},
-          {'name': 'Lateral Raises', 'setsReps': '3 x 15', 'muscle': 'Shoulders'},
-        ];
+        return pushExercises[weekIndex.clamp(0, 3)];
       case 'pull':
-        return [
-          {'name': 'Deadlift', 'setsReps': '$baseSets x ${baseReps - 4}', 'muscle': 'Back'},
-          {'name': 'Pull-Ups', 'setsReps': '$baseSets x ${baseReps - 2}', 'muscle': 'Lats'},
-          {'name': 'Barbell Rows', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Back'},
-          {'name': 'Face Pulls', 'setsReps': '3 x 15', 'muscle': 'Rear Delts'},
-          {'name': 'Bicep Curls', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Biceps'},
-        ];
+        return pullExercises[weekIndex.clamp(0, 3)];
       case 'legs':
       case 'lower':
-        return [
-          {'name': 'Squats', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Quads'},
-          {'name': 'Romanian Deadlift', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Hamstrings'},
-          {'name': 'Leg Press', 'setsReps': '$baseSets x ${baseReps + 2}', 'muscle': 'Legs'},
-          {'name': 'Walking Lunges', 'setsReps': '3 x 12 each', 'muscle': 'Legs'},
-          {'name': 'Calf Raises', 'setsReps': '4 x 15', 'muscle': 'Calves'},
-        ];
+        return legExercises[weekIndex.clamp(0, 3)];
       case 'upper':
-        return [
-          {'name': 'Bench Press', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Chest'},
-          {'name': 'Barbell Rows', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Back'},
-          {'name': 'Shoulder Press', 'setsReps': '$baseSets x ${baseReps - 2}', 'muscle': 'Shoulders'},
-          {'name': 'Pull-Ups', 'setsReps': '$baseSets x ${baseReps - 4}', 'muscle': 'Lats'},
-          {'name': 'Dips', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Chest/Triceps'},
-        ];
+        return upperExercises[weekIndex.clamp(0, 3)];
       case 'full':
-        return [
-          {'name': 'Squats', 'setsReps': '3 x 12', 'muscle': 'Legs'},
-          {'name': 'Push-Ups', 'setsReps': '3 x 15', 'muscle': 'Chest'},
-          {'name': 'Dumbbell Rows', 'setsReps': '3 x 12', 'muscle': 'Back'},
-          {'name': 'Lunges', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
-          {'name': 'Plank', 'setsReps': '3 x 45s', 'muscle': 'Core'},
-        ];
+        return fullBodyExercises[weekIndex.clamp(0, 3)];
       case 'hiit':
-        return [
-          {'name': 'Burpees', 'setsReps': '30s x 4', 'muscle': 'Full Body'},
-          {'name': 'Mountain Climbers', 'setsReps': '30s x 4', 'muscle': 'Core'},
-          {'name': 'Jump Squats', 'setsReps': '30s x 4', 'muscle': 'Legs'},
-          {'name': 'High Knees', 'setsReps': '30s x 4', 'muscle': 'Cardio'},
-          {'name': 'Box Jumps', 'setsReps': '30s x 4', 'muscle': 'Power'},
-        ];
+        return hiitExercises[weekIndex.clamp(0, 3)];
       case 'cardio':
-        return [
-          {'name': 'Treadmill Run', 'setsReps': '20 min', 'muscle': 'Cardio'},
-          {'name': 'Rowing Machine', 'setsReps': '10 min', 'muscle': 'Full Body'},
-          {'name': 'Stair Climber', 'setsReps': '10 min', 'muscle': 'Legs'},
-        ];
+        return cardioExercises[weekIndex.clamp(0, 3)];
       default:
         return [
-          {'name': 'Exercise 1', 'setsReps': '3 x 12', 'muscle': 'Primary'},
-          {'name': 'Exercise 2', 'setsReps': '3 x 12', 'muscle': 'Secondary'},
-          {'name': 'Exercise 3', 'setsReps': '3 x 12', 'muscle': 'Tertiary'},
+          {'name': 'Exercise 1', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Primary'},
+          {'name': 'Exercise 2', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Secondary'},
+          {'name': 'Exercise 3', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Tertiary'},
         ];
     }
   }

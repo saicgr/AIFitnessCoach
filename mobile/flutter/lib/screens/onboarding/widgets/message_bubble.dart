@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/models/coach_persona.dart';
 
 /// Simple markdown text widget that supports **bold**, *italic*, and emojis
 class _MarkdownText extends StatelessWidget {
@@ -101,6 +102,7 @@ class MessageBubble extends StatelessWidget {
   final DateTime? timestamp;
   final bool animate;
   final int animationIndex;
+  final CoachPersona? coach;
 
   const MessageBubble({
     super.key,
@@ -109,6 +111,7 @@ class MessageBubble extends StatelessWidget {
     this.timestamp,
     this.animate = true,
     this.animationIndex = 0,
+    this.coach,
   });
 
   @override
@@ -224,22 +227,31 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildAiAvatar(ThemeColors colors) {
+    // Use coach colors if provided, otherwise fall back to default cyan
+    final coachColor = coach?.primaryColor ?? AppColors.cyan;
+    final coachAccentColor = coach?.accentColor ?? AppColors.purple;
+    final coachIcon = coach?.icon ?? Icons.auto_awesome;
+
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        gradient: AppColors.cyanGradient,
+        gradient: LinearGradient(
+          colors: [coachColor, coachAccentColor],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: colors.cyan.withOpacity(0.4),
+            color: coachColor.withOpacity(0.4),
             blurRadius: 20,
             spreadRadius: 2,
           ),
         ],
       ),
-      child: const Center(
-        child: Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+      child: Center(
+        child: Icon(coachIcon, color: Colors.white, size: 20),
       ),
     );
   }

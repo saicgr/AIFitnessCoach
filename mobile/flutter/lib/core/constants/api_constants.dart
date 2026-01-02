@@ -5,7 +5,7 @@ class ApiConstants {
   /// Base URL for the backend API
   // Development: Use localhost:8000 for local testing
   // Production: Use https://fitwiz-zqi3.onrender.com
-  static const String baseUrl = 'https://fitwiz-zqi3.onrender.com'; // Production
+  static const String baseUrl = 'https://aifitnesscoach-zqi3.onrender.com'; // Production
 
   /// API version prefix
   static const String apiVersion = '/api/v1';

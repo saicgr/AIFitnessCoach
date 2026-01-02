@@ -170,25 +170,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnModeSelection = state.matchedLocation == '/mode-selection';
       final isOnStatsWelcome = state.matchedLocation == '/stats-welcome';
 
-      // Helper to get the appropriate home route based on accessibility mode
-      String getHomeRoute() {
-        if (accessibilitySettings.mode == AccessibilityMode.senior) {
-          return '/senior-home';
-        }
-        return '/home';
-      }
-
-      // Still loading auth or language - stay on splash (or go to splash if starting)
-      if (authState.status == AuthStatus.initial ||
-          authState.status == AuthStatus.loading ||
-          languageState.isLoading) {
-        // If we're on splash, stay there
-        if (isOnSplash) return null;
-        // Otherwise redirect to splash
-        return '/splash';
-      }
-
-      // Check if on new onboarding flow screens
+      // Check if on new onboarding flow screens (declare early for use in loading/error checks)
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
@@ -203,6 +185,41 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnGuestHome = state.matchedLocation == '/guest-home';
       final isOnGuestLibrary = state.matchedLocation == '/guest-library';
       final isGuestRoute = isOnGuestHome || isOnGuestLibrary;
+
+      // Helper to get the appropriate home route based on accessibility mode
+      String getHomeRoute() {
+        if (accessibilitySettings.mode == AccessibilityMode.senior) {
+          return '/senior-home';
+        }
+        return '/home';
+      }
+
+      // Still loading auth or language - stay on splash (or go to splash if starting)
+      // But allow pre-auth screens to stay as-is during loading (don't interrupt sign-in flow)
+      if (authState.status == AuthStatus.initial ||
+          authState.status == AuthStatus.loading ||
+          languageState.isLoading) {
+        // If we're on splash, stay there
+        if (isOnSplash) return null;
+        // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
+        if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview ||
+            isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
+          return null;
+        }
+        // Otherwise redirect to splash
+        return '/splash';
+      }
+
+      // Handle error state - allow sign-in screen to show errors
+      if (authState.status == AuthStatus.error) {
+        // If on sign-in page, stay there to show the error
+        if (isOnSignIn) return null;
+        // If on other pre-auth pages, stay there
+        if (isOnPreAuthQuiz || isOnPreview || isOnPricingPreview ||
+            isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
+          return null;
+        }
+      }
 
       // Check if user is in guest mode
       final isGuestMode = ref.read(guestModeProvider).isGuestMode;
