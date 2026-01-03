@@ -15,8 +15,26 @@ ASAP:
 56. Strength Score and integration to social
 
 ISSUES:
-27. When I hit view full 4 week plan, why are all the exercises same for all the weeks?
-28. Google sign in still shows same old icon
+33. workout generation takes so much time, is there a reason? weekly workouts should be fine do not need 30 day
+34. click to open image in pop up in share your workout
+35. Change elite to hell - gemini should have access to all workouts that it can suggest to show hell to the user.
+36. after i hit mood workout there is no way for me to know that the workout has been generated no notif or no loading screen, its just stuck in the starting mood workout, same with regen current work.
+37. unable to search for other user still
+38. notifications are not working
+39. I see duplicate what should we build next in home remobe the bottom one
+40. quick workouts fails to genearate
+41. nutrtion onboarding still opens everytime I opeend the app, need to reimplement it from scratch
+42. Several overflow issues.
+43. food logging doesnt work, when I typed in roast checkne for example and hit analyze with AI I thought it would display reslts first AI would review it and then I would estimate or edit or check portion size if true then accept it to log food, but currently when I hit analyze with AI it automaticalaly shows up in the food log when i refresh it.
+44. I signed up as a new user but I do not get to select which google, did not get to select my coach, didn't get app tour
+45. Calories estimated in food utrion onboarding doesn;t seem to line up in nutrition page, now ay to edit macro/micro nutrients/ calorie goal as well
+46. Need AI review to validate if the food I ate aligns with the goals I set RUDE REVIEW
+47. Synced the app with health connect but still it says it needs healthconnect
+48. Notifications are not wokring
+49. Why this exercise from AI always is broken from exercise detail screen
+50. Some sections from home can be moved to workout page
+51. Use Flexbox to prevent all screensize issues
+
 
 <!-- NEW FEATURES IN APP -->
 3. Hi ! I suspect it's complicated and certainly not on the Roadmap but it would be huge if we had training adapted to the women's cycle. Related to Apple health for example. A woman having phases where performance will differ.
