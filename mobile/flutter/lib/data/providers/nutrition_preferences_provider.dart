@@ -97,6 +97,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
 
   /// Initialize nutrition preferences for a user
   Future<void> initialize(String userId) async {
+    // Skip re-initialization if already loaded and onboarding is complete
+    // This prevents re-showing onboarding when navigating back to nutrition screen
+    if (state.preferences != null && state.onboardingCompleted) {
+      debugPrint('🥗 [NutritionPrefsProvider] Already initialized and onboarding complete, skipping');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       debugPrint('🥗 [NutritionPrefsProvider] Initializing for $userId');

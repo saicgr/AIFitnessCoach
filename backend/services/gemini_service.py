@@ -291,7 +291,7 @@ IMPORTANT:
         Returns:
             Dictionary with food_items, total_calories, protein_g, carbs_g, fat_g, fiber_g, feedback
         """
-        prompt = '''Analyze this food image and provide detailed nutrition information.
+        prompt = '''Analyze this food image and provide detailed nutrition information including micronutrients.
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
@@ -302,7 +302,18 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
       "calories": 150,
       "protein_g": 10.0,
       "carbs_g": 15.0,
-      "fat_g": 5.0
+      "fat_g": 5.0,
+      "fiber_g": 2.0,
+      "sodium_mg": 200,
+      "sugar_g": 5.0,
+      "saturated_fat_g": 2.0,
+      "cholesterol_mg": 50,
+      "potassium_mg": 300,
+      "vitamin_a_iu": 500,
+      "vitamin_c_mg": 10,
+      "vitamin_d_iu": 40,
+      "calcium_mg": 100,
+      "iron_mg": 2.0
     }
   ],
   "total_calories": 450,
@@ -310,6 +321,16 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
+  "sodium_mg": 400,
+  "sugar_g": 10.0,
+  "saturated_fat_g": 4.0,
+  "cholesterol_mg": 100,
+  "potassium_mg": 600,
+  "vitamin_a_iu": 1000,
+  "vitamin_c_mg": 20,
+  "vitamin_d_iu": 80,
+  "calcium_mg": 200,
+  "iron_mg": 4.0,
   "feedback": "Brief nutritional feedback about the meal"
 }
 
@@ -317,6 +338,7 @@ IMPORTANT:
 - Identify ALL visible food items in the image
 - Estimate realistic portion sizes based on visual cues
 - Use standard USDA nutrition data for calorie/macro estimates
+- Include micronutrients (sodium, sugar, saturated fat, cholesterol, potassium, vitamins, calcium, iron)
 - If you cannot identify the food, make your best educated guess
 - Total values should be the sum of individual items
 - Provide helpful feedback about the nutritional quality of the meal'''
@@ -425,6 +447,16 @@ HEALTH FLAGS TO DETECT:
       "carbs_g": 15.0,
       "fat_g": 5.0,
       "fiber_g": 2.0,
+      "sodium_mg": 200,
+      "sugar_g": 5.0,
+      "saturated_fat_g": 2.0,
+      "cholesterol_mg": 50,
+      "potassium_mg": 300,
+      "vitamin_a_iu": 500,
+      "vitamin_c_mg": 10,
+      "vitamin_d_iu": 40,
+      "calcium_mg": 100,
+      "iron_mg": 2.0,
       "goal_score": 8,
       "goal_alignment": "excellent",
       "reason": "High protein content supports your muscle building goal"
@@ -435,6 +467,16 @@ HEALTH FLAGS TO DETECT:
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
+  "sodium_mg": 400,
+  "sugar_g": 10.0,
+  "saturated_fat_g": 4.0,
+  "cholesterol_mg": 100,
+  "potassium_mg": 600,
+  "vitamin_a_iu": 1000,
+  "vitamin_c_mg": 20,
+  "vitamin_d_iu": 80,
+  "calcium_mg": 200,
+  "iron_mg": 4.0,
   "overall_meal_score": 7,
   "health_score": 8,
   "goal_alignment_percentage": 75,
@@ -453,7 +495,17 @@ HEALTH FLAGS TO DETECT:
       "protein_g": 10.0,
       "carbs_g": 15.0,
       "fat_g": 5.0,
-      "fiber_g": 2.0
+      "fiber_g": 2.0,
+      "sodium_mg": 200,
+      "sugar_g": 5.0,
+      "saturated_fat_g": 2.0,
+      "cholesterol_mg": 50,
+      "potassium_mg": 300,
+      "vitamin_a_iu": 500,
+      "vitamin_c_mg": 10,
+      "vitamin_d_iu": 40,
+      "calcium_mg": 100,
+      "iron_mg": 2.0
     }}
   ],
   "total_calories": 450,
@@ -461,6 +513,16 @@ HEALTH FLAGS TO DETECT:
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
+  "sodium_mg": 400,
+  "sugar_g": 10.0,
+  "saturated_fat_g": 4.0,
+  "cholesterol_mg": 100,
+  "potassium_mg": 600,
+  "vitamin_a_iu": 1000,
+  "vitamin_c_mg": 20,
+  "vitamin_d_iu": 80,
+  "calcium_mg": 200,
+  "iron_mg": 4.0,
   "health_score": 7,
   "ai_suggestion": "Brief nutritional feedback about the meal"
 }}'''

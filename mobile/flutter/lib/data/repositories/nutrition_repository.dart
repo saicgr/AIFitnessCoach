@@ -730,17 +730,21 @@ class NutritionRepository {
       String eventType = '';
       String eventData = '';
 
+      debugPrint('🔍 [Nutrition-Text] Starting to read SSE stream...');
       await for (final chunk in stream.transform(transformer)) {
+        debugPrint('🔍 [Nutrition-Text] SSE chunk: ${chunk.length} bytes');
         // Parse SSE format
         for (final line in chunk.split('\n')) {
           if (line.isEmpty) {
             // End of event
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              debugPrint('🔍 [Nutrition-Text] Event: $eventType');
               try {
                 final data = jsonDecode(eventData) as Map<String, dynamic>;
                 final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
 
                 if (eventType == 'progress') {
+                  debugPrint('🔍 [Nutrition-Text] Progress: ${data['step']}/${data['total_steps']} - ${data['message']}');
                   yield FoodLoggingProgress(
                     step: data['step'] as int? ?? 0,
                     totalSteps: data['total_steps'] as int? ?? 3,
@@ -750,17 +754,33 @@ class NutritionRepository {
                     isAnalysisOnly: true,
                   );
                 } else if (eventType == 'done') {
-                  final foodLog = LogFoodResponse.fromJson(data);
-                  yield FoodLoggingProgress(
-                    step: 3,
-                    totalSteps: 3,
-                    message: 'Analysis complete!',
-                    elapsedMs: elapsedMs,
-                    foodLog: foodLog,
-                    isCompleted: true,
-                    isAnalysisOnly: true,
-                  );
+                  debugPrint('✅ [Nutrition-Text] Analysis complete! Parsing JSON...');
+                  try {
+                    final foodLog = LogFoodResponse.fromJson(data);
+                    debugPrint('✅ [Nutrition-Text] Parsed: ${foodLog.totalCalories} cal, ${foodLog.foodItems.length} items');
+                    yield FoodLoggingProgress(
+                      step: 3,
+                      totalSteps: 3,
+                      message: 'Analysis complete!',
+                      elapsedMs: elapsedMs,
+                      foodLog: foodLog,
+                      isCompleted: true,
+                      isAnalysisOnly: true,
+                    );
+                  } catch (parseError) {
+                    debugPrint('❌ [Nutrition-Text] JSON parse error: $parseError');
+                    debugPrint('❌ [Nutrition-Text] Raw data: $eventData');
+                    yield FoodLoggingProgress(
+                      step: 0,
+                      totalSteps: 3,
+                      message: 'Failed to parse response: $parseError',
+                      elapsedMs: elapsedMs,
+                      hasError: true,
+                      isAnalysisOnly: true,
+                    );
+                  }
                 } else if (eventType == 'error') {
+                  debugPrint('❌ [Nutrition-Text] Server error: ${data['error']}');
                   yield FoodLoggingProgress(
                     step: 0,
                     totalSteps: 3,
@@ -771,7 +791,7 @@ class NutritionRepository {
                   );
                 }
               } catch (e) {
-                debugPrint('⚠️ [Nutrition] Error parsing SSE data: $e');
+                debugPrint('⚠️ [Nutrition-Text] Error parsing SSE data: $e');
               }
               eventType = '';
               eventData = '';
@@ -786,8 +806,9 @@ class NutritionRepository {
           }
         }
       }
+      debugPrint('🔍 [Nutrition-Text] SSE stream ended');
     } catch (e) {
-      debugPrint('❌ [Nutrition] Streaming food analysis error: $e');
+      debugPrint('❌ [Nutrition-Text] Streaming food analysis error: $e');
       yield FoodLoggingProgress(
         step: 0,
         totalSteps: 3,

@@ -388,7 +388,7 @@ class FoodItemRanking {
 class LogFoodResponse {
   final bool success;
   @JsonKey(name: 'food_log_id')
-  final String foodLogId;
+  final String? foodLogId;  // Nullable for analyze-only responses (not yet saved)
   @JsonKey(name: 'food_items')
   final List<Map<String, dynamic>> foodItems;
   @JsonKey(name: 'total_calories')
@@ -446,7 +446,7 @@ class LogFoodResponse {
 
   const LogFoodResponse({
     required this.success,
-    required this.foodLogId,
+    this.foodLogId,  // Optional for analyze-only responses
     this.foodItems = const [],
     required this.totalCalories,
     required this.proteinG,

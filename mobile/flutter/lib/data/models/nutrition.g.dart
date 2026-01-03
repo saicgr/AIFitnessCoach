@@ -223,7 +223,7 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
     LogFoodResponse(
       success: json['success'] as bool,
-      foodLogId: json['food_log_id'] as String,
+      foodLogId: json['food_log_id'] as String?,
       foodItems:
           (json['food_items'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)

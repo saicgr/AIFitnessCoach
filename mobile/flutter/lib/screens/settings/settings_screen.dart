@@ -674,7 +674,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               subtitle: 'Browse apparel, accessories & more',
               color: AppColors.success,
               onTap: () async {
-                const storeUrl = 'https://ai-fitness-coach-git-main-chetangrs-projects.vercel.app/store';
+                // Main Vercel deployment URL
+                const storeUrl = 'https://ai-fitness-coach.vercel.app/store';
                 final uri = Uri.parse(storeUrl);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);

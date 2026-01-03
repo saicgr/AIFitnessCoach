@@ -246,9 +246,11 @@ export default function Store() {
     });
   };
 
-  const removeFromCart = (productId: string) => {
+  const _removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.id !== productId));
   };
+  // Expose for future cart drawer implementation
+  void _removeFromCart;
 
   return (
     <div className="min-h-screen bg-black text-white">

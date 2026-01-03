@@ -1601,6 +1601,18 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             warnings = food_analysis.get('warnings', [])
             recommended_swap = food_analysis.get('recommended_swap')
 
+            # Micronutrients
+            sodium_mg = food_analysis.get('sodium_mg')
+            sugar_g = food_analysis.get('sugar_g')
+            saturated_fat_g = food_analysis.get('saturated_fat_g')
+            cholesterol_mg = food_analysis.get('cholesterol_mg')
+            potassium_mg = food_analysis.get('potassium_mg')
+            vitamin_a_iu = food_analysis.get('vitamin_a_iu')
+            vitamin_c_mg = food_analysis.get('vitamin_c_mg')
+            vitamin_d_iu = food_analysis.get('vitamin_d_iu')
+            calcium_mg = food_analysis.get('calcium_mg')
+            iron_mg = food_analysis.get('iron_mg')
+
             logger.info(f"[ANALYZE-STREAM] Analysis complete for user {body.user_id}: {total_calories} calories")
 
             # Send the analysis result (NO database save - user must confirm first)
@@ -1622,6 +1634,17 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "recommended_swap": recommended_swap,
                 "source_type": "text",
                 "total_time_ms": elapsed_ms(),
+                # Micronutrients
+                "sodium_mg": sodium_mg,
+                "sugar_g": sugar_g,
+                "saturated_fat_g": saturated_fat_g,
+                "cholesterol_mg": cholesterol_mg,
+                "potassium_mg": potassium_mg,
+                "vitamin_a_iu": vitamin_a_iu,
+                "vitamin_c_mg": vitamin_c_mg,
+                "vitamin_d_iu": vitamin_d_iu,
+                "calcium_mg": calcium_mg,
+                "iron_mg": iron_mg,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -1841,6 +1864,18 @@ async def analyze_food_from_image_streaming(
             fat_g = food_analysis.get('fat_g', 0.0)
             fiber_g = food_analysis.get('fiber_g', 0.0)
 
+            # Micronutrients
+            sodium_mg = food_analysis.get('sodium_mg')
+            sugar_g = food_analysis.get('sugar_g')
+            saturated_fat_g = food_analysis.get('saturated_fat_g')
+            cholesterol_mg = food_analysis.get('cholesterol_mg')
+            potassium_mg = food_analysis.get('potassium_mg')
+            vitamin_a_iu = food_analysis.get('vitamin_a_iu')
+            vitamin_c_mg = food_analysis.get('vitamin_c_mg')
+            vitamin_d_iu = food_analysis.get('vitamin_d_iu')
+            calcium_mg = food_analysis.get('calcium_mg')
+            iron_mg = food_analysis.get('iron_mg')
+
             logger.info(f"[ANALYZE-STREAM] Image analysis complete for user {user_id}: {total_calories} calories")
 
             # Send the analysis result (NO database save - user must confirm first)
@@ -1856,6 +1891,17 @@ async def analyze_food_from_image_streaming(
                 "ai_suggestion": food_analysis.get('feedback'),
                 "source_type": "image",
                 "total_time_ms": elapsed_ms(),
+                # Micronutrients
+                "sodium_mg": sodium_mg,
+                "sugar_g": sugar_g,
+                "saturated_fat_g": saturated_fat_g,
+                "cholesterol_mg": cholesterol_mg,
+                "potassium_mg": potassium_mg,
+                "vitamin_a_iu": vitamin_a_iu,
+                "vitamin_c_mg": vitamin_c_mg,
+                "vitamin_d_iu": vitamin_d_iu,
+                "calcium_mg": calcium_mg,
+                "iron_mg": iron_mg,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
