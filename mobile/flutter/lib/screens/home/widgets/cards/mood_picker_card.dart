@@ -352,7 +352,15 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
     final notifier = ref.read(moodWorkoutProvider.notifier);
     notifier.selectMood(mood);
 
+    // Show full-screen loading overlay
+    _showGeneratingOverlay(mood);
+
     final workout = await notifier.generateMoodWorkout();
+
+    // Close the overlay
+    if (mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
     if (workout != null) {
       // Log successful generation
@@ -366,6 +374,162 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
       await ref.read(workoutsProvider.notifier).refresh();
       ref.invalidate(workoutsProvider);
     }
+  }
+
+  void _showGeneratingOverlay(Mood mood) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.85),
+      builder: (dialogContext) => _MoodWorkoutGeneratingOverlay(mood: mood),
+    );
+  }
+}
+
+/// Full-screen overlay shown during mood workout generation
+class _MoodWorkoutGeneratingOverlay extends ConsumerWidget {
+  final Mood mood;
+
+  const _MoodWorkoutGeneratingOverlay({required this.mood});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(moodWorkoutProvider);
+    final moodColor = mood.color;
+
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Animated emoji with glow
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.9, end: 1.1),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeInOut,
+                builder: (context, scale, child) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: moodColor.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: moodColor.withOpacity(0.4),
+                            blurRadius: 30,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          mood.emoji,
+                          style: const TextStyle(fontSize: 56),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                onEnd: () {
+                  // Restart animation for continuous pulse
+                },
+              ),
+              const SizedBox(height: 32),
+
+              // Status message
+              Text(
+                state.statusMessage ?? 'Generating your ${mood.label.toLowerCase()} workout...',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (state.detail != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Text(
+                    state.detail!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 32),
+
+              // Progress bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48),
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: state.progress > 0 ? state.progress : null,
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(moodColor),
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      state.currentStep > 0
+                          ? 'Step ${state.currentStep} of ${state.totalSteps}'
+                          : 'Initializing...',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Error state
+              if (state.hasFailed) ...[
+                const SizedBox(height: 24),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        state.error ?? 'Something went wrong',
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Close', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

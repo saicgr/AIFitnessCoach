@@ -42,6 +42,7 @@ class QuizMotivation extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 16),
               itemCount: _motivations.length,
               itemBuilder: (context, index) {
                 final motivation = _motivations[index];

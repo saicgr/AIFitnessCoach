@@ -441,11 +441,14 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       ),
                       Row(
                         children: [
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
+                          Flexible(
+                            child: Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (value) ...[

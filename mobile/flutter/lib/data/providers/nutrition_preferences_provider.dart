@@ -393,6 +393,53 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(error: e.toString());
     }
   }
+
+  /// Update nutrition targets (calories and macros)
+  /// This allows users to manually edit their calorie/macro goals
+  Future<void> updateTargets({
+    required String userId,
+    int? targetCalories,
+    int? targetProteinG,
+    int? targetCarbsG,
+    int? targetFatG,
+  }) async {
+    if (state.preferences == null) {
+      debugPrint('❌ [NutritionPrefsProvider] Cannot update targets: no preferences loaded');
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      debugPrint('📝 [NutritionPrefsProvider] Updating targets: cal=$targetCalories, p=$targetProteinG, c=$targetCarbsG, f=$targetFatG');
+
+      // Create updated preferences with new target values
+      final updatedPreferences = state.preferences!.copyWith(
+        targetCalories: targetCalories ?? state.preferences!.targetCalories,
+        targetProteinG: targetProteinG ?? state.preferences!.targetProteinG,
+        targetCarbsG: targetCarbsG ?? state.preferences!.targetCarbsG,
+        targetFatG: targetFatG ?? state.preferences!.targetFatG,
+      );
+
+      // Save to backend
+      final saved = await _repository.savePreferences(
+        userId: userId,
+        preferences: updatedPreferences,
+      );
+
+      // Refresh dynamic targets as well
+      final dynamicTargets = await _repository.getDynamicTargets(userId: userId);
+
+      state = state.copyWith(
+        preferences: saved,
+        dynamicTargets: dynamicTargets,
+        isLoading: false,
+      );
+      debugPrint('✅ [NutritionPrefsProvider] Targets updated');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefsProvider] Update targets error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
 }
 
 // ============================================

@@ -36,6 +36,9 @@ class FoodLoggingProgress {
   /// Whether an error occurred
   final bool hasError;
 
+  /// Whether this is an analysis-only result (not yet saved to database)
+  final bool isAnalysisOnly;
+
   FoodLoggingProgress({
     required this.step,
     required this.totalSteps,
@@ -45,6 +48,7 @@ class FoodLoggingProgress {
     this.foodLog,
     this.isCompleted = false,
     this.hasError = false,
+    this.isAnalysisOnly = false,
   });
 
   /// Progress as a percentage (0.0 to 1.0)
@@ -653,6 +657,333 @@ class NutritionRepository {
         hasError: true,
       );
     }
+  }
+
+  // ============================================
+  // Analyze-Only Streaming Methods (No Save)
+  // ============================================
+
+  /// Analyze food from text description with streaming progress updates
+  ///
+  /// DOES NOT save to database - returns analysis only for user review.
+  /// Call logFoodDirect() after user confirmation to actually save.
+  ///
+  /// Returns a Stream that emits progress as text is analyzed:
+  /// - Step 1: Loading user profile and goals
+  /// - Step 2: Analyzing food with AI
+  /// - Step 3: Calculating nutrition (analysis complete)
+  Stream<FoodLoggingProgress> analyzeFoodFromTextStreaming({
+    required String userId,
+    required String description,
+    required String mealType,
+  }) async* {
+    debugPrint('🔍 [Nutrition] Starting streaming food ANALYSIS for $userId');
+    final startTime = DateTime.now();
+
+    try {
+      // Emit initial status
+      yield FoodLoggingProgress(
+        step: 0,
+        totalSteps: 3,
+        message: 'Starting analysis...',
+        elapsedMs: 0,
+        isAnalysisOnly: true,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _client.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _client.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final response = await streamingDio.post(
+        '/nutrition/analyze-text-stream',
+        data: {
+          'user_id': userId,
+          'description': description,
+          'meal_type': mealType,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'progress') {
+                  yield FoodLoggingProgress(
+                    step: data['step'] as int? ?? 0,
+                    totalSteps: data['total_steps'] as int? ?? 3,
+                    message: data['message'] as String? ?? 'Analyzing...',
+                    detail: data['detail'] as String?,
+                    elapsedMs: elapsedMs,
+                    isAnalysisOnly: true,
+                  );
+                } else if (eventType == 'done') {
+                  final foodLog = LogFoodResponse.fromJson(data);
+                  yield FoodLoggingProgress(
+                    step: 3,
+                    totalSteps: 3,
+                    message: 'Analysis complete!',
+                    elapsedMs: elapsedMs,
+                    foodLog: foodLog,
+                    isCompleted: true,
+                    isAnalysisOnly: true,
+                  );
+                } else if (eventType == 'error') {
+                  yield FoodLoggingProgress(
+                    step: 0,
+                    totalSteps: 3,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                    hasError: true,
+                    isAnalysisOnly: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Nutrition] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Streaming food analysis error: $e');
+      yield FoodLoggingProgress(
+        step: 0,
+        totalSteps: 3,
+        message: 'Failed to analyze food: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        hasError: true,
+        isAnalysisOnly: true,
+      );
+    }
+  }
+
+  /// Analyze food from image with streaming progress updates
+  ///
+  /// DOES NOT save to database - returns analysis only for user review.
+  /// Call logFoodDirect() after user confirmation to actually save.
+  ///
+  /// Returns a Stream that emits progress as image is analyzed:
+  /// - Step 1: Processing image
+  /// - Step 2: AI analyzing food
+  /// - Step 3: Calculating nutrition (analysis complete)
+  Stream<FoodLoggingProgress> analyzeFoodFromImageStreaming({
+    required String userId,
+    required String mealType,
+    required File imageFile,
+  }) async* {
+    debugPrint('📸 [Nutrition] Starting streaming image ANALYSIS for $userId');
+    final startTime = DateTime.now();
+
+    try {
+      // Emit initial status
+      yield FoodLoggingProgress(
+        step: 0,
+        totalSteps: 3,
+        message: 'Preparing image...',
+        elapsedMs: 0,
+        isAnalysisOnly: true,
+      );
+
+      // Get the base URL from API client
+      final baseUrl = _client.baseUrl;
+
+      // Create a new Dio instance for streaming
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+      ));
+
+      // Add auth headers from existing client
+      final authHeaders = await _client.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final formData = FormData.fromMap({
+        'user_id': userId,
+        'meal_type': mealType,
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: 'food_image.jpg',
+        ),
+      });
+
+      final response = await streamingDio.post(
+        '/nutrition/analyze-image-stream',
+        data: formData,
+        options: Options(
+          responseType: ResponseType.stream,
+        ),
+      );
+
+      final stream = response.data.stream as Stream<List<int>>;
+      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
+        handleData: (data, sink) {
+          sink.add(utf8.decode(data));
+        },
+      );
+
+      String eventType = '';
+      String eventData = '';
+
+      await for (final chunk in stream.transform(transformer)) {
+        // Parse SSE format
+        for (final line in chunk.split('\n')) {
+          if (line.isEmpty) {
+            // End of event
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+
+                if (eventType == 'progress') {
+                  yield FoodLoggingProgress(
+                    step: data['step'] as int? ?? 0,
+                    totalSteps: data['total_steps'] as int? ?? 3,
+                    message: data['message'] as String? ?? 'Analyzing...',
+                    detail: data['detail'] as String?,
+                    elapsedMs: elapsedMs,
+                    isAnalysisOnly: true,
+                  );
+                } else if (eventType == 'done') {
+                  final foodLog = LogFoodResponse.fromJson(data);
+                  yield FoodLoggingProgress(
+                    step: 3,
+                    totalSteps: 3,
+                    message: 'Analysis complete!',
+                    elapsedMs: elapsedMs,
+                    foodLog: foodLog,
+                    isCompleted: true,
+                    isAnalysisOnly: true,
+                  );
+                } else if (eventType == 'error') {
+                  yield FoodLoggingProgress(
+                    step: 0,
+                    totalSteps: 3,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                    hasError: true,
+                    isAnalysisOnly: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Nutrition] Error parsing SSE data: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Nutrition] Streaming image analysis error: $e');
+      yield FoodLoggingProgress(
+        step: 0,
+        totalSteps: 3,
+        message: 'Failed to analyze image: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        hasError: true,
+        isAnalysisOnly: true,
+      );
+    }
+  }
+
+  /// Log food directly from an analyzed response (after user confirmation)
+  ///
+  /// Use this method after the user has reviewed and confirmed the analysis
+  /// from analyzeFoodFromTextStreaming() or analyzeFoodFromImageStreaming().
+  Future<LogFoodResponse> logFoodDirect({
+    required String userId,
+    required String mealType,
+    required LogFoodResponse analyzedFood,
+    double portionMultiplier = 1.0,
+    String sourceType = 'text',
+  }) async {
+    debugPrint('💾 [Nutrition] Saving analyzed food for $userId');
+
+    // Adjust nutrition values by portion multiplier
+    final adjustedCalories = (analyzedFood.totalCalories * portionMultiplier).round();
+    final adjustedProtein = (analyzedFood.proteinG * portionMultiplier).round();
+    final adjustedCarbs = (analyzedFood.carbsG * portionMultiplier).round();
+    final adjustedFat = (analyzedFood.fatG * portionMultiplier).round();
+    final adjustedFiber = ((analyzedFood.fiberG ?? 0) * portionMultiplier).round();
+
+    // Adjust food items
+    final adjustedItems = analyzedFood.foodItems.map((item) {
+      return {
+        ...item,
+        'calories': ((item['calories'] ?? 0) * portionMultiplier).round(),
+        'protein_g': ((item['protein_g'] ?? 0) * portionMultiplier).round(),
+        'carbs_g': ((item['carbs_g'] ?? 0) * portionMultiplier).round(),
+        'fat_g': ((item['fat_g'] ?? 0) * portionMultiplier).round(),
+        if (portionMultiplier != 1.0) 'portion_adjusted': true,
+        if (portionMultiplier != 1.0) 'portion_multiplier': portionMultiplier,
+      };
+    }).toList();
+
+    return logAdjustedFood(
+      userId: userId,
+      mealType: mealType,
+      foodItems: adjustedItems,
+      totalCalories: adjustedCalories,
+      totalProtein: adjustedProtein,
+      totalCarbs: adjustedCarbs,
+      totalFat: adjustedFat,
+      totalFiber: adjustedFiber,
+      sourceType: sourceType,
+    );
   }
 
   // ============================================

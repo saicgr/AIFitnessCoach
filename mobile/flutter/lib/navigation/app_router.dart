@@ -28,7 +28,7 @@ import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
 import '../screens/workouts/workouts_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
-import '../screens/workout/active_workout_screen.dart';
+import '../screens/workout/active_workout_screen_refactored.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/exercise_detail_screen.dart';

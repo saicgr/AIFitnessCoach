@@ -921,10 +921,16 @@ IMPORTANT RULES:
             difficulty = intensity_preference
 
             # Warn about potentially dangerous combinations
-            if fitness_level == "beginner" and intensity_preference == "hard":
+            if fitness_level == "beginner" and intensity_preference == "hell":
+                print(f"🔥 [Gemini] WARNING: Beginner fitness level with HELL intensity - this is extremely challenging!")
+            elif fitness_level == "beginner" and intensity_preference == "hard":
                 print(f"⚠️ [Gemini] WARNING: Beginner fitness level with hard intensity preference - ensure exercises are scaled appropriately")
+            elif fitness_level == "intermediate" and intensity_preference == "hell":
+                print(f"🔥 [Gemini] Note: Intermediate fitness level with HELL intensity - maximum challenge mode")
             elif fitness_level == "intermediate" and intensity_preference == "hard":
                 print(f"🔍 [Gemini] Note: Intermediate fitness level with hard intensity - will challenge the user")
+            elif intensity_preference == "hell":
+                print(f"🔥 [Gemini] HELL MODE ACTIVATED - generating maximum intensity workout")
         else:
             difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
@@ -976,8 +982,29 @@ IMPORTANT RULES:
             age_activity_context += f"\n- Activity Level: {activity_desc}"
 
         # Add safety instruction if there's a mismatch between fitness level and intensity
+        # Also add special instructions for HELL mode workouts
         safety_instruction = ""
-        if fitness_level == "beginner" and difficulty == "hard":
+        if difficulty == "hell":
+            safety_instruction = """
+
+🔥 HELL MODE - MAXIMUM INTENSITY WORKOUT:
+This is an EXTREME intensity workout. You MUST:
+1. Use heavier weights than normal (increase by 20-30% from typical recommendations)
+2. Minimize rest periods (30-45 seconds max between sets)
+3. Include advanced techniques: drop sets, supersets, AMRAP sets, tempo training
+4. Push rep ranges to near-failure (aim for RPE 9-10)
+5. Include explosive and compound movements
+6. Add intensity boosters like pause reps, 1.5 reps, or slow eccentrics
+7. This workout should be BRUTAL - make users feel accomplished for finishing
+8. Include challenging exercise variations (e.g., deficit push-ups, Bulgarian split squats)
+9. Higher volume: more sets per exercise (4-5 sets minimum)
+
+HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "Devastation", "Annihilation", "Carnage", "Rampage"."""
+            if fitness_level == "beginner":
+                safety_instruction += "\n\n⚠️ BEGINNER IN HELL MODE: Scale weights appropriately but maintain high intensity. Focus on form while pushing limits. Include extra rest if needed for safety."
+            elif fitness_level == "intermediate":
+                safety_instruction += "\n\n💪 INTERMEDIATE IN HELL MODE: Push to your limits with challenging weights and minimal rest. You can handle this - make it count!"
+        elif fitness_level == "beginner" and difficulty == "hard":
             safety_instruction = "\n\n⚠️ SAFETY NOTE: User is a beginner but wants hard intensity. Choose challenging exercises but ensure proper form is achievable. Include more rest periods and focus on compound movements with moderate weights rather than advanced techniques."
 
         # Determine workout type (strength, cardio, or mixed)
@@ -1391,9 +1418,10 @@ Requirements:
 - MUST include AT LEAST 5 exercises (minimum 5, ideally 6-8) appropriate for {fitness_level} fitness level
 - EVERY exercise MUST match the focus area - do NOT include exercises for other muscle groups!
 - ONLY use equipment from this list: {', '.join(equipment) if equipment else 'bodyweight'}
-- For beginners: focus on form, include more rest, simpler movements
-- For intermediate: balanced challenge, compound movements
-- For advanced: higher intensity, complex movements, less rest
+- For beginners: USE ALL AVAILABLE EQUIPMENT listed above! Focus on proper form and include adequate rest. Choose foundational compound movements (squats, bench press, rows, deadlifts) over isolation exercises. Beginners CAN and SHOULD use barbells, dumbbells, and machines - not just bodyweight!
+- For intermediate: balanced challenge, mix of compound and isolation movements
+- For advanced: higher intensity, complex movements, advanced techniques, less rest
+- For HELL difficulty: MAXIMUM intensity! Supersets, drop sets, minimal rest (30-45s), heavy weights, near-failure reps. This should be the hardest workout possible. Include at least 7-8 exercises with 4-5 sets each.
 - Align exercise selection with goals: {', '.join(goals) if goals else 'general fitness'}
 - Include variety - don't repeat the same movement pattern
 - Each exercise should have helpful form notes
@@ -1648,10 +1676,16 @@ Include 5-8 exercises for {fitness_level} level using only: {', '.join(equipment
             difficulty = intensity_preference
 
             # Warn about potentially dangerous combinations
-            if fitness_level == "beginner" and intensity_preference == "hard":
+            if fitness_level == "beginner" and intensity_preference == "hell":
+                print(f"🔥 [Gemini] WARNING: Beginner fitness level with HELL intensity - this is extremely challenging!")
+            elif fitness_level == "beginner" and intensity_preference == "hard":
                 print(f"⚠️ [Gemini] WARNING: Beginner fitness level with hard intensity preference - ensure exercises are scaled appropriately")
+            elif fitness_level == "intermediate" and intensity_preference == "hell":
+                print(f"🔥 [Gemini] Note: Intermediate fitness level with HELL intensity - maximum challenge mode")
             elif fitness_level == "intermediate" and intensity_preference == "hard":
                 print(f"🔍 [Gemini] Note: Intermediate fitness level with hard intensity - will challenge the user")
+            elif intensity_preference == "hell":
+                print(f"🔥 [Gemini] HELL MODE ACTIVATED - generating maximum intensity workout from library")
         else:
             difficulty = "easy" if fitness_level == "beginner" else ("hard" if fitness_level == "advanced" else "medium")
 
@@ -1906,9 +1940,10 @@ RULES:
 5. Avoid generic phrases like "great exercise" or "builds strength"
 """
 
-            response = await self.model.generate_content_async(
-                prompt,
-                generation_config=genai.GenerationConfig(
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     temperature=0.7,
                     max_output_tokens=1000,
                 ),

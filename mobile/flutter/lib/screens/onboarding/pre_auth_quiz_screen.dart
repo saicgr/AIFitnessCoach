@@ -1005,6 +1005,14 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   /// Handle environment selection - pre-populates equipment based on environment
   void _handleEnvironmentChange(String envId) {
     setState(() {
+      // If tapping the same environment, deselect it and clear equipment
+      if (_selectedEnvironment == envId) {
+        _selectedEnvironment = null;
+        _selectedEquipment.clear();
+        _otherSelectedEquipment.clear();
+        return;
+      }
+
       _selectedEnvironment = envId;
 
       // Pre-populate equipment based on environment

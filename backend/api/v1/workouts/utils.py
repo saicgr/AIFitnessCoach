@@ -2008,7 +2008,12 @@ def validate_and_cap_exercise_parameters(
             except (ValueError, IndexError):
                 original_reps = 10  # Safe default
 
-        # Ensure we're working with integers
+        # Ensure we're working with integers (handle None from JSON null)
+        try:
+            original_reps = int(original_reps)
+        except (ValueError, TypeError):
+            original_reps = 10  # Safe default
+
         try:
             original_sets = int(original_sets)
         except (ValueError, TypeError):

@@ -149,9 +149,12 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(100),
+                  preferredSize: const Size.fromHeight(140),
                   child: Column(
                     children: [
+                      // Username chip (tap to copy)
+                      _buildUserIdChip(context, isDark, authState.user),
+                      const SizedBox(height: 8),
                       // Stats chips row
                       _buildStatsChips(context, isDark, feedDataAsync),
                       const SizedBox(height: 4),
@@ -299,6 +302,91 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserIdChip(
+    BuildContext context,
+    bool isDark,
+    dynamic user,
+  ) {
+    final username = user?.username as String?;
+    final userId = user?.id as String?;
+
+    // Show username if available, otherwise show truncated user ID
+    final displayText = username != null
+        ? '@$username'
+        : (userId != null ? 'ID: ${userId.substring(0, 8)}...' : 'No ID');
+
+    // Copy the full username or user ID
+    final copyText = username ?? userId ?? '';
+
+    final chipBackground = isDark
+        ? AppColors.cyan.withValues(alpha: 0.15)
+        : AppColors.cyan.withValues(alpha: 0.1);
+    final borderColor = AppColors.cyan.withValues(alpha: 0.3);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (copyText.isNotEmpty) {
+              HapticFeedback.lightImpact();
+              Clipboard.setData(ClipboardData(text: copyText));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    username != null
+                        ? 'Username copied: @$username'
+                        : 'User ID copied',
+                  ),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: chipBackground,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.alternate_email_rounded,
+                  color: AppColors.cyan,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    displayText,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.copy_rounded,
+                  color: AppColors.textMuted,
+                  size: 16,
+                ),
+              ],
+            ),
           ),
         ),
       ),

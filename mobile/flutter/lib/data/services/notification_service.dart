@@ -214,6 +214,9 @@ typedef OnNotificationReceivedCallback = void Function({
 /// Callback type for handling notification taps
 typedef OnNotificationTappedCallback = void Function(String? notificationType);
 
+/// Callback type for FCM token refresh - allows syncing new token to backend
+typedef OnTokenRefreshCallback = void Function(String newToken);
+
 /// Notification service for FCM + Local Notifications
 class NotificationService {
   FirebaseMessaging? _messaging;
@@ -234,6 +237,9 @@ class NotificationService {
 
   /// Callback to handle notification taps (for navigation)
   OnNotificationTappedCallback? onNotificationTapped;
+
+  /// Callback for FCM token refresh - set this to sync token to backend
+  OnTokenRefreshCallback? onTokenRefresh;
 
   String? get fcmToken => _fcmToken;
 
@@ -401,7 +407,8 @@ class NotificationService {
       messaging!.onTokenRefresh.listen((newToken) {
         debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
         _fcmToken = newToken;
-        // TODO: Send new token to backend
+        // Notify listeners so they can sync to backend
+        onTokenRefresh?.call(newToken);
       });
 
       // Handle foreground messages

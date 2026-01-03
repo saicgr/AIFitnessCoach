@@ -185,12 +185,14 @@ class SettingTile extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     title,
                     style: const TextStyle(
                       fontSize: 15,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (subtitle != null)
                     Text(
@@ -199,12 +201,18 @@ class SettingTile extends StatelessWidget {
                         fontSize: 12,
                         color: textMuted,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                     ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             if (trailing != null)
-              trailing!
+              Flexible(
+                flex: 0,
+                child: trailing!,
+              )
             else if (onTap != null && showChevron)
               Icon(
                 Icons.chevron_right,

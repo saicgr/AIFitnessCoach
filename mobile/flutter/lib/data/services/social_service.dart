@@ -505,6 +505,8 @@ class SocialService {
   }) async {
     if (query.trim().isEmpty) return [];
 
+    debugPrint('🔍 [Social] Searching users: query="$query", userId=$userId, limit=$limit');
+
     try {
       final response = await _apiClient.get(
         '/social/users/search',
@@ -515,10 +517,15 @@ class SocialService {
         },
       );
 
+      debugPrint('🔍 [Social] Search response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        debugPrint('✅ [Social] Found ${(response.data as List).length} users');
-        return List<Map<String, dynamic>>.from(response.data);
+        final results = List<Map<String, dynamic>>.from(response.data);
+        debugPrint('✅ [Social] Found ${results.length} users for query "$query"');
+        return results;
       } else {
+        debugPrint('❌ [Social] Search failed with status: ${response.statusCode}');
+        debugPrint('❌ [Social] Response body: ${response.data}');
         throw Exception('Failed to search users: ${response.statusCode}');
       }
     } catch (e) {

@@ -227,7 +227,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
 
       final repo = ref.read(workoutRepositoryProvider);
 
-      // Step 1: Update preferences and delete old workouts
+      // Update preferences and delete old workouts
       await repo.updateProgramAndRegenerate(
         userId: userId,
         difficulty: _selectedDifficulty,
@@ -247,42 +247,10 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet> {
             : null,
       );
 
+      // Close sheet immediately - workouts will be generated on-demand when user visits home
       if (mounted) {
-        setState(() => _updateStatus = 'Generating workouts...');
+        Navigator.pop(context, true);
       }
-
-      // Step 2: Generate 2 weeks with streaming for real-time progress
-      final today = DateTime.now().toIso8601String().split('T')[0];
-
-      await for (final progress in repo.generateMonthlyWorkoutsStreaming(
-        userId: userId,
-        selectedDays: _selectedDays.toList(),
-        durationMinutes: _selectedDuration.round(),
-        monthStartDate: today,
-      )) {
-        if (!mounted) return;
-
-        if (progress.hasError) {
-          throw Exception(progress.message);
-        }
-
-        if (progress.isCompleted) {
-          // All workouts generated successfully
-          Navigator.pop(context, true);
-          return;
-        }
-
-        // Update UI with streaming progress
-        setState(() {
-          _generatingWorkout = progress.currentWorkout;
-          _totalWorkoutsToGenerate = progress.totalWorkouts;
-          _updateStatus = progress.message;
-          _generatingDetail = progress.detail;
-        });
-      }
-
-      // If we get here without completion, something went wrong
-      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() {

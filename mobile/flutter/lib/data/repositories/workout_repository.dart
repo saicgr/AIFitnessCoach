@@ -125,18 +125,21 @@ class WorkoutRepository {
   /// Generate monthly workouts with streaming progress updates
   ///
   /// Returns a Stream that emits progress as each workout is generated.
-  /// Always generates exactly 2 weeks of workouts.
+  /// By default generates 2 weeks of workouts, but can be limited with maxWorkouts.
   ///
   /// Each progress event contains:
   /// - currentWorkout/totalWorkouts: Progress through the batch
   /// - message: "Generating next workout..."
   /// - detail: "Day X of Y"
   /// - workout: The just-generated workout (when available)
+  ///
+  /// Use maxWorkouts: 1 for on-demand single workout generation.
   Stream<ProgramGenerationProgress> generateMonthlyWorkoutsStreaming({
     required String userId,
     required List<int> selectedDays,
     int durationMinutes = 45,
     String? monthStartDate,
+    int? maxWorkouts,
   }) async* {
     debugPrint('🚀 [Workout] Starting streaming program generation for $userId');
     final startTime = DateTime.now();
@@ -171,14 +174,22 @@ class WorkoutRepository {
 
       final startDate = monthStartDate ?? DateTime.now().toIso8601String().split('T')[0];
 
+      final requestData = {
+        'user_id': userId,
+        'month_start_date': startDate,
+        'selected_days': selectedDays,
+        'duration_minutes': durationMinutes,
+      };
+
+      // Add max_workouts if specified (for on-demand single workout generation)
+      if (maxWorkouts != null) {
+        requestData['max_workouts'] = maxWorkouts;
+        debugPrint('🎯 [Workout] On-demand mode: generating max $maxWorkouts workout(s)');
+      }
+
       final response = await streamingDio.post(
         '${ApiConstants.workouts}/generate-monthly-stream',
-        data: {
-          'user_id': userId,
-          'month_start_date': startDate,
-          'selected_days': selectedDays,
-          'duration_minutes': durationMinutes,
-        },
+        data: requestData,
         options: Options(
           responseType: ResponseType.stream,
         ),

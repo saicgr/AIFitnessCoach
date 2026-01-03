@@ -185,6 +185,7 @@ class GenerateMonthlyRequest(BaseModel):
     selected_days: List[int] = Field(..., max_length=7)
     duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
     weeks: Optional[int] = Field(default=12, ge=1, le=52)
+    max_workouts: Optional[int] = Field(default=None, ge=1, le=30, description="Limit number of workouts to generate. If set, generates only this many workouts.")
 
 
 class GenerateMonthlyResponse(BaseModel):

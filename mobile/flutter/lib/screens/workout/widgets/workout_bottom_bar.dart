@@ -1,15 +1,16 @@
 /// Workout bottom bar widget
 ///
 /// Bottom navigation bar for the active workout screen.
+/// Simplified design showing only next exercise preview.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
-/// Bottom bar for workout navigation and controls
+/// Bottom bar for workout navigation - simplified to next exercise preview
 class WorkoutBottomBar extends StatelessWidget {
   /// Current exercise
   final WorkoutExercise currentExercise;
@@ -17,17 +18,20 @@ class WorkoutBottomBar extends StatelessWidget {
   /// Next exercise (null if last)
   final WorkoutExercise? nextExercise;
 
-  /// Whether instructions panel is shown
+  /// Whether instructions panel is shown (kept for compatibility)
   final bool showInstructions;
 
   /// Whether currently resting
   final bool isResting;
 
-  /// Callback to toggle instructions
+  /// Callback to toggle instructions (kept for compatibility)
   final VoidCallback onToggleInstructions;
 
   /// Callback to skip (rest or exercise)
   final VoidCallback onSkip;
+
+  /// Optional callback to show exercise details
+  final VoidCallback? onShowExerciseDetails;
 
   const WorkoutBottomBar({
     super.key,
@@ -37,6 +41,7 @@ class WorkoutBottomBar extends StatelessWidget {
     required this.isResting,
     required this.onToggleInstructions,
     required this.onSkip,
+    this.onShowExerciseDetails,
   });
 
   @override
@@ -45,378 +50,192 @@ class WorkoutBottomBar extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Collapsible instructions panel
-          if (showInstructions)
-            _buildInstructionsPanel(
-              context,
-              isDark: isDark,
-            ),
-
-          const SizedBox(height: 8),
-
-          // Bottom bar
-          _buildBottomBar(context, isDark: isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstructionsPanel(BuildContext context, {required bool isDark}) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         decoration: BoxDecoration(
           color: isDark
-              ? AppColors.elevated.withOpacity(0.95)
-              : AppColorsLight.elevated.withOpacity(0.98),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-          ),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.info_outline, color: AppColors.cyan, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Instructions',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                  ),
-                ),
-              ],
+              ? AppColors.nearBlack.withOpacity(0.95)
+              : Colors.white.withOpacity(0.95),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
             ),
-            const SizedBox(height: 12),
-            // Exercise details
-            _InstructionRow(
-              label: 'Reps',
-              value: currentExercise.reps != null
-                  ? '${currentExercise.reps} reps'
-                  : '${currentExercise.durationSeconds ?? 30}s',
-            ),
-            _InstructionRow(
-              label: 'Sets',
-              value: '${currentExercise.sets ?? 3} sets',
-            ),
-            if (currentExercise.weight != null)
-              _InstructionRow(
-                label: 'Weight',
-                value: '${currentExercise.weight} kg',
-              ),
-            _InstructionRow(
-              label: 'Rest',
-              value: '${currentExercise.restSeconds ?? 90}s between sets',
-            ),
-            if (currentExercise.notes != null &&
-                currentExercise.notes!.isNotEmpty) ...[
-              const Divider(color: AppColors.cardBorder, height: 24),
-              Text(
-                currentExercise.notes!,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ],
           ],
         ),
-      ).animate().fadeIn().slideY(begin: 0.1),
-    );
-  }
-
-  Widget _buildBottomBar(BuildContext context, {required bool isDark}) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.nearBlack.withOpacity(0.95)
-            : AppColorsLight.elevated.withOpacity(0.98),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: isDark
-            ? null
-            : Border(
-                top: BorderSide(
-                    color: AppColorsLight.cardBorder.withOpacity(0.3)),
-              ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          // Expand/collapse info button
-          _GlassButton(
-            icon:
-                showInstructions ? Icons.expand_more : Icons.expand_less,
-            onTap: onToggleInstructions,
-            size: 44,
-          ),
-
-          const SizedBox(width: 12),
-
-          // Next exercise indicator
-          Expanded(
-            child: nextExercise != null
-                ? _buildNextExerciseIndicator(isDark)
-                : _buildLastExerciseIndicator(),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Skip button
-          OutlinedButton(
-            onPressed: onSkip,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              side: BorderSide(
-                color: isResting
-                    ? AppColors.purple.withOpacity(0.5)
-                    : (isDark
-                        ? AppColors.cardBorder
-                        : AppColorsLight.cardBorder),
-              ),
-              foregroundColor: isResting
-                  ? AppColors.purple
-                  : (isDark
-                      ? AppColors.textSecondary
-                      : AppColorsLight.textSecondary),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(isResting ? 'Skip Rest' : 'Skip'),
-          ),
-        ],
+        child: nextExercise != null
+            ? _buildNextExercisePreview(isDark)
+            : _buildLastExerciseIndicator(isDark),
       ),
     );
   }
 
-  Widget _buildNextExerciseIndicator(bool isDark) {
+  Widget _buildNextExercisePreview(bool isDark) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            AppColors.cyan.withOpacity(0.15),
-            AppColors.electricBlue.withOpacity(0.1),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onShowExerciseDetails?.call();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.05)
+              : Colors.black.withOpacity(0.03),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.05),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Next icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.electricBlue.withOpacity(0.12),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                size: 20,
+                color: AppColors.electricBlue,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // Exercise info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'UP NEXT',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    nextExercise!.name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _buildExerciseDetails(nextExercise!),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Chevron
+            Icon(
+              Icons.chevron_right,
+              size: 24,
+              color: textMuted,
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.cyan.withOpacity(0.2),
-            ),
-            child: const Icon(Icons.arrow_forward_rounded,
-                size: 18, color: AppColors.cyan),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Next',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: AppColors.cyan.withOpacity(0.8),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  nextExercise!.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildLastExerciseIndicator() {
+  String _buildExerciseDetails(WorkoutExercise exercise) {
+    final parts = <String>[];
+
+    if (exercise.sets != null) {
+      parts.add('${exercise.sets} sets');
+    }
+    if (exercise.reps != null) {
+      parts.add('${exercise.reps} reps');
+    } else if (exercise.durationSeconds != null) {
+      parts.add('${exercise.durationSeconds}s');
+    }
+    if (exercise.weight != null) {
+      parts.add('${exercise.weight}kg');
+    }
+
+    return parts.join(' • ');
+  }
+
+  Widget _buildLastExerciseIndicator(bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            AppColors.success.withOpacity(0.15),
-            AppColors.success.withOpacity(0.08),
+            AppColors.success.withOpacity(0.12),
+            AppColors.success.withOpacity(0.06),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.4),
-          width: 1.5,
+          color: AppColors.success.withOpacity(0.25),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withOpacity(0.15),
             ),
-            child: const Icon(Icons.flag_rounded,
-                size: 16, color: AppColors.success),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'Last Exercise!',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+            child: const Icon(
+              Icons.flag_rounded,
+              size: 20,
               color: AppColors.success,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Glass button widget
-class _GlassButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final double size;
-
-  const _GlassButton({
-    required this.icon,
-    required this.onTap,
-    this.size = 44,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.pureBlack.withOpacity(0.5)
-              : AppColorsLight.elevated.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.2)
-                : AppColorsLight.cardBorder.withOpacity(0.5),
-          ),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Icon(
-          icon,
-          color: isDark ? Colors.white : AppColorsLight.textPrimary,
-          size: size * 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-/// Instruction row widget
-class _InstructionRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InstructionRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
+          const SizedBox(width: 14),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'FINAL EXERCISE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                  color: AppColors.success,
+                ),
               ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+              SizedBox(height: 2),
+              Text(
+                'You\'re almost there!',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.success,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -437,15 +256,18 @@ class SetDotsIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Label
         Text(
           'Set ${completedSets + 1} of $totalSets',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textMuted,
+            color: textMuted,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -466,11 +288,13 @@ class SetDotsIndicator extends StatelessWidget {
                 color: isCompleted
                     ? AppColors.success
                     : isCurrent
-                        ? AppColors.cyan
-                        : AppColors.glassSurface,
+                        ? AppColors.electricBlue
+                        : (isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.08)),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isCurrent ? AppColors.cyan : Colors.transparent,
+                  color: isCurrent ? AppColors.electricBlue : Colors.transparent,
                   width: 2,
                 ),
               ),
@@ -504,14 +328,19 @@ class ExerciseOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -519,7 +348,7 @@ class ExerciseOptionTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -539,15 +368,17 @@ class ExerciseOptionTile extends StatelessWidget {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColorsLight.textMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: color.withOpacity(0.7)),
+            Icon(Icons.chevron_right, color: color.withOpacity(0.6)),
           ],
         ),
       ),

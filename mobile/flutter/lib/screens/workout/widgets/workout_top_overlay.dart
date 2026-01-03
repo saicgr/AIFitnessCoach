@@ -1,6 +1,6 @@
 /// Top overlay widget for active workout screen
 ///
-/// Displays workout timer, pause/resume controls, and exercise list access.
+/// Displays workout timer with progress bar, minimal and clean design.
 library;
 
 import 'package:flutter/material.dart';
@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../controllers/workout_timer_controller.dart';
 
-/// Top overlay with workout controls
+/// Top overlay with workout controls - simplified design
 class WorkoutTopOverlay extends StatelessWidget {
   /// Total workout seconds
   final int workoutSeconds;
@@ -51,8 +51,14 @@ class WorkoutTopOverlay extends StatelessWidget {
     this.scaleFactor = 1.0,
   });
 
+  double get progress => totalExercises > 0
+      ? (currentExerciseIndex + 1) / totalExercises
+      : 0.0;
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Positioned(
       top: 0,
       left: 0,
@@ -60,158 +66,161 @@ class WorkoutTopOverlay extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              // Left side stats
+              // Main controls row
               Row(
                 children: [
-                  // Timer stat
-                  _StatChip(
-                    icon: isPaused ? Icons.pause : Icons.timer,
-                    value: WorkoutTimerController.formatTime(workoutSeconds),
-                    color: isPaused ? AppColors.orange : AppColors.cyan,
-                    scaleFactor: scaleFactor,
-                    isTappable: true,
-                    label: isPaused ? 'PAUSED' : null,
+                  // Pause/Play button
+                  _GlassButton(
+                    icon: isPaused ? Icons.play_arrow : Icons.pause,
                     onTap: onTogglePause,
+                    isHighlighted: isPaused,
+                    size: 44 * scaleFactor,
                   ),
-                  SizedBox(width: 8 * scaleFactor),
-                  // Exercise progress stat
-                  _StatChip(
-                    icon: Icons.fitness_center,
-                    value: '${currentExerciseIndex + 1}/$totalExercises',
-                    color: AppColors.purple,
-                    scaleFactor: scaleFactor,
-                    isTappable: true,
-                    onTap: onShowExerciseList,
-                  ),
-                  SizedBox(width: 8 * scaleFactor),
-                  // Sets completed stat
-                  _StatChip(
-                    icon: Icons.check_circle_outline,
-                    value: '$totalCompletedSets',
-                    suffix: ' sets',
-                    color: AppColors.success,
-                    scaleFactor: scaleFactor,
+
+                  const Spacer(),
+
+                  // Timer - centered and prominent
+                  _buildTimer(isDark),
+
+                  const Spacer(),
+
+                  // Close button
+                  _GlassButton(
+                    icon: Icons.close,
+                    onTap: onQuit,
+                    isSubdued: true,
+                    size: 44 * scaleFactor,
                   ),
                 ],
               ),
-              // Right side - close button
-              _GlassButton(
-                icon: Icons.close,
-                onTap: onQuit,
-                isSubdued: true,
-                size: 40 * scaleFactor,
-              ),
+
+              const SizedBox(height: 12),
+
+              // Progress bar
+              _buildProgressBar(isDark),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-/// Stat chip widget for displaying workout stats
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String? suffix;
-  final String? label;
-  final Color color;
-  final double scaleFactor;
-  final bool isTappable;
-  final VoidCallback? onTap;
-
-  const _StatChip({
-    required this.icon,
-    required this.value,
-    required this.color,
-    this.suffix,
-    this.label,
-    this.scaleFactor = 1.0,
-    this.isTappable = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Dynamic dimensions based on scale factor
-    final horizontalPadding = (10 * scaleFactor).clamp(6.0, 14.0);
-    final verticalPadding = (6 * scaleFactor).clamp(4.0, 8.0);
-    final iconSize = (16 * scaleFactor).clamp(12.0, 20.0);
-    final valueFontSize = (14 * scaleFactor).clamp(10.0, 18.0);
-    final suffixFontSize = (10 * scaleFactor).clamp(8.0, 13.0);
-    final labelFontSize = (8 * scaleFactor).clamp(6.0, 10.0);
-    final innerSpacing = (4 * scaleFactor).clamp(2.0, 6.0);
-    final borderRadius = (12 * scaleFactor).clamp(8.0, 16.0);
-
-    final widget = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.pureBlack.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isTappable ? color.withOpacity(0.5) : color.withOpacity(0.3),
-          width: isTappable ? 1.5 : 1.0,
-        ),
-        boxShadow: isTappable
-            ? [
-                BoxShadow(
-                  color: color.withOpacity(0.2),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: iconSize, color: color),
-          SizedBox(width: innerSpacing),
-          Text(
-            label ?? value,
-            style: TextStyle(
-              fontSize: label != null ? labelFontSize : valueFontSize,
-              fontWeight: FontWeight.bold,
-              fontFamily: label != null ? null : 'monospace',
-              color: label != null ? AppColors.orange : color,
-            ),
+  Widget _buildTimer(bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTogglePause();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.pureBlack.withOpacity(0.6)
+              : Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isPaused
+                ? AppColors.orange.withOpacity(0.5)
+                : (isDark
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.08)),
+            width: isPaused ? 2 : 1,
           ),
-          if (suffix != null && label == null)
-            Text(
-              suffix!,
-              style: TextStyle(
-                fontSize: suffixFontSize,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          if (isTappable) ...[
-            SizedBox(width: innerSpacing * 0.5),
-            Icon(
-              Icons.add_circle_outline,
-              size: iconSize * 0.7,
-              color: color.withOpacity(0.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+              blurRadius: 12,
+              spreadRadius: 0,
             ),
           ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPaused ? Icons.pause : Icons.timer_outlined,
+              size: 20,
+              color: isPaused
+                  ? AppColors.orange
+                  : (isDark ? Colors.white : AppColorsLight.textPrimary),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              WorkoutTimerController.formatTime(workoutSeconds),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                letterSpacing: 1,
+                color: isPaused
+                    ? AppColors.orange
+                    : (isDark ? Colors.white : AppColorsLight.textPrimary),
+              ),
+            ),
+            if (isPaused) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'PAUSED',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.orange,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(bool isDark) {
+    return Container(
+      height: 6,
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.1)
+            : Colors.black.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Stack(
+        children: [
+          AnimatedFractionallySizedBox(
+            duration: const Duration(milliseconds: 300),
+            alignment: Alignment.centerLeft,
+            widthFactor: progress,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.electricBlue,
+                    AppColors.electricBlue.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(3),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.electricBlue.withOpacity(0.4),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
-
-    if (onTap != null) {
-      return GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap?.call();
-        },
-        child: widget,
-      );
-    }
-    return widget;
   }
 }
 
@@ -236,29 +245,29 @@ class _GlassButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isHighlighted
-        ? AppColors.cyan.withOpacity(0.3)
+        ? AppColors.orange.withOpacity(0.2)
         : isSubdued
             ? (isDark
-                ? AppColors.pureBlack.withOpacity(0.3)
-                : AppColorsLight.elevated.withOpacity(0.8))
+                ? AppColors.pureBlack.withOpacity(0.4)
+                : Colors.white.withOpacity(0.8))
             : (isDark
                 ? AppColors.pureBlack.withOpacity(0.5)
-                : AppColorsLight.elevated.withOpacity(0.9));
+                : Colors.white.withOpacity(0.9));
 
     final borderColor = isHighlighted
-        ? AppColors.cyan.withOpacity(0.5)
+        ? AppColors.orange.withOpacity(0.5)
         : isSubdued
             ? (isDark
                 ? Colors.white.withOpacity(0.1)
-                : AppColorsLight.cardBorder.withOpacity(0.3))
+                : Colors.black.withOpacity(0.08))
             : (isDark
-                ? Colors.white.withOpacity(0.2)
-                : AppColorsLight.cardBorder.withOpacity(0.5));
+                ? Colors.white.withOpacity(0.15)
+                : Colors.black.withOpacity(0.1));
 
     final iconColor = isHighlighted
-        ? AppColors.cyan
+        ? AppColors.orange
         : isSubdued
-            ? (isDark ? Colors.white.withOpacity(0.5) : AppColorsLight.textMuted)
+            ? (isDark ? Colors.white.withOpacity(0.6) : AppColorsLight.textMuted)
             : (isDark ? Colors.white : AppColorsLight.textPrimary);
 
     return GestureDetector(
@@ -271,17 +280,15 @@ class _GlassButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor, width: isHighlighted ? 2 : 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Icon(
           icon,
@@ -318,16 +325,66 @@ class WorkoutStatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _StatChip(
-      icon: icon,
-      value: value,
-      color: color,
-      suffix: suffix,
-      label: label,
-      scaleFactor: scaleFactor,
-      isTappable: isTappable,
-      onTap: onTap,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final horizontalPadding = (10 * scaleFactor).clamp(6.0, 14.0);
+    final verticalPadding = (6 * scaleFactor).clamp(4.0, 8.0);
+    final iconSize = (16 * scaleFactor).clamp(12.0, 20.0);
+    final valueFontSize = (14 * scaleFactor).clamp(10.0, 18.0);
+    final suffixFontSize = (10 * scaleFactor).clamp(8.0, 13.0);
+    final innerSpacing = (4 * scaleFactor).clamp(2.0, 6.0);
+    final borderRadius = (12 * scaleFactor).clamp(8.0, 16.0);
+
+    final widget = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppColors.pureBlack.withOpacity(0.5)
+            : Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: isTappable ? color.withOpacity(0.5) : color.withOpacity(0.3),
+          width: isTappable ? 1.5 : 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: iconSize, color: color),
+          SizedBox(width: innerSpacing),
+          Text(
+            label ?? value,
+            style: TextStyle(
+              fontSize: valueFontSize,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+              color: color,
+            ),
+          ),
+          if (suffix != null && label == null)
+            Text(
+              suffix!,
+              style: TextStyle(
+                fontSize: suffixFontSize,
+                color: color.withOpacity(0.7),
+              ),
+            ),
+        ],
+      ),
     );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap?.call();
+        },
+        child: widget,
+      );
+    }
+    return widget;
   }
 }
 

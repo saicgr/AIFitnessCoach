@@ -1,6 +1,7 @@
 /// Set tracking overlay widget
 ///
 /// Displays the set tracking table during active workout.
+/// Hevy/Gravl-inspired design with inline editing and single CTA.
 library;
 
 import 'dart:ui';
@@ -12,7 +13,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
-import 'number_input_widgets.dart';
 
 /// Set tracking overlay for logging sets during workout
 class SetTrackingOverlay extends StatelessWidget {
@@ -46,7 +46,7 @@ class SetTrackingOverlay extends StatelessWidget {
   /// Reps input controller
   final TextEditingController repsController;
 
-  /// Whether active row is expanded
+  /// Whether active row is expanded (kept for compatibility)
   final bool isActiveRowExpanded;
 
   /// Index of just-completed set for animation
@@ -55,7 +55,7 @@ class SetTrackingOverlay extends StatelessWidget {
   /// Whether done button is pressed
   final bool isDoneButtonPressed;
 
-  /// Callback to toggle row expansion
+  /// Callback to toggle row expansion (kept for compatibility)
   final VoidCallback onToggleRowExpansion;
 
   /// Callback to complete current set
@@ -98,6 +98,9 @@ class SetTrackingOverlay extends StatelessWidget {
   final void Function(TextEditingController controller, bool isDecimal)
       onShowNumberInputDialog;
 
+  /// Callback to skip exercise (optional, for overflow menu)
+  final VoidCallback? onSkipExercise;
+
   const SetTrackingOverlay({
     super.key,
     required this.exercise,
@@ -127,37 +130,32 @@ class SetTrackingOverlay extends StatelessWidget {
     required this.onDoneButtonPressUp,
     required this.onDoneButtonPressCancel,
     required this.onShowNumberInputDialog,
+    this.onSkipExercise,
   });
 
   bool get isViewingCurrent => viewingExerciseIndex == currentExerciseIndex;
+  int get currentSetIndex => completedSets.length;
+  bool get allSetsCompleted => completedSets.length >= totalSets;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final headerBg = isDark
-        ? AppColors.elevated.withOpacity(0.6)
-        : AppColorsLight.glassSurface.withOpacity(0.8);
-    final rowBorder = isDark
-        ? AppColors.cardBorder.withOpacity(0.2)
-        : AppColorsLight.cardBorder.withOpacity(0.3);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(
-          sigmaX: isDark ? 10 : 8,
-          sigmaY: isDark ? 10 : 8,
+          sigmaX: isDark ? 12 : 10,
+          sigmaY: isDark ? 12 : 10,
         ),
         child: Container(
           decoration: BoxDecoration(
             color: isDark
-                ? AppColors.pureBlack.withOpacity(0.65)
-                : Colors.white.withOpacity(0.75),
+                ? AppColors.pureBlack.withOpacity(0.75)
+                : Colors.white.withOpacity(0.85),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
@@ -166,8 +164,8 @@ class SetTrackingOverlay extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-                blurRadius: 20,
+                color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                blurRadius: 24,
                 spreadRadius: 0,
                 offset: const Offset(0, 8),
               ),
@@ -176,102 +174,62 @@ class SetTrackingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header row with exercise navigation
-              _buildHeader(
-                context,
-                headerBg: headerBg,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
+              // Header with exercise name and overflow menu
+              _buildHeader(context, isDark, textPrimary, textMuted),
 
               // Table header
               _buildTableHeader(isDark, textMuted),
 
-              // Warmup set rows
-              _buildWarmupSetRow(
-                setLabel: 'W',
-                repRange: _getRepRange(exercise),
-                rowBorder: rowBorder,
-                textMuted: textMuted,
-                textSecondary: textSecondary,
-              ),
-              _buildWarmupSetRow(
-                setLabel: 'W',
-                repRange: _getRepRange(exercise),
-                rowBorder: rowBorder,
-                textMuted: textMuted,
-                textSecondary: textSecondary,
-              ),
+              // Warmup set row (always first)
+              _buildWarmupRow(context, isDark, textPrimary, textMuted),
 
               // Working set rows
               ...List.generate(totalSets, (index) {
-                return _buildSetRow(
-                  context,
-                  index: index,
-                  rowBorder: rowBorder,
-                  textMuted: textMuted,
-                  textSecondary: textSecondary,
-                  textPrimary: textPrimary,
-                  isDark: isDark,
-                );
+                return _buildSetRow(context, index, isDark, textPrimary, textMuted);
               }),
 
-              // Add Set button
-              _buildAddSetButton(isDark),
+              // Complete Set button (only CTA)
+              if (isViewingCurrent && !allSetsCompleted)
+                _buildCompleteSetButton(isDark),
 
-              const SizedBox(height: 24),
+              // Back to current or rest info
+              if (!isViewingCurrent)
+                _buildBackToCurrentButton(isDark, textMuted),
 
-              // Rest timer info / back to current
-              _buildBottomInfo(isDark),
+              const SizedBox(height: 12),
             ],
           ),
         ),
       ),
-    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.1);
+    ).animate().fadeIn(duration: 200.ms).slideY(begin: -0.05);
   }
 
   Widget _buildHeader(
-    BuildContext context, {
-    required Color headerBg,
-    required Color textPrimary,
-    required Color textMuted,
-  }) {
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: headerBg,
+        color: isDark
+            ? AppColors.elevated.withOpacity(0.5)
+            : AppColorsLight.glassSurface.withOpacity(0.7),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         children: [
           // Previous exercise button
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: viewingExerciseIndex > 0
-                ? () {
-                    onPreviousExercise?.call();
-                    HapticFeedback.selectionClick();
-                  }
-                : null,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: viewingExerciseIndex > 0
-                    ? AppColors.cyan.withOpacity(0.2)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.chevron_left,
-                size: 24,
-                color: viewingExerciseIndex > 0
-                    ? AppColors.cyan
-                    : textMuted.withOpacity(0.3),
-              ),
-            ),
+          _buildNavButton(
+            icon: Icons.chevron_left,
+            enabled: viewingExerciseIndex > 0,
+            onTap: onPreviousExercise,
+            isDark: isDark,
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 12),
+
           // Exercise name and position
           Expanded(
             child: Column(
@@ -279,41 +237,44 @@ class SetTrackingOverlay extends StatelessWidget {
                 Text(
                   exercise.name,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isViewingCurrent ? AppColors.cyan : textPrimary,
+                    color: textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                 ),
+                const SizedBox(height: 2),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '${viewingExerciseIndex + 1}/$totalExercises',
+                      '${viewingExerciseIndex + 1} of $totalExercises',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: textMuted,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (!isViewingCurrent) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.2),
+                          color: AppColors.orange.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           viewingExerciseIndex < currentExerciseIndex
-                              ? 'PAST'
+                              ? 'DONE'
                               : 'UPCOMING',
                           style: const TextStyle(
-                            fontSize: 8,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                             color: AppColors.orange,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
@@ -323,240 +284,315 @@ class SetTrackingOverlay extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+
+          const SizedBox(width: 12),
+
           // Next exercise button
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: viewingExerciseIndex < totalExercises - 1
-                ? () {
-                    onNextExercise?.call();
-                    HapticFeedback.selectionClick();
-                  }
-                : null,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: viewingExerciseIndex < totalExercises - 1
-                    ? AppColors.cyan.withOpacity(0.2)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.chevron_right,
-                size: 24,
-                color: viewingExerciseIndex < totalExercises - 1
-                    ? AppColors.cyan
-                    : textMuted.withOpacity(0.3),
-              ),
-            ),
+          _buildNavButton(
+            icon: Icons.chevron_right,
+            enabled: viewingExerciseIndex < totalExercises - 1,
+            onTap: onNextExercise,
+            isDark: isDark,
           ),
+
           const SizedBox(width: 8),
-          // Unit toggle
-          GestureDetector(
-            onTap: () {
-              onToggleUnit();
-              HapticFeedback.selectionClick();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                useKg ? 'KG' : 'LBS',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.cyan,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Close button
-          GestureDetector(
-            onTap: onClose,
-            child: const Icon(
-              Icons.close,
-              size: 18,
-              color: AppColors.textMuted,
-            ),
-          ),
+
+          // Overflow menu
+          _buildOverflowMenu(context, isDark),
         ],
       ),
+    );
+  }
+
+  Widget _buildNavButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback? onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: enabled
+          ? () {
+              onTap?.call();
+              HapticFeedback.selectionClick();
+            }
+          : null,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: enabled
+              ? (isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 24,
+          color: enabled
+              ? (isDark ? Colors.white : AppColorsLight.textPrimary)
+              : (isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverflowMenu(BuildContext context, bool isDark) {
+    return PopupMenuButton<String>(
+      icon: Icon(
+        Icons.more_vert,
+        color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+        size: 22,
+      ),
+      color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      offset: const Offset(0, 40),
+      onSelected: (value) {
+        HapticFeedback.selectionClick();
+        switch (value) {
+          case 'add_set':
+            onAddSet();
+            break;
+          case 'remove_set':
+            if (totalSets > 1) {
+              // Could add a callback for remove set
+            }
+            break;
+          case 'toggle_unit':
+            onToggleUnit();
+            break;
+          case 'skip':
+            onSkipExercise?.call();
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'add_set',
+          child: Row(
+            children: [
+              Icon(Icons.add_circle_outline,
+                  size: 20, color: AppColors.electricBlue),
+              const SizedBox(width: 12),
+              const Text('Add Set'),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'toggle_unit',
+          child: Row(
+            children: [
+              Icon(Icons.swap_horiz, size: 20, color: AppColors.purple),
+              const SizedBox(width: 12),
+              Text('Switch to ${useKg ? 'lbs' : 'kg'}'),
+            ],
+          ),
+        ),
+        if (onSkipExercise != null)
+          PopupMenuItem(
+            value: 'skip',
+            child: Row(
+              children: [
+                Icon(Icons.skip_next, size: 20, color: AppColors.orange),
+                const SizedBox(width: 12),
+                const Text('Skip Exercise'),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildTableHeader(bool isDark, Color textMuted) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.elevated.withOpacity(0.3)
-            : AppColorsLight.glassSurface.withOpacity(0.6),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+          ),
+        ),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 36,
-            child: Center(
-              child: Text(
-                'SET',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                ),
+          const SizedBox(
+            width: 40,
+            child: Text(
+              'SET',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           Expanded(
-            flex: 3,
-            child: Center(
-              child: Text(
-                'PREVIOUS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                ),
+            flex: 2,
+            child: Text(
+              'PREVIOUS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                useKg ? 'KG' : 'LBS',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.cyan,
-                  letterSpacing: 0.5,
-                ),
+            flex: 2,
+            child: Text(
+              useKg ? 'KG' : 'LBS',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.electricBlue,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 8),
           const Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                'REPS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.purple,
-                  letterSpacing: 0.5,
-                ),
+            flex: 2,
+            child: Text(
+              'REPS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.electricBlue,
+                letterSpacing: 0.5,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 50),
+          const SizedBox(width: 44), // Space for checkmark
         ],
       ),
     );
   }
 
-  Widget _buildWarmupSetRow({
-    required String setLabel,
-    required String repRange,
-    required Color rowBorder,
-    required Color textMuted,
-    required Color textSecondary,
-  }) {
+  /// Build warmup set row
+  Widget _buildWarmupRow(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    // Calculate warmup weight (50% of target weight for first working set)
+    final targetWeight = double.tryParse(weightController.text) ?? exercise.weight ?? 0;
+    final warmupWeight = targetWeight * 0.5;
+    final warmupReps = 10; // Standard warmup reps
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.05),
+        color: isDark
+            ? AppColors.orange.withOpacity(0.06)
+            : AppColors.orange.withOpacity(0.04),
         border: Border(
-          bottom: BorderSide(color: rowBorder),
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.04),
+          ),
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Warmup indicator
           SizedBox(
-            width: 36,
-            child: Center(
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Center(
-                  child: Text(
-                    'W',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
-                    ),
+            width: 40,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.orange.withOpacity(0.15),
+              ),
+              child: const Center(
+                child: Text(
+                  'W',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.orange,
                   ),
                 ),
               ),
             ),
           ),
+
+          // Previous (empty for warmup)
           Expanded(
-            flex: 3,
-            child: Center(
-              child: Text(
-                '-',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted.withOpacity(0.5),
-                ),
+            flex: 2,
+            child: Text(
+              '-',
+              style: TextStyle(
+                fontSize: 13,
+                color: textMuted.withOpacity(0.5),
               ),
+              textAlign: TextAlign.center,
             ),
           ),
+
+          // Warmup weight suggestion
           Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                '-',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted.withOpacity(0.5),
-                ),
+            flex: 2,
+            child: Text(
+              warmupWeight > 0 ? warmupWeight.toStringAsFixed(0) : '-',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.orange.withOpacity(0.8),
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 8),
+
+          // Warmup reps
           Expanded(
-            flex: 4,
-            child: Center(
-              child: Text(
-                repRange,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondary,
-                ),
+            flex: 2,
+            child: Text(
+              '$warmupReps',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.orange.withOpacity(0.8),
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 50),
+
+          // Empty checkmark space
+          SizedBox(
+            width: 44,
+            child: Icon(
+              Icons.whatshot_outlined,
+              size: 18,
+              color: AppColors.orange.withOpacity(0.5),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSetRow(
-    BuildContext context, {
-    required int index,
-    required Color rowBorder,
-    required Color textMuted,
-    required Color textSecondary,
-    required Color textPrimary,
-    required bool isDark,
-  }) {
+    BuildContext context,
+    int index,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+  ) {
     final isCompleted = index < completedSets.length;
     final isCurrent = isViewingCurrent && index == completedSets.length;
+    final isPending = index > completedSets.length;
     final previousSet = index < previousSets.length ? previousSets[index] : null;
 
     SetLog? completedSetData;
@@ -570,274 +606,82 @@ class SetTrackingOverlay extends StatelessWidget {
       final prevWeight = useKg
           ? previousSet['weight'] as double
           : (previousSet['weight'] as double) * 2.20462;
-      prevDisplay = '${prevWeight.toStringAsFixed(0)} x ${previousSet['reps']}';
+      prevDisplay = '${prevWeight.toStringAsFixed(0)} × ${previousSet['reps']}';
     }
 
-    final isExpanded = isCurrent && isActiveRowExpanded;
-    final rowOpacity = (isCurrent || !isActiveRowExpanded) ? 1.0 : 0.5;
-    final inputBg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textColor = isDark ? Colors.white : AppColorsLight.textPrimary;
-
-    final rowWidget = GestureDetector(
-      onTap: isCurrent
-          ? () {
-              onToggleRowExpansion();
-              HapticFeedback.mediumImpact();
-            }
-          : null,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: rowOpacity,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-          margin: isCurrent
-              ? EdgeInsets.symmetric(
-                  horizontal: 2, vertical: isExpanded ? 6 : 3)
-              : EdgeInsets.zero,
-          padding: EdgeInsets.symmetric(
-            horizontal: isCurrent ? 8 : 10,
-            vertical: isExpanded ? 16 : (isCurrent ? 8 : 5),
-          ),
-          decoration: BoxDecoration(
-            gradient: isCurrent
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.cyan.withOpacity(isExpanded ? 0.18 : 0.12),
-                      AppColors.electricBlue.withOpacity(isExpanded ? 0.12 : 0.08),
-                      AppColors.cyan.withOpacity(isExpanded ? 0.08 : 0.05),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  )
-                : null,
-            color: isCompleted
-                ? AppColors.success.withOpacity(0.08)
-                : isCurrent
-                    ? null
-                    : Colors.transparent,
-            borderRadius:
-                isCurrent ? BorderRadius.circular(isExpanded ? 16 : 12) : null,
-            border: isCurrent
-                ? Border.all(
-                    color: AppColors.cyan.withOpacity(isExpanded ? 0.4 : 0.3),
-                    width: isExpanded ? 1.5 : 1,
-                  )
-                : Border(
-                    bottom: BorderSide(color: rowBorder),
-                  ),
-            boxShadow: isCurrent
-                ? [
-                    BoxShadow(
-                      color:
-                          AppColors.cyan.withOpacity(isExpanded ? 0.15 : 0.1),
-                      blurRadius: isExpanded ? 16 : 10,
-                      spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: AppColors.electricBlue.withOpacity(0.05),
-                      blurRadius: 4,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : null,
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 260),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: isExpanded
-                ? _buildExpandedRow(inputBg, textColor)
-                : _buildCompactRow(
-                    index: index,
-                    isCompleted: isCompleted,
-                    isCurrent: isCurrent,
-                    completedSetData: completedSetData,
-                    prevDisplay: prevDisplay,
-                    textMuted: textMuted,
-                    textSecondary: textSecondary,
-                    textColor: textColor,
-                    inputBg: inputBg,
-                  ),
+    final rowWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isCurrent
+            ? AppColors.electricBlue.withOpacity(0.08)
+            : isCompleted
+                ? AppColors.success.withOpacity(0.05)
+                : Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.04),
           ),
         ),
       ),
-    );
-
-    if (isCompleted) {
-      return _buildDismissibleRow(rowWidget, index);
-    } else if (isCurrent) {
-      return rowWidget
-          .animate()
-          .shimmer(duration: 2000.ms, color: AppColors.cyan.withOpacity(0.1));
-    }
-    return rowWidget;
-  }
-
-  Widget _buildExpandedRow(Color inputBg, Color textColor) {
-    return Column(
-      key: const ValueKey('expanded'),
-      children: [
-        // Collapse hint
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.keyboard_arrow_up,
-                size: 16, color: AppColors.cyan.withOpacity(0.6)),
-            const SizedBox(width: 4),
-            Text(
-              'Tap to collapse',
-              style: TextStyle(
-                fontSize: 10,
-                color: AppColors.cyan.withOpacity(0.6),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 50.ms, duration: 200.ms),
-        const SizedBox(height: 12),
-        // Large KG and REPS side by side
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    useKg ? 'WEIGHT (KG)' : 'WEIGHT (LBS)',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ExpandedNumberInput(
-                    controller: weightController,
-                    isDecimal: true,
-                    accentColor: AppColors.cyan,
-                    onShowDialog: () =>
-                        onShowNumberInputDialog(weightController, true),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                children: [
-                  const Text(
-                    'REPS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.purple,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ExpandedNumberInput(
-                    controller: repsController,
-                    isDecimal: false,
-                    accentColor: AppColors.purple,
-                    onShowDialog: () =>
-                        onShowNumberInputDialog(repsController, false),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 80.ms, duration: 200.ms),
-        const SizedBox(height: 16),
-        // Large complete button
-        _buildExpandedCompleteButton()
-            .animate()
-            .fadeIn(delay: 100.ms, duration: 200.ms)
-            .scale(
-              begin: const Offset(0.9, 0.9),
-              end: const Offset(1.0, 1.0),
-              delay: 100.ms,
-              duration: 300.ms,
-              curve: Curves.elasticOut,
-            ),
-      ],
-    );
-  }
-
-  Widget _buildCompactRow({
-    required int index,
-    required bool isCompleted,
-    required bool isCurrent,
-    required SetLog? completedSetData,
-    required String prevDisplay,
-    required Color textMuted,
-    required Color textSecondary,
-    required Color textColor,
-    required Color inputBg,
-  }) {
-    return Row(
-      key: const ValueKey('compact'),
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Set number
-        SizedBox(
-          width: 36,
-          child: Center(
+      child: Row(
+        children: [
+          // Set number
+          SizedBox(
+            width: 40,
             child: Container(
-              width: isCurrent ? 28 : 22,
-              height: isCurrent ? 28 : 22,
-              decoration: isCurrent
-                  ? BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.cyan.withOpacity(0.2),
-                      border: Border.all(color: AppColors.cyan, width: 1.5),
-                    )
-                  : null,
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? AppColors.success.withOpacity(0.15)
+                    : isCurrent
+                        ? AppColors.electricBlue.withOpacity(0.15)
+                        : Colors.transparent,
+                border: isCurrent
+                    ? Border.all(color: AppColors.electricBlue, width: 2)
+                    : null,
+              ),
               child: Center(
                 child: Text(
                   '${index + 1}',
                   style: TextStyle(
-                    fontSize: isCurrent ? 14 : 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: isCompleted
                         ? AppColors.success
                         : isCurrent
-                            ? AppColors.cyan
-                            : textMuted,
+                            ? AppColors.electricBlue
+                            : textMuted.withOpacity(0.5),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        // Previous session
-        Expanded(
-          flex: 3,
-          child: Center(
+
+          // Previous session
+          Expanded(
+            flex: 2,
             child: Text(
               prevDisplay,
               style: TextStyle(
-                fontSize: isCurrent ? 13 : 12,
-                color: isCurrent ? textSecondary : textMuted.withOpacity(0.7),
+                fontSize: 13,
+                color: textMuted.withOpacity(isPending ? 0.4 : 0.7),
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-        ),
-        // Weight
-        Expanded(
-          flex: 4,
-          child: Center(
+
+          // Weight
+          Expanded(
+            flex: 2,
             child: isCurrent
-                ? InlineNumberInput(
+                ? _buildInlineInput(
                     controller: weightController,
                     isDecimal: true,
-                    isActive: true,
-                    accentColor: AppColors.cyan,
-                    onShowDialog: () =>
-                        onShowNumberInputDialog(weightController, true),
+                    isDark: isDark,
                   )
                 : Text(
                     isCompleted
@@ -847,58 +691,158 @@ class SetTrackingOverlay extends StatelessWidget {
                                 .toStringAsFixed(0))
                         : '-',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                      color: isCompleted ? AppColors.success : textMuted,
+                      fontSize: 15,
+                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                      color: isCompleted
+                          ? AppColors.success
+                          : textMuted.withOpacity(0.4),
                     ),
+                    textAlign: TextAlign.center,
                   ),
           ),
-        ),
-        const SizedBox(width: 8),
-        // Reps
-        Expanded(
-          flex: 4,
-          child: Center(
+
+          // Reps
+          Expanded(
+            flex: 2,
             child: isCurrent
-                ? InlineNumberInput(
+                ? _buildInlineInput(
                     controller: repsController,
                     isDecimal: false,
-                    isActive: true,
-                    accentColor: AppColors.purple,
-                    onShowDialog: () =>
-                        onShowNumberInputDialog(repsController, false),
+                    isDark: isDark,
                   )
                 : Text(
                     isCompleted ? completedSetData!.reps.toString() : '-',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                      color: isCompleted ? AppColors.success : textMuted,
+                      fontSize: 15,
+                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                      color: isCompleted
+                          ? AppColors.success
+                          : textMuted.withOpacity(0.4),
                     ),
+                    textAlign: TextAlign.center,
                   ),
           ),
+
+          // Checkmark / status
+          SizedBox(
+            width: 44,
+            child: isCompleted
+                ? _buildCompletedCheckmark(index)
+                : isCurrent
+                    ? const SizedBox() // No inline button, use big CTA below
+                    : _buildPendingIndicator(textMuted),
+          ),
+        ],
+      ),
+    );
+
+    // Make completed rows swipeable for edit/delete
+    if (isCompleted) {
+      return Dismissible(
+        key: Key('set_${viewingExerciseIndex}_$index'),
+        background: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 24),
+          color: AppColors.electricBlue.withOpacity(0.15),
+          child: const Row(
+            children: [
+              Icon(Icons.edit, color: AppColors.electricBlue, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Edit',
+                style: TextStyle(
+                  color: AppColors.electricBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
-        // Checkmark / Complete button
-        SizedBox(
-          width: 50,
-          child: isCompleted
-              ? _buildCompletedCheckmark(index)
-              : isCurrent
-                  ? _buildActiveCompleteButton()
-                  : _buildPendingIndicator(textMuted),
+        secondaryBackground: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          color: AppColors.error.withOpacity(0.15),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'Delete',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+            ],
+          ),
         ),
-      ],
+        confirmDismiss: (direction) async {
+          HapticFeedback.mediumImpact();
+          if (direction == DismissDirection.startToEnd) {
+            onEditSet(index);
+            return false;
+          } else {
+            return true;
+          }
+        },
+        onDismissed: (direction) {
+          if (direction == DismissDirection.endToStart) {
+            onDeleteSet(index);
+          }
+        },
+        child: rowWidget,
+      );
+    }
+
+    return rowWidget;
+  }
+
+  Widget _buildInlineInput({
+    required TextEditingController controller,
+    required bool isDecimal,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onShowNumberInputDialog(controller, isDecimal);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.pureBlack.withOpacity(0.6)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.electricBlue.withOpacity(0.4),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          controller.text.isEmpty ? '-' : controller.text,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.electricBlue,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 
   Widget _buildCompletedCheckmark(int index) {
+    final isJustCompleted = justCompletedSetIndex == index;
+
     return Stack(
       alignment: Alignment.center,
       children: [
-        if (justCompletedSetIndex == index) ...[
+        if (isJustCompleted) ...[
           Container(
-            width: 50,
-            height: 50,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.success, width: 2),
@@ -907,82 +851,31 @@ class SetTrackingOverlay extends StatelessWidget {
               .animate()
               .scale(
                   begin: const Offset(0.5, 0.5),
-                  end: const Offset(1.4, 1.4),
-                  duration: 400.ms)
-              .fadeOut(duration: 400.ms),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.3),
-            ),
-          )
-              .animate()
-              .scale(
-                  begin: const Offset(0.3, 0.3),
-                  end: const Offset(1.8, 1.8),
-                  duration: 500.ms,
-                  delay: 50.ms)
-              .fadeOut(duration: 400.ms, delay: 100.ms),
+                  end: const Offset(1.3, 1.3),
+                  duration: 350.ms)
+              .fadeOut(duration: 350.ms),
         ],
         Container(
-          width: 36,
-          height: 36,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.success.withOpacity(0.15),
-            border: Border.all(color: AppColors.success, width: 2),
           ),
-          child: const Icon(Icons.check_rounded,
-              size: 20, color: AppColors.success),
-        )
-            .animate()
-            .scale(
-                begin: const Offset(0.5, 0.5),
-                end: const Offset(1.0, 1.0),
-                duration: 300.ms,
-                curve: Curves.elasticOut),
-      ],
-    );
-  }
-
-  Widget _buildActiveCompleteButton() {
-    return GestureDetector(
-      onTapDown: (_) => onDoneButtonPressDown(),
-      onTapUp: (_) => onDoneButtonPressUp(),
-      onTapCancel: onDoneButtonPressCancel,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        width: isDoneButtonPressed ? 40 : 44,
-        height: isDoneButtonPressed ? 40 : 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDoneButtonPressed
-                ? [AppColors.electricBlue, AppColors.cyan]
-                : [AppColors.cyan, AppColors.electricBlue],
+          child: const Icon(
+            Icons.check_rounded,
+            size: 18,
+            color: AppColors.success,
           ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  AppColors.cyan.withOpacity(isDoneButtonPressed ? 0.35 : 0.2),
-              blurRadius: isDoneButtonPressed ? 12 : 8,
-              spreadRadius: 0,
-            ),
-          ],
         ),
-        child: const Icon(Icons.check_rounded, size: 26, color: Colors.white),
-      ),
+      ],
     );
   }
 
   Widget _buildPendingIndicator(Color textMuted) {
     return Container(
-      width: 28,
-      height: 28,
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
@@ -993,166 +886,41 @@ class SetTrackingOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandedCompleteButton() {
-    return GestureDetector(
-      onTapDown: (_) => onDoneButtonPressDown(),
-      onTapUp: (_) => onDoneButtonPressUp(),
-      onTapCancel: onDoneButtonPressCancel,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        width: double.infinity,
-        height: isDoneButtonPressed ? 52 : 56,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDoneButtonPressed
-                ? [AppColors.electricBlue, AppColors.cyan]
-                : [AppColors.cyan, AppColors.electricBlue],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  AppColors.cyan.withOpacity(isDoneButtonPressed ? 0.3 : 0.18),
-              blurRadius: isDoneButtonPressed ? 14 : 10,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_rounded, size: 28, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'COMPLETE SET',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDismissibleRow(Widget rowWidget, int index) {
-    return Dismissible(
-      key: Key('set_${viewingExerciseIndex}_$index'),
-      background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        decoration: BoxDecoration(
-          color: AppColors.cyan.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.edit, color: AppColors.cyan, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Edit',
-              style: TextStyle(
-                color: AppColors.cyan,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              'Delete',
-              style: TextStyle(
-                color: AppColors.error,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(width: 8),
-            Icon(Icons.delete, color: AppColors.error, size: 20),
-          ],
-        ),
-      ),
-      onUpdate: (details) {
-        if (details.reached && details.previousReached == false) {
-          HapticFeedback.mediumImpact();
-        }
-      },
-      confirmDismiss: (direction) async {
-        HapticFeedback.selectionClick();
-        if (direction == DismissDirection.startToEnd) {
-          onEditSet(index);
-          return false;
-        } else if (direction == DismissDirection.endToStart) {
-          // Show delete confirmation
-          return true;
-        }
-        return false;
-      },
-      onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart) {
-          onDeleteSet(index);
-        }
-      },
-      child: Opacity(
-        opacity: 0.6,
-        child: rowWidget,
-      ),
-    );
-  }
-
-  Widget _buildAddSetButton(bool isDark) {
+  Widget _buildCompleteSetButton(bool isDark) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: GestureDetector(
-        onTap: () {
-          onAddSet();
-          HapticFeedback.mediumImpact();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        onTapDown: (_) => onDoneButtonPressDown(),
+        onTapUp: (_) => onDoneButtonPressUp(),
+        onTapCancel: onDoneButtonPressCancel,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          width: double.infinity,
+          height: isDoneButtonPressed ? 52 : 56,
           decoration: BoxDecoration(
-            color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.cyan.withOpacity(0.4),
-              width: 1.5,
-            ),
+            color: AppColors.electricBlue,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.electricBlue.withOpacity(isDoneButtonPressed ? 0.4 : 0.25),
+                blurRadius: isDoneButtonPressed ? 16 : 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.cyan.withOpacity(0.15),
-                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-                ),
-                child:
-                    const Icon(Icons.add, size: 16, color: AppColors.cyan),
-              ),
+              const Icon(Icons.check_rounded, size: 24, color: Colors.white),
               const SizedBox(width: 10),
-              const Text(
-                'Add Set',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
+              Text(
+                'Complete Set ${currentSetIndex + 1}',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
@@ -1162,85 +930,44 @@ class SetTrackingOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomInfo(bool isDark) {
+  Widget _buildBackToCurrentButton(bool isDark, Color textMuted) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.glassSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: AppColors.purple.withOpacity(0.4),
-          width: 1.5,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: GestureDetector(
+        onTap: () {
+          onBackToCurrentExercise();
+          HapticFeedback.selectionClick();
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.05),
+            border: Border.all(
+              color: AppColors.electricBlue.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.keyboard_return,
+                  size: 20, color: AppColors.electricBlue),
+              const SizedBox(width: 10),
+              Text(
+                'Back to Current Exercise',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.electricBlue,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      child: isViewingCurrent
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.purple.withOpacity(0.15),
-                  ),
-                  child: const Icon(Icons.timer_outlined,
-                      size: 14, color: AppColors.purple),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Rest: ${exercise.restSeconds ?? 90}s between sets',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.purple,
-                  ),
-                ),
-              ],
-            )
-          : GestureDetector(
-              onTap: () {
-                onBackToCurrentExercise();
-                HapticFeedback.selectionClick();
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.cyan.withOpacity(0.15),
-                    ),
-                    child: const Icon(Icons.keyboard_return,
-                        size: 14, color: AppColors.cyan),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Back to Current Exercise',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
-                    ),
-                  ),
-                ],
-              ),
-            ),
     );
-  }
-
-  String _getRepRange(WorkoutExercise exercise) {
-    if (exercise.reps != null) {
-      final reps = exercise.reps!;
-      if (reps <= 6) return '${reps - 1}-${reps + 1}';
-      if (reps <= 12) return '${reps - 2}-${reps + 2}';
-      return '${reps - 3}-${reps + 3}';
-    } else if (exercise.durationSeconds != null) {
-      return '${exercise.durationSeconds}s';
-    }
-    return '8-12';
   }
 }

@@ -743,23 +743,29 @@ class RepsPresetButtons extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         // Target button (primary)
-        _PresetButton(
-          label: 'Target ($targetReps)',
-          color: color,
-          isPrimary: true,
-          onTap: () => _setReps(targetReps),
+        Flexible(
+          child: _PresetButton(
+            label: 'Target ($targetReps)',
+            color: color,
+            isPrimary: true,
+            onTap: () => _setReps(targetReps),
+          ),
         ),
         // -5 button
-        _PresetButton(
-          label: '-5',
-          color: AppColors.orange,
-          onTap: () => _setReps(targetReps - 5),
+        Flexible(
+          child: _PresetButton(
+            label: '-5',
+            color: AppColors.orange,
+            onTap: () => _setReps(targetReps - 5),
+          ),
         ),
         // -2 button
-        _PresetButton(
-          label: '-2',
-          color: AppColors.orange,
-          onTap: () => _setReps(targetReps - 2),
+        Flexible(
+          child: _PresetButton(
+            label: '-2',
+            color: AppColors.orange,
+            onTap: () => _setReps(targetReps - 2),
+          ),
         ),
       ],
     );

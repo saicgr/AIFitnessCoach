@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'data/providers/admin_provider.dart';
 import 'data/repositories/auth_repository.dart';
+import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/notifications/notifications_screen.dart';
@@ -76,7 +77,31 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       await prefsSync.syncPreferences(prefs);
     });
 
+    // Register FCM token with backend now that user is authenticated
+    _registerFcmToken();
+
     debugPrint('🔔 [App] Notification preferences sync callback configured');
+  }
+
+  /// Register FCM token with backend when user authenticates
+  Future<void> _registerFcmToken() async {
+    try {
+      final authState = ref.read(authStateProvider);
+      if (authState.user == null) return;
+
+      final notificationService = ref.read(notificationServiceProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = authState.user!.id;
+
+      final success = await notificationService.registerTokenWithBackend(apiClient, userId);
+      if (success) {
+        debugPrint('🔔 [App] FCM token registered with backend on login');
+      } else {
+        debugPrint('⚠️ [App] Failed to register FCM token (may not be available yet)');
+      }
+    } catch (e) {
+      debugPrint('❌ [App] Error registering FCM token: $e');
+    }
   }
 
   void _setupNotificationStorageCallback() {
@@ -106,7 +131,18 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       _navigateToScreenForNotificationType(notificationType);
     };
 
-    debugPrint('🔔 [App] Notification storage callback configured');
+    // Set up callback for FCM token refresh - sync to backend
+    notificationService.onTokenRefresh = (newToken) async {
+      final authState = ref.read(authStateProvider);
+      if (authState.status == AuthStatus.authenticated && authState.user != null) {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = authState.user!.id;
+        await notificationService.registerTokenWithBackend(apiClient, userId);
+        debugPrint('🔔 [App] FCM token refreshed and synced to backend');
+      }
+    };
+
+    debugPrint('🔔 [App] Notification callbacks configured');
   }
 
   void _navigateToScreenForNotificationType(String? notificationType) {

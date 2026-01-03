@@ -53,6 +53,7 @@ class QuizMultiSelect extends StatelessWidget {
           const SizedBox(height: 24),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 16),
               itemCount: options.length,
               itemBuilder: (context, index) {
                 final option = options[index];
@@ -108,18 +109,18 @@ class _QuizOptionCard extends StatelessWidget {
     final color = option['color'] as Color? ?? AppColors.cyan;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             gradient: isSelected ? AppColors.cyanGradient : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? AppColors.cyan : cardBorder,
               width: isSelected ? 2 : 1,
@@ -128,7 +129,7 @@ class _QuizOptionCard extends StatelessWidget {
                 ? [
                     BoxShadow(
                       color: AppColors.cyan.withOpacity(0.3),
-                      blurRadius: 12,
+                      blurRadius: 8,
                       spreadRadius: 0,
                     ),
                   ]
@@ -137,21 +138,21 @@ class _QuizOptionCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withOpacity(0.2)
                       : color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   option['icon'] as IconData,
                   color: isSelected ? Colors.white : color,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,17 +160,17 @@ class _QuizOptionCard extends StatelessWidget {
                     Text(
                       option['label'] as String,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: isSelected ? Colors.white : textPrimary,
                       ),
                     ),
                     if (showDescription && option['description'] != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         option['description'] as String,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: isSelected ? Colors.white70 : textSecondary,
                         ),
                       ),
@@ -178,8 +179,8 @@ class _QuizOptionCard extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 24,
-                height: 24,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
                   shape: BoxShape.circle,
@@ -188,7 +189,7 @@ class _QuizOptionCard extends StatelessWidget {
                       : Border.all(color: cardBorder, width: 2),
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
                     : null,
               ),
             ],

@@ -66,7 +66,11 @@ class AuthRepository {
     try {
       debugPrint('🔍 [Auth] Starting Google Sign-In...');
 
-      // Trigger Google Sign-In flow
+      // Sign out first to ensure account picker is shown (not auto-selecting previous account)
+      // This is important for new users who want to choose which Google account to use
+      await _googleSignIn.signOut();
+
+      // Trigger Google Sign-In flow - will now show account picker
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         throw Exception('Google Sign-In was cancelled');
@@ -130,9 +134,14 @@ class AuthRepository {
       await _supabase.auth.signOut();
       await _apiClient.clearAuth();
 
-      // Clear local onboarding flag so notifications stop until re-onboarded
+      // Clear local onboarding and tour flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('onboarding_completed');
+      // Clear app tour state so new users see the tour
+      await prefs.remove('multi_screen_tour_completed');
+      await prefs.remove('multi_screen_tour_skipped');
+      await prefs.remove('multi_screen_tour_current_step');
+      await prefs.remove('multi_screen_tour_completed_at');
 
       debugPrint('✅ [Auth] Sign-out success');
     } catch (e) {

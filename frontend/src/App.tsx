@@ -7,6 +7,7 @@ import Landing from './pages/Landing';
 import MarketingLanding from './pages/MarketingLanding';
 import Features from './pages/Features';
 import Pricing from './pages/Pricing';
+import Store from './pages/Store';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
 import ConversationalOnboarding from './pages/ConversationalOnboarding';
@@ -73,6 +74,7 @@ function App() {
         <Route path="/" element={<MarketingLanding />} />
         <Route path="/features" element={<Features />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/store" element={<Store />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}

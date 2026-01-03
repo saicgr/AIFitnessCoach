@@ -141,7 +141,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
         backgroundColor: backgroundColor,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -167,16 +167,22 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
                 // Progress bar
                 _buildProgressBar(stretchProgress, elevatedColor),
 
-                const Spacer(),
-
-                // Current stretch exercise
-                _buildCurrentExercise(
-                  currentStretch,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
+                // Flexible content area
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Current stretch exercise
+                      Flexible(
+                        child: _buildCurrentExercise(
+                          currentStretch,
+                          textPrimary: textPrimary,
+                          textSecondary: textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-
-                const Spacer(),
 
                 // Upcoming stretch exercises
                 if (_currentExerciseIndex < widget.exercises.length - 1)
@@ -342,64 +348,70 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
     required Color textSecondary,
   }) {
     return Center(
-      child: Column(
-        children: [
-          // Exercise icon
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: AppColors.green.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              exercise.icon,
-              size: 64,
-              color: AppColors.green,
-            ),
-          )
-              .animate()
-              .fadeIn(duration: 300.ms)
-              .scale(begin: const Offset(0.8, 0.8)),
-
-          const SizedBox(height: 32),
-
-          // Exercise name
-          Text(
-            exercise.name,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
-
-          const SizedBox(height: 16),
-
-          // Duration or timer
-          if (_timerController.isRunning ||
-              _timerController.secondsRemaining > 0)
-            Text(
-              WorkoutTimerController.formatTime(
-                  _timerController.secondsRemaining),
-              style: const TextStyle(
-                fontSize: 64,
-                fontWeight: FontWeight.w300,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Exercise icon
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.green.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                exercise.icon,
+                size: 48,
                 color: AppColors.green,
               ),
             )
-                .animate(onPlay: (controller) => controller.repeat())
-                .shimmer(
-                    duration: 2000.ms, color: AppColors.green.withOpacity(0.3))
-          else
+                .animate()
+                .fadeIn(duration: 300.ms)
+                .scale(begin: const Offset(0.8, 0.8)),
+
+            const SizedBox(height: 24),
+
+            // Exercise name
             Text(
-              '${exercise.duration} sec',
+              exercise.name,
               style: TextStyle(
-                fontSize: 24,
-                color: textSecondary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
               ),
-            ),
-        ],
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
+
+            const SizedBox(height: 12),
+
+            // Duration or timer
+            if (_timerController.isRunning ||
+                _timerController.secondsRemaining > 0)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  WorkoutTimerController.formatTime(
+                      _timerController.secondsRemaining),
+                  style: const TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w300,
+                    color: AppColors.green,
+                  ),
+                )
+                    .animate(onPlay: (controller) => controller.repeat())
+                    .shimmer(
+                        duration: 2000.ms, color: AppColors.green.withOpacity(0.3)),
+              )
+            else
+              Text(
+                '${exercise.duration} sec',
+                style: TextStyle(
+                  fontSize: 22,
+                  color: textSecondary,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

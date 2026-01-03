@@ -19,19 +19,20 @@ class PaywallFeaturesScreen extends ConsumerWidget {
         child: Column(
           children: [
             // Empty space where X button would be (removed per user request)
-            const SizedBox(height: 56),
+            const SizedBox(height: 24),
 
+            // Scrollable content
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    const Spacer(flex: 1),
+                    const SizedBox(height: 16),
 
                     // Logo/Mascot
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -45,18 +46,18 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       ),
                       child: const Icon(
                         Icons.fitness_center,
-                        size: 60,
+                        size: 48,
                         color: Colors.white,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Title
                     Text(
                       'Unlock the full',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                       ),
@@ -64,13 +65,13 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     Text(
                       'AI Coach experience',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: colors.cyan,
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
 
                     // Feature list - Key differentiators (ordered by impact)
                     _FeatureItem(
@@ -80,7 +81,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Custom AI plans for 23+ equipment types',
                       colors: colors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.camera_alt_outlined,
                       iconColor: colors.orange,
@@ -88,7 +89,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Snap a photo, get instant macros',
                       colors: colors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.restaurant_menu_outlined,
                       iconColor: colors.cyan,
@@ -96,7 +97,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Log meals, track calories & macros',
                       colors: colors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.library_books_outlined,
                       iconColor: colors.success,
@@ -104,7 +105,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Video demos & muscle targeting',
                       colors: colors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.trending_up,
                       iconColor: Colors.amber,
@@ -112,7 +113,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       subtitle: 'Track strength gains over time',
                       colors: colors,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.healing_outlined,
                       iconColor: colors.coral,
@@ -121,34 +122,35 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       colors: colors,
                     ),
 
-                    const Spacer(flex: 2),
-
-                    // Continue button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/paywall-timeline'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.cyan,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Learn More',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-
                     const SizedBox(height: 32),
                   ],
+                ),
+              ),
+            ),
+
+            // Fixed bottom button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/paywall-timeline'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Learn More',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),

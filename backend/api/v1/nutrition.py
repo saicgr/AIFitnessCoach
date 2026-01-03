@@ -1489,6 +1489,157 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
     )
 
 
+@router.post("/analyze-text-stream")
+@limiter.limit("10/minute")
+async def analyze_food_from_text_streaming(request: Request, body: LogTextRequest):
+    """
+    Analyze food from text description with streaming progress updates via SSE.
+
+    DOES NOT save to database - returns analysis only for user review.
+    Use /log-direct to save after user confirmation.
+
+    Provides real-time feedback during food analysis:
+    - Step 1: Loading user profile and goals
+    - Step 2: Analyzing food with AI
+    - Step 3: Calculating nutrition (analysis complete)
+
+    Returns SSE events with progress updates and final analysis (no save).
+    """
+    logger.info(f"[ANALYZE-STREAM] Analyzing food from text for user {body.user_id}: {body.description[:50]}...")
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = time.time()
+
+        def elapsed_ms() -> int:
+            return int((time.time() - start_time) * 1000)
+
+        def send_progress(step: int, total: int, message: str, detail: str = None):
+            data = {
+                "type": "progress",
+                "step": step,
+                "total_steps": total,
+                "message": message,
+                "detail": detail,
+                "elapsed_ms": elapsed_ms()
+            }
+            return f"event: progress\ndata: {json.dumps(data)}\n\n"
+
+        def send_error(error: str):
+            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
+            return f"event: error\ndata: {json.dumps(data)}\n\n"
+
+        try:
+            # Step 1: Load user profile and goals
+            yield send_progress(1, 3, "Loading your profile...", "Fetching nutrition goals")
+
+            db = get_supabase_db()
+
+            user_goals = None
+            nutrition_targets = None
+            try:
+                user = db.get_user(body.user_id)
+                if user:
+                    goals_str = user.get('goals', '[]')
+                    if isinstance(goals_str, str):
+                        try:
+                            user_goals = json.loads(goals_str)
+                        except json.JSONDecodeError:
+                            user_goals = []
+                    elif isinstance(goals_str, list):
+                        user_goals = goals_str
+
+                    nutrition_targets = {
+                        'daily_calorie_target': user.get('daily_calorie_target'),
+                        'daily_protein_target_g': user.get('daily_protein_target_g'),
+                        'daily_carbs_target_g': user.get('daily_carbs_target_g'),
+                        'daily_fat_target_g': user.get('daily_fat_target_g'),
+                    }
+            except Exception as e:
+                logger.warning(f"[ANALYZE-STREAM] Could not fetch user goals: {e}")
+
+            # Step 2: Get RAG context and analyze with AI
+            yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
+
+            rag_context = None
+            if user_goals:
+                try:
+                    nutrition_rag = get_nutrition_rag_service()
+                    rag_context = await nutrition_rag.get_context_for_goals(
+                        food_description=body.description,
+                        user_goals=user_goals,
+                        n_results=5,
+                    )
+                except Exception as e:
+                    logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
+
+            gemini_service = GeminiService()
+            food_analysis = await gemini_service.parse_food_description(
+                description=body.description,
+                user_goals=user_goals,
+                nutrition_targets=nutrition_targets,
+                rag_context=rag_context,
+            )
+
+            if not food_analysis or not food_analysis.get('food_items'):
+                yield send_error("Could not identify any food items from your description")
+                return
+
+            # Step 3: Calculate nutrition (analysis complete - NO SAVE)
+            yield send_progress(3, 3, "Calculating nutrition...", f"Found {len(food_analysis.get('food_items', []))} items")
+
+            food_items = food_analysis.get('food_items', [])
+            total_calories = food_analysis.get('total_calories', 0)
+            protein_g = food_analysis.get('protein_g', 0.0)
+            carbs_g = food_analysis.get('carbs_g', 0.0)
+            fat_g = food_analysis.get('fat_g', 0.0)
+            fiber_g = food_analysis.get('fiber_g', 0.0)
+            overall_meal_score = food_analysis.get('overall_meal_score')
+            health_score = food_analysis.get('health_score')
+            goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
+            ai_suggestion = food_analysis.get('ai_suggestion') or food_analysis.get('feedback')
+            encouragements = food_analysis.get('encouragements', [])
+            warnings = food_analysis.get('warnings', [])
+            recommended_swap = food_analysis.get('recommended_swap')
+
+            logger.info(f"[ANALYZE-STREAM] Analysis complete for user {body.user_id}: {total_calories} calories")
+
+            # Send the analysis result (NO database save - user must confirm first)
+            response_data = {
+                "success": True,
+                "is_analysis_only": True,  # Flag to indicate this is not yet saved
+                "food_items": food_items,
+                "total_calories": total_calories,
+                "protein_g": protein_g,
+                "carbs_g": carbs_g,
+                "fat_g": fat_g,
+                "fiber_g": fiber_g,
+                "overall_meal_score": overall_meal_score,
+                "health_score": health_score,
+                "goal_alignment_percentage": goal_alignment_percentage,
+                "ai_suggestion": ai_suggestion,
+                "encouragements": encouragements,
+                "warnings": warnings,
+                "recommended_swap": recommended_swap,
+                "source_type": "text",
+                "total_time_ms": elapsed_ms(),
+            }
+            yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+
+        except Exception as e:
+            logger.error(f"[ANALYZE-STREAM] Food analysis error: {e}")
+            yield send_error(str(e))
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
 @router.post("/log-image-stream")
 @limiter.limit("10/minute")
 async def log_food_from_image_streaming(
@@ -1600,6 +1751,116 @@ async def log_food_from_image_streaming(
 
         except Exception as e:
             logger.error(f"[STREAM] Image food logging error: {e}")
+            yield send_error(str(e))
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
+@router.post("/analyze-image-stream")
+@limiter.limit("10/minute")
+async def analyze_food_from_image_streaming(
+    request: Request,
+    user_id: str = Form(...),
+    meal_type: str = Form(...),
+    image: UploadFile = File(...),
+):
+    """
+    Analyze food from an image with streaming progress updates via SSE.
+
+    DOES NOT save to database - returns analysis only for user review.
+    Use /log-direct to save after user confirmation.
+
+    Provides real-time feedback during food image analysis:
+    - Step 1: Processing image
+    - Step 2: AI analyzing food
+    - Step 3: Calculating nutrition (analysis complete)
+
+    Returns SSE events with progress updates and final analysis (no save).
+    """
+    logger.info(f"[ANALYZE-STREAM] Analyzing food from image for user {user_id}, meal_type={meal_type}")
+
+    # Read image upfront (before generator)
+    image_bytes = await image.read()
+    content_type = image.content_type or 'image/jpeg'
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = time.time()
+
+        def elapsed_ms() -> int:
+            return int((time.time() - start_time) * 1000)
+
+        def send_progress(step: int, total: int, message: str, detail: str = None):
+            data = {
+                "type": "progress",
+                "step": step,
+                "total_steps": total,
+                "message": message,
+                "detail": detail,
+                "elapsed_ms": elapsed_ms()
+            }
+            return f"event: progress\ndata: {json.dumps(data)}\n\n"
+
+        def send_error(error: str):
+            data = {"type": "error", "error": error, "elapsed_ms": elapsed_ms()}
+            return f"event: error\ndata: {json.dumps(data)}\n\n"
+
+        try:
+            # Step 1: Process image
+            yield send_progress(1, 3, "Processing image...", f"{len(image_bytes) // 1024} KB")
+
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+
+            # Step 2: Analyze with AI
+            yield send_progress(2, 3, "Analyzing your food...", "AI is identifying ingredients")
+
+            gemini_service = GeminiService()
+            food_analysis = await gemini_service.analyze_food_image(
+                image_base64=image_base64,
+                mime_type=content_type,
+            )
+
+            if not food_analysis or not food_analysis.get('food_items'):
+                yield send_error("Could not identify any food items in the image")
+                return
+
+            # Step 3: Calculate nutrition (analysis complete - NO SAVE)
+            food_items = food_analysis.get('food_items', [])
+            yield send_progress(3, 3, "Calculating nutrition...", f"Found {len(food_items)} items")
+
+            total_calories = food_analysis.get('total_calories', 0)
+            protein_g = food_analysis.get('protein_g', 0.0)
+            carbs_g = food_analysis.get('carbs_g', 0.0)
+            fat_g = food_analysis.get('fat_g', 0.0)
+            fiber_g = food_analysis.get('fiber_g', 0.0)
+
+            logger.info(f"[ANALYZE-STREAM] Image analysis complete for user {user_id}: {total_calories} calories")
+
+            # Send the analysis result (NO database save - user must confirm first)
+            response_data = {
+                "success": True,
+                "is_analysis_only": True,  # Flag to indicate this is not yet saved
+                "food_items": food_items,
+                "total_calories": total_calories,
+                "protein_g": protein_g,
+                "carbs_g": carbs_g,
+                "fat_g": fat_g,
+                "fiber_g": fiber_g,
+                "ai_suggestion": food_analysis.get('feedback'),
+                "source_type": "image",
+                "total_time_ms": elapsed_ms(),
+            }
+            yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+
+        except Exception as e:
+            logger.error(f"[ANALYZE-STREAM] Image food analysis error: {e}")
             yield send_error(str(e))
 
     return StreamingResponse(

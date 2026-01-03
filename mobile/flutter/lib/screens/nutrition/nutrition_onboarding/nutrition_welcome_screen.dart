@@ -29,14 +29,14 @@ class NutritionWelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              // Skip button (optional)
-              if (onSkip != null)
-                Align(
-                  alignment: Alignment.topRight,
+        child: Column(
+          children: [
+            // Skip button (optional) - fixed at top
+            if (onSkip != null)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16, top: 8),
                   child: TextButton(
                     onPressed: () {
                       HapticService.light();
@@ -47,150 +47,167 @@ class NutritionWelcomeScreen extends StatelessWidget {
                       style: TextStyle(color: textMuted, fontSize: 14),
                     ),
                   ),
-                )
-              else
-                const SizedBox(height: 48),
-
-              const Spacer(),
-
-              // Icon/illustration
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      green.withValues(alpha: 0.2),
-                      green.withValues(alpha: 0.1),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.restaurant_menu,
-                  size: 56,
-                  color: green,
                 ),
               )
-                  .animate()
-                  .fadeIn(duration: 400.ms)
-                  .scale(begin: const Offset(0.8, 0.8)),
+            else
+              const SizedBox(height: 48),
 
-              const SizedBox(height: 32),
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
 
-              // Title
-              Text(
-                'Welcome to Nutrition Tracking',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              )
-                  .animate()
-                  .fadeIn(delay: 100.ms, duration: 400.ms)
-                  .slideY(begin: 0.2, end: 0),
+                    // Icon/illustration
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            green.withValues(alpha: 0.2),
+                            green.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.restaurant_menu,
+                        size: 48,
+                        color: green,
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .scale(begin: const Offset(0.8, 0.8)),
 
-              const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-              // Subtitle
-              Text(
-                'Let\'s personalize your nutrition goals and preferences to help you eat better.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: textMuted,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              )
-                  .animate()
-                  .fadeIn(delay: 200.ms, duration: 400.ms)
-                  .slideY(begin: 0.2, end: 0),
+                    // Title
+                    Text(
+                      'Welcome to Nutrition Tracking',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    )
+                        .animate()
+                        .fadeIn(delay: 100.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, end: 0),
 
-              const SizedBox(height: 40),
+                    const SizedBox(height: 12),
 
-              // Features list
-              _buildFeatureItem(
-                icon: Icons.track_changes,
-                title: 'Personalized Targets',
-                description: 'Calories, protein, carbs, and fat tailored to your goals',
-                color: green,
-                elevated: elevated,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                delay: 300,
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                icon: Icons.restaurant,
-                title: 'Diet Preferences',
-                description: 'Vegetarian, keto, flexitarian, or your own custom diet',
-                color: const Color(0xFFFF9500),
-                elevated: elevated,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                delay: 400,
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                icon: Icons.schedule,
-                title: 'Meal Patterns',
-                description: 'Intermittent fasting, OMAD, or traditional meals',
-                color: isDark ? AppColors.purple : AppColorsLight.purple,
-                elevated: elevated,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-                delay: 500,
-              ),
+                    // Subtitle
+                    Text(
+                      'Let\'s personalize your nutrition goals and preferences to help you eat better.',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: textMuted,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    )
+                        .animate()
+                        .fadeIn(delay: 200.ms, duration: 400.ms)
+                        .slideY(begin: 0.2, end: 0),
 
-              const Spacer(),
+                    const SizedBox(height: 32),
 
-              // Get Started button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticService.medium();
-                    onGetStarted();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                    // Features list
+                    _buildFeatureItem(
+                      icon: Icons.track_changes,
+                      title: 'Personalized Targets',
+                      description: 'Calories, protein, carbs, and fat tailored to your goals',
+                      color: green,
+                      elevated: elevated,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      delay: 300,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Get Started',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 12),
+                    _buildFeatureItem(
+                      icon: Icons.restaurant,
+                      title: 'Diet Preferences',
+                      description: 'Vegetarian, keto, flexitarian, or your own custom diet',
+                      color: const Color(0xFFFF9500),
+                      elevated: elevated,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      delay: 400,
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    _buildFeatureItem(
+                      icon: Icons.schedule,
+                      title: 'Meal Patterns',
+                      description: 'Intermittent fasting, OMAD, or traditional meals',
+                      color: isDark ? AppColors.purple : AppColorsLight.purple,
+                      elevated: elevated,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      delay: 500,
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
                 ),
-              )
-                  .animate()
-                  .fadeIn(delay: 600.ms, duration: 400.ms)
-                  .slideY(begin: 0.2, end: 0),
+              ),
+            ),
 
-              const SizedBox(height: 16),
+            // Fixed bottom section with button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Get Started button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticService.medium();
+                        onGetStarted();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: green,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 600.ms, duration: 400.ms)
+                      .slideY(begin: 0.2, end: 0),
 
-              // Time estimate
-              Text(
-                'Takes about 2 minutes',
-                style: TextStyle(fontSize: 14, color: textMuted),
-              )
-                  .animate()
-                  .fadeIn(delay: 700.ms, duration: 400.ms),
+                  const SizedBox(height: 12),
 
-              const SizedBox(height: 32),
-            ],
-          ),
+                  // Time estimate
+                  Text(
+                    'Takes about 2 minutes',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  )
+                      .animate()
+                      .fadeIn(delay: 700.ms, duration: 400.ms),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

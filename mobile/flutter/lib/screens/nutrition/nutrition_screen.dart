@@ -96,6 +96,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // Initialize nutrition preferences and check onboarding status
       await ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
 
+      // Log state after initialization for debugging
+      final initState = ref.read(nutritionPreferencesProvider);
+      debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, onboarding=${initState.preferences?.nutritionOnboardingCompleted}, calories=${initState.preferences?.targetCalories}');
+
       // Check if onboarding is needed (only once per screen load)
       if (!_hasCheckedOnboarding) {
         _hasCheckedOnboarding = true;
@@ -124,6 +128,19 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
 
     final prefsState = ref.read(nutritionPreferencesProvider);
+
+    // Don't show onboarding while still loading preferences from backend
+    if (prefsState.isLoading) {
+      debugPrint('⏳ [NutritionScreen] Preferences still loading, skipping onboarding check');
+      return;
+    }
+
+    // Don't show onboarding if preferences failed to load (network error, etc.)
+    // This prevents punishing users for connectivity issues
+    if (prefsState.preferences == null && prefsState.error != null) {
+      debugPrint('⚠️ [NutritionScreen] Preferences failed to load, skipping onboarding check');
+      return;
+    }
 
     // Check if onboarding is complete using multiple signals:
     // 1. Provider state flag (set after completing onboarding in this session)

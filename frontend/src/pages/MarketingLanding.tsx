@@ -382,6 +382,9 @@ export default function MarketingLanding() {
               <Link to="/pricing" className="text-xs text-white/80 hover:text-white transition-colors">
                 Pricing
               </Link>
+              <Link to="/store" className="text-xs text-white/80 hover:text-white transition-colors">
+                Store
+              </Link>
               <button onClick={() => scrollTo('how-it-works')} className="text-xs text-white/80 hover:text-white transition-colors">
                 How It Works
               </button>
@@ -423,6 +426,7 @@ export default function MarketingLanding() {
                 <button onClick={() => scrollTo('highlights')} className="text-sm text-white/80 hover:text-white text-left py-2">Highlights</button>
                 <Link to="/features" className="text-sm text-white/80 hover:text-white py-2">Features</Link>
                 <Link to="/pricing" className="text-sm text-white/80 hover:text-white py-2">Pricing</Link>
+                <Link to="/store" className="text-sm text-white/80 hover:text-white py-2">Store</Link>
                 <button onClick={() => scrollTo('how-it-works')} className="text-sm text-white/80 hover:text-white text-left py-2">How It Works</button>
                 <Link to="/login" className="text-sm text-white/80 hover:text-white py-2">Sign In</Link>
                 <Link to="/login" className="text-sm text-center py-2.5 bg-emerald-500 text-white rounded-full mt-2">Get Started</Link>
@@ -1282,6 +1286,7 @@ export default function MarketingLanding() {
               <button onClick={() => scrollTo('highlights')} className="hover:text-[#f5f5f7] transition-colors">Highlights</button>
               <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
               <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
+              <Link to="/store" className="hover:text-[#f5f5f7] transition-colors">Store</Link>
               <button onClick={() => scrollTo('how-it-works')} className="hover:text-[#f5f5f7] transition-colors">How It Works</button>
               <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
             </div>

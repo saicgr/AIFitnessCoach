@@ -180,6 +180,9 @@ export default function Pricing() {
               <Link to="/pricing" className="text-xs text-emerald-400 transition-colors">
                 Pricing
               </Link>
+              <Link to="/store" className="text-xs text-white/80 hover:text-white transition-colors">
+                Store
+              </Link>
               <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
                 Sign In
               </Link>
@@ -570,6 +573,7 @@ export default function Pricing() {
                 <Link to="/" className="hover:text-[#f5f5f7] transition-colors">Home</Link>
                 <Link to="/features" className="hover:text-[#f5f5f7] transition-colors">Features</Link>
                 <Link to="/pricing" className="hover:text-[#f5f5f7] transition-colors">Pricing</Link>
+                <Link to="/store" className="hover:text-[#f5f5f7] transition-colors">Store</Link>
                 <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
               </div>
             </div>

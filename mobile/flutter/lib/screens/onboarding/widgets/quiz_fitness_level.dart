@@ -63,15 +63,15 @@ class QuizFitnessLevel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTitle(textPrimary),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             _buildSubtitle(textSecondary),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             ..._buildLevelCards(isDark, textPrimary, textSecondary),
             if (selectedLevel != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               _buildExperienceSection(isDark, textPrimary, textSecondary),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -108,7 +108,7 @@ class QuizFitnessLevel extends StatelessWidget {
       final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(bottom: 8),
         child: GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
@@ -116,7 +116,7 @@ class QuizFitnessLevel extends StatelessWidget {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               gradient: isSelected ? AppColors.cyanGradient : null,
               color: isSelected
@@ -133,7 +133,7 @@ class QuizFitnessLevel extends StatelessWidget {
                 Icon(
                   level['icon'] as IconData,
                   color: isSelected ? Colors.white : (level['color'] as Color),
-                  size: 24,
+                  size: 22,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -143,7 +143,7 @@ class QuizFitnessLevel extends StatelessWidget {
                       Text(
                         level['label'] as String,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: isSelected ? Colors.white : textPrimary,
                         ),
@@ -151,7 +151,7 @@ class QuizFitnessLevel extends StatelessWidget {
                       Text(
                         level['description'] as String,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: isSelected ? Colors.white70 : textSecondary,
                         ),
                       ),
@@ -189,20 +189,20 @@ class QuizFitnessLevel extends StatelessWidget {
         Text(
           'How long have you been lifting weights?',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: textPrimary,
           ),
         ).animate().fadeIn(delay: 100.ms),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           'This helps us pick the right exercises',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -218,7 +218,7 @@ class QuizFitnessLevel extends StatelessWidget {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppColors.cyanGradient : null,
                   color: isSelected

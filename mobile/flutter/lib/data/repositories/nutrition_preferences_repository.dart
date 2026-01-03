@@ -27,9 +27,12 @@ class NutritionPreferencesRepository {
           await _client.get('/nutrition/preferences/$userId');
       if (response.data == null ||
           (response.data is Map && response.data.isEmpty)) {
+        debugPrint('⚠️ [NutritionPrefs] Empty response, returning null');
         return null;
       }
-      return NutritionPreferences.fromJson(response.data);
+      final prefs = NutritionPreferences.fromJson(response.data);
+      debugPrint('🔍 [NutritionPrefs] Loaded: nutritionOnboardingCompleted=${prefs.nutritionOnboardingCompleted}, targetCalories=${prefs.targetCalories}');
+      return prefs;
     } catch (e) {
       if (e.toString().contains('404')) {
         debugPrint('ℹ️ [NutritionPrefs] No preferences found (404)');

@@ -44,12 +44,12 @@ import 'widgets/number_input_widgets.dart';
 import 'widgets/set_row.dart'; // For RpeRirSelector
 
 /// Active workout screen with modular composition
-class ActiveWorkoutScreenRefactored extends ConsumerStatefulWidget {
+class ActiveWorkoutScreen extends ConsumerStatefulWidget {
   final Workout workout;
   final String? challengeId;
   final Map<String, dynamic>? challengeData;
 
-  const ActiveWorkoutScreenRefactored({
+  const ActiveWorkoutScreen({
     super.key,
     required this.workout,
     this.challengeId,
@@ -57,12 +57,12 @@ class ActiveWorkoutScreenRefactored extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ActiveWorkoutScreenRefactored> createState() =>
-      _ActiveWorkoutScreenRefactoredState();
+  ConsumerState<ActiveWorkoutScreen> createState() =>
+      _ActiveWorkoutScreenState();
 }
 
-class _ActiveWorkoutScreenRefactoredState
-    extends ConsumerState<ActiveWorkoutScreenRefactored> {
+class _ActiveWorkoutScreenState
+    extends ConsumerState<ActiveWorkoutScreen> {
   // Phase state
   WorkoutPhase _currentPhase = WorkoutPhase.warmup;
 
@@ -954,7 +954,7 @@ class _ActiveWorkoutScreenRefactoredState
               Positioned(
                 left: 16,
                 right: 16,
-                top: MediaQuery.of(context).padding.top + 70,
+                top: MediaQuery.of(context).padding.top + 90,
                 child: SetTrackingOverlay(
                   exercise: _exercises[_viewingExerciseIndex],
                   viewingExerciseIndex: _viewingExerciseIndex,
@@ -999,6 +999,7 @@ class _ActiveWorkoutScreenRefactoredState
                   onDoneButtonPressCancel: () =>
                       setState(() => _isDoneButtonPressed = false),
                   onShowNumberInputDialog: _showNumberInputDialog,
+                  onSkipExercise: _skipExercise,
                 ),
               ),
 

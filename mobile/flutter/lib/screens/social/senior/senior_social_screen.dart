@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/senior/senior_card.dart';
 import '../../../widgets/senior/senior_button.dart';
 
@@ -25,6 +26,7 @@ class _SeniorSocialScreenState extends ConsumerState<SeniorSocialScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final authState = ref.watch(authStateProvider);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -52,6 +54,10 @@ class _SeniorSocialScreenState extends ConsumerState<SeniorSocialScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Username chip (tap to copy) - larger for senior mode
+                    _buildUserIdChip(context, isDark, authState.user),
+                    const SizedBox(height: 20),
+
                     // Encouragement Summary
                     _buildEncouragementSummary(context, isDark),
 
@@ -542,5 +548,93 @@ class _SeniorSocialScreenState extends ConsumerState<SeniorSocialScreen> {
   void _handleFamilyProfile() {
     HapticFeedback.lightImpact();
     // TODO: Navigate to family member profile
+  }
+
+  Widget _buildUserIdChip(
+    BuildContext context,
+    bool isDark,
+    dynamic user,
+  ) {
+    final username = user?.username as String?;
+    final userId = user?.id as String?;
+
+    // Show username if available, otherwise show truncated user ID
+    final displayText = username != null
+        ? '@$username'
+        : (userId != null ? 'ID: ${userId.substring(0, 8)}...' : 'No ID');
+
+    // Copy the full username or user ID
+    final copyText = username ?? userId ?? '';
+
+    return SeniorCard(
+      onTap: () {
+        if (copyText.isNotEmpty) {
+          HapticFeedback.mediumImpact();
+          Clipboard.setData(ClipboardData(text: copyText));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                username != null
+                    ? 'Username copied: @$username'
+                    : 'User ID copied',
+                style: const TextStyle(fontSize: 18),
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.cyan.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.alternate_email_rounded,
+                color: AppColors.cyan,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your Username',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    displayText,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.copy_rounded,
+              color: AppColors.textMuted,
+              size: 28,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

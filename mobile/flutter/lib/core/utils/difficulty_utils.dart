@@ -17,7 +17,7 @@ class DifficultyUtils {
     'easy': 'Beginner',
     'medium': 'Moderate',
     'hard': 'Challenging',
-    'hell': 'Elite',
+    'hell': 'Hell',
   };
 
   /// Descriptions for each difficulty level (shown in tooltips)

@@ -146,9 +146,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       });
 
       final repository = ref.read(nutritionRepositoryProvider);
+      LogFoodResponse? response;
 
-      // Use streaming for real-time progress updates
-      await for (final progress in repository.logFoodFromImageStreaming(
+      // Use ANALYZE-ONLY streaming - does NOT save to database yet
+      await for (final progress in repository.analyzeFoodFromImageStreaming(
         userId: widget.userId,
         mealType: _selectedMealType.value,
         imageFile: File(image.path),
@@ -164,18 +165,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         }
 
         if (progress.isCompleted && progress.foodLog != null) {
-          if (_restaurantMode) {
-            // Show portion selector instead of logging directly
-            setState(() {
-              _pendingFoodLog = progress.foodLog;
-              _isLoading = false;
-            });
-            return;
-          }
-          Navigator.pop(context);
-          _showSuccessSnackbar(progress.foodLog!.totalCalories);
-          ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-          return;
+          response = progress.foodLog;
+          break;
         }
 
         // Update progress UI
@@ -185,6 +176,50 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           _progressMessage = progress.message;
           _progressDetail = progress.detail;
         });
+      }
+
+      if (mounted && response != null) {
+        setState(() => _isLoading = false);
+
+        if (_restaurantMode) {
+          // Show portion selector instead of confirmation dialog
+          setState(() {
+            _pendingFoodLog = response;
+          });
+          return;
+        }
+
+        // Show rainbow confirmation dialog for user to review
+        final confirmed = await _showRainbowNutritionConfirmation(response, 'Photo analysis');
+        if (confirmed == true && mounted) {
+          // NOW actually save to database after user confirmation
+          setState(() {
+            _isLoading = true;
+            _progressMessage = 'Saving your meal...';
+          });
+
+          try {
+            await repository.logFoodDirect(
+              userId: widget.userId,
+              mealType: _selectedMealType.value,
+              analyzedFood: response,
+              sourceType: 'image',
+            );
+
+            if (mounted) {
+              Navigator.pop(context);
+              _showSuccessSnackbar(response.totalCalories);
+              ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+            }
+          } catch (saveError) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _error = 'Failed to save meal: $saveError';
+              });
+            }
+          }
+        }
       }
     } catch (e) {
       setState(() {
@@ -223,8 +258,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       final repository = ref.read(nutritionRepositoryProvider);
       LogFoodResponse? response;
 
-      // Use streaming for real-time progress updates
-      await for (final progress in repository.logFoodFromTextStreaming(
+      // Use ANALYZE-ONLY streaming - does NOT save to database yet
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
         userId: widget.userId,
         description: description,
         mealType: _selectedMealType.value,
@@ -264,12 +299,36 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           return;
         }
 
-        // Show rainbow confirmation dialog
+        // Show rainbow confirmation dialog for user to review
         final confirmed = await _showRainbowNutritionConfirmation(response, description);
         if (confirmed == true && mounted) {
-          Navigator.pop(context);
-          _showSuccessSnackbar(response.totalCalories);
-          ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+          // NOW actually save to database after user confirmation
+          setState(() {
+            _isLoading = true;
+            _progressMessage = 'Saving your meal...';
+          });
+
+          try {
+            await repository.logFoodDirect(
+              userId: widget.userId,
+              mealType: _selectedMealType.value,
+              analyzedFood: response,
+              sourceType: 'text',
+            );
+
+            if (mounted) {
+              Navigator.pop(context);
+              _showSuccessSnackbar(response.totalCalories);
+              ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+            }
+          } catch (saveError) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _error = 'Failed to save meal: $saveError';
+              });
+            }
+          }
         }
       }
     } catch (e) {
@@ -1557,7 +1616,7 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
   // Streaming progress state
   int _currentStep = 0;
-  int _totalSteps = 4;
+  int _totalSteps = 3; // Analyze-only has 3 steps (save happens separately on confirm)
   String _progressMessage = '';
   String? _progressDetail;
 
@@ -1583,8 +1642,8 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       final repository = ref.read(nutritionRepositoryProvider);
       LogFoodResponse? response;
 
-      // Use streaming for real-time progress updates
-      await for (final progress in repository.logFoodFromTextStreaming(
+      // Use streaming for real-time progress updates (analyze-only, no save)
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
         userId: widget.userId,
         description: widget.controller.text.trim(),
         mealType: widget.mealType,
@@ -1646,9 +1705,40 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     setState(() => _analyzedResponse = null);
   }
 
-  void _handleLog() {
-    if (_analyzedResponse != null) {
-      widget.onLog(_analyzedResponse!);
+  Future<void> _handleLog() async {
+    if (_analyzedResponse == null) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+
+      // Actually save the analyzed food to the database
+      await repository.logFoodDirect(
+        userId: widget.userId,
+        mealType: widget.mealType,
+        analyzedFood: _analyzedResponse!,
+        sourceType: widget.sourceType,
+      );
+
+      if (mounted) {
+        setState(() => _isSaving = false);
+        // Call parent's onLog for any additional handling (fasting, navigation, etc.)
+        widget.onLog(_analyzedResponse!);
+      }
+    } catch (e) {
+      debugPrint('❌ [LogMeal] Error saving food: $e');
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save meal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -2128,11 +2218,20 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _handleLog,
-              icon: const Icon(Icons.check, size: 20),
-              label: const Text(
-                'Log This Meal',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              onPressed: _isSaving ? null : _handleLog,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.check, size: 20),
+              label: Text(
+                _isSaving ? 'Saving...' : 'Log This Meal',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6BCB77),

@@ -6685,21 +6685,27 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildPresetButton(
-          label: 'Target',
-          value: targetReps,
-          color: AppColors.purple,
-          isPrimary: true,
+        Flexible(
+          child: _buildPresetButton(
+            label: 'Target',
+            value: targetReps,
+            color: AppColors.purple,
+            isPrimary: true,
+          ),
         ),
-        _buildPresetButton(
-          label: '-5',
-          value: targetReps - 5,
-          color: AppColors.orange,
+        Flexible(
+          child: _buildPresetButton(
+            label: '-5',
+            value: targetReps - 5,
+            color: AppColors.orange,
+          ),
         ),
-        _buildPresetButton(
-          label: '-2',
-          value: targetReps - 2,
-          color: AppColors.orange,
+        Flexible(
+          child: _buildPresetButton(
+            label: '-2',
+            value: targetReps - 2,
+            color: AppColors.orange,
+          ),
         ),
       ],
     );

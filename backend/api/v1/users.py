@@ -188,6 +188,8 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
             "name": full_name,
             "username": unique_username,  # Auto-generated unique username
             "onboarding_completed": False,
+            "coach_selected": False,  # Explicitly set for new users to trigger coach selection
+            "paywall_completed": False,  # Explicitly set for new users to trigger paywall flow
             "fitness_level": "beginner",
             "goals": "[]",  # VARCHAR column - needs JSON string
             "equipment": "[]",  # VARCHAR column - needs JSON string

@@ -41,12 +41,16 @@ async def search_users(
 
     try:
         supabase = get_supabase_client()
+        logger.info(f"🔍 [UserSearch] Searching for query='{query}' by user={user_id}")
 
         # Search users by name OR username (case-insensitive)
         # Use or filter to search both fields
+        # Note: bio column doesn't exist in users table, using empty string as default
         result = supabase.table("users").select(
-            "id, name, username, avatar_url, bio"
+            "id, name, username, avatar_url"
         ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").neq("id", user_id).limit(limit).execute()
+
+        logger.info(f"✅ [UserSearch] Found {len(result.data) if result.data else 0} users matching '{query}'")
 
         if not result.data:
             return []
@@ -111,7 +115,7 @@ async def search_users(
                 name=user.get("name", "Unknown"),
                 username=user.get("username"),
                 avatar_url=user.get("avatar_url"),
-                bio=user.get("bio"),
+                bio=None,  # bio column doesn't exist in users table
                 total_workouts=workout_counts.get(uid, 0),
                 current_streak=0,  # Would need separate query for streak calculation
                 is_following=is_following,
@@ -124,7 +128,8 @@ async def search_users(
 
         return results
     except Exception as e:
-        logger.error(f"Error searching users for query '{query}': {e}", exc_info=True)
+        logger.error(f"❌ [UserSearch] Error searching users for query '{query}': {e}", exc_info=True)
+        # Return empty list but log the full error for debugging
         return []
 
 
@@ -178,9 +183,9 @@ async def get_friend_suggestions(
             if sorted_suggestions:
                 suggestion_ids = [s[0] for s in sorted_suggestions]
 
-                # Get user profiles
+                # Get user profiles (bio column doesn't exist)
                 users = supabase.table("users").select(
-                    "id, name, avatar_url, bio"
+                    "id, name, avatar_url"
                 ).in_("id", suggestion_ids).execute()
 
                 # Get workout counts
@@ -215,7 +220,7 @@ async def get_friend_suggestions(
                             id=uid,
                             name=user.get("name", "Unknown"),
                             avatar_url=user.get("avatar_url"),
-                            bio=user.get("bio"),
+                            bio=None,  # bio column doesn't exist
                             total_workouts=workout_counts.get(uid, 0),
                             current_streak=0,
                             is_following=False,
@@ -232,7 +237,7 @@ async def get_friend_suggestions(
 
         # Fallback: Get active users if no mutual connections
         active_users = supabase.table("users").select(
-            "id, name, avatar_url, bio"
+            "id, name, avatar_url"
         ).neq("id", user_id).limit(limit).execute()
 
         if not active_users.data:
@@ -272,7 +277,7 @@ async def get_friend_suggestions(
                 id=u["id"],
                 name=u.get("name", "Unknown"),
                 avatar_url=u.get("avatar_url"),
-                bio=u.get("bio"),
+                bio=None,  # bio column doesn't exist
                 total_workouts=workout_counts.get(u["id"], 0),
                 current_streak=0,
                 is_following=False,
@@ -310,9 +315,9 @@ async def get_user_profile(
     """
     supabase = get_supabase_client()
 
-    # Get user profile
+    # Get user profile (bio column doesn't exist)
     result = supabase.table("users").select(
-        "id, name, avatar_url, bio"
+        "id, name, avatar_url"
     ).eq("id", target_user_id).single().execute()
 
     if not result.data:
@@ -365,7 +370,7 @@ async def get_user_profile(
         id=user["id"],
         name=user.get("name", "Unknown"),
         avatar_url=user.get("avatar_url"),
-        bio=user.get("bio"),
+        bio=None,  # bio column doesn't exist
         total_workouts=workout_count.count or 0,
         current_streak=0,
         is_following=is_following,

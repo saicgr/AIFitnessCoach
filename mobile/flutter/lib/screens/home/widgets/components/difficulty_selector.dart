@@ -53,7 +53,7 @@ class DifficultySelector extends StatelessWidget {
 
   /// Show warning dialog for beginners selecting hard difficulties
   void _showBeginnerWarning(BuildContext context, String difficulty, SheetColors colors) {
-    final isElite = difficulty.toLowerCase() == 'hell';
+    final isHell = difficulty.toLowerCase() == 'hell';
     final displayName = DifficultyUtils.getDisplayName(difficulty);
     showDialog(
       context: context,
@@ -70,7 +70,7 @@ class DifficultySelector extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                isElite ? 'Elite Intensity' : 'High Intensity',
+                isHell ? 'Hell Intensity' : 'High Intensity',
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class DifficultySelector extends StatelessWidget {
           ],
         ),
         content: Text(
-          isElite
+          isHell
               ? '$displayName mode is designed for experienced athletes. As a beginner, this may lead to injury or burnout. We recommend starting with Beginner or Moderate difficulty.'
               : '$displayName mode may be intense for beginners. Consider starting with Beginner or Moderate difficulty and progressing as you build strength and endurance.',
           style: TextStyle(
@@ -105,7 +105,7 @@ class DifficultySelector extends StatelessWidget {
             child: Text(
               'Continue Anyway',
               style: TextStyle(
-                color: isElite ? colors.error : colors.orange,
+                color: isHell ? colors.error : colors.orange,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -301,7 +301,7 @@ class DifficultySelector extends StatelessWidget {
                   Expanded(
                     child: Text(
                       selectedDifficulty.toLowerCase() == 'hell'
-                          ? 'Elite mode is very intense for beginners'
+                          ? 'Hell mode is very intense for beginners'
                           : 'Challenging mode may be intense for beginners',
                       style: TextStyle(
                         color: colors.orange,

@@ -17,6 +17,7 @@ import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/deep_link_service.dart';
+import '../../data/services/health_service.dart';
 import '../../widgets/responsive_layout.dart';
 import '../nutrition/log_meal_sheet.dart';
 import 'widgets/components/components.dart';
@@ -156,7 +157,6 @@ const List<LayoutPreset> layoutPresets = [
       TileType.streakCounter,
       TileType.personalRecords,
       TileType.weeklyProgress,
-      TileType.upcomingFeatures,
       TileType.quickActions,
     ],
   ),
@@ -256,6 +256,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (mounted) {
         ref.invalidate(workoutsProvider);
       }
+
+      // Refresh Health Connect status - user may have granted permissions externally
+      ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
     }
   }
 
@@ -1320,8 +1323,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             (notifier.state.valueOrNull?.isEmpty ?? true);
 
         if (hasNoWorkouts) {
-          // Use streaming generation for first-time users
-          await _generateWorkoutsWithStreaming();
+          // Use on-demand single workout generation
+          await _generateWorkoutsWithStreaming(maxWorkouts: 1);
         } else {
           // Use background check for users with existing workouts
           final result = await notifier.checkAndRegenerateIfNeeded();
@@ -1367,8 +1370,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  /// Generate workouts with streaming progress for first-time users
-  Future<void> _generateWorkoutsWithStreaming() async {
+  /// Generate a single workout on-demand with streaming progress
+  /// This is called when home screen loads and no workouts exist
+  Future<void> _generateWorkoutsWithStreaming({int maxWorkouts = 1}) async {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
     if (userId == null) return;
@@ -1395,17 +1399,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     setState(() {
       _isStreamingGeneration = true;
       _generationStartDate = DateTime.now().toIso8601String().split('T')[0];
-      _totalExpected = 0;
+      _totalExpected = maxWorkouts;
       _totalGenerated = 0;
-      _generationMessage = 'Starting workout generation...';
+      _generationMessage = 'Generating your workout...';
       _generationDetail = null;
     });
+
+    debugPrint('🎯 [Home] On-demand generation: generating $maxWorkouts workout(s)');
 
     try {
       await for (final progress in repo.generateMonthlyWorkoutsStreaming(
         userId: userId,
         selectedDays: selectedDays,
         durationMinutes: durationMinutes,
+        maxWorkouts: maxWorkouts, // Limit to 1 workout for on-demand
       )) {
         if (!mounted) return;
 
@@ -1428,12 +1435,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             _totalExpected = 0;
             _totalGenerated = 0;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${progress.workouts.length} workouts ready!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          debugPrint('✅ [Home] On-demand generation complete: ${progress.workouts.length} workout(s)');
+          // Don't show snackbar for single workout - just show the card
           break;
         }
 
@@ -1446,12 +1449,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         });
       }
     } catch (e) {
-      debugPrint('Error during streaming generation: $e');
+      debugPrint('❌ [Home] Error during on-demand generation: $e');
       if (mounted) {
         setState(() => _isStreamingGeneration = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate workouts: $e'),
+            content: Text('Failed to generate workout: $e'),
             backgroundColor: AppColors.error,
           ),
         );

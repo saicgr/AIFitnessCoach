@@ -664,7 +664,6 @@ const List<TileType> defaultTileOrder = [
   TileType.weeklyProgress,
   TileType.weeklyGoals,
   TileType.weekChanges,
-  TileType.upcomingFeatures,
   TileType.upcomingWorkouts,
 ];
 

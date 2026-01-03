@@ -235,12 +235,53 @@ class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
   Future<void> _loadSyncState() async {
     final prefs = await SharedPreferences.getInstance();
     final lastSyncMs = prefs.getInt('health_last_sync');
-    final isConnected = prefs.getBool('health_connected') ?? false;
+    final storedIsConnected = prefs.getBool('health_connected') ?? false;
 
+    // First, set state from stored preferences
     state = state.copyWith(
-      isConnected: isConnected,
+      isConnected: storedIsConnected,
       lastSyncTime: lastSyncMs != null ? DateTime.fromMillisecondsSinceEpoch(lastSyncMs) : null,
     );
+
+    // Then verify actual permissions - user may have granted them in Health Connect app directly
+    await _verifyAndUpdateConnectionStatus();
+  }
+
+  /// Verify actual Health Connect permissions and update state accordingly.
+  /// This handles the case where user grants permissions in Health Connect app
+  /// outside of FitWiz, so our stored state becomes stale.
+  Future<void> _verifyAndUpdateConnectionStatus() async {
+    try {
+      // Check if Health Connect is available first
+      final available = await _healthService.isHealthConnectAvailable();
+      if (!available) {
+        debugPrint('🏥 Health Connect not available on this device');
+        return;
+      }
+
+      // Try to check if we have permissions by attempting to read data
+      final hasPermissions = await _healthService.hasHealthPermissions();
+
+      if (hasPermissions && !state.isConnected) {
+        // User granted permissions outside the app - update our state
+        debugPrint('🏥 Health Connect permissions detected (granted externally), updating state');
+        state = state.copyWith(isConnected: true);
+        await _saveSyncState();
+      } else if (!hasPermissions && state.isConnected) {
+        // User revoked permissions - update our state
+        debugPrint('🏥 Health Connect permissions revoked, updating state');
+        state = state.copyWith(isConnected: false);
+        await _saveSyncState();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error verifying Health Connect status: $e');
+      // Don't change state on error - keep existing state
+    }
+  }
+
+  /// Refresh connection status - call this when app resumes to detect external changes
+  Future<void> refreshConnectionStatus() async {
+    await _verifyAndUpdateConnectionStatus();
   }
 
   Future<void> _saveSyncState() async {
@@ -423,6 +464,55 @@ class HealthService {
       return false;
     } catch (e) {
       debugPrint('❌ Error checking Health Connect availability: $e');
+      return false;
+    }
+  }
+
+  /// Check if we have permissions to read health data.
+  /// This verifies actual permissions by checking authorization status.
+  Future<bool> hasHealthPermissions() async {
+    try {
+      // Configure the health plugin first
+      await _health.configure();
+
+      // Check permissions for the most basic data type (STEPS)
+      // If we can read steps, we likely have permissions
+      final types = [HealthDataType.STEPS];
+      final permissions = [HealthDataAccess.READ];
+
+      // Use hasPermissions to check if we already have authorization
+      final hasAuth = await _health.hasPermissions(types, permissions: permissions);
+
+      // hasPermissions returns null if status is unknown, true if granted, false if denied
+      if (hasAuth == true) {
+        debugPrint('🏥 Health permissions verified: granted');
+        return true;
+      }
+
+      // If hasPermissions returns false or null, try to actually read some data
+      // This is a fallback check - if we can read data, we have permissions
+      if (hasAuth == null) {
+        try {
+          final now = DateTime.now();
+          final start = now.subtract(const Duration(hours: 1));
+          final data = await _health.getHealthDataFromTypes(
+            startTime: start,
+            endTime: now,
+            types: types,
+          );
+          // If we get here without error, we have permissions
+          debugPrint('🏥 Health permissions verified via data read: granted (${data.length} points)');
+          return true;
+        } catch (e) {
+          debugPrint('🏥 Health data read failed, assuming no permissions: $e');
+          return false;
+        }
+      }
+
+      debugPrint('🏥 Health permissions verified: not granted');
+      return false;
+    } catch (e) {
+      debugPrint('⚠️ Error checking health permissions: $e');
       return false;
     }
   }

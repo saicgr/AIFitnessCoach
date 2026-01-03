@@ -326,16 +326,18 @@ class _NutritionSettingsScreenState
                   const SizedBox(height: 24),
 
                   // Current Targets Info Card
-                  _buildInfoCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    textPrimary,
-                    textMuted,
-                    preferences,
-                    prefsState,
-                  ),
+                  if (userId != null)
+                    _buildInfoCard(
+                      context,
+                      isDark,
+                      elevated,
+                      cardBorder,
+                      textPrimary,
+                      textMuted,
+                      preferences,
+                      prefsState,
+                      userId,
+                    ),
 
                   const SizedBox(height: 24),
 
@@ -798,6 +800,7 @@ class _NutritionSettingsScreenState
     Color textMuted,
     NutritionPreferences preferences,
     NutritionPreferencesState prefsState,
+    String userId,
   ) {
     final dynamicTargets = prefsState.dynamicTargets;
     final isTrainingDay = prefsState.isTrainingDay;
@@ -828,8 +831,8 @@ class _NutritionSettingsScreenState
                   color: textPrimary,
                 ),
               ),
+              const Spacer(),
               if (isTrainingDay) ...[
-                const Spacer(),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -857,7 +860,32 @@ class _NutritionSettingsScreenState
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
               ],
+              // Edit button
+              GestureDetector(
+                onTap: () => _showEditTargetsSheet(
+                  context,
+                  isDark,
+                  textPrimary,
+                  textMuted,
+                  elevated,
+                  preferences,
+                  userId,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF007AFF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: const Color(0xFF007AFF),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1113,5 +1141,194 @@ class _NutritionSettingsScreenState
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// Show bottom sheet to edit calorie and macro targets
+  void _showEditTargetsSheet(
+    BuildContext context,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    NutritionPreferences preferences,
+    String userId,
+  ) {
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    final caloriesController = TextEditingController(
+      text: (preferences.targetCalories ?? 2000).toString(),
+    );
+    final proteinController = TextEditingController(
+      text: (preferences.targetProteinG ?? 150).toString(),
+    );
+    final carbsController = TextEditingController(
+      text: (preferences.targetCarbsG ?? 200).toString(),
+    );
+    final fatController = TextEditingController(
+      text: (preferences.targetFatG ?? 65).toString(),
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: nearBlack,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Daily Targets',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: textMuted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Manually set your daily nutrition goals',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textMuted,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildTargetTextField(
+                controller: caloriesController,
+                label: 'Calories',
+                suffix: 'kcal',
+                elevated: elevated,
+                textMuted: textMuted,
+                textPrimary: textPrimary,
+              ),
+              const SizedBox(height: 12),
+              _buildTargetTextField(
+                controller: proteinController,
+                label: 'Protein',
+                suffix: 'g',
+                elevated: elevated,
+                textMuted: textMuted,
+                textPrimary: textPrimary,
+              ),
+              const SizedBox(height: 12),
+              _buildTargetTextField(
+                controller: carbsController,
+                label: 'Carbs',
+                suffix: 'g',
+                elevated: elevated,
+                textMuted: textMuted,
+                textPrimary: textPrimary,
+              ),
+              const SizedBox(height: 12),
+              _buildTargetTextField(
+                controller: fatController,
+                label: 'Fat',
+                suffix: 'g',
+                elevated: elevated,
+                textMuted: textMuted,
+                textPrimary: textPrimary,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    HapticService.light();
+                    Navigator.pop(context);
+
+                    final calories = int.tryParse(caloriesController.text);
+                    final protein = int.tryParse(proteinController.text);
+                    final carbs = int.tryParse(carbsController.text);
+                    final fat = int.tryParse(fatController.text);
+
+                    if (calories != null || protein != null || carbs != null || fat != null) {
+                      await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
+                        userId: userId,
+                        targetCalories: calories,
+                        targetProteinG: protein,
+                        targetCarbsG: carbs,
+                        targetFatG: fat,
+                      );
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Targets updated'),
+                            backgroundColor: teal,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save Targets',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTargetTextField({
+    required TextEditingController controller,
+    required String label,
+    required String suffix,
+    required Color elevated,
+    required Color textMuted,
+    required Color textPrimary,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      style: TextStyle(color: textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: textMuted),
+        suffixText: suffix,
+        suffixStyle: TextStyle(color: textMuted),
+        filled: true,
+        fillColor: elevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
   }
 }

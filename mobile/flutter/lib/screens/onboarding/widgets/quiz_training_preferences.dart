@@ -220,21 +220,21 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
           Text(
             "Training Preferences",
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: textPrimary,
-              height: 1.3,
+              height: 1.2,
             ),
           ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           // Subtitle with learn more
           Row(
             children: [
               Text(
                 'All optional',
-                style: TextStyle(fontSize: 13, color: textSecondary),
+                style: TextStyle(fontSize: 12, color: textSecondary),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -243,7 +243,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 child: Text(
                   'Not sure? Tap to learn more',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: AppColors.cyan,
                     fontWeight: FontWeight.w500,
                   ),
@@ -252,7 +252,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             ],
           ).animate().fadeIn(delay: 150.ms),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // Content in scrollable area
           Expanded(
@@ -262,24 +262,24 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 children: [
                   // Section 1: Training Split (colorful cards)
                   _buildSectionLabel('Training Split', textSecondary, 0),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _buildSplitCards(isDark, textPrimary),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // Section 2: Workout Type (horizontal colorful chips)
                   _buildSectionLabel('Workout Type', textSecondary, 1),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _buildWorkoutTypeChips(isDark, textPrimary),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // Section 3: Progression Pace (horizontal colorful chips)
                   _buildSectionLabel('Weight Progression', textSecondary, 2),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _buildPaceChips(isDark, textPrimary, textSecondary),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -333,7 +333,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
         final color = split['color'] as Color;
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 6),
           child: GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -341,7 +341,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
@@ -363,27 +363,28 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.white.withValues(alpha: 0.2) : color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       split['icon'] as IconData,
                       color: isSelected ? Colors.white : color,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           split['label'] as String,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: isSelected ? Colors.white : textPrimary,
                           ),
@@ -391,7 +392,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                         Text(
                           split['desc'] as String,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10,
                             color: isSelected ? Colors.white70 : color,
                           ),
                         ),
@@ -437,7 +438,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
@@ -461,13 +462,13 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     Icon(
                       type['icon'] as IconData,
                       color: isSelected ? Colors.white : color,
-                      size: 22,
+                      size: 20,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       type['label'] as String,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: isSelected ? Colors.white : textPrimary,
                       ),
@@ -502,7 +503,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
@@ -526,16 +527,16 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     Text(
                       pace['label'] as String,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: isSelected ? Colors.white : textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       pace['desc'] as String,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         color: isSelected ? Colors.white70 : textSecondary,
                       ),
                     ),

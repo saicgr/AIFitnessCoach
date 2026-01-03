@@ -2578,7 +2578,7 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             user_activity_level = user.get("activity_level")
             focus_areas = parse_json_field(user.get("focus_areas"), [])
 
-            # Always generate exactly 2 weeks
+            # Generate 2 weeks by default, but allow limiting via max_workouts
             weeks = 2
             today = datetime.now().date()
             max_horizon = today + timedelta(days=14)
@@ -2590,8 +2590,13 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                 yield send_error("No workout dates calculated")
                 return
 
+            # Apply max_workouts limit if specified (for on-demand generation)
+            if body.max_workouts:
+                workout_dates = workout_dates[:body.max_workouts]
+                logger.info(f"[STREAM] Limiting to {body.max_workouts} workout(s) (on-demand mode)")
+
             total_workouts = len(workout_dates)
-            logger.info(f"[STREAM] Will generate {total_workouts} workouts for 2 weeks")
+            logger.info(f"[STREAM] Will generate {total_workouts} workout(s)")
 
             yield send_progress(0, total_workouts, "Planning your workouts...", f"{total_workouts} workouts to generate")
 

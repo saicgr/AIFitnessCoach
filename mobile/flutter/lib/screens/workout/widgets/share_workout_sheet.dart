@@ -404,14 +404,18 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      child: Column(
-        children: [
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 12),
@@ -564,8 +568,9 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
           // Action buttons
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+            padding: EdgeInsets.fromLTRB(24, 0, 24, MediaQuery.of(context).padding.bottom + 16),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Primary share buttons row
                 Row(
@@ -622,6 +627,30 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
             ),
           ),
         ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showImagePreview() async {
+    HapticFeedback.mediumImpact();
+
+    // Capture the current template
+    final bytes = await _captureCurrentTemplate();
+    if (bytes == null) {
+      _showError('Failed to capture image');
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Show full-screen preview
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.95),
+      builder: (context) => _ImagePreviewDialog(
+        imageBytes: bytes,
+        templateName: _templateNames[_currentPage],
       ),
     );
   }
@@ -638,68 +667,145 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
       children: [
         // Stats Template
         Center(
-          child: CapturableWidget(
-            captureKey: _captureKeys[0],
-            child: StatsTemplate(
-              workoutName: widget.workoutName,
-              durationSeconds: widget.durationSeconds,
-              calories: widget.calories,
-              totalVolumeKg: widget.totalVolumeKg,
-              totalSets: widget.totalSets,
-              totalReps: widget.totalReps,
-              exercisesCount: widget.exercisesCount,
-              completedAt: now,
-              showWatermark: _showWatermark,
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                CapturableWidget(
+                  captureKey: _captureKeys[0],
+                  child: StatsTemplate(
+                    workoutName: widget.workoutName,
+                    durationSeconds: widget.durationSeconds,
+                    calories: widget.calories,
+                    totalVolumeKg: widget.totalVolumeKg,
+                    totalSets: widget.totalSets,
+                    totalReps: widget.totalReps,
+                    exercisesCount: widget.exercisesCount,
+                    completedAt: now,
+                    showWatermark: _showWatermark,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
             ),
           ),
         ),
 
         // PRs Template
         Center(
-          child: CapturableWidget(
-            captureKey: _captureKeys[1],
-            child: PrsTemplate(
-              workoutName: widget.workoutName,
-              prsData: widget.newPRs ?? [],
-              achievementsData: widget.achievements,
-              completedAt: now,
-              showWatermark: _showWatermark,
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                CapturableWidget(
+                  captureKey: _captureKeys[1],
+                  child: PrsTemplate(
+                    workoutName: widget.workoutName,
+                    prsData: widget.newPRs ?? [],
+                    achievementsData: widget.achievements,
+                    completedAt: now,
+                    showWatermark: _showWatermark,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
             ),
           ),
         ),
 
         // Photo Overlay Template
         Center(
-          child: CapturableWidget(
-            captureKey: _captureKeys[2],
-            child: PhotoOverlayTemplate(
-              workoutName: widget.workoutName,
-              durationSeconds: widget.durationSeconds,
-              calories: widget.calories,
-              totalVolumeKg: widget.totalVolumeKg,
-              exercisesCount: widget.exercisesCount,
-              userPhotoBytes: _userPhotoBytes,
-              completedAt: now,
-              showWatermark: _showWatermark,
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                CapturableWidget(
+                  captureKey: _captureKeys[2],
+                  child: PhotoOverlayTemplate(
+                    workoutName: widget.workoutName,
+                    durationSeconds: widget.durationSeconds,
+                    calories: widget.calories,
+                    totalVolumeKg: widget.totalVolumeKg,
+                    exercisesCount: widget.exercisesCount,
+                    userPhotoBytes: _userPhotoBytes,
+                    completedAt: now,
+                    showWatermark: _showWatermark,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
             ),
           ),
         ),
 
         // Motivational Template
         Center(
-          child: CapturableWidget(
-            captureKey: _captureKeys[3],
-            child: MotivationalTemplate(
-              workoutName: widget.workoutName,
-              currentStreak: widget.currentStreak,
-              totalWorkouts: widget.totalWorkouts ?? 1,
-              durationSeconds: widget.durationSeconds,
-              completedAt: now,
-              showWatermark: _showWatermark,
+          child: GestureDetector(
+            onTap: _showImagePreview,
+            child: Stack(
+              children: [
+                CapturableWidget(
+                  captureKey: _captureKeys[3],
+                  child: MotivationalTemplate(
+                    workoutName: widget.workoutName,
+                    currentStreak: widget.currentStreak,
+                    totalWorkouts: widget.totalWorkouts ?? 1,
+                    durationSeconds: widget.durationSeconds,
+                    completedAt: now,
+                    showWatermark: _showWatermark,
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildPreviewHint(),
+                ),
+              ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPreviewHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.zoom_out_map_rounded,
+            color: Colors.white.withValues(alpha: 0.9),
+            size: 14,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Tap to preview',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -951,5 +1057,119 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
         setState(() => _isSharing = false);
       }
     }
+  }
+}
+
+/// Full-screen image preview dialog with pinch-to-zoom
+class _ImagePreviewDialog extends StatelessWidget {
+  final Uint8List imageBytes;
+  final String templateName;
+
+  const _ImagePreviewDialog({
+    required this.imageBytes,
+    required this.templateName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Dismiss on tap outside
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              color: Colors.transparent,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+          ),
+
+          // Image with pinch-to-zoom
+          Center(
+            child: Hero(
+              tag: 'preview_$templateName',
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.memory(
+                  imageBytes,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+
+          // Close button
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+
+          // Template name label
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                templateName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+
+          // Hint at bottom
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 32,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'Pinch to zoom • Tap anywhere to close',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

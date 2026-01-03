@@ -52,17 +52,18 @@ class PaywallTimelineScreen extends ConsumerWidget {
               ),
             ),
 
+            // Scrollable content
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    const Spacer(flex: 1),
+                    const SizedBox(height: 16),
 
                     // Logo/Mascot
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -76,18 +77,18 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       ),
                       child: const Icon(
                         Icons.fitness_center,
-                        size: 50,
+                        size: 40,
                         color: Colors.white,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Title
                     Text(
                       'How your free',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                       ),
@@ -95,13 +96,13 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     Text(
                       'trial works',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: colors.textPrimary,
                       ),
                     ),
 
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 32),
 
                     // Timeline
                     _TimelineItem(
@@ -132,34 +133,35 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       colors: colors,
                     ),
 
-                    const Spacer(flex: 2),
-
-                    // Continue button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => context.push('/paywall-pricing'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.cyan,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-
                     const SizedBox(height: 32),
                   ],
+                ),
+              ),
+            ),
+
+            // Fixed bottom button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => context.push('/paywall-pricing'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),

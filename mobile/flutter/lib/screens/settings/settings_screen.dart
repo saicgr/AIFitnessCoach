@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -270,6 +271,17 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'recalibrate', 'redo test', 'strength levels', 'fitness test',
     'workout test', 'test workout', 'calibration workout',
   ],
+  // Shop - merchandise and products
+  'shop': [
+    // Direct keywords
+    'shop', 'store', 'merch', 'merchandise', 'apparel', 'gear', 'products',
+    'clothing', 'buy', 'purchase', 'order',
+    // Natural language
+    'buy merchandise', 'get gear', 'fitwiz store', 'fitwiz shop',
+    'buy clothes', 'buy apparel', 'fitness gear', 'workout gear',
+    't-shirt', 'hoodie', 'tank top', 'shorts', 'accessories',
+    'bottle', 'shaker', 'bag', 'bands', 'supplements', 'ebook', 'program',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -351,6 +363,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: 'Health sync, email preferences',
       color: const Color(0xFF5AC8FA),
       sectionKeys: ['health_sync', 'email_preferences'],
+    ),
+    _SettingsGroup(
+      id: 'shop',
+      icon: Icons.storefront,
+      title: 'Shop',
+      subtitle: 'Apparel, gear & digital products',
+      color: AppColors.success,
+      sectionKeys: ['shop'],
     ),
     _SettingsGroup(
       id: 'about',
@@ -643,6 +663,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             HealthSyncSection(),
             SizedBox(height: 16),
             EmailPreferencesSection(),
+          ],
+        );
+      case 'shop':
+        return Column(
+          children: [
+            _buildNavigationTile(
+              icon: Icons.shopping_bag,
+              title: 'Visit FitWiz Store',
+              subtitle: 'Browse apparel, accessories & more',
+              color: AppColors.success,
+              onTap: () async {
+                const storeUrl = 'https://ai-fitness-coach-git-main-chetangrs-projects.vercel.app/store';
+                final uri = Uri.parse(storeUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
           ],
         );
       case 'about':
