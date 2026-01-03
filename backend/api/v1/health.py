@@ -52,3 +52,46 @@ async def debug_gemini():
         logger.error(f"Gemini debug test failed: {e}")
 
     return result
+
+
+@router.get("/debug/chat")
+async def debug_chat():
+    """Debug endpoint to test the full chat flow."""
+    from services.langgraph_service import LangGraphCoachService
+    from models.chat import ChatRequest
+    import traceback
+
+    result = {"steps": []}
+
+    try:
+        result["steps"].append("1. Creating ChatRequest")
+        request = ChatRequest(
+            user_id="debug-test-user",
+            message="Hello"
+        )
+        result["steps"].append("2. ChatRequest created successfully")
+
+        result["steps"].append("3. Getting LangGraph service")
+        from api.v1 import chat as chat_module
+        if chat_module.langgraph_coach_service is None:
+            result["error"] = "LangGraph service not initialized"
+            return result
+        result["steps"].append("4. LangGraph service found")
+
+        result["steps"].append("5. Processing message...")
+        response = await chat_module.langgraph_coach_service.process_message(request)
+        result["steps"].append("6. Message processed successfully")
+
+        result["success"] = True
+        result["intent"] = response.intent.value if hasattr(response.intent, 'value') else str(response.intent)
+        result["agent_type"] = response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type)
+        result["message_preview"] = response.message[:100] if response.message else None
+
+    except Exception as e:
+        result["success"] = False
+        result["error"] = str(e)
+        result["error_type"] = type(e).__name__
+        result["traceback"] = traceback.format_exc()
+        logger.error(f"Chat debug test failed: {e}", exc_info=True)
+
+    return result
