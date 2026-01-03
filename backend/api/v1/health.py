@@ -226,3 +226,16 @@ async def debug_chat_post(request: TestChatRequest, http_request: Request):
         logger.error(f"POST chat debug failed: {e}", exc_info=True)
 
     return result
+
+
+@router.post("/debug/echo")
+async def debug_echo(request: TestChatRequest):
+    """Simple POST echo endpoint - no rate limiter, no AI call."""
+    return {"echo": True, "user_id": request.user_id, "message": request.message}
+
+
+@router.post("/debug/echo-limited")
+@limiter.limit("10/minute")
+async def debug_echo_limited(request: TestChatRequest, http_request: Request):
+    """Simple POST echo endpoint WITH rate limiter."""
+    return {"echo": True, "rate_limited": True, "user_id": request.user_id, "message": request.message}
