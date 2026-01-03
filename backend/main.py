@@ -72,6 +72,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     3. Authorization header (future: JWT token)
 
     Sets request_id for tracing a single request through the system.
+
+    NOTE: We do NOT read the request body here to avoid consuming the stream
+    before the actual endpoint handler can read it. User ID extraction from
+    body has been removed to prevent "body stream already consumed" errors.
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -83,27 +87,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         # Generate unique request ID for tracing
         request_id = str(uuid.uuid4())[:8]
 
-        # Try to extract user_id from various sources
-        user_id = None
-
-        # 1. Check query parameters
+        # Try to extract user_id from query parameters only
+        # NOTE: We cannot read request body here as it would consume the stream
         user_id = request.query_params.get("user_id")
-
-        # 2. For POST/PUT/PATCH, try to peek at body (cache it for later)
-        if not user_id and method in ("POST", "PUT", "PATCH"):
-            try:
-                # Read body and cache it
-                body = await request.body()
-                if body:
-                    # Store body for later use by the actual endpoint
-                    request.state._body = body
-                    try:
-                        body_json = json.loads(body)
-                        user_id = body_json.get("user_id")
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        pass
-            except Exception:
-                pass
 
         # Set logging context for this request
         set_log_context(user_id=user_id, request_id=request_id)
