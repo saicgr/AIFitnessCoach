@@ -23,9 +23,10 @@ class FastingRepository {
     required String userId,
     required FastingProtocol protocol,
     int? customDurationMinutes,
+    DateTime? startTime,
   }) async {
     try {
-      debugPrint('🕐 [Fasting] Starting fast for $userId with protocol ${protocol.id}');
+      debugPrint('🕐 [Fasting] Starting fast for $userId with protocol ${protocol.id}${startTime != null ? ' at $startTime' : ''}');
       final response = await _client.post(
         '/fasting/start',
         data: {
@@ -33,6 +34,7 @@ class FastingRepository {
           'protocol': protocol.id,
           'protocol_type': protocol.type,
           'goal_duration_minutes': customDurationMinutes ?? protocol.fastingHours * 60,
+          if (startTime != null) 'started_at': startTime.toUtc().toIso8601String(),
         },
       );
       debugPrint('✅ [Fasting] Fast started successfully');

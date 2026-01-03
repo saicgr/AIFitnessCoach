@@ -183,7 +183,16 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
     // Show onboarding if not completed
     if (!fastingState.onboardingCompleted) {
+      // Hide nav bar during onboarding
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+      });
       return const FastingOnboardingScreen();
+    } else {
+      // Show nav bar when onboarding is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      });
     }
 
     return Scaffold(
@@ -234,15 +243,53 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       ),
                     ),
                 ],
-                bottom: TabBar(
-                  controller: _tabController,
-                  indicatorColor: purple,
-                  labelColor: purple,
-                  unselectedLabelColor: textMuted,
-                  tabs: const [
-                    Tab(text: 'Timer'),
-                    Tab(text: 'History'),
-                  ],
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(48),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicator: BoxDecoration(
+                        color: purple,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      labelColor: Colors.white,
+                      unselectedLabelColor: textMuted,
+                      dividerHeight: 0,
+                      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                      tabs: const [
+                        Tab(
+                          height: 36,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.timer_outlined, size: 18),
+                              SizedBox(width: 6),
+                              Text('Timer'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          height: 36,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history, size: 18),
+                              SizedBox(width: 6),
+                              Text('History'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ];
@@ -395,11 +442,12 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
         defaultProtocol: preferences?.defaultProtocol != null
             ? FastingProtocol.fromString(preferences!.defaultProtocol)
             : null,
-        onStartFast: (protocol, customMinutes) async {
+        onStartFast: (protocol, customMinutes, startTime) async {
           await ref.read(fastingProvider.notifier).startFast(
                 userId: userId,
                 protocol: protocol,
                 customDurationMinutes: customMinutes,
+                startTime: startTime,
               );
 
           // Start timer service monitoring

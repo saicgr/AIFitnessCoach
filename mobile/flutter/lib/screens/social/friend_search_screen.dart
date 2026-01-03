@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/providers/social_provider.dart';
-import '../../data/services/api_client.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'widgets/user_search_result_card.dart';
 
 /// Friend Search Screen - Search for users and send friend requests
@@ -32,17 +32,16 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _initUser();
-  }
 
-  Future<void> _initUser() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() => _userId = userId);
-      if (userId != null) {
+    // Get userId from authStateProvider (consistent with rest of app)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (mounted && userId != null) {
+        setState(() => _userId = userId);
         _loadSuggestions();
       }
-    }
+    });
   }
 
   @override

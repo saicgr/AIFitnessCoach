@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
-import '../../../data/services/api_client.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/social_service.dart' show PostVisibility, SocialActivityType;
 
 /// UI representation for post visibility options
@@ -55,14 +55,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   @override
   void initState() {
     super.initState();
-    _loadUserId();
-  }
-
-  Future<void> _loadUserId() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() => _userId = userId);
-    }
+    // Get userId from authStateProvider (consistent with rest of app)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (mounted) {
+        setState(() => _userId = userId);
+      }
+    });
   }
 
   @override

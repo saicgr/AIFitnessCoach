@@ -33,10 +33,22 @@ logger = get_logger(__name__)
 
 # Difficulty ceiling by fitness level (prevents advanced exercises for beginners)
 # Scale: beginner exercises=1-3, intermediate=4-6, advanced=7-10
+# NOTE: These ceilings are now used for RANKING, not hard filtering.
+# All exercises are available to all users, but exercises matching
+# the user's level are scored higher in selection.
 DIFFICULTY_CEILING = {
-    "beginner": 3,       # Only easy exercises (1-3)
-    "intermediate": 6,   # Medium exercises OK (1-6)
-    "advanced": 10,      # No limit (1-10)
+    "beginner": 3,       # Prefers easy exercises (1-3)
+    "intermediate": 6,   # Prefers medium exercises (1-6)
+    "advanced": 10,      # Prefers all difficulties
+}
+
+# Difficulty preference ratios for workout generation
+# Format: {fitness_level: {difficulty_category: percentage}}
+# beginner/intermediate/advanced refer to EXERCISE difficulty, not user level
+DIFFICULTY_RATIOS = {
+    "beginner": {"beginner": 0.60, "intermediate": 0.30, "advanced": 0.10},
+    "intermediate": {"beginner": 0.25, "intermediate": 0.50, "advanced": 0.25},
+    "advanced": {"beginner": 0.15, "intermediate": 0.35, "advanced": 0.50},
 }
 
 # Map difficulty string values to numeric scale (1-10)
@@ -93,10 +105,14 @@ def get_difficulty_numeric(difficulty_value) -> int:
     Handles:
     - String values like "beginner", "intermediate", "advanced"
     - Numeric values (int or float)
-    - None or empty values (defaults to 5)
+    - None or empty values (defaults to 2 = beginner)
+
+    Note: Default is beginner (2) so exercises without explicit difficulty
+    are available to all fitness levels. This prevents the bug where
+    defaulting to intermediate (5) filtered out ALL exercises for beginners.
     """
     if difficulty_value is None:
-        return 5  # Default to intermediate
+        return 2  # Default to beginner so all users can access
 
     # If already numeric
     if isinstance(difficulty_value, (int, float)):
@@ -104,7 +120,7 @@ def get_difficulty_numeric(difficulty_value) -> int:
 
     # Convert string to lowercase and look up
     difficulty_str = str(difficulty_value).lower().strip()
-    return DIFFICULTY_STRING_TO_NUM.get(difficulty_str, 5)
+    return DIFFICULTY_STRING_TO_NUM.get(difficulty_str, 2)  # Default to beginner
 
 
 def get_adjusted_difficulty_ceiling(
@@ -148,6 +164,61 @@ def get_adjusted_difficulty_ceiling(
     return adjusted_ceiling
 
 
+def get_exercise_difficulty_category(exercise_difficulty) -> str:
+    """
+    Get the difficulty category for an exercise.
+
+    Args:
+        exercise_difficulty: The exercise's difficulty (string or numeric)
+
+    Returns:
+        "beginner", "intermediate", or "advanced"
+    """
+    difficulty_num = get_difficulty_numeric(exercise_difficulty)
+
+    if difficulty_num <= 3:
+        return "beginner"
+    elif difficulty_num <= 6:
+        return "intermediate"
+    else:
+        return "advanced"
+
+
+def get_difficulty_score(
+    exercise_difficulty,
+    user_fitness_level: str,
+    difficulty_adjustment: int = 0,
+) -> float:
+    """
+    Calculate a difficulty compatibility score (0.0 to 1.0).
+
+    Higher scores mean the exercise is more appropriate for the user's level.
+    This is used for RANKING exercises, not filtering them out.
+
+    Args:
+        exercise_difficulty: The exercise's difficulty (string or numeric)
+        user_fitness_level: User's fitness level ("beginner", "intermediate", "advanced")
+        difficulty_adjustment: Adjustment from user feedback (-2 to +2)
+
+    Returns:
+        Score from 0.0 (poor match) to 1.0 (ideal match)
+    """
+    validated_level = validate_fitness_level(user_fitness_level)
+    exercise_category = get_exercise_difficulty_category(exercise_difficulty)
+
+    # Get the ratio for this exercise category given user's fitness level
+    ratios = DIFFICULTY_RATIOS.get(validated_level, DIFFICULTY_RATIOS["intermediate"])
+    base_score = ratios.get(exercise_category, 0.25)
+
+    # Apply difficulty adjustment: positive = prefer harder, negative = prefer easier
+    if difficulty_adjustment > 0 and exercise_category in ["intermediate", "advanced"]:
+        base_score = min(1.0, base_score + 0.1 * difficulty_adjustment)
+    elif difficulty_adjustment < 0 and exercise_category in ["beginner", "intermediate"]:
+        base_score = min(1.0, base_score + 0.1 * abs(difficulty_adjustment))
+
+    return base_score
+
+
 def is_exercise_too_difficult(
     exercise_difficulty,
     user_fitness_level: str,
@@ -155,6 +226,42 @@ def is_exercise_too_difficult(
 ) -> bool:
     """
     Check if an exercise is too difficult for a user's fitness level.
+
+    NOTE: This now returns False for most cases to allow all exercises.
+    The only hard filter is preventing Elite (10) exercises for beginners
+    without positive difficulty adjustment.
+
+    Args:
+        exercise_difficulty: The exercise's difficulty (string or numeric)
+        user_fitness_level: User's fitness level ("beginner", "intermediate", "advanced")
+        difficulty_adjustment: Adjustment from user feedback (-2 to +2)
+
+    Returns:
+        True if the exercise should be filtered out, False if OK
+    """
+    exercise_difficulty_num = get_difficulty_numeric(exercise_difficulty)
+    validated_level = validate_fitness_level(user_fitness_level)
+
+    # Only hard-filter Elite (10) exercises for beginners without adjustment
+    # This prevents injury risk from extremely advanced movements
+    if validated_level == "beginner" and difficulty_adjustment <= 0:
+        if exercise_difficulty_num >= 10:
+            return True
+
+    # All other exercises are allowed - difficulty is used for ranking, not filtering
+    return False
+
+
+def is_exercise_too_difficult_strict(
+    exercise_difficulty,
+    user_fitness_level: str,
+    difficulty_adjustment: int = 0,
+) -> bool:
+    """
+    STRICT version: Check if exercise exceeds user's difficulty ceiling.
+
+    This is the original hard-filter logic, kept for backwards compatibility
+    and cases where strict filtering is needed.
 
     Args:
         exercise_difficulty: The exercise's difficulty (string or numeric)
@@ -551,7 +658,8 @@ class ExerciseRAGService:
 
                 # Filter by difficulty - prevent advanced exercises for beginners
                 # Uses feedback-based difficulty_adjustment to shift ceiling
-                exercise_difficulty = meta.get("difficulty", "intermediate")
+                # Default to "beginner" so exercises without explicit difficulty are available to all
+                exercise_difficulty = meta.get("difficulty", "beginner")
                 if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
                     logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level} (adjusted)")
                     continue
@@ -579,13 +687,20 @@ class ExerciseRAGService:
                 else:
                     eq = raw_eq
 
+                # Calculate difficulty compatibility score for ranking
+                exercise_diff = meta.get("difficulty", "beginner")
+                diff_score = get_difficulty_score(exercise_diff, validated_fitness_level, difficulty_adjustment)
+
                 filtered_candidates.append({
                     "id": meta.get("exercise_id", ""),
                     "name": exercise_name,
                     "body_part": meta.get("body_part", ""),
                     "equipment": eq,
                     "target_muscle": meta.get("target_muscle", ""),
-                    "difficulty": meta.get("difficulty", "intermediate"),
+                    "secondary_muscles": meta.get("secondary_muscles", []),
+                    "difficulty": exercise_diff,
+                    "difficulty_category": get_exercise_difficulty_category(exercise_diff),
+                    "difficulty_score": diff_score,
                     "gif_url": meta.get("gif_url", ""),
                     "video_url": meta.get("video_url", ""),
                     "image_url": meta.get("image_url", ""),
@@ -612,6 +727,26 @@ class ExerciseRAGService:
         if not candidates:
             logger.error("No compatible exercises found after filtering (even without media requirement)")
             raise ValueError(f"No compatible exercises found for focus_area={focus_area}, equipment={equipment}")
+
+        # Apply difficulty score to similarity for ranking
+        # This ensures exercises matching user's fitness level are prioritized
+        # Weight: 70% similarity, 30% difficulty match
+        for candidate in candidates:
+            original_similarity = candidate.get("similarity", 0.5)
+            difficulty_score = candidate.get("difficulty_score", 0.5)
+            # Weighted combination: similarity matters more, but difficulty influences selection
+            candidate["similarity"] = (original_similarity * 0.7) + (difficulty_score * 0.3)
+            candidate["original_similarity"] = original_similarity
+
+        # Re-sort after applying difficulty scores
+        candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+
+        logger.info(
+            f"Applied difficulty scoring for {validated_fitness_level} user: "
+            f"{len([c for c in candidates if c.get('difficulty_category') == 'beginner'])} beginner, "
+            f"{len([c for c in candidates if c.get('difficulty_category') == 'intermediate'])} intermediate, "
+            f"{len([c for c in candidates if c.get('difficulty_category') == 'advanced'])} advanced exercises available"
+        )
 
         # Pre-filter for injuries
         if injuries and len(injuries) > 0:

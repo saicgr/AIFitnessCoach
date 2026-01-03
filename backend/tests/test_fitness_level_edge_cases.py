@@ -82,31 +82,34 @@ class TestValidateFitnessLevel:
 
 
 class TestIsExerciseTooDifficultEdgeCases:
-    """Test edge cases in is_exercise_too_difficult."""
+    """Test edge cases in is_exercise_too_difficult.
+
+    With the ratio-based system, only Elite (10) exercises are filtered for beginners.
+    """
 
     def test_none_fitness_level_handled(self):
         """None fitness level should not crash."""
         # This should not raise AttributeError
         result = is_exercise_too_difficult(5, None)
-        # Should use default intermediate ceiling (6)
+        # Should use default intermediate (no restrictions)
         assert result is False
 
     def test_empty_fitness_level_handled(self):
         """Empty fitness level should not crash."""
         result = is_exercise_too_difficult(5, "")
-        assert result is False  # Uses default intermediate ceiling
+        assert result is False  # Uses default intermediate
 
     def test_typo_fitness_level_uses_default(self):
-        """Typo in fitness level should use default ceiling."""
-        # Typo should default to intermediate (ceiling=6)
+        """Typo in fitness level should use default (intermediate)."""
+        # Typo defaults to intermediate, which has no restrictions
         assert is_exercise_too_difficult(5, "beginnner") is False
-        assert is_exercise_too_difficult(7, "beginnner") is True
+        assert is_exercise_too_difficult(7, "beginnner") is False
+        assert is_exercise_too_difficult(10, "beginnner") is False  # Not beginner, so no elite filter
 
     def test_none_difficulty_uses_default(self):
-        """None exercise difficulty should use default (5)."""
-        # Difficulty None defaults to 5, beginner ceiling is 3
-        assert is_exercise_too_difficult(None, "beginner") is True
-        # Difficulty None defaults to 5, intermediate ceiling is 6
+        """None exercise difficulty should use default (2 = beginner)."""
+        # Difficulty None defaults to 2, which is available to all
+        assert is_exercise_too_difficult(None, "beginner") is False
         assert is_exercise_too_difficult(None, "intermediate") is False
 
 

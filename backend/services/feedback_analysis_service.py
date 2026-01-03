@@ -106,7 +106,7 @@ class FeedbackAnalysisService:
             workout_feedback = workout_result.data or []
 
             # Analyze the feedback
-            return self._calculate_adjustment(exercise_feedback, workout_feedback)
+            return self._calculate_adjustment(exercise_feedback, workout_feedback, user_id)
 
         except Exception as e:
             logger.error(f"Failed to analyze user feedback: {e}")
@@ -125,6 +125,7 @@ class FeedbackAnalysisService:
         self,
         exercise_feedback: List[Dict],
         workout_feedback: List[Dict],
+        user_id: str = "unknown",
     ) -> FeedbackAnalysis:
         """
         Calculate the difficulty adjustment based on collected feedback.
@@ -147,7 +148,7 @@ class FeedbackAnalysisService:
 
         # Analyze exercise-level feedback (weight 2x)
         for feedback in exercise_feedback:
-            difficulty = feedback.get("difficulty_felt", "").lower()
+            difficulty = (feedback.get("difficulty_felt") or "").lower()
             if difficulty == "too_easy":
                 too_easy_count += 2  # Weight 2
             elif difficulty == "just_right":
@@ -157,7 +158,7 @@ class FeedbackAnalysisService:
 
         # Analyze workout-level feedback (weight 1x)
         for feedback in workout_feedback:
-            difficulty = feedback.get("overall_difficulty", "").lower()
+            difficulty = (feedback.get("overall_difficulty") or "").lower()
             if difficulty == "too_easy":
                 too_easy_count += 1  # Weight 1
             elif difficulty == "just_right":

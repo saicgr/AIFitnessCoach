@@ -748,3 +748,130 @@ class TestExerciseSwap:
                 break
 
         assert not found, "Should not find nonexistent exercise"
+
+
+# ============ CRITICAL: Difficulty Filter Tests ============
+
+class TestDifficultyFilter:
+    """CRITICAL TESTS: Difficulty filtering must not break workout generation.
+
+    These tests verify that exercises without explicit difficulty metadata
+    are still available to beginners. This was a production bug where
+    defaulting to "intermediate" filtered out ALL exercises for beginners.
+    """
+
+    def test_exercises_without_difficulty_available_to_beginners(self):
+        """CRITICAL: Exercises without difficulty field must work for beginners.
+
+        With the new ratio-based system, all exercises are available to all users.
+        Difficulty is used for RANKING, not hard filtering.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        # Exercise with NO difficulty (simulates ChromaDB data without this field)
+        exercise_difficulty = None
+
+        # This should NOT filter out the exercise for a beginner
+        result = is_exercise_too_difficult(exercise_difficulty, "beginner")
+        assert result is False, (
+            "CRITICAL: Exercises without difficulty must be available to beginners."
+        )
+
+    def test_beginner_exercises_pass_for_beginners(self):
+        """Beginner exercises pass difficulty filter."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        result = is_exercise_too_difficult("beginner", "beginner")
+        assert result is False, "Beginner exercises must pass for beginner users"
+
+    def test_intermediate_exercises_available_to_beginners(self):
+        """Intermediate exercises ARE available to beginners (ratio-based system).
+
+        The new system uses difficulty for ranking, not filtering.
+        Beginners get 60% beginner, 30% intermediate, 10% advanced exercises.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        result = is_exercise_too_difficult("intermediate", "beginner")
+        assert result is False, "Intermediate exercises should be available to beginners (ranked lower)"
+
+    def test_advanced_exercises_available_to_beginners(self):
+        """Advanced exercises ARE available to beginners (ratio-based system).
+
+        The new system uses difficulty for ranking, not filtering.
+        Beginners can access advanced exercises, but they're ranked lower.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        result = is_exercise_too_difficult("advanced", "beginner")
+        assert result is False, "Advanced exercises should be available to beginners (ranked lower)"
+
+    def test_elite_exercises_filtered_for_beginners(self):
+        """Elite (10) exercises are the only ones filtered for beginners.
+
+        This is a safety measure to prevent injury from extremely advanced movements.
+        """
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        result = is_exercise_too_difficult("elite", "beginner")
+        assert result is True, "Elite exercises should be filtered for beginners"
+        result = is_exercise_too_difficult(10, "beginner")
+        assert result is True, "Elite (10) exercises should be filtered for beginners"
+
+    def test_all_difficulties_pass_for_advanced_users(self):
+        """Advanced users should have access to all difficulty levels."""
+        from services.exercise_rag.service import is_exercise_too_difficult
+
+        for difficulty in ["beginner", "intermediate", "advanced", "elite", None, 10]:
+            result = is_exercise_too_difficult(difficulty, "advanced")
+            assert result is False, f"Advanced users should access {difficulty} exercises"
+
+    def test_difficulty_ceiling_values(self):
+        """Verify difficulty ceiling values are correct (used for ranking preferences)."""
+        from services.exercise_rag.service import DIFFICULTY_CEILING
+
+        assert DIFFICULTY_CEILING["beginner"] == 3, "Beginner ceiling must be 3"
+        assert DIFFICULTY_CEILING["intermediate"] == 6, "Intermediate ceiling must be 6"
+        assert DIFFICULTY_CEILING["advanced"] == 10, "Advanced ceiling must be 10"
+
+    def test_difficulty_ratios_exist(self):
+        """Verify difficulty ratio configuration exists for all fitness levels."""
+        from services.exercise_rag.service import DIFFICULTY_RATIOS
+
+        assert "beginner" in DIFFICULTY_RATIOS
+        assert "intermediate" in DIFFICULTY_RATIOS
+        assert "advanced" in DIFFICULTY_RATIOS
+
+        # Beginner should prefer beginner exercises
+        assert DIFFICULTY_RATIOS["beginner"]["beginner"] > DIFFICULTY_RATIOS["beginner"]["advanced"]
+
+        # Advanced should prefer advanced exercises
+        assert DIFFICULTY_RATIOS["advanced"]["advanced"] > DIFFICULTY_RATIOS["advanced"]["beginner"]
+
+    def test_difficulty_score_calculation(self):
+        """Verify difficulty score gives higher scores for matching fitness levels."""
+        from services.exercise_rag.service import get_difficulty_score
+
+        # Beginner user should get higher score for beginner exercises
+        beginner_score = get_difficulty_score("beginner", "beginner")
+        advanced_score = get_difficulty_score("advanced", "beginner")
+        assert beginner_score > advanced_score, "Beginner exercises should score higher for beginner users"
+
+        # Advanced user should get higher score for advanced exercises
+        beginner_score = get_difficulty_score("beginner", "advanced")
+        advanced_score = get_difficulty_score("advanced", "advanced")
+        assert advanced_score > beginner_score, "Advanced exercises should score higher for advanced users"
+
+    def test_difficulty_string_to_num_values(self):
+        """CRITICAL: Verify difficulty string mappings are correct."""
+        from services.exercise_rag.service import DIFFICULTY_STRING_TO_NUM
+
+        # Beginner-level strings should map to low numbers (<=3)
+        assert DIFFICULTY_STRING_TO_NUM["beginner"] <= 3, "Beginner must be <= 3"
+        assert DIFFICULTY_STRING_TO_NUM["easy"] <= 3, "Easy must be <= 3"
+
+        # Intermediate should be 4-6
+        assert 4 <= DIFFICULTY_STRING_TO_NUM["intermediate"] <= 6, "Intermediate must be 4-6"
+
+        # Advanced should be high
+        assert DIFFICULTY_STRING_TO_NUM["advanced"] >= 7, "Advanced must be >= 7"

@@ -7,6 +7,11 @@ import '../../data/repositories/nutrition_repository.dart';
 
 /// Provider for food-mood analytics data
 final foodMoodAnalyticsProvider = FutureProvider.autoDispose.family<FoodMoodAnalytics, String>((ref, userId) async {
+  // Guard: Return empty analytics if userId is empty
+  if (userId.isEmpty) {
+    return FoodMoodAnalytics.empty();
+  }
+
   final repository = ref.watch(nutritionRepositoryProvider);
 
   // Get food logs from the last 30 days
@@ -67,6 +72,22 @@ class FoodMoodAnalytics {
     required this.negativeCorrelations,
     required this.mealTypeMoods,
   });
+
+  /// Create an empty analytics object (used when userId is not available)
+  factory FoodMoodAnalytics.empty() {
+    return const FoodMoodAnalytics(
+      totalLogs: 0,
+      logsWithMood: 0,
+      moodBeforeDistribution: {},
+      moodAfterDistribution: {},
+      energyDistribution: {},
+      averageEnergy: 0,
+      moodTransitions: {},
+      positiveCorrelations: [],
+      negativeCorrelations: [],
+      mealTypeMoods: {},
+    );
+  }
 
   factory FoodMoodAnalytics.fromLogs(List<FoodLog> logs) {
     final logsWithMood = logs.where((l) => l.moodBefore != null || l.moodAfter != null).toList();

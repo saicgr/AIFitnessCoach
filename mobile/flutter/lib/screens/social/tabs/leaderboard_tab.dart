@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/leaderboard_locked_state.dart';
 import '../widgets/leaderboard_rank_card.dart';
@@ -45,7 +46,17 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     _leaderboardService = LeaderboardService(ref.read(apiClientProvider));
     _challengesService = ChallengesService(ref.read(apiClientProvider));
 
-    _loadUserId();
+    // Get userId from authStateProvider (consistent with rest of app)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (mounted && userId != null) {
+        setState(() {
+          _userId = userId;
+        });
+        _loadUnlockStatus();
+      }
+    });
   }
 
   @override
@@ -61,16 +72,6 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
         _selectedType = LeaderboardType.values[_typeTabController.index];
       });
       _loadLeaderboard();
-    }
-  }
-
-  Future<void> _loadUserId() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() {
-        _userId = userId;
-      });
-      _loadUnlockStatus();
     }
   }
 

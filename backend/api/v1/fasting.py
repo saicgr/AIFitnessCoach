@@ -47,6 +47,7 @@ class StartFastRequest(BaseModel):
     protocol: str = Field(description="Protocol ID like '16:8', '18:6', '5:2'")
     protocol_type: str = Field(description="Type: 'tre', 'modified', 'extended', 'custom'")
     goal_duration_minutes: int = Field(ge=60, le=10080, description="Goal in minutes (1h to 7 days)")
+    started_at: Optional[str] = Field(None, description="Custom start time in ISO format (for backdating)")
     mood_before: Optional[str] = None
     notes: Optional[str] = None
 
@@ -401,11 +402,14 @@ async def start_fast(data: StartFastRequest):
                 detail="You already have an active fast. End it before starting a new one."
             )
 
+        # Determine start time (custom or now)
+        start_time = data.started_at if data.started_at else datetime.utcnow().isoformat()
+
         # Create new fast record
         fast_data = {
             "id": str(uuid.uuid4()),
             "user_id": data.user_id,
-            "start_time": datetime.utcnow().isoformat(),
+            "start_time": start_time,
             "goal_duration_minutes": data.goal_duration_minutes,
             "protocol": data.protocol,
             "protocol_type": data.protocol_type,

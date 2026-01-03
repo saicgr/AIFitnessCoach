@@ -12,6 +12,7 @@ class FoodSearchResults extends ConsumerWidget {
   final FoodSearchFilter? filter;
   final ScrollController? scrollController;
   final bool showCategories;
+  final VoidCallback? onAnalyzeWithAI;
 
   const FoodSearchResults({
     super.key,
@@ -20,6 +21,7 @@ class FoodSearchResults extends ConsumerWidget {
     this.filter,
     this.scrollController,
     this.showCategories = true,
+    this.onAnalyzeWithAI,
   });
 
   @override
@@ -56,7 +58,7 @@ class FoodSearchResults extends ConsumerWidget {
 
       case search.FoodSearchResults(:final saved, :final recent, :final database, :final query, :final fromCache):
         if (saved.isEmpty && recent.isEmpty && database.isEmpty) {
-          return _NoResultsState(query: query);
+          return _NoResultsState(query: query, onAnalyzeWithAI: onAnalyzeWithAI);
         }
 
         // Apply filter
@@ -672,20 +674,56 @@ class _NutrientPill extends StatelessWidget {
 /// No results state
 class _NoResultsState extends StatelessWidget {
   final String query;
+  final VoidCallback? onAnalyzeWithAI;
 
-  const _NoResultsState({required this.query});
+  const _NoResultsState({required this.query, this.onAnalyzeWithAI});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: EmptyState(
-        icon: Icons.search_off_rounded,
-        title: 'No foods found',
-        subtitle:
-            'No results for "$query".\nTry different keywords or describe the food differently.',
-        iconColor: AppColors.textMuted,
-        useLottie: false,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          EmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'No foods found',
+            subtitle: 'No saved foods match "$query".',
+            iconColor: AppColors.textMuted,
+            useLottie: false,
+          ),
+          if (onAnalyzeWithAI != null) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onAnalyzeWithAI,
+                icon: const Icon(Icons.auto_awesome, size: 18),
+                label: const Text(
+                  'Analyze with AI',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: teal,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'AI will estimate nutrition for "$query"',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -703,8 +741,8 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: EmptyState(
         icon: Icons.error_outline_rounded,
         title: 'Something went wrong',

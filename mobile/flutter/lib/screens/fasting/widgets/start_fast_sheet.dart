@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
@@ -7,7 +8,7 @@ import '../../../data/services/haptic_service.dart';
 class StartFastSheet extends StatefulWidget {
   final String userId;
   final FastingProtocol? defaultProtocol;
-  final Future<void> Function(FastingProtocol protocol, int? customMinutes)
+  final Future<void> Function(FastingProtocol protocol, int? customMinutes, DateTime? startTime)
       onStartFast;
 
   const StartFastSheet({
@@ -25,6 +26,26 @@ class _StartFastSheetState extends State<StartFastSheet> {
   FastingProtocol? _selectedProtocol;
   int _customHours = 16;
   bool _isStarting = false;
+  bool _showExtended = false;
+  bool _startNow = true;
+  DateTime _customStartTime = DateTime.now();
+
+  // TRE (Time-Restricted Eating) protocols
+  static const List<FastingProtocol> _treProtocols = [
+    FastingProtocol.twelve12,
+    FastingProtocol.fourteen10,
+    FastingProtocol.sixteen8,
+    FastingProtocol.eighteen6,
+    FastingProtocol.twenty4,
+    FastingProtocol.omad,
+  ];
+
+  // Extended protocols
+  static const List<FastingProtocol> _extendedProtocols = [
+    FastingProtocol.waterFast24,
+    FastingProtocol.waterFast48,
+    FastingProtocol.waterFast72,
+  ];
 
   @override
   void initState() {
@@ -41,14 +62,18 @@ class _StartFastSheetState extends State<StartFastSheet> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,93 +89,139 @@ class _StartFastSheetState extends State<StartFastSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // Title
-            Text(
-              'Start a Fast',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Choose a fasting protocol',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Protocol options
-            Text(
-              'Popular Protocols',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // TRE Protocols
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+            // Title row
+            Row(
               children: [
-                _ProtocolChip(
-                  protocol: FastingProtocol.twelve12,
-                  isSelected: _selectedProtocol == FastingProtocol.twelve12,
-                  onTap: () => _selectProtocol(FastingProtocol.twelve12),
-                  isDark: isDark,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Start a Fast',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Choose protocol & start time',
+                        style: TextStyle(fontSize: 13, color: textMuted),
+                      ),
+                    ],
+                  ),
                 ),
-                _ProtocolChip(
-                  protocol: FastingProtocol.fourteen10,
-                  isSelected: _selectedProtocol == FastingProtocol.fourteen10,
-                  onTap: () => _selectProtocol(FastingProtocol.fourteen10),
-                  isDark: isDark,
-                ),
-                _ProtocolChip(
-                  protocol: FastingProtocol.sixteen8,
-                  isSelected: _selectedProtocol == FastingProtocol.sixteen8,
-                  onTap: () => _selectProtocol(FastingProtocol.sixteen8),
-                  isDark: isDark,
-                ),
-                _ProtocolChip(
-                  protocol: FastingProtocol.eighteen6,
-                  isSelected: _selectedProtocol == FastingProtocol.eighteen6,
-                  onTap: () => _selectProtocol(FastingProtocol.eighteen6),
-                  isDark: isDark,
-                ),
-                _ProtocolChip(
-                  protocol: FastingProtocol.twenty4,
-                  isSelected: _selectedProtocol == FastingProtocol.twenty4,
-                  onTap: () => _selectProtocol(FastingProtocol.twenty4),
-                  isDark: isDark,
-                ),
-                _ProtocolChip(
-                  protocol: FastingProtocol.omad,
-                  isSelected: _selectedProtocol == FastingProtocol.omad,
-                  onTap: () => _selectProtocol(FastingProtocol.omad),
-                  isDark: isDark,
+                // Close button
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cardBorder.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.close, size: 20, color: textMuted),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
-            // Custom option
+            // === PROTOCOL SELECTION ===
             Text(
-              'Or Custom Duration',
+              'Protocol',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: textMuted,
+                letterSpacing: 0.5,
               ),
             ),
+            const SizedBox(height: 10),
+
+            // TRE Protocols - Grid
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _treProtocols.map((p) => _ProtocolChip(
+                protocol: p,
+                isSelected: _selectedProtocol == p,
+                onTap: () => _selectProtocol(p),
+                isDark: isDark,
+              )).toList(),
+            ),
             const SizedBox(height: 12),
+
+            // Extended protocols toggle
+            GestureDetector(
+              onTap: () {
+                HapticService.light();
+                setState(() => _showExtended = !_showExtended);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: cardBorder.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showExtended ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: purple,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Extended Fasts (24h+)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Advanced',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Extended protocols
+            if (_showExtended) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _extendedProtocols.map((p) => _ProtocolChip(
+                  protocol: p,
+                  isSelected: _selectedProtocol == p,
+                  onTap: () => _selectProtocol(p),
+                  isDark: isDark,
+                  isExtended: true,
+                )).toList(),
+              ),
+            ],
+            const SizedBox(height: 12),
+
+            // Custom duration
             _ProtocolChip(
               protocol: FastingProtocol.custom,
               isSelected: _selectedProtocol == FastingProtocol.custom,
@@ -161,106 +232,181 @@ class _StartFastSheetState extends State<StartFastSheet> {
 
             // Custom hours slider
             if (_selectedProtocol == FastingProtocol.custom) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color:
-                      (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
-                          .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(12),
+                  color: cardBorder.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Fasting Duration',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textPrimary,
-                          ),
-                        ),
+                        Text('Duration', style: TextStyle(fontSize: 13, color: textPrimary)),
                         Text(
                           '$_customHours hours',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: purple,
-                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: purple),
                         ),
                       ],
                     ),
-                    Slider(
-                      value: _customHours.toDouble(),
-                      min: 12,
-                      max: 48,
-                      divisions: 36,
-                      activeColor: purple,
-                      inactiveColor: purple.withValues(alpha: 0.2),
-                      onChanged: (value) {
-                        setState(() {
-                          _customHours = value.round();
-                        });
-                        HapticService.light();
-                      },
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                      ),
+                      child: Slider(
+                        value: _customHours.toDouble(),
+                        min: 12,
+                        max: 72,
+                        divisions: 60,
+                        activeColor: purple,
+                        inactiveColor: purple.withValues(alpha: 0.2),
+                        onChanged: (value) {
+                          setState(() => _customHours = value.round());
+                          HapticService.light();
+                        },
+                      ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('12h', style: TextStyle(color: textMuted, fontSize: 12)),
-                        Text('48h', style: TextStyle(color: textMuted, fontSize: 12)),
+                        Text('12h', style: TextStyle(color: textMuted, fontSize: 11)),
+                        Text('72h', style: TextStyle(color: textMuted, fontSize: 11)),
                       ],
                     ),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // Selected protocol info
-            if (_selectedProtocol != null) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: purple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: purple.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: purple, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedProtocol == FastingProtocol.custom
-                            ? 'You\'ll fast for $_customHours hours.'
-                            : '${_selectedProtocol!.displayName}: Fast for ${_selectedProtocol!.fastingHours}h, eat during ${_selectedProtocol!.eatingHours}h window.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textPrimary,
+            // === START TIME SELECTION ===
+            Text(
+              'Start Time',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Start time options
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      setState(() => _startNow = true);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _startNow ? purple.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _startNow ? purple : Colors.transparent,
+                          width: 2,
                         ),
                       ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.play_arrow, color: _startNow ? purple : textMuted, size: 24),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Start Now',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: _startNow ? FontWeight.bold : FontWeight.w500,
+                              color: _startNow ? purple : textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      HapticService.light();
+                      setState(() => _startNow = false);
+                      await _selectStartTime();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: !_startNow ? purple.withValues(alpha: 0.15) : cardBorder.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: !_startNow ? purple : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.schedule, color: !_startNow ? purple : textMuted, size: 24),
+                          const SizedBox(height: 4),
+                          Text(
+                            !_startNow
+                                ? DateFormat('h:mm a').format(_customStartTime)
+                                : 'Custom Time',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: !_startNow ? FontWeight.bold : FontWeight.w500,
+                              color: !_startNow ? purple : textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Info box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: purple.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: purple.withValues(alpha: 0.2)),
               ),
-              const SizedBox(height: 24),
-            ],
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: purple, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _getProtocolInfo(),
+                      style: TextStyle(fontSize: 12, color: textPrimary, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
 
             // Start button
             SizedBox(
               width: double.infinity,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _isStarting ? null : _startFast,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: purple,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 0,
                   disabledBackgroundColor: purple.withValues(alpha: 0.5),
                 ),
                 child: _isStarting
@@ -272,20 +418,77 @@ class _StartFastSheetState extends State<StartFastSheet> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text(
-                        'Start Fast',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.play_arrow, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            _startNow ? 'Start Fast Now' : 'Start Fast at ${DateFormat('h:mm a').format(_customStartTime)}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
               ),
             ),
-            const SizedBox(height: 16),
+
+            // Safe area bottom padding
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
       ),
     );
+  }
+
+  String _getProtocolInfo() {
+    if (_selectedProtocol == null) return '';
+
+    if (_selectedProtocol == FastingProtocol.custom) {
+      return 'Custom fast: $_customHours hours of fasting.';
+    }
+
+    final p = _selectedProtocol!;
+    if (p.isDangerous) {
+      return '${p.displayName}: ${p.fastingHours}h fast. Extended fasts require experience and should be done with medical supervision.';
+    }
+
+    return '${p.displayName}: Fast for ${p.fastingHours}h, eat during ${p.eatingHours}h window.';
+  }
+
+  Future<void> _selectStartTime() async {
+    final now = DateTime.now();
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_customStartTime),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.purple,
+              surface: AppColors.elevated,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (time != null && mounted) {
+      setState(() {
+        _customStartTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          time.hour,
+          time.minute,
+        );
+        // If selected time is in the past, assume it's for yesterday (backdate)
+        if (_customStartTime.isAfter(now)) {
+          _customStartTime = _customStartTime.subtract(const Duration(days: 1));
+        }
+        _startNow = false;
+      });
+    }
   }
 
   void _selectProtocol(FastingProtocol protocol) {
@@ -305,7 +508,8 @@ class _StartFastSheetState extends State<StartFastSheet> {
       final customMinutes = _selectedProtocol == FastingProtocol.custom
           ? _customHours * 60
           : null;
-      await widget.onStartFast(_selectedProtocol!, customMinutes);
+      final startTime = _startNow ? null : _customStartTime;
+      await widget.onStartFast(_selectedProtocol!, customMinutes, startTime);
     } finally {
       if (mounted) {
         setState(() => _isStarting = false);
@@ -320,6 +524,7 @@ class _ProtocolChip extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDark;
   final String? customLabel;
+  final bool isExtended;
 
   const _ProtocolChip({
     required this.protocol,
@@ -327,37 +532,37 @@ class _ProtocolChip extends StatelessWidget {
     required this.onTap,
     required this.isDark,
     this.customLabel,
+    this.isExtended = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = isExtended ? Colors.orange : purple;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? purple.withValues(alpha: 0.15)
-              : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
-                  .withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
+              ? accentColor.withValues(alpha: 0.15)
+              : cardBorder.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? purple : Colors.transparent,
+            color: isSelected ? accentColor : Colors.transparent,
             width: 2,
           ),
         ),
         child: Text(
           customLabel ?? protocol.displayName,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? purple : textPrimary,
+            color: isSelected ? accentColor : textPrimary,
           ),
         ),
       ),

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
-import '../../../data/services/api_client.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../widgets/friend_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/pending_request_card.dart';
@@ -30,17 +30,16 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
   void initState() {
     super.initState();
     _friendsTabController = TabController(length: 3, vsync: this);
-    _initUser();
-  }
 
-  Future<void> _initUser() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() => _userId = userId);
-      if (userId != null) {
+    // Get userId from authStateProvider (consistent with rest of app)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (mounted && userId != null) {
+        setState(() => _userId = userId);
         _loadPendingRequests();
       }
-    }
+    });
   }
 
   @override

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import '../../data/providers/social_provider.dart';
-import '../../data/services/api_client.dart';
+import '../../data/repositories/auth_repository.dart';
 import 'tabs/feed_tab.dart';
 import 'tabs/challenges_tab.dart';
 import 'tabs/leaderboard_tab.dart';
@@ -24,22 +24,11 @@ class SocialScreen extends ConsumerStatefulWidget {
 class _SocialScreenState extends ConsumerState<SocialScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String? _userId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _loadUserId();
-  }
-
-  Future<void> _loadUserId() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() {
-        _userId = userId;
-      });
-    }
   }
 
   @override
@@ -65,9 +54,13 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // Get userId from authStateProvider (consistent with rest of app)
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
+
     // Watch activity feed for stats
-    final feedDataAsync = _userId != null
-        ? ref.watch(activityFeedProvider(_userId!))
+    final feedDataAsync = userId != null
+        ? ref.watch(activityFeedProvider(userId))
         : null;
 
     return Scaffold(
@@ -117,23 +110,25 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(88),
+                  preferredSize: const Size.fromHeight(80),
                   child: Column(
                     children: [
                       // Stats chips row
                       _buildStatsChips(context, isDark, feedDataAsync),
-                      // Tab bar
+                      // Compact tab bar - icons with short labels
                       TabBar(
                         controller: _tabController,
                         indicatorColor: AppColors.cyan,
                         labelColor: isDark ? Colors.white : Colors.black,
                         unselectedLabelColor: AppColors.textMuted,
                         indicatorWeight: 3,
+                        labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        unselectedLabelStyle: const TextStyle(fontSize: 11),
                         tabs: const [
-                          Tab(text: 'Feed'),
-                          Tab(text: 'Challenges'),
-                          Tab(text: 'Leaderboard'),
-                          Tab(text: 'Friends'),
+                          Tab(text: 'Feed', icon: Icon(Icons.dynamic_feed_rounded, size: 18)),
+                          Tab(text: 'Challenges', icon: Icon(Icons.emoji_events_rounded, size: 18)),
+                          Tab(text: 'Ranks', icon: Icon(Icons.leaderboard_rounded, size: 18)),
+                          Tab(text: 'Friends', icon: Icon(Icons.people_rounded, size: 18)),
                         ],
                       ),
                     ],
@@ -175,7 +170,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         children: [
           _buildStatChip(
@@ -190,7 +185,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               _tabController.animateTo(3); // Friends tab
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           _buildStatChip(
             context,
             isDark: isDark,
@@ -203,7 +198,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               _tabController.animateTo(1); // Challenges tab
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           _buildStatChip(
             context,
             isDark: isDark,
@@ -240,27 +235,28 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: chipBackground,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: borderColor, width: 1),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: color, size: 16),
-                const SizedBox(width: 4),
+                Icon(icon, color: color, size: 14),
+                const SizedBox(width: 3),
                 Flexible(
                   child: Text(
                     '$value',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

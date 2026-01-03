@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
-import '../../../data/services/api_client.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/main_shell.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/empty_state.dart';
@@ -19,24 +19,6 @@ class FeedTab extends ConsumerStatefulWidget {
 
 class _FeedTabState extends ConsumerState<FeedTab> {
   final ScrollController _scrollController = ScrollController();
-  String? _userId;
-  bool _isLoadingUser = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserId();
-  }
-
-  Future<void> _loadUserId() async {
-    final userId = await ref.read(apiClientProvider).getUserId();
-    if (mounted) {
-      setState(() {
-        _userId = userId;
-        _isLoadingUser = false;
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -46,13 +28,12 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while fetching userId
-    if (_isLoadingUser) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    // Get userId from authStateProvider (consistent with rest of app)
+    final authState = ref.watch(authStateProvider);
+    final userId = authState.user?.id;
 
     // If no userId, show error
-    if (_userId == null) {
+    if (userId == null) {
       return SocialEmptyState(
         icon: Icons.error_outline_rounded,
         title: 'Not Logged In',
@@ -63,7 +44,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     }
 
     // Use the activityFeedProvider to load feed data
-    final activityFeedAsync = ref.watch(activityFeedProvider(_userId!));
+    final activityFeedAsync = ref.watch(activityFeedProvider(userId));
 
     return Stack(
       children: [
@@ -77,7 +58,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               description: 'Could not load your activity feed.\nPlease try again later.',
               actionLabel: 'Retry',
               onAction: () {
-                ref.invalidate(activityFeedProvider(_userId!));
+                ref.invalidate(activityFeedProvider(userId));
               },
             );
           },
@@ -92,7 +73,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                 title: 'No Activity Yet',
                 description: 'Complete workouts to see them shared here!\nFollow friends to see their workouts too.',
                 actionLabel: 'Create Post',
-                onAction: _showCreatePostSheet,
+                onAction: () => _showCreatePostSheet(userId),
               );
             }
 
@@ -111,7 +92,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                           padding: const EdgeInsets.only(bottom: 16),
                           child: ActivityCard(
                             activityId: activity['id'] as String? ?? '',
-                            currentUserId: _userId ?? '',
+                            currentUserId: userId,
                             userName: activity['user_name'] as String? ?? 'User',
                             userAvatar: activity['user_avatar'] as String?,
                             activityType: activity['activity_type'] as String? ?? 'workout_completed',
@@ -121,7 +102,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                             commentCount: activity['comment_count'] as int? ?? 0,
                             hasUserReacted: activity['user_has_reacted'] as bool? ?? false,
                             userReactionType: activity['user_reaction_type'] as String?,
-                            onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType),
+                            onReact: (reactionType) => _handleReaction(activity['id'] as String, reactionType, userId),
                             onComment: () => _handleComment(activity['id'] as String),
                           ),
                         );
@@ -145,7 +126,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           bottom: 80, // Above the bottom nav bar
           right: 16,
           child: FloatingActionButton(
-            onPressed: _showCreatePostSheet,
+            onPressed: () => _showCreatePostSheet(userId),
             backgroundColor: AppColors.cyan,
             foregroundColor: Colors.white,
             elevation: 4,
@@ -156,7 +137,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     );
   }
 
-  void _showCreatePostSheet() {
+  void _showCreatePostSheet(String userId) {
     HapticFeedback.mediumImpact();
     // Hide the floating nav bar when sheet opens
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
@@ -174,8 +155,8 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       // Show the floating nav bar again when sheet closes
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
       // If post was created, refresh the feed
-      if (result == true && _userId != null) {
-        ref.invalidate(activityFeedProvider(_userId!));
+      if (result == true) {
+        ref.invalidate(activityFeedProvider(userId));
       }
     });
   }
@@ -194,16 +175,14 @@ class _FeedTabState extends ConsumerState<FeedTab> {
     return DateTime.now();
   }
 
-  Future<void> _handleReaction(String activityId, String reactionType) async {
+  Future<void> _handleReaction(String activityId, String reactionType, String userId) async {
     HapticFeedback.lightImpact();
-
-    if (_userId == null) return;
 
     try {
       final socialService = ref.read(socialServiceProvider);
 
       // Toggle reaction: if already reacted with this type, remove it; otherwise add/update
-      final activity = ref.read(activityFeedProvider(_userId!)).value?['activities']
+      final activity = ref.read(activityFeedProvider(userId)).value?['activities']
           ?.firstWhere((a) => a['id'] == activityId, orElse: () => null);
 
       if (activity != null &&
@@ -211,14 +190,14 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           activity['user_reaction_type'] == reactionType) {
         // Remove reaction
         await socialService.removeReaction(
-          userId: _userId!,
+          userId: userId,
           activityId: activityId,
         );
         debugPrint('Removed reaction: $reactionType');
       } else {
         // Add or update reaction
         await socialService.addReaction(
-          userId: _userId!,
+          userId: userId,
           activityId: activityId,
           reactionType: reactionType,
         );
@@ -226,7 +205,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
       }
 
       // Refresh the feed to show updated reaction counts
-      ref.invalidate(activityFeedProvider(_userId!));
+      ref.invalidate(activityFeedProvider(userId));
     } catch (e) {
       debugPrint('Error handling reaction: $e');
       // Show error snackbar

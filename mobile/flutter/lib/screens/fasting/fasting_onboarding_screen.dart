@@ -103,7 +103,7 @@ class _FastingOnboardingScreenState
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: _buildStep(_currentStep, isDark, textPrimary, textMuted, purple),
@@ -252,17 +252,17 @@ class _FastingOnboardingScreenState
         Text(
           'Safety Check',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           'Please answer honestly to ensure fasting is safe for you.',
-          style: TextStyle(fontSize: 14, color: textMuted),
+          style: TextStyle(fontSize: 13, color: textMuted),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
         ...fastingSafetyQuestions.map((q) => _buildSafetyQuestion(
               q,
               isDark,
@@ -286,86 +286,66 @@ class _FastingOnboardingScreenState
     final isAcknowledged = _acknowledgedWarnings.contains(question.id);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: hasWarning && !isAcknowledged
               ? AppColors.coral.withValues(alpha: 0.5)
               : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            question.question,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: textPrimary,
+          // Question text
+          Expanded(
+            flex: 3,
+            child: Text(
+              question.question,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textPrimary,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(width: 8),
+          // Yes/No buttons - compact inline
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: _buildColoredOptionButton(
-                  'Yes',
-                  response == true,
-                  () => _setSafetyResponse(question, true),
-                  isDark,
-                  isYes: true,
-                  hasWarning: question.warnMessage != null,
-                ),
+              _buildCompactOptionButton(
+                'Yes',
+                response == true,
+                () => _setSafetyResponse(question, true),
+                isDark,
+                isYes: true,
+                hasWarning: question.warnMessage != null,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildColoredOptionButton(
-                  'No',
-                  response == false,
-                  () => _setSafetyResponse(question, false),
-                  isDark,
-                  isYes: false,
-                  hasWarning: false,
-                ),
+              const SizedBox(width: 6),
+              _buildCompactOptionButton(
+                'No',
+                response == false,
+                () => _setSafetyResponse(question, false),
+                isDark,
+                isYes: false,
+                hasWarning: false,
               ),
+              // Show acknowledged indicator
+              if (hasWarning && isAcknowledged) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.check_circle, color: Colors.orange, size: 16),
+              ],
             ],
           ),
-          // Show acknowledged warning badge
-          if (hasWarning && isAcknowledged) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.orange, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Acknowledged',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildColoredOptionButton(
+  Widget _buildCompactOptionButton(
     String label,
     bool isSelected,
     VoidCallback onTap,
@@ -373,55 +353,46 @@ class _FastingOnboardingScreenState
     required bool isYes,
     required bool hasWarning,
   }) {
-    // Colors based on selection and type
     Color backgroundColor;
     Color borderColor;
     Color textColor;
 
     if (isSelected) {
       if (isYes && hasWarning) {
-        // Yes with warning - orange/coral
         backgroundColor = AppColors.coral.withValues(alpha: 0.15);
         borderColor = AppColors.coral;
         textColor = AppColors.coral;
       } else if (isYes) {
-        // Yes selected (no warning)
         backgroundColor = Colors.green.withValues(alpha: 0.15);
         borderColor = Colors.green;
         textColor = Colors.green;
       } else {
-        // No selected
         backgroundColor = Colors.green.withValues(alpha: 0.15);
         borderColor = Colors.green;
         textColor = Colors.green;
       }
     } else {
-      // Unselected state
       backgroundColor = (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
           .withValues(alpha: 0.5);
       borderColor = Colors.transparent;
-      textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+      textColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     }
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: borderColor,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: borderColor, width: 1.5),
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: textColor,
-            ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: textColor,
           ),
         ),
       ),

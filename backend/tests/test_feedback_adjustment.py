@@ -276,42 +276,53 @@ class TestDifficultyCeilingModification:
 
 
 class TestIsExerciseTooDifficult:
-    """Tests for is_exercise_too_difficult function with adjustment."""
+    """Tests for is_exercise_too_difficult function with adjustment.
+
+    With the ratio-based system, only Elite (10) exercises are filtered for beginners.
+    """
 
     def test_exercise_within_ceiling_allowed(self):
         """Test that exercises within ceiling are allowed."""
-        # Beginner ceiling is 3, exercise difficulty 2 should pass
+        # All non-elite exercises are allowed for all users
         result = is_exercise_too_difficult(2, "beginner", 0)
         assert result is False
 
-    def test_exercise_above_ceiling_filtered(self):
-        """Test that exercises above ceiling are filtered out."""
-        # Beginner ceiling is 3, exercise difficulty 5 should be filtered
+    def test_all_non_elite_exercises_allowed_for_beginners(self):
+        """Test that non-elite exercises are NOT filtered for beginners.
+
+        With ratio-based system, all exercises except Elite are available.
+        Difficulty is used for ranking, not filtering.
+        """
+        # Beginner can access intermediate and advanced exercises
         result = is_exercise_too_difficult(5, "beginner", 0)
-        assert result is True
+        assert result is False  # Intermediate allowed
+        result = is_exercise_too_difficult(8, "beginner", 0)
+        assert result is False  # Advanced allowed
 
-    def test_positive_adjustment_allows_harder_exercises(self):
-        """Test that positive adjustment allows harder exercises."""
-        # Beginner ceiling is 3, exercise difficulty 5
-        # With +2 adjustment, ceiling becomes 5, so difficulty 5 should pass
-        result = is_exercise_too_difficult(5, "beginner", 2)
+    def test_elite_exercises_filtered_for_beginners(self):
+        """Test that Elite exercises are filtered for beginners without adjustment."""
+        result = is_exercise_too_difficult(10, "beginner", 0)
+        assert result is True  # Elite (10) filtered for safety
+
+    def test_positive_adjustment_allows_elite_for_beginners(self):
+        """Test that positive adjustment allows Elite exercises for beginners."""
+        # With positive adjustment, beginners can access elite exercises
+        result = is_exercise_too_difficult(10, "beginner", 1)
         assert result is False
-
-    def test_negative_adjustment_filters_more_exercises(self):
-        """Test that negative adjustment filters more exercises."""
-        # Intermediate ceiling is 6, exercise difficulty 5
-        # With -2 adjustment, ceiling becomes 4, so difficulty 5 should fail
-        result = is_exercise_too_difficult(5, "intermediate", -2)
-        assert result is True
 
     def test_string_difficulty_values(self):
         """Test that string difficulty values work correctly."""
-        # "advanced" maps to difficulty 8
+        # "advanced" maps to difficulty 8, allowed for all users
         result_beginner = is_exercise_too_difficult("advanced", "beginner", 0)
         result_advanced = is_exercise_too_difficult("advanced", "advanced", 0)
 
-        assert result_beginner is True  # 8 > 3
-        assert result_advanced is False  # 8 <= 10
+        assert result_beginner is False  # Advanced (8) allowed for beginners
+        assert result_advanced is False  # Advanced (8) allowed for advanced users
+
+    def test_elite_string_filtered_for_beginners(self):
+        """Test that 'elite' string is filtered for beginners."""
+        result = is_exercise_too_difficult("elite", "beginner", 0)
+        assert result is True  # Elite filtered for beginners
 
 
 # =============================================================================

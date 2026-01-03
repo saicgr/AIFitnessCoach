@@ -11,24 +11,26 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
-import '../../data/services/api_client.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
-import '../../data/services/food_search_service.dart' hide FoodSearchResults;
+import '../../data/services/food_search_service.dart' as search;
 import 'widgets/food_search_bar.dart';
-import 'widgets/food_search_results.dart';
 import 'widgets/inflammation_analysis_widget.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
   debugPrint('showLogMealSheet: Starting...');
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final userId = await ref.read(apiClientProvider).getUserId();
+  // Use authStateProvider for consistent auth state (not apiClientProvider)
+  final authState = ref.read(authStateProvider);
+  final userId = authState.user?.id;
 
   debugPrint('showLogMealSheet: userId=$userId, context.mounted=${context.mounted}');
 
-  if (userId == null || !context.mounted) {
-    debugPrint('showLogMealSheet: Aborting - userId is null or context not mounted');
+  // Check for null, empty string, or unmounted context
+  if (userId == null || userId.isEmpty || !context.mounted) {
+    debugPrint('showLogMealSheet: Aborting - userId is null/empty or context not mounted');
     return;
   }
 
@@ -1551,10 +1553,6 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
   String _progressMessage = '';
   String? _progressDetail;
 
-  // Search mode state
-  bool _showSearchResults = false;
-  FoodSearchFilter _selectedFilter = FoodSearchFilter.all;
-
   // Rainbow colors for nutrition values
   static const caloriesColor = Color(0xFFFF6B6B);
   static const proteinColor = Color(0xFFFFD93D);
@@ -1710,58 +1708,6 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     widget.controller.text += text;
   }
 
-  /// Handle when a saved/recent food is selected from search
-  Future<void> _handleSearchResultSelected(FoodSearchResult result) async {
-    debugPrint('FoodSearch: Selected ${result.name} (${result.source.label})');
-
-    // For saved foods with full nutrition data, we can log directly
-    if (result.originalData != null && result.calories > 0) {
-      // Create a LogFoodResponse from the saved food data
-      final foodItems = result.originalData!['food_items'] as List<dynamic>? ?? [
-        {
-          'name': result.name,
-          'calories': result.calories,
-          'protein_g': result.protein ?? 0,
-          'carbs_g': result.carbs ?? 0,
-          'fat_g': result.fat ?? 0,
-        }
-      ];
-
-      final response = LogFoodResponse(
-        success: true,
-        foodLogId: 'from-search-${result.id}',
-        foodItems: foodItems.map((e) => e as Map<String, dynamic>).toList(),
-        totalCalories: result.calories,
-        proteinG: result.protein ?? 0,
-        carbsG: result.carbs ?? 0,
-        fatG: result.fat ?? 0,
-        confidenceLevel: 'high',
-        confidenceScore: 1.0,
-        sourceType: result.source == FoodSearchSource.saved ? 'saved' : 'recent',
-      );
-
-      setState(() {
-        _analyzedResponse = response;
-        _showSearchResults = false;
-      });
-    } else {
-      // For partial matches, populate the text field and let user analyze
-      widget.controller.text = result.name;
-      if (result.brand != null) {
-        widget.controller.text += ' (${result.brand})';
-      }
-      setState(() {
-        _showSearchResults = false;
-      });
-    }
-  }
-
-  void _onSearchQueryChanged(String query) {
-    setState(() {
-      _showSearchResults = query.trim().isNotEmpty;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -1868,102 +1814,97 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
       );
     }
 
-    // Otherwise show the input form with instant search
-    return Column(
-      children: [
-        // Search bar with instant results
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: _FoodSearchInput(
-            controller: widget.controller,
-            userId: widget.userId,
-            isDark: isDark,
-            onSearch: _onSearchQueryChanged,
-            onResultSelected: _handleSearchResultSelected,
-            selectedFilter: _selectedFilter,
-            onFilterChanged: (filter) => setState(() => _selectedFilter = filter),
+    // Simple AI-first describe input
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Text input field
+          Container(
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.controller.text.trim().isNotEmpty ? teal : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+              ),
+            ),
+            child: TextField(
+              controller: widget.controller,
+              maxLines: 3,
+              minLines: 2,
+              style: TextStyle(color: textPrimary, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: 'Describe what you ate...\ne.g., "rotisserie chicken from costco with rice"',
+                hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.all(16),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
           ),
-        ),
 
-        // Expandable content: either search results or regular input
-        Expanded(
-          child: _showSearchResults
-              ? FoodSearchResults(
-                  userId: widget.userId,
-                  onResultSelected: _handleSearchResultSelected,
-                  filter: _selectedFilter,
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Quick suggestions when search is empty
-                      Text(
-                        'Quick Add',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _QuickSuggestion(label: 'Coffee', onTap: () => _appendText('coffee'), isDark: isDark),
-                          _QuickSuggestion(label: 'Eggs', onTap: () => _appendText('2 eggs'), isDark: isDark),
-                          _QuickSuggestion(label: 'Toast', onTap: () => _appendText('toast'), isDark: isDark),
-                          _QuickSuggestion(label: 'Salad', onTap: () => _appendText('salad'), isDark: isDark),
-                          _QuickSuggestion(label: 'Chicken', onTap: () => _appendText('chicken breast'), isDark: isDark),
-                          _QuickSuggestion(label: 'Rice', onTap: () => _appendText('1 cup rice'), isDark: isDark),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-                      // Or describe manually section
-                      Text(
-                        'Or describe what you ate',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Type a detailed description and AI will estimate the nutrition.',
-                        style: TextStyle(fontSize: 13, color: textSecondary),
-                      ),
-                      const SizedBox(height: 16),
+          // Analyze with AI button - always visible when there's text
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: widget.controller.text.trim().isNotEmpty ? _handleAnalyze : null,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text(
+                'Analyze with AI',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: teal,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: teal.withValues(alpha: 0.3),
+                disabledForegroundColor: Colors.white54,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
 
-                      // Analyze button
-                      if (widget.controller.text.trim().isNotEmpty)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _handleAnalyze,
-                            icon: const Icon(Icons.auto_awesome, size: 18),
-                            label: const Text(
-                              'Analyze with AI',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: teal,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-        ),
-      ],
+          const SizedBox(height: 8),
+
+          // Helper text
+          Text(
+            'AI will identify foods and estimate nutrition automatically',
+            style: TextStyle(fontSize: 12, color: textMuted),
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Quick suggestions
+          Text(
+            'Quick suggestions',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _QuickSuggestion(label: 'Coffee', onTap: () => _appendText('coffee'), isDark: isDark),
+              _QuickSuggestion(label: '2 Eggs', onTap: () => _appendText('2 eggs'), isDark: isDark),
+              _QuickSuggestion(label: 'Toast', onTap: () => _appendText('toast with butter'), isDark: isDark),
+              _QuickSuggestion(label: 'Salad', onTap: () => _appendText('mixed salad'), isDark: isDark),
+              _QuickSuggestion(label: 'Chicken', onTap: () => _appendText('grilled chicken breast'), isDark: isDark),
+              _QuickSuggestion(label: 'Rice', onTap: () => _appendText('1 cup rice'), isDark: isDark),
+              _QuickSuggestion(label: 'Protein shake', onTap: () => _appendText('protein shake'), isDark: isDark),
+              _QuickSuggestion(label: 'Sandwich', onTap: () => _appendText('turkey sandwich'), isDark: isDark),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -2230,7 +2171,7 @@ class _FoodSearchInput extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
   final Function(String query)? onSearch;
-  final Function(FoodSearchResult result)? onResultSelected;
+  final Function(search.FoodSearchResult result)? onResultSelected;
   final FoodSearchFilter selectedFilter;
   final Function(FoodSearchFilter filter)? onFilterChanged;
 
@@ -2278,14 +2219,14 @@ class _FoodSearchInputState extends ConsumerState<_FoodSearchInput> {
 
   void _onTextChanged() {
     final query = widget.controller.text.trim();
-    final searchService = ref.read(foodSearchServiceProvider);
+    final searchService = ref.read(search.foodSearchServiceProvider);
     searchService.search(query, widget.userId);
     widget.onSearch?.call(query);
   }
 
   void _clearSearch() {
     widget.controller.clear();
-    final searchService = ref.read(foodSearchServiceProvider);
+    final searchService = ref.read(search.foodSearchServiceProvider);
     searchService.cancel();
     widget.onSearch?.call('');
   }
@@ -2293,7 +2234,7 @@ class _FoodSearchInputState extends ConsumerState<_FoodSearchInput> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final searchState = ref.watch(foodSearchStateProvider);
+    final searchState = ref.watch(search.foodSearchStateProvider);
 
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -2302,7 +2243,7 @@ class _FoodSearchInputState extends ConsumerState<_FoodSearchInput> {
     final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     final isLoading = searchState.maybeWhen(
-      data: (state) => state is FoodSearchLoading,
+      data: (state) => state is search.FoodSearchLoading,
       orElse: () => false,
     );
 
@@ -2569,7 +2510,7 @@ class _ScanTabState extends State<_ScanTab> {
 // Quick Tab
 // ─────────────────────────────────────────────────────────────────
 
-class _QuickTab extends ConsumerWidget {
+class _QuickTab extends ConsumerStatefulWidget {
   final String userId;
   final MealType mealType;
   final VoidCallback onLogged;
@@ -2583,11 +2524,216 @@ class _QuickTab extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(nutritionProvider);
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+  ConsumerState<_QuickTab> createState() => _QuickTabState();
+}
 
+class _QuickTabState extends ConsumerState<_QuickTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'all'; // all, saved, recent
+  bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+    if (query.isNotEmpty) {
+      setState(() => _isSearching = true);
+      final service = ref.read(search.foodSearchServiceProvider);
+      service.search(query, widget.userId);
+    } else {
+      setState(() => _isSearching = false);
+    }
+  }
+
+  Future<void> _handleResultSelected(search.FoodSearchResult result) async {
+    // Log the selected food
+    final repository = ref.read(nutritionRepositoryProvider);
+    try {
+      await repository.logFoodFromText(
+        userId: widget.userId,
+        description: result.name,
+        mealType: widget.mealType.value,
+      );
+      widget.onLogged();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to log: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Column(
+      children: [
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: elevated,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _isSearching ? teal : cardBorder),
+            ),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(color: widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
+              decoration: InputDecoration(
+                hintText: 'Search saved & recent foods...',
+                hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: textMuted),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: textMuted),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _isSearching = false);
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+        ),
+
+        // Filter chips
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              _FilterChip(
+                label: 'All',
+                isSelected: _selectedFilter == 'all',
+                onTap: () => setState(() => _selectedFilter = 'all'),
+                isDark: widget.isDark,
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: 'Saved',
+                isSelected: _selectedFilter == 'saved',
+                onTap: () => setState(() => _selectedFilter = 'saved'),
+                isDark: widget.isDark,
+              ),
+              const SizedBox(width: 8),
+              _FilterChip(
+                label: 'Recent',
+                isSelected: _selectedFilter == 'recent',
+                onTap: () => setState(() => _selectedFilter = 'recent'),
+                isDark: widget.isDark,
+              ),
+            ],
+          ),
+        ),
+
+        // Results
+        Expanded(
+          child: _isSearching
+              ? _buildSearchResults()
+              : _buildDefaultList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchResults() {
+    final searchState = ref.watch(search.foodSearchStateProvider);
+
+    return searchState.when(
+      data: (state) {
+        switch (state) {
+          case search.FoodSearchLoading():
+            return const Center(child: CircularProgressIndicator());
+
+          case search.FoodSearchResults(:final saved, :final recent, :final database, :final query):
+            final allResults = <search.FoodSearchResult>[];
+            if (_selectedFilter == 'all' || _selectedFilter == 'saved') {
+              allResults.addAll(saved);
+            }
+            if (_selectedFilter == 'all' || _selectedFilter == 'recent') {
+              allResults.addAll(recent);
+            }
+            if (_selectedFilter == 'all') {
+              allResults.addAll(database);
+            }
+
+            if (allResults.isEmpty) {
+              return _buildEmptySearchState(query);
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: allResults.length,
+              itemBuilder: (context, index) {
+                final result = allResults[index];
+                return _QuickFoodItem(
+                  name: result.name,
+                  calories: result.calories,
+                  subtitle: result.source.label,
+                  onTap: () => _handleResultSelected(result),
+                  isDark: widget.isDark,
+                );
+              },
+            );
+
+          case search.FoodSearchError(:final message):
+            return Center(
+              child: Text('Error: $message', style: const TextStyle(color: Colors.red)),
+            );
+
+          case search.FoodSearchInitial():
+            return const SizedBox.shrink();
+        }
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _buildEmptySearchState(String query) {
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 48, color: textMuted),
+          const SizedBox(height: 16),
+          Text('No saved foods match "$query"', style: TextStyle(fontSize: 16, color: textSecondary)),
+          const SizedBox(height: 8),
+          Text('Use the Describe tab to log new foods', style: TextStyle(fontSize: 14, color: textMuted)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultList() {
+    final state = ref.watch(nutritionProvider);
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Build recent items from food logs
     final recentItems = <String, Map<String, dynamic>>{};
     for (final log in state.recentLogs.take(20)) {
       for (final item in log.foodItems) {
@@ -2619,7 +2765,7 @@ class _QuickTab extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         Text(
           'RECENT ITEMS',
@@ -2633,11 +2779,11 @@ class _QuickTab extends ConsumerWidget {
                 final repository = ref.read(nutritionRepositoryProvider);
                 try {
                   await repository.logFoodFromText(
-                    userId: userId,
+                    userId: widget.userId,
                     description: item['name'] as String,
-                    mealType: mealType.value,
+                    mealType: widget.mealType.value,
                   );
-                  onLogged();
+                  widget.onLogged();
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -2646,9 +2792,51 @@ class _QuickTab extends ConsumerWidget {
                   }
                 }
               },
-              isDark: isDark,
+              isDark: widget.isDark,
             )),
       ],
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? teal : elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? teal : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : textMuted,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2656,12 +2844,14 @@ class _QuickTab extends ConsumerWidget {
 class _QuickFoodItem extends StatelessWidget {
   final String name;
   final int calories;
+  final String? subtitle;
   final VoidCallback onTap;
   final bool isDark;
 
   const _QuickFoodItem({
     required this.name,
     required this.calories,
+    this.subtitle,
     required this.onTap,
     required this.isDark,
   });
@@ -2670,6 +2860,7 @@ class _QuickFoodItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     return Container(
@@ -2685,9 +2876,21 @@ class _QuickFoodItem extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textPrimary),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textPrimary),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 Text('$calories kcal', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: teal)),

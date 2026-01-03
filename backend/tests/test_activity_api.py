@@ -184,7 +184,7 @@ class TestGetActivityByDate:
         )
 
         assert result is not None
-        assert result.activity_date == "2025-01-10"
+        assert result.activity_date == date(2025, 1, 10)
 
     def test_get_activity_by_date_not_exists(self, mock_supabase_db, sample_user_id):
         """Test getting activity for a date with no data."""

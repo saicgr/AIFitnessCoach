@@ -43,7 +43,7 @@ import json
 import time
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from core.rate_limiter import limiter
 
@@ -171,6 +171,12 @@ class LogBarcodeRequest(BaseModel):
     servings: float = 1.0
     serving_size_g: Optional[float] = None  # Override serving size
 
+    @validator('user_id')
+    def user_id_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('user_id cannot be empty')
+        return v
+
 
 class LogBarcodeResponse(BaseModel):
     """Response after logging food from barcode."""
@@ -189,6 +195,12 @@ class LogTextRequest(BaseModel):
     description: str  # e.g., "2 eggs, toast with butter, and orange juice"
     meal_type: str  # breakfast, lunch, dinner, snack
 
+    @validator('user_id')
+    def user_id_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('user_id cannot be empty')
+        return v
+
 
 class LogDirectRequest(BaseModel):
     """Request to log already-analyzed food directly (e.g., from restaurant mode with portion adjustments)."""
@@ -202,6 +214,12 @@ class LogDirectRequest(BaseModel):
     total_fiber: Optional[int] = None
     source_type: str = "restaurant"  # restaurant, manual, adjusted
     notes: Optional[str] = None
+
+    @validator('user_id')
+    def user_id_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('user_id cannot be empty')
+        return v
 
 
 class FoodItemRanking(BaseModel):
@@ -3592,6 +3610,12 @@ class NutritionOnboardingRequest(BaseModel):
     custom_carb_percent: Optional[int] = None
     custom_protein_percent: Optional[int] = None
     custom_fat_percent: Optional[int] = None
+
+    @validator('user_id')
+    def user_id_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('user_id cannot be empty')
+        return v
 
     # Pre-calculated values from frontend (optional - if provided, use these instead of recalculating)
     # This ensures calorie displayed during onboarding matches what's saved

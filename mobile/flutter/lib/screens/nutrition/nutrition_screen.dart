@@ -405,6 +405,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   void _showLogMealSheet(bool isDark) {
+    // Guard: Don't show sheet if user ID is not available
+    if (_userId == null || _userId!.isEmpty) {
+      debugPrint('Cannot show LogMealSheet: userId is null or empty');
+      return;
+    }
+
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -413,7 +419,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
-          LogMealSheet(userId: _userId ?? '', isDark: isDark),
+          LogMealSheet(userId: _userId!, isDark: isDark),
     ).then((_) {
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -422,6 +428,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   void _showRecipeBuilder(BuildContext context, bool isDark) {
+    // Guard: Don't show sheet if user ID is not available
+    if (_userId == null || _userId!.isEmpty) {
+      debugPrint('Cannot show RecipeBuilderSheet: userId is null or empty');
+      return;
+    }
+
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -430,13 +442,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
-          RecipeBuilderSheet(userId: _userId ?? '', isDark: isDark),
+          RecipeBuilderSheet(userId: _userId!, isDark: isDark),
     ).then((_) {
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-      if (_userId != null) {
-        _loadRecipes(_userId!);
-      }
+      _loadRecipes(_userId!);
     });
   }
 

@@ -7,20 +7,28 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import 'sections/sections.dart';
 
-/// The main settings screen that composes all settings sections.
+/// Samsung-style grouped settings model
+class _SettingsGroup {
+  final String id;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final List<String> sectionKeys;
+
+  const _SettingsGroup({
+    required this.id,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.sectionKeys,
+  });
+}
+
+/// The main settings screen with Samsung-style grouped layout.
 ///
-/// This screen provides access to all app settings including:
-/// - Preferences (theme, system settings)
-/// - Haptics configuration
-/// - Accessibility options
-/// - Health sync integration
-/// - Notification preferences
-/// - Social & Privacy settings
-/// - Support links
-/// - App info
-/// - Data management (import/export)
-/// - Danger zone (reset/delete account)
-/// - Logout
+/// Shows compact grouped cards that expand to show detailed settings.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -271,6 +279,77 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Track which sections match the current search
   Set<String> _matchingSections = {};
 
+  // Track which groups are expanded (Samsung-style collapse/expand)
+  final Set<String> _expandedGroups = {};
+
+  // Samsung-style settings groups
+  late final List<_SettingsGroup> _settingsGroups = [
+    _SettingsGroup(
+      id: 'ai_coach',
+      icon: Icons.auto_awesome,
+      title: 'AI Coach',
+      subtitle: 'Voice, personality, coaching style',
+      color: AppColors.purple,
+      sectionKeys: ['ai_coach'],
+    ),
+    _SettingsGroup(
+      id: 'appearance',
+      icon: Icons.palette_outlined,
+      title: 'Appearance',
+      subtitle: 'Theme, haptics, app mode, accessibility',
+      color: AppColors.cyan,
+      sectionKeys: ['preferences', 'haptics', 'app_mode', 'accessibility'],
+    ),
+    _SettingsGroup(
+      id: 'audio',
+      icon: Icons.volume_up_outlined,
+      title: 'Sound & Voice',
+      subtitle: 'Announcements, music, audio settings',
+      color: AppColors.orange,
+      sectionKeys: ['voice_announcements', 'audio_settings'],
+    ),
+    _SettingsGroup(
+      id: 'training',
+      icon: Icons.fitness_center,
+      title: 'Training',
+      subtitle: 'Progression, warmup, calibration, equipment',
+      color: AppColors.success,
+      sectionKeys: ['training', 'superset', 'warmup_settings', 'calibration', 'custom_content'],
+    ),
+    _SettingsGroup(
+      id: 'connections',
+      icon: Icons.sync_alt,
+      title: 'Connections',
+      subtitle: 'Health sync, notifications, email, privacy',
+      color: AppColors.info,
+      sectionKeys: ['health_sync', 'notifications', 'email_preferences', 'social_privacy'],
+    ),
+    _SettingsGroup(
+      id: 'about',
+      icon: Icons.info_outline,
+      title: 'About & Support',
+      subtitle: 'Legal, app tour, version info',
+      color: AppColors.textMuted,
+      sectionKeys: ['support', 'app_tour', 'app_info'],
+    ),
+    _SettingsGroup(
+      id: 'subscription',
+      icon: Icons.workspace_premium,
+      title: 'Subscription',
+      subtitle: 'Manage your plan and billing',
+      color: const Color(0xFFFFD700),
+      sectionKeys: ['subscription'],
+    ),
+    _SettingsGroup(
+      id: 'account',
+      icon: Icons.manage_accounts_outlined,
+      title: 'Account',
+      subtitle: 'Data export, reset, delete account',
+      color: AppColors.error,
+      sectionKeys: ['data_management', 'danger_zone', 'logout'],
+    ),
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -326,79 +405,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return matches;
   }
 
-  bool _sectionMatches(String sectionKey) {
-    if (_searchQuery.isEmpty) return true;
-    return _matchingSections.isEmpty || _matchingSections.contains(sectionKey);
-  }
-
-  /// Build AI Coach settings section - navigates to AI settings
-  Widget _buildAICoachSection(
-    BuildContext context,
-    bool isDark,
-    Color textPrimary,
-    Color textMuted,
-  ) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: purple.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: purple.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.auto_awesome, color: purple, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'AI Coach',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // AI Coach settings tile
-          ListTile(
-            leading: Icon(Icons.record_voice_over, color: purple),
-            title: Text(
-              'Coach Voice & Personality',
-              style: TextStyle(color: textPrimary),
-            ),
-            subtitle: Text(
-              'Change your AI coach\'s voice and style',
-              style: TextStyle(color: textMuted, fontSize: 12),
-            ),
-            trailing: Icon(Icons.chevron_right, color: textMuted),
-            onTap: () {
-              HapticFeedback.lightImpact();
-              context.push('/ai-settings');
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Build no results message when search finds nothing
   Widget _buildNoResultsMessage(BuildContext context, Color textMuted) {
     return Padding(
@@ -433,176 +439,240 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  /// Build the "Popular Settings" quick access section
-  Widget _buildPopularSettingsSection(BuildContext context, bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+  /// Check if a group matches the current search
+  bool _groupMatches(_SettingsGroup group) {
+    if (_searchQuery.isEmpty) return true;
+    return group.sectionKeys.any((key) => _matchingSections.contains(key));
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header
-        Row(
-          children: [
-            Text(
-              'POPULAR SETTINGS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'Quick Access',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
-                ),
-              ),
-            ),
-          ],
+  /// Build a Samsung-style settings group card
+  Widget _buildSettingsGroupCard({
+    required _SettingsGroup group,
+    required bool isDark,
+    required int index,
+  }) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isExpanded = _expandedGroups.contains(group.id);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isExpanded ? group.color.withValues(alpha: 0.3) : cardBorder,
+          width: isExpanded ? 1.5 : 1,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Frequently used settings for quick adjustments',
-          style: TextStyle(
-            fontSize: 12,
-            color: textSecondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Quick access grid
-        Container(
-          decoration: BoxDecoration(
-            color: elevated,
+      ),
+      child: Column(
+        children: [
+          // Group header (always visible)
+          InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              setState(() {
+                if (isExpanded) {
+                  _expandedGroups.remove(group.id);
+                } else {
+                  _expandedGroups.add(group.id);
+                }
+              });
+            },
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Icon container
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: group.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      group.icon,
+                      color: group.color,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // Title and subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          group.title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          group.subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Expand/collapse indicator
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: textMuted,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Column(
-            children: [
-              _buildQuickAccessTile(
-                context: context,
-                icon: Icons.fitness_center,
-                title: 'My Equipment',
-                subtitle: 'Set available gear',
-                color: AppColors.cyan,
-                isDark: isDark,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  // Navigate to equipment selector or scroll to training section
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Scroll down to Training section'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: elevated,
-                    ),
-                  );
-                },
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-              _buildQuickAccessTile(
-                context: context,
-                icon: Icons.notifications_outlined,
-                title: 'Workout Reminders',
-                subtitle: 'Set notification times',
-                color: AppColors.orange,
-                isDark: isDark,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Scroll down to Notifications section'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: elevated,
-                    ),
-                  );
-                },
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-              _buildQuickAccessTile(
-                context: context,
-                icon: Icons.trending_up,
-                title: 'Progression Pace',
-                subtitle: 'How fast weights increase',
-                color: AppColors.purple,
-                isDark: isDark,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Scroll down to Training section'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: elevated,
-                    ),
-                  );
-                },
-              ),
-              Divider(height: 1, color: cardBorder, indent: 56),
-              _buildQuickAccessTile(
-                context: context,
-                icon: Icons.dark_mode_outlined,
-                title: 'Theme',
-                subtitle: 'Light or dark mode',
-                color: AppColors.success,
-                isDark: isDark,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Scroll down to Preferences section'),
-                      behavior: SnackBarBehavior.floating,
-                      backgroundColor: elevated,
-                    ),
-                  );
-                },
-              ),
-            ],
+          // Expanded content
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _buildGroupContent(group),
+            ),
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 200),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  /// Build a quick access tile
-  Widget _buildQuickAccessTile({
-    required BuildContext context,
+  /// Build the expanded content for a group
+  Widget _buildGroupContent(_SettingsGroup group) {
+    switch (group.id) {
+      case 'ai_coach':
+        return Column(
+          children: [
+            _buildNavigationTile(
+              icon: Icons.record_voice_over,
+              title: 'Coach Voice & Personality',
+              subtitle: 'Change AI voice and style',
+              color: AppColors.purple,
+              onTap: () => context.push('/ai-settings'),
+            ),
+          ],
+        );
+      case 'appearance':
+        return const Column(
+          children: [
+            PreferencesSection(),
+            SizedBox(height: 16),
+            HapticsSection(),
+            SizedBox(height: 16),
+            AppModeSection(),
+            SizedBox(height: 16),
+            AccessibilitySection(),
+          ],
+        );
+      case 'audio':
+        return const Column(
+          children: [
+            VoiceAnnouncementsSection(),
+            SizedBox(height: 16),
+            AudioSettingsSection(),
+          ],
+        );
+      case 'training':
+        return const Column(
+          children: [
+            TrainingPreferencesSection(),
+            SizedBox(height: 16),
+            SupersetSettingsSection(),
+            SizedBox(height: 16),
+            WarmupSettingsSection(),
+            SizedBox(height: 16),
+            CalibrationSection(),
+            SizedBox(height: 16),
+            CustomContentSection(),
+          ],
+        );
+      case 'connections':
+        return const Column(
+          children: [
+            HealthSyncSection(),
+            SizedBox(height: 16),
+            NotificationsSection(),
+            SizedBox(height: 16),
+            EmailPreferencesSection(),
+            SizedBox(height: 16),
+            SocialPrivacySection(),
+          ],
+        );
+      case 'about':
+        return const Column(
+          children: [
+            SupportSection(),
+            SizedBox(height: 16),
+            AppTourSection(),
+            SizedBox(height: 16),
+            AppInfoSection(),
+          ],
+        );
+      case 'subscription':
+        return const SubscriptionSection();
+      case 'account':
+        return const Column(
+          children: [
+            DataManagementSection(),
+            SizedBox(height: 16),
+            DangerZoneSection(),
+            SizedBox(height: 24),
+            LogoutSection(),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  /// Build a navigation tile within a group
+  Widget _buildNavigationTile({
     required IconData icon,
     required String title,
     required String subtitle,
     required Color color,
-    required bool isDark,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 14),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,64 +680,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: textMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: textMuted,
-              size: 20,
-            ),
+            Icon(Icons.chevron_right, color: textMuted, size: 18),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Build a section group header with description
-  Widget _buildSectionGroupHeader({
-    required String title,
-    required String description,
-    required bool isDark,
-  }) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 12,
-              color: textSecondary,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -725,234 +755,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Popular Settings section (only when not searching)
-                  if (_searchQuery.isEmpty)
-                    _buildPopularSettingsSection(context, isDark)
-                        .animate()
-                        .fadeIn(delay: 30.ms),
+                  // Samsung-style grouped settings cards
+                  ..._settingsGroups.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final group = entry.value;
 
-                  if (_searchQuery.isEmpty)
-                    const SizedBox(height: 32),
+                    // Filter groups based on search
+                    if (!_groupMatches(group)) return const SizedBox.shrink();
 
-                  // AI Coach section (shown when searching for AI-related terms)
-                  if (_sectionMatches('ai_coach'))
-                    _buildAICoachSection(context, isDark, textPrimary, textMuted)
-                        .animate()
-                        .fadeIn(delay: 45.ms),
+                    // Auto-expand matching groups when searching
+                    if (_searchQuery.isNotEmpty && !_expandedGroups.contains(group.id)) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _groupMatches(group)) {
+                          setState(() {
+                            _expandedGroups.add(group.id);
+                          });
+                        }
+                      });
+                    }
 
-                  if (_sectionMatches('ai_coach'))
-                    const SizedBox(height: 24),
-
-                  // --- APPEARANCE & EXPERIENCE GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('preferences') || _sectionMatches('haptics') || _sectionMatches('voice_announcements') || _sectionMatches('audio_settings') || _sectionMatches('app_mode') || _sectionMatches('accessibility'))
-                    _buildSectionGroupHeader(
-                      title: 'Appearance & Experience',
-                      description: 'Customize how the app looks and feels',
+                    return _buildSettingsGroupCard(
+                      group: group,
                       isDark: isDark,
-                    ).animate().fadeIn(delay: 48.ms),
+                      index: index,
+                    ).animate().fadeIn(delay: Duration(milliseconds: 30 + (index * 20)));
+                  }),
 
-                  // Preferences section
-                  if (_sectionMatches('preferences'))
-                    const PreferencesSection().animate().fadeIn(delay: 50.ms),
-
-                  if (_sectionMatches('preferences'))
-                    const SizedBox(height: 24),
-
-                  // Haptics section
-                  if (_sectionMatches('haptics'))
-                    const HapticsSection().animate().fadeIn(delay: 55.ms),
-
-                  if (_sectionMatches('haptics'))
-                    const SizedBox(height: 24),
-
-                  // Voice Announcements section
-                  if (_sectionMatches('voice_announcements'))
-                    const VoiceAnnouncementsSection().animate().fadeIn(delay: 56.ms),
-
-                  if (_sectionMatches('voice_announcements'))
-                    const SizedBox(height: 24),
-
-                  // Audio Settings section (background music, ducking, volume)
-                  if (_sectionMatches('audio_settings'))
-                    const AudioSettingsSection().animate().fadeIn(delay: 56.5.ms),
-
-                  if (_sectionMatches('audio_settings'))
-                    const SizedBox(height: 24),
-
-                  // App Mode section (Standard, Senior, Kids)
-                  if (_sectionMatches('app_mode'))
-                    const AppModeSection().animate().fadeIn(delay: 56.ms),
-
-                  if (_sectionMatches('app_mode'))
-                    const SizedBox(height: 24),
-
-                  // Accessibility section
-                  if (_sectionMatches('accessibility'))
-                    const AccessibilitySection().animate().fadeIn(delay: 57.ms),
-
-                  if (_sectionMatches('accessibility'))
-                    const SizedBox(height: 32),
-
-                  // --- WORKOUT & TRAINING GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('training') || _sectionMatches('warmup_settings') || _sectionMatches('custom_content') || _sectionMatches('calibration'))
-                    _buildSectionGroupHeader(
-                      title: 'Workout & Training',
-                      description: 'Configure how workouts are generated',
-                      isDark: isDark,
-                    ).animate().fadeIn(delay: 50.ms),
-
-                  // Training Preferences section (progression pace, workout type)
-                  if (_sectionMatches('training'))
-                    const TrainingPreferencesSection().animate().fadeIn(delay: 51.ms),
-
-                  if (_sectionMatches('training'))
-                    const SizedBox(height: 24),
-
-                  // Superset Settings section
-                  if (_sectionMatches('superset'))
-                    const SupersetSettingsSection().animate().fadeIn(delay: 51.2.ms),
-
-                  if (_sectionMatches('superset'))
-                    const SizedBox(height: 24),
-
-                  // Warmup & Cooldown Settings section
-                  if (_sectionMatches('warmup_settings'))
-                    const WarmupSettingsSection().animate().fadeIn(delay: 51.5.ms),
-
-                  if (_sectionMatches('warmup_settings'))
-                    const SizedBox(height: 24),
-
-                  // Calibration section (strength assessment and baselines)
-                  if (_sectionMatches('calibration'))
-                    const CalibrationSection().animate().fadeIn(delay: 51.8.ms),
-
-                  if (_sectionMatches('calibration'))
-                    const SizedBox(height: 24),
-
-                  // My Custom Content section (equipment, exercises, workouts)
-                  if (_sectionMatches('custom_content'))
-                    const CustomContentSection().animate().fadeIn(delay: 52.ms),
-
-                  if (_sectionMatches('custom_content'))
-                    const SizedBox(height: 32),
-
-                  // --- CONNECTIONS & DATA GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('health_sync') || _sectionMatches('notifications') || _sectionMatches('email_preferences') || _sectionMatches('social_privacy'))
-                    _buildSectionGroupHeader(
-                      title: 'Connections & Data',
-                      description: 'Manage integrations and privacy',
-                      isDark: isDark,
-                    ).animate().fadeIn(delay: 58.ms),
-
-                  // Health Connect / Apple Health section
-                  if (_sectionMatches('health_sync'))
-                    const HealthSyncSection().animate().fadeIn(delay: 60.ms),
-
-                  if (_sectionMatches('health_sync'))
-                    const SizedBox(height: 24),
-
-                  // Notifications section
-                  if (_sectionMatches('notifications'))
-                    const NotificationsSection().animate().fadeIn(delay: 75.ms),
-
-                  if (_sectionMatches('notifications'))
-                    const SizedBox(height: 24),
-
-                  // Email Preferences section
-                  if (_sectionMatches('email_preferences'))
-                    const EmailPreferencesSection().animate().fadeIn(delay: 80.ms),
-
-                  if (_sectionMatches('email_preferences'))
-                    const SizedBox(height: 24),
-
-                  // Social & Privacy section
-                  if (_sectionMatches('social_privacy'))
-                    const SocialPrivacySection().animate().fadeIn(delay: 85.ms),
-
-                  if (_sectionMatches('social_privacy'))
-                    const SizedBox(height: 32),
-
-                  // --- ABOUT & SUPPORT GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('support') || _sectionMatches('app_tour') || _sectionMatches('app_info'))
-                    _buildSectionGroupHeader(
-                      title: 'About & Support',
-                      description: 'Help, legal info, and app details',
-                      isDark: isDark,
-                    ).animate().fadeIn(delay: 95.ms),
-
-                  // Support section
-                  if (_sectionMatches('support'))
-                    const SupportSection().animate().fadeIn(delay: 100.ms),
-
-                  if (_sectionMatches('support'))
-                    const SizedBox(height: 24),
-
-                  // App Tour & Demo section
-                  if (_sectionMatches('app_tour'))
-                    const AppTourSection().animate().fadeIn(delay: 125.ms),
-
-                  if (_sectionMatches('app_tour'))
-                    const SizedBox(height: 24),
-
-                  // App Info section
-                  if (_sectionMatches('app_info'))
-                    const AppInfoSection().animate().fadeIn(delay: 150.ms),
-
-                  if (_sectionMatches('app_info'))
-                    const SizedBox(height: 32),
-
-                  // --- SUBSCRIPTION GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('subscription'))
-                    _buildSectionGroupHeader(
-                      title: 'Subscription',
-                      description: 'Manage your plan and billing',
-                      isDark: isDark,
-                    ).animate().fadeIn(delay: 160.ms),
-
-                  // Subscription section
-                  if (_sectionMatches('subscription'))
-                    const SubscriptionSection().animate().fadeIn(delay: 165.ms),
-
-                  if (_sectionMatches('subscription'))
-                    const SizedBox(height: 32),
-
-                  // --- DATA & ACCOUNT GROUP ---
-                  if (_searchQuery.isEmpty || _sectionMatches('data_management') || _sectionMatches('danger_zone') || _sectionMatches('logout'))
-                    _buildSectionGroupHeader(
-                      title: 'Data & Account',
-                      description: 'Export data, reset, or delete account',
-                      isDark: isDark,
-                    ).animate().fadeIn(delay: 170.ms),
-
-                  // Data Management section
-                  if (_sectionMatches('data_management'))
-                    const DataManagementSection().animate().fadeIn(delay: 175.ms),
-
-                  if (_sectionMatches('data_management'))
-                    const SizedBox(height: 24),
-
-                  // Danger Zone section
-                  if (_sectionMatches('danger_zone'))
-                    const DangerZoneSection().animate().fadeIn(delay: 200.ms),
-
-                  if (_sectionMatches('danger_zone'))
-                    const SizedBox(height: 32),
-
-                  // Logout button
-                  if (_sectionMatches('logout'))
-                    const LogoutSection().animate().fadeIn(delay: 250.ms),
-
-                  if (_sectionMatches('logout'))
+                  // Version info at bottom
+                  if (_searchQuery.isEmpty) ...[
                     const SizedBox(height: 16),
-
-                  // Version
-                  if (_searchQuery.isEmpty)
-                    Text(
-                      'FitWiz v1.0.0',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: textMuted,
-                          ),
+                    Center(
+                      child: Text(
+                        'FitWiz v1.0.0',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: textMuted,
+                            ),
+                      ),
                     ),
+                  ],
 
                   // No results message
                   if (_searchQuery.isNotEmpty && _matchingSections.isEmpty)

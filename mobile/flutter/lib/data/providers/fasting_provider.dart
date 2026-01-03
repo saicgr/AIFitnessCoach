@@ -154,14 +154,16 @@ class FastingNotifier extends StateNotifier<FastingState> {
     required String userId,
     required FastingProtocol protocol,
     int? customDurationMinutes,
+    DateTime? startTime,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      debugPrint('🕐 [FastingProvider] Starting fast: ${protocol.displayName}');
+      debugPrint('🕐 [FastingProvider] Starting fast: ${protocol.displayName}${startTime != null ? ' at $startTime' : ''}');
       final fast = await _repository.startFast(
         userId: userId,
         protocol: protocol,
         customDurationMinutes: customDurationMinutes,
+        startTime: startTime,
       );
       state = state.copyWith(activeFast: fast, isLoading: false);
       _startRefreshTimer();
