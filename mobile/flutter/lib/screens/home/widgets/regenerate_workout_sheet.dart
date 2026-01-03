@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
 import 'workout_review_sheet.dart';
 
@@ -16,6 +17,9 @@ Future<Workout?> showRegenerateWorkoutSheet(
 ) async {
   final parentTheme = Theme.of(context);
 
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
   return showModalBottomSheet<Workout>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -25,7 +29,10 @@ Future<Workout?> showRegenerateWorkoutSheet(
       data: parentTheme,
       child: _RegenerateWorkoutSheet(workout: workout),
     ),
-  );
+  ).whenComplete(() {
+    // Show nav bar when sheet is closed
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+  });
 }
 
 class _RegenerateWorkoutSheet extends ConsumerStatefulWidget {

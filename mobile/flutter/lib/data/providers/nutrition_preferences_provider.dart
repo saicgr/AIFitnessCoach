@@ -230,6 +230,21 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     }
   }
 
+  /// Skip nutrition onboarding permanently
+  /// This saves the skip to the database so the user won't see onboarding again
+  Future<void> skipOnboarding({required String userId}) async {
+    try {
+      debugPrint('⏭️ [NutritionPrefsProvider] Skipping onboarding for user $userId');
+      await _repository.skipOnboarding(userId: userId);
+      state = state.copyWith(onboardingCompleted: true);
+      debugPrint('✅ [NutritionPrefsProvider] Onboarding skipped');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefsProvider] Skip onboarding error: $e');
+      // Still mark as completed in memory so user isn't bothered again this session
+      state = state.copyWith(onboardingCompleted: true);
+    }
+  }
+
   /// Save nutrition preferences
   Future<void> savePreferences({
     required String userId,

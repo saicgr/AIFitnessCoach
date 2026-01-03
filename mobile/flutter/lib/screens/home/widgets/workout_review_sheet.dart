@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/main_shell.dart';
 import '../../workout/widgets/exercise_swap_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 import 'components/components.dart';
@@ -15,6 +16,9 @@ Future<Workout?> showWorkoutReviewSheet(
   WidgetRef ref,
   Workout generatedWorkout,
 ) async {
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
   return await showModalBottomSheet<Workout>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -22,7 +26,10 @@ Future<Workout?> showWorkoutReviewSheet(
     isDismissible: false,
     enableDrag: false,
     builder: (context) => _WorkoutReviewSheet(workout: generatedWorkout),
-  );
+  ).whenComplete(() {
+    // Show nav bar when sheet is closed
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+  });
 }
 
 class _WorkoutReviewSheet extends ConsumerStatefulWidget {

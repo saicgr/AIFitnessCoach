@@ -135,6 +135,22 @@ class NutritionPreferencesRepository {
     }
   }
 
+  /// Skip nutrition onboarding permanently
+  /// This marks onboarding as complete without setting up targets
+  Future<void> skipOnboarding({required String userId}) async {
+    try {
+      debugPrint('⏭️ [NutritionPrefs] Skipping onboarding for $userId');
+      await _client.post(
+        '/nutrition/onboarding/skip',
+        data: {'user_id': userId},
+      );
+      debugPrint('✅ [NutritionPrefs] Onboarding skipped');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefs] Error skipping onboarding: $e');
+      rethrow;
+    }
+  }
+
   /// Recalculate targets based on current user data
   Future<NutritionPreferences> recalculateTargets(String userId) async {
     try {

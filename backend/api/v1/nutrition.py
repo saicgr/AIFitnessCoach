@@ -4099,6 +4099,67 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SkipOnboardingRequest(BaseModel):
+    """Request to skip nutrition onboarding."""
+    user_id: str
+
+
+@router.post("/onboarding/skip")
+async def skip_nutrition_onboarding(request: SkipOnboardingRequest):
+    """
+    Skip nutrition onboarding permanently.
+
+    Sets nutrition_onboarding_completed to true with default targets (2000 cal).
+    User can always customize later in settings.
+    """
+    logger.info(f"Skipping nutrition onboarding for user {request.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Default targets for skipped users
+        default_prefs = {
+            "user_id": request.user_id,
+            "nutrition_onboarding_completed": True,
+            "onboarding_completed_at": datetime.utcnow().isoformat(),
+            "target_calories": 2000,
+            "target_protein_g": 150,
+            "target_carbs_g": 200,
+            "target_fat_g": 67,
+            "target_fiber_g": 25,
+            "diet_type": "balanced",
+            "meal_pattern": "3_meals",
+        }
+
+        # Check if preferences exist
+        existing = db.client.table("nutrition_preferences")\
+            .select("id")\
+            .eq("user_id", request.user_id)\
+            .maybe_single()\
+            .execute()
+
+        if existing.data:
+            # Update existing preferences
+            db.client.table("nutrition_preferences")\
+                .update({
+                    "nutrition_onboarding_completed": True,
+                    "onboarding_completed_at": datetime.utcnow().isoformat(),
+                })\
+                .eq("user_id", request.user_id)\
+                .execute()
+        else:
+            # Create new preferences with defaults
+            db.client.table("nutrition_preferences")\
+                .insert(default_prefs)\
+                .execute()
+
+        return {"success": True, "message": "Nutrition onboarding skipped"}
+
+    except Exception as e:
+        logger.error(f"Failed to skip nutrition onboarding: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/{user_id}/reset-onboarding")
 async def reset_nutrition_onboarding(user_id: str):
     """

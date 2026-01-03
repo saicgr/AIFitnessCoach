@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../models/program_history.dart';
+import '../../../widgets/main_shell.dart';
 import 'components/components.dart';
 // import 'program_history_screen.dart';
 
@@ -16,6 +17,9 @@ Future<bool?> showEditProgramSheet(
 ) async {
   final parentTheme = Theme.of(context);
 
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
   return showModalBottomSheet<bool>(
     context: context,
     backgroundColor: Colors.transparent,
@@ -25,7 +29,10 @@ Future<bool?> showEditProgramSheet(
       data: parentTheme,
       child: const _EditProgramSheet(),
     ),
-  );
+  ).whenComplete(() {
+    // Show nav bar when sheet is closed
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+  });
 }
 
 class _EditProgramSheet extends ConsumerStatefulWidget {

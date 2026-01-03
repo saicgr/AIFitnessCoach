@@ -190,9 +190,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
         // Trigger rebuild with the already-updated provider state
         setState(() {});
-      } else if (mounted) {
-        // User skipped - remember this so we don't ask again during this session
-        debugPrint('⏭️ [NutritionScreen] User skipped onboarding');
+      } else if (mounted && _userId != null) {
+        // User skipped - save to database so it doesn't show again
+        debugPrint('⏭️ [NutritionScreen] User skipped onboarding - saving to database');
+        await ref.read(nutritionPreferencesProvider.notifier).skipOnboarding(
+          userId: _userId!,
+        );
         setState(() => _hasSkippedOnboarding = true);
       }
     }

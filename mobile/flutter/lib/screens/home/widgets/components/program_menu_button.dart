@@ -6,6 +6,7 @@ import '../../../../data/providers/branded_program_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/main_shell.dart';
 import '../edit_program_sheet.dart';
 
 /// Settings icon button for the home screen header
@@ -135,6 +136,9 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
     showModalBottomSheet(
       context: context,
@@ -400,13 +404,15 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                 ),
               ),
 
-              // Extra padding to ensure content isn't covered by the floating chat button
-              const SizedBox(height: 80),
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Show nav bar when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   Future<void> _quickRegenerate() async {
