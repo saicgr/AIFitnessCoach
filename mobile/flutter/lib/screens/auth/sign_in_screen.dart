@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/providers/guest_mode_provider.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 
 /// Dedicated sign-in screen shown after quiz and preview
@@ -89,18 +88,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         duration: const Duration(seconds: 2),
       ),
     );
-  }
-
-  Future<void> _continueAsGuest() async {
-    HapticFeedback.lightImpact();
-
-    // Enter guest mode
-    await ref.read(guestModeProvider.notifier).enterGuestMode();
-
-    // Navigate to guest home
-    if (mounted) {
-      context.go('/guest-home');
-    }
   }
 
   @override
@@ -526,89 +513,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             ),
           ),
         ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
-
-        const SizedBox(height: 20),
-
-        // Divider with "or"
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 1,
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'or',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Container(
-                height: 1,
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 750.ms),
-
-        const SizedBox(height: 16),
-
-        // Continue as Guest button
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: OutlinedButton(
-            onPressed: _isLoading ? null : _continueAsGuest,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-              side: BorderSide(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                width: 1.5,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.visibility_outlined,
-                  size: 20,
-                  color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Continue as Guest',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
-
-        // Guest mode info text
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            '10-minute preview with limited features',
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ).animate().fadeIn(delay: 850.ms),
       ],
     );
   }

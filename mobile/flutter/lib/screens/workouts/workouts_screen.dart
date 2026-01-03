@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
+import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/multi_screen_tour_helper.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/upcoming_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
@@ -19,6 +21,36 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
+  // Key for tour target
+  final GlobalKey _todaysWorkoutKey = GlobalKey();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check if we should show tour step when this screen becomes visible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTourStep();
+    });
+  }
+
+  /// Check and show the tour step for workouts screen
+  void _checkAndShowTourStep() {
+    final tourState = ref.read(multiScreenTourProvider);
+
+    if (!tourState.isActive || tourState.isLoading) return;
+
+    final currentStep = tourState.currentStep;
+    if (currentStep == null) return;
+
+    // Workouts screen handles step 2 (todays_workout_card)
+    if (currentStep.screenRoute != '/workouts') return;
+
+    if (currentStep.targetKeyId == 'todays_workout_card') {
+      final helper = MultiScreenTourHelper(context: context, ref: ref);
+      helper.checkAndShowTour('/workouts', _todaysWorkoutKey);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -172,6 +204,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
           _buildSectionHeader('TODAY\'S WORKOUT', textSecondary),
           const SizedBox(height: 8),
           Padding(
+            key: _todaysWorkoutKey,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: NextWorkoutCard(
               workout: nextWorkout,
@@ -183,8 +216,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
           ),
           const SizedBox(height: 24),
         ] else ...[
-          // No workout scheduled
-          _buildNoWorkoutCard(context, isDark, textPrimary, textSecondary),
+          // No workout scheduled - also use the key for tour purposes
+          Container(
+            key: _todaysWorkoutKey,
+            child: _buildNoWorkoutCard(context, isDark, textPrimary, textSecondary),
+          ),
           const SizedBox(height: 24),
         ],
 

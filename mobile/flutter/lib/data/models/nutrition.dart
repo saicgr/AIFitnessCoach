@@ -422,6 +422,28 @@ class LogFoodResponse {
   @JsonKey(name: 'source_type')
   final String? sourceType;  // 'image', 'text', 'barcode', 'restaurant'
 
+  // Micronutrients (vitamins & minerals)
+  @JsonKey(name: 'sodium_mg')
+  final double? sodiumMg;
+  @JsonKey(name: 'sugar_g')
+  final double? sugarG;
+  @JsonKey(name: 'saturated_fat_g')
+  final double? saturatedFatG;
+  @JsonKey(name: 'cholesterol_mg')
+  final double? cholesterolMg;
+  @JsonKey(name: 'potassium_mg')
+  final double? potassiumMg;
+  @JsonKey(name: 'vitamin_a_iu')
+  final double? vitaminAIu;
+  @JsonKey(name: 'vitamin_c_mg')
+  final double? vitaminCMg;
+  @JsonKey(name: 'vitamin_d_iu')
+  final double? vitaminDIu;
+  @JsonKey(name: 'calcium_mg')
+  final double? calciumMg;
+  @JsonKey(name: 'iron_mg')
+  final double? ironMg;
+
   const LogFoodResponse({
     required this.success,
     required this.foodLogId,
@@ -441,6 +463,16 @@ class LogFoodResponse {
     this.confidenceScore,
     this.confidenceLevel,
     this.sourceType,
+    this.sodiumMg,
+    this.sugarG,
+    this.saturatedFatG,
+    this.cholesterolMg,
+    this.potassiumMg,
+    this.vitaminAIu,
+    this.vitaminCMg,
+    this.vitaminDIu,
+    this.calciumMg,
+    this.ironMg,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -724,6 +756,36 @@ class SaveFoodRequest {
       foodItems: response.foodItems,
       overallMealScore: response.overallMealScore,
       goalAlignmentPercentage: response.goalAlignmentPercentage,
+      tags: tags,
+    );
+  }
+
+  /// Create from FoodLog (for saving logged meals as favorites)
+  factory SaveFoodRequest.fromFoodLog(
+    FoodLog log, {
+    String? name,
+    String? description,
+    List<String>? tags,
+  }) {
+    // Use first food item name or a default
+    final displayName = name ??
+        (log.foodItems.isNotEmpty
+            ? (log.foodItems.length == 1
+                ? log.foodItems.first.name
+                : '${log.foodItems.first.name} + ${log.foodItems.length - 1} more')
+            : 'Saved Meal');
+
+    return SaveFoodRequest(
+      name: displayName,
+      description: description ?? log.aiFeedback,
+      sourceType: 'logged',
+      totalCalories: log.totalCalories,
+      totalProteinG: log.proteinG,
+      totalCarbsG: log.carbsG,
+      totalFatG: log.fatG,
+      totalFiberG: log.fiberG,
+      foodItems: log.foodItems.map((item) => item.toJson()).toList(),
+      overallMealScore: log.healthScore,
       tags: tags,
     );
   }

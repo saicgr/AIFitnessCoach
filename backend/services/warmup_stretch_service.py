@@ -132,8 +132,11 @@ class WarmupStretchService:
         self.model = settings.gemini_model
         self.supabase = get_supabase().client  # Get the actual Supabase client
 
-    async def get_recently_used_warmups(self, user_id: str, days: int = 7) -> List[str]:
-        """Get list of warmup exercise names used by user in recent workouts."""
+    async def get_recently_used_warmups(self, user_id: str, days: int = 30) -> List[str]:
+        """Get list of warmup exercise names used by user in recent workouts.
+
+        Extended to 30 days (from 7) to ensure better variety across workout cycles.
+        """
         try:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
 
@@ -172,8 +175,11 @@ class WarmupStretchService:
             logger.error(f"❌ Failed to get recent warmups: {e}")
             return []
 
-    async def get_recently_used_stretches(self, user_id: str, days: int = 7) -> List[str]:
-        """Get list of stretch exercise names used by user in recent workouts."""
+    async def get_recently_used_stretches(self, user_id: str, days: int = 30) -> List[str]:
+        """Get list of stretch exercise names used by user in recent workouts.
+
+        Extended to 30 days (from 7) to ensure better variety across workout cycles.
+        """
         try:
             cutoff_date = (datetime.now() - timedelta(days=days)).isoformat()
 
@@ -442,17 +448,24 @@ You MUST avoid warmup exercises that could aggravate these conditions:
 Only include gentle, safe warmup movements appropriate for someone with {injury_list}.
 """
 
-        # Build variety section - avoid recently used exercises
+        # Build variety section - avoid recently used exercises with stronger variety emphasis
         variety_section = ""
         if avoid_exercises and len(avoid_exercises) > 0:
-            avoid_list = ", ".join(avoid_exercises[:10])  # Limit to 10 for prompt length
+            avoid_list = ", ".join(avoid_exercises[:15])  # Increased to 15 for better filtering
             variety_section = f"""
-🔄 FOR VARIETY: Try to avoid these recently used warmup exercises: {avoid_list}
-Choose different but equally effective warmup exercises to keep routines fresh.
+🔄 CRITICAL - EXERCISE VARIETY REQUIRED:
+You MUST avoid these recently used warmup exercises: {avoid_list}
+DO NOT repeat any of the above exercises. Choose COMPLETELY DIFFERENT movements.
+Be creative and select alternative warmup exercises that target the same muscle groups.
+Examples of good alternatives:
+- Instead of Arm Circles → Shoulder Shrugs, Band Pull-Aparts, Wall Angels
+- Instead of Leg Swings → Hip Circles, Glute Bridges, Monster Walks
+- Instead of High Knees → Butt Kicks, A-Skips, Lateral Shuffles
 """
 
         prompt = f"""Generate a {duration_minutes}-minute dynamic warm-up routine for a workout targeting: {', '.join(muscles)}.
 {injury_section}{variety_section}
+IMPORTANT: Create a UNIQUE warmup routine that differs from typical generic warmups.
 Return JSON with "exercises" array containing 3-4 warm-up exercises:
 {{
   "exercises": [
@@ -474,8 +487,8 @@ Focus on:
 - Progressively increasing range of motion
 - Activating muscles that will be used in the workout
 - No equipment needed
+- VARIETY: Select exercises you haven't used recently
 {"- SAFETY FIRST: Only include exercises safe for someone with " + ", ".join(injuries) if injuries else ""}
-{"- VARIETY: Choose different exercises from recent workouts" if avoid_exercises else ""}
 
 Return ONLY valid JSON."""
 
@@ -486,7 +499,7 @@ Return ONLY valid JSON."""
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=3000,  # Increased for thinking models
-                    temperature=0.7,
+                    temperature=0.9,  # Higher temperature for more variety
                 ),
             )
 
@@ -565,17 +578,24 @@ You MUST avoid stretches that could aggravate these conditions:
 Only include gentle, safe stretches appropriate for someone with {injury_list}.
 """
 
-        # Build variety section - avoid recently used exercises
+        # Build variety section - avoid recently used exercises with stronger variety emphasis
         variety_section = ""
         if avoid_exercises and len(avoid_exercises) > 0:
-            avoid_list = ", ".join(avoid_exercises[:10])  # Limit to 10 for prompt length
+            avoid_list = ", ".join(avoid_exercises[:15])  # Increased to 15 for better filtering
             variety_section = f"""
-🔄 FOR VARIETY: Try to avoid these recently used stretches: {avoid_list}
-Choose different but equally effective stretches to keep routines fresh.
+🔄 CRITICAL - EXERCISE VARIETY REQUIRED:
+You MUST avoid these recently used stretch exercises: {avoid_list}
+DO NOT repeat any of the above stretches. Choose COMPLETELY DIFFERENT stretches.
+Be creative and select alternative stretches that target the same muscle groups.
+Examples of good alternatives:
+- Instead of Child's Pose → Cat-Cow, Thread the Needle, Puppy Pose
+- Instead of Quad Stretch → Pigeon Pose, Couch Stretch, 90-90 Stretch
+- Instead of Hamstring Stretch → RDL Stretch, Good Morning Stretch, Pyramid Pose
 """
 
         prompt = f"""Generate a {duration_minutes}-minute cool-down stretching routine for a workout that targeted: {', '.join(muscles)}.
 {injury_section}{variety_section}
+IMPORTANT: Create a UNIQUE stretch routine that differs from typical generic stretching.
 Return JSON with "exercises" array containing 4-5 stretches:
 {{
   "exercises": [
@@ -597,8 +617,8 @@ Focus on:
 - 20-30 second holds per stretch
 - Target all muscles used in the workout
 - Promote relaxation and recovery
+- VARIETY: Select stretches you haven't used recently
 {"- SAFETY FIRST: Only include stretches safe for someone with " + ", ".join(injuries) if injuries else ""}
-{"- VARIETY: Choose different stretches from recent workouts" if avoid_exercises else ""}
 
 Return ONLY valid JSON."""
 
@@ -609,7 +629,7 @@ Return ONLY valid JSON."""
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=3000,  # Increased for thinking models
-                    temperature=0.7,
+                    temperature=0.9,  # Higher temperature for more variety
                 ),
             )
 
@@ -645,10 +665,10 @@ Return ONLY valid JSON."""
         target_muscles = self.get_target_muscles(exercises)
         logger.info(f"🎯 [Warmup Generation] Target muscles from workout: {target_muscles}")
 
-        # Get recently used warmups for variety if user_id provided
+        # Get recently used warmups for variety if user_id provided (30 days for better variety)
         avoid_exercises = None
         if user_id:
-            avoid_exercises = await self.get_recently_used_warmups(user_id, days=7)
+            avoid_exercises = await self.get_recently_used_warmups(user_id, days=30)
 
         warmup_exercises = await self.generate_warmup(
             exercises, duration_minutes, injuries, avoid_exercises
@@ -688,10 +708,10 @@ Return ONLY valid JSON."""
         target_muscles = self.get_target_muscles(exercises)
         logger.info(f"🎯 [Stretch Generation] Target muscles from workout: {target_muscles}")
 
-        # Get recently used stretches for variety if user_id provided
+        # Get recently used stretches for variety if user_id provided (30 days for better variety)
         avoid_exercises = None
         if user_id:
-            avoid_exercises = await self.get_recently_used_stretches(user_id, days=7)
+            avoid_exercises = await self.get_recently_used_stretches(user_id, days=30)
 
         stretch_exercises = await self.generate_stretches(
             exercises, duration_minutes, injuries, avoid_exercises

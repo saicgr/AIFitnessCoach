@@ -6,10 +6,12 @@ import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
+import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/multi_screen_tour_helper.dart';
 import 'widgets/fasting_timer_widget.dart';
 import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
@@ -30,11 +32,41 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
   late TabController _tabController;
   bool _initialized = false;
 
+  // Tour key for Start Fast button
+  final GlobalKey _startFastKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _initialize());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check if we should show tour step when this screen becomes visible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowTourStep();
+    });
+  }
+
+  /// Check and show the tour step for fasting screen
+  void _checkAndShowTourStep() {
+    final tourState = ref.read(multiScreenTourProvider);
+
+    if (!tourState.isActive || tourState.isLoading) return;
+
+    final currentStep = tourState.currentStep;
+    if (currentStep == null) return;
+
+    // Fasting screen handles step 4 (start_fast_button)
+    if (currentStep.screenRoute != '/fasting') return;
+
+    if (currentStep.targetKeyId == 'start_fast_button') {
+      final helper = MultiScreenTourHelper(context: context, ref: ref);
+      helper.checkAndShowTour('/fasting', _startFastKey);
+    }
   }
 
   @override
@@ -341,15 +373,18 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
       child: Column(
         children: [
           // Timer Widget with Start button in center
-          FastingTimerWidget(
-            activeFast: fastingState.activeFast,
-            onEndFast: userId != null
-                ? () => _showEndFastDialog(context, userId)
-                : null,
-            onStartFast: userId != null
-                ? () => _showStartFastSheet(context, userId)
-                : null,
-            isDark: isDark,
+          Container(
+            key: _startFastKey,
+            child: FastingTimerWidget(
+              activeFast: fastingState.activeFast,
+              onEndFast: userId != null
+                  ? () => _showEndFastDialog(context, userId)
+                  : null,
+              onStartFast: userId != null
+                  ? () => _showStartFastSheet(context, userId)
+                  : null,
+              isDark: isDark,
+            ),
           ),
           const SizedBox(height: 24),
 

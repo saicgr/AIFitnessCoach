@@ -1050,6 +1050,9 @@ async def generate_monthly_workouts(http_request: Request, request: GenerateMont
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
+        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
+        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -1250,29 +1253,29 @@ async def generate_monthly_workouts(http_request: Request, request: GenerateMont
                 await index_workout_to_rag(workout)
                 generated_workouts.append(workout)
 
-                # Generate warmup and stretches alongside workout (with injury awareness and variety)
+                # Generate warmup and stretches alongside workout (using user preferences)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
                     exercises = result["exercises"]
 
-                    # Generate and save warmup (with variety tracking via user_id)
+                    # Generate and save warmup (using user's preferred duration)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=warmup_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
 
-                    # Generate and save stretches (with variety tracking via user_id)
+                    # Generate and save stretches (using user's preferred duration)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=stretch_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
-                    logger.info(f"✅ Generated warmup and stretches for workout {workout.id}")
+                    logger.info(f"✅ Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for workout {workout.id}")
                 except Exception as ws_error:
                     logger.warning(f"⚠️ Failed to generate warmup/stretches for workout {workout.id}: {ws_error}")
 
@@ -1332,6 +1335,9 @@ async def generate_remaining_workouts(http_request: Request, request: GenerateMo
         equipment = parse_json_field(user.get("equipment"), [])
         preferences = parse_json_field(user.get("preferences"), {})
         training_split = preferences.get("training_split", "full_body")
+        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
+        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
+        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
         # Get equipment counts for single dumbbell/kettlebell filtering
         dumbbell_count = preferences.get("dumbbell_count", 2)
         kettlebell_count = preferences.get("kettlebell_count", 1)
@@ -1548,29 +1554,29 @@ async def generate_remaining_workouts(http_request: Request, request: GenerateMo
                 workout = row_to_workout(created)
                 await index_workout_to_rag(workout)
 
-                # Generate warmup and stretches alongside workout (with injury awareness and variety)
+                # Generate warmup and stretches alongside workout (using user preferences)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
                     exercises = result["exercises"]
 
-                    # Generate and save warmup (with variety tracking via user_id)
+                    # Generate and save warmup (using user's preferred duration)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=warmup_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
 
-                    # Generate and save stretches (with variety tracking via user_id)
+                    # Generate and save stretches (using user's preferred duration)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=stretch_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
-                    logger.info(f"✅ Generated warmup and stretches for remaining workout {workout.id}")
+                    logger.info(f"✅ Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for remaining workout {workout.id}")
                 except Exception as ws_error:
                     logger.warning(f"⚠️ Failed to generate warmup/stretches for remaining workout {workout.id}: {ws_error}")
 

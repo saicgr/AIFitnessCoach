@@ -5,16 +5,25 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/quick_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/main_shell.dart';
 
 /// Shows the Quick Workout bottom sheet for busy users
 /// who want 5-15 minute workouts.
-Future<Workout?> showQuickWorkoutSheet(BuildContext context) async {
-  return await showModalBottomSheet<Workout>(
+Future<Workout?> showQuickWorkoutSheet(BuildContext context, WidgetRef ref) async {
+  // Hide nav bar while sheet is open
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+  final result = await showModalBottomSheet<Workout>(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (context) => const _QuickWorkoutSheet(),
   );
+
+  // Show nav bar when sheet is closed
+  ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+
+  return result;
 }
 
 class _QuickWorkoutSheet extends ConsumerStatefulWidget {

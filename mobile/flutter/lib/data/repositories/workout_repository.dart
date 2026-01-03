@@ -184,21 +184,25 @@ class WorkoutRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
+
           if (line.isEmpty) {
-            // End of event
+            // End of event - process accumulated data
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
               try {
                 final data = jsonDecode(eventData) as Map<String, dynamic>;
@@ -357,21 +361,25 @@ class WorkoutRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
+
           if (line.isEmpty) {
-            // End of event
+            // End of event - process accumulated data
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
               try {
                 final data = jsonDecode(eventData) as Map<String, dynamic>;
@@ -494,21 +502,25 @@ class WorkoutRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
+
           if (line.isEmpty) {
-            // End of event
+            // End of event - process accumulated data
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
               try {
                 final data = jsonDecode(eventData) as Map<String, dynamic>;
@@ -631,21 +643,25 @@ class WorkoutRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
+
           if (line.isEmpty) {
-            // End of event
+            // End of event - process accumulated data
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
               try {
                 final data = jsonDecode(eventData) as Map<String, dynamic>;

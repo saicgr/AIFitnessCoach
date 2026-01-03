@@ -3273,9 +3273,9 @@ async def get_dynamic_nutrition_targets(
         adjust_for_training = prefs.get("adjust_calories_for_training", True)
         adjust_for_rest = prefs.get("adjust_calories_for_rest", False)
 
-        # Check if there's a workout scheduled or completed today
+        # Check if there's a workout logged today
         workout_result = db.client.table("workout_logs")\
-            .select("id, status")\
+            .select("id")\
             .eq("user_id", user_id)\
             .gte("started_at", f"{target_date_str}T00:00:00")\
             .lt("started_at", f"{target_date_str}T23:59:59")\
@@ -3285,10 +3285,11 @@ async def get_dynamic_nutrition_targets(
 
         # Also check scheduled workouts if no log exists
         if not has_workout:
-            schedule_result = db.client.table("workout_schedules")\
+            schedule_result = db.client.table("workouts")\
                 .select("id")\
                 .eq("user_id", user_id)\
-                .eq("scheduled_date", target_date_str)\
+                .gte("scheduled_date", f"{target_date_str}T00:00:00")\
+                .lt("scheduled_date", f"{target_date_str}T23:59:59")\
                 .execute()
             has_workout = bool(schedule_result and schedule_result.data)
 

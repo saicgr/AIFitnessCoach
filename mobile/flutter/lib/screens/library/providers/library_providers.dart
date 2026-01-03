@@ -331,95 +331,79 @@ void clearSearchAndFilters(WidgetRef ref) {
 
 /// Fetches exercises grouped by body part for Netflix-style carousel
 final categoryExercisesProvider =
-    FutureProvider.autoDispose<Map<String, List<LibraryExercise>>>((ref) async {
+    FutureProvider<Map<String, List<LibraryExercise>>>((ref) async {
   final apiClient = ref.read(apiClientProvider);
-
   final result = <String, List<LibraryExercise>>{};
 
   try {
-    debugPrint('🎬 [Netflix] Fetching all exercises for categorization...');
-    final allResponse = await apiClient.get(
-      '${ApiConstants.library}/exercises?limit=500&offset=0',
+    // Fetch exercises from API
+    final response = await apiClient.get(
+      '${ApiConstants.library}/exercises?limit=200&offset=0',
     );
 
-    if (allResponse.statusCode == 200) {
-      try {
-        final data = allResponse.data as List;
-        final allExercises = data
-            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
-            .toList();
-
-        debugPrint('🎬 [Netflix] Loaded ${allExercises.length} total exercises');
-
-        // Popular = first 20 exercises
-        result['Popular'] = allExercises.take(20).toList();
-
-        // Group by body part (the API returns normalized body_part field)
-        final Map<String, List<LibraryExercise>> byBodyPart = {};
-        for (final exercise in allExercises) {
-          final bodyPart = exercise.bodyPart ?? 'Other';
-          byBodyPart.putIfAbsent(bodyPart, () => []);
-          byBodyPart[bodyPart]!.add(exercise);
-        }
-
-        debugPrint('🎬 [Netflix] Body parts found: ${byBodyPart.keys.toList()}');
-
-        // Map to display categories
-        // Combine arm muscles into "Arms"
-        final armExercises = <LibraryExercise>[];
-        for (final key in ['Biceps', 'Triceps', 'Forearms']) {
-          armExercises.addAll(byBodyPart[key] ?? []);
-        }
-        if (armExercises.isNotEmpty) {
-          result['Arms'] = armExercises.take(20).toList();
-        }
-
-        // Combine leg muscles into "Legs"
-        final legExercises = <LibraryExercise>[];
-        for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
-          legExercises.addAll(byBodyPart[key] ?? []);
-        }
-        if (legExercises.isNotEmpty) {
-          result['Legs'] = legExercises.take(20).toList();
-        }
-
-        // Direct mappings for other categories
-        if (byBodyPart['Chest']?.isNotEmpty == true) {
-          result['Chest'] = byBodyPart['Chest']!.take(20).toList();
-        }
-        if (byBodyPart['Back']?.isNotEmpty == true) {
-          result['Back'] = byBodyPart['Back']!.take(20).toList();
-        }
-        if (byBodyPart['Shoulders']?.isNotEmpty == true) {
-          result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
-        }
-        if (byBodyPart['Core']?.isNotEmpty == true) {
-          result['Core'] = byBodyPart['Core']!.take(20).toList();
-        }
-
-        debugPrint('🎬 [Netflix] Categories built: ${result.keys.toList()}');
-        for (final entry in result.entries) {
-          debugPrint('🎬 [Netflix]   ${entry.key}: ${entry.value.length} exercises');
-        }
-      } catch (e) {
-        debugPrint('❌ [Netflix] Parse error: $e');
-        throw const ParseException();
-      }
-    } else {
-      debugPrint('❌ [Netflix] API error: ${allResponse.statusCode}');
+    if (response.statusCode != 200) {
       throw ApiException(
         message: 'Failed to load exercises',
-        statusCode: allResponse.statusCode,
+        statusCode: response.statusCode,
       );
     }
-  } catch (e) {
-    if (e is AppException) {
-      debugPrint('❌ [Netflix] AppException: ${e.userMessage}');
-      rethrow;
+
+    final data = response.data as List;
+    final allExercises = data
+        .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    if (allExercises.isEmpty) {
+      return result;
     }
-    debugPrint('❌ [Netflix] Error: $e');
+
+    // Popular = first 20 exercises
+    result['Popular'] = allExercises.take(20).toList();
+
+    // Group by body part
+    final Map<String, List<LibraryExercise>> byBodyPart = {};
+    for (final exercise in allExercises) {
+      final bodyPart = exercise.bodyPart ?? 'Other';
+      byBodyPart.putIfAbsent(bodyPart, () => []);
+      byBodyPart[bodyPart]!.add(exercise);
+    }
+
+    // Combine arm muscles into "Arms"
+    final armExercises = <LibraryExercise>[];
+    for (final key in ['Biceps', 'Triceps', 'Forearms']) {
+      armExercises.addAll(byBodyPart[key] ?? []);
+    }
+    if (armExercises.isNotEmpty) {
+      result['Arms'] = armExercises.take(20).toList();
+    }
+
+    // Combine leg muscles into "Legs"
+    final legExercises = <LibraryExercise>[];
+    for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
+      legExercises.addAll(byBodyPart[key] ?? []);
+    }
+    if (legExercises.isNotEmpty) {
+      result['Legs'] = legExercises.take(20).toList();
+    }
+
+    // Direct mappings for other categories
+    if (byBodyPart['Chest']?.isNotEmpty == true) {
+      result['Chest'] = byBodyPart['Chest']!.take(20).toList();
+    }
+    if (byBodyPart['Back']?.isNotEmpty == true) {
+      result['Back'] = byBodyPart['Back']!.take(20).toList();
+    }
+    if (byBodyPart['Shoulders']?.isNotEmpty == true) {
+      result['Shoulders'] = byBodyPart['Shoulders']!.take(20).toList();
+    }
+    if (byBodyPart['Core']?.isNotEmpty == true) {
+      result['Core'] = byBodyPart['Core']!.take(20).toList();
+    }
+
+    return result;
+  } catch (e) {
+    if (e is AppException) rethrow;
+    debugPrint('❌ [CategoryExercises] Error: $e');
     throw ExceptionHandler.handle(e);
   }
-
-  return result;
 });

@@ -11,7 +11,7 @@ import '../data/services/widget_action_service.dart';
 import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
-import '../screens/home/widgets/home_tooltip_tour.dart';
+import '../screens/home/home_screen.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
 /// Provider to control floating nav bar visibility
@@ -26,10 +26,10 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/nutrition')) return 1;
-    if (location.startsWith('/fasting')) return 2;
-    if (location.startsWith('/social')) return 3;
-    if (location.startsWith('/workouts')) return 4;
+    if (location.startsWith('/workouts')) return 1;
+    if (location.startsWith('/nutrition')) return 2;
+    if (location.startsWith('/fasting')) return 3;
+    if (location.startsWith('/social')) return 4;
     return 0;
   }
 
@@ -39,16 +39,16 @@ class MainShell extends ConsumerWidget {
         context.go('/home');
         break;
       case 1:
-        context.go('/nutrition');
+        context.go('/workouts');
         break;
       case 2:
-        context.go('/fasting');
+        context.go('/nutrition');
         break;
       case 3:
-        context.go('/social');
+        context.go('/fasting');
         break;
       case 4:
-        context.go('/workouts');
+        context.go('/social');
         break;
     }
   }
@@ -201,13 +201,23 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
+                  // Workouts - Cyan
+                  _NavItem(
+                    icon: Icons.fitness_center_outlined,
+                    selectedIcon: Icons.fitness_center,
+                    label: 'Workouts',
+                    isSelected: selectedIndex == 1,
+                    onTap: () => onItemTapped(1),
+                    itemHeight: itemHeight,
+                    selectedColor: AppColors.cyan,
+                  ),
                   // Food - Green
                   _NavItem(
                     icon: Icons.restaurant_outlined,
                     selectedIcon: Icons.restaurant,
                     label: 'Food',
-                    isSelected: selectedIndex == 1,
-                    onTap: () => onItemTapped(1),
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemTapped(2),
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFF34C759),
                   ),
@@ -216,8 +226,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     icon: Icons.timer_outlined,
                     selectedIcon: Icons.timer,
                     label: 'Fasting',
-                    isSelected: selectedIndex == 2,
-                    onTap: () => onItemTapped(2),
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemTapped(3),
                     itemHeight: itemHeight,
                     selectedColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
@@ -226,20 +236,10 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     icon: Icons.people_outline,
                     selectedIcon: Icons.people,
                     label: 'Social',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
-                    itemHeight: itemHeight,
-                    selectedColor: const Color(0xFFFF9500),
-                  ),
-                  // Workouts - Cyan
-                  _NavItem(
-                    icon: Icons.fitness_center_outlined,
-                    selectedIcon: Icons.fitness_center,
-                    label: 'Workouts',
                     isSelected: selectedIndex == 4,
                     onTap: () => onItemTapped(4),
                     itemHeight: itemHeight,
-                    selectedColor: AppColors.cyan,
+                    selectedColor: const Color(0xFFFF9500),
                   ),
                 ],
               ),

@@ -176,12 +176,12 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Exercise preview strip at top - tappable to navigate
+            // Exercise preview strip at top - tappable to view workout detail
             if (exercises.isNotEmpty)
               GestureDetector(
                 onTap: () {
                   HapticService.selection();
-                  widget.onStart();
+                  context.push('/workout/${workout.id}');
                 },
                 child: Container(
                   height: 60,
@@ -218,11 +218,11 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header badges - tappable to navigate
+                  // Header badges - tappable to view workout detail
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
-                      widget.onStart();
+                      context.push('/workout/${workout.id}');
                     },
                     child: Row(
                       children: [
@@ -301,11 +301,11 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Title - tappable to navigate
+                  // Title - tappable to view workout detail
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
-                      widget.onStart();
+                      context.push('/workout/${workout.id}');
                     },
                     child: Text(
                       workout.name ?? 'Workout',
@@ -316,11 +316,11 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Stats row - simplified to 2 key stats
+                  // Stats row - tappable to view workout detail
                   GestureDetector(
                     onTap: () {
                       HapticService.selection();
-                      widget.onStart();
+                      context.push('/workout/${workout.id}');
                     },
                     child: Row(
                       children: [

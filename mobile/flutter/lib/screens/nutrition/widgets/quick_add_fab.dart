@@ -83,19 +83,23 @@ class QuickAddFABSimple extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return FloatingActionButton.extended(
-      heroTag: 'quick_add_fab_simple',
-      onPressed: () => _showQuickAddSheet(context, ref),
-      backgroundColor: teal,
-      foregroundColor: Colors.white,
-      elevation: 6,
-      highlightElevation: 8,
-      icon: const Icon(Icons.add_rounded, size: 24),
-      label: const Text(
-        'Log Food',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
+    // Add bottom padding to position FAB above the floating nav bar
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 80),
+      child: FloatingActionButton.extended(
+        heroTag: 'quick_add_fab_simple',
+        onPressed: () => _showQuickAddSheet(context, ref),
+        backgroundColor: teal,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        highlightElevation: 8,
+        icon: const Icon(Icons.add_rounded, size: 24),
+        label: const Text(
+          'Log Food',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
       ),
     );

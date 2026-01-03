@@ -1189,6 +1189,102 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       ],
     ];
 
+    // Strength exercises (for lose_weight goal)
+    final strengthExercises = [
+      [
+        {'name': 'Goblet Squats', 'setsReps': '3 x 12', 'muscle': 'Legs'},
+        {'name': 'Dumbbell Rows', 'setsReps': '3 x 10', 'muscle': 'Back'},
+        {'name': 'Push-Ups', 'setsReps': '3 x 12', 'muscle': 'Chest'},
+      ],
+      [
+        {'name': 'Lunges', 'setsReps': '3 x 10 each', 'muscle': 'Legs'},
+        {'name': 'Lat Pulldowns', 'setsReps': '3 x 12', 'muscle': 'Back'},
+        {'name': 'Dumbbell Press', 'setsReps': '3 x 10', 'muscle': 'Chest'},
+      ],
+      [
+        {'name': 'Romanian Deadlift', 'setsReps': '4 x 10', 'muscle': 'Hamstrings'},
+        {'name': 'Cable Rows', 'setsReps': '4 x 10', 'muscle': 'Back'},
+        {'name': 'Incline Press', 'setsReps': '3 x 10', 'muscle': 'Upper Chest'},
+      ],
+      [
+        {'name': 'Bulgarian Split Squats', 'setsReps': '4 x 8 each', 'muscle': 'Legs'},
+        {'name': 'Pull-Ups', 'setsReps': '3 x 8', 'muscle': 'Back'},
+        {'name': 'Overhead Press', 'setsReps': '4 x 8', 'muscle': 'Shoulders'},
+      ],
+    ];
+
+    // Recovery/Flexibility exercises
+    final recoveryExercises = [
+      [
+        {'name': 'Foam Rolling', 'setsReps': '10 min', 'muscle': 'Full Body'},
+        {'name': 'Hip Flexor Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Hips'},
+        {'name': 'Cat-Cow Stretch', 'setsReps': '3 x 10', 'muscle': 'Spine'},
+      ],
+      [
+        {'name': 'Yoga Flow', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'Pigeon Pose', 'setsReps': '2 x 45s each', 'muscle': 'Hips'},
+        {'name': 'Child\'s Pose', 'setsReps': '3 x 30s', 'muscle': 'Back'},
+      ],
+      [
+        {'name': 'Dynamic Stretching', 'setsReps': '10 min', 'muscle': 'Full Body'},
+        {'name': 'Shoulder Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Shoulders'},
+        {'name': 'Hamstring Stretch', 'setsReps': '2 x 30s each', 'muscle': 'Hamstrings'},
+      ],
+      [
+        {'name': 'Mobility Circuit', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'World\'s Greatest Stretch', 'setsReps': '3 x 5 each', 'muscle': 'Full Body'},
+        {'name': 'Meditation', 'setsReps': '5 min', 'muscle': 'Mind'},
+      ],
+    ];
+
+    // Arms exercises
+    final armsExercises = [
+      [
+        {'name': 'Barbell Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+        {'name': 'Tricep Pushdowns', 'setsReps': '3 x 12', 'muscle': 'Triceps'},
+        {'name': 'Hammer Curls', 'setsReps': '3 x 10', 'muscle': 'Biceps'},
+      ],
+      [
+        {'name': 'Preacher Curls', 'setsReps': '3 x 10', 'muscle': 'Biceps'},
+        {'name': 'Skull Crushers', 'setsReps': '3 x 10', 'muscle': 'Triceps'},
+        {'name': 'Cable Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+      ],
+      [
+        {'name': 'Incline DB Curls', 'setsReps': '4 x 10', 'muscle': 'Biceps'},
+        {'name': 'Overhead Tricep Ext', 'setsReps': '4 x 10', 'muscle': 'Triceps'},
+        {'name': 'Concentration Curls', 'setsReps': '3 x 12', 'muscle': 'Biceps'},
+      ],
+      [
+        {'name': 'EZ Bar Curls', 'setsReps': '4 x 8', 'muscle': 'Biceps'},
+        {'name': 'Close Grip Bench', 'setsReps': '4 x 8', 'muscle': 'Triceps'},
+        {'name': 'Reverse Curls', 'setsReps': '3 x 12', 'muscle': 'Forearms'},
+      ],
+    ];
+
+    // Endurance/Interval exercises
+    final enduranceExercises = [
+      [
+        {'name': 'Steady State Run', 'setsReps': '25 min', 'muscle': 'Cardio'},
+        {'name': 'Cycling', 'setsReps': '15 min', 'muscle': 'Legs'},
+        {'name': 'Cool Down Walk', 'setsReps': '5 min', 'muscle': 'Recovery'},
+      ],
+      [
+        {'name': 'Tempo Run', 'setsReps': '30 min', 'muscle': 'Cardio'},
+        {'name': 'Rowing', 'setsReps': '10 min', 'muscle': 'Full Body'},
+        {'name': 'Stretching', 'setsReps': '5 min', 'muscle': 'Recovery'},
+      ],
+      [
+        {'name': 'Long Distance Run', 'setsReps': '35 min', 'muscle': 'Cardio'},
+        {'name': 'Swimming', 'setsReps': '15 min', 'muscle': 'Full Body'},
+        {'name': 'Foam Rolling', 'setsReps': '5 min', 'muscle': 'Recovery'},
+      ],
+      [
+        {'name': 'Fartlek Training', 'setsReps': '40 min', 'muscle': 'Cardio'},
+        {'name': 'Cross Training', 'setsReps': '20 min', 'muscle': 'Full Body'},
+        {'name': 'Mobility Work', 'setsReps': '10 min', 'muscle': 'Recovery'},
+      ],
+    ];
+
     switch (workoutId) {
       case 'push':
         return pushExercises[weekIndex.clamp(0, 3)];
@@ -1204,13 +1300,23 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       case 'hiit':
         return hiitExercises[weekIndex.clamp(0, 3)];
       case 'cardio':
+      case 'intervals':
+      case 'tempo':
+      case 'long':
+      case 'cross':
         return cardioExercises[weekIndex.clamp(0, 3)];
+      case 'strength':
+        return strengthExercises[weekIndex.clamp(0, 3)];
+      case 'recovery':
+      case 'flexibility':
+        return recoveryExercises[weekIndex.clamp(0, 3)];
+      case 'arms':
+        return armsExercises[weekIndex.clamp(0, 3)];
+      case 'endurance':
+        return enduranceExercises[weekIndex.clamp(0, 3)];
       default:
-        return [
-          {'name': 'Exercise 1', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Primary'},
-          {'name': 'Exercise 2', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Secondary'},
-          {'name': 'Exercise 3', 'setsReps': '$baseSets x $baseReps', 'muscle': 'Tertiary'},
-        ];
+        // Fallback to full body exercises instead of generic placeholders
+        return fullBodyExercises[weekIndex.clamp(0, 3)];
     }
   }
 

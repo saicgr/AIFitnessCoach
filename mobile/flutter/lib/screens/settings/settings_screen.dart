@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import 'sections/sections.dart';
+import 'widgets/widgets.dart';
 
 /// Samsung-style grouped settings model
 class _SettingsGroup {
@@ -282,6 +283,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Track which groups are expanded (Samsung-style collapse/expand)
   final Set<String> _expandedGroups = {};
 
+  // Track if search bar is expanded
+  bool _isSearchExpanded = false;
+
   // Samsung-style settings groups
   late final List<_SettingsGroup> _settingsGroups = [
     _SettingsGroup(
@@ -309,20 +313,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       sectionKeys: ['voice_announcements', 'audio_settings'],
     ),
     _SettingsGroup(
-      id: 'training',
-      icon: Icons.fitness_center,
-      title: 'Training',
-      subtitle: 'Progression, warmup, calibration, equipment',
+      id: 'workout_settings',
+      icon: Icons.speed,
+      title: 'Workout Settings',
+      subtitle: 'Progression, intensity, splits, schedule',
       color: AppColors.success,
-      sectionKeys: ['training', 'superset', 'warmup_settings', 'calibration', 'custom_content'],
+      sectionKeys: ['training'],
+    ),
+    _SettingsGroup(
+      id: 'exercise_preferences',
+      icon: Icons.favorite_outline,
+      title: 'Exercise Preferences',
+      subtitle: 'Favorites, avoided, queue',
+      color: AppColors.error,
+      sectionKeys: ['training'],
+    ),
+    _SettingsGroup(
+      id: 'equipment',
+      icon: Icons.fitness_center,
+      title: 'Equipment & Environment',
+      subtitle: 'Calibration, equipment, warmup, supersets',
+      color: const Color(0xFF8E8E93),
+      sectionKeys: ['calibration', 'custom_content', 'warmup_settings', 'superset'],
+    ),
+    _SettingsGroup(
+      id: 'notifications',
+      icon: Icons.notifications_outlined,
+      title: 'Notifications',
+      subtitle: 'Workout reminders, push notifications',
+      color: AppColors.info,
+      sectionKeys: ['notifications'],
     ),
     _SettingsGroup(
       id: 'connections',
       icon: Icons.sync_alt,
       title: 'Connections',
-      subtitle: 'Health sync, notifications, email, privacy',
-      color: AppColors.info,
-      sectionKeys: ['health_sync', 'notifications', 'email_preferences', 'social_privacy'],
+      subtitle: 'Health sync, email preferences',
+      color: const Color(0xFF5AC8FA),
+      sectionKeys: ['health_sync', 'email_preferences'],
     ),
     _SettingsGroup(
       id: 'about',
@@ -344,9 +372,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       id: 'account',
       icon: Icons.manage_accounts_outlined,
       title: 'Account',
-      subtitle: 'Data export, reset, delete account',
+      subtitle: 'Privacy, data export, delete account',
       color: AppColors.error,
-      sectionKeys: ['data_management', 'danger_zone', 'logout'],
+      sectionKeys: ['social_privacy', 'data_management', 'danger_zone', 'logout'],
     ),
   ];
 
@@ -591,30 +619,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             AudioSettingsSection(),
           ],
         );
-      case 'training':
+      case 'workout_settings':
+        return const _WorkoutSettingsContent();
+      case 'exercise_preferences':
+        return const _ExercisePreferencesContent();
+      case 'equipment':
         return const Column(
           children: [
-            TrainingPreferencesSection(),
-            SizedBox(height: 16),
-            SupersetSettingsSection(),
-            SizedBox(height: 16),
-            WarmupSettingsSection(),
-            SizedBox(height: 16),
             CalibrationSection(),
             SizedBox(height: 16),
             CustomContentSection(),
+            SizedBox(height: 16),
+            WarmupSettingsSection(),
+            SizedBox(height: 16),
+            SupersetSettingsSection(),
           ],
         );
+      case 'notifications':
+        return const NotificationsSection();
       case 'connections':
         return const Column(
           children: [
             HealthSyncSection(),
             SizedBox(height: 16),
-            NotificationsSection(),
-            SizedBox(height: 16),
             EmailPreferencesSection(),
-            SizedBox(height: 16),
-            SocialPrivacySection(),
           ],
         );
       case 'about':
@@ -632,6 +660,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case 'account':
         return const Column(
           children: [
+            SocialPrivacySection(),
+            SizedBox(height: 16),
             DataManagementSection(),
             SizedBox(height: 16),
             DangerZoneSection(),
@@ -697,6 +727,140 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             Icon(Icons.chevron_right, color: textMuted, size: 18),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Build the collapsed search FAB
+  Widget _buildSearchFAB(bool isDark) {
+    return GestureDetector(
+      key: const ValueKey('search_fab'),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _isSearchExpanded = true;
+        });
+        // Focus the text field after expansion
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _searchFocusNode.requestFocus();
+        });
+      },
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              isDark ? AppColors.purple : AppColorsLight.purple,
+              isDark ? AppColors.cyan : AppColorsLight.cyan,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? AppColors.purple : AppColorsLight.purple)
+                  .withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.search,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build the expanded search bar
+  Widget _buildExpandedSearchBar(bool isDark, Color textPrimary, Color textMuted) {
+    return ClipRRect(
+      key: const ValueKey('search_bar'),
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              // AI sparkle icon
+              Icon(
+                Icons.auto_awesome,
+                color: isDark ? AppColors.purple : AppColorsLight.purple,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              // Search field
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: _onSearchChanged,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 15,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search settings...',
+                    hintStyle: TextStyle(
+                      color: textMuted,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+              // Close button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _searchController.clear();
+                  _onSearchChanged('');
+                  _searchFocusNode.unfocus();
+                  setState(() {
+                    _isSearchExpanded = false;
+                  });
+                },
+                child: Container(
+                  width: 48,
+                  height: 56,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.close,
+                    color: textMuted,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -804,98 +968,174 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
 
-          // Floating search bar at bottom
+          // Floating search - FAB when collapsed, full bar when expanded
           Positioned(
-            left: 16,
+            left: _isSearchExpanded ? 16 : null,
             right: 16,
             bottom: bottomPadding + 16,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.7)
-                        : Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.1),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: animation,
+                    alignment: Alignment.centerRight,
+                    child: child,
                   ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      // AI sparkle icon
-                      Icon(
-                        Icons.auto_awesome,
-                        color: isDark ? AppColors.purple : AppColorsLight.purple,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      // Always-visible search field
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocusNode,
-                          onChanged: _onSearchChanged,
-                          style: TextStyle(
-                            color: textPrimary,
-                            fontSize: 15,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'AI Search · try "dark mode", "ai voice"',
-                            hintStyle: TextStyle(
-                              color: textMuted,
-                              fontSize: 14,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Clear button when searching
-                      if (_searchQuery.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _searchController.clear();
-                            _onSearchChanged('');
-                          },
-                          child: Container(
-                            width: 48,
-                            height: 56,
-                            alignment: Alignment.center,
-                            child: Icon(
-                              Icons.close,
-                              color: textMuted,
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 16),
-                    ],
-                  ),
-                ),
-              ),
+                );
+              },
+              child: _isSearchExpanded
+                  ? _buildExpandedSearchBar(isDark, textPrimary, textMuted)
+                  : _buildSearchFAB(isDark),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Workout Settings Content - Progression, intensity, splits, schedule
+/// Split from the original massive TrainingPreferencesSection
+class _WorkoutSettingsContent extends StatelessWidget {
+  const _WorkoutSettingsContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'WORKOUT SETTINGS',
+          subtitle: 'Configure progression and scheduling',
+        ),
+        const SizedBox(height: 12),
+        SettingsCard(
+          items: [
+            SettingItemData(
+              icon: Icons.assessment_outlined,
+              title: 'Calibration Test',
+              subtitle: 'Test your fitness level',
+              isCalibrationTestScreen: true,
+            ),
+            SettingItemData(
+              icon: Icons.speed,
+              title: 'My 1RMs',
+              subtitle: 'View and edit your max lifts',
+              isMyOneRMsScreen: true,
+            ),
+            SettingItemData(
+              icon: Icons.percent,
+              title: 'Training Intensity',
+              subtitle: 'Work at a percentage of your max',
+              isTrainingIntensitySelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.trending_up,
+              title: 'Progression Pace',
+              subtitle: 'How fast to increase weights',
+              isProgressionPaceSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.fitness_center,
+              title: 'Workout Type',
+              subtitle: 'Strength, cardio, or mixed',
+              isWorkoutTypeSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.view_week,
+              title: 'Training Split',
+              subtitle: 'Push/Pull/Legs, Full Body, etc.',
+              isTrainingSplitSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.calendar_month,
+              title: 'Workout Days',
+              subtitle: 'Which days you train',
+              isWorkoutDaysSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.shuffle,
+              title: 'Exercise Consistency',
+              subtitle: 'Vary or keep same exercises',
+              isConsistencyModeSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.tune,
+              title: 'Weekly Variety',
+              subtitle: 'How much exercises change each week',
+              isVariationSlider: true,
+            ),
+            SettingItemData(
+              icon: Icons.show_chart,
+              title: 'Progress Charts',
+              subtitle: 'Visualize strength & volume over time',
+              isProgressChartsScreen: true,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Exercise Preferences Content - Favorites, avoided, queue
+/// Split from the original massive TrainingPreferencesSection
+class _ExercisePreferencesContent extends StatelessWidget {
+  const _ExercisePreferencesContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'EXERCISE PREFERENCES',
+          subtitle: 'Customize which exercises appear in workouts',
+        ),
+        const SizedBox(height: 12),
+        SettingsCard(
+          items: [
+            SettingItemData(
+              icon: Icons.favorite,
+              title: 'Favorite Exercises',
+              subtitle: 'AI will prioritize these',
+              isFavoriteExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.lock,
+              title: 'Staple Exercises',
+              subtitle: 'Core lifts that never rotate',
+              isStapleExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.queue,
+              title: 'Exercise Queue',
+              subtitle: 'Queue exercises for next workout',
+              isExerciseQueueManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.block,
+              title: 'Exercises to Avoid',
+              subtitle: 'Skip specific exercises',
+              isAvoidedExercisesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.accessibility_new,
+              title: 'Muscles to Avoid',
+              subtitle: 'Skip or reduce muscle groups',
+              isAvoidedMusclesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.history,
+              title: 'Import Workout History',
+              subtitle: 'Add past workouts for better AI weights',
+              isWorkoutHistoryImport: true,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

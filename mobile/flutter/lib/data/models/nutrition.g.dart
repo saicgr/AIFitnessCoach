@@ -249,6 +249,16 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       confidenceScore: (json['confidence_score'] as num?)?.toDouble(),
       confidenceLevel: json['confidence_level'] as String?,
       sourceType: json['source_type'] as String?,
+      sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
+      sugarG: (json['sugar_g'] as num?)?.toDouble(),
+      saturatedFatG: (json['saturated_fat_g'] as num?)?.toDouble(),
+      cholesterolMg: (json['cholesterol_mg'] as num?)?.toDouble(),
+      potassiumMg: (json['potassium_mg'] as num?)?.toDouble(),
+      vitaminAIu: (json['vitamin_a_iu'] as num?)?.toDouble(),
+      vitaminCMg: (json['vitamin_c_mg'] as num?)?.toDouble(),
+      vitaminDIu: (json['vitamin_d_iu'] as num?)?.toDouble(),
+      calciumMg: (json['calcium_mg'] as num?)?.toDouble(),
+      ironMg: (json['iron_mg'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -271,6 +281,16 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'confidence_score': instance.confidenceScore,
       'confidence_level': instance.confidenceLevel,
       'source_type': instance.sourceType,
+      'sodium_mg': instance.sodiumMg,
+      'sugar_g': instance.sugarG,
+      'saturated_fat_g': instance.saturatedFatG,
+      'cholesterol_mg': instance.cholesterolMg,
+      'potassium_mg': instance.potassiumMg,
+      'vitamin_a_iu': instance.vitaminAIu,
+      'vitamin_c_mg': instance.vitaminCMg,
+      'vitamin_d_iu': instance.vitaminDIu,
+      'calcium_mg': instance.calciumMg,
+      'iron_mg': instance.ironMg,
     };
 
 SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>

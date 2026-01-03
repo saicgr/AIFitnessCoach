@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/providers/tooltip_tour_provider.dart';
+import '../../../data/providers/multi_screen_tour_provider.dart';
 import '../widgets/settings_card.dart';
 import '../widgets/setting_tile.dart';
 
@@ -30,8 +30,8 @@ class AppTourSection extends ConsumerWidget {
           subtitle: 'See the interactive app walkthrough again',
           onTap: () async {
             HapticFeedback.lightImpact();
-            // Reset tooltip tour completion status
-            await ref.read(tooltipTourProvider.notifier).resetTour();
+            // Reset multi-screen tour completion status
+            await ref.read(multiScreenTourProvider.notifier).resetTour();
             // Navigate back to home screen where the tour will show
             if (context.mounted) {
               context.go('/home');

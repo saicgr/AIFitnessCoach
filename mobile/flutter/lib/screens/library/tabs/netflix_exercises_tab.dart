@@ -182,14 +182,12 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
       loading: () => Center(
         child: CircularProgressIndicator(color: cyan),
       ),
-      error: (error, _) {
+      error: (error, stackTrace) {
         // Get user-friendly error message
         final errorMessage = error is AppException
             ? error.userMessage
-            : ExceptionHandler.getUserMessage(error);
-        final isNetworkError = error is NetworkException ||
-            errorMessage.contains('internet') ||
-            errorMessage.contains('connection');
+            : 'Unable to load data. Please try again';
+        final isNetworkError = error is NetworkException;
 
         return Center(
           child: Padding(

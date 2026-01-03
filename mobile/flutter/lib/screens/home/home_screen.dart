@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -8,8 +10,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
-import '../../data/providers/tooltip_tour_provider.dart';
-import 'widgets/home_tooltip_tour.dart';
+import '../../data/providers/multi_screen_tour_provider.dart';
+import '../../widgets/multi_screen_tour_helper.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -236,6 +238,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Auto-refresh when screen becomes visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoRefreshIfNeeded();
+      // Check if we should show tour step when returning to home
+      _checkAndShowTourStep();
     });
   }
 
@@ -1140,10 +1144,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               setState(() {
                 _editingTiles = defaultTileTypes.asMap().entries.map((entry) {
                   return HomeTile(
+                    id: 'tile_${entry.key}',
                     type: entry.value,
                     order: entry.key,
                     isVisible: true,
-                    size: TileSize.normal,
+                    size: TileSize.full,
                   );
                 }).toList();
               });
@@ -1201,41 +1206,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  /// Check if tooltip tour should be shown for new users
+  /// Check if multi-screen tour should be shown for new users
   Future<void> _checkAppTour() async {
     try {
-      final shouldShow = await ref.read(tooltipTourProvider.notifier).checkShouldShowTour();
-      if (shouldShow && mounted) {
-        debugPrint('🎯 [Home] Tooltip tour should be shown');
+      // Initialize the multi-screen tour provider
+      await ref.read(multiScreenTourProvider.notifier).initialize();
+      final tourState = ref.read(multiScreenTourProvider);
+
+      if (tourState.shouldShowTour && tourState.isActive && mounted) {
+        debugPrint('🎯 [Home] Multi-screen tour should be shown');
         // Wait a bit for the UI to fully build before showing tour
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) {
-          _showTooltipTour();
+          _checkAndShowTourStep();
         }
       }
     } catch (e) {
-      debugPrint('❌ [Home] Error checking tooltip tour: $e');
+      debugPrint('❌ [Home] Error checking app tour: $e');
     }
   }
 
-  /// Show the tooltip-based app tour
-  void _showTooltipTour() {
-    final controller = HomeTooltipTourController(
-      context: context,
-      ref: ref,
-      keys: HomeTourKeys.all,
-      onComplete: () {
-        debugPrint('✅ [Home] Tooltip tour complete');
-      },
-    );
-    controller.show();
+  /// Check and show the appropriate tour step for home screen
+  void _checkAndShowTourStep() {
+    final tourState = ref.read(multiScreenTourProvider);
+
+    if (!tourState.isActive || tourState.isLoading) return;
+
+    final currentStep = tourState.currentStep;
+    if (currentStep == null) return;
+
+    // Home screen handles step 1 (next_workout_card) and step 6 (chat_fab)
+    if (currentStep.screenRoute != '/home') return;
+
+    // Determine which key to use based on the step
+    GlobalKey? targetKey;
+    if (currentStep.targetKeyId == 'next_workout_card') {
+      targetKey = HomeTourKeys.nextWorkoutKey;
+    } else if (currentStep.targetKeyId == 'chat_fab') {
+      targetKey = HomeTourKeys.chatFabKey;
+    }
+
+    if (targetKey == null) {
+      debugPrint('[Home] No matching key for step: ${currentStep.id}');
+      return;
+    }
+
+    // Use the helper to show the tour
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final helper = MultiScreenTourHelper(context: context, ref: ref);
+      helper.checkAndShowTour('/home', targetKey!);
+    });
   }
 
   Future<void> _initializeWorkouts() async {
     final notifier = ref.read(workoutsProvider.notifier);
 
-    // First refresh to get current workouts
-    await notifier.refresh();
+    // First refresh to get current workouts with timeout
+    try {
+      await notifier.refresh().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          debugPrint('⚠️ [HomeScreen] Workout refresh timed out');
+          throw TimeoutException('Workout refresh timed out after 15 seconds');
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ [HomeScreen] Error refreshing workouts: $e');
+      // Continue even if refresh fails - show empty state instead of infinite loading
+      if (mounted) {
+        setState(() => _isInitializing = false);
+      }
+      return;
+    }
 
     // Clear banner state if workouts exist
     if (notifier.nextWorkout != null && mounted) {
@@ -1473,6 +1516,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   isDark,
                   isCompact: isInSplitScreen || isNarrowLayout,
                 ),
+              ),
+
+              // Feature voting pill - compact access below header
+              SliverToBoxAdapter(
+                child: _FeatureVotingPill(isDark: isDark),
               ),
 
               // Renewal Reminder Banner (shows 5 days before subscription renewal)
@@ -2111,9 +2159,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
 
-      // Upcoming Features Card
-      const SliverToBoxAdapter(child: UpcomingFeaturesCard()),
-
       // Section: YOUR WEEK
       const SliverToBoxAdapter(
         child: SectionHeader(title: 'YOUR WEEK'),
@@ -2421,6 +2466,64 @@ class _ProfileButton extends StatelessWidget {
   }
 }
 
+/// Compact pill for feature voting access - shown below header
+class _FeatureVotingPill extends StatelessWidget {
+  final bool isDark;
+
+  const _FeatureVotingPill({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final pillBg = isDark
+        ? AppColors.cyan.withValues(alpha: 0.12)
+        : AppColors.cyan.withValues(alpha: 0.08);
+    final borderColor = AppColors.cyan.withValues(alpha: 0.3);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          context.push('/features');
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: pillBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.how_to_vote_rounded,
+                color: AppColors.cyan,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'What should we build next?',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.cyan,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.cyan,
+                size: 12,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A badge showing the current workout streak with fire icon
 class _StreakBadge extends StatelessWidget {
   final int streak;
@@ -2479,4 +2582,24 @@ class _StreakBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Global keys for tour targets on home screen
+class HomeTourKeys {
+  static final GlobalKey nextWorkoutKey = GlobalKey();
+  static final GlobalKey streakBadgeKey = GlobalKey();
+  static final GlobalKey libraryButtonKey = GlobalKey();
+  static final GlobalKey quickActionsKey = GlobalKey();
+  static final GlobalKey editButtonKey = GlobalKey();
+  static final GlobalKey chatFabKey = GlobalKey();
+
+  /// Get all keys as a map
+  static Map<String, GlobalKey> get all => {
+    'nextWorkout': nextWorkoutKey,
+    'streakBadge': streakBadgeKey,
+    'libraryButton': libraryButtonKey,
+    'quickActions': quickActionsKey,
+    'editButton': editButtonKey,
+    'chatFab': chatFabKey,
+  };
 }

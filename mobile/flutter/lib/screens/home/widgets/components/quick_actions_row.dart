@@ -63,7 +63,7 @@ class QuickActionsRow extends ConsumerWidget {
                 color: AppColors.orange,
                 onTap: () {
                   HapticService.light();
-                  showQuickWorkoutSheet(context);
+                  showQuickWorkoutSheet(context, ref);
                 },
                 isDark: isDark,
               ),
@@ -209,6 +209,7 @@ class _WaterQuickActionButtonState
               ),
               backgroundColor: AppColors.electricBlue,
               behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -217,6 +218,7 @@ class _WaterQuickActionButtonState
             const SnackBar(
               content: Text('Failed to log water. Please try again.'),
               behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
             ),
           );
         }
@@ -227,6 +229,7 @@ class _WaterQuickActionButtonState
           const SnackBar(
             content: Text('Failed to log water. Please try again.'),
             behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 80, left: 16, right: 16),
           ),
         );
       }

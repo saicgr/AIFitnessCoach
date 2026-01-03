@@ -365,6 +365,8 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
       communicationTone: coach.communicationTone,
       encouragementLevel: coach.encouragementLevel,
     );
+    // Mark as loaded to prevent API from overwriting local selection during onboarding
+    _isLoaded = true;
     _saveSettings();
   }
 
@@ -383,6 +385,8 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
       communicationTone: communicationTone,
       encouragementLevel: encouragementLevel,
     );
+    // Mark as loaded to prevent API from overwriting local selection during onboarding
+    _isLoaded = true;
     _saveSettings();
   }
 

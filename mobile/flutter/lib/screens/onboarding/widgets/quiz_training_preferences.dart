@@ -31,14 +31,14 @@ class QuizTrainingPreferences extends StatefulWidget {
 }
 
 class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
-  // All 5 training splits with colors + "Don't know" option
+  // All 5 training splits with colors + "Nothing structured" option first
   static final _splits = [
+    {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.cyan, 'desc': "I'll let AI decide"},
     {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.purple, 'desc': '6 days • Popular'},
     {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.success, 'desc': '3 days • Beginners'},
     {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days • Balanced'},
     {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.orange, 'desc': '4 days • Power + Hypertrophy'},
     {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.coral, 'desc': '5-6 days • Advanced'},
-    {'id': 'dont_know', 'label': "Don't know", 'icon': Icons.help_outline, 'color': AppColors.textSecondary, 'desc': "I'll let AI decide"},
   ];
 
   // Workout types with colors
@@ -143,6 +143,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
   String _getSplitExplanation(String id) {
     switch (id) {
+      case 'nothing_structured':
+        return "Not sure? No problem! Our AI will recommend the best split based on your goals, experience, and schedule.";
       case 'push_pull_legs':
         return 'Train pushing muscles (chest, shoulders, triceps), pulling muscles (back, biceps), and legs on separate days. Great for balanced development.';
       case 'full_body':
@@ -153,8 +155,6 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
         return 'Power Hypertrophy Upper Lower - combines strength and muscle building. 4 days with heavy and lighter sessions.';
       case 'body_part':
         return 'Dedicate each day to one muscle group (chest day, back day, etc). High volume per muscle, needs more gym days.';
-      case 'dont_know':
-        return "Not sure? No problem! Our AI will recommend the best split based on your goals, experience, and schedule.";
       default:
         return '';
     }

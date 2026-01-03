@@ -2057,6 +2057,9 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
         training_split = preferences.get("training_split", "full_body")
         # Use explicit intensity_preference if set, otherwise derive from fitness level
         intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
+        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
+        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
         # Get workout environment for environment-aware workout generation
@@ -2465,29 +2468,29 @@ async def generate_monthly_workouts(request: GenerateMonthlyRequest):
                 await index_workout_to_rag(workout)
                 generated_workouts.append(workout)
 
-                # Generate warmup and stretches alongside workout
+                # Generate warmup and stretches alongside workout (using user preferences)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
                     exercises = result["exercises"]
 
-                    # Generate and save warmup
+                    # Generate and save warmup (using user's preferred duration)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=warmup_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
 
-                    # Generate and save stretches
+                    # Generate and save stretches (using user's preferred duration)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=stretch_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
-                    logger.info(f"Generated warmup and stretches for workout {workout.id}")
+                    logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for workout {workout.id}")
                 except Exception as ws_error:
                     logger.warning(f"Failed to generate warmup/stretches for workout {workout.id}: {ws_error}")
 
@@ -2563,6 +2566,9 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
             training_split = preferences.get("training_split", "full_body")
             # Use explicit intensity_preference if set, otherwise derive from fitness level
             intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+            # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
+            warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
+            stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
             custom_program_description = preferences.get("custom_program_description")
             workout_environment = preferences.get("workout_environment")
             dumbbell_count = preferences.get("dumbbell_count", 2)
@@ -2783,20 +2789,20 @@ async def generate_monthly_workouts_streaming(request: Request, body: GenerateMo
                     asyncio.create_task(index_workout_to_rag(workout))
                     generated_workouts.append(workout)
 
-                    # Generate warmup/stretches (fire-and-forget)
+                    # Generate warmup/stretches (fire-and-forget, using user preferences)
                     try:
                         warmup_stretch_service = get_warmup_stretch_service()
                         asyncio.create_task(warmup_stretch_service.create_warmup_for_workout(
                             workout_id=workout.id,
                             exercises=workout_data.get("exercises", []),
-                            duration_minutes=5,
+                            duration_minutes=warmup_duration,
                             injuries=active_injuries if active_injuries else None,
                             user_id=body.user_id
                         ))
                         asyncio.create_task(warmup_stretch_service.create_stretches_for_workout(
                             workout_id=workout.id,
                             exercises=workout_data.get("exercises", []),
-                            duration_minutes=5,
+                            duration_minutes=stretch_duration,
                             injuries=active_injuries if active_injuries else None,
                             user_id=body.user_id
                         ))
@@ -2874,6 +2880,9 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
         training_split = preferences.get("training_split", "full_body")
         # Use explicit intensity_preference if set, otherwise derive from fitness level
         intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+        # Get warmup and stretch duration preferences (default 5 minutes each, clamped 1-15)
+        warmup_duration = max(1, min(15, preferences.get("warmup_duration_minutes", 5)))
+        stretch_duration = max(1, min(15, preferences.get("stretch_duration_minutes", 5)))
         # Get custom program description for custom training goals
         custom_program_description = preferences.get("custom_program_description")
         # Get workout environment for environment-aware workout generation
@@ -3268,28 +3277,28 @@ async def generate_remaining_workouts(request: GenerateMonthlyRequest):
                 workout = row_to_workout(created)
                 await index_workout_to_rag(workout)
 
-                # Generate warmup and stretches alongside workout
+                # Generate warmup and stretches alongside workout (using user preferences)
                 try:
                     warmup_stretch_service = get_warmup_stretch_service()
 
-                    # Generate and save warmup
+                    # Generate and save warmup (using user's preferred duration)
                     await warmup_stretch_service.create_warmup_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=warmup_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
 
-                    # Generate and save stretches
+                    # Generate and save stretches (using user's preferred duration)
                     await warmup_stretch_service.create_stretches_for_workout(
                         workout_id=workout.id,
                         exercises=exercises,
-                        duration_minutes=5,
+                        duration_minutes=stretch_duration,
                         injuries=active_injuries if active_injuries else None,
                         user_id=request.user_id
                     )
-                    logger.info(f"Generated warmup and stretches for remaining workout {workout.id}")
+                    logger.info(f"Generated warmup ({warmup_duration}m) and stretches ({stretch_duration}m) for remaining workout {workout.id}")
                 except Exception as ws_error:
                     logger.warning(f"Failed to generate warmup/stretches for remaining workout {workout.id}: {ws_error}")
 
