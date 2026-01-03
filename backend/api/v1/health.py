@@ -56,12 +56,18 @@ async def debug_gemini():
 
 @router.get("/debug/chat")
 async def debug_chat():
-    """Debug endpoint to test the full chat flow."""
+    """Debug endpoint to test the full chat flow including DB operations."""
     from services.langgraph_service import LangGraphCoachService
     from models.chat import ChatRequest
+    from core.supabase_db import get_supabase_db
+    from core.supabase_client import get_supabase
+    from core.activity_logger import log_user_activity
     import traceback
+    import json as json_lib
+    import time
 
     result = {"steps": []}
+    start_time = time.time()
 
     try:
         result["steps"].append("1. Creating ChatRequest")
@@ -82,10 +88,76 @@ async def debug_chat():
         response = await chat_module.langgraph_coach_service.process_message(request)
         result["steps"].append("6. Message processed successfully")
 
+        response_time_ms = int((time.time() - start_time) * 1000)
+
+        # Test DB save (same as chat.py)
+        result["steps"].append("7. Testing DB save...")
+        try:
+            db = get_supabase_db()
+            context_dict = {
+                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
+                "rag_context_used": response.rag_context_used,
+            }
+            chat_data = {
+                "user_id": request.user_id,
+                "user_message": request.message,
+                "ai_response": response.message,
+                "context_json": json_lib.dumps(context_dict) if response.intent else None,
+            }
+            db.create_chat_message(chat_data)
+            result["steps"].append("8. DB save successful")
+        except Exception as db_error:
+            result["steps"].append(f"8. DB save failed (non-fatal): {db_error}")
+
+        # Test analytics save
+        result["steps"].append("9. Testing analytics save...")
+        try:
+            supabase = get_supabase().client
+            analytics_data = {
+                "user_id": request.user_id,
+                "user_message_length": len(request.message),
+                "ai_response_length": len(response.message),
+                "coaching_style": "motivational",
+                "communication_tone": "encouraging",
+                "encouragement_level": 0.7,
+                "response_length": "balanced",
+                "use_emojis": True,
+                "agent_type": response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type),
+                "intent": response.intent.value if hasattr(response.intent, 'value') else str(response.intent),
+                "rag_context_used": response.rag_context_used or False,
+                "response_time_ms": response_time_ms,
+            }
+            supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
+            result["steps"].append("10. Analytics save successful")
+        except Exception as analytics_error:
+            result["steps"].append(f"10. Analytics save failed (non-fatal): {analytics_error}")
+
+        # Test activity logging
+        result["steps"].append("11. Testing activity logging...")
+        try:
+            await log_user_activity(
+                user_id=request.user_id,
+                action="chat",
+                endpoint="/api/v1/health/debug/chat",
+                message=f"Debug test: {response.intent.value if hasattr(response.intent, 'value') else str(response.intent)}",
+                metadata={
+                    "intent": str(response.intent),
+                    "agent_type": str(response.agent_type),
+                    "rag_used": response.rag_context_used,
+                },
+                duration_ms=response_time_ms,
+                status_code=200
+            )
+            result["steps"].append("12. Activity logging successful")
+        except Exception as activity_error:
+            result["steps"].append(f"12. Activity logging failed: {activity_error}")
+
         result["success"] = True
         result["intent"] = response.intent.value if hasattr(response.intent, 'value') else str(response.intent)
         result["agent_type"] = response.agent_type.value if hasattr(response.agent_type, 'value') else str(response.agent_type)
         result["message_preview"] = response.message[:100] if response.message else None
+        result["response_time_ms"] = response_time_ms
 
     except Exception as e:
         result["success"] = False
