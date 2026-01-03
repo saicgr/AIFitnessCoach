@@ -9,7 +9,7 @@ void main() {
     LibraryExercise createExercise({
       String name = 'Bench Press',
       String? bodyPart,
-      int? difficultyLevel,
+      String? difficultyLevel,
       String? equipment,
       String? videoUrl,
     }) {
@@ -17,7 +17,7 @@ void main() {
         id: 'test-id',
         nameValue: name,
         bodyPart: bodyPart,
-        difficultyLevel: difficultyLevel,
+        difficultyLevelValue: difficultyLevel,
         equipmentValue: equipment,
         videoUrl: videoUrl,
       );
@@ -63,7 +63,7 @@ void main() {
         (WidgetTester tester) async {
       final exercise = createExercise(
         name: 'Deadlift',
-        difficultyLevel: 2, // Intermediate
+        difficultyLevel: 'Intermediate',
       );
 
       await tester.pumpWidget(
@@ -178,7 +178,7 @@ void main() {
       final exercise = createExercise(
         name: 'Lat Pulldown',
         bodyPart: 'Back',
-        difficultyLevel: 1, // Beginner
+        difficultyLevel: 'Beginner',
       );
 
       await tester.pumpWidget(
@@ -201,7 +201,7 @@ void main() {
       final exercise = createExercise(
         name: 'Bicep Curl',
         bodyPart: 'Arms',
-        difficultyLevel: 1, // Easy/Beginner
+        difficultyLevel: 'Beginner',
       );
 
       await tester.pumpWidget(

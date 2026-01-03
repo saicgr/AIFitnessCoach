@@ -12,6 +12,7 @@ import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/services/food_search_service.dart' as search;
@@ -22,9 +23,16 @@ import 'widgets/inflammation_analysis_widget.dart';
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
   debugPrint('showLogMealSheet: Starting...');
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  // Use authStateProvider for consistent auth state (not apiClientProvider)
+
+  // Try authStateProvider first, fallback to apiClientProvider for consistency
   final authState = ref.read(authStateProvider);
-  final userId = authState.user?.id;
+  String? userId = authState.user?.id;
+
+  // Fallback to apiClient if authState doesn't have user ID
+  if (userId == null || userId.isEmpty) {
+    debugPrint('showLogMealSheet: authState userId is null, trying apiClient...');
+    userId = await ref.read(apiClientProvider).getUserId();
+  }
 
   debugPrint('showLogMealSheet: userId=$userId, context.mounted=${context.mounted}');
 
@@ -42,7 +50,7 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => LogMealSheet(userId: userId, isDark: isDark),
+    builder: (context) => LogMealSheet(userId: userId!, isDark: isDark),
   );
 
   debugPrint('showLogMealSheet: Bottom sheet closed');

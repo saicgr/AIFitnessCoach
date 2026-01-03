@@ -161,7 +161,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         tabs: const [
           Tab(text: 'Exercises'),
           Tab(text: 'Programs'),
-          Tab(text: 'Skill Progressions'),
+          Tab(text: 'Skills'),
         ],
       ),
     );

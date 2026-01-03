@@ -525,34 +525,27 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                     curve: AppAnimations.fastOut,
                     child: FadeInAnimation(
                       curve: AppAnimations.fastOut,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
+                      child: ExpandedExerciseCard(
+                        key: ValueKey(exercise.id ?? index),
+                        exercise: exercise,
+                        index: index,
+                        workoutId: widget.workoutId,
+                        initiallyExpanded: false,
                         onTap: () {
-                          print('🎯 [WorkoutDetail] Exercise tapped at index $index: ${exercise.name}');
+                          debugPrint('🎯 [WorkoutDetail] Exercise tapped: ${exercise.name}');
                           context.push('/exercise-detail', extra: exercise);
                         },
-                        child: ExpandedExerciseCard(
-                          key: ValueKey(exercise.id ?? index),
-                          exercise: exercise,
-                          index: index,
-                          workoutId: widget.workoutId,
-                          initiallyExpanded: false,
-                          onTap: () {
-                            print('🎯 [Card] onTap called for: ${exercise.name}');
-                            context.push('/exercise-detail', extra: exercise);
-                          },
-                          onSwap: () async {
-                            final updatedWorkout = await showExerciseSwapSheet(
-                              context,
-                              ref,
-                              workoutId: widget.workoutId,
-                              exercise: exercise,
-                            );
-                            if (updatedWorkout != null) {
-                              setState(() => _workout = updatedWorkout);
-                            }
-                          },
-                        ),
+                        onSwap: () async {
+                          final updatedWorkout = await showExerciseSwapSheet(
+                            context,
+                            ref,
+                            workoutId: widget.workoutId,
+                            exercise: exercise,
+                          );
+                          if (updatedWorkout != null) {
+                            setState(() => _workout = updatedWorkout);
+                          }
+                        },
                       ),
                     ),
                   ),

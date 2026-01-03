@@ -72,20 +72,12 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
                     const SizedBox(height: 40),
 
-                    // Feature list - Key differentiators from FEATURES.md
-                    _FeatureItem(
-                      icon: Icons.smart_toy_outlined,
-                      iconColor: colors.cyan,
-                      title: '100+ AI coach messages daily',
-                      subtitle: 'Personal trainer in your pocket',
-                      colors: colors,
-                    ),
-                    const SizedBox(height: 16),
+                    // Feature list - Key differentiators (ordered by impact)
                     _FeatureItem(
                       icon: Icons.auto_fix_high,
                       iconColor: colors.purple,
                       title: 'Unlimited workout generation',
-                      subtitle: 'Custom plans for 23+ equipment types',
+                      subtitle: 'Custom AI plans for 23+ equipment types',
                       colors: colors,
                     ),
                     const SizedBox(height: 16),
@@ -93,7 +85,15 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       icon: Icons.camera_alt_outlined,
                       iconColor: colors.orange,
                       title: 'AI food photo scanning',
-                      subtitle: 'Instant nutrition from any meal',
+                      subtitle: 'Snap a photo, get instant macros',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 16),
+                    _FeatureItem(
+                      icon: Icons.restaurant_menu_outlined,
+                      iconColor: colors.cyan,
+                      title: 'Full nutrition & macro tracking',
+                      subtitle: 'Log meals, track calories & macros',
                       colors: colors,
                     ),
                     const SizedBox(height: 16),
@@ -108,8 +108,8 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     _FeatureItem(
                       icon: Icons.trending_up,
                       iconColor: Colors.amber,
-                      title: 'PR tracking & 1RM calculator',
-                      subtitle: 'Track strength progress over time',
+                      title: 'PR tracking & progress charts',
+                      subtitle: 'Track strength gains over time',
                       colors: colors,
                     ),
                     const SizedBox(height: 16),

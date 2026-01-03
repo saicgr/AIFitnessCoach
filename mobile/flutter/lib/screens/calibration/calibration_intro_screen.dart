@@ -33,9 +33,9 @@ class _CalibrationIntroScreenState extends ConsumerState<CalibrationIntroScreen>
     // Log the skip event
     ref.read(contextLoggingServiceProvider).logCalibrationSkipped();
 
-    // Navigate to home or paywall based on flow
+    // Navigate to home (paywall is already completed if fromOnboarding)
     if (widget.fromOnboarding) {
-      context.go('/paywall-features');
+      context.go('/home');
     } else {
       context.pop();
     }

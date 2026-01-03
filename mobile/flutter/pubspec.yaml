@@ -92,6 +92,9 @@ dependencies:
   # Home Screen Widgets
   home_widget: ^0.7.0
 
+  # Tutorial/Coach Mark for App Tour
+  tutorial_coach_mark: ^1.2.11
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

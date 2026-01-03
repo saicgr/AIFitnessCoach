@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../data/providers/app_tour_provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/tooltip_tour_provider.dart';
 import '../widgets/settings_card.dart';
 import '../widgets/setting_tile.dart';
 
 /// App Tour & Demo settings section.
 ///
 /// Provides access to:
-/// - Restart App Tour - Re-show the interactive app walkthrough
+/// - Restart App Tour - Re-show the interactive tooltip-based app walkthrough
 /// - Try Demo Workout - Experience a sample workout without commitment
 /// - Preview Sample Plan - See what a 4-week workout plan looks like
 ///
@@ -27,12 +28,23 @@ class AppTourSection extends ConsumerWidget {
           icon: Icons.replay,
           title: 'Restart App Tour',
           subtitle: 'See the interactive app walkthrough again',
-          onTap: () {
+          onTap: () async {
             HapticFeedback.lightImpact();
-            // Reset tour completion status
-            ref.read(appTourProvider.notifier).resetTour();
-            // Navigate to tour with settings source
-            context.push('/app-tour', extra: {'source': 'settings'});
+            // Reset tooltip tour completion status
+            await ref.read(tooltipTourProvider.notifier).resetTour();
+            // Navigate back to home screen where the tour will show
+            if (context.mounted) {
+              context.go('/home');
+              // Show confirmation
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Tour will start on the home screen'),
+                  backgroundColor: AppColors.cyan,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
           },
         ),
         // Try Demo Workout

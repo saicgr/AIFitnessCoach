@@ -221,7 +221,7 @@ void main() {
           'body_part': 'legs',
           'equipment': 'Barbell',
           'target_muscle': 'quadriceps',
-          'difficulty_level': 2,
+          'difficulty_level': 'Intermediate',
           'category': 'compound',
           'instructions': 'Stand with feet shoulder-width apart...',
           'tips': 'Keep your chest up.',
@@ -236,12 +236,10 @@ void main() {
         expect(exercise.name, 'Barbell Back Squat');
         expect(exercise.bodyPart, 'legs');
         expect(exercise.targetMuscle, 'quadriceps');
-        expect(exercise.difficultyLevel, 2);
+        expect(exercise.difficulty, 'Intermediate');
         expect(exercise.category, 'compound');
         expect(exercise.videoUrl, 'https://example.com/video.mp4');
         expect(exercise.imageUrl, 'https://example.com/image.jpg');
-        expect(exercise.isBodyweight, false);
-        expect(exercise.isCompound, true);
       });
 
       test('should handle minimal JSON', () {
@@ -291,30 +289,22 @@ void main() {
     });
 
     group('difficulty getter', () {
-      test('should return "Beginner" for level 1', () {
-        const exercise = LibraryExercise(difficultyLevel: 1);
+      test('should return the difficulty level value directly', () {
+        const exercise = LibraryExercise(difficultyLevelValue: 'Beginner');
         expect(exercise.difficulty, 'Beginner');
       });
 
-      test('should return "Intermediate" for level 2', () {
-        const exercise = LibraryExercise(difficultyLevel: 2);
+      test('should return Intermediate for Intermediate level', () {
+        const exercise = LibraryExercise(difficultyLevelValue: 'Intermediate');
         expect(exercise.difficulty, 'Intermediate');
       });
 
-      test('should return "Advanced" for level 3', () {
-        const exercise = LibraryExercise(difficultyLevel: 3);
+      test('should return Advanced for Advanced level', () {
+        const exercise = LibraryExercise(difficultyLevelValue: 'Advanced');
         expect(exercise.difficulty, 'Advanced');
       });
 
-      test('should return null for other levels', () {
-        const exercise = LibraryExercise(difficultyLevel: 0);
-        expect(exercise.difficulty, isNull);
-
-        const exercise2 = LibraryExercise(difficultyLevel: 4);
-        expect(exercise2.difficulty, isNull);
-      });
-
-      test('should return null when difficultyLevel is null', () {
+      test('should return null when difficultyLevelValue is null', () {
         const exercise = LibraryExercise();
         expect(exercise.difficulty, isNull);
       });

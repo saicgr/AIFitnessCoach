@@ -6,7 +6,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
-import '../log_meal_sheet.dart';
 
 /// Provider for caching quick add suggestions
 /// This prefetches data when the nutrition screen loads for instant access
@@ -563,20 +562,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
   }
 
   void _openFullLogSheet(BuildContext context) {
-    Navigator.of(context).pop(); // Close quick add sheet first
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => LogMealSheet(
-        userId: widget.userId,
-        isDark: isDark,
-      ),
-    ).then((_) {
-      widget.onMealLogged();
-    });
+    // Pop with 'openFullLog' result to signal parent to show LogMealSheet
+    Navigator.of(context).pop('openFullLog');
   }
 
   void _showSuccessSnackbar(String name, int calories) {

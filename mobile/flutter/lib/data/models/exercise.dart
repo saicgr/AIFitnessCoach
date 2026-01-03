@@ -330,7 +330,7 @@ class LibraryExercise extends Equatable {
   @JsonKey(name: 'instructions')
   final String? instructionsValue;
   @JsonKey(name: 'difficulty_level')
-  final int? difficultyLevel;
+  final String? difficultyLevelValue;
   final String? category;
   @JsonKey(name: 'gif_url')
   final String? gifUrl;
@@ -353,7 +353,7 @@ class LibraryExercise extends Equatable {
     this.targetMuscle,
     this.secondaryMuscles,
     this.instructionsValue,
-    this.difficultyLevel,
+    this.difficultyLevelValue,
     this.category,
     this.gifUrl,
     this.videoUrl,
@@ -373,20 +373,8 @@ class LibraryExercise extends Equatable {
   /// Get muscle group for filtering (use body_part as primary)
   String? get muscleGroup => bodyPart ?? targetMuscle;
 
-  /// Get difficulty string
-  String? get difficulty {
-    if (difficultyLevel == null) return null;
-    switch (difficultyLevel) {
-      case 1:
-        return 'Beginner';
-      case 2:
-        return 'Intermediate';
-      case 3:
-        return 'Advanced';
-      default:
-        return 'Intermediate';
-    }
-  }
+  /// Get difficulty string (already a string from API, just return it)
+  String? get difficulty => difficultyLevelValue;
 
   /// Get type (category)
   String? get type => category;

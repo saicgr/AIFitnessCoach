@@ -26,6 +26,7 @@ import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/summaries/weekly_summary_screen.dart';
 import '../screens/social/social_screen.dart';
+import '../screens/workouts/workouts_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen.dart';
 import '../screens/workout/workout_complete_screen.dart';
@@ -40,6 +41,7 @@ import '../screens/settings/exercise_preferences/exercise_queue_screen.dart';
 import '../screens/settings/exercise_preferences/staple_exercises_screen.dart';
 import '../screens/settings/workout_history_import_screen.dart';
 import '../screens/settings/training/my_1rms_screen.dart';
+import '../screens/settings/training/strength_baselines_screen.dart';
 import '../screens/settings/layout_editor_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
@@ -815,6 +817,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/workouts',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: WorkoutsScreen(),
+            ),
+          ),
+          GoRoute(
             path: '/progress',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: ProgressScreen(),
@@ -1090,6 +1098,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/my-1rms',
         builder: (context, state) => const My1RMsScreen(),
+      ),
+
+      // Strength Baselines (from calibration)
+      GoRoute(
+        path: '/settings/training/baselines',
+        builder: (context, state) => const StrengthBaselinesScreen(),
       ),
 
       // Layout Editor (My Space) - Home screen layout customization

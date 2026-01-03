@@ -145,7 +145,7 @@ class AppTourNotifier extends StateNotifier<AppTourState> {
       final localShouldShow = await _repository.shouldShowTourLocally();
       if (!localShouldShow) {
         state = state.copyWith(shouldShowTour: false);
-        debugPrint('[AppTourProvider] Tour already completed (local)');
+        debugPrint('[AppTourProvider] Tour already completed/skipped (local)');
         return false;
       }
 
@@ -170,8 +170,12 @@ class AppTourNotifier extends StateNotifier<AppTourState> {
         isLoading: false,
         error: 'Failed to check tour status',
       );
-      // Default to showing tour on error
-      return true;
+      // On error, fall back to local storage check (don't default to showing)
+      // This prevents the tour from showing every time if there's an API issue
+      final localShouldShow = await _repository.shouldShowTourLocally();
+      state = state.copyWith(shouldShowTour: localShouldShow);
+      debugPrint('[AppTourProvider] Fallback to local storage: $localShouldShow');
+      return localShouldShow;
     }
   }
 

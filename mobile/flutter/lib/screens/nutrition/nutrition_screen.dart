@@ -404,11 +404,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     );
   }
 
-  void _showLogMealSheet(bool isDark) {
+  Future<void> _showLogMealSheet(bool isDark) async {
+    // Try local state first, fallback to apiClient
+    String? userId = _userId;
+    if (userId == null || userId.isEmpty) {
+      debugPrint('_showLogMealSheet: local userId is null, trying apiClient...');
+      userId = await ref.read(apiClientProvider).getUserId();
+    }
+
     // Guard: Don't show sheet if user ID is not available
-    if (_userId == null || _userId!.isEmpty) {
+    if (userId == null || userId.isEmpty) {
       debugPrint('Cannot show LogMealSheet: userId is null or empty');
       return;
+    }
+
+    // Update local state if we got it from apiClient
+    if (_userId == null) {
+      setState(() => _userId = userId);
     }
 
     // Hide nav bar while sheet is open
@@ -419,7 +431,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
-          LogMealSheet(userId: _userId!, isDark: isDark),
+          LogMealSheet(userId: userId!, isDark: isDark),
     ).then((_) {
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;

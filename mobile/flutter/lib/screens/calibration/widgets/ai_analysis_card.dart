@@ -207,13 +207,17 @@ class AIAnalysisCard extends StatelessWidget {
     final success = isDark ? AppColors.success : AppColorsLight.success;
     final warning = isDark ? AppColors.warning : AppColorsLight.warning;
 
+    // Double-check: if levels are actually the same string, they match regardless of backend flag
+    final actuallyMatch = levelsMatch ||
+        statedLevel.toLowerCase().trim() == detectedLevel.toLowerCase().trim();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: (levelsMatch ? success : warning).withValues(alpha: 0.1),
+        color: (actuallyMatch ? success : warning).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (levelsMatch ? success : warning).withValues(alpha: 0.3),
+          color: (actuallyMatch ? success : warning).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -230,7 +234,7 @@ class AIAnalysisCard extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: levelsMatch
+                child: actuallyMatch
                     ? Icon(
                         Icons.check_circle,
                         color: success,
@@ -260,12 +264,12 @@ class AIAnalysisCard extends StatelessWidget {
                   level: detectedLevel,
                   color: purple,
                   isDark: isDark,
-                  isHighlighted: !levelsMatch,
+                  isHighlighted: !actuallyMatch,
                 ),
               ),
             ],
           ),
-          if (!levelsMatch) ...[
+          if (!actuallyMatch) ...[
             const SizedBox(height: 12),
             Row(
               children: [

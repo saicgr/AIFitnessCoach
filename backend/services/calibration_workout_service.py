@@ -195,8 +195,8 @@ class CalibrationWorkoutService:
     """
     Service for generating and analyzing calibration/test workouts.
 
-    Calibration workouts are short (15-20 min) test workouts that assess
-    a user's actual fitness level by testing key movement patterns.
+    Calibration workouts are quick (15 min) test workouts with 5-6 exercises
+    that assess a user's actual fitness level by testing key movement patterns.
     """
 
     def __init__(self):
@@ -208,7 +208,7 @@ class CalibrationWorkoutService:
         user_data: dict
     ) -> dict:
         """
-        Generate a 15-20 minute calibration workout based on onboarding data.
+        Generate a quick 15 minute calibration workout based on onboarding data.
 
         Args:
             user_data: User's profile data including:
@@ -260,7 +260,7 @@ class CalibrationWorkoutService:
         lower_body_weight = FITNESS_LEVEL_WEIGHT_GUIDELINES[fitness_level][MovementPattern.LOWER_BODY][gender]
         core_weight = FITNESS_LEVEL_WEIGHT_GUIDELINES[fitness_level][MovementPattern.CORE][gender]
 
-        prompt = f"""Generate a 15-20 minute calibration/assessment workout to test the user's fitness level.
+        prompt = f"""Generate a quick 15 minute calibration/assessment workout to test the user's fitness level.
 
 USER PROFILE:
 - Self-reported fitness level: {fitness_level}
@@ -271,16 +271,15 @@ USER PROFILE:
 
 CALIBRATION WORKOUT REQUIREMENTS:
 
-1. TEST ALL FOUR MOVEMENT PATTERNS:
-   - Upper Body Push (chest, shoulders, triceps): 2-3 exercises
-   - Upper Body Pull (back, biceps): 2-3 exercises
-   - Lower Body (legs, glutes): 2-3 exercises
-   - Core (abs, obliques): 2 exercises
+1. TEST ALL FOUR MOVEMENT PATTERNS (5-6 exercises total):
+   - Upper Body Push (chest, shoulders, triceps): 1-2 exercises
+   - Upper Body Pull (back, biceps): 1-2 exercises
+   - Lower Body (legs, glutes): 1-2 exercises
+   - Core (abs, obliques): 1 exercise
 
 2. EXERCISE SELECTION RULES:
    - Select exercises that match the user's available equipment
    - Include ONE primary compound movement per pattern
-   - Include ONE secondary or isolation movement per pattern
    - Each exercise should have 2-3 sets with 8-12 target reps
    - Include progressive weight options (lighter, standard, heavier)
 
@@ -334,8 +333,8 @@ Return ONLY valid JSON in this exact format:
 }}
 
 IMPORTANT:
-- Include exactly 8-10 exercises total covering all movement patterns
-- Keep rest periods short (45-60 seconds) to complete in 15-20 minutes
+- Include exactly 5-6 exercises total covering all movement patterns
+- Keep rest periods short (45-60 seconds) to complete in 15 minutes
 - Weight recommendations should be realistic for {fitness_level} level
 - Notes should help the user understand proper form and what to observe"""
 

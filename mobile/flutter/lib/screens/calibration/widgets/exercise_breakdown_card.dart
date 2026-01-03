@@ -301,10 +301,10 @@ class _ExerciseBreakdownCardState extends State<ExerciseBreakdownCard> {
 
           const SizedBox(height: 8),
 
-          // Stats row
+          // Stats row - only show meaningful values
           Row(
             children: [
-              if (result.weightUsedKg != null) ...[
+              if (result.weightUsedKg != null && result.weightUsedKg! > 0) ...[
                 _buildStatItem(
                   Icons.fitness_center,
                   '${result.weightUsedKg!.toStringAsFixed(1)} kg',
@@ -312,7 +312,8 @@ class _ExerciseBreakdownCardState extends State<ExerciseBreakdownCard> {
                 ),
                 const SizedBox(width: 16),
               ],
-              if (result.repsCompleted != null) ...[
+              // Only show reps if greater than 1 (to avoid showing "1 reps" for timed exercises)
+              if (result.repsCompleted != null && result.repsCompleted! > 1) ...[
                 _buildStatItem(
                   Icons.repeat,
                   '${result.repsCompleted} reps',
@@ -320,7 +321,8 @@ class _ExerciseBreakdownCardState extends State<ExerciseBreakdownCard> {
                 ),
                 const SizedBox(width: 16),
               ],
-              if (result.setsCompleted != null)
+              // Only show sets if greater than 1 (calibration is typically single-set)
+              if (result.setsCompleted != null && result.setsCompleted! > 1)
                 _buildStatItem(
                   Icons.format_list_numbered,
                   '${result.setsCompleted} sets',

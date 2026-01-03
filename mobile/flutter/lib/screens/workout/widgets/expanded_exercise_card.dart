@@ -311,13 +311,12 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   }
 
   Widget _buildHeader(BuildContext context, WorkoutExercise exercise, Color glassSurface, Color textMuted) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return InkWell(
       onTap: () {
-        print('🎯 [ExerciseCard] Header tapped: ${widget.exercise.name}');
+        debugPrint('🎯 [ExerciseCard] Header tapped: ${widget.exercise.name}');
         widget.onTap?.call();
       },
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [

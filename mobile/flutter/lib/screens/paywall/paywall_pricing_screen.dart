@@ -256,9 +256,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                               period: '/mo',
                               billedAs: _selectedBillingCycle == 'yearly' ? '\$47.99/year' : 'Billed monthly',
                               features: const [
-                                '100 AI chats/day',
                                 'Daily workouts',
                                 '5 food scans/day',
+                                'Full macro tracking',
                               ],
                               isSelected: _selectedPlan == (_selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
                               onTap: () => setState(() => _selectedPlan = _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly'),
@@ -523,10 +523,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
       if (context.mounted) {
         // If calibration not completed and not skipped, offer calibration
+        // For new users, status will be null - they should see calibration
         final status = calibrationStatus.status;
-        if (status != null && !status.isCompleted && !status.isSkipped) {
+        final isCompleted = status?.isCompleted ?? false;
+        final isSkipped = status?.isSkipped ?? false;
+
+        if (!isCompleted && !isSkipped) {
+          debugPrint('🎯 [Paywall] Navigating to calibration (status: ${status == null ? "null" : "exists"}, completed: $isCompleted, skipped: $isSkipped)');
           context.go('/calibration/intro', extra: {'fromOnboarding': true});
         } else {
+          debugPrint('🏠 [Paywall] Navigating to home (completed: $isCompleted, skipped: $isSkipped)');
           context.go('/home');
         }
       }

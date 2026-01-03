@@ -239,9 +239,11 @@ class DangerZoneSection extends ConsumerWidget {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
+      // Use authStateProvider for consistent auth state (not apiClientProvider.getUserId())
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
 
-      if (userId == null) {
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not found');
       }
 
@@ -297,9 +299,11 @@ class DangerZoneSection extends ConsumerWidget {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
+      // Use authStateProvider for consistent auth state (not apiClientProvider.getUserId())
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
 
-      if (userId == null) {
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not found');
       }
 

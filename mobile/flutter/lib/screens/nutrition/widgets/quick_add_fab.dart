@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../log_meal_sheet.dart';
 import 'quick_add_sheet.dart';
 
 /// Floating action button for quick meal logging
@@ -48,15 +49,20 @@ class QuickAddFAB extends ConsumerWidget {
     // Haptic feedback for button press
     HapticFeedback.lightImpact();
 
-    showModalBottomSheet(
+    showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => QuickAddSheet(
+      builder: (ctx) => QuickAddSheet(
         userId: userId,
         onMealLogged: onMealLogged,
       ),
-    );
+    ).then((result) {
+      // If user chose to open full log sheet, show LogMealSheet
+      if (result == 'openFullLog' && context.mounted) {
+        showLogMealSheet(context, ref).then((_) => onMealLogged());
+      }
+    });
   }
 }
 
@@ -99,14 +105,19 @@ class QuickAddFABSimple extends ConsumerWidget {
     // Haptic feedback for button press
     HapticFeedback.lightImpact();
 
-    showModalBottomSheet(
+    showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => QuickAddSheet(
+      builder: (ctx) => QuickAddSheet(
         userId: userId,
         onMealLogged: onMealLogged,
       ),
-    );
+    ).then((result) {
+      // If user chose to open full log sheet, show LogMealSheet
+      if (result == 'openFullLog' && context.mounted) {
+        showLogMealSheet(context, ref).then((_) => onMealLogged());
+      }
+    });
   }
 }

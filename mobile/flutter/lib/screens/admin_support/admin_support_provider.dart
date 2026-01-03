@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
+import '../../data/providers/admin_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/services/supabase_realtime_service.dart';
@@ -103,8 +105,17 @@ class AdminSupportChatsNotifier extends StateNotifier<AsyncValue<List<AdminSuppo
   Timer? _refreshTimer;
 
   AdminSupportChatsNotifier(this.ref) : super(const AsyncValue.loading()) {
+    // Only initialize polling for admin users
+    final isAdmin = ref.read(isAdminProvider);
+    if (!isAdmin) {
+      // Non-admin users get empty list immediately, no polling
+      state = const AsyncValue.data([]);
+      debugPrint('[AdminSupport] User is not admin, skipping live-chats initialization');
+      return;
+    }
+
     _loadChats();
-    // Auto-refresh every 30 seconds
+    // Auto-refresh every 30 seconds (only for admins)
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       refreshChats();
     });
@@ -137,13 +148,20 @@ class AdminSupportChatsNotifier extends StateNotifier<AsyncValue<List<AdminSuppo
       }
     } catch (e) {
       // Keep existing data on refresh error
-      print('Failed to refresh admin chats: $e');
+      debugPrint('[AdminSupport] Failed to refresh admin chats: $e');
     }
   }
 
   Future<List<AdminSupportChat>> _fetchChats() async {
     final authState = ref.read(authStateProvider);
     if (authState.user == null) return [];
+
+    // Skip API call if user is not an admin - prevents 422 errors
+    final isAdmin = ref.read(isAdminProvider);
+    if (!isAdmin) {
+      debugPrint('[AdminSupport] User is not admin, skipping live-chats fetch');
+      return [];
+    }
 
     final apiClient = ref.read(apiClientProvider);
     final response = await apiClient.get(

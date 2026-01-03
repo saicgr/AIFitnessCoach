@@ -8,6 +8,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
+import '../../data/providers/tooltip_tour_provider.dart';
+import 'widgets/home_tooltip_tour.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -206,6 +208,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _checkPendingWidgetAction();
       _initializeCurrentProgram();
       _initializeWindowModeTracking();
+      _checkAppTour();
     });
   }
 
@@ -794,6 +797,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
             const SizedBox(height: 16),
+            // Reset to Default button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Material(
+                color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => _resetToDefaultLayout(),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.orange.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.orange.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.restart_alt_rounded,
+                            color: AppColors.orange,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Reset to Default',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Restore the original FitWiz layout',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.orange,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             // Preset layouts list
             Expanded(
               child: ListView.builder(
@@ -1006,6 +1077,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  void _resetToDefaultLayout() {
+    Navigator.pop(context); // Close the sheet
+
+    // Default tiles that match the original FitWiz layout
+    final defaultTileTypes = [
+      TileType.fitnessScore,
+      TileType.moodPicker,
+      TileType.dailyActivity,
+      TileType.nextWorkout,
+      TileType.quickActions,
+      TileType.weekChanges,
+      TileType.weeklyProgress,
+      TileType.weeklyGoals,
+      TileType.upcomingWorkouts,
+      TileType.aiCoachTip,
+    ];
+
+    // Show confirmation dialog
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: elevatedColor,
+        title: Row(
+          children: [
+            Icon(Icons.restart_alt_rounded, color: AppColors.orange, size: 28),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Reset to Default?',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'This will restore the original FitWiz layout. Your current customizations will be replaced.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _editingTiles = defaultTileTypes.asMap().entries.map((entry) {
+                  return HomeTile(
+                    type: entry.value,
+                    order: entry.key,
+                    isVisible: true,
+                    size: TileSize.normal,
+                  );
+                }).toList();
+              });
+              HapticService.success();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('🔄 Default layout restored!'),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _checkPendingWidgetAction() {
     final pendingAction = ref.read(pendingWidgetActionProvider);
     debugPrint('HomeScreen: Checking pending action: $pendingAction');
@@ -1038,6 +1199,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (userId != null) {
       ref.read(windowModeProvider.notifier).setUserId(userId);
     }
+  }
+
+  /// Check if tooltip tour should be shown for new users
+  Future<void> _checkAppTour() async {
+    try {
+      final shouldShow = await ref.read(tooltipTourProvider.notifier).checkShouldShowTour();
+      if (shouldShow && mounted) {
+        debugPrint('🎯 [Home] Tooltip tour should be shown');
+        // Wait a bit for the UI to fully build before showing tour
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) {
+          _showTooltipTour();
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Home] Error checking tooltip tour: $e');
+    }
+  }
+
+  /// Show the tooltip-based app tour
+  void _showTooltipTour() {
+    final controller = HomeTooltipTourController(
+      context: context,
+      ref: ref,
+      keys: HomeTourKeys.all,
+      onComplete: () {
+        debugPrint('✅ [Home] Tooltip tour complete');
+      },
+    );
+    controller.show();
   }
 
   Future<void> _initializeWorkouts() async {
@@ -1576,40 +1767,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return [
+      // Add Tile and Discover buttons row - at the top
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            'Drag to reorder • Tap size to resize • Tap eye to hide',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-      SliverReorderableList(
-        itemBuilder: (context, index) {
-          final tile = sortedTiles[index];
-          return _buildEditableTile(
-            context,
-            tile,
-            index,
-            isDark,
-            workoutsState,
-            workoutsNotifier,
-            nextWorkout,
-            isAIGenerating,
-          );
-        },
-        itemCount: sortedTiles.length,
-        onReorder: _onReorderTiles,
-      ),
-      // Add Tile and Discover buttons row
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Row(
             children: [
               // Add Tile button
@@ -1698,6 +1859,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ],
           ),
         ),
+      ),
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            'Drag to reorder • Tap size to resize • Tap eye to hide',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+      SliverReorderableList(
+        itemBuilder: (context, index) {
+          final tile = sortedTiles[index];
+          return _buildEditableTile(
+            context,
+            tile,
+            index,
+            isDark,
+            workoutsState,
+            workoutsNotifier,
+            nextWorkout,
+            isAIGenerating,
+          );
+        },
+        itemCount: sortedTiles.length,
+        onReorder: _onReorderTiles,
       ),
     ];
   }
@@ -1910,10 +2101,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
 
       // Quick Actions Row
-      const SliverToBoxAdapter(
+      SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.only(top: 8, bottom: 8),
-          child: QuickActionsRow(),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: Container(
+            key: HomeTourKeys.quickActionsKey,
+            child: const QuickActionsRow(),
+          ),
         ),
       ),
 
@@ -2029,11 +2223,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           // Streak Badge
-          _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
+          Container(
+            key: HomeTourKeys.streakBadgeKey,
+            child: _StreakBadge(streak: currentStreak, isDark: isDark, isCompact: isCompact),
+          ),
           SizedBox(width: spacing),
-          // Hide Library button in very narrow split screen
+          // Hide Profile button in very narrow split screen
           if (!isCompact) ...[
-            _LibraryButton(isDark: isDark),
+            Container(
+              key: HomeTourKeys.libraryButtonKey, // Keep key for tour compatibility
+              child: _ProfileButton(isDark: isDark),
+            ),
             SizedBox(width: spacing / 2),
           ],
           NotificationBellButton(isDark: isDark),
@@ -2073,9 +2273,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               message: 'AI is generating your workout...',
             )
           : nextWorkout != null
-              ? NextWorkoutCard(
-                  workout: nextWorkout,
-                  onStart: () => context.push('/workout/${nextWorkout.id}'),
+              ? Container(
+                  key: HomeTourKeys.nextWorkoutKey,
+                  child: NextWorkoutCard(
+                    workout: nextWorkout,
+                    onStart: () => context.push('/workout/${nextWorkout.id}'),
+                  ),
                 )
               : (_isCheckingWorkouts || _isStreamingGeneration)
                   ? const GeneratingWorkoutsCard(
@@ -2147,38 +2350,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ] else ...[
             // Edit button (replaces My Space)
-            Material(
-              color: elevatedColor,
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                onTap: _enterEditMode,
+            Container(
+              key: HomeTourKeys.editButtonKey,
+              child: Material(
+                color: elevatedColor,
                 borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.purple.withOpacity(0.3),
+                child: InkWell(
+                  onTap: _enterEditMode,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.purple.withOpacity(0.3),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.edit_rounded,
-                        size: 16,
-                        color: AppColors.purple,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 16,
+                          color: AppColors.purple,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -2192,25 +2398,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 }
 
-/// A button that navigates to the library screen
-class _LibraryButton extends StatelessWidget {
+/// A button that navigates to the profile screen
+class _ProfileButton extends StatelessWidget {
   final bool isDark;
 
-  const _LibraryButton({required this.isDark});
+  const _ProfileButton({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: () {
         HapticService.light();
-        context.push('/library');
+        context.push('/profile');
       },
       icon: Icon(
-        Icons.fitness_center,
+        Icons.person_outline,
         color: AppColors.purple,
         size: 24,
       ),
-      tooltip: 'Exercise Library',
+      tooltip: 'Profile',
     );
   }
 }

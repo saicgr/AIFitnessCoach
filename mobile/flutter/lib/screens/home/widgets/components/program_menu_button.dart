@@ -400,7 +400,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                 ),
               ),
 
-              const SizedBox(height: 20),
+              // Extra padding to ensure content isn't covered by the floating chat button
+              const SizedBox(height: 80),
             ],
           ),
         ),

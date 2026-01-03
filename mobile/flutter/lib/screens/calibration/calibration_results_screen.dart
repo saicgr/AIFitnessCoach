@@ -73,12 +73,8 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     // Show success toast
     _showSuccessToast('Settings updated successfully!');
 
-    // Navigate based on flow
-    if (widget.fromOnboarding) {
-      context.go('/paywall-features');
-    } else {
-      context.go('/home');
-    }
+    // Navigate to home (paywall is already completed if fromOnboarding)
+    context.go('/home');
   }
 
   void _declineAdjustments() {
@@ -93,12 +89,8 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
     // Show info toast
     _showInfoToast('Keeping your original settings');
 
-    // Navigate based on flow
-    if (widget.fromOnboarding) {
-      context.go('/paywall-features');
-    } else {
-      context.go('/home');
-    }
+    // Navigate to home (paywall is already completed if fromOnboarding)
+    context.go('/home');
   }
 
   void _showSuccessToast(String message) {
@@ -148,15 +140,31 @@ class _CalibrationResultsScreenState extends ConsumerState<CalibrationResultsScr
       final status = adjustments[_getAdjustmentKey(exercise.name)] as String?;
       if (status == 'good') {
         performanceIndicator = 'exceeded';
-      } else if (status == 'focus') {
+      } else if (status == 'focus' || status == 'needs_work') {
         performanceIndicator = 'below';
+      }
+
+      // For timed exercises (like plank), show time instead of reps
+      int? repsToShow = exercise.repsCompleted;
+      String aiComment = _getExerciseComment(exercise, status);
+
+      // If this is a timed exercise with no reps, show the time held
+      if (exercise.isTimed && exercise.secondsHeld != null && exercise.secondsHeld! > 0) {
+        final minutes = exercise.secondsHeld! ~/ 60;
+        final seconds = exercise.secondsHeld! % 60;
+        final timeStr = minutes > 0
+            ? '$minutes:${seconds.toString().padLeft(2, '0')}'
+            : '${seconds}s';
+        aiComment = 'Held for $timeStr. ${_getExerciseComment(exercise, status)}';
+        // Don't show reps for pure timed exercises
+        repsToShow = null;
       }
 
       return CalibrationExerciseResult(
         exerciseName: exercise.name,
-        repsCompleted: exercise.repsCompleted,
-        setsCompleted: 1, // Calibration exercises are single-set
-        aiComment: _getExerciseComment(exercise, status),
+        repsCompleted: repsToShow,
+        setsCompleted: null, // Don't show sets for calibration (it's implicit)
+        aiComment: aiComment,
         performanceIndicator: performanceIndicator,
       );
     }).toList();

@@ -61,6 +61,7 @@ END;
 $$;
 
 -- 3. recalculate_recipe_nutrition
+-- NOTE: Uses user_recipes table (not recipes)
 CREATE OR REPLACE FUNCTION public.recalculate_recipe_nutrition()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -82,11 +83,11 @@ BEGIN
     FROM recipe_ingredients
     WHERE recipe_id = COALESCE(NEW.recipe_id, OLD.recipe_id);
 
-    UPDATE recipes SET
-        total_calories = total_calories,
-        total_protein_g = total_protein,
-        total_carbs_g = total_carbs,
-        total_fat_g = total_fat,
+    UPDATE user_recipes SET
+        calories_per_serving = total_calories,
+        protein_per_serving_g = total_protein,
+        carbs_per_serving_g = total_carbs,
+        fat_per_serving_g = total_fat,
         updated_at = NOW()
     WHERE id = COALESCE(NEW.recipe_id, OLD.recipe_id);
 
@@ -95,6 +96,7 @@ END;
 $$;
 
 -- 4. update_recipe_log_count
+-- NOTE: Uses user_recipes table (not recipes)
 CREATE OR REPLACE FUNCTION public.update_recipe_log_count()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -102,10 +104,10 @@ SECURITY INVOKER
 SET search_path = public
 AS $$
 BEGIN
-    IF TG_OP = 'INSERT' THEN
-        UPDATE recipes SET times_logged = times_logged + 1 WHERE id = NEW.recipe_id;
-    ELSIF TG_OP = 'DELETE' THEN
-        UPDATE recipes SET times_logged = times_logged - 1 WHERE id = OLD.recipe_id;
+    IF TG_OP = 'INSERT' AND NEW.recipe_id IS NOT NULL THEN
+        UPDATE user_recipes SET times_logged = times_logged + 1, last_logged_at = NOW() WHERE id = NEW.recipe_id;
+    ELSIF TG_OP = 'DELETE' AND OLD.recipe_id IS NOT NULL THEN
+        UPDATE user_recipes SET times_logged = times_logged - 1 WHERE id = OLD.recipe_id;
     END IF;
     RETURN NULL;
 END;

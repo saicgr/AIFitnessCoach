@@ -971,61 +971,61 @@ class _FastingOnboardingScreenState
     Color textMuted,
     Color purple,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+    return GestureDetector(
+      onTap: () async {
+        HapticService.light();
+        final TimeOfDay? picked = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay(hour: selectedHour, minute: 0),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: purple,
+                  brightness: isDark ? Brightness.dark : Brightness.light,
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (picked != null) {
+          onChanged(picked.hour);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: textMuted, fontSize: 13)),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(24, (hour) {
-                final isSelected = hour == selectedHour;
-                final displayHour = _formatHour(hour);
-                return GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    onChanged(hour);
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? purple.withValues(alpha: 0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? purple
-                            : textMuted.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Text(
-                      displayHour,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? purple : textPrimary,
-                      ),
+        child: Row(
+          children: [
+            Icon(Icons.access_time, color: purple, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(color: textMuted, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatHour(selectedHour),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
                   ),
-                );
-              }),
+                ],
+              ),
             ),
-          ),
-        ],
+            Icon(Icons.chevron_right, color: textMuted),
+          ],
+        ),
       ),
     );
   }

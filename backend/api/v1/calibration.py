@@ -25,6 +25,7 @@ from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from services.gemini_service import GeminiService
+from services.calibration_workout_service import get_calibration_workout_service
 
 router = APIRouter(prefix="/calibration", tags=["Calibration"])
 logger = get_logger(__name__)
@@ -315,8 +316,9 @@ async def generate_calibration_workout(
     """
     Generate a new calibration workout for the user.
 
-    Creates a workout with exercises designed to assess the user's
-    strength levels across major muscle groups.
+    Uses AI to create a personalized assessment workout covering all major
+    movement patterns (upper push, upper pull, lower body, core) with
+    5-6 exercises and appropriate weight recommendations.
     """
     logger.info(f"Generating calibration workout for user: {user_id}")
 
@@ -330,98 +332,222 @@ async def generate_calibration_workout(
         if not equipment:
             equipment = user.get("equipment", [])
 
-        # Define calibration exercises based on equipment
-        # These are key compound movements for strength assessment
-        calibration_exercises = []
+        # Ensure equipment is a list
+        if isinstance(equipment, str):
+            equipment = [equipment]
+        if not equipment:
+            equipment = ["bodyweight"]
 
-        # Upper body push
-        if "barbell" in equipment or "dumbbells" in equipment:
+        # Build user data for the calibration service
+        # Calculate age from date_of_birth
+        age = 30  # default
+        if user.get("date_of_birth"):
+            try:
+                dob = datetime.fromisoformat(user["date_of_birth"].replace("Z", "+00:00"))
+                age = (datetime.utcnow() - dob.replace(tzinfo=None)).days // 365
+            except Exception:
+                pass
+
+        user_data = {
+            "fitness_level": user.get("fitness_level", "beginner"),
+            "equipment": equipment,
+            "goals": user.get("goals", ["general_fitness"]),
+            "age": age,
+            "gender": user.get("gender", "male"),
+            "injuries": user.get("injuries", []),
+        }
+
+        # Use the AI-powered calibration workout service
+        calibration_service = get_calibration_workout_service()
+
+        try:
+            ai_workout = await calibration_service.generate_calibration_workout(user_data)
+
+            # Convert AI-generated exercises to CalibrationExercise format
+            calibration_exercises = []
+            for ex in ai_workout.get("exercises", []):
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name=ex.get("name", "Unknown Exercise"),
+                    target_muscle=ex.get("muscle_group", ex.get("movement_pattern", "full_body")),
+                    equipment=ex.get("equipment", "bodyweight"),
+                    is_compound=ex.get("is_compound", True),
+                    test_type="max_reps" if ex.get("target_reps") else "time",
+                    suggested_weight=ex.get("standard_weight_kg"),
+                    weight_unit="kg",
+                    instructions=ex.get("notes", f"Perform {ex.get('target_reps', 10)} reps with good form. Rest {ex.get('rest_seconds', 60)} seconds between sets."),
+                ))
+
+            workout_instructions = "\n".join(ai_workout.get("instructions", [
+                "Start with the suggested weight recommendation",
+                "If the weight feels easy (RPE <6), try going heavier",
+                "If the weight feels hard (RPE >8), use a lighter weight",
+                "Record your actual weights and reps for each exercise"
+            ]))
+
+            estimated_duration = ai_workout.get("duration_minutes", 20)
+
+        except Exception as ai_error:
+            logger.warning(f"AI calibration generation failed, using fallback: {ai_error}")
+
+            # Fallback: 5-6 exercises covering essential movement patterns
+            # (Push, Pull, Squat, Hinge, Core)
+            calibration_exercises = []
+
+            # 1. PUSH (chest/shoulders/triceps)
+            if "barbell" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Barbell Bench Press",
+                    target_muscle="chest",
+                    equipment="barbell",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=40.0,
+                    instructions="Perform 8-12 reps with a weight that challenges you. Track your RPE.",
+                ))
+            elif "dumbbells" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Dumbbell Bench Press",
+                    target_muscle="chest",
+                    equipment="dumbbells",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=15.0,
+                    instructions="Perform 8-12 reps per side with a challenging weight.",
+                ))
+            else:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Push-ups",
+                    target_muscle="chest",
+                    equipment="bodyweight",
+                    is_compound=True,
+                    test_type="max_reps",
+                    instructions="Perform as many push-ups as possible with good form.",
+                ))
+
+            # 2. PULL (back/biceps)
+            if "pull_up_bar" in equipment or "pull-up bar" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Pull-ups",
+                    target_muscle="back",
+                    equipment="pull-up bar",
+                    is_compound=True,
+                    test_type="max_reps",
+                    instructions="Perform as many pull-ups as possible with full range of motion.",
+                ))
+            elif "dumbbells" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Dumbbell Bent-Over Rows",
+                    target_muscle="back",
+                    equipment="dumbbells",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=15.0,
+                    instructions="Perform 8-12 rows per side with a challenging weight.",
+                ))
+            else:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Inverted Rows",
+                    target_muscle="back",
+                    equipment="bodyweight",
+                    is_compound=True,
+                    test_type="max_reps",
+                    instructions="Use a sturdy table or bar to perform inverted rows.",
+                ))
+
+            # 3. SQUAT (quads/glutes)
+            if "barbell" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Barbell Back Squat",
+                    target_muscle="legs",
+                    equipment="barbell",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=60.0,
+                    instructions="Squat to parallel or below for 8-12 reps.",
+                ))
+            elif "dumbbells" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Goblet Squat",
+                    target_muscle="legs",
+                    equipment="dumbbells",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=15.0,
+                    instructions="Hold dumbbell at chest and squat for 10-15 reps.",
+                ))
+            else:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Bodyweight Squats",
+                    target_muscle="legs",
+                    equipment="bodyweight",
+                    is_compound=True,
+                    test_type="max_reps",
+                    instructions="Perform as many squats as possible with good depth.",
+                ))
+
+            # 4. HINGE (hamstrings/glutes/lower back)
+            if "barbell" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Romanian Deadlift",
+                    target_muscle="hamstrings",
+                    equipment="barbell",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=40.0,
+                    instructions="Perform 8-12 reps focusing on hip hinge movement.",
+                ))
+            elif "dumbbells" in equipment:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Dumbbell Romanian Deadlift",
+                    target_muscle="hamstrings",
+                    equipment="dumbbells",
+                    is_compound=True,
+                    test_type="max_reps",
+                    suggested_weight=15.0,
+                    instructions="Perform 8-12 reps focusing on hip hinge movement.",
+                ))
+            else:
+                calibration_exercises.append(CalibrationExercise(
+                    id=str(uuid.uuid4()),
+                    name="Single-Leg Romanian Deadlift",
+                    target_muscle="hamstrings",
+                    equipment="bodyweight",
+                    is_compound=True,
+                    test_type="max_reps",
+                    instructions="Perform 8-10 reps per leg for balance and hamstring strength.",
+                ))
+
+            # 5. CORE (stability)
             calibration_exercises.append(CalibrationExercise(
                 id=str(uuid.uuid4()),
-                name="Bench Press" if "barbell" in equipment else "Dumbbell Bench Press",
-                target_muscle="chest",
-                equipment="barbell" if "barbell" in equipment else "dumbbells",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Perform as many reps as possible with a moderate weight you can control.",
-            ))
-        else:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Push-ups",
-                target_muscle="chest",
+                name="Plank Hold",
+                target_muscle="core",
                 equipment="bodyweight",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Perform as many push-ups as possible with good form.",
+                is_compound=False,
+                test_type="time",
+                instructions="Hold a plank position for as long as possible. Record your time.",
             ))
 
-        # Upper body pull
-        if "pull_up_bar" in equipment or "pull-up bar" in equipment:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Pull-ups",
-                target_muscle="back",
-                equipment="pull-up bar",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Perform as many pull-ups as possible with full range of motion.",
-            ))
-        elif "dumbbells" in equipment:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Dumbbell Rows",
-                target_muscle="back",
-                equipment="dumbbells",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Perform rows with a challenging weight for max reps.",
-            ))
+            workout_instructions = """Complete each exercise to your maximum ability:
+1. Start with the suggested weight or bodyweight
+2. If it feels easy (RPE 5-6), increase the challenge
+3. If it feels too hard (RPE 9-10), reduce the weight
+4. Rest 60-90 seconds between exercises
+5. Record your actual reps, weights, and how hard each felt"""
 
-        # Lower body
-        if "barbell" in equipment:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Barbell Squat",
-                target_muscle="legs",
-                equipment="barbell",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Squat to parallel or below with a weight you can control.",
-            ))
-        else:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Bodyweight Squats",
-                target_muscle="legs",
-                equipment="bodyweight",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Perform as many squats as possible with good depth.",
-            ))
-
-        # Shoulders
-        if "dumbbells" in equipment:
-            calibration_exercises.append(CalibrationExercise(
-                id=str(uuid.uuid4()),
-                name="Dumbbell Shoulder Press",
-                target_muscle="shoulders",
-                equipment="dumbbells",
-                is_compound=True,
-                test_type="max_reps",
-                instructions="Press overhead with control for max reps.",
-            ))
-
-        # Core
-        calibration_exercises.append(CalibrationExercise(
-            id=str(uuid.uuid4()),
-            name="Plank",
-            target_muscle="core",
-            equipment="bodyweight",
-            is_compound=False,
-            test_type="time",
-            instructions="Hold a plank position for as long as possible.",
-        ))
+            estimated_duration = 15
 
         # Create calibration workout record
         now = datetime.utcnow().isoformat()
@@ -432,8 +558,8 @@ async def generate_calibration_workout(
             "user_id": user_id,
             "status": "generated",
             "exercises_json": json.dumps([ex.model_dump() for ex in calibration_exercises]),
-            "estimated_duration_minutes": request.duration_preference if request else 20,
-            "instructions": "Complete each exercise to your maximum ability. Rest 2-3 minutes between exercises. Record your performance honestly - this helps us personalize your workouts.",
+            "estimated_duration_minutes": request.duration_preference if request else estimated_duration,
+            "instructions": workout_instructions,
             "created_at": now,
         }
 
@@ -452,6 +578,7 @@ async def generate_calibration_workout(
             metadata={
                 "calibration_id": calibration_id,
                 "exercise_count": len(calibration_exercises),
+                "ai_generated": 'ai_workout' in dir(),
             },
             status_code=200,
         )
@@ -461,7 +588,7 @@ async def generate_calibration_workout(
             user_id=user_id,
             status=CalibrationWorkoutStatus.GENERATED,
             exercises=calibration_exercises,
-            estimated_duration_minutes=request.duration_preference if request else 20,
+            estimated_duration_minutes=request.duration_preference if request else estimated_duration,
             instructions=workout_data["instructions"],
             created_at=datetime.fromisoformat(now),
         )

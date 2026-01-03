@@ -442,7 +442,7 @@ void main() {
         'body_part': 'legs',
         'equipment': 'Barbell',
         'target_muscle': 'quadriceps',
-        'difficulty_level': 2,
+        'difficulty_level': 'Intermediate',
         'category': 'compound',
         'instructions': 'Stand with feet shoulder-width apart. Lower your body.',
       };
@@ -452,7 +452,7 @@ void main() {
       expect(exercise.name, 'Barbell Squat');
       expect(exercise.bodyPart, 'legs');
       expect(exercise.targetMuscle, 'quadriceps');
-      expect(exercise.difficultyLevel, 2);
+      expect(exercise.difficulty, 'Intermediate');
       expect(exercise.category, 'compound');
     });
 
@@ -470,11 +470,11 @@ void main() {
       expect(ex2.muscleGroup, 'biceps');
     });
 
-    test('should convert difficulty level to string', () {
-      expect(LibraryExercise(difficultyLevel: 1).difficulty, 'Beginner');
-      expect(LibraryExercise(difficultyLevel: 2).difficulty, 'Intermediate');
-      expect(LibraryExercise(difficultyLevel: 3).difficulty, 'Advanced');
-      expect(LibraryExercise(difficultyLevel: null).difficulty, isNull);
+    test('should return difficulty level value directly', () {
+      expect(LibraryExercise(difficultyLevelValue: 'Beginner').difficulty, 'Beginner');
+      expect(LibraryExercise(difficultyLevelValue: 'Intermediate').difficulty, 'Intermediate');
+      expect(LibraryExercise(difficultyLevelValue: 'Advanced').difficulty, 'Advanced');
+      expect(const LibraryExercise().difficulty, isNull);
     });
 
     test('should normalize equipment list', () {

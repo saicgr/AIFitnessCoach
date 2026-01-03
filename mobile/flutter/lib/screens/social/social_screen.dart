@@ -110,25 +110,24 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(80),
+                  preferredSize: const Size.fromHeight(100),
                   child: Column(
                     children: [
                       // Stats chips row
                       _buildStatsChips(context, isDark, feedDataAsync),
-                      // Compact tab bar - icons with short labels
+                      const SizedBox(height: 4),
+                      // Compact tab bar - icons only for space
                       TabBar(
                         controller: _tabController,
                         indicatorColor: AppColors.cyan,
                         labelColor: isDark ? Colors.white : Colors.black,
                         unselectedLabelColor: AppColors.textMuted,
                         indicatorWeight: 3,
-                        labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                        unselectedLabelStyle: const TextStyle(fontSize: 11),
                         tabs: const [
-                          Tab(text: 'Feed', icon: Icon(Icons.dynamic_feed_rounded, size: 18)),
-                          Tab(text: 'Challenges', icon: Icon(Icons.emoji_events_rounded, size: 18)),
-                          Tab(text: 'Ranks', icon: Icon(Icons.leaderboard_rounded, size: 18)),
-                          Tab(text: 'Friends', icon: Icon(Icons.people_rounded, size: 18)),
+                          Tab(icon: Icon(Icons.dynamic_feed_rounded, size: 22)),
+                          Tab(icon: Icon(Icons.emoji_events_rounded, size: 22)),
+                          Tab(icon: Icon(Icons.leaderboard_rounded, size: 22)),
+                          Tab(icon: Icon(Icons.people_rounded, size: 22)),
                         ],
                       ),
                     ],
@@ -170,46 +169,49 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildStatChip(
-            context,
-            isDark: isDark,
-            icon: Icons.people_rounded,
-            label: 'Friends',
-            value: friendsCount,
-            color: AppColors.cyan,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _tabController.animateTo(3); // Friends tab
-            },
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.people_rounded,
+              value: friendsCount,
+              color: AppColors.cyan,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _tabController.animateTo(3); // Friends tab
+              },
+            ),
           ),
-          const SizedBox(width: 6),
-          _buildStatChip(
-            context,
-            isDark: isDark,
-            icon: Icons.emoji_events_rounded,
-            label: 'Challenges',
-            value: challengesCount,
-            color: AppColors.orange,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _tabController.animateTo(1); // Challenges tab
-            },
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.emoji_events_rounded,
+              value: challengesCount,
+              color: AppColors.orange,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _tabController.animateTo(1); // Challenges tab
+              },
+            ),
           ),
-          const SizedBox(width: 6),
-          _buildStatChip(
-            context,
-            isDark: isDark,
-            icon: Icons.favorite_rounded,
-            label: 'Reactions',
-            value: reactionsCount,
-            color: AppColors.pink,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _tabController.animateTo(0); // Feed tab (where reactions are)
-            },
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildStatChip(
+              context,
+              isDark: isDark,
+              icon: Icons.favorite_rounded,
+              value: reactionsCount,
+              color: AppColors.pink,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _tabController.animateTo(0); // Feed tab (where reactions are)
+              },
+            ),
           ),
         ],
       ),
@@ -220,7 +222,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     BuildContext context, {
     required bool isDark,
     required IconData icon,
-    required String label,
     required int value,
     required Color color,
     required VoidCallback onTap,
@@ -230,38 +231,32 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         : color.withValues(alpha: 0.1);
     final borderColor = color.withValues(alpha: 0.3);
 
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: chipBackground,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor, width: 1),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: color, size: 14),
-                const SizedBox(width: 3),
-                Flexible(
-                  child: Text(
-                    '$value',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: chipBackground,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                '$value',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: color,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

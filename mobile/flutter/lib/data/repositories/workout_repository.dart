@@ -11,6 +11,7 @@ import '../models/mood.dart';
 import '../models/today_workout.dart';
 import '../models/workout_generation_params.dart';
 import '../services/api_client.dart';
+import 'auth_repository.dart';
 
 export '../models/today_workout.dart';
 
@@ -33,7 +34,10 @@ final workoutsProvider =
     StateNotifierProvider<WorkoutsNotifier, AsyncValue<List<Workout>>>((ref) {
   final repository = ref.watch(workoutRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
-  return WorkoutsNotifier(repository, apiClient);
+  // Get userId from authStateProvider (primary source of truth)
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.user?.id;
+  return WorkoutsNotifier(repository, apiClient, userId);
 });
 
 /// Single workout provider
@@ -2761,18 +2765,28 @@ class ExerciseProgressionTrend {
 class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   final WorkoutRepository _repository;
   final ApiClient _apiClient;
+  final String? _userId;
 
-  WorkoutsNotifier(this._repository, this._apiClient)
+  WorkoutsNotifier(this._repository, this._apiClient, this._userId)
       : super(const AsyncValue.loading()) {
     _init();
   }
 
   Future<void> _init() async {
-    final userId = await _apiClient.getUserId();
-    if (userId != null) {
-      await fetchWorkouts(userId);
+    // Use userId from authStateProvider (passed from provider)
+    if (_userId != null && _userId.isNotEmpty) {
+      debugPrint('🏋️ [Workouts] _init() with userId from authState: $_userId');
+      await fetchWorkouts(_userId);
     } else {
-      state = const AsyncValue.data([]);
+      // Fallback to apiClient.getUserId() for backwards compatibility
+      final userId = await _apiClient.getUserId();
+      if (userId != null && userId.isNotEmpty) {
+        debugPrint('🏋️ [Workouts] _init() with userId from apiClient: $userId');
+        await fetchWorkouts(userId);
+      } else {
+        debugPrint('🏋️ [Workouts] _init() - no userId available');
+        state = const AsyncValue.data([]);
+      }
     }
   }
 
@@ -2796,8 +2810,13 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// Refresh workouts
   Future<void> refresh() async {
     debugPrint('🏋️ [Workouts] refresh() called');
-    final userId = await _apiClient.getUserId();
-    if (userId != null) {
+    // Use userId from authStateProvider (passed from provider) first
+    String? userId = _userId;
+    if (userId == null || userId.isEmpty) {
+      // Fallback to apiClient.getUserId() for backwards compatibility
+      userId = await _apiClient.getUserId();
+    }
+    if (userId != null && userId.isNotEmpty) {
       debugPrint('🏋️ [Workouts] Fetching workouts for user: $userId');
       await fetchWorkouts(userId);
       final currentWorkouts = state.valueOrNull ?? [];
@@ -2805,7 +2824,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       final nextWorkoutName = nextWorkout?.name;
       debugPrint('🏋️ [Workouts] Next workout: $nextWorkoutName');
     } else {
-      debugPrint('🏋️ [Workouts] refresh() - no userId');
+      debugPrint('🏋️ [Workouts] refresh() - no userId available');
     }
   }
 
@@ -2813,8 +2832,13 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// This should be called on home screen load to ensure continuous workout availability
   /// Uses a 10-day threshold - will generate if user has less than 10 days of workouts
   Future<Map<String, dynamic>> checkAndRegenerateIfNeeded() async {
-    final userId = await _apiClient.getUserId();
-    if (userId == null) {
+    // Use userId from authStateProvider (passed from provider) first
+    String? userId = _userId;
+    if (userId == null || userId.isEmpty) {
+      // Fallback to apiClient.getUserId() for backwards compatibility
+      userId = await _apiClient.getUserId();
+    }
+    if (userId == null || userId.isEmpty) {
       return {'success': false, 'message': 'No user ID'};
     }
 

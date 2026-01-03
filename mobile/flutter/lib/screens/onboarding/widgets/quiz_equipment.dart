@@ -115,21 +115,22 @@ class QuizEquipment extends StatelessWidget {
     final totalItems = _equipment.length + 1;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTitle(textPrimary),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _buildSubtitle(textSecondary),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           // Environment quick selection chips
           if (onEnvironmentChanged != null) ...[
             _buildEnvironmentSection(context, isDark, textPrimary, textSecondary),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
           Expanded(
             child: ListView.builder(
+              padding: EdgeInsets.zero,
               itemCount: totalItems,
               itemBuilder: (context, index) {
                 // Last item is "Other"
@@ -339,10 +340,10 @@ class QuizEquipment extends StatelessWidget {
     return Text(
       'What equipment do you have access to?',
       style: TextStyle(
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.bold,
         color: textPrimary,
-        height: 1.3,
+        height: 1.2,
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
@@ -351,7 +352,7 @@ class QuizEquipment extends StatelessWidget {
     return Text(
       "Select all that apply - we'll design workouts around what you have",
       style: TextStyle(
-        fontSize: 14,
+        fontSize: 13,
         color: textSecondary,
       ),
     ).animate().fadeIn(delay: 200.ms);
@@ -372,7 +373,7 @@ class QuizEquipment extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -380,13 +381,13 @@ class QuizEquipment extends StatelessWidget {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             gradient: isSelected ? AppColors.cyanGradient : null,
             color: isSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected ? AppColors.cyan : cardBorder,
               width: isSelected ? 2 : 1,
@@ -397,14 +398,14 @@ class QuizEquipment extends StatelessWidget {
               Icon(
                 item['icon'] as IconData,
                 color: isSelected ? Colors.white : textSecondary,
-                size: 24,
+                size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   item['label'] as String,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected ? Colors.white : textPrimary,
                   ),
@@ -544,8 +545,8 @@ class QuizEquipment extends StatelessWidget {
 
   Widget _buildCheckbox(bool isSelected, Color cardBorder, bool isDark) {
     return Container(
-      width: 24,
-      height: 24,
+      width: 22,
+      height: 22,
       decoration: BoxDecoration(
         color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
         shape: BoxShape.circle,
@@ -556,7 +557,7 @@ class QuizEquipment extends StatelessWidget {
                 width: 2,
               ),
       ),
-      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
     );
   }
 
@@ -571,7 +572,7 @@ class QuizEquipment extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: () {
           HapticFeedback.selectionClick();
@@ -579,13 +580,13 @@ class QuizEquipment extends StatelessWidget {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             gradient: hasOtherSelected ? AppColors.cyanGradient : null,
             color: hasOtherSelected
                 ? null
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: hasOtherSelected ? AppColors.cyan : cardBorder,
               width: hasOtherSelected ? 2 : 1,
@@ -596,17 +597,18 @@ class QuizEquipment extends StatelessWidget {
               Icon(
                 Icons.more_horiz,
                 color: hasOtherSelected ? Colors.white : textSecondary,
-                size: 24,
+                size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Other Equipment',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
                         color: hasOtherSelected ? Colors.white : textPrimary,
                       ),
@@ -615,7 +617,7 @@ class QuizEquipment extends StatelessWidget {
                       Text(
                         '${otherSelectedEquipment.length} selected',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
@@ -625,7 +627,7 @@ class QuizEquipment extends StatelessWidget {
               Icon(
                 Icons.search,
                 color: hasOtherSelected ? Colors.white70 : textSecondary,
-                size: 20,
+                size: 18,
               ),
             ],
           ),

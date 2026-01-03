@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/exceptions/app_exceptions.dart';
 import '../../../data/models/exercise.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';

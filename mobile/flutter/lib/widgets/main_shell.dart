@@ -11,6 +11,7 @@ import '../data/services/widget_action_service.dart';
 import '../screens/admin_support/admin_support_provider.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/nutrition/quick_log_overlay.dart';
+import '../screens/home/widgets/home_tooltip_tour.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 
 /// Provider to control floating nav bar visibility
@@ -28,7 +29,7 @@ class MainShell extends ConsumerWidget {
     if (location.startsWith('/nutrition')) return 1;
     if (location.startsWith('/fasting')) return 2;
     if (location.startsWith('/social')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    if (location.startsWith('/workouts')) return 4;
     return 0;
   }
 
@@ -47,7 +48,7 @@ class MainShell extends ConsumerWidget {
         context.go('/social');
         break;
       case 4:
-        context.go('/profile');
+        context.go('/workouts');
         break;
     }
   }
@@ -230,15 +231,15 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     itemHeight: itemHeight,
                     selectedColor: const Color(0xFFFF9500),
                   ),
-                  // Profile - Pink
+                  // Workouts - Cyan
                   _NavItem(
-                    icon: Icons.person_outline_rounded,
-                    selectedIcon: Icons.person_rounded,
-                    label: 'Profile',
+                    icon: Icons.fitness_center_outlined,
+                    selectedIcon: Icons.fitness_center,
+                    label: 'Workouts',
                     isSelected: selectedIndex == 4,
                     onTap: () => onItemTapped(4),
                     itemHeight: itemHeight,
-                    selectedColor: const Color(0xFFFF2D55),
+                    selectedColor: AppColors.cyan,
                   ),
                 ],
               ),
@@ -253,12 +254,15 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           _AdminSupportButton(),
 
           // AI Coach Button - fixed position
-          _AICoachButton(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              // Show the chat bottom sheet directly (we have Navigator access here)
-              showChatBottomSheet(context, ref);
-            },
+          Container(
+            key: HomeTourKeys.chatFabKey,
+            child: _AICoachButton(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                // Show the chat bottom sheet directly (we have Navigator access here)
+                showChatBottomSheet(context, ref);
+              },
+            ),
           ),
         ],
       ),
