@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 import uvicorn
 import time
 import traceback
@@ -262,6 +263,10 @@ app.add_middleware(LoggingMiddleware)
 
 # Add security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Add SlowAPI middleware for rate limiting
+# This MUST be added for rate limiting to work properly
+app.add_middleware(SlowAPIMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")

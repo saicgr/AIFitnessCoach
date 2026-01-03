@@ -52,10 +52,10 @@ def get_rag_service() -> RAGService:
 
 
 @router.post("/send", response_model=ChatResponse)
-# @limiter.limit("10/minute")  # TEMPORARILY DISABLED - causing 500 errors on Render
+@limiter.limit("10/minute")
 async def send_message(
     request: ChatRequest,
-    # http_request: Request,  # Not needed without rate limiter
+    http_request: Request,
     coach: LangGraphCoachService = Depends(get_coach_service),
 ):
     """
