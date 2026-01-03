@@ -49,4 +49,9 @@ def get_real_client_ip(request: Request) -> str:
 # Single shared limiter instance
 # Uses custom key function for reverse proxy compatibility (e.g., Render)
 # Default global limit: 100 requests per minute
-limiter = Limiter(key_func=get_real_client_ip, default_limits=["100/minute"])
+# swallow_errors=True prevents 500 errors if rate limiting fails
+limiter = Limiter(
+    key_func=get_real_client_ip,
+    default_limits=["100/minute"],
+    swallow_errors=True,  # Log errors but don't crash the request
+)
