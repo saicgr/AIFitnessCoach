@@ -1,13 +1,22 @@
 """
 Health check endpoints.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from pydantic import BaseModel
+from typing import Optional
 from core.config import get_settings
 from core.logger import get_logger
+from core.rate_limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+class TestChatRequest(BaseModel):
+    """Simple test request body."""
+    user_id: str
+    message: str
 
 
 @router.get("/")
@@ -165,5 +174,55 @@ async def debug_chat():
         result["error_type"] = type(e).__name__
         result["traceback"] = traceback.format_exc()
         logger.error(f"Chat debug test failed: {e}", exc_info=True)
+
+    return result
+
+
+@router.post("/debug/chat-post")
+@limiter.limit("10/minute")
+async def debug_chat_post(request: TestChatRequest, http_request: Request):
+    """
+    Debug endpoint to test POST with rate limiter - mimics chat/send flow.
+    This tests:
+    1. POST request body parsing
+    2. Rate limiter decorator
+    3. Full chat flow
+    """
+    from models.chat import ChatRequest as FullChatRequest
+    import traceback
+
+    result = {"steps": [], "received": {"user_id": request.user_id, "message": request.message}}
+
+    try:
+        result["steps"].append("1. POST body received successfully")
+
+        result["steps"].append("2. Creating full ChatRequest")
+        full_request = FullChatRequest(
+            user_id=request.user_id,
+            message=request.message
+        )
+        result["steps"].append("3. ChatRequest created")
+
+        result["steps"].append("4. Getting LangGraph service")
+        from api.v1 import chat as chat_module
+        if chat_module.langgraph_coach_service is None:
+            result["error"] = "LangGraph service not initialized"
+            return result
+        result["steps"].append("5. Service found")
+
+        result["steps"].append("6. Processing message...")
+        response = await chat_module.langgraph_coach_service.process_message(full_request)
+        result["steps"].append("7. Message processed successfully")
+
+        result["success"] = True
+        result["intent"] = response.intent.value if hasattr(response.intent, 'value') else str(response.intent)
+        result["message_preview"] = response.message[:100] if response.message else None
+
+    except Exception as e:
+        result["success"] = False
+        result["error"] = str(e)
+        result["error_type"] = type(e).__name__
+        result["traceback"] = traceback.format_exc()
+        logger.error(f"POST chat debug failed: {e}", exc_info=True)
 
     return result
