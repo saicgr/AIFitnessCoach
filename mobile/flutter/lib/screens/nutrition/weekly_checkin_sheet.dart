@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/nutrition_preferences.dart';
+import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
@@ -100,6 +101,11 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
         accepted: true,
       );
 
+      // Record the weekly check-in completion
+      await ref.read(nutritionPreferencesProvider.notifier).recordWeeklyCheckin(
+        userId: widget.userId,
+      );
+
       if (mounted) {
         Navigator.pop(context);
         _showSuccessSnackbar('Targets updated! Your new goals are active.');
@@ -123,6 +129,11 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
         userId: widget.userId,
         recommendationId: _recommendation!.id,
         accepted: false,
+      );
+
+      // Record the weekly check-in completion (declining also counts)
+      await ref.read(nutritionPreferencesProvider.notifier).recordWeeklyCheckin(
+        userId: widget.userId,
       );
 
       if (mounted) {

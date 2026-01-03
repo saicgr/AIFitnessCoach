@@ -13,7 +13,6 @@ class QuizTrainingPreferences extends StatefulWidget {
   final ValueChanged<String> onSplitChanged;
   final ValueChanged<String> onWorkoutTypeChanged;
   final ValueChanged<String> onProgressionPaceChanged;
-  final VoidCallback? onSkip;
 
   const QuizTrainingPreferences({
     super.key,
@@ -23,7 +22,6 @@ class QuizTrainingPreferences extends StatefulWidget {
     required this.onSplitChanged,
     required this.onWorkoutTypeChanged,
     required this.onProgressionPaceChanged,
-    this.onSkip,
   });
 
   @override
@@ -285,27 +283,6 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
             ),
           ),
 
-          // Skip button at bottom
-          if (widget.onSkip != null)
-            Center(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  widget.onSkip?.call();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    "Skip for now",
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ).animate().fadeIn(delay: 400.ms),
         ],
       ),
     );

@@ -1,6 +1,9 @@
 /// Models for the today's workout quick start feature
 library;
 
+import 'exercise.dart';
+import 'workout.dart';
+
 /// Summary info for quick display on home screen
 class TodayWorkoutSummary {
   final String id;
@@ -13,6 +16,7 @@ class TodayWorkoutSummary {
   final String scheduledDate;
   final bool isToday;
   final bool isCompleted;
+  final List<WorkoutExercise> exercises;
 
   const TodayWorkoutSummary({
     required this.id,
@@ -25,9 +29,16 @@ class TodayWorkoutSummary {
     required this.scheduledDate,
     required this.isToday,
     required this.isCompleted,
+    this.exercises = const [],
   });
 
   factory TodayWorkoutSummary.fromJson(Map<String, dynamic> json) {
+    // Parse exercises from JSON array
+    final exercisesJson = json['exercises'] as List<dynamic>? ?? [];
+    final exercises = exercisesJson
+        .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
+        .toList();
+
     return TodayWorkoutSummary(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Workout',
@@ -42,6 +53,7 @@ class TodayWorkoutSummary {
       scheduledDate: json['scheduled_date'] as String? ?? '',
       isToday: json['is_today'] as bool? ?? false,
       isCompleted: json['is_completed'] as bool? ?? false,
+      exercises: exercises,
     );
   }
 
@@ -56,7 +68,20 @@ class TodayWorkoutSummary {
         'scheduled_date': scheduledDate,
         'is_today': isToday,
         'is_completed': isCompleted,
+        'exercises': exercises.map((e) => e.toJson()).toList(),
       };
+
+  /// Convert to full Workout object for NextWorkoutCard compatibility
+  Workout toWorkout() => Workout(
+        id: id,
+        name: name,
+        type: type,
+        difficulty: difficulty,
+        durationMinutes: durationMinutes,
+        scheduledDate: scheduledDate,
+        isCompleted: isCompleted,
+        exercisesJson: exercises.map((e) => e.toJson()).toList(),
+      );
 }
 
 /// Response model for today's workout endpoint

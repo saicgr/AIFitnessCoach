@@ -16,6 +16,7 @@ import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/responsive_layout.dart';
@@ -1263,202 +1264,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _initializeWorkouts() async {
-    final notifier = ref.read(workoutsProvider.notifier);
-
-    // First refresh to get current workouts with timeout
-    try {
-      await notifier.refresh().timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          debugPrint('⚠️ [HomeScreen] Workout refresh timed out');
-          throw TimeoutException('Workout refresh timed out after 15 seconds');
-        },
-      );
-    } catch (e) {
-      debugPrint('❌ [HomeScreen] Error refreshing workouts: $e');
-      // Continue even if refresh fails - show empty state instead of infinite loading
-      if (mounted) {
-        setState(() => _isInitializing = false);
-      }
-      return;
-    }
-
-    // Clear banner state if workouts exist
-    if (notifier.nextWorkout != null && mounted) {
-      setState(() {
-        _isInitializing = false;
-        _generationStartDate = null;
-        _generationWeeks = 0;
-        _totalExpected = 0;
-        _totalGenerated = 0;
-        _isStreamingGeneration = false;
-      });
-      return; // Don't check for generation if we already have workouts
-    }
-
-    // Check if we've already checked today (persisted across app restarts)
-    final prefs = await SharedPreferences.getInstance();
-    final lastCheckDate = prefs.getString('last_workout_check_date');
-    final today = DateTime.now().toIso8601String().split('T')[0];
-
-    // Also check session-level flag (for tab switching within same session)
-    final hasCheckedSession = ref.read(hasCheckedRegenerationProvider);
-
-    if (lastCheckDate == today || hasCheckedSession) {
-      debugPrint(
-        'Debug: [HomeScreen] Skipping regeneration check - already done today ($lastCheckDate)',
-      );
-      if (mounted) {
-        setState(() => _isInitializing = false);
-      }
-      return;
-    }
-
-    // Check if we need to generate workouts and use streaming for real-time progress
-    if (!_isCheckingWorkouts && !_isStreamingGeneration) {
-      setState(() => _isCheckingWorkouts = true);
-      try {
-        // If user has NO workouts at all, use streaming for immediate feedback
-        final hasNoWorkouts = notifier.nextWorkout == null &&
-            (notifier.state.valueOrNull?.isEmpty ?? true);
-
-        if (hasNoWorkouts) {
-          // Use on-demand single workout generation
-          await _generateWorkoutsWithStreaming(maxWorkouts: 1);
-        } else {
-          // Use background check for users with existing workouts
-          final result = await notifier.checkAndRegenerateIfNeeded();
-          debugPrint(
-            'Debug: [HomeScreen] Workout check result: ${result['message']}',
-          );
-
-          // If generation was triggered in background, show banner
-          if (result['needs_generation'] == true && mounted) {
-            setState(() {
-              _generationStartDate = result['start_date'] as String?;
-              _generationWeeks = (result['weeks'] as int?) ?? 4;
-              _totalExpected = (result['total_expected'] as int?) ?? 0;
-              _totalGenerated = (result['total_generated'] as int?) ?? 0;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Generating your upcoming workouts...'),
-                backgroundColor: AppColors.elevated,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-
-        // Mark as checked for this session AND persist today's date
-        ref.read(hasCheckedRegenerationProvider.notifier).state = true;
-        await prefs.setString('last_workout_check_date', today);
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isCheckingWorkouts = false;
-            _isInitializing = false;
-          });
-        }
-      }
-    } else {
-      // Already checked today, just mark initialization complete
-      if (mounted) {
-        setState(() => _isInitializing = false);
-      }
-    }
-  }
-
-  /// Generate a single workout on-demand with streaming progress
-  /// This is called when home screen loads and no workouts exist
-  Future<void> _generateWorkoutsWithStreaming({int maxWorkouts = 1}) async {
-    final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
-    if (userId == null) return;
-
-    // Get user preferences for workout days
-    final repo = ref.read(workoutRepositoryProvider);
-    final prefs = await repo.getProgramPreferences(userId);
-
-    // Convert day names to indices (0=Mon, 6=Sun)
-    const dayNameToIndex = {
-      'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-      'Friday': 4, 'Saturday': 5, 'Sunday': 6,
-    };
-    List<int> selectedDays;
-    if (prefs?.workoutDays.isNotEmpty == true) {
-      selectedDays = prefs!.workoutDays
-          .map((name) => dayNameToIndex[name] ?? 0)
-          .toList();
-    } else {
-      selectedDays = [0, 2, 4]; // Mon, Wed, Fri default
-    }
-    final durationMinutes = prefs?.durationMinutes ?? 45;
-
-    setState(() {
-      _isStreamingGeneration = true;
-      _generationStartDate = DateTime.now().toIso8601String().split('T')[0];
-      _totalExpected = maxWorkouts;
-      _totalGenerated = 0;
-      _generationMessage = 'Generating your workout...';
-      _generationDetail = null;
-    });
-
-    debugPrint('🎯 [Home] On-demand generation: generating $maxWorkouts workout(s)');
-
-    try {
-      await for (final progress in repo.generateMonthlyWorkoutsStreaming(
-        userId: userId,
-        selectedDays: selectedDays,
-        durationMinutes: durationMinutes,
-        maxWorkouts: maxWorkouts, // Limit to 1 workout for on-demand
-      )) {
-        if (!mounted) return;
-
-        if (progress.hasError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${progress.message}'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-          break;
-        }
-
-        if (progress.isCompleted) {
-          // Generation complete - refresh workouts and clear generation state
-          await ref.read(workoutsProvider.notifier).refresh();
-          setState(() {
-            _isStreamingGeneration = false;
-            _generationStartDate = null;
-            _totalExpected = 0;
-            _totalGenerated = 0;
-          });
-          debugPrint('✅ [Home] On-demand generation complete: ${progress.workouts.length} workout(s)');
-          // Don't show snackbar for single workout - just show the card
-          break;
-        }
-
-        // Update progress UI
-        setState(() {
-          _totalExpected = progress.totalWorkouts;
-          _totalGenerated = progress.currentWorkout;
-          _generationMessage = progress.message;
-          _generationDetail = progress.detail;
-        });
-      }
-    } catch (e) {
-      debugPrint('❌ [Home] Error during on-demand generation: $e');
-      if (mounted) {
-        setState(() => _isStreamingGeneration = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate workout: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+    // Home screen now uses todayWorkoutProvider (lazy loading)
+    // No need to fetch all workouts or trigger regeneration here
+    // Regeneration is handled by the Workouts tab when user navigates there
+    if (mounted) {
+      setState(() => _isInitializing = false);
     }
   }
 
@@ -1472,16 +1282,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    final workoutsState = ref.watch(workoutsProvider);
-    final workoutsNotifier = ref.read(workoutsProvider.notifier);
+    // Use todayWorkoutProvider for lazy loading (only fetches today's/next workout)
+    final todayWorkoutState = ref.watch(todayWorkoutProvider);
     final user = authState.user;
     final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
     final activeLayoutState = ref.watch(activeLayoutProvider);
-
-    final nextWorkout = workoutsNotifier.nextWorkout;
-    final upcomingWorkouts = workoutsNotifier.upcomingWorkouts;
-    final weeklyProgress = workoutsNotifier.weeklyProgress;
-    final currentStreak = workoutsNotifier.currentStreak;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
@@ -1498,9 +1303,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onRefresh: () async {
           debugPrint('🔄 [Home] Pull-to-refresh triggered');
           _lastRefreshTime = DateTime.now();
-          await workoutsNotifier.refresh();
-          // Invalidate workouts provider to force UI rebuild with fresh data
-          ref.invalidate(workoutsProvider);
+          // Invalidate todayWorkoutProvider to refetch
+          ref.invalidate(todayWorkoutProvider);
           // Also refresh layout in case it changed
           ref.invalidate(activeLayoutProvider);
           debugPrint('✅ [Home] Pull-to-refresh complete');
@@ -1515,7 +1319,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: _buildHeader(
                   context,
                   user?.displayName ?? 'User',
-                  currentStreak,
+                  0, // Streak is now shown elsewhere, not fetched here
                   isDark,
                   isCompact: isInSplitScreen || isNarrowLayout,
                 ),
@@ -1536,49 +1340,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: MissedWorkoutBanner(),
               ),
 
-              // Streaming Generation Banner (for first-time users with real-time progress)
-              if (_isStreamingGeneration && nextWorkout == null)
-                SliverToBoxAdapter(
-                  child: StreamingWorkoutGenerationCard(
-                    isDark: isDark,
-                    currentWorkout: _totalGenerated,
-                    totalWorkouts: _totalExpected,
-                    message: _generationMessage,
-                    detail: _generationDetail,
-                  ),
-                ),
-
-              // Legacy Generation Banner (for background generation)
-              if (!_isStreamingGeneration &&
-                  _generationStartDate != null &&
-                  _generationWeeks > 0 &&
-                  nextWorkout == null)
-                SliverToBoxAdapter(
-                  child: MoreWorkoutsLoadingBanner(
-                    isDark: isDark,
-                    startDate: _generationStartDate!,
-                    weeks: _generationWeeks,
-                    totalExpected: _totalExpected,
-                    totalGenerated: _totalGenerated,
-                  ),
-                ),
-
               // Section: TODAY with Customize button
               SliverToBoxAdapter(
                 child: _buildTodaySectionHeader(isDark),
               ),
 
               // Dynamic Tile Rendering based on active layout
-              ..._buildDynamicTiles(
+              ..._buildDynamicTilesLazy(
                 context,
                 activeLayoutState,
                 isDark,
-                workoutsState,
-                workoutsNotifier,
-                nextWorkout,
+                todayWorkoutState,
                 isAIGenerating,
-                weeklyProgress,
-                upcomingWorkouts,
               ),
 
               // Bottom padding
@@ -1801,6 +1574,305 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
         return slivers;
       },
+    );
+  }
+
+  /// Build tiles dynamically based on active layout using lazy loading (todayWorkoutProvider)
+  /// This version only shows the next workout card - no UPCOMING or YOUR WEEK sections
+  List<Widget> _buildDynamicTilesLazy(
+    BuildContext context,
+    AsyncValue<HomeLayout?> activeLayoutState,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    return activeLayoutState.when(
+      loading: () => [
+        const SliverToBoxAdapter(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ],
+      error: (error, _) => [
+        ..._buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating),
+      ],
+      data: (layout) {
+        // Always use simplified default tiles for lazy loading
+        return _buildDefaultTilesLazy(context, isDark, todayWorkoutState, isAIGenerating);
+      },
+    );
+  }
+
+  /// Build default tiles using lazy loading (todayWorkoutProvider)
+  /// Simplified version without UPCOMING and YOUR WEEK sections
+  List<Widget> _buildDefaultTilesLazy(
+    BuildContext context,
+    bool isDark,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    return [
+      // Fitness Score Card
+      const SliverToBoxAdapter(child: FitnessScoreCard()),
+
+      // Mood Picker Card
+      const SliverToBoxAdapter(child: MoodPickerCard()),
+
+      // Daily Activity Card
+      const SliverToBoxAdapter(child: DailyActivityCard()),
+
+      // View Upcoming link above the workout card
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  HapticService.light();
+                  context.push('/workouts');
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'View Upcoming',
+                      style: TextStyle(
+                        color: AppColors.cyan,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.chevron_right,
+                      color: AppColors.cyan,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+      // Next Workout Card (using lazy loading)
+      SliverToBoxAdapter(
+        child: _buildNextWorkoutSectionLazy(
+          context,
+          todayWorkoutState,
+          isAIGenerating,
+        ),
+      ),
+
+      // Quick Actions Row
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: Container(
+            key: HomeTourKeys.quickActionsKey,
+            child: const QuickActionsRow(),
+          ),
+        ),
+      ),
+
+      // Note: YOUR WEEK and UPCOMING sections have been moved to Workouts tab
+    ];
+  }
+
+  /// Build the next workout section using lazy loading (todayWorkoutProvider)
+  Widget _buildNextWorkoutSectionLazy(
+    BuildContext context,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    // Show loading card during initial app load
+    if (_isInitializing) {
+      return const GeneratingWorkoutsCard(
+        message: 'Loading your workout...',
+        subtitle: 'Preparing your personalized fitness plan',
+      );
+    }
+
+    return todayWorkoutState.when(
+      loading: () => const GeneratingWorkoutsCard(
+        message: 'Loading workout...',
+        subtitle: 'Please wait a moment',
+      ),
+      error: (e, _) {
+        // Fallback to workoutsProvider on error
+        debugPrint('⚠️ [Home] todayWorkoutProvider error, falling back to workoutsProvider: $e');
+        return _buildFallbackWorkoutCard(context);
+      },
+      data: (response) {
+        // If no response (endpoint might not be deployed), fallback to workoutsProvider
+        if (response == null) {
+          debugPrint('⚠️ [Home] todayWorkoutProvider returned null, falling back to workoutsProvider');
+          return _buildFallbackWorkoutCard(context);
+        }
+
+        // Get the workout to display (today's or next upcoming)
+        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
+
+        if (workoutSummary != null) {
+          // Convert summary to Workout for NextWorkoutCard
+          final workout = workoutSummary.toWorkout();
+          return Container(
+            key: HomeTourKeys.nextWorkoutKey,
+            child: NextWorkoutCard(
+              workout: workout,
+              onStart: () => context.push('/workout/${workout.id}'),
+            ),
+          );
+        }
+
+        // No workout available - show rest day or empty state
+        if (response.restDayMessage != null) {
+          return _buildRestDayCard(response.restDayMessage!, response.daysUntilNext);
+        }
+
+        return EmptyWorkoutCard(
+          onGenerate: () {
+            // Navigate to workouts tab which handles generation
+            context.push('/workouts');
+          },
+        );
+      },
+    );
+  }
+
+  /// Fallback to workoutsProvider when todayWorkoutProvider fails
+  /// This ensures the home screen still works even if the /workouts/today endpoint isn't deployed
+  Widget _buildFallbackWorkoutCard(BuildContext context) {
+    final workoutsState = ref.watch(workoutsProvider);
+
+    return workoutsState.when(
+      loading: () => const GeneratingWorkoutsCard(
+        message: 'Loading workout...',
+        subtitle: 'Please wait a moment',
+      ),
+      error: (e, _) => ErrorCard(
+        message: 'Failed to load workout',
+        onRetry: () => ref.invalidate(workoutsProvider),
+      ),
+      data: (workouts) {
+        if (workouts.isEmpty) {
+          return _isCheckingWorkouts || _isStreamingGeneration
+              ? const GeneratingWorkoutsCard(
+                  message: 'Generating your personalized workout...',
+                )
+              : EmptyWorkoutCard(
+                  onGenerate: () {
+                    context.push('/workouts');
+                  },
+                );
+        }
+
+        // Find today's or next workout
+        final today = DateTime.now();
+        final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+        // Find today's incomplete workout
+        final todayWorkout = workouts.where((w) =>
+            (w.scheduledDate?.startsWith(todayStr) ?? false) && !(w.isCompleted ?? false)
+        ).firstOrNull;
+
+        if (todayWorkout != null) {
+          return Container(
+            key: HomeTourKeys.nextWorkoutKey,
+            child: NextWorkoutCard(
+              workout: todayWorkout,
+              onStart: () => context.push('/workout/${todayWorkout.id}'),
+            ),
+          );
+        }
+
+        // Find next upcoming workout (future, not completed)
+        final nextWorkout = workouts.where((w) {
+          if (w.isCompleted ?? false) return false;
+          final dateStr = w.scheduledDate;
+          if (dateStr == null) return false;
+          try {
+            final date = DateTime.parse(dateStr.split('T')[0]);
+            return date.isAfter(today);
+          } catch (_) {
+            return false;
+          }
+        }).firstOrNull;
+
+        if (nextWorkout != null) {
+          return Container(
+            key: HomeTourKeys.nextWorkoutKey,
+            child: NextWorkoutCard(
+              workout: nextWorkout,
+              onStart: () => context.push('/workout/${nextWorkout.id}'),
+            ),
+          );
+        }
+
+        return EmptyWorkoutCard(
+          onGenerate: () {
+            context.push('/workouts');
+          },
+        );
+      },
+    );
+  }
+
+  /// Build a rest day card
+  Widget _buildRestDayCard(String message, int? daysUntilNext) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.self_improvement,
+              size: 48,
+              color: AppColors.cyan.withOpacity(0.7),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Rest Day',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => context.push('/workouts'),
+              child: Text(
+                'View Schedule',
+                style: TextStyle(
+                  color: AppColors.cyan,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

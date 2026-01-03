@@ -60,7 +60,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                   children: [
                     const SizedBox(height: 16),
 
-                    // Logo/Mascot
+                    // App Icon
                     Container(
                       width: 80,
                       height: 80,
@@ -75,10 +75,18 @@ class PaywallTimelineScreen extends ConsumerWidget {
                         ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.fitness_center,
-                        size: 40,
-                        color: Colors.white,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.fitness_center,
+                            size: 40,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -109,7 +117,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       icon: Icons.card_giftcard,
                       iconColor: Colors.amber,
                       title: 'Today',
-                      subtitle: 'Get unlimited access to all AI Coach features',
+                      subtitle: 'Unlimited workouts, food scanning, injury tracking, skill progressions & more',
                       isFirst: true,
                       isLast: false,
                       colors: colors,
@@ -118,7 +126,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       icon: Icons.notifications_outlined,
                       iconColor: colors.cyan,
                       title: 'In 5 days',
-                      subtitle: 'Get a reminder your trial is about to end',
+                      subtitle: 'We\'ll remind you before your trial ends - no surprises',
                       isFirst: false,
                       isLast: false,
                       colors: colors,
@@ -127,7 +135,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       icon: Icons.credit_card_outlined,
                       iconColor: colors.textSecondary,
                       title: 'In 7 days',
-                      subtitle: 'You\'ll be charged based on your selected plan on ${dateFormat.format(chargeDate)}. Cancel anytime before to avoid charges.',
+                      subtitle: 'You\'ll be charged on ${dateFormat.format(chargeDate)}. Cancel anytime before - no questions asked.',
                       isFirst: false,
                       isLast: true,
                       colors: colors,

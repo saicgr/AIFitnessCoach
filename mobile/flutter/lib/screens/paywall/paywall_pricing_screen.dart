@@ -212,9 +212,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                   period: '/mo',
                                   billedAs: '\$79.99/year',
                                   features: const [
-                                    '∞ Unlimited AI coach',
                                     '∞ Unlimited workouts',
                                     '📸 Food photo scanning',
+                                    '🍎 Full nutrition tracking',
                                     '📊 Advanced analytics',
                                   ],
                                   isSelected: _selectedPlan == 'premium_plus_yearly',
@@ -233,9 +233,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 period: '/mo',
                                 billedAs: 'Billed monthly',
                                 features: const [
-                                  '∞ Unlimited AI coach',
                                   '∞ Unlimited workouts',
                                   '📸 Food photo scanning',
+                                  '🍎 Full nutrition tracking',
                                   '📊 Advanced analytics',
                                 ],
                                 isSelected: _selectedPlan == 'premium_plus_monthly',

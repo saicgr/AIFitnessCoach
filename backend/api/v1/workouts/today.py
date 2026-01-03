@@ -31,6 +31,7 @@ class TodayWorkoutSummary(BaseModel):
     scheduled_date: str
     is_today: bool
     is_completed: bool
+    exercises: List[dict] = []  # Full exercise data for hero card preview
 
 
 class TodayWorkoutResponse(BaseModel):
@@ -91,6 +92,7 @@ def _row_to_summary(row: dict) -> TodayWorkoutSummary:
         scheduled_date=scheduled_date,
         is_today=is_today,
         is_completed=row.get("is_completed", False),
+        exercises=exercises if isinstance(exercises, list) else [],
     )
 
 

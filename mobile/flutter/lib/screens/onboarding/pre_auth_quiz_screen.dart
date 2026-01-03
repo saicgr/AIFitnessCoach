@@ -856,6 +856,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 canProceed: _canProceed,
                 isLastQuestion: _currentQuestion == _totalQuestions - 1,
                 onPressed: _nextQuestion,
+                // Show skip option for Training Preferences (question 4)
+                onSkip: _currentQuestion == 4 ? _nextQuestion : null,
+                skipText: 'Skip for now',
               ),
               const SizedBox(height: 16),
             ],
@@ -924,7 +927,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           onSplitChanged: (split) => setState(() => _selectedTrainingSplit = split),
           onWorkoutTypeChanged: (type) => setState(() => _selectedWorkoutType = type),
           onProgressionPaceChanged: (pace) => setState(() => _selectedProgressionPace = pace),
-          onSkip: _nextQuestion,
         );
       case 5:
         return QuizMotivation(

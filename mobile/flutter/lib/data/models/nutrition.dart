@@ -514,6 +514,63 @@ class LogFoodResponse {
     if (confidenceScore! >= 0.5) return 'orange';
     return 'red';
   }
+
+  /// Create a copy with all nutritional values multiplied by a factor
+  /// Used for portion size adjustments
+  LogFoodResponse copyWithMultiplier(double multiplier) {
+    // Scale food items if they have calorie/macro data
+    final scaledFoodItems = foodItems.map((item) {
+      final scaledItem = Map<String, dynamic>.from(item);
+      if (scaledItem.containsKey('calories')) {
+        scaledItem['calories'] = ((scaledItem['calories'] as num) * multiplier).round();
+      }
+      if (scaledItem.containsKey('protein_g')) {
+        scaledItem['protein_g'] = (scaledItem['protein_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('carbs_g')) {
+        scaledItem['carbs_g'] = (scaledItem['carbs_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('fat_g')) {
+        scaledItem['fat_g'] = (scaledItem['fat_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('fiber_g') && scaledItem['fiber_g'] != null) {
+        scaledItem['fiber_g'] = (scaledItem['fiber_g'] as num) * multiplier;
+      }
+      return scaledItem;
+    }).toList();
+
+    return LogFoodResponse(
+      success: success,
+      foodLogId: foodLogId,
+      foodItems: scaledFoodItems,
+      totalCalories: (totalCalories * multiplier).round(),
+      proteinG: proteinG * multiplier,
+      carbsG: carbsG * multiplier,
+      fatG: fatG * multiplier,
+      fiberG: fiberG != null ? fiberG! * multiplier : null,
+      overallMealScore: overallMealScore,
+      healthScore: healthScore,
+      goalAlignmentPercentage: goalAlignmentPercentage,
+      aiSuggestion: aiSuggestion,
+      encouragements: encouragements,
+      warnings: warnings,
+      recommendedSwap: recommendedSwap,
+      confidenceScore: confidenceScore,
+      confidenceLevel: confidenceLevel,
+      sourceType: sourceType,
+      // Scale micronutrients
+      sodiumMg: sodiumMg != null ? sodiumMg! * multiplier : null,
+      sugarG: sugarG != null ? sugarG! * multiplier : null,
+      saturatedFatG: saturatedFatG != null ? saturatedFatG! * multiplier : null,
+      cholesterolMg: cholesterolMg != null ? cholesterolMg! * multiplier : null,
+      potassiumMg: potassiumMg != null ? potassiumMg! * multiplier : null,
+      vitaminAIu: vitaminAIu != null ? vitaminAIu! * multiplier : null,
+      vitaminCMg: vitaminCMg != null ? vitaminCMg! * multiplier : null,
+      vitaminDIu: vitaminDIu != null ? vitaminDIu! * multiplier : null,
+      calciumMg: calciumMg != null ? calciumMg! * multiplier : null,
+      ironMg: ironMg != null ? ironMg! * multiplier : null,
+    );
+  }
 }
 
 /// Source type for saved foods

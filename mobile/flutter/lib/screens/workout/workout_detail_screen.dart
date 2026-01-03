@@ -171,14 +171,20 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
   }
 
   /// Convert training split ID to display name
-  /// Returns the program name if found, or throws for unrecognized splits
-  String _getTrainingProgramName(String splitId) {
-    // Split should already be resolved (dont_know -> actual split) by _resolveTrainingSplit
-    // Look up the program - must exist in our known list
+  /// Returns the program name if found, or null for special cases like 'nothing_structured'
+  String? _getTrainingProgramName(String splitId) {
+    // Handle special cases that are valid but don't have a display badge
+    if (splitId == 'nothing_structured' || splitId == 'dont_know') {
+      // User chose "let AI decide" - no specific program badge to show
+      return null;
+    }
+
+    // Look up the program in our known list
     final program = defaultTrainingPrograms.where((p) => p.id == splitId).firstOrNull;
     if (program == null) {
-      // Unknown split ID - this is a data integrity issue that should be fixed
-      throw StateError('Unknown training split: $splitId - this should not happen');
+      // Unknown split ID - log it but don't crash
+      debugPrint('⚠️ [WorkoutDetail] Unknown training split: $splitId');
+      return null;
     }
     return program.name;
   }
@@ -272,11 +278,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
                         color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
                         backgroundColor: glassSurface,
                       ),
-                      // Training Program Badge
-                      if (_trainingSplit != null)
+                      // Training Program Badge (only show if we have a valid program name)
+                      if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null)
                         _buildLabeledBadge(
                           label: 'Program',
-                          value: _getTrainingProgramName(_trainingSplit!),
+                          value: _getTrainingProgramName(_trainingSplit!)!,
                           color: AppColors.purple,
                           backgroundColor: AppColors.purple.withOpacity(0.15),
                         ),

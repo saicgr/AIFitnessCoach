@@ -11,6 +11,7 @@ import '../../data/models/recipe.dart';
 import '../../data/providers/multi_screen_tour_provider.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../data/repositories/nutrition_preferences_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/multi_screen_tour_helper.dart';
@@ -25,6 +26,7 @@ import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/quick_add_fab.dart';
 import 'widgets/quick_add_sheet.dart';
+import 'widgets/nutrition_goals_card.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   const NutritionScreen({super.key});
@@ -44,6 +46,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   bool _hasCheckedOnboarding = false;
   bool _hasSkippedOnboarding = false;
   bool _onboardingJustCompleted = false;  // Guard flag to prevent redirect loop
+  bool _hasCheckedWeeklyCheckin = false;  // Guard flag for weekly check-in prompt
 
   // Tour key for Log Food FAB
   final GlobalKey _logFoodFabKey = GlobalKey();
@@ -104,6 +107,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       if (!_hasCheckedOnboarding) {
         _hasCheckedOnboarding = true;
         await _checkAndShowOnboarding();
+      }
+
+      // Check if weekly check-in is due (only once per screen load, after onboarding)
+      if (!_hasCheckedWeeklyCheckin && mounted) {
+        _hasCheckedWeeklyCheckin = true;
+        await _checkAndShowWeeklyCheckin();
       }
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -198,6 +207,34 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         );
         setState(() => _hasSkippedOnboarding = true);
       }
+    }
+  }
+
+  /// Check if weekly check-in is due and show the sheet if enabled
+  Future<void> _checkAndShowWeeklyCheckin() async {
+    if (!mounted || _userId == null) return;
+
+    final prefsState = ref.read(nutritionPreferencesProvider);
+    final prefs = prefsState.preferences;
+
+    // Skip if preferences not loaded or onboarding not complete
+    if (prefs == null || !prefs.nutritionOnboardingCompleted) {
+      debugPrint('📅 [NutritionScreen] Skipping weekly check-in - prefs not ready or onboarding incomplete');
+      return;
+    }
+
+    // Check if weekly check-in is due using the model helper
+    if (prefs.isWeeklyCheckinDue) {
+      debugPrint('📅 [NutritionScreen] Weekly check-in is due! Last check-in: ${prefs.lastWeeklyCheckinAt}, Days since: ${prefs.daysSinceLastCheckin}');
+
+      // Small delay to let the screen render first
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) {
+        showWeeklyCheckinSheet(context, ref);
+      }
+    } else {
+      debugPrint('📅 [NutritionScreen] Weekly check-in not due. Enabled: ${prefs.weeklyCheckinEnabled}, Days since: ${prefs.daysSinceLastCheckin}');
     }
   }
 
@@ -1003,6 +1040,184 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     );
   }
 
+  /// Show edit targets bottom sheet
+  void _showEditTargetsSheet(BuildContext context) {
+    final prefsState = ref.read(nutritionPreferencesProvider);
+    final preferences = prefsState.preferences;
+    if (preferences == null) return;
+
+    final isDark = widget.isDark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    final caloriesController = TextEditingController(
+      text: (preferences.targetCalories ?? 2000).toString(),
+    );
+    final proteinController = TextEditingController(
+      text: (preferences.targetProteinG ?? 150).toString(),
+    );
+    final carbsController = TextEditingController(
+      text: (preferences.targetCarbsG ?? 200).toString(),
+    );
+    final fatController = TextEditingController(
+      text: (preferences.targetFatG ?? 65).toString(),
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: nearBlack,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Daily Targets',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: Icon(Icons.close, color: textMuted),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Manually set your daily nutrition goals',
+                style: TextStyle(fontSize: 14, color: textMuted),
+              ),
+              const SizedBox(height: 24),
+              _buildTargetField(caloriesController, 'Calories', 'kcal', elevated, textMuted, textPrimary),
+              const SizedBox(height: 12),
+              _buildTargetField(proteinController, 'Protein', 'g', elevated, textMuted, textPrimary),
+              const SizedBox(height: 12),
+              _buildTargetField(carbsController, 'Carbs', 'g', elevated, textMuted, textPrimary),
+              const SizedBox(height: 12),
+              _buildTargetField(fatController, 'Fat', 'g', elevated, textMuted, textPrimary),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final calories = int.tryParse(caloriesController.text);
+                    final protein = int.tryParse(proteinController.text);
+                    final carbs = int.tryParse(carbsController.text);
+                    final fat = int.tryParse(fatController.text);
+
+                    if (calories != null || protein != null || carbs != null || fat != null) {
+                      await ref.read(nutritionPreferencesProvider.notifier).updateTargets(
+                        userId: widget.userId,
+                        targetCalories: calories,
+                        targetProteinG: protein,
+                        targetCarbsG: carbs,
+                        targetFatG: fat,
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Targets updated'),
+                            backgroundColor: teal,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        widget.onRefresh();
+                      }
+                    }
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: teal,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('Save Targets', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTargetField(
+    TextEditingController controller,
+    String label,
+    String suffix,
+    Color elevated,
+    Color textMuted,
+    Color textPrimary,
+  ) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      style: TextStyle(color: textPrimary, fontSize: 16),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: textMuted),
+        suffixText: suffix,
+        suffixStyle: TextStyle(color: textMuted),
+        filled: true,
+        fillColor: elevated,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+    );
+  }
+
+  /// Recalculate nutrition targets based on user profile
+  Future<void> _recalculateTargets() async {
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    try {
+      await ref.read(nutritionPreferencesProvider.notifier).recalculateTargets(widget.userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Targets recalculated based on your profile'),
+            backgroundColor: teal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        widget.onRefresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to recalculate: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
@@ -1030,6 +1245,10 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   onQuickAdd: widget.onLogMeal,
                   isDark: widget.isDark,
                   calmMode: widget.calmMode,
+                  summary: widget.summary,
+                  targets: widget.targets,
+                  dynamicTargets: ref.watch(nutritionPreferencesProvider).dynamicTargets,
+                  onMacrosTap: () => _showGoalsInfo(),
                 ).animate().fadeIn().scale(),
 
                 const SizedBox(height: 16),
@@ -1057,15 +1276,14 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                   const SizedBox(height: 16),
                 ],
 
-                // Macros Summary (compact row) - tap to edit goals
+                // Nutrition Goals Card - detailed goals with edit/recalculate
                 if (!widget.calmMode)
-                  GestureDetector(
-                    onTap: () => _showGoalsInfo(),
-                    child: _MacrosRow(
-                      summary: widget.summary,
-                      targets: widget.targets,
-                      isDark: widget.isDark,
-                    ),
+                  NutritionGoalsCard(
+                    targets: widget.targets,
+                    summary: widget.summary,
+                    isDark: widget.isDark,
+                    onEdit: () => _showEditTargetsSheet(context),
+                    onRecalculate: () => _recalculateTargets(),
                   ).animate().fadeIn(delay: 100.ms),
 
                 if (!widget.calmMode) const SizedBox(height: 16),
@@ -1110,6 +1328,10 @@ class _CompactEnergyHeader extends StatelessWidget {
   final VoidCallback onQuickAdd;
   final bool isDark;
   final bool calmMode;
+  final DailyNutritionSummary? summary;
+  final NutritionTargets? targets;
+  final DynamicNutritionTargets? dynamicTargets;
+  final VoidCallback? onMacrosTap;
 
   const _CompactEnergyHeader({
     required this.consumed,
@@ -1117,6 +1339,10 @@ class _CompactEnergyHeader extends StatelessWidget {
     required this.onQuickAdd,
     required this.isDark,
     this.calmMode = false,
+    this.summary,
+    this.targets,
+    this.dynamicTargets,
+    this.onMacrosTap,
   });
 
   int get remaining => target - consumed;
@@ -1276,6 +1502,17 @@ class _CompactEnergyHeader extends StatelessWidget {
               color: textMuted,
             ),
           ),
+          // Compact macro targets row
+          if (summary != null || targets != null) ...[
+            const SizedBox(height: 12),
+            CompactMacroTargets(
+              summary: summary,
+              targets: targets,
+              dynamicTargets: dynamicTargets,
+              isDark: isDark,
+              onTap: onMacrosTap,
+            ),
+          ],
         ],
       ),
     );

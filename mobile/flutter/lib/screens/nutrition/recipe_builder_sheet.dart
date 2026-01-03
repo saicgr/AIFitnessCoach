@@ -1007,7 +1007,9 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
 
       // Delete the log entry we just created since we only wanted the analysis
       try {
-        await repository.deleteFoodLog(response.foodLogId);
+        if (response.foodLogId != null) {
+          await repository.deleteFoodLog(response.foodLogId!);
+        }
       } catch (_) {
         // Ignore delete errors
       }

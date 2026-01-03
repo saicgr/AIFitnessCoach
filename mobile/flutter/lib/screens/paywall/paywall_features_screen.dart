@@ -29,7 +29,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                   children: [
                     const SizedBox(height: 16),
 
-                    // Logo/Mascot
+                    // App Icon
                     Container(
                       width: 100,
                       height: 100,
@@ -44,10 +44,18 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                         ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.fitness_center,
-                        size: 48,
-                        color: Colors.white,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.fitness_center,
+                            size: 48,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -77,8 +85,24 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                     _FeatureItem(
                       icon: Icons.auto_fix_high,
                       iconColor: colors.purple,
-                      title: 'Unlimited workout generation',
-                      subtitle: 'Custom AI plans for 23+ equipment types',
+                      title: 'Unlimited AI workout generation',
+                      subtitle: '23+ equipment types with personalized weights',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _FeatureItem(
+                      icon: Icons.location_on_outlined,
+                      iconColor: colors.electricBlue,
+                      title: 'Workout environment aware',
+                      subtitle: 'Gym, home, hotel, outdoors - adapts to your space',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _FeatureItem(
+                      icon: Icons.star_outline,
+                      iconColor: Colors.amber,
+                      title: 'Staple & avoided exercises',
+                      subtitle: 'Always include favorites, never see exercises you hate',
                       colors: colors,
                     ),
                     const SizedBox(height: 12),
@@ -86,7 +110,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       icon: Icons.camera_alt_outlined,
                       iconColor: colors.orange,
                       title: 'AI food photo scanning',
-                      subtitle: 'Snap a photo, get instant macros',
+                      subtitle: 'Snap a photo, get instant macros & inflammation score',
                       colors: colors,
                     ),
                     const SizedBox(height: 12),
@@ -94,31 +118,39 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                       icon: Icons.restaurant_menu_outlined,
                       iconColor: colors.cyan,
                       title: 'Full nutrition & macro tracking',
-                      subtitle: 'Log meals, track calories & macros',
-                      colors: colors,
-                    ),
-                    const SizedBox(height: 12),
-                    _FeatureItem(
-                      icon: Icons.library_books_outlined,
-                      iconColor: colors.success,
-                      title: '1,700+ exercise library',
-                      subtitle: 'Video demos & muscle targeting',
-                      colors: colors,
-                    ),
-                    const SizedBox(height: 12),
-                    _FeatureItem(
-                      icon: Icons.trending_up,
-                      iconColor: Colors.amber,
-                      title: 'PR tracking & progress charts',
-                      subtitle: 'Track strength gains over time',
+                      subtitle: 'Cooked food converter & frequent foods',
                       colors: colors,
                     ),
                     const SizedBox(height: 12),
                     _FeatureItem(
                       icon: Icons.healing_outlined,
                       iconColor: colors.coral,
-                      title: 'Injury-aware adaptations',
-                      subtitle: 'Auto-adjust for injuries & recovery',
+                      title: 'Injury tracking & body part exclusion',
+                      subtitle: 'Report injuries, auto-adapt workouts safely',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _FeatureItem(
+                      icon: Icons.elderly,
+                      iconColor: colors.teal,
+                      title: 'Age-aware & comeback mode',
+                      subtitle: 'Safe return after breaks, senior adjustments',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _FeatureItem(
+                      icon: Icons.fitness_center,
+                      iconColor: colors.success,
+                      title: '52 skill progressions',
+                      subtitle: 'Wall pushups → one-arm, dragon squats & more',
+                      colors: colors,
+                    ),
+                    const SizedBox(height: 12),
+                    _FeatureItem(
+                      icon: Icons.self_improvement,
+                      iconColor: const Color(0xFFE91E63),
+                      title: 'Hormonal health optimization',
+                      subtitle: 'Cycle-aware workouts & diet recommendations',
                       colors: colors,
                     ),
 

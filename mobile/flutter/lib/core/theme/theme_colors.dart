@@ -77,6 +77,8 @@ class ThemeColors {
   Color get purple => AppColors.purple;
   Color get coral => AppColors.coral;
   Color get magenta => AppColors.magenta;
+  Color get electricBlue => isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
+  Color get teal => isDark ? AppColors.teal : AppColorsLight.teal;
 }
 
 /// Extension on BuildContext for convenient access to theme colors

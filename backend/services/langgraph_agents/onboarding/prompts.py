@@ -341,13 +341,13 @@ QUICK_REPLIES = {
     ],
     # Past programs tried - helps avoid repetition (these are programs they've DONE, not what they want)
     "past_programs": [
+        {"label": "Nothing structured 🎲", "value": "none"},
         {"label": "PPL (Push/Pull/Legs) 💪", "value": "ppl"},
         {"label": "Bro Split 📅", "value": "bro_split"},
         {"label": "Starting Strength 🏋️", "value": "starting_strength"},
         {"label": "StrongLifts 5x5 📊", "value": "stronglifts"},
         {"label": "CrossFit 🔥", "value": "crossfit"},
         {"label": "Apps/YouTube 📱", "value": "home_apps"},
-        {"label": "Nothing structured 🎲", "value": "none"},
     ],
     # Biggest obstacle - helps address barriers
     "biggest_obstacle": [

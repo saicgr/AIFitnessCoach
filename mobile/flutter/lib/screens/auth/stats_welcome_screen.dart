@@ -40,7 +40,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
   String? _loadingMessage;
   final List<String> _loadingMessages = [
     'Connecting to server...',
-    'Waking up backend (cold start)...',
+    'Setting things up...',
     'Almost there...',
     'Verifying credentials...',
   ];
@@ -603,6 +603,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   accentColor: AppColors.teal,
                   isDark: isDark,
                   icon: Icons.person_outline,
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Free', AppColors.teal),
                 ),
               ),
               const SizedBox(width: 6),
@@ -617,6 +618,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   isDark: isDark,
                   icon: Icons.workspace_premium,
                   isPopular: true,
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium', AppColors.cyan),
                 ),
               ),
             ],
@@ -634,6 +636,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   accentColor: AppColors.purple,
                   isDark: isDark,
                   icon: Icons.diamond_outlined,
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Premium Plus', AppColors.purple),
                 ),
               ),
               const SizedBox(width: 6),
@@ -647,6 +650,7 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   accentColor: const Color(0xFFFFB800), // Gold
                   isDark: isDark,
                   icon: Icons.all_inclusive,
+                  onInfoTap: () => _showTierFeaturesSheet(context, isDark, 'Lifetime', const Color(0xFFFFB800)),
                 ),
               ),
             ],
@@ -667,17 +671,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _FeatureComparisonItem(
-                  label: 'AI Chats',
-                  free: '10/day',
-                  paid: '100+',
-                  isDark: isDark,
-                ),
-                Container(
-                  width: 1,
-                  height: 24,
-                  color: borderColor,
-                ),
-                _FeatureComparisonItem(
                   label: 'Workouts',
                   free: '4/mo',
                   paid: '∞',
@@ -692,6 +685,17 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   label: 'Food Scans',
                   free: '—',
                   paid: '10/day',
+                  isDark: isDark,
+                ),
+                Container(
+                  width: 1,
+                  height: 24,
+                  color: borderColor,
+                ),
+                _FeatureComparisonItem(
+                  label: 'Nutrition',
+                  free: '—',
+                  paid: 'Full',
                   isDark: isDark,
                 ),
               ],
@@ -782,11 +786,6 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
                     _FeatureRow(
-                      feature: 'AI Chat Messages',
-                      values: ['10/day', '30/day', '100+', '100+'],
-                      isDark: isDark,
-                    ),
-                    _FeatureRow(
                       feature: 'Workout Generation',
                       values: ['4/mo', 'Daily', '∞', '∞'],
                       isDark: isDark,
@@ -797,13 +796,13 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
                       isDark: isDark,
                     ),
                     _FeatureRow(
-                      feature: 'Chat History',
-                      values: ['7 days', '90 days', 'Forever', 'Forever'],
+                      feature: 'Nutrition Tracking',
+                      values: ['—', 'Full', 'Full', 'Full'],
                       isDark: isDark,
                     ),
                     _FeatureRow(
                       feature: 'Exercise Library',
-                      values: ['1,700+', '1,700+', '1,700+', '1,700+'],
+                      values: ['50', '1,700+', '1,700+', '1,700+'],
                       isDark: isDark,
                     ),
                     _FeatureRow(
@@ -895,6 +894,239 @@ class _StatsWelcomeScreenState extends ConsumerState<StatsWelcomeScreen>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Show a bottom sheet with features for a specific tier
+  void _showTierFeaturesSheet(BuildContext context, bool isDark, String tierName, Color accentColor) {
+    final cardColor = isDark ? AppColors.elevated : Colors.white;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Define features for each tier
+    final Map<String, List<Map<String, dynamic>>> tierFeatures = {
+      'Free': [
+        {'feature': 'Workout Generation', 'value': '4/month', 'included': true},
+        {'feature': 'Exercise Library', 'value': '50 exercises', 'included': true},
+        {'feature': 'Streak Tracking', 'value': '✓', 'included': true},
+        {'feature': 'Fasting Tracker', 'value': '✓', 'included': true},
+        {'feature': 'Saved Workouts', 'value': '3 max', 'included': true},
+        {'feature': 'Basic Progress', 'value': '7 days', 'included': true},
+        {'feature': 'Food Photo Scans', 'value': '—', 'included': false},
+        {'feature': 'Nutrition Tracking', 'value': '—', 'included': false},
+        {'feature': 'PR Tracking', 'value': '—', 'included': false},
+        {'feature': 'Ads', 'value': 'Yes', 'included': false, 'isNegative': true},
+      ],
+      'Premium': [
+        {'feature': 'Workout Generation', 'value': 'Daily', 'included': true},
+        {'feature': 'Exercise Library', 'value': '1,700+', 'included': true},
+        {'feature': 'Food Photo Scans', 'value': '5/day', 'included': true},
+        {'feature': 'Full Nutrition Tracking', 'value': '✓', 'included': true},
+        {'feature': 'Full Macro Tracking', 'value': '✓', 'included': true},
+        {'feature': 'PR Tracking', 'value': '✓', 'included': true},
+        {'feature': 'Edit Workouts', 'value': '✓', 'included': true},
+        {'feature': 'Saved Workouts', 'value': '5', 'included': true},
+        {'feature': 'Advanced Analytics', 'value': '✓', 'included': true},
+        {'feature': 'Ad-Free', 'value': '✓', 'included': true},
+        {'feature': '7-day Free Trial', 'value': '✓', 'included': true},
+      ],
+      'Premium Plus': [
+        {'feature': 'Workout Generation', 'value': 'Unlimited', 'included': true},
+        {'feature': 'Exercise Library', 'value': '1,700+', 'included': true},
+        {'feature': 'Food Photo Scans', 'value': '10/day', 'included': true},
+        {'feature': 'Full Nutrition Tracking', 'value': '✓', 'included': true},
+        {'feature': 'Full Macro Tracking', 'value': '✓', 'included': true},
+        {'feature': 'PR Tracking', 'value': '✓', 'included': true},
+        {'feature': 'Edit Workouts', 'value': '✓', 'included': true},
+        {'feature': 'Saved Workouts', 'value': 'Unlimited', 'included': true},
+        {'feature': 'Advanced Analytics', 'value': '✓', 'included': true},
+        {'feature': 'Shareable Links', 'value': '✓', 'included': true},
+        {'feature': 'Leaderboards', 'value': '✓', 'included': true},
+        {'feature': 'Priority Support', 'value': '✓', 'included': true},
+        {'feature': 'Ad-Free', 'value': '✓', 'included': true},
+      ],
+      'Lifetime': [
+        {'feature': 'Everything in Premium Plus', 'value': '✓', 'included': true},
+        {'feature': 'One-Time Payment', 'value': '\$99.99', 'included': true},
+        {'feature': 'Lifetime Updates', 'value': '✓', 'included': true},
+        {'feature': 'Early Access Features', 'value': '✓', 'included': true},
+        {'feature': 'No Recurring Charges', 'value': 'Ever', 'included': true},
+        {'feature': 'Best Value', 'value': '~14 months', 'included': true},
+      ],
+    };
+
+    final features = tierFeatures[tierName] ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: borderColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      tierName == 'Free' ? Icons.person_outline :
+                      tierName == 'Premium' ? Icons.workspace_premium :
+                      tierName == 'Premium Plus' ? Icons.diamond_outlined :
+                      Icons.all_inclusive,
+                      color: accentColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$tierName Features',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                        Text(
+                          tierName == 'Free' ? '\$0/forever' :
+                          tierName == 'Premium' ? '\$4/mo (yearly)' :
+                          tierName == 'Premium Plus' ? '\$6.67/mo (yearly)' :
+                          '\$99.99 one-time',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: accentColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Divider(color: borderColor, height: 1),
+            // Features list
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: features.length,
+                itemBuilder: (context, index) {
+                  final feature = features[index];
+                  final isIncluded = feature['included'] as bool;
+                  final isNegative = feature['isNegative'] ?? false;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isNegative
+                                ? Colors.red.withValues(alpha: 0.15)
+                                : isIncluded
+                                    ? accentColor.withValues(alpha: 0.15)
+                                    : Colors.grey.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isNegative
+                                ? Icons.remove
+                                : isIncluded
+                                    ? Icons.check
+                                    : Icons.close,
+                            size: 14,
+                            color: isNegative
+                                ? Colors.red
+                                : isIncluded
+                                    ? accentColor
+                                    : Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            feature['feature'] as String,
+                            style: TextStyle(
+                              color: isIncluded ? textPrimary : textSecondary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          feature['value'] as String,
+                          style: TextStyle(
+                            color: isNegative
+                                ? Colors.red
+                                : isIncluded
+                                    ? accentColor
+                                    : textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Compare all button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showFeaturesBottomSheet(context, isDark);
+                },
+                child: Text(
+                  'Compare All Plans',
+                  style: TextStyle(
+                    color: AppColors.cyan,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1557,6 +1789,7 @@ class _CompactTierCard extends StatelessWidget {
   final bool isDark;
   final IconData icon;
   final bool isPopular;
+  final VoidCallback? onInfoTap;
 
   const _CompactTierCard({
     required this.tierName,
@@ -1567,6 +1800,7 @@ class _CompactTierCard extends StatelessWidget {
     required this.isDark,
     required this.icon,
     this.isPopular = false,
+    this.onInfoTap,
   });
 
   @override
@@ -1611,7 +1845,7 @@ class _CompactTierCard extends StatelessWidget {
                     color: accentColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(
+                  child: const Text(
                     '★',
                     style: TextStyle(
                       color: Colors.white,
@@ -1619,6 +1853,17 @@ class _CompactTierCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (onInfoTap != null) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: onInfoTap,
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: accentColor.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 4),

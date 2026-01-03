@@ -91,7 +91,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
     if (customMessage != null) return customMessage!;
     switch (feature) {
       case GuestFeatureLimit.chat:
-        return 'You\'ve used your ${GuestUsageLimits.maxChatMessagesPerDay} free chat messages. Sign up free to get 10 messages/day, or go Premium for unlimited!';
+        return 'You\'ve used your ${GuestUsageLimits.maxChatMessagesPerDay} free chat messages. Sign up free to continue chatting with your AI coach!';
       case GuestFeatureLimit.workout:
         return 'Guest mode includes ${GuestUsageLimits.maxWorkoutGenerationsTotal} sample workout. Sign up free to generate 4 workouts/month, or go Premium for unlimited!';
       case GuestFeatureLimit.foodScan:

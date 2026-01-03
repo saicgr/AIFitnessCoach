@@ -18,6 +18,7 @@ import '../../widgets/main_shell.dart';
 import '../../data/services/food_search_service.dart' as search;
 import 'widgets/food_search_bar.dart';
 import 'widgets/inflammation_analysis_widget.dart';
+import 'widgets/portion_amount_input.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
@@ -189,9 +190,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           return;
         }
 
-        // Show rainbow confirmation dialog for user to review
-        final confirmed = await _showRainbowNutritionConfirmation(response, 'Photo analysis');
-        if (confirmed == true && mounted) {
+        // Show rainbow confirmation dialog for user to review with portion editing
+        final result = await _showRainbowNutritionConfirmation(response, 'Photo analysis');
+        if (result != null && result.confirmed && mounted) {
+          // Apply portion multiplier to the response
+          final adjustedResponse = result.multiplier != 1.0
+              ? response.copyWithMultiplier(result.multiplier)
+              : response;
+
           // NOW actually save to database after user confirmation
           setState(() {
             _isLoading = true;
@@ -202,13 +208,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             await repository.logFoodDirect(
               userId: widget.userId,
               mealType: _selectedMealType.value,
-              analyzedFood: response,
+              analyzedFood: adjustedResponse,
               sourceType: 'image',
             );
 
             if (mounted) {
               Navigator.pop(context);
-              _showSuccessSnackbar(response.totalCalories);
+              _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
             }
           } catch (saveError) {
@@ -299,9 +305,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           return;
         }
 
-        // Show rainbow confirmation dialog for user to review
-        final confirmed = await _showRainbowNutritionConfirmation(response, description);
-        if (confirmed == true && mounted) {
+        // Show rainbow confirmation dialog for user to review with portion editing
+        final result = await _showRainbowNutritionConfirmation(response, description);
+        if (result != null && result.confirmed && mounted) {
+          // Apply portion multiplier to the response
+          final adjustedResponse = result.multiplier != 1.0
+              ? response.copyWithMultiplier(result.multiplier)
+              : response;
+
           // NOW actually save to database after user confirmation
           setState(() {
             _isLoading = true;
@@ -312,13 +323,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
             await repository.logFoodDirect(
               userId: widget.userId,
               mealType: _selectedMealType.value,
-              analyzedFood: response,
+              analyzedFood: adjustedResponse,
               sourceType: 'text',
             );
 
             if (mounted) {
               Navigator.pop(context);
-              _showSuccessSnackbar(response.totalCalories);
+              _showSuccessSnackbar(adjustedResponse.totalCalories);
               ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
             }
           } catch (saveError) {
@@ -510,7 +521,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     );
   }
 
-  Future<bool?> _showRainbowNutritionConfirmation(LogFoodResponse response, String description) {
+  /// Returns (confirmed, multiplier) - multiplier defaults to 1.0 if not adjusted
+  Future<({bool confirmed, double multiplier})?> _showRainbowNutritionConfirmation(LogFoodResponse response, String description) {
     final isDark = widget.isDark;
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -524,162 +536,195 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     const fatColor = Color(0xFF4D96FF);       // Blue
     const fiberColor = Color(0xFF9B59B6);     // Purple
 
-    return showDialog<bool>(
+    // Portion multiplier state
+    double portionMultiplier = 1.0;
+
+    return showDialog<({bool confirmed, double multiplier})>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: nearBlack,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'AI Estimated Nutrition',
-                style: TextStyle(
-                  color: textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Food description
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.restaurant, size: 20, color: textMuted),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      description,
-                      style: TextStyle(color: textPrimary, fontSize: 14),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          // Calculate adjusted values based on portion multiplier
+          final adjustedCalories = (response.totalCalories * portionMultiplier).round();
+          final adjustedProtein = response.proteinG * portionMultiplier;
+          final adjustedCarbs = response.carbsG * portionMultiplier;
+          final adjustedFat = response.fatG * portionMultiplier;
+          final adjustedFiber = (response.fiberG ?? 0) * portionMultiplier;
+
+          return AlertDialog(
+            backgroundColor: nearBlack,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'AI Estimated Nutrition',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Food description
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: elevated,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.restaurant, size: 20, color: textMuted),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            description,
+                            style: TextStyle(color: textPrimary, fontSize: 14),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Portion adjustment section
+                  PortionAmountInput(
+                    initialMultiplier: portionMultiplier,
+                    baseCalories: response.totalCalories,
+                    baseProtein: response.proteinG,
+                    baseCarbs: response.carbsG,
+                    baseFat: response.fatG,
+                    isDark: isDark,
+                    onMultiplierChanged: (newMultiplier) {
+                      setDialogState(() {
+                        portionMultiplier = newMultiplier;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Rainbow nutrition grid (shows adjusted values)
+                  _RainbowNutritionCard(
+                    icon: Icons.local_fire_department,
+                    label: 'Calories',
+                    value: '$adjustedCalories',
+                    unit: 'kcal',
+                    color: caloriesColor,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.fitness_center,
+                          label: 'Protein',
+                          value: adjustedProtein.toStringAsFixed(1),
+                          unit: 'g',
+                          color: proteinColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.grain,
+                          label: 'Carbs',
+                          value: adjustedCarbs.toStringAsFixed(1),
+                          unit: 'g',
+                          color: carbsColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.opacity,
+                          label: 'Fat',
+                          value: adjustedFat.toStringAsFixed(1),
+                          unit: 'g',
+                          color: fatColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _RainbowNutritionCard(
+                          icon: Icons.eco,
+                          label: 'Fiber',
+                          value: adjustedFiber.toStringAsFixed(1),
+                          unit: 'g',
+                          color: fiberColor,
+                          isDark: isDark,
+                          compact: true,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Confidence indicator
+                  if (response.confidenceLevel != null)
+                    _ConfidenceIndicator(
+                      confidenceLevel: response.confidenceLevel!,
+                      confidenceScore: response.confidenceScore,
+                      sourceType: response.sourceType,
+                      isDark: isDark,
+                    ),
+
+                  if (response.confidenceLevel == null)
+                    Text(
+                      'These values are AI estimates based on your description.',
+                      style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
+                      textAlign: TextAlign.center,
+                    ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Rainbow nutrition grid
-            _RainbowNutritionCard(
-              icon: Icons.local_fire_department,
-              label: 'Calories',
-              value: '${response.totalCalories}',
-              unit: 'kcal',
-              color: caloriesColor,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _RainbowNutritionCard(
-                    icon: Icons.fitness_center,
-                    label: 'Protein',
-                    value: response.proteinG.toStringAsFixed(1),
-                    unit: 'g',
-                    color: proteinColor,
-                    isDark: isDark,
-                    compact: true,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _RainbowNutritionCard(
-                    icon: Icons.grain,
-                    label: 'Carbs',
-                    value: response.carbsG.toStringAsFixed(1),
-                    unit: 'g',
-                    color: carbsColor,
-                    isDark: isDark,
-                    compact: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _RainbowNutritionCard(
-                    icon: Icons.opacity,
-                    label: 'Fat',
-                    value: response.fatG.toStringAsFixed(1),
-                    unit: 'g',
-                    color: fatColor,
-                    isDark: isDark,
-                    compact: true,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _RainbowNutritionCard(
-                    icon: Icons.eco,
-                    label: 'Fiber',
-                    value: (response.fiberG ?? 0).toStringAsFixed(1),
-                    unit: 'g',
-                    color: fiberColor,
-                    isDark: isDark,
-                    compact: true,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Confidence indicator
-            if (response.confidenceLevel != null)
-              _ConfidenceIndicator(
-                confidenceLevel: response.confidenceLevel!,
-                confidenceScore: response.confidenceScore,
-                sourceType: response.sourceType,
-                isDark: isDark,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: Text('Cancel', style: TextStyle(color: textMuted)),
               ),
-
-            if (response.confidenceLevel == null)
-              Text(
-                'These values are AI estimates based on your description.',
-                style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
-                textAlign: TextAlign.center,
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, (confirmed: true, multiplier: portionMultiplier)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6BCB77),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check, size: 18),
+                    SizedBox(width: 8),
+                    Text('Log This'),
+                  ],
+                ),
               ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle(color: textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6BCB77),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check, size: 18),
-                SizedBox(width: 8),
-                Text('Log This'),
-              ],
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -840,6 +885,80 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     );
   }
 
+  void _showRestaurantModeInfo(BuildContext context, bool isDark) {
+    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: nearBlack,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.restaurant, color: orange, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Restaurant Mode',
+              style: TextStyle(
+                color: textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Restaurant portions can vary significantly from typical serving sizes.',
+              style: TextStyle(color: textPrimary, fontSize: 14, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'When enabled:',
+              style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            _buildInfoBullet('Choose portion size after analysis', textMuted),
+            _buildInfoBullet('Pick from lighter, typical, or generous portions', textMuted),
+            _buildInfoBullet('Nutrition values adjust based on your selection', textMuted),
+            const SizedBox(height: 16),
+            Text(
+              'Use this when eating out to get more accurate logging.',
+              style: TextStyle(color: textMuted, fontSize: 13, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Got it', style: TextStyle(color: orange, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoBullet(String text, Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('  •  ', style: TextStyle(color: textColor, fontSize: 14)),
+          Expanded(
+            child: Text(text, style: TextStyle(color: textColor, fontSize: 13)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -966,6 +1085,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
+                        color: _restaurantMode ? orange : textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () => _showRestaurantModeInfo(context, isDark),
+                      child: Icon(
+                        Icons.info_outline,
+                        size: 16,
                         color: _restaurantMode ? orange : textMuted,
                       ),
                     ),

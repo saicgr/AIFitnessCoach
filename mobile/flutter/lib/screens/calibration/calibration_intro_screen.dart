@@ -299,55 +299,67 @@ class _CalibrationIntroScreenState extends ConsumerState<CalibrationIntroScreen>
                   top: BorderSide(color: cardBorder.withOpacity(0.5)),
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: Row(
                 children: [
-                  // Start button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _startCalibration,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.purple,
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: AppColors.purple.withOpacity(0.4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.play_arrow_rounded, size: 24),
-                          SizedBox(width: 8),
-                          Text(
-                            'Start Calibration',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                  // Skip button (only in onboarding)
+                  if (widget.fromOnboarding)
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 56,
+                        child: TextButton(
+                          onPressed: _skipCalibration,
+                          style: TextButton.styleFrom(
+                            foregroundColor: textMuted,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                        ],
-                      ),
+                          child: Text(
+                            'Skip for now',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: textSecondary,
+                            ),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 350.ms),
                     ),
-                  ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1),
-
-                  if (widget.fromOnboarding) ...[
-                    const SizedBox(height: 12),
-                    // Skip button
-                    TextButton(
-                      onPressed: _skipCalibration,
-                      child: Text(
-                        'Skip for now',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: textMuted,
+                  if (widget.fromOnboarding) const SizedBox(width: 12),
+                  // Start button
+                  Expanded(
+                    flex: widget.fromOnboarding ? 5 : 1,
+                    child: SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _startCalibration,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.purple,
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: AppColors.purple.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.play_arrow_rounded, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              'Start Calibration',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ).animate().fadeIn(delay: 400.ms),
-                  ],
+                    ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1),
+                  ),
                 ],
               ),
             ),

@@ -23,7 +23,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   String? _loadingMessage;
   final List<String> _loadingMessages = [
     'Connecting to server...',
-    'Waking up backend (cold start)...',
+    'Setting things up...',
     'Almost there...',
     'Verifying credentials...',
   ];

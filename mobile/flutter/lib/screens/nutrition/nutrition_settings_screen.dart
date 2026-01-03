@@ -320,6 +320,21 @@ class _NutritionSettingsScreenState
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Weekly Check-in Reminders',
+                        subtitle: preferences.weeklyCheckinEnabled
+                            ? 'Get reminded to review and adjust your targets weekly'
+                            : 'Disabled - targets won\'t auto-adjust',
+                        value: preferences.weeklyCheckinEnabled,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, weeklyCheckinEnabled: value),
+                        icon: Icons.calendar_today_rounded,
+                        iconColor: const Color(0xFF00C7BE), // Teal
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
                     ],
                   ),
 
@@ -1102,6 +1117,7 @@ class _NutritionSettingsScreenState
     bool? quickLogModeEnabled,
     bool? compactTrackerViewEnabled,
     bool? showMacrosOnLog,
+    bool? weeklyCheckinEnabled,
   }) async {
     if (userId == null) return;
 
@@ -1117,6 +1133,7 @@ class _NutritionSettingsScreenState
         quickLogModeEnabled: quickLogModeEnabled,
         compactTrackerViewEnabled: compactTrackerViewEnabled,
         showMacrosOnLog: showMacrosOnLog,
+        weeklyCheckinEnabled: weeklyCheckinEnabled,
       );
 
       await ref.read(nutritionPreferencesProvider.notifier).savePreferences(

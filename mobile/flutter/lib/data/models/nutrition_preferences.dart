@@ -388,6 +388,12 @@ class NutritionPreferences {
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
+  // Weekly check-in settings
+  @JsonKey(name: 'weekly_checkin_enabled')
+  final bool weeklyCheckinEnabled;
+  @JsonKey(name: 'last_weekly_checkin_at')
+  final DateTime? lastWeeklyCheckinAt;
+
   const NutritionPreferences({
     this.id,
     required this.userId,
@@ -429,6 +435,8 @@ class NutritionPreferences {
     this.lastRecalculatedAt,
     this.createdAt,
     this.updatedAt,
+    this.weeklyCheckinEnabled = true,
+    this.lastWeeklyCheckinAt,
   });
 
   /// Get nutrition goals as enums (multi-select)
@@ -463,6 +471,20 @@ class NutritionPreferences {
   /// Get favorite cuisines as enums
   List<CuisineType> get favoriteCuisineEnums =>
       favoriteCuisines.map((c) => CuisineType.fromString(c)).toList();
+
+  /// Check if weekly check-in is due (7+ days since last check-in)
+  bool get isWeeklyCheckinDue {
+    if (!weeklyCheckinEnabled) return false;
+    if (lastWeeklyCheckinAt == null) return true; // Never checked in
+    final daysSince = DateTime.now().difference(lastWeeklyCheckinAt!).inDays;
+    return daysSince >= 7;
+  }
+
+  /// Days since last weekly check-in
+  int? get daysSinceLastCheckin {
+    if (lastWeeklyCheckinAt == null) return null;
+    return DateTime.now().difference(lastWeeklyCheckinAt!).inDays;
+  }
 
   factory NutritionPreferences.fromJson(Map<String, dynamic> json) =>
       _$NutritionPreferencesFromJson(json);
@@ -509,6 +531,8 @@ class NutritionPreferences {
     DateTime? lastRecalculatedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? weeklyCheckinEnabled,
+    DateTime? lastWeeklyCheckinAt,
   }) {
     return NutritionPreferences(
       id: id ?? this.id,
@@ -559,6 +583,10 @@ class NutritionPreferences {
       lastRecalculatedAt: lastRecalculatedAt ?? this.lastRecalculatedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      weeklyCheckinEnabled:
+          weeklyCheckinEnabled ?? this.weeklyCheckinEnabled,
+      lastWeeklyCheckinAt:
+          lastWeeklyCheckinAt ?? this.lastWeeklyCheckinAt,
     );
   }
 }

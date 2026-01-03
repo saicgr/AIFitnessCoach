@@ -6,9 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Defines the limits for free tier users to ensure transparency
 /// about what they can do without paying.
 class FreeTierLimits {
-  /// Maximum chat messages per day for free users
-  static const int chatMessagesPerDay = 10;
-
   /// Maximum workout generations per month for free users
   static const int workoutGenerationsPerMonth = 4;
 
@@ -120,7 +117,6 @@ class FreeTierState {
 
 /// Feature IDs for tracking
 class FeatureIds {
-  static const String chatMessages = 'chat_messages';
   static const String workoutGenerations = 'workout_generations';
   static const String foodScans = 'food_scans';
   static const String exerciseLibrary = 'exercise_library';
@@ -149,15 +145,6 @@ class FreeTierNotifier extends StateNotifier<FreeTierState> {
 
       // Load all feature usage
       final usage = <String, FeatureUsage>{};
-
-      // Chat messages (daily limit)
-      final chatUsage = prefs.getInt('$_prefsKeyPrefix${FeatureIds.chatMessages}') ?? 0;
-      usage[FeatureIds.chatMessages] = FeatureUsage(
-        featureId: FeatureIds.chatMessages,
-        currentUsage: chatUsage,
-        limit: FreeTierLimits.chatMessagesPerDay,
-        resetDate: _getNextDayReset(),
-      );
 
       // Workout generations (monthly limit)
       final workoutUsage =
@@ -197,15 +184,14 @@ class FreeTierNotifier extends StateNotifier<FreeTierState> {
     }
   }
 
-  /// Check and reset daily counters
+  /// Check and reset daily counters (kept for future daily-limited features)
   Future<void> _checkAndResetDailyCounters(SharedPreferences prefs) async {
     final lastResetStr = prefs.getString('${_prefsKeyPrefix}daily_reset');
     final today = DateTime.now();
     final todayStr = '${today.year}-${today.month}-${today.day}';
 
     if (lastResetStr != todayStr) {
-      // Reset daily counters
-      await prefs.setInt('$_prefsKeyPrefix${FeatureIds.chatMessages}', 0);
+      // Reset daily counters (currently no daily-limited features for free tier)
       await prefs.setString('${_prefsKeyPrefix}daily_reset', todayStr);
     }
   }
@@ -221,11 +207,6 @@ class FreeTierNotifier extends StateNotifier<FreeTierState> {
       await prefs.setInt('$_prefsKeyPrefix${FeatureIds.workoutGenerations}', 0);
       await prefs.setString('${_prefsKeyPrefix}monthly_reset', monthStr);
     }
-  }
-
-  DateTime _getNextDayReset() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + 1);
   }
 
   DateTime _getNextMonthReset() {

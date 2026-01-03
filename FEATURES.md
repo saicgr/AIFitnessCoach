@@ -20,9 +20,6 @@
 
 | Feature Category | Free | Premium | Premium Plus | Lifetime |
 |------------------|:----:|:-------:|:------------:|:--------:|
-| **AI Chat** | 10/day | 30/day | 100/day | 100/day |
-| **AI Model** | GPT-5 nano | GPT-5 mini | GPT-5 mini | GPT-5 mini |
-| **Chat History** | 7 days | 90 days | Forever | Forever |
 | **Workout Generation** | 4/month | Daily | Unlimited | Unlimited |
 | **Edit Workouts** | - | Yes | Yes | Yes |
 | **Save Favorites** | - | 5 | Unlimited | Unlimited |
@@ -431,7 +428,7 @@ This addresses the frustration of workout logs showing incorrect data when you c
 - **See Full Pricing Details Button**: Prominent button navigates to `/pricing-preview` before any account creation
 - **Try Sample Workout Button**: Users can try a full workout before signing up
 - **Continue as Guest Button**: 60-minute guest preview with feature chips explaining what's included
-- **Free Tier Transparency**: Clear display of free tier limits (10 chats/day, 4 workouts/month)
+- **Free Tier Transparency**: Clear display of free tier limits (4 workouts/month, 50 exercises)
 - **Subscription Transparency API**: Full event tracking for pricing views, trial starts, guest sessions
   - `POST /api/v1/subscription-transparency/event` - Log transparency events
   - `GET /api/v1/subscription-transparency/trial-status/{user_id}` - Get trial status with days remaining
@@ -2713,7 +2710,7 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 29 | Workout Modification | Modify today's workout via chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Active Workout |
 | 30 | Nutrition Logging via Chat | Log meals by describing in chat | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | Fully Implemented | User | Backend system |
 
-### 8. Nutrition Tracking (80 Features)
+### 8. Nutrition Tracking (85 Features)
 
 **Tier Availability:**
 | Feature | Free | Premium | Premium Plus/Lifetime |
@@ -2807,6 +2804,11 @@ A comprehensive feature allowing users to set weekly challenges like "How many p
 | 78 | Inflammation Statistics | User's aggregated inflammation scan stats | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Stats |
 | 79 | Barcode Inflammation Cache | 90-day caching of barcode inflammation analyses | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | — |
 | 80 | AI Inflammation Recommendations | Personalized recommendations based on product ingredients | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Nutrition → Scan |
+| 81 | Goals Visibility - Header | Compact macro targets (P/C/F) in nutrition screen header | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition |
+| 82 | Goals Visibility - Card | Dedicated NutritionGoalsCard with circular progress rings | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition |
+| 83 | Portion Size Editing | Quick presets (½, ¾, 1x, 1¼, 1½, 2x) + custom % input | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Nutrition → Log Food |
+| 84 | Real-time Nutrition Preview | Live calorie/macro calculation as portion is adjusted | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Nutrition → Log Food |
+| 85 | Weekly Check-in Reminders | Toggle for weekly target review prompt with auto-trigger | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Nutrition → Settings |
 
 ### 9. Hydration Tracking (8 Features)
 

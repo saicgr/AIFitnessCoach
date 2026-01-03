@@ -32,7 +32,7 @@ class FastingRepository {
         data: {
           'user_id': userId,
           'protocol': protocol.id,
-          'protocol_type': protocol.type,
+          'protocol_type': protocol.type.name,
           'goal_duration_minutes': customDurationMinutes ?? protocol.fastingHours * 60,
           if (startTime != null) 'started_at': startTime.toUtc().toIso8601String(),
         },

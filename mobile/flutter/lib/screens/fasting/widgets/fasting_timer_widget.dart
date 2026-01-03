@@ -147,12 +147,12 @@ class FastingTimerWidget extends ConsumerWidget {
                             ),
                           ),
                         ] else ...[
-                          // Start Fast button in center when not fasting
+                          // Play button only - text moved to main button below
                           GestureDetector(
                             onTap: onStartFast,
                             child: Container(
-                              width: screenWidth < 380 ? 64 : 80,
-                              height: screenWidth < 380 ? 64 : 80,
+                              width: screenWidth < 380 ? 72 : 88,
+                              height: screenWidth < 380 ? 72 : 88,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
@@ -166,33 +166,16 @@ class FastingTimerWidget extends ConsumerWidget {
                                 boxShadow: [
                                   BoxShadow(
                                     color: purple.withValues(alpha: 0.4),
-                                    blurRadius: 16,
-                                    spreadRadius: 2,
+                                    blurRadius: 20,
+                                    spreadRadius: 4,
                                   ),
                                 ],
                               ),
                               child: Icon(
                                 Icons.play_arrow_rounded,
                                 color: Colors.white,
-                                size: screenWidth < 380 ? 32 : 40,
+                                size: screenWidth < 380 ? 40 : 48,
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Start Fast',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Tap to begin',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
                             ),
                           ),
                         ],

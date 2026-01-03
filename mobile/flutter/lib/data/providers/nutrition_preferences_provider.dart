@@ -462,6 +462,31 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  /// Record that weekly check-in was completed
+  Future<void> recordWeeklyCheckin({required String userId}) async {
+    if (state.preferences == null) {
+      debugPrint('❌ [NutritionPrefsProvider] Cannot record check-in: no preferences loaded');
+      return;
+    }
+
+    try {
+      debugPrint('📅 [NutritionPrefsProvider] Recording weekly check-in completion');
+      final updatedPreferences = state.preferences!.copyWith(
+        lastWeeklyCheckinAt: DateTime.now(),
+      );
+
+      final saved = await _repository.savePreferences(
+        userId: userId,
+        preferences: updatedPreferences,
+      );
+
+      state = state.copyWith(preferences: saved);
+      debugPrint('✅ [NutritionPrefsProvider] Weekly check-in recorded');
+    } catch (e) {
+      debugPrint('❌ [NutritionPrefsProvider] Record check-in error: $e');
+    }
+  }
 }
 
 // ============================================

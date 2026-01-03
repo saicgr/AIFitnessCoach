@@ -80,11 +80,6 @@
 | Yearly | - | $47.99 | $79.99 | - |
 | One-time | - | - | - | $99.99 |
 | | | | | |
-| **AI CHAT** | | | | |
-| Messages/day | 5 | 30 | 100 | 100 |
-| AI Model | GPT-5 nano | GPT-5 mini | GPT-5 mini | GPT-5 mini |
-| Chat history | 7 days | 90 days | Forever | Forever |
-| | | | | |
 | **WORKOUTS** | | | | |
 | Generations/week | 1 | Daily | Unlimited | Unlimited |
 | Edit workouts | - | Yes | Yes | Yes |

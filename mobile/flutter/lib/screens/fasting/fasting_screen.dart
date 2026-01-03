@@ -17,6 +17,9 @@ import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
 import 'widgets/fasting_history_list.dart';
 import 'widgets/start_fast_sheet.dart';
+import 'widgets/protocol_selector_chip.dart';
+import 'widgets/protocol_selector_sheet.dart';
+import 'widgets/time_schedule_row.dart';
 import 'fasting_onboarding_screen.dart';
 
 /// Fasting tracker screen with timer and zone visualization
@@ -34,6 +37,12 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
   // Tour key for Start Fast button
   final GlobalKey _startFastKey = GlobalKey();
+
+  // Inline fast configuration state
+  FastingProtocol _selectedProtocol = FastingProtocol.sixteen8;
+  int _customHours = 16;
+  DateTime _startTime = DateTime.now();
+  bool _isStartingFast = false;
 
   @override
   void initState() {
@@ -368,10 +377,25 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     Color textMuted,
     Color elevated,
   ) {
+    final hasFast = fastingState.hasFast;
+    final durationMinutes = _selectedProtocol == FastingProtocol.custom
+        ? _customHours * 60
+        : _selectedProtocol.fastingHours * 60;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       child: Column(
         children: [
+          // Protocol Selector (only when not fasting)
+          if (!hasFast) ...[
+            ProtocolSelectorChip(
+              selectedProtocol: _selectedProtocol,
+              onTap: () => _showProtocolSelector(context),
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+          ],
+
           // Timer Widget with Start button in center
           Container(
             key: _startFastKey,
@@ -380,16 +404,80 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
               onEndFast: userId != null
                   ? () => _showEndFastDialog(context, userId)
                   : null,
-              onStartFast: userId != null
-                  ? () => _showStartFastSheet(context, userId)
+              onStartFast: userId != null && !hasFast
+                  ? () => _startFastDirectly(userId)
                   : null,
               isDark: isDark,
             ),
           ),
-          const SizedBox(height: 24),
+
+          // Inline controls (only when not fasting)
+          if (!hasFast) ...[
+            const SizedBox(height: 20),
+
+            // Time Schedule Row
+            TimeScheduleRow(
+              startTime: _startTime,
+              durationMinutes: durationMinutes,
+              onStartTimeChanged: (newTime) {
+                setState(() => _startTime = newTime);
+              },
+              isDark: isDark,
+            ),
+            const SizedBox(height: 20),
+
+            // Start Fast Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isStartingFast || userId == null
+                      ? null
+                      : () => _startFastDirectly(userId),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: purple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                    disabledBackgroundColor: purple.withValues(alpha: 0.5),
+                  ),
+                  child: _isStartingFast
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.play_arrow_rounded, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Start Fast',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ] else ...[
+            const SizedBox(height: 24),
+          ],
 
           // Zone Timeline (only when fasting)
-          if (fastingState.hasFast) ...[
+          if (hasFast) ...[
             FastingZoneTimeline(
               activeFast: fastingState.activeFast!,
               isDark: isDark,
@@ -499,6 +587,82 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     });
+  }
+
+  /// Show the protocol selector sheet
+  void _showProtocolSelector(BuildContext context) {
+    HapticService.light();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ProtocolSelectorSheet(
+        currentProtocol: _selectedProtocol,
+        currentCustomHours: _customHours,
+        onSelect: (protocol, customHours) {
+          setState(() {
+            _selectedProtocol = protocol;
+            if (customHours != null) {
+              _customHours = customHours;
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  /// Start fast directly without the full sheet
+  Future<void> _startFastDirectly(String userId) async {
+    if (_isStartingFast) return;
+
+    setState(() => _isStartingFast = true);
+    HapticService.medium();
+
+    try {
+      final customMinutes = _selectedProtocol == FastingProtocol.custom
+          ? _customHours * 60
+          : null;
+
+      // Check if start time is in the future (scheduled) or now
+      final now = DateTime.now();
+      final isScheduled = _startTime.isAfter(now.add(const Duration(minutes: 1)));
+      final startTime = isScheduled ? _startTime : null;
+
+      await ref.read(fastingProvider.notifier).startFast(
+            userId: userId,
+            protocol: _selectedProtocol,
+            customDurationMinutes: customMinutes,
+            startTime: startTime,
+          );
+
+      // Start timer service monitoring
+      final activeFast = ref.read(fastingProvider).activeFast;
+      if (activeFast != null) {
+        ref.read(fastingTimerServiceProvider).startZoneMonitoring(activeFast);
+        ref.read(fastingTimerServiceProvider).showFastStartedNotification(_selectedProtocol);
+      }
+
+      // Reset start time for next fast
+      if (mounted) {
+        setState(() {
+          _startTime = DateTime.now();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start fast: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isStartingFast = false);
+      }
+    }
   }
 
   void _showEndFastDialog(BuildContext context, String userId) {

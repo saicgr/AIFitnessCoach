@@ -25,6 +25,41 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
   final GlobalKey _todaysWorkoutKey = GlobalKey();
 
   @override
+  void initState() {
+    super.initState();
+    // Check and regenerate workouts if needed when this screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndRegenerateIfNeeded();
+    });
+  }
+
+  /// Check if user needs more workouts and trigger generation if needed
+  /// This is called when Workouts tab loads
+  Future<void> _checkAndRegenerateIfNeeded() async {
+    // Only check once per session
+    final hasChecked = ref.read(hasCheckedRegenerationProvider);
+    if (hasChecked) return;
+
+    final workoutsNotifier = ref.read(workoutsProvider.notifier);
+    final result = await workoutsNotifier.checkAndRegenerateIfNeeded();
+
+    // Mark as checked for this session
+    ref.read(hasCheckedRegenerationProvider.notifier).state = true;
+
+    // Show snackbar if generation was triggered
+    if (result['needs_generation'] == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Generating your upcoming workouts...'),
+          backgroundColor: AppColors.elevated,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Check if we should show tour step when this screen becomes visible

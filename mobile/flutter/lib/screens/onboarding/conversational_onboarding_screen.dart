@@ -766,7 +766,7 @@ class _ConversationalOnboardingScreenState
 
       setState(() {
         _workoutLoadingProgress = 25;
-        _workoutLoadingMessage = 'Generating your first week of workouts...';
+        _workoutLoadingMessage = 'Generating your first workout...';
       });
 
       // Generate workouts
@@ -806,12 +806,14 @@ class _ConversationalOnboardingScreenState
 
         final monthStart = DateTime.now().toIso8601String().split('T')[0];
 
-        // Use streaming for real-time progress updates
+        // Only generate 1 workout during onboarding for fast completion
+        // Rest are generated on-demand when user views "View All"
         await for (final progress in workoutRepo.generateMonthlyWorkoutsStreaming(
           userId: authState.user!.id,
           monthStartDate: monthStart,
           durationMinutes: (finalData['workoutDuration'] as int?) ?? 45,
           selectedDays: dayIndices,
+          maxWorkouts: 1,
         )) {
           if (!mounted) break;
 
@@ -835,10 +837,10 @@ class _ConversationalOnboardingScreenState
 
         setState(() {
           _workoutLoadingProgress = 95;
-          _workoutLoadingMessage = 'Your workouts are ready!';
+          _workoutLoadingMessage = 'Your first workout is ready!';
         });
 
-        debugPrint('✅ [Onboarding] Workouts generated!');
+        debugPrint('✅ [Onboarding] First workout generated!');
       } catch (e) {
         debugPrint('❌ [Onboarding] Workout generation failed: $e');
         setState(() {
