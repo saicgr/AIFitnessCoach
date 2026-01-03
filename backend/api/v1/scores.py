@@ -549,7 +549,7 @@ async def get_all_strength_scores(
     bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get latest strength scores from database
-    scores_response = db.from_("latest_strength_scores").select("*").eq(
+    scores_response = db.client.table("latest_strength_scores").select("*").eq(
         "user_id", user_id
     ).execute()
 
@@ -622,7 +622,7 @@ async def get_strength_detail(
     bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get latest strength score
-    score_response = db.from_("latest_strength_scores").select("*").eq(
+    score_response = db.client.table("latest_strength_scores").select("*").eq(
         "user_id", user_id
     ).eq(
         "muscle_group", muscle_group.lower()
@@ -734,7 +734,7 @@ async def calculate_strength_scores(
     )
 
     # Get previous scores for trend calculation
-    previous_response = db.from_("latest_strength_scores").select(
+    previous_response = db.client.table("latest_strength_scores").select(
         "muscle_group, strength_score"
     ).eq("user_id", user_id).execute()
 
@@ -1196,7 +1196,7 @@ async def calculate_fitness_score(
     user_id = request.user_id
 
     # 1. Get strength score (overall)
-    strength_response = db.from_("latest_strength_scores").select(
+    strength_response = db.client.table("latest_strength_scores").select(
         "muscle_group, strength_score"
     ).eq("user_id", user_id).execute()
 
