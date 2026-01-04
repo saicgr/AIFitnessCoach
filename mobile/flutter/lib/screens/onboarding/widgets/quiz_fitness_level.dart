@@ -3,19 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Combined fitness level and training experience question widget.
+/// Combined fitness level, training experience, and activity level question widget.
 class QuizFitnessLevel extends StatelessWidget {
   final String? selectedLevel;
   final String? selectedExperience;
+  final String? selectedActivityLevel;
   final ValueChanged<String> onLevelChanged;
   final ValueChanged<String> onExperienceChanged;
+  final ValueChanged<String>? onActivityLevelChanged;
 
   const QuizFitnessLevel({
     super.key,
     required this.selectedLevel,
     required this.selectedExperience,
+    this.selectedActivityLevel,
     required this.onLevelChanged,
     required this.onExperienceChanged,
+    this.onActivityLevelChanged,
   });
 
   static const _levels = [
@@ -50,6 +54,13 @@ class QuizFitnessLevel extends StatelessWidget {
     {'id': '5_plus_years', 'label': '5+ years', 'description': 'Veteran lifter'},
   ];
 
+  static const _activityLevelOptions = [
+    {'id': 'sedentary', 'emoji': '🪑', 'label': 'Sedentary', 'description': 'Desk job, minimal movement'},
+    {'id': 'lightly_active', 'emoji': '🚶', 'label': 'Light', 'description': 'Some walking, light activity'},
+    {'id': 'moderately_active', 'emoji': '🏃', 'label': 'Moderate', 'description': 'On feet often, regular activity'},
+    {'id': 'very_active', 'emoji': '⚡', 'label': 'Very Active', 'description': 'Physical job, always moving'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -70,6 +81,10 @@ class QuizFitnessLevel extends StatelessWidget {
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),
               _buildExperienceSection(isDark, textPrimary, textSecondary),
+            ],
+            if (selectedExperience != null && onActivityLevelChanged != null) ...[
+              const SizedBox(height: 20),
+              _buildActivityLevelSection(isDark, textPrimary, textSecondary),
             ],
             const SizedBox(height: 16),
           ],
@@ -237,6 +252,82 @@ class QuizFitnessLevel extends StatelessWidget {
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     color: isSelected ? Colors.white : textPrimary,
                   ),
+                ),
+              ),
+            ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityLevelSection(bool isDark, Color textPrimary, Color textSecondary) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Daily activity level (outside gym)?',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ).animate().fadeIn(delay: 100.ms),
+        const SizedBox(height: 4),
+        Text(
+          'Helps calculate your calorie needs',
+          style: TextStyle(
+            fontSize: 12,
+            color: textSecondary,
+          ),
+        ).animate().fadeIn(delay: 150.ms),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _activityLevelOptions.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final isSelected = selectedActivityLevel == option['id'];
+
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onActivityLevelChanged?.call(option['id'] as String);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  color: isSelected
+                      ? null
+                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected ? AppColors.cyan : cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      option['emoji'] as String,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      option['label'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));

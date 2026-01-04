@@ -21,7 +21,6 @@ import 'widgets/start_fast_sheet.dart';
 import 'widgets/protocol_selector_chip.dart';
 import 'widgets/protocol_selector_sheet.dart';
 import 'widgets/time_schedule_row.dart';
-import 'fasting_onboarding_screen.dart';
 
 /// Fasting tracker screen with timer and zone visualization
 class FastingScreen extends ConsumerStatefulWidget {
@@ -221,20 +220,6 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
           child: CircularProgressIndicator(color: purple),
         ),
       );
-    }
-
-    // Show onboarding if not completed
-    if (!fastingState.onboardingCompleted) {
-      // Hide nav bar during onboarding
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      });
-      return const FastingOnboardingScreen();
-    } else {
-      // Show nav bar when onboarding is complete
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-      });
     }
 
     return Scaffold(

@@ -124,6 +124,17 @@ class UserUpdate(BaseModel):
     # Detailed equipment with quantities and weights
     # Array of objects: [{"name": "dumbbells", "quantity": 2, "weights": [15, 25], "weight_unit": "lbs", "notes": ""}]
     equipment_details: Optional[list] = None
+    # Enhanced pre-auth quiz fields (stored in preferences JSON)
+    sleep_quality: Optional[str] = Field(default=None, max_length=20)  # poor, fair, good, excellent
+    obstacles: Optional[list] = None  # ["time", "energy", "motivation", "knowledge", "diet", "access"]
+    dietary_restrictions: Optional[list] = None  # ["vegetarian", "vegan", "gluten_free", etc.]
+    weight_direction: Optional[str] = Field(default=None, max_length=20)  # lose, gain, maintain
+    weight_change_amount: Optional[float] = Field(default=None, ge=0, le=200)  # kg amount
+    motivations: Optional[list] = None  # List of motivation tags
+    nutrition_goals: Optional[list] = None  # Nutrition goal tags
+    interested_in_fasting: Optional[bool] = None
+    fasting_protocol: Optional[str] = Field(default=None, max_length=50)
+    coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
 
 
 class User(BaseModel):

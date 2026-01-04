@@ -319,6 +319,32 @@ class _ConversationalOnboardingScreenState
         prePopulatedData['progressionPace'] = preAuthData.progressionPace;
       }
 
+      // Nutrition goals (multi-select)
+      if (preAuthData.nutritionGoals != null && preAuthData.nutritionGoals!.isNotEmpty) {
+        prePopulatedData['nutritionGoals'] = preAuthData.nutritionGoals;
+      }
+
+      // Fasting preferences
+      if (preAuthData.interestedInFasting != null) {
+        prePopulatedData['interestedInFasting'] = preAuthData.interestedInFasting;
+        if (preAuthData.fastingProtocol != null) {
+          prePopulatedData['fastingProtocol'] = preAuthData.fastingProtocol;
+        }
+      }
+
+      // Body metrics (from pre-auth quiz body metrics step)
+      if (preAuthData.heightCm != null) {
+        prePopulatedData['heightCm'] = preAuthData.heightCm;
+      }
+      if (preAuthData.weightKg != null) {
+        prePopulatedData['weightKg'] = preAuthData.weightKg;
+      }
+      if (preAuthData.goalWeightKg != null) {
+        prePopulatedData['targetWeightKg'] = preAuthData.goalWeightKg;
+      }
+      // Store metric preference
+      prePopulatedData['useMetricUnits'] = preAuthData.useMetricUnits;
+
       // Update collected data with pre-auth answers
       if (prePopulatedData.isNotEmpty) {
         ref.read(onboardingStateProvider.notifier).updateCollectedData(prePopulatedData);
@@ -737,6 +763,13 @@ class _ConversationalOnboardingScreenState
         // Workout type preference (strength, cardio, mixed) and progression pace (slow, medium, fast)
         'workout_type_preference': finalData['workoutTypePreference'] ?? 'strength',
         'progression_pace': finalData['progressionPace'] ?? 'medium',
+        // Nutrition preferences (from pre-auth quiz)
+        'nutrition_goals': finalData['nutritionGoals'],
+        'nutrition_onboarding_completed': true,  // Mark as completed since we collected in quiz
+        // Fasting preferences (from pre-auth quiz)
+        'interested_in_fasting': finalData['interestedInFasting'] ?? false,
+        'fasting_protocol': finalData['fastingProtocol'],
+        'fasting_onboarding_completed': true,  // Mark as completed since we collected in quiz
       });
 
       final userData = {

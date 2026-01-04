@@ -49,6 +49,21 @@ class AppColors {
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
 
+  // ═══════════════════════════════════════════════════════════════
+  // Futuristic Glow Colors (for Active Workout Screen)
+  // ═══════════════════════════════════════════════════════════════
+
+  // Bright glowing accents
+  static const Color glowCyan = Color(0xFF00E5FF);
+  static const Color glowPurple = Color(0xFFB388FF);
+  static const Color glowGreen = Color(0xFF00E676);
+  static const Color glowOrange = Color(0xFFFF9100);
+
+  // Glassmorphic backgrounds
+  static const Color glassDark = Color(0x40000000); // 25% black
+  static const Color glassBorder = Color(0x20FFFFFF); // 12% white
+  static const Color glassHighlight = Color(0x10FFFFFF); // 6% white
+
   // Gradients
   static const LinearGradient cyanGradient = LinearGradient(
     colors: [cyan, cyanDark],
@@ -61,6 +76,25 @@ class AppColors {
       Color(0x1AFFFFFF),
       Color(0x0DFFFFFF),
     ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Futuristic gradients
+  static const LinearGradient glowCyanGradient = LinearGradient(
+    colors: [glowCyan, Color(0xFF0091EA)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient glowSuccessGradient = LinearGradient(
+    colors: [glowGreen, Color(0xFF00C853)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient glowPurpleGradient = LinearGradient(
+    colors: [glowPurple, Color(0xFF7C4DFF)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

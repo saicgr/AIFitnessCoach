@@ -17,6 +17,7 @@ class _SettingsGroup {
   final String subtitle;
   final Color color;
   final List<String> sectionKeys;
+  final VoidCallback? onTap;
 
   const _SettingsGroup({
     required this.id,
@@ -25,6 +26,7 @@ class _SettingsGroup {
     required this.subtitle,
     required this.color,
     required this.sectionKeys,
+    this.onTap,
   });
 }
 
@@ -301,11 +303,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Samsung-style settings groups
   late final List<_SettingsGroup> _settingsGroups = [
     _SettingsGroup(
+      id: 'customize_home',
+      icon: Icons.dashboard_customize_outlined,
+      title: 'Customize Home',
+      subtitle: 'Tiles, layout presets, personalization',
+      color: AppColors.purple,
+      sectionKeys: ['home_layout'],
+      onTap: () => _openHomeCustomization(),
+    ),
+    _SettingsGroup(
       id: 'ai_coach',
       icon: Icons.auto_awesome,
       title: 'AI Coach',
       subtitle: 'Voice, personality, coaching style',
-      color: AppColors.purple,
+      color: AppColors.cyan,
       sectionKeys: ['ai_coach'],
     ),
     _SettingsGroup(
@@ -313,7 +324,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       icon: Icons.palette_outlined,
       title: 'Appearance',
       subtitle: 'Theme, haptics, app mode, accessibility',
-      color: AppColors.cyan,
+      color: AppColors.orange,
       sectionKeys: ['preferences', 'haptics', 'app_mode', 'accessibility'],
     ),
     _SettingsGroup(
@@ -410,6 +421,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _searchQuery = value.toLowerCase().trim();
       _matchingSections = _computeMatchingSections(_searchQuery);
     });
+  }
+
+  /// Navigate to home screen with edit mode enabled
+  void _openHomeCustomization() {
+    // Navigate to home and trigger edit mode
+    context.go('/home?edit=true');
   }
 
   /// AI-powered semantic search - finds sections that match user intent
@@ -522,6 +539,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           InkWell(
             onTap: () {
               HapticFeedback.lightImpact();
+              // Check if group has custom onTap handler
+              if (group.onTap != null) {
+                group.onTap!();
+                return;
+              }
               setState(() {
                 if (isExpanded) {
                   _expandedGroups.remove(group.id);

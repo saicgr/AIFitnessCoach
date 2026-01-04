@@ -68,6 +68,21 @@ enum TileType {
   roiSummary,
   @JsonValue('weeklyPlan')
   weeklyPlan,
+  // New tiles for fat loss UX
+  @JsonValue('weightTrend')
+  weightTrend,
+  @JsonValue('dailyStats')
+  dailyStats,
+  @JsonValue('achievements')
+  achievements,
+  @JsonValue('heroSection')
+  heroSection,
+  @JsonValue('quickLogWeight')
+  quickLogWeight,
+  @JsonValue('quickLogMeasurements')
+  quickLogMeasurements,
+  @JsonValue('habits')
+  habits,
 }
 
 /// Extension to provide metadata for tile types
@@ -135,6 +150,20 @@ extension TileTypeExtension on TileType {
         return 'Your Journey ROI';
       case TileType.weeklyPlan:
         return 'Weekly Plan';
+      case TileType.weightTrend:
+        return 'Weight Trend';
+      case TileType.dailyStats:
+        return 'Daily Stats';
+      case TileType.achievements:
+        return 'Achievements';
+      case TileType.heroSection:
+        return 'Hero Section';
+      case TileType.quickLogWeight:
+        return 'Quick Log Weight';
+      case TileType.quickLogMeasurements:
+        return 'Quick Measurements';
+      case TileType.habits:
+        return 'Today\'s Habits';
     }
   }
 
@@ -201,6 +230,20 @@ extension TileTypeExtension on TileType {
         return 'Total workouts, time invested, and milestones';
       case TileType.weeklyPlan:
         return 'Holistic plan with workouts, nutrition & fasting';
+      case TileType.weightTrend:
+        return 'Weekly weight change with trend arrow';
+      case TileType.dailyStats:
+        return 'Steps count and calorie deficit';
+      case TileType.achievements:
+        return 'Recent badges and next milestone';
+      case TileType.heroSection:
+        return 'Swipeable workout, nutrition & fasting focus';
+      case TileType.quickLogWeight:
+        return 'Quickly log your weight';
+      case TileType.quickLogMeasurements:
+        return 'Track body measurements';
+      case TileType.habits:
+        return 'Daily habits and goals tracker';
     }
   }
 
@@ -267,6 +310,20 @@ extension TileTypeExtension on TileType {
         return 'trending_up';
       case TileType.weeklyPlan:
         return 'calendar_view_week';
+      case TileType.weightTrend:
+        return 'trending_down';
+      case TileType.dailyStats:
+        return 'directions_walk';
+      case TileType.achievements:
+        return 'emoji_events';
+      case TileType.heroSection:
+        return 'view_carousel';
+      case TileType.quickLogWeight:
+        return 'scale';
+      case TileType.quickLogMeasurements:
+        return 'straighten';
+      case TileType.habits:
+        return 'checklist';
     }
   }
 
@@ -310,6 +367,18 @@ extension TileTypeExtension on TileType {
       case TileType.roiSummary:
         return TileCategory.progress;
       case TileType.weeklyPlan:
+        return TileCategory.wellness;
+      case TileType.weightTrend:
+      case TileType.achievements:
+        return TileCategory.progress;
+      case TileType.dailyStats:
+        return TileCategory.wellness;
+      case TileType.heroSection:
+        return TileCategory.workout;
+      case TileType.quickLogWeight:
+      case TileType.quickLogMeasurements:
+        return TileCategory.progress;
+      case TileType.habits:
         return TileCategory.wellness;
     }
   }
@@ -357,6 +426,17 @@ extension TileTypeExtension on TileType {
       // Full and compact
       case TileType.aiCoachTip:
         return [TileSize.full, TileSize.compact];
+      // New tiles - half and full
+      case TileType.weightTrend:
+      case TileType.dailyStats:
+      case TileType.achievements:
+      case TileType.quickLogWeight:
+      case TileType.quickLogMeasurements:
+      case TileType.habits:
+        return [TileSize.full, TileSize.half, TileSize.compact];
+      // Hero section is full only
+      case TileType.heroSection:
+        return [TileSize.full];
     }
   }
 
@@ -369,6 +449,12 @@ extension TileTypeExtension on TileType {
       case TileType.bodyWeight:
       case TileType.leaderboardRank:
       case TileType.sleepScore:
+      case TileType.weightTrend:
+      case TileType.dailyStats:
+      case TileType.achievements:
+      case TileType.quickLogWeight:
+      case TileType.quickLogMeasurements:
+      case TileType.habits:
         return TileSize.half;
       default:
         return TileSize.full;
@@ -670,6 +756,138 @@ const List<TileType> defaultTileOrder = [
 /// Create default tiles for a new user
 List<HomeTile> createDefaultTiles() {
   return defaultTileOrder.asMap().entries.map((entry) {
+    return HomeTile(
+      id: 'tile_${entry.key}',
+      type: entry.value,
+      size: entry.value.defaultSize,
+      order: entry.key,
+      isVisible: true,
+    );
+  }).toList();
+}
+
+/// Layout preset types
+enum LayoutPreset {
+  fatLossFocus,
+  gymFocused,
+  nutritionFocused,
+  trackerOnly,
+  fastingFocused,
+  minimal,
+}
+
+extension LayoutPresetExtension on LayoutPreset {
+  String get displayName {
+    switch (this) {
+      case LayoutPreset.fatLossFocus:
+        return 'Fat Loss Focus';
+      case LayoutPreset.gymFocused:
+        return 'Gym Focused';
+      case LayoutPreset.nutritionFocused:
+        return 'Nutrition Focused';
+      case LayoutPreset.trackerOnly:
+        return 'Tracker Only';
+      case LayoutPreset.fastingFocused:
+        return 'Fasting Focused';
+      case LayoutPreset.minimal:
+        return 'Minimal';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case LayoutPreset.fatLossFocus:
+        return 'Weight trends, daily stats, streak tracking';
+      case LayoutPreset.gymFocused:
+        return 'Workout-centric with personal records';
+      case LayoutPreset.nutritionFocused:
+        return 'Calories, macros, and meal logging';
+      case LayoutPreset.trackerOnly:
+        return 'Simple progress tracking';
+      case LayoutPreset.fastingFocused:
+        return 'Intermittent fasting with weight trends';
+      case LayoutPreset.minimal:
+        return 'Just the essentials';
+    }
+  }
+
+  String get icon {
+    switch (this) {
+      case LayoutPreset.fatLossFocus:
+        return 'trending_down';
+      case LayoutPreset.gymFocused:
+        return 'fitness_center';
+      case LayoutPreset.nutritionFocused:
+        return 'restaurant';
+      case LayoutPreset.trackerOnly:
+        return 'insights';
+      case LayoutPreset.fastingFocused:
+        return 'timer';
+      case LayoutPreset.minimal:
+        return 'view_agenda';
+    }
+  }
+
+  /// Get tile order for this preset
+  List<TileType> get tileOrder {
+    switch (this) {
+      case LayoutPreset.fatLossFocus:
+        return [
+          TileType.weightTrend,
+          TileType.heroSection,
+          TileType.dailyStats,
+          TileType.quickActions,
+          TileType.streakCounter,
+          TileType.weeklyProgress,
+          TileType.habits,
+        ];
+      case LayoutPreset.gymFocused:
+        return [
+          TileType.heroSection,
+          TileType.streakCounter,
+          TileType.personalRecords,
+          TileType.weeklyProgress,
+          TileType.quickActions,
+          TileType.roiSummary,
+        ];
+      case LayoutPreset.nutritionFocused:
+        return [
+          TileType.heroSection,
+          TileType.caloriesSummary,
+          TileType.macroRings,
+          TileType.weightTrend,
+          TileType.quickActions,
+          TileType.fasting,
+        ];
+      case LayoutPreset.trackerOnly:
+        return [
+          TileType.weightTrend,
+          TileType.dailyStats,
+          TileType.streakCounter,
+          TileType.achievements,
+          TileType.weeklyProgress,
+          TileType.habits,
+        ];
+      case LayoutPreset.fastingFocused:
+        return [
+          TileType.heroSection,
+          TileType.fasting,
+          TileType.weightTrend,
+          TileType.streakCounter,
+          TileType.quickActions,
+        ];
+      case LayoutPreset.minimal:
+        return [
+          TileType.heroSection,
+          TileType.quickActions,
+        ];
+    }
+  }
+}
+
+/// Create tiles for a specific preset
+List<HomeTile> createPresetTiles(LayoutPreset preset) {
+  return preset.tileOrder.asMap().entries.map((entry) {
     return HomeTile(
       id: 'tile_${entry.key}',
       type: entry.value,

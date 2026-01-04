@@ -222,6 +222,19 @@ def merge_extended_fields_into_preferences(
     progression_pace: Optional[str] = None,
     workout_type_preference: Optional[str] = None,
     workout_environment: Optional[str] = None,
+    # Enhanced pre-auth quiz fields
+    sleep_quality: Optional[str] = None,
+    obstacles: Optional[List[str]] = None,
+    dietary_restrictions: Optional[List[str]] = None,
+    weight_direction: Optional[str] = None,
+    weight_change_amount: Optional[float] = None,
+    motivations: Optional[List[str]] = None,
+    nutrition_goals: Optional[List[str]] = None,
+    interested_in_fasting: Optional[bool] = None,
+    fasting_protocol: Optional[str] = None,
+    coach_id: Optional[str] = None,
+    training_experience: Optional[str] = None,
+    workout_days: Optional[List[str]] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -249,6 +262,31 @@ def merge_extended_fields_into_preferences(
         prefs["workout_type_preference"] = workout_type_preference
     if workout_environment is not None:
         prefs["workout_environment"] = workout_environment
+    # Enhanced pre-auth quiz fields
+    if sleep_quality is not None:
+        prefs["sleep_quality"] = sleep_quality
+    if obstacles is not None:
+        prefs["obstacles"] = obstacles
+    if dietary_restrictions is not None:
+        prefs["dietary_restrictions"] = dietary_restrictions
+    if weight_direction is not None:
+        prefs["weight_direction"] = weight_direction
+    if weight_change_amount is not None:
+        prefs["weight_change_amount"] = weight_change_amount
+    if motivations is not None:
+        prefs["motivations"] = motivations
+    if nutrition_goals is not None:
+        prefs["nutrition_goals"] = nutrition_goals
+    if interested_in_fasting is not None:
+        prefs["interested_in_fasting"] = interested_in_fasting
+    if fasting_protocol is not None:
+        prefs["fasting_protocol"] = fasting_protocol
+    if coach_id is not None:
+        prefs["coach_id"] = coach_id
+    if training_experience is not None:
+        prefs["training_experience"] = training_experience
+    if workout_days is not None:
+        prefs["workout_days"] = workout_days
 
     return prefs
 
@@ -485,6 +523,157 @@ def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[st
         return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     else:
         return ["Mon", "Wed", "Fri"]
+
+
+class UserPreferencesRequest(BaseModel):
+    """Request body for updating user preferences from pre-auth quiz."""
+    # Goals & Fitness
+    goals: Optional[List[str]] = None
+    fitness_level: Optional[str] = None
+    training_experience: Optional[str] = None
+    activity_level: Optional[str] = None
+
+    # Body Metrics
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    goal_weight_kg: Optional[float] = None
+    weight_direction: Optional[str] = None  # lose, gain, maintain
+    weight_change_amount: Optional[float] = None
+
+    # Schedule
+    days_per_week: Optional[int] = None
+    selected_days: Optional[List[str]] = None
+
+    # Equipment
+    equipment: Optional[List[str]] = None
+    custom_equipment: Optional[List[str]] = None
+
+    # Training Preferences
+    training_split: Optional[str] = None
+    workout_type: Optional[str] = None
+    progression_pace: Optional[str] = None
+
+    # Lifestyle
+    sleep_quality: Optional[str] = None
+    obstacles: Optional[List[str]] = None
+
+    # Nutrition
+    nutrition_goals: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+
+    # Fasting
+    interested_in_fasting: Optional[bool] = None
+    fasting_protocol: Optional[str] = None
+
+    # Motivations
+    motivations: Optional[List[str]] = None
+
+    # Coach
+    coach_id: Optional[str] = None
+
+
+@router.post("/{user_id}/preferences")
+async def save_user_preferences(user_id: str, request: UserPreferencesRequest):
+    """
+    Save user preferences from pre-auth quiz.
+
+    This endpoint is called after coach selection to persist all quiz data.
+    Data is merged into the user's preferences JSON and relevant columns.
+    """
+    logger.info(f"Saving preferences for user: id={user_id}")
+    try:
+        db = get_supabase_db()
+
+        # Check if user exists
+        existing = db.get_user(user_id)
+        if not existing:
+            logger.warning(f"User not found for preferences: id={user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Build update data
+        update_data = {}
+
+        # Direct column updates
+        if request.fitness_level is not None:
+            update_data["fitness_level"] = request.fitness_level
+        if request.height_cm is not None:
+            update_data["height_cm"] = request.height_cm
+        if request.weight_kg is not None:
+            update_data["weight_kg"] = request.weight_kg
+        if request.goal_weight_kg is not None:
+            update_data["target_weight_kg"] = request.goal_weight_kg
+        if request.activity_level is not None:
+            update_data["activity_level"] = request.activity_level
+        if request.goals is not None:
+            update_data["goals"] = request.goals
+        if request.equipment is not None:
+            update_data["equipment"] = request.equipment
+        if request.custom_equipment is not None:
+            update_data["custom_equipment"] = request.custom_equipment
+
+        # Merge into preferences JSON
+        current_prefs = existing.get("preferences", {})
+        if isinstance(current_prefs, str):
+            try:
+                current_prefs = json.loads(current_prefs)
+            except json.JSONDecodeError:
+                current_prefs = {}
+
+        final_preferences = merge_extended_fields_into_preferences(
+            current_prefs,
+            request.days_per_week,
+            None,  # workout_duration
+            request.training_split,
+            None,  # intensity_preference
+            None,  # preferred_time
+            request.progression_pace,
+            request.workout_type,
+            None,  # workout_environment
+            # Enhanced pre-auth quiz fields
+            request.sleep_quality,
+            request.obstacles,
+            request.dietary_restrictions,
+            request.weight_direction,
+            request.weight_change_amount,
+            request.motivations,
+            request.nutrition_goals,
+            request.interested_in_fasting,
+            request.fasting_protocol,
+            request.coach_id,
+            request.training_experience,
+            request.selected_days,
+        )
+        update_data["preferences"] = final_preferences
+
+        # Perform update
+        if update_data:
+            db.update_user(user_id, update_data)
+            logger.info(f"Saved {len(update_data)} preference fields for user {user_id}")
+
+        # Log activity
+        await log_user_activity(
+            user_id=user_id,
+            action="preferences_saved",
+            endpoint=f"/api/v1/users/{user_id}/preferences",
+            message="Pre-auth quiz preferences saved",
+            metadata={"fields_count": len(update_data)},
+            status_code=200
+        )
+
+        return {"success": True, "message": "Preferences saved successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save preferences: {e}")
+        await log_user_error(
+            user_id=user_id,
+            action="preferences_saved",
+            error=e,
+            endpoint=f"/api/v1/users/{user_id}/preferences",
+            status_code=500
+        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{user_id}", response_model=User)

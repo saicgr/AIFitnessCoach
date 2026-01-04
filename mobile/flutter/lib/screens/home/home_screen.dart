@@ -15,6 +15,7 @@ import '../../widgets/multi_screen_tour_helper.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/services/deep_link_service.dart';
@@ -28,6 +29,9 @@ import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
+import 'widgets/hero_workout_card.dart';
+import 'widgets/week_progress_strip.dart';
+import 'widgets/swipeable_hero_section.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -166,7 +170,9 @@ const List<LayoutPreset> layoutPresets = [
 
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final bool startEditMode;
+
+  const HomeScreen({super.key, this.startEditMode = false});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -213,6 +219,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _initializeCurrentProgram();
       _initializeWindowModeTracking();
       _checkAppTour();
+      // Start edit mode if requested via route parameter
+      if (widget.startEditMode) {
+        _enterEditMode();
+      }
     });
   }
 
@@ -731,6 +741,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return Icons.trending_up;
       case TileType.weeklyPlan:
         return Icons.calendar_view_week;
+      // New fat loss UX tiles
+      case TileType.weightTrend:
+        return Icons.trending_down;
+      case TileType.dailyStats:
+        return Icons.insights;
+      case TileType.achievements:
+        return Icons.emoji_events;
+      case TileType.heroSection:
+        return Icons.home;
+      case TileType.quickLogWeight:
+        return Icons.monitor_weight_outlined;
+      case TileType.quickLogMeasurements:
+        return Icons.straighten;
+      case TileType.habits:
+        return Icons.check_circle_outline;
     }
   }
 
@@ -1341,12 +1366,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: MissedWorkoutBanner(),
               ),
 
-              // Section: TODAY with Customize button
-              SliverToBoxAdapter(
-                child: _buildTodaySectionHeader(isDark),
-              ),
-
-              // Dynamic Tile Rendering based on active layout
+              // Dynamic Tile Rendering - action-focused layout
               ..._buildDynamicTilesLazy(
                 context,
                 activeLayoutState,
@@ -1604,29 +1624,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   /// Build default tiles using lazy loading (todayWorkoutProvider)
-  /// Simplified version without UPCOMING and YOUR WEEK sections
+  /// Action-focused layout: Swipeable hero (workout/nutrition/fasting), Quick actions, Week progress, My Program
   List<Widget> _buildDefaultTilesLazy(
     BuildContext context,
     bool isDark,
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
+    // Get the workout for the swipeable section
+    final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
+    final isGenerating = _isGeneratingFromState(todayWorkoutState);
+
     return [
-      // Next Workout Card (hero card - using lazy loading)
+      // Swipeable Hero Section - workout, nutrition, or fasting focus
       SliverToBoxAdapter(
-        child: _buildNextWorkoutSectionLazy(
-          context,
-          todayWorkoutState,
-          isAIGenerating,
+        child: SwipeableHeroSection(
+          key: HomeTourKeys.nextWorkoutKey,
+          todayWorkout: todayWorkout,
+          isGenerating: isGenerating || isAIGenerating || _isInitializing,
         ),
       ),
 
-      // My Program Summary - visible access to workout preferences
-      const SliverToBoxAdapter(
-        child: MyProgramSummaryCard(),
-      ),
-
-      // Quick Actions Row
+      // Quick Actions Row - Food, Water, Fasting, Stats
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -1637,17 +1656,112 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
 
-      // Fitness Score Card
-      const SliverToBoxAdapter(child: FitnessScoreCard()),
+      // Week Progress Strip - day circles with completion count
+      const SliverToBoxAdapter(
+        child: WeekProgressStrip(),
+      ),
 
-      // Mood Picker Card
-      const SliverToBoxAdapter(child: MoodPickerCard()),
-
-      // Daily Activity Card
-      const SliverToBoxAdapter(child: DailyActivityCard()),
-
-      // Note: YOUR WEEK and UPCOMING sections have been moved to Workouts tab
+      // My Program Summary - visible access to workout preferences
+      const SliverToBoxAdapter(
+        child: MyProgramSummaryCard(),
+      ),
     ];
+  }
+
+  /// Extract workout from todayWorkoutProvider state
+  Workout? _getTodayWorkoutFromState(AsyncValue<TodayWorkoutResponse?> state) {
+    return state.whenOrNull(
+      data: (response) {
+        if (response == null) return null;
+        if (response.isGenerating) return null;
+        final summary = response.todayWorkout ?? response.nextWorkout;
+        return summary?.toWorkout();
+      },
+    );
+  }
+
+  /// Check if workout is being generated from state
+  bool _isGeneratingFromState(AsyncValue<TodayWorkoutResponse?> state) {
+    return state.whenOrNull(
+      loading: () => true,
+      data: (response) => response?.isGenerating ?? false,
+    ) ?? false;
+  }
+
+  /// Build hero workout section using the new HeroWorkoutCard
+  Widget _buildHeroWorkoutSection(
+    BuildContext context,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+  ) {
+    // Show loading during initial app load
+    if (_isInitializing) {
+      return const GeneratingHeroCard(
+        message: 'Loading your workout...',
+      );
+    }
+
+    return todayWorkoutState.when(
+      loading: () => const GeneratingHeroCard(
+        message: 'Loading workout...',
+      ),
+      error: (e, _) {
+        debugPrint('⚠️ [Home] todayWorkoutProvider error: $e');
+        return _buildFallbackHeroCard(context);
+      },
+      data: (response) {
+        if (response == null) {
+          return _buildFallbackHeroCard(context);
+        }
+
+        // Show generating card if workout is being generated
+        if (response.isGenerating) {
+          return GeneratingHeroCard(
+            message: response.generationMessage ?? 'Generating your workout...',
+          );
+        }
+
+        // Get the workout to display (today's or next upcoming)
+        final workoutSummary = response.todayWorkout ?? response.nextWorkout;
+
+        if (workoutSummary != null) {
+          final workout = workoutSummary.toWorkout();
+          return HeroWorkoutCard(
+            key: HomeTourKeys.nextWorkoutKey,
+            workout: workout,
+          );
+        }
+
+        // This should rarely happen since backend auto-generates
+        return const GeneratingHeroCard(
+          message: 'Loading your workout...',
+        );
+      },
+    );
+  }
+
+  /// Fallback hero card when todayWorkoutProvider fails
+  Widget _buildFallbackHeroCard(BuildContext context) {
+    final workoutsAsync = ref.watch(workoutsProvider);
+
+    return workoutsAsync.when(
+      loading: () => const GeneratingHeroCard(message: 'Loading...'),
+      error: (e, _) => const GeneratingHeroCard(message: 'Could not load workout'),
+      data: (workouts) {
+        final upcoming = workouts.where((w) => w.isCompleted != true).toList()
+          ..sort((a, b) {
+            if (a.scheduledDate == null) return 1;
+            if (b.scheduledDate == null) return -1;
+            return a.scheduledDate!.compareTo(b.scheduledDate!);
+          });
+
+        if (upcoming.isNotEmpty) {
+          return HeroWorkoutCard(workout: upcoming.first);
+        }
+
+        return const GeneratingHeroCard(message: 'No workouts scheduled');
+      },
+    );
   }
 
   /// Build the next workout section using lazy loading (todayWorkoutProvider)
@@ -2276,6 +2390,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ],
           NotificationBellButton(isDark: isDark),
           SizedBox(width: spacing / 2),
+          // Edit home button
+          _EditHomeButton(
+            isDark: isDark,
+            isEditMode: _isEditMode,
+            onTap: _isEditMode ? () => _exitEditMode(save: true) : _enterEditMode,
+          ),
+          SizedBox(width: spacing / 2),
           SettingsButton(isDark: isDark),
         ],
       ),
@@ -2455,6 +2576,46 @@ class _ProfileButton extends StatelessWidget {
         size: 24,
       ),
       tooltip: 'Profile',
+    );
+  }
+}
+
+/// Edit home button - toggles edit mode for home screen customization
+class _EditHomeButton extends StatelessWidget {
+  final bool isDark;
+  final bool isEditMode;
+  final VoidCallback onTap;
+
+  const _EditHomeButton({
+    required this.isDark,
+    required this.isEditMode,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        HapticService.light();
+        onTap();
+      },
+      icon: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: isEditMode
+            ? Icon(
+                Icons.check_rounded,
+                key: const ValueKey('done'),
+                color: AppColors.success,
+                size: 24,
+              )
+            : Icon(
+                Icons.edit_rounded,
+                key: const ValueKey('edit'),
+                color: AppColors.purple,
+                size: 22,
+              ),
+      ),
+      tooltip: isEditMode ? 'Done editing' : 'Customize home',
     );
   }
 }

@@ -727,5 +727,168 @@ class StrengthCalculatorService:
         return []
 
 
+    # -------------------------------------------------------------------------
+    # RPE Estimation
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def estimate_rpe(
+        weight_kg: float,
+        reps_completed: int,
+        estimated_1rm: float,
+    ) -> Tuple[float, float, str]:
+        """
+        Estimate RPE (Rate of Perceived Exertion) from reps completed and %1RM.
+
+        Uses standard RPE-to-%1RM tables based on research by Mike Tuchscherer
+        and Eric Helms.
+
+        Args:
+            weight_kg: Weight lifted in kg
+            reps_completed: Number of reps completed
+            estimated_1rm: User's estimated 1RM for this exercise
+
+        Returns:
+            Tuple of (estimated_rpe, confidence, description)
+            - estimated_rpe: 6.0 to 10.0
+            - confidence: 0.0 to 1.0 (higher for lower reps)
+            - description: Human-readable description
+        """
+        if estimated_1rm <= 0 or weight_kg <= 0:
+            return (7.0, 0.3, "Insufficient data for accurate RPE estimation")
+
+        # Calculate percentage of 1RM
+        percent_1rm = weight_kg / estimated_1rm
+
+        # RPE chart mapping: (reps, %1RM) -> RPE
+        # Based on Tuchscherer/Helms research
+        # Format: RPE -> list of (reps, %1RM)
+        RPE_TABLE = {
+            10.0: [(1, 1.00), (2, 0.955), (3, 0.922), (4, 0.892), (5, 0.863),
+                   (6, 0.837), (7, 0.811), (8, 0.786), (9, 0.762), (10, 0.739)],
+            9.5: [(1, 0.978), (2, 0.939), (3, 0.907), (4, 0.878), (5, 0.850),
+                  (6, 0.824), (7, 0.799), (8, 0.774), (9, 0.751), (10, 0.728)],
+            9.0: [(1, 0.955), (2, 0.922), (3, 0.892), (4, 0.863), (5, 0.837),
+                  (6, 0.811), (7, 0.786), (8, 0.762), (9, 0.739), (10, 0.717)],
+            8.5: [(1, 0.939), (2, 0.907), (3, 0.878), (4, 0.850), (5, 0.824),
+                  (6, 0.799), (7, 0.774), (8, 0.751), (9, 0.728), (10, 0.707)],
+            8.0: [(1, 0.922), (2, 0.892), (3, 0.863), (4, 0.837), (5, 0.811),
+                  (6, 0.786), (7, 0.762), (8, 0.739), (9, 0.717), (10, 0.696)],
+            7.5: [(1, 0.907), (2, 0.878), (3, 0.850), (4, 0.824), (5, 0.799),
+                  (6, 0.774), (7, 0.751), (8, 0.728), (9, 0.707), (10, 0.686)],
+            7.0: [(1, 0.892), (2, 0.863), (3, 0.837), (4, 0.811), (5, 0.786),
+                  (6, 0.762), (7, 0.739), (8, 0.717), (9, 0.696), (10, 0.676)],
+            6.5: [(1, 0.878), (2, 0.850), (3, 0.824), (4, 0.799), (5, 0.774),
+                  (6, 0.751), (7, 0.728), (8, 0.707), (9, 0.686), (10, 0.666)],
+            6.0: [(1, 0.863), (2, 0.837), (3, 0.811), (4, 0.786), (5, 0.762),
+                  (6, 0.739), (7, 0.717), (8, 0.696), (9, 0.676), (10, 0.656)],
+        }
+
+        # Cap reps at 10 for table lookup
+        lookup_reps = min(reps_completed, 10)
+        if lookup_reps < 1:
+            lookup_reps = 1
+
+        # Find the closest RPE match
+        best_rpe = 7.0
+        best_diff = float('inf')
+
+        for rpe, rep_percent_pairs in RPE_TABLE.items():
+            for reps, expected_percent in rep_percent_pairs:
+                if reps == lookup_reps:
+                    diff = abs(percent_1rm - expected_percent)
+                    if diff < best_diff:
+                        best_diff = diff
+                        best_rpe = rpe
+                    break
+
+        # Adjust for reps > 10 (higher reps = lower effective RPE)
+        if reps_completed > 10:
+            # Each rep beyond 10 typically lowers RPE by ~0.2
+            adjustment = (reps_completed - 10) * 0.1
+            best_rpe = max(6.0, best_rpe - adjustment)
+
+        # Calculate confidence based on rep range
+        # Lower reps = more reliable 1RM = higher confidence
+        if reps_completed <= 3:
+            confidence = 0.90
+        elif reps_completed <= 5:
+            confidence = 0.85
+        elif reps_completed <= 8:
+            confidence = 0.75
+        elif reps_completed <= 10:
+            confidence = 0.65
+        else:
+            # High rep ranges are less reliable
+            confidence = max(0.40, 0.65 - (reps_completed - 10) * 0.03)
+
+        # Generate description
+        if best_rpe >= 9.5:
+            description = "Maximum effort - at or very near failure"
+        elif best_rpe >= 9.0:
+            description = "Very hard - could do 1 more rep"
+        elif best_rpe >= 8.0:
+            description = "Challenging - could do 2 more reps"
+        elif best_rpe >= 7.0:
+            description = "Moderate - could do 3 more reps"
+        else:
+            description = "Light - could do 4+ more reps"
+
+        return (round(best_rpe, 1), round(confidence, 2), description)
+
+    @staticmethod
+    def calculate_weight_for_rpe(
+        estimated_1rm: float,
+        target_reps: int,
+        target_rpe: float = 8.0,
+    ) -> float:
+        """
+        Calculate the weight needed to hit a target RPE for given reps.
+
+        This is the inverse of estimate_rpe - given a target RPE and reps,
+        calculate what weight to use.
+
+        Args:
+            estimated_1rm: User's estimated 1RM for this exercise
+            target_reps: Number of reps planned
+            target_rpe: Target RPE (6.0 to 10.0), default 8.0
+
+        Returns:
+            Suggested weight in kg
+        """
+        # RPE to %1RM lookup table (for common rep ranges)
+        # Based on Tuchscherer/Helms research
+        RPE_PERCENT_MAP = {
+            # (RPE, reps) -> %1RM
+            (10.0, 1): 1.00, (10.0, 3): 0.922, (10.0, 5): 0.863, (10.0, 8): 0.786, (10.0, 10): 0.739,
+            (9.0, 1): 0.955, (9.0, 3): 0.892, (9.0, 5): 0.837, (9.0, 8): 0.762, (9.0, 10): 0.717,
+            (8.0, 1): 0.922, (8.0, 3): 0.863, (8.0, 5): 0.811, (8.0, 8): 0.739, (8.0, 10): 0.696,
+            (7.0, 1): 0.892, (7.0, 3): 0.837, (7.0, 5): 0.786, (7.0, 8): 0.717, (7.0, 10): 0.676,
+            (6.0, 1): 0.863, (6.0, 3): 0.811, (6.0, 5): 0.762, (6.0, 8): 0.696, (6.0, 10): 0.656,
+        }
+
+        # Clamp inputs
+        target_rpe = max(6.0, min(10.0, target_rpe))
+        target_reps = max(1, min(10, target_reps))
+
+        # Find closest match in table
+        best_key = None
+        best_diff = float('inf')
+
+        for (rpe, reps) in RPE_PERCENT_MAP.keys():
+            diff = abs(rpe - target_rpe) + abs(reps - target_reps) * 0.1
+            if diff < best_diff:
+                best_diff = diff
+                best_key = (rpe, reps)
+
+        if best_key:
+            percent = RPE_PERCENT_MAP[best_key]
+        else:
+            # Default to 75% if no match
+            percent = 0.75
+
+        return round(estimated_1rm * percent, 1)
+
+
 # Singleton instance
 strength_calculator_service = StrengthCalculatorService()

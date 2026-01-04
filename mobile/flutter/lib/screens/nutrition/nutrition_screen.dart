@@ -19,8 +19,6 @@ import '../../widgets/nutrition/health_metrics_card.dart';
 import '../../widgets/nutrition/food_mood_analytics_card.dart';
 import 'log_meal_sheet.dart';
 import 'nutrient_explorer.dart';
-import 'nutrition_onboarding/nutrition_onboarding_screen.dart';
-import 'nutrition_onboarding/nutrition_welcome_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
@@ -43,9 +41,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   DailyMicronutrientSummary? _micronutrientSummary;
   List<RecipeSummary> _recipes = [];
   bool _isLoadingMicronutrients = false;
-  bool _hasCheckedOnboarding = false;
-  bool _hasSkippedOnboarding = false;
-  bool _onboardingJustCompleted = false;  // Guard flag to prevent redirect loop
   bool _hasCheckedWeeklyCheckin = false;  // Guard flag for weekly check-in prompt
 
   // Tour key for Log Food FAB
@@ -101,15 +96,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       // Log state after initialization for debugging
       final initState = ref.read(nutritionPreferencesProvider);
-      debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, onboarding=${initState.preferences?.nutritionOnboardingCompleted}, calories=${initState.preferences?.targetCalories}');
+      debugPrint('🥗 [NutritionScreen] After init: prefs=${initState.preferences != null}, calories=${initState.preferences?.targetCalories}');
 
-      // Check if onboarding is needed (only once per screen load)
-      if (!_hasCheckedOnboarding) {
-        _hasCheckedOnboarding = true;
-        await _checkAndShowOnboarding();
-      }
-
-      // Check if weekly check-in is due (only once per screen load, after onboarding)
+      // Check if weekly check-in is due (only once per screen load)
       if (!_hasCheckedWeeklyCheckin && mounted) {
         _hasCheckedWeeklyCheckin = true;
         await _checkAndShowWeeklyCheckin();
@@ -127,89 +116,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
-  Future<void> _checkAndShowOnboarding() async {
-    if (!mounted) return;
-
-    // CRITICAL: Skip if we just completed onboarding to prevent redirect loop
-    if (_onboardingJustCompleted) {
-      debugPrint('⚠️ [NutritionScreen] Skipping onboarding check - just completed');
-      return;
-    }
-
-    final prefsState = ref.read(nutritionPreferencesProvider);
-
-    // Don't show onboarding while still loading preferences from backend
-    if (prefsState.isLoading) {
-      debugPrint('⏳ [NutritionScreen] Preferences still loading, skipping onboarding check');
-      return;
-    }
-
-    // Don't show onboarding if preferences failed to load (network error, etc.)
-    // This prevents punishing users for connectivity issues
-    if (prefsState.preferences == null && prefsState.error != null) {
-      debugPrint('⚠️ [NutritionScreen] Preferences failed to load, skipping onboarding check');
-      return;
-    }
-
-    // Check if onboarding is complete using multiple signals:
-    // 1. Provider state flag (set after completing onboarding in this session)
-    // 2. Backend preferences flag (nutritionOnboardingCompleted)
-    // 3. Targets set (if user has calorie targets, they've done onboarding)
-    final hasTargetsSet = prefsState.preferences?.targetCalories != null &&
-        (prefsState.preferences?.targetCalories ?? 0) > 0;
-    final isOnboardingComplete = prefsState.onboardingCompleted ||
-        (prefsState.preferences?.nutritionOnboardingCompleted ?? false) ||
-        hasTargetsSet;
-
-    debugPrint('🥗 [NutritionScreen] Checking onboarding: stateFlag=${prefsState.onboardingCompleted}, prefsFlag=${prefsState.preferences?.nutritionOnboardingCompleted}, hasTargets=$hasTargetsSet, final=$isOnboardingComplete');
-
-    // If onboarding not completed and not skipped, show welcome screen first
-    if (!isOnboardingComplete && !_hasSkippedOnboarding) {
-      debugPrint('🥗 [NutritionScreen] Onboarding not completed, showing welcome');
-
-      // Hide floating nav bar during onboarding
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-      final result = await Navigator.push<bool>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => _NutritionWelcomeFlow(),
-        ),
-      );
-
-      // Show floating nav bar again
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-      }
-
-      // If onboarding was completed
-      if (result == true && mounted) {
-        debugPrint('✅ [NutritionScreen] Onboarding completed successfully');
-        // Set guard flag BEFORE any data reload to prevent loop
-        _onboardingJustCompleted = true;
-
-        // The provider already has the correct state from completeOnboarding()
-        // Just reload nutrition data without re-initializing preferences
-        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-        ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
-        ref.read(nutritionProvider.notifier).loadTargets(_userId!);
-        ref.read(nutritionProvider.notifier).loadRecentLogs(_userId!);
-        _loadMicronutrients(_userId!, dateStr);
-        _loadRecipes(_userId!);
-
-        // Trigger rebuild with the already-updated provider state
-        setState(() {});
-      } else if (mounted && _userId != null) {
-        // User skipped - save to database so it doesn't show again
-        debugPrint('⏭️ [NutritionScreen] User skipped onboarding - saving to database');
-        await ref.read(nutritionPreferencesProvider.notifier).skipOnboarding(
-          userId: _userId!,
-        );
-        setState(() => _hasSkippedOnboarding = true);
-      }
-    }
-  }
-
   /// Check if weekly check-in is due and show the sheet if enabled
   Future<void> _checkAndShowWeeklyCheckin() async {
     if (!mounted || _userId == null) return;
@@ -217,9 +123,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final prefsState = ref.read(nutritionPreferencesProvider);
     final prefs = prefsState.preferences;
 
-    // Skip if preferences not loaded or onboarding not complete
-    if (prefs == null || !prefs.nutritionOnboardingCompleted) {
-      debugPrint('📅 [NutritionScreen] Skipping weekly check-in - prefs not ready or onboarding incomplete');
+    // Skip if preferences not loaded
+    if (prefs == null) {
+      debugPrint('📅 [NutritionScreen] Skipping weekly check-in - prefs not ready');
       return;
     }
 
@@ -5469,45 +5375,6 @@ class _MiniWeightChart extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Nutrition Welcome Flow (Welcome + Onboarding)
-// ─────────────────────────────────────────────────────────────────
-
-/// Combined flow that shows welcome screen first, then onboarding
-class _NutritionWelcomeFlow extends StatefulWidget {
-  const _NutritionWelcomeFlow();
-
-  @override
-  State<_NutritionWelcomeFlow> createState() => _NutritionWelcomeFlowState();
-}
-
-class _NutritionWelcomeFlowState extends State<_NutritionWelcomeFlow> {
-  bool _showingOnboarding = false;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_showingOnboarding) {
-      return NutritionOnboardingScreen(
-        onComplete: () {
-          Navigator.of(context).pop(true);
-        },
-        onSkip: () {
-          Navigator.of(context).pop(false);
-        },
-      );
-    }
-
-    return NutritionWelcomeScreen(
-      onGetStarted: () {
-        setState(() => _showingOnboarding = true);
-      },
-      onSkip: () {
-        Navigator.of(context).pop(false);
-      },
     );
   }
 }

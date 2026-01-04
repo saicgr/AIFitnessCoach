@@ -19,3 +19,11 @@ export 'consistency_insight_card.dart';
 export 'today_workout_card.dart';
 export 'neat_activity_card.dart';
 export 'habits_card.dart';
+
+// New fat loss UX tiles
+export 'weight_trend_card.dart';
+export 'daily_stats_card.dart';
+export 'achievements_card.dart';
+export 'quick_log_weight_card.dart';
+export 'quick_log_measurements_card.dart';
+export 'habits_tile_card.dart';

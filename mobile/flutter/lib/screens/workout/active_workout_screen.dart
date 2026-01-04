@@ -29,6 +29,8 @@ import 'widgets/set_adjustment_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/superset_pair_sheet.dart';
 import '../../data/repositories/superset_repository.dart';
+import 'widgets/exercise_thumbnail_strip.dart';
+import 'widgets/video_pip.dart';
 
 /// Log for a single set
 class SetLog {
@@ -122,6 +124,8 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   String? _imageUrl;
   String? _videoUrl;
   bool _isLoadingMedia = true;
+  bool _showVideoPip = true; // PiP video visibility
+  bool _isVideoExpanded = false; // Full-screen video modal
 
   // Timers
   Timer? _workoutTimer;
@@ -4164,51 +4168,42 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         backgroundColor: backgroundColor,
         body: Stack(
           children: [
-            // Full-screen video/image background - tap to hide overlay or pause video
+            // Dark gradient background (instead of full-screen video)
             Positioned.fill(
-              child: GestureDetector(
-                onTap: _handleScreenTap,
-                child: _buildMediaBackground(),
-              ),
-            ),
-
-            // Gradient overlay for readability
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.pureBlack.withOpacity(0.7),
-                        Colors.transparent,
-                        Colors.transparent,
-                        AppColors.pureBlack.withOpacity(0.9),
-                      ],
-                      stops: const [0.0, 0.25, 0.6, 1.0],
-                    ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF0A0A0A),
+                      AppColors.pureBlack,
+                      AppColors.pureBlack,
+                      Color(0xFF0A0A0A),
+                    ],
+                    stops: [0.0, 0.3, 0.7, 1.0],
                   ),
                 ),
               ),
             ),
 
-            // Video pause indicator
-            if (!_isVideoPlaying && _isVideoInitialized)
-              Center(
+            // Subtle pattern overlay for depth
+            Positioned.fill(
+              child: IgnorePointer(
                 child: Container(
-                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.pureBlack.withOpacity(0.6),
-                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      center: Alignment.topRight,
+                      radius: 1.5,
+                      colors: [
+                        AppColors.glowCyan.withOpacity(0.03),
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    size: 64,
-                    color: Colors.white,
-                  ),
-                ).animate().fadeIn(duration: 200.ms).scale(begin: const Offset(0.8, 0.8)),
+                ),
               ),
+            ),
 
             // Top stats overlay
             Positioned(
@@ -4248,8 +4243,51 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
               right: 0,
               child: _buildBottomSection(currentExercise, nextExercise),
             ),
+
+            // PiP Video (corner floating video)
+            if (!_isResting && !_isInTransition && (_isVideoInitialized || _imageUrl != null))
+              VideoPip(
+                videoController: _videoController,
+                isVideoInitialized: _isVideoInitialized,
+                isVideoPlaying: _isVideoPlaying,
+                imageUrl: _imageUrl,
+                isLoading: _isLoadingMedia,
+                onTogglePlay: _toggleVideoPlayPause,
+                isVisible: _showVideoPip,
+                onVisibilityChanged: (visible) {
+                  setState(() => _showVideoPip = visible);
+                },
+                onTap: () {
+                  // Show full-screen video modal
+                  _showFullScreenVideo();
+                },
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Show full-screen video modal
+  void _showFullScreenVideo() {
+    if (!_isVideoInitialized && _imageUrl == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FullScreenVideoModal(
+        videoController: _videoController,
+        isVideoInitialized: _isVideoInitialized,
+        isVideoPlaying: _isVideoPlaying,
+        imageUrl: _imageUrl,
+        onTogglePlay: () {
+          _toggleVideoPlayPause();
+          // Rebuild the modal to reflect the change
+          Navigator.pop(context);
+          _showFullScreenVideo();
+        },
+        onClose: () => Navigator.pop(context),
       ),
     );
   }
@@ -6951,276 +6989,23 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   }
 
   Widget _buildBottomSection(WorkoutExercise currentExercise, WorkoutExercise? nextExercise) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Build completed sets count per exercise
+    final completedSetsPerExercise = <int, int>{};
+    for (int i = 0; i < _exercises.length; i++) {
+      completedSetsPerExercise[i] = _completedSets[i]?.length ?? 0;
+    }
 
-    // Responsive adjustments for split screen / narrow windows
-    final isCompact = isInSplitScreen || isNarrowLayout;
-    final horizontalMargin = isCompact ? 10.0 : 16.0;
-    final contentPadding = isCompact ? 12.0 : 16.0;
-    final buttonSize = isCompact ? 38.0 : 44.0;
-    final iconSize = isCompact ? 16.0 : 20.0;
-    final fontSize = isCompact ? 12.0 : 14.0;
-
-    return SafeArea(
-      top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Collapsible instructions panel - hide completely in very narrow mode
-          if (!isNarrowLayout)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            height: _showInstructions ? null : 0,
-            child: _showInstructions
-                ? Container(
-                    margin: EdgeInsets.symmetric(horizontal: horizontalMargin),
-                    padding: EdgeInsets.all(contentPadding),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.elevated.withOpacity(0.95)
-                          : AppColorsLight.elevated.withOpacity(0.98),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                      ),
-                      boxShadow: isDark ? null : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.info_outline, color: AppColors.cyan, size: 20),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Instructions',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.cyan,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Exercise details
-                        _InstructionRow(
-                          label: 'Reps',
-                          value: currentExercise.reps != null
-                              ? '${currentExercise.reps} reps'
-                              : '${currentExercise.durationSeconds ?? 30}s',
-                        ),
-                        _InstructionRow(
-                          label: 'Sets',
-                          value: '${currentExercise.sets ?? 3} sets',
-                        ),
-                        if (currentExercise.weight != null)
-                          _InstructionRow(
-                            label: 'Weight',
-                            value: '${currentExercise.weight} kg',
-                          ),
-                        _InstructionRow(
-                          label: 'Rest',
-                          value: '${currentExercise.restSeconds ?? 90}s between sets',
-                        ),
-                        if (currentExercise.notes != null && currentExercise.notes!.isNotEmpty) ...[
-                          const Divider(color: AppColors.cardBorder, height: 24),
-                          Text(
-                            currentExercise.notes!,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ).animate().fadeIn().slideY(begin: 0.1)
-                : const SizedBox.shrink(),
-          ),
-
-          SizedBox(height: isCompact ? 4 : 8),
-
-          // Simplified bottom bar - navigation only
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              horizontalMargin,
-              isCompact ? 8 : 12,
-              horizontalMargin,
-              isCompact ? 4 : 8,
-            ),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.nearBlack.withOpacity(0.95)
-                  : AppColorsLight.elevated.withOpacity(0.98),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(isCompact ? 16 : 20)),
-              border: isDark ? null : Border(
-                top: BorderSide(color: AppColorsLight.cardBorder.withOpacity(0.3)),
-              ),
-              boxShadow: isDark ? null : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Expand/collapse info button - hide in very narrow mode
-                if (!isNarrowLayout) ...[
-                  _GlassButton(
-                    icon: _showInstructions ? Icons.expand_more : Icons.expand_less,
-                    onTap: () => setState(() => _showInstructions = !_showInstructions),
-                    size: buttonSize,
-                  ),
-                  SizedBox(width: isCompact ? 8 : 12),
-                ],
-
-                // Next exercise indicator - MORE PROMINENT sticky drawer style
-                Expanded(
-                  child: nextExercise != null
-                      ? Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isCompact ? 10 : 14,
-                            vertical: isCompact ? 8 : 12,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                AppColors.cyan.withOpacity(0.15),
-                                AppColors.electricBlue.withOpacity(0.1),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.cyan.withOpacity(0.3),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              // Arrow icon with animation hint
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.cyan.withOpacity(0.2),
-                                ),
-                                child: const Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.cyan),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Next',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.5,
-                                        color: AppColors.cyan.withOpacity(0.8),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      nextExercise.name,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      // Last exercise - celebration style
-                      : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                              colors: [
-                                AppColors.success.withOpacity(0.15),
-                                AppColors.success.withOpacity(0.08),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: AppColors.success.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.success.withOpacity(0.2),
-                                ),
-                                child: const Icon(Icons.flag_rounded, size: 16, color: AppColors.success),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Last Exercise!',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Skip button - skips rest when resting, skips exercise otherwise
-                OutlinedButton(
-                  onPressed: _isResting ? _endRest : _skipExercise,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    side: BorderSide(
-                      color: _isResting
-                          ? AppColors.purple.withOpacity(0.5)
-                          : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                    ),
-                    foregroundColor: _isResting
-                        ? AppColors.purple
-                        : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(_isResting ? 'Skip Rest' : 'Skip'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return ExerciseThumbnailStrip(
+      exercises: _exercises,
+      currentIndex: _currentExerciseIndex,
+      completedSetsPerExercise: completedSetsPerExercise,
+      totalSetsPerExercise: _totalSetsPerExercise,
+      isResting: _isResting,
+      onExerciseTap: (index) {
+        // Allow switching to any exercise
+        _makeExerciseActive(index);
+      },
+      onSkip: _isResting ? _endRest : _skipExercise,
     );
   }
 }

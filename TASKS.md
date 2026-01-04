@@ -16,7 +16,6 @@ ASAP:
 
 ISSUES:
 51. Use Flexbox to prevent all screensize issues
-52. I clicked nutrition tab, I finished nutrition onboarding, I wne to fasting screen finished fasting onbaording and then went back to nutrititon tab but then nutrition onbaording stared again, what is going on? I had multiple claude sessions to fix this and it still is not fixed
 53. 
 
 <!-- NEW FEATURES IN APP -->

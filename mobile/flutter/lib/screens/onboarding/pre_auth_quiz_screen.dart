@@ -17,6 +17,9 @@ import 'widgets/quiz_days_selector.dart';
 import 'widgets/quiz_equipment.dart';
 import 'widgets/quiz_training_preferences.dart';
 import 'widgets/quiz_motivation.dart';
+import 'widgets/quiz_nutrition_goals.dart';
+import 'widgets/quiz_fasting.dart';
+import 'widgets/quiz_body_metrics.dart';
 import 'widgets/equipment_search_sheet.dart';
 
 /// Pre-auth quiz data stored in SharedPreferences
@@ -24,6 +27,16 @@ class PreAuthQuizData {
   final List<String>? goals;
   final String? fitnessLevel;
   final String? trainingExperience;
+  // Activity level (outside of gym) - for TDEE calculations
+  final String? activityLevel;  // sedentary, lightly_active, moderately_active, very_active
+  // Body metrics for weight projection
+  final double? heightCm;
+  final double? weightKg;
+  final double? goalWeightKg;
+  final bool useMetricUnits;
+  // Two-step weight goal
+  final String? weightDirection;  // lose, gain, maintain
+  final double? weightChangeAmount;  // Amount to change in kg
   final int? daysPerWeek;
   final List<int>? workoutDays;
   final List<String>? equipment;
@@ -33,15 +46,31 @@ class PreAuthQuizData {
   final List<String>? motivations;
   final int? dumbbellCount;
   final int? kettlebellCount;
-  // New: Workout type preference (strength, cardio, mixed)
+  // Workout type preference (strength, cardio, mixed)
   final String? workoutTypePreference;
-  // New: Progression pace (slow, medium, fast)
+  // Progression pace (slow, medium, fast)
   final String? progressionPace;
+  // Lifestyle
+  final String? sleepQuality;  // poor, fair, good, excellent
+  final List<String>? obstacles;  // time, energy, motivation, knowledge, diet, access
+  // Nutrition preferences
+  final List<String>? nutritionGoals;  // lose_fat, build_muscle, maintain, improve_energy, eat_healthier
+  final List<String>? dietaryRestrictions;  // vegetarian, vegan, gluten_free, dairy_free, nut_allergy, keto, none
+  // Fasting preferences
+  final bool? interestedInFasting;
+  final String? fastingProtocol;  // 16:8, 18:6, 14:10, 20:4, none
 
   PreAuthQuizData({
     this.goals,
     this.fitnessLevel,
     this.trainingExperience,
+    this.activityLevel,
+    this.heightCm,
+    this.weightKg,
+    this.goalWeightKg,
+    this.useMetricUnits = true,
+    this.weightDirection,
+    this.weightChangeAmount,
     this.daysPerWeek,
     this.workoutDays,
     this.equipment,
@@ -53,6 +82,12 @@ class PreAuthQuizData {
     this.kettlebellCount,
     this.workoutTypePreference,
     this.progressionPace,
+    this.sleepQuality,
+    this.obstacles,
+    this.nutritionGoals,
+    this.dietaryRestrictions,
+    this.interestedInFasting,
+    this.fastingProtocol,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -77,6 +112,13 @@ class PreAuthQuizData {
         'goal': goal,
         'fitnessLevel': fitnessLevel,
         'trainingExperience': trainingExperience,
+        'activityLevel': activityLevel,
+        'heightCm': heightCm,
+        'weightKg': weightKg,
+        'goalWeightKg': goalWeightKg,
+        'useMetricUnits': useMetricUnits,
+        'weightDirection': weightDirection,
+        'weightChangeAmount': weightChangeAmount,
         'daysPerWeek': daysPerWeek,
         'workoutDays': workoutDays,
         'equipment': equipment,
@@ -89,6 +131,12 @@ class PreAuthQuizData {
         'kettlebellCount': kettlebellCount,
         'workoutTypePreference': workoutTypePreference,
         'progressionPace': progressionPace,
+        'sleepQuality': sleepQuality,
+        'obstacles': obstacles,
+        'nutritionGoals': nutritionGoals,
+        'dietaryRestrictions': dietaryRestrictions,
+        'interestedInFasting': interestedInFasting,
+        'fastingProtocol': fastingProtocol,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -96,6 +144,13 @@ class PreAuthQuizData {
             (json['goal'] != null ? [json['goal'] as String] : null),
         fitnessLevel: json['fitnessLevel'] as String?,
         trainingExperience: json['trainingExperience'] as String?,
+        activityLevel: json['activityLevel'] as String?,
+        heightCm: (json['heightCm'] as num?)?.toDouble(),
+        weightKg: (json['weightKg'] as num?)?.toDouble(),
+        goalWeightKg: (json['goalWeightKg'] as num?)?.toDouble(),
+        useMetricUnits: json['useMetricUnits'] as bool? ?? true,
+        weightDirection: json['weightDirection'] as String?,
+        weightChangeAmount: (json['weightChangeAmount'] as num?)?.toDouble(),
         daysPerWeek: json['daysPerWeek'] as int?,
         workoutDays: (json['workoutDays'] as List<dynamic>?)?.cast<int>(),
         equipment: (json['equipment'] as List<dynamic>?)?.cast<String>(),
@@ -108,6 +163,12 @@ class PreAuthQuizData {
         kettlebellCount: json['kettlebellCount'] as int?,
         workoutTypePreference: json['workoutTypePreference'] as String?,
         progressionPace: json['progressionPace'] as String?,
+        sleepQuality: json['sleepQuality'] as String?,
+        obstacles: (json['obstacles'] as List<dynamic>?)?.cast<String>(),
+        nutritionGoals: (json['nutritionGoals'] as List<dynamic>?)?.cast<String>(),
+        dietaryRestrictions: (json['dietaryRestrictions'] as List<dynamic>?)?.cast<String>(),
+        interestedInFasting: json['interestedInFasting'] as bool?,
+        fastingProtocol: json['fastingProtocol'] as String?,
       );
 }
 
@@ -129,6 +190,14 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final goals = prefs.getStringList('preAuth_goals');
     final level = prefs.getString('preAuth_fitnessLevel');
     final trainingExp = prefs.getString('preAuth_trainingExperience');
+    final activityLevel = prefs.getString('preAuth_activityLevel');
+    // Body metrics
+    final heightCm = prefs.getDouble('preAuth_heightCm');
+    final weightKg = prefs.getDouble('preAuth_weightKg');
+    final goalWeightKg = prefs.getDouble('preAuth_goalWeightKg');
+    final useMetricUnits = prefs.getBool('preAuth_useMetric') ?? true;
+    final weightDirection = prefs.getString('preAuth_weightDirection');
+    final weightChangeAmount = prefs.getDouble('preAuth_weightChangeAmount');
     final days = prefs.getInt('preAuth_daysPerWeek');
     final workoutDaysStr = prefs.getStringList('preAuth_workoutDays');
     final workoutDays = workoutDaysStr?.map((s) => int.tryParse(s) ?? 0).toList();
@@ -141,11 +210,24 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final kettlebellCount = prefs.getInt('preAuth_kettlebellCount');
     final workoutTypePref = prefs.getString('preAuth_workoutTypePreference');
     final progressionPace = prefs.getString('preAuth_progressionPace');
+    final sleepQuality = prefs.getString('preAuth_sleepQuality');
+    final obstacles = prefs.getStringList('preAuth_obstacles');
+    final nutritionGoals = prefs.getStringList('preAuth_nutritionGoals');
+    final dietaryRestrictions = prefs.getStringList('preAuth_dietaryRestrictions');
+    final interestedInFasting = prefs.getBool('preAuth_interestedInFasting');
+    final fastingProtocol = prefs.getString('preAuth_fastingProtocol');
 
     state = PreAuthQuizData(
       goals: goals,
       fitnessLevel: level,
       trainingExperience: trainingExp,
+      activityLevel: activityLevel,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      goalWeightKg: goalWeightKg,
+      useMetricUnits: useMetricUnits,
+      weightDirection: weightDirection,
+      weightChangeAmount: weightChangeAmount,
       daysPerWeek: days,
       workoutDays: workoutDays,
       equipment: equipmentStr,
@@ -157,6 +239,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: kettlebellCount,
       workoutTypePreference: workoutTypePref,
       progressionPace: progressionPace,
+      sleepQuality: sleepQuality,
+      obstacles: obstacles,
+      nutritionGoals: nutritionGoals,
+      dietaryRestrictions: dietaryRestrictions,
+      interestedInFasting: interestedInFasting,
+      fastingProtocol: fastingProtocol,
     );
     _isLoaded = true;
   }
@@ -175,6 +263,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -186,6 +281,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -196,6 +297,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: level,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -207,6 +315,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -217,6 +331,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: experience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -228,6 +349,96 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setActivityLevel(String level) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_activityLevel', level);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: level,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setBodyMetrics({
+    required double heightCm,
+    required double weightKg,
+    required double goalWeightKg,
+    required bool useMetric,
+    String? weightDirection,
+    double? weightChangeAmount,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('preAuth_heightCm', heightCm);
+    await prefs.setDouble('preAuth_weightKg', weightKg);
+    await prefs.setDouble('preAuth_goalWeightKg', goalWeightKg);
+    await prefs.setBool('preAuth_useMetric', useMetric);
+    if (weightDirection != null) {
+      await prefs.setString('preAuth_weightDirection', weightDirection);
+    }
+    if (weightChangeAmount != null) {
+      await prefs.setDouble('preAuth_weightChangeAmount', weightChangeAmount);
+    }
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      goalWeightKg: goalWeightKg,
+      useMetricUnits: useMetric,
+      weightDirection: weightDirection ?? state.weightDirection,
+      weightChangeAmount: weightChangeAmount ?? state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -238,6 +449,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: days,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -249,6 +467,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -259,6 +483,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: workoutDays,
       equipment: state.equipment,
@@ -270,6 +501,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -303,6 +540,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: equipment,
@@ -314,6 +558,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: kettlebellCount ?? state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -324,6 +574,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -335,6 +592,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -345,6 +608,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -356,6 +626,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -366,6 +642,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -377,6 +660,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: type,
       progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -387,6 +676,13 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       goals: state.goals,
       fitnessLevel: state.fitnessLevel,
       trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
       daysPerWeek: state.daysPerWeek,
       workoutDays: state.workoutDays,
       equipment: state.equipment,
@@ -398,6 +694,187 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       kettlebellCount: state.kettlebellCount,
       workoutTypePreference: state.workoutTypePreference,
       progressionPace: pace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setNutritionGoals(List<String> nutritionGoals) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('preAuth_nutritionGoals', nutritionGoals);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setFastingPreferences({required bool interested, String? protocol}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('preAuth_interestedInFasting', interested);
+    if (protocol != null) {
+      await prefs.setString('preAuth_fastingProtocol', protocol);
+    } else {
+      await prefs.remove('preAuth_fastingProtocol');
+    }
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: interested,
+      fastingProtocol: protocol,
+    );
+  }
+
+  Future<void> setSleepQuality(String quality) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_sleepQuality', quality);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: quality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setObstacles(List<String> obstacles) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('preAuth_obstacles', obstacles);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: state.dietaryRestrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
+    );
+  }
+
+  Future<void> setDietaryRestrictions(List<String> restrictions) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('preAuth_dietaryRestrictions', restrictions);
+    state = PreAuthQuizData(
+      goals: state.goals,
+      fitnessLevel: state.fitnessLevel,
+      trainingExperience: state.trainingExperience,
+      activityLevel: state.activityLevel,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      goalWeightKg: state.goalWeightKg,
+      useMetricUnits: state.useMetricUnits,
+      weightDirection: state.weightDirection,
+      weightChangeAmount: state.weightChangeAmount,
+      daysPerWeek: state.daysPerWeek,
+      workoutDays: state.workoutDays,
+      equipment: state.equipment,
+      customEquipment: state.customEquipment,
+      workoutEnvironment: state.workoutEnvironment,
+      trainingSplit: state.trainingSplit,
+      motivations: state.motivations,
+      dumbbellCount: state.dumbbellCount,
+      kettlebellCount: state.kettlebellCount,
+      workoutTypePreference: state.workoutTypePreference,
+      progressionPace: state.progressionPace,
+      sleepQuality: state.sleepQuality,
+      obstacles: state.obstacles,
+      nutritionGoals: state.nutritionGoals,
+      dietaryRestrictions: restrictions,
+      interestedInFasting: state.interestedInFasting,
+      fastingProtocol: state.fastingProtocol,
     );
   }
 
@@ -406,9 +883,17 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_goals');
     await prefs.remove('preAuth_fitnessLevel');
     await prefs.remove('preAuth_trainingExperience');
+    await prefs.remove('preAuth_activityLevel');
+    await prefs.remove('preAuth_heightCm');
+    await prefs.remove('preAuth_weightKg');
+    await prefs.remove('preAuth_goalWeightKg');
+    await prefs.remove('preAuth_useMetric');
+    await prefs.remove('preAuth_weightDirection');
+    await prefs.remove('preAuth_weightChangeAmount');
     await prefs.remove('preAuth_daysPerWeek');
     await prefs.remove('preAuth_workoutDays');
     await prefs.remove('preAuth_equipment');
+    await prefs.remove('preAuth_customEquipment');
     await prefs.remove('preAuth_workoutEnvironment');
     await prefs.remove('preAuth_trainingSplit');
     await prefs.remove('preAuth_motivations');
@@ -416,6 +901,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     await prefs.remove('preAuth_kettlebellCount');
     await prefs.remove('preAuth_workoutTypePreference');
     await prefs.remove('preAuth_progressionPace');
+    await prefs.remove('preAuth_sleepQuality');
+    await prefs.remove('preAuth_obstacles');
+    await prefs.remove('preAuth_nutritionGoals');
+    await prefs.remove('preAuth_dietaryRestrictions');
+    await prefs.remove('preAuth_interestedInFasting');
+    await prefs.remove('preAuth_fastingProtocol');
     state = PreAuthQuizData();
   }
 }
@@ -431,28 +922,48 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
-  static const int _totalQuestions = 6;  // Back to 6 - combined preferences
+  static const int _totalQuestions = 9;  // Now 9 questions with body metrics
 
   // Question 1: Goals (multi-select)
   final Set<String> _selectedGoals = {};
   // Question 2: Fitness Level + Training Experience
   String? _selectedLevel;
   String? _selectedTrainingExperience;
-  // Question 3: Days per week + which days
+  // Question 3: Body Metrics (height, weight, goal weight)
+  double? _heightCm;
+  double? _weightKg;
+  double? _goalWeightKg;
+  bool _useMetric = true;
+  // Two-step weight goal
+  String? _weightDirection;  // lose, gain, maintain
+  double? _weightChangeAmount;  // Amount to change in kg
+  // Activity level (added to fitness level screen)
+  String? _selectedActivityLevel;
+  // Lifestyle (Sleep quality and Obstacles)
+  String? _selectedSleepQuality;
+  final Set<String> _selectedObstacles = {};
+  // Dietary restrictions (added to nutrition goals screen)
+  final Set<String> _selectedDietaryRestrictions = {};
+  // Question 4: Days per week + which days
   int? _selectedDays;
   final Set<int> _selectedWorkoutDays = {};
-  // Question 4: Equipment
+  // Question 5: Equipment
   final Set<String> _selectedEquipment = {};
   final Set<String> _otherSelectedEquipment = {};
   final List<String> _customEquipment = [];  // User-added equipment not in predefined list
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
   String? _selectedEnvironment;  // Workout environment (home, home_gym, commercial_gym, hotel)
-  // Question 5: Training Preferences (Split + Workout Type + Progression Pace)
+  // Question 6: Training Preferences (Split + Workout Type + Progression Pace)
   String? _selectedTrainingSplit;
   String? _selectedWorkoutType;
   String? _selectedProgressionPace;
-  // Question 6: Motivations
+  // Question 7: Nutrition Goals
+  final Set<String> _selectedNutritionGoals = {};
+  // Question 8: Fasting Interest & Protocol
+  bool? _interestedInFasting;
+  String? _selectedFastingProtocol;
+  // Question 9: Motivations
   final Set<String> _selectedMotivations = {};
 
   late AnimationController _progressController;
@@ -521,8 +1032,24 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         if (_selectedTrainingExperience != null) {
           await ref.read(preAuthQuizProvider.notifier).setTrainingExperience(_selectedTrainingExperience!);
         }
+        if (_selectedActivityLevel != null) {
+          await ref.read(preAuthQuizProvider.notifier).setActivityLevel(_selectedActivityLevel!);
+        }
         break;
       case 2:
+        // Save body metrics with weight direction and amount
+        if (_heightCm != null && _weightKg != null && _goalWeightKg != null) {
+          await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
+            heightCm: _heightCm!,
+            weightKg: _weightKg!,
+            goalWeightKg: _goalWeightKg!,
+            useMetric: _useMetric,
+            weightDirection: _weightDirection,
+            weightChangeAmount: _weightChangeAmount,
+          );
+        }
+        break;
+      case 3:
         if (_selectedDays != null) {
           await ref.read(preAuthQuizProvider.notifier).setDaysPerWeek(_selectedDays!);
         }
@@ -530,7 +1057,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
         }
         break;
-      case 3:
+      case 4:
         if (_selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty) {
           final hasFullGym = _selectedEquipment.contains('full_gym');
           // Combine main equipment and other equipment selections
@@ -543,7 +1070,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           );
         }
         break;
-      case 4:
+      case 5:
         // Save all training preferences (split, workout type, pace)
         if (_selectedTrainingSplit != null) {
           await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(_selectedTrainingSplit!);
@@ -554,13 +1081,38 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         if (_selectedProgressionPace != null) {
           await ref.read(preAuthQuizProvider.notifier).setProgressionPace(_selectedProgressionPace!);
         }
+        // Save lifestyle data (sleep quality and obstacles)
+        if (_selectedSleepQuality != null) {
+          await ref.read(preAuthQuizProvider.notifier).setSleepQuality(_selectedSleepQuality!);
+        }
+        if (_selectedObstacles.isNotEmpty) {
+          await ref.read(preAuthQuizProvider.notifier).setObstacles(_selectedObstacles.toList());
+        }
         break;
-      case 5:
+      case 6:
+        // Save nutrition goals and dietary restrictions
+        if (_selectedNutritionGoals.isNotEmpty) {
+          await ref.read(preAuthQuizProvider.notifier).setNutritionGoals(_selectedNutritionGoals.toList());
+        }
+        if (_selectedDietaryRestrictions.isNotEmpty) {
+          await ref.read(preAuthQuizProvider.notifier).setDietaryRestrictions(_selectedDietaryRestrictions.toList());
+        }
+        break;
+      case 7:
+        // Save fasting preferences
+        if (_interestedInFasting != null) {
+          await ref.read(preAuthQuizProvider.notifier).setFastingPreferences(
+            interested: _interestedInFasting!,
+            protocol: _selectedFastingProtocol,
+          );
+        }
+        break;
+      case 8:
         if (_selectedMotivations.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setMotivations(_selectedMotivations.toList());
         }
         if (mounted) {
-          context.go('/preview');
+          context.go('/weight-projection');
         }
         return;
     }
@@ -586,14 +1138,21 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       case 0:
         return _selectedGoals.isNotEmpty;
       case 1:
-        return _selectedLevel != null && _selectedTrainingExperience != null;
+        return _selectedLevel != null && _selectedTrainingExperience != null && _selectedActivityLevel != null;
       case 2:
-        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
+        // Body metrics: height, weight, and goal weight are required
+        return _heightCm != null && _weightKg != null && _goalWeightKg != null;
       case 3:
-        return _selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty;
+        return _selectedDays != null && _selectedWorkoutDays.length >= _selectedDays!;
       case 4:
-        return true; // Training preferences are all optional
+        return _selectedEquipment.isNotEmpty || _otherSelectedEquipment.isNotEmpty;
       case 5:
+        return true; // Training preferences are all optional
+      case 6:
+        return true; // Nutrition goals are optional
+      case 7:
+        return _interestedInFasting != null; // Must answer yes or no
+      case 8:
         return _selectedMotivations.isNotEmpty;
       default:
         return false;
@@ -856,8 +1415,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 canProceed: _canProceed,
                 isLastQuestion: _currentQuestion == _totalQuestions - 1,
                 onPressed: _nextQuestion,
-                // Show skip option for Training Preferences (question 4)
-                onSkip: _currentQuestion == 4 ? _nextQuestion : null,
+                // Show skip option for Training Preferences (5) and Nutrition Goals (6)
+                onSkip: (_currentQuestion == 5 || _currentQuestion == 6) ? _nextQuestion : null,
                 skipText: 'Skip for now',
               ),
               const SizedBox(height: 16),
@@ -877,10 +1436,28 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           key: const ValueKey('fitness_level'),
           selectedLevel: _selectedLevel,
           selectedExperience: _selectedTrainingExperience,
+          selectedActivityLevel: _selectedActivityLevel,
           onLevelChanged: (level) => setState(() => _selectedLevel = level),
           onExperienceChanged: (exp) => setState(() => _selectedTrainingExperience = exp),
+          onActivityLevelChanged: (level) => setState(() => _selectedActivityLevel = level),
         );
       case 2:
+        return QuizBodyMetrics(
+          key: const ValueKey('body_metrics'),
+          heightCm: _heightCm,
+          weightKg: _weightKg,
+          goalWeightKg: _goalWeightKg,
+          useMetric: _useMetric,
+          weightDirection: _weightDirection,
+          weightChangeAmount: _weightChangeAmount,
+          onHeightChanged: (height) => setState(() => _heightCm = height),
+          onWeightChanged: (weight) => setState(() => _weightKg = weight),
+          onGoalWeightChanged: (goalWeight) => setState(() => _goalWeightKg = goalWeight),
+          onUnitChanged: (useMetric) => setState(() => _useMetric = useMetric),
+          onWeightDirectionChanged: (direction) => setState(() => _weightDirection = direction),
+          onWeightChangeAmountChanged: (amount) => setState(() => _weightChangeAmount = amount),
+        );
+      case 3:
         return QuizDaysSelector(
           key: const ValueKey('days_selector'),
           selectedDays: _selectedDays,
@@ -903,7 +1480,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             });
           },
         );
-      case 3:
+      case 4:
         return QuizEquipment(
           key: const ValueKey('equipment'),
           selectedEquipment: _selectedEquipment,
@@ -918,17 +1495,73 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           selectedEnvironment: _selectedEnvironment,
           onEnvironmentChanged: _handleEnvironmentChange,
         );
-      case 4:
+      case 5:
         return QuizTrainingPreferences(
           key: const ValueKey('training_preferences'),
           selectedSplit: _selectedTrainingSplit,
           selectedWorkoutType: _selectedWorkoutType,
           selectedProgressionPace: _selectedProgressionPace,
+          selectedSleepQuality: _selectedSleepQuality,
+          selectedObstacles: _selectedObstacles,
           onSplitChanged: (split) => setState(() => _selectedTrainingSplit = split),
           onWorkoutTypeChanged: (type) => setState(() => _selectedWorkoutType = type),
           onProgressionPaceChanged: (pace) => setState(() => _selectedProgressionPace = pace),
+          onSleepQualityChanged: (quality) => setState(() => _selectedSleepQuality = quality),
+          onObstacleToggle: (id) {
+            setState(() {
+              if (_selectedObstacles.contains(id)) {
+                _selectedObstacles.remove(id);
+              } else if (_selectedObstacles.length < 3) {
+                _selectedObstacles.add(id);
+              }
+            });
+          },
         );
-      case 5:
+      case 6:
+        return QuizNutritionGoals(
+          key: const ValueKey('nutrition_goals'),
+          selectedGoals: _selectedNutritionGoals,
+          selectedRestrictions: _selectedDietaryRestrictions,
+          onToggle: (id) {
+            setState(() {
+              if (_selectedNutritionGoals.contains(id)) {
+                _selectedNutritionGoals.remove(id);
+              } else {
+                _selectedNutritionGoals.add(id);
+              }
+            });
+          },
+          onRestrictionToggle: (id) {
+            setState(() {
+              // Handle "none" special case - clears all other restrictions
+              if (id == 'none') {
+                if (_selectedDietaryRestrictions.contains('none')) {
+                  _selectedDietaryRestrictions.remove('none');
+                } else {
+                  _selectedDietaryRestrictions.clear();
+                  _selectedDietaryRestrictions.add('none');
+                }
+              } else {
+                // Remove "none" if selecting another restriction
+                _selectedDietaryRestrictions.remove('none');
+                if (_selectedDietaryRestrictions.contains(id)) {
+                  _selectedDietaryRestrictions.remove(id);
+                } else {
+                  _selectedDietaryRestrictions.add(id);
+                }
+              }
+            });
+          },
+        );
+      case 7:
+        return QuizFasting(
+          key: const ValueKey('fasting'),
+          interestedInFasting: _interestedInFasting,
+          selectedProtocol: _selectedFastingProtocol,
+          onInterestChanged: (interested) => setState(() => _interestedInFasting = interested),
+          onProtocolChanged: (protocol) => setState(() => _selectedFastingProtocol = protocol),
+        );
+      case 8:
         return QuizMotivation(
           key: const ValueKey('motivation'),
           selectedMotivations: _selectedMotivations,

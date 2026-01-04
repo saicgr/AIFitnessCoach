@@ -11,7 +11,7 @@ import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import 'pre_auth_quiz_screen.dart';
-import 'widgets/coach_card.dart';
+import 'widgets/coach_profile_card.dart';
 import 'widgets/custom_coach_form.dart';
 
 /// Coach Selection Screen - Choose your AI coach persona before onboarding
@@ -27,6 +27,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   bool _isCustomMode = false;
   bool _isLoading = false;
 
+  // PageView controller for swipeable coach selection
+  late final PageController _pageController;
+  int _currentPageIndex = 0;
+
   // Custom coach settings
   String _customName = '';
   String _customStyle = 'motivational';
@@ -38,6 +42,13 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     super.initState();
     // Default to first predefined coach
     _selectedCoach = CoachPersona.predefinedCoaches.first;
+    _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   void _selectCoach(CoachPersona coach) {
@@ -96,34 +107,98 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     }
 
     // Update local auth state immediately for fast navigation
+    // Skip conversational onboarding - mark onboarding as complete and go to home
     ref.read(authStateProvider.notifier).markCoachSelected();
+    ref.read(authStateProvider.notifier).markOnboardingComplete();
 
-    // Reset onboarding state so the new coach personality takes effect from the start
-    ref.read(onboardingStateProvider.notifier).reset();
-
-    // Navigate to conversational onboarding immediately
+    // Navigate directly to home (skipping conversational onboarding)
     if (mounted) {
-      context.go('/onboarding');
+      context.go('/home');
     }
 
-    // Update backend in background (fire-and-forget) - don't block navigation
-    _updateBackendCoachFlag();
+    // Update backend in background (fire-and-forget) - submit all quiz data + coach
+    _submitUserPreferencesAndFlags();
   }
 
-  /// Updates the coach_selected flag in backend without blocking UI
-  void _updateBackendCoachFlag() {
+  /// Submits all user preferences (pre-auth quiz data + coach) to backend
+  /// This runs in the background without blocking UI navigation
+  void _submitUserPreferencesAndFlags() {
     Future(() async {
       try {
         final apiClient = ref.read(apiClientProvider);
         final userId = await apiClient.getUserId();
-        if (userId != null) {
-          await apiClient.put(
-            '${ApiConstants.users}/$userId',
-            data: {'coach_selected': true},
-          );
-        }
+        if (userId == null) return;
+
+        // Get pre-auth quiz data
+        final quizData = ref.read(preAuthQuizProvider);
+
+        // Build preferences payload from quiz data
+        final preferencesPayload = <String, dynamic>{
+          // Goals & Fitness
+          if (quizData.goals != null) 'goals': quizData.goals,
+          if (quizData.fitnessLevel != null) 'fitness_level': quizData.fitnessLevel,
+          if (quizData.trainingExperience != null) 'training_experience': quizData.trainingExperience,
+          if (quizData.activityLevel != null) 'activity_level': quizData.activityLevel,
+
+          // Body Metrics
+          if (quizData.heightCm != null) 'height_cm': quizData.heightCm,
+          if (quizData.weightKg != null) 'weight_kg': quizData.weightKg,
+          if (quizData.goalWeightKg != null) 'goal_weight_kg': quizData.goalWeightKg,
+          if (quizData.weightDirection != null) 'weight_direction': quizData.weightDirection,
+          if (quizData.weightChangeAmount != null) 'weight_change_amount': quizData.weightChangeAmount,
+
+          // Schedule
+          if (quizData.daysPerWeek != null) 'days_per_week': quizData.daysPerWeek,
+          if (quizData.workoutDays != null) 'selected_days': quizData.workoutDays,
+
+          // Equipment
+          if (quizData.equipment != null) 'equipment': quizData.equipment,
+          if (quizData.customEquipment != null) 'custom_equipment': quizData.customEquipment,
+
+          // Training Preferences
+          if (quizData.trainingSplit != null) 'training_split': quizData.trainingSplit,
+          if (quizData.workoutTypePreference != null) 'workout_type': quizData.workoutTypePreference,
+          if (quizData.progressionPace != null) 'progression_pace': quizData.progressionPace,
+
+          // Lifestyle
+          if (quizData.sleepQuality != null) 'sleep_quality': quizData.sleepQuality,
+          if (quizData.obstacles != null) 'obstacles': quizData.obstacles,
+
+          // Nutrition
+          if (quizData.nutritionGoals != null) 'nutrition_goals': quizData.nutritionGoals,
+          if (quizData.dietaryRestrictions != null) 'dietary_restrictions': quizData.dietaryRestrictions,
+
+          // Fasting
+          if (quizData.interestedInFasting != null) 'interested_in_fasting': quizData.interestedInFasting,
+          if (quizData.fastingProtocol != null) 'fasting_protocol': quizData.fastingProtocol,
+
+          // Motivations
+          if (quizData.motivations != null) 'motivations': quizData.motivations,
+
+          // Coach
+          'coach_id': _isCustomMode ? 'custom' : _selectedCoach?.id,
+        };
+
+        // Submit preferences to backend
+        await apiClient.post(
+          '${ApiConstants.users}/$userId/preferences',
+          data: preferencesPayload,
+        );
+
+        // Update flags
+        await apiClient.put(
+          '${ApiConstants.users}/$userId',
+          data: {
+            'coach_selected': true,
+            'onboarding_completed': true,
+          },
+        );
+
+        debugPrint('✅ [CoachSelection] User preferences submitted successfully');
       } catch (e) {
-        debugPrint('❌ [CoachSelection] Failed to update coach_selected flag: $e');
+        debugPrint('❌ [CoachSelection] Failed to submit preferences: $e');
+        // Preferences submission failure is not critical - user can still use the app
+        // The local quiz data is still available for plan generation
       }
     });
   }
@@ -167,47 +242,97 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
               // Content
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
+                child: Column(
+                  children: [
+                    // PageView for swipeable coach cards
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _currentPageIndex = index;
+                            _selectedCoach = CoachPersona.predefinedCoaches[index];
+                            _isCustomMode = false;
+                          });
+                        },
+                        itemCount: CoachPersona.predefinedCoaches.length,
+                        itemBuilder: (context, index) {
+                          final coach = CoachPersona.predefinedCoaches[index];
+                          return AnimatedScale(
+                            duration: const Duration(milliseconds: 200),
+                            scale: index == _currentPageIndex ? 1.0 : 0.9,
+                            child: CoachProfileCard(
+                              coach: coach,
+                              isSelected: !_isCustomMode && _selectedCoach?.id == coach.id,
+                              onTap: () => _selectCoach(coach),
+                            ),
+                          ).animate(delay: (100 + index * 50).ms).fadeIn();
+                        },
+                      ),
+                    ),
 
-                      // Predefined Coaches Section
-                      Text(
-                        'Choose Your Coach',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textSecondary,
-                          letterSpacing: 1.2,
+                    // Page indicator dots
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          CoachPersona.predefinedCoaches.length,
+                          (index) => GestureDetector(
+                            onTap: () {
+                              _pageController.animateToPage(
+                                index,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutCubic,
+                              );
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: index == _currentPageIndex ? 24 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: index == _currentPageIndex
+                                    ? AppColors.cyan
+                                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: index == _currentPageIndex
+                                      ? AppColors.cyan
+                                      : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ).animate().fadeIn(delay: 100.ms),
-                      const SizedBox(height: 12),
+                      ).animate().fadeIn(delay: 300.ms),
+                    ),
 
-                      // Coach Cards
-                      ...CoachPersona.predefinedCoaches.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final coach = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: CoachCard(
-                            coach: coach,
-                            isSelected: !_isCustomMode && _selectedCoach?.id == coach.id,
-                            onTap: () => _selectCoach(coach),
-                          ).animate(delay: (150 + index * 50).ms).fadeIn().slideX(begin: 0.03),
-                        );
-                      }),
+                    // Custom Coach toggle (compact)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: _buildCompactCustomToggle(isDark, textPrimary, textSecondary),
+                    ),
 
-                      const SizedBox(height: 24),
+                    // Custom Coach Form (if enabled)
+                    if (_isCustomMode)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: CustomCoachForm(
+                          name: _customName,
+                          coachingStyle: _customStyle,
+                          communicationTone: _customTone,
+                          encouragementLevel: _customEncouragement,
+                          onNameChanged: (name) => _updateCustomCoach(name: name),
+                          onStyleChanged: (style) => _updateCustomCoach(style: style),
+                          onToneChanged: (tone) => _updateCustomCoach(tone: tone),
+                          onEncouragementChanged: (level) => _updateCustomCoach(encouragement: level),
+                        ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
+                      ),
 
-                      // Custom Coach Section
-                      _buildCustomCoachSection(isDark, textPrimary, textSecondary),
-
-                      const SizedBox(height: 100),
-                    ],
-                  ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
 
@@ -392,116 +517,53 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     ).animate().fadeIn().slideY(begin: -0.1);
   }
 
-  Widget _buildCustomCoachSection(bool isDark, Color textPrimary, Color textSecondary) {
+  /// Compact custom coach toggle for use below the PageView
+  Widget _buildCompactCustomToggle(bool isDark, Color textPrimary, Color textSecondary) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Or Create Your Own',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textSecondary,
-            letterSpacing: 1.2,
+    return GestureDetector(
+      onTap: _toggleCustomMode,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: _isCustomMode ? AppColors.cyanGradient : null,
+          color: _isCustomMode
+              ? null
+              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isCustomMode ? AppColors.cyan : cardBorder,
+            width: _isCustomMode ? 2 : 1,
           ),
-        ).animate().fadeIn(delay: 400.ms),
-        const SizedBox(height: 12),
-
-        // Custom Coach Toggle Card
-        GestureDetector(
-          onTap: _toggleCustomMode,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: _isCustomMode ? AppColors.cyanGradient : null,
-              color: _isCustomMode
-                  ? null
-                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _isCustomMode ? AppColors.cyan : cardBorder,
-                width: _isCustomMode ? 2 : 1,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              color: _isCustomMode ? Colors.white : AppColors.cyan,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _isCustomMode ? 'Custom Coach Selected' : 'Or Create Your Own Coach',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _isCustomMode ? Colors.white : textPrimary,
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: _isCustomMode
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : AppColors.cyan.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.auto_awesome,
-                    color: _isCustomMode ? Colors.white : AppColors.cyan,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Custom Coach',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: _isCustomMode ? Colors.white : textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Create your perfect AI coach',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: _isCustomMode ? Colors.white70 : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: _isCustomMode ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: _isCustomMode
-                        ? null
-                        : Border.all(color: cardBorder, width: 2),
-                  ),
-                  child: _isCustomMode
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
-                ),
-              ],
+            const SizedBox(width: 8),
+            Icon(
+              _isCustomMode ? Icons.check_circle : Icons.arrow_forward_ios,
+              color: _isCustomMode ? Colors.white : textSecondary,
+              size: 16,
             ),
-          ),
-        ).animate().fadeIn(delay: 450.ms),
-
-        // Custom Coach Form (expandable)
-        if (_isCustomMode) ...[
-          const SizedBox(height: 16),
-          CustomCoachForm(
-            name: _customName,
-            coachingStyle: _customStyle,
-            communicationTone: _customTone,
-            encouragementLevel: _customEncouragement,
-            onNameChanged: (name) => _updateCustomCoach(name: name),
-            onStyleChanged: (style) => _updateCustomCoach(style: style),
-            onToneChanged: (tone) => _updateCustomCoach(tone: tone),
-            onEncouragementChanged: (level) => _updateCustomCoach(encouragement: level),
-          ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
-        ],
-      ],
-    );
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 400.ms);
   }
 
   Widget _buildContinueButton(bool isDark, bool canContinue) {

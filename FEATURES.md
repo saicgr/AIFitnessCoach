@@ -1,6 +1,6 @@
 # FitWiz - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
-> **Total Features: 1035+** across 26 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, and **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**)
+> **Total Features: 1044+** across 26 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, and **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**)
 
 ---
 
@@ -2192,7 +2192,7 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 2 | Apple Sign-In | Coming soon | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | App Launch → Sign In → Apple Sign-In |
 | 3 | Language Selection | English, Telugu (coming soon) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | Settings → Language |
 | 4 | 6-Step Onboarding | Personal Info, Body Metrics, Fitness Background, Schedule, Preferences, Health | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | Partially Implemented | User | First Launch → Onboarding Flow |
-| 5 | Pre-Auth Quiz | Conversational fitness assessment with environment + equipment selection | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | User | App Launch → Get Started → Quiz |
+| 5 | Pre-Auth Quiz | 9-screen comprehensive quiz collecting goals, fitness level, activity level, body metrics with 2-step weight goal (direction + amount), schedule, equipment, training preferences, sleep quality, obstacles, nutrition goals, dietary restrictions, fasting interest, and motivations | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | App Launch → Get Started → Quiz |
 | 6 | Mode Selection | Standard vs Senior mode | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Age Check → Mode Selection |
 | 7 | Timezone Auto-Detect | Automatic timezone detection and sync | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | Partially Implemented | Dev | Automatic on app start |
 | 8 | User Profile Creation | Goals, equipment, injuries configuration | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Onboarding → Profile Setup |
@@ -2200,7 +2200,7 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 10 | Auto-Scrolling Carousel | Pause-on-interaction feature | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | Not Implemented | User | Welcome Screen → Auto-scroll |
 | 11 | Step Progress Indicators | Visual step tracking during onboarding | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Onboarding → Progress Bar |
 | 12 | Exit Confirmation | Dialog to confirm leaving onboarding | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Active Workout → Back → Confirm Exit |
-| 13 | Coach Selection Screen | Choose from 5 predefined AI coach personas | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Coach Selection |
+| 13 | Coach Selection Screen | Swipeable horizontal PageView with 5 predefined AI coach personas (Coach Mike, Dr. Sarah, Sergeant Max, Zen Maya, Hype Danny) showing sample messages and personality traits. Direct navigation to home after selection (skips conversational onboarding) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Coach Selection → Home |
 | 14 | Custom Coach Creator | Build your own coach with name, avatar, style, personality traits | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Coach Selection → Create Custom |
 | 15 | Coach Personas | Alex (Motivator), Sam (Scientist), Jordan (Drill Sergeant), Taylor (Yogi), Morgan (Buddy) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Coach Selection → Persona Cards |
 | 16 | Coaching Styles | Encouraging, Scientific, Tough Love, Mindful, Casual | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Coach Selection → Style Selection |
@@ -2210,14 +2210,23 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 20 | Paywall Pricing Screen | Monthly/yearly toggle with RevenueCat integration | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Paywall Features → Pricing |
 | 21 | Personalized Preview | AI-generated workout preview based on onboarding answers | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Quiz Complete → Plan Preview |
 | 22 | Onboarding Flow Tracking | coach_selected, paywall_completed, onboarding_completed flags | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Backend tracking |
-| 23 | Conversational AI Onboarding | Chat-based fitness assessment vs form-based | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Fully Implemented | User | Onboarding → AI Chat Flow |
+| 23 | Conversational AI Onboarding | Chat-based fitness assessment (DEPRECATED - now uses enhanced pre-auth quiz that collects all data upfront) | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Deprecated | User | Onboarding → AI Chat Flow |
 | 24 | Quick Reply Detection | Smart detection of user quick reply selections | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | Fully Implemented | Dev | Onboarding → Chat → Quick Replies |
 | 25 | Language Provider System | Multi-language support with provider pattern | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | Dev | Backend system |
 | 26 | Senior Onboarding Mode | Larger UI and simpler flow for seniors | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Partially Implemented | User | Onboarding → Senior Mode |
 | 27 | Equipment Selection with Details | Pick equipment with quantities and weights during onboarding | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Fully Implemented | User | Onboarding → Equipment Selection |
 | 28 | Environment Selection | Choose workout environment (gym, home, outdoor, etc.) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | Fully Implemented | User | Onboarding → Environment Selection |
+| 29 | Two-Step Weight Goal | User selects direction (Lose/Gain/Maintain) then amount in kg/lbs with automatic goal weight calculation | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Quiz → Body Metrics → Weight Goal |
+| 30 | Weight Projection Screen | Visual timeline showing weekly weight milestones leading to goal, with maintain mode showing benefits instead of projection chart | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Quiz → Weight Projection |
+| 31 | Activity Level Selection | Sedentary/Light/Moderate/Very Active levels for TDEE calculation in fitness level screen | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Quiz → Fitness Level → Activity Level |
+| 32 | Sleep Quality Selection | Poor/Fair/Good/Excellent sleep quality tracking for recovery-aware recommendations | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Quiz → Training Preferences → Sleep |
+| 33 | Obstacles Selection | Multi-select up to 3 obstacles (Time/Energy/Motivation/Knowledge/Diet/Access) for targeted AI tips | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Quiz → Training Preferences → Obstacles |
+| 34 | Dietary Restrictions | Multi-select dietary restrictions (Vegetarian/Vegan/Gluten-free/Dairy-free/Keto/etc.) for meal planning | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Quiz → Nutrition Goals → Dietary |
+| 35 | Coach Profile Cards | Enhanced coach cards with gradient headers, sample messages showing communication style, personality trait chips, and selection badges | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Coach Selection → Swipe Cards |
+| 36 | Streamlined Onboarding Flow | Pre-Auth Quiz → Weight Projection → Preview → Sign In → Coach Selection → Home (skips conversational onboarding) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Full onboarding journey |
+| 37 | Preferences API Endpoint | POST endpoint to save all quiz data to backend after coach selection (fire-and-forget for fast navigation) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Backend API |
 
-### 2. Home Screen (33 Features)
+### 2. Home Screen (43 Features)
 
 **Tier Availability:**
 | Feature | Free | Premium | Premium Plus/Lifetime |
@@ -2257,12 +2266,22 @@ GET    /api/v1/workouts/{user_id}  - List all workouts
 | 25 | Template Picker Sheet | Browse and apply system templates with preview cards | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → My Space → Apply Template |
 | 26 | Dynamic Tile Rendering | TileFactory builds widgets based on TileType with Consumer patterns for data | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | Dev | Home → Tile Display |
 | 27 | Layout Sharing | Generate preview images of layouts and share to Instagram Stories/System Share/Gallery | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → My Space → Share Layout |
-| 28 | 26 Tile Types | nextWorkout, fitnessScore, moodPicker, dailyActivity, quickActions, weeklyProgress, weeklyGoals, weekChanges, upcomingFeatures, upcomingWorkouts, streakCounter, personalRecords, aiCoachTip, challengeProgress, caloriesSummary, macroRings, bodyWeight, progressPhoto, socialFeed, leaderboardRank, fasting, weeklyCalendar, muscleHeatmap, sleepScore, restDayTip, myJourney | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Home → Various Tiles |
+| 28 | 34 Tile Types | nextWorkout, fitnessScore, moodPicker, dailyActivity, quickActions, weeklyProgress, weeklyGoals, weekChanges, upcomingFeatures, upcomingWorkouts, streakCounter, personalRecords, aiCoachTip, challengeProgress, caloriesSummary, macroRings, bodyWeight, progressPhoto, socialFeed, leaderboardRank, fasting, weeklyCalendar, muscleHeatmap, sleepScore, restDayTip, myJourney, progressCharts, roiSummary, weeklyPlan, **weightTrend**, **dailyStats**, **achievements**, **heroSection**, **quickLogWeight**, **quickLogMeasurements**, **habits** | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | Dev | Home → Various Tiles |
 | 29 | Layout Activity Logging | Track layout creates, updates, activations, deletes for user analytics | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Backend system |
 | 30 | Default Layout Migration | Automatic creation of default layout when no layouts exist for user | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | Backend system |
 | 31 | My Journey Card | Fitness journey progress tile showing milestones (Getting Started → Legend), progress bars, streak, and weekly stats | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → My Journey Tile |
 | 32 | Journey Milestones | 8-level progression system: Getting Started (0), Beginner (5), Building Habit (15), Consistent (30), Dedicated (50), Athlete (100), Champion (200), Legend (500) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → My Journey → Milestones |
 | 33 | Journey Half-Size Tile | Compact My Journey card variant for half-width grid display | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → My Journey (Compact) |
+| 34 | Weight Trend Tile | Shows weekly weight change with trend arrow (green down for fat loss, red up for gain) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Weight Trend Tile |
+| 35 | Daily Stats Tile | Shows steps from HealthKit/Google Fit and calorie deficit/surplus calculation | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Daily Stats Tile |
+| 36 | Achievements Tile | Shows recent achievement earned and progress to next milestone with tier colors | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Achievements Tile |
+| 37 | Quick Log Weight Tile | Inline weight logging with last weight display and one-tap log button | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Quick Log Weight Tile |
+| 38 | Quick Log Measurements Tile | Shows waist, chest, hips measurements with last update and quick update button | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Quick Measurements Tile |
+| 39 | Habits Tile | Today's habits checklist with quick toggle completion and progress indicator (X/Y done) | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Habits Tile |
+| 40 | Swipeable Hero Section | Main focus card that swipes between workout/nutrition/fasting modes with rest day improvements | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Home → Hero Section |
+| 41 | Rest Day Improvements | Motivational messages, activity suggestions (stretch/walk/yoga), and quick action buttons on rest days | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → Rest Day Card |
+| 42 | Edit Button in Header | Quick access to layout edit mode from home screen header | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → Header → Edit Icon |
+| 43 | Settings Customize Home | Customize Home option in settings that navigates to edit mode | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Settings → Customize Home |
 
 ### 3. Workout Generation & Management (69 Features)
 
@@ -3947,5 +3966,972 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 
 ---
 
+### 43. "The app doesn't help me pick weights or rest times during workouts"
+✅ **SOLVED**: Complete AI-Powered Real-Time Workout Intelligence system
+
+---
+
+## AI-Powered Real-Time Workout Intelligence
+
+> **The AI coach that learns and adapts during your workout in real-time.**
+
+FitWiz includes a sophisticated AI system that provides intelligent suggestions throughout your workout. Unlike static workout plans, this system adapts to your actual performance, detecting fatigue, suggesting optimal weights, and recommending rest times based on how you're actually performing.
+
+---
+
+### Feature 1: Smart Weight Auto-Fill
+
+**What it does:** Automatically suggests the optimal weight before each set based on your strength data.
+
+#### How It Works
+```
+┌─────────────────────────────────────────────────────────────┐
+│  BENCH PRESS - SET 1 OF 3                     💡 AI        │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  Weight: [  45.0 kg  ]  ← Auto-filled                      │
+│                                                             │
+│  📊 Based on your 60kg 1RM at 75% intensity                │
+│  📈 Last session: 42.5kg × 10 @ RPE 6 (you crushed it!)    │
+│                                                             │
+│  [ - ]  [ + ]                    [Complete Set]            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Calculation Formula
+```
+suggested_weight = 1RM × target_intensity% × performance_modifier
+```
+
+Where:
+- **1RM**: Your one-rep max for this exercise (from strength records)
+- **Target Intensity**: Based on training goal:
+  | Goal | Intensity Range | Typical Reps |
+  |------|-----------------|--------------|
+  | Strength | 85-95% | 1-5 reps |
+  | Hypertrophy | 65-80% | 8-12 reps |
+  | Endurance | 50-65% | 15-20+ reps |
+  | Power | 70-85% | 3-6 reps |
+- **Performance Modifier**: Adjusts based on last session
+  - Crushed it (RPE 6-7 with target reps): +5%
+  - Normal (RPE 8): No change
+  - Struggled (RPE 9-10 or missed reps): -5%
+
+#### Equipment-Aware Rounding
+| Equipment Type | Increment | Example |
+|---------------|-----------|---------|
+| Dumbbells | 2.5 kg | 23.7 → 22.5 or 25.0 |
+| Barbells | 2.5 kg | 61.3 → 60.0 or 62.5 |
+| Machines | 5.0 kg | 42.0 → 40.0 or 45.0 |
+| Cables | 5.0 kg | 33.0 → 35.0 |
+
+#### First-Time User Flow
+For new users without 1RM data:
+1. **No 1RM stored** → Use conservative starting weights based on:
+   - User's fitness level (beginner/intermediate/advanced from onboarding)
+   - Body weight (for bodyweight-relative exercises)
+   - Exercise difficulty rating
+2. **After first workout** → System calculates estimated 1RM from performance
+3. **Subsequent workouts** → Full AI suggestions with increasing accuracy
+
+---
+
+### Feature 2: AI Rest Time Suggestions
+
+**What it does:** Recommends optimal rest duration after each set based on how hard it was.
+
+#### How It Works
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🕐 AI REST COACH                                [AI]      │
+│  ─────────────────────────────────────────────────────────  │
+│  Standard Rest                                              │
+│                                                             │
+│         2:30              │           1:30                 │
+│       SUGGESTED           │           QUICK                │
+│                                                             │
+│  💡 "That was a hard set (RPE 9). Heavy compound           │
+│      exercises need full recovery for optimal gains."      │
+│                                                             │
+│  ┌─────────────────┐      ┌─────────────────────────────┐  │
+│  │ Quick Rest      │      │ ✓ Use Suggested (2:30)     │  │
+│  │ Save 1:00       │      │                             │  │
+│  └─────────────────┘      └─────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Rest Time Categories
+| Category | Duration | When Used | Exercise Types |
+|----------|----------|-----------|----------------|
+| **Short** | 30-60s | RPE 6-7, light work | Isolation, accessories |
+| **Moderate** | 90-120s | RPE 7-8, standard work | Most exercises |
+| **Long** | 150-180s | RPE 8-9, heavy work | Compound lifts |
+| **Extended** | 180-300s | RPE 9-10, max effort | Strength/power sets |
+
+#### Factors Considered
+1. **RPE of completed set** (primary factor)
+2. **Exercise type** (compound vs isolation)
+3. **Set number** (later sets need more rest due to fatigue)
+4. **Remaining sets** (conserve energy if many left)
+5. **User's training goal** (strength needs more rest than endurance)
+
+#### Fatigue Multiplier
+| Set Number | Multiplier | Effect |
+|------------|------------|--------|
+| Set 1-2 | 1.0x | Baseline rest |
+| Set 3 | 1.05x | +5% rest time |
+| Set 4 | 1.10x | +10% rest time |
+| Set 5+ | 1.15x | +15% rest time |
+
+---
+
+### Feature 3: Predictive Fatigue Alerts
+
+**What it does:** Warns you when your performance is declining and suggests adjustments before you fail.
+
+#### How It Works
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠️ FATIGUE DETECTED                              [85%]    │
+│  ─────────────────────────────────────────────────────────  │
+│  MODERATE Alert                                             │
+│                                                             │
+│  Lat Pulldown                                               │
+│                                                             │
+│  "Your last 2 sets showed 25% performance decline.         │
+│   Consider reducing weight to maintain form and volume."   │
+│                                                             │
+│  DETECTED ISSUES:                                           │
+│  ┌──────────────┐  ┌──────────────┐                        │
+│  │ 📉 Rep Drop  │  │ ⚡ RPE Spike │                        │
+│  └──────────────┘  └──────────────┘                        │
+│                                                             │
+│  ════════════════════════════════════════════════════════  │
+│  SUGGESTED ADJUSTMENT                                       │
+│                                                             │
+│       60.0 kg   →   51.0 kg                                │
+│       ───────       ───────                                │
+│       current       suggested (-15%)                        │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │               ✓ Accept Suggestion                    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │               Continue as Planned                    │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Fatigue Detection Triggers
+| Indicator | Threshold | Description |
+|-----------|-----------|-------------|
+| **Rep Decline** | ≥20% drop | Fewer reps than first set (12 → 9) |
+| **Severe Rep Decline** | ≥35% drop | Significant performance loss |
+| **RPE Spike** | +2 points | Effort increased significantly (7 → 9) |
+| **Sustained High RPE** | RPE 9+ for 2+ sets | Working too hard |
+| **Failed Set** | 0 reps or marked failed | Complete failure |
+| **Weight Reduced** | User reduced weight | Self-correcting fatigue |
+
+#### Severity Levels & Recommendations
+| Severity | Color | Weight Reduction | Action |
+|----------|-------|------------------|--------|
+| **None** | Green | 0% | Continue normally |
+| **Low** | Yellow | 5% | Consider slight adjustment |
+| **Moderate** | Orange | 10% | Reduce weight recommended |
+| **High** | Red | 15% | Strong recommendation to reduce |
+| **Critical** | Dark Red | 20% | Option to stop exercise |
+
+---
+
+### Feature 4: Next Set Preview
+
+**What it does:** Shows AI-recommended weight and reps for your upcoming set during rest periods.
+
+#### How It Works
+```
+┌─────────────────────────────────────────────────────────────┐
+│  🌟 AI RECOMMENDATION                            [87%]     │
+│  ─────────────────────────────────────────────────────────  │
+│  Set 3 of 4                                                 │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                                                       │   │
+│  │      47.5 kg           │          10 reps           │   │
+│  │      ────────          │         ────────           │   │
+│  │       +2.5 ↑           │       75% intensity        │   │
+│  │                                                       │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  💡 "Progressing well. Slight weight increase based on     │
+│      your strong Set 2 performance (RPE 7, all reps)."     │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                    ✓ Use This                        │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Weight Delta Display
+| Change | Color | Icon | Example |
+|--------|-------|------|---------|
+| Increase | Green | ↑ | +2.5 kg |
+| Same | Gray | = | 0 kg |
+| Decrease | Orange | ↓ | -5.0 kg |
+
+#### Preview Data Includes
+- **Recommended Weight**: Based on 1RM, intensity, and current performance
+- **Target Reps**: From workout plan
+- **Intensity %**: Percentage of estimated 1RM
+- **Confidence %**: How sure the AI is (higher with more data)
+- **Reasoning**: Personalized explanation
+
+---
+
+### Feature 5: Auto-RPE Estimation
+
+**What it does:** Estimates your RPE when you skip entering it manually.
+
+#### How It Works
+When user doesn't input RPE, the system estimates it using:
+
+```
+Estimated RPE = f(weight_used, reps_completed, estimated_1RM)
+```
+
+Based on the Tuchscherer/Helms RPE-Reps-Percentage tables:
+
+| Reps | @RPE 6 | @RPE 7 | @RPE 8 | @RPE 9 | @RPE 10 |
+|------|--------|--------|--------|--------|---------|
+| 1 | 85% | 89% | 92% | 96% | 100% |
+| 3 | 79% | 82% | 85% | 89% | 92% |
+| 5 | 74% | 77% | 80% | 84% | 87% |
+| 8 | 67% | 70% | 73% | 77% | 80% |
+| 10 | 62% | 65% | 68% | 72% | 75% |
+| 12 | 57% | 60% | 63% | 67% | 70% |
+
+**Example**: User lifts 45kg for 8 reps, 1RM is 60kg
+- 45/60 = 75% of 1RM
+- At 8 reps, 75% falls between RPE 8-9
+- System displays: "Estimated RPE: 8.5"
+
+---
+
+## First-Time User Experience
+
+### Workout 1: Cold Start (No Data)
+
+For a brand new user with no workout history:
+
+```
+Day 1 User Flow:
+────────────────
+
+1. USER STARTS WORKOUT
+   └─> App generates workout based on onboarding answers
+       (fitness level, equipment, goals)
+
+2. EXERCISE BEGINS (e.g., Dumbbell Bench Press)
+   └─> No 1RM data exists
+   └─> System uses conservative defaults:
+       • Beginner: Light weight (body weight × 0.3)
+       • Intermediate: Moderate (body weight × 0.5)
+       • Advanced: Higher (body weight × 0.7)
+   └─> Shows: "Starting weight: 15 kg (adjust as needed)"
+   └─> NO "AI" badge shown (no data to base it on)
+
+3. USER COMPLETES SET 1
+   └─> Logs: 15 kg × 10 reps @ RPE 7
+   └─> System calculates: Estimated 1RM ≈ 20 kg
+   └─> REST SUGGESTION: Uses rule-based logic
+       (RPE 7 + compound = 90-120 sec)
+   └─> NO AI badge (building data)
+
+4. SET 2 BEGINS
+   └─> System now has 1 data point
+   └─> Suggests: "Try 15 kg again or 17.5 kg if easy"
+   └─> Shows faint "Learning..." indicator
+
+5. USER COMPLETES SET 2
+   └─> Logs: 17.5 kg × 9 reps @ RPE 8
+   └─> 1RM estimate refined: ~24 kg
+   └─> FATIGUE CHECK: Compares Set 1 vs Set 2
+       (9 reps vs 10 = 10% drop, below threshold)
+       No alert shown
+
+6. SET 3 BEGINS
+   └─> System has 2 data points
+   └─> Suggests: "17.5 kg recommended"
+   └─> Shows: "AI" badge (enough data)
+
+7. WORKOUT ENDS
+   └─> All performance data saved
+   └─> 1RM estimates stored for each exercise
+   └─> Ready for smarter suggestions next time
+```
+
+### Workout 2+: AI-Powered Experience
+
+```
+Day 2+ User Flow:
+─────────────────
+
+1. USER STARTS WORKOUT
+   └─> App has historical data
+
+2. EXERCISE BEGINS (Dumbbell Bench Press)
+   └─> System fetches:
+       • Last session: 17.5 kg × 9 @ RPE 8
+       • Stored 1RM: 24 kg
+       • Target intensity: 75% (hypertrophy)
+   └─> Calculates: 24 × 0.75 = 18 kg
+   └─> Applies performance modifier: +2.5% (good last session)
+   └─> Rounds to equipment: 17.5 kg (nearest 2.5)
+   └─> Shows: "17.5 kg" with "AI" badge
+   └─> Reasoning: "Based on your 24kg 1RM at 75% intensity"
+
+3. USER COMPLETES SET 1
+   └─> Logs: 17.5 kg × 10 reps @ RPE 7
+   └─> REST TIMER starts
+   └─> AI REST COACH appears:
+       "RPE 7 + compound = 90 sec suggested"
+       Quick option: 60 sec
+   └─> NEXT SET PREVIEW appears:
+       "Set 2: 17.5 kg × 10 (same weight, you're doing great)"
+
+4. USER ACCEPTS REST SUGGESTION
+   └─> Timer set to 90 seconds
+   └─> Suggestion logged: {type: "rest", accepted: true}
+
+5. SET 2 BEGINS
+   └─> Weight pre-filled: 17.5 kg
+   └─> User increases to 20 kg (feels strong)
+
+6. USER COMPLETES SET 2
+   └─> Logs: 20 kg × 8 reps @ RPE 8
+   └─> FATIGUE CHECK: 8 vs 10 reps = 20% drop
+   └─> ⚠️ FATIGUE ALERT triggered (threshold met)
+   └─> Modal shows:
+       "Rep count dropped 20%. Suggested: 17.5 kg for remaining sets"
+   └─> User chooses: "Continue as Planned"
+   └─> Choice logged for AI learning
+
+7. SET 3 BEGINS
+   └─> NEXT SET PREVIEW showed during rest:
+       "Consider 17.5 kg based on fatigue indicators"
+   └─> User sees warning but continues at 20 kg
+
+8. USER COMPLETES SET 3
+   └─> Logs: 20 kg × 6 reps @ RPE 9
+   └─> FATIGUE CHECK: 6 vs 10 = 40% drop
+   └─> ⚠️ HIGH FATIGUE ALERT
+   └─> Modal shows severity: HIGH
+   └─> Suggested: 17.5 kg (-12.5%)
+   └─> User accepts suggestion
+
+9. SET 4 (Final Set)
+   └─> Weight pre-filled: 17.5 kg (from accepted suggestion)
+   └─> User completes: 17.5 kg × 10 @ RPE 8
+   └─> 1RM updated based on all set data
+
+10. WORKOUT ENDS
+    └─> Summary shows:
+        • AI suggestions: 4 shown, 2 accepted
+        • Fatigue alerts: 2 triggered
+        • 1RM updated: Bench Press → 26 kg (+2 kg)
+    └─> Data feeds into next workout's suggestions
+```
+
+---
+
+## Data Flow Architecture
+
+```
+                    ┌─────────────────────────────────────┐
+                    │         USER STARTS SET             │
+                    └──────────────┬──────────────────────┘
+                                   │
+                    ┌──────────────▼──────────────────────┐
+                    │     Smart Weight API Called          │
+                    │  GET /workouts/smart-weight/{id}    │
+                    └──────────────┬──────────────────────┘
+                                   │
+              ┌────────────────────┴────────────────────┐
+              │                                         │
+   ┌──────────▼──────────┐               ┌─────────────▼─────────────┐
+   │  Has 1RM Data?      │               │  No 1RM Data              │
+   │  YES                │               │  Use defaults             │
+   └──────────┬──────────┘               └─────────────┬─────────────┘
+              │                                         │
+   ┌──────────▼──────────────────────────────┐         │
+   │  Calculate:                              │         │
+   │  weight = 1RM × intensity% × modifier    │         │
+   │  Apply equipment rounding                │         │
+   │  Generate reasoning                      │         │
+   └──────────┬───────────────────────────────┘         │
+              │                                         │
+              └────────────────┬────────────────────────┘
+                               │
+                    ┌──────────▼──────────────────────┐
+                    │   Display Weight in Set Card     │
+                    │   Show "AI" badge if data-backed │
+                    └──────────┬──────────────────────┘
+                               │
+                    ┌──────────▼──────────────────────┐
+                    │      USER COMPLETES SET          │
+                    │   Logs: weight, reps, RPE        │
+                    └──────────┬──────────────────────┘
+                               │
+              ┌────────────────┴────────────────────┐
+              │                                      │
+   ┌──────────▼──────────┐            ┌─────────────▼─────────────┐
+   │  Fatigue Check API   │            │  Rest Suggestion API      │
+   │  POST /fatigue-check │            │  POST /rest-suggestion    │
+   └──────────┬───────────┘            └─────────────┬─────────────┘
+              │                                       │
+   ┌──────────▼──────────────────────┐  ┌────────────▼────────────┐
+   │  Analyze:                        │  │  Calculate rest time:    │
+   │  - Rep decline vs first set      │  │  - Base rest by RPE      │
+   │  - RPE change between sets       │  │  - Fatigue multiplier    │
+   │  - Failed sets                   │  │  - Exercise type factor  │
+   │  - Weight reductions             │  │  - Gemini reasoning      │
+   └──────────┬───────────────────────┘  └────────────┬────────────┘
+              │                                        │
+   ┌──────────▼─────────────┐             ┌───────────▼────────────┐
+   │  Fatigue Detected?      │             │  Show Rest Coach Card   │
+   │  Show Alert Modal       │             │  Suggested + Quick opt  │
+   └──────────┬──────────────┘             └───────────┬────────────┘
+              │                                         │
+              └────────────────┬────────────────────────┘
+                               │
+                    ┌──────────▼──────────────────────┐
+                    │   Next Set Preview API           │
+                    │   POST /next-set-preview         │
+                    └──────────┬──────────────────────┘
+                               │
+                    ┌──────────▼──────────────────────┐
+                    │   Show Next Set Preview Card     │
+                    │   During rest period             │
+                    └──────────┬──────────────────────┘
+                               │
+                    ┌──────────▼──────────────────────┐
+                    │   Log All Suggestions to DB      │
+                    │   ai_workout_suggestions table   │
+                    │   Track: accepted/dismissed      │
+                    └─────────────────────────────────┘
+```
+
+---
+
+## API Reference
+
+### Smart Weight Endpoint
+```http
+GET /workouts/smart-weight/{user_id}/{exercise_id}
+Query Parameters:
+  - target_reps: int (default: 10)
+  - goal: enum (strength, hypertrophy, endurance, power)
+  - equipment: string (dumbbell, barbell, machine, cable)
+
+Response:
+{
+  "suggested_weight": 45.0,
+  "reasoning": "Based on your 60kg 1RM at 75% intensity",
+  "confidence": 0.87,
+  "one_rm_kg": 60.0,
+  "target_intensity": 0.75,
+  "equipment_increment": 2.5,
+  "performance_modifier": 1.05,
+  "last_session": {
+    "weight_kg": 42.5,
+    "reps": 10,
+    "rpe": 6
+  }
+}
+```
+
+### Rest Suggestion Endpoint
+```http
+POST /workouts/rest-suggestion
+Body:
+{
+  "rpe": 8,
+  "exercise_name": "Bench Press",
+  "exercise_type": "compound",
+  "set_number": 3,
+  "total_sets": 4,
+  "user_goal": "hypertrophy"
+}
+
+Response:
+{
+  "suggested_seconds": 120,
+  "reasoning": "Moderate RPE on compound lift. Standard rest recommended.",
+  "quick_option_seconds": 90,
+  "rest_category": "moderate",
+  "ai_powered": true
+}
+```
+
+### Fatigue Check Endpoint
+```http
+POST /workouts/fatigue-check
+Body:
+{
+  "exercise_name": "Lat Pulldown",
+  "current_weight": 60.0,
+  "sets": [
+    {"reps": 10, "weight": 60.0, "rpe": 7},
+    {"reps": 8, "weight": 60.0, "rpe": 8},
+    {"reps": 6, "weight": 60.0, "rpe": 9}
+  ]
+}
+
+Response:
+{
+  "fatigue_detected": true,
+  "severity": "moderate",
+  "suggested_weight_reduction": 15,
+  "suggested_weight_kg": 51.0,
+  "reasoning": "Rep count dropped 40% over 3 sets with rising RPE.",
+  "indicators": ["rep_decline", "rpe_spike"],
+  "confidence": 0.85
+}
+```
+
+### Next Set Preview Endpoint
+```http
+POST /workouts/next-set-preview
+Body:
+{
+  "exercise_name": "Squat",
+  "user_id": "uuid",
+  "current_set": 2,
+  "total_sets": 4,
+  "current_weight": 80.0,
+  "last_set_reps": 8,
+  "last_set_rpe": 7
+}
+
+Response:
+{
+  "recommended_weight": 82.5,
+  "recommended_reps": 8,
+  "intensity_percentage": 77.5,
+  "reasoning": "Strong performance on Set 2. Slight progression recommended.",
+  "confidence": 0.82,
+  "is_final_set": false
+}
+```
+
+---
+
+## Database Schema
+
+### ai_workout_suggestions Table
+```sql
+CREATE TABLE ai_workout_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  workout_log_id UUID REFERENCES workout_logs(id),
+  exercise_id UUID REFERENCES exercises(id),
+  exercise_name TEXT,
+
+  suggestion_type TEXT NOT NULL,  -- 'weight', 'rest', 'fatigue', 'next_set'
+  suggested_value JSONB NOT NULL,
+  reasoning TEXT,
+  confidence REAL DEFAULT 0.5,
+
+  user_action TEXT,  -- 'accepted', 'dismissed', 'modified'
+  user_modified_value JSONB,
+  action_timestamp TIMESTAMPTZ,
+
+  set_number INTEGER,
+  current_rpe REAL,
+  current_reps INTEGER,
+  current_weight_kg REAL,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  source TEXT DEFAULT 'auto'  -- 'auto', 'requested', 'chat'
+);
+```
+
+### user_exercise_1rm Table
+```sql
+CREATE TABLE user_exercise_1rm (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  exercise_id UUID REFERENCES exercises(id),
+  exercise_name TEXT NOT NULL,
+
+  estimated_1rm REAL NOT NULL,
+  formula_used TEXT DEFAULT 'brzycki',
+  confidence REAL DEFAULT 0.5,
+
+  based_on_weight REAL,
+  based_on_reps INTEGER,
+  based_on_rpe REAL,
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+---
+
+## UI Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `FuturisticSetCard` | `futuristic_set_card.dart` | Glassmorphic set logging with AI badge |
+| `RestSuggestionCard` | `rest_suggestion_card.dart` | Rest time suggestion with quick option |
+| `NextSetPreviewCard` | `next_set_preview_card.dart` | Next set AI preview during rest |
+| `FatigueAlertModal` | `fatigue_alert_modal.dart` | Full-screen fatigue warning |
+| `ExerciseThumbnailStrip` | `exercise_thumbnail_strip.dart` | 80px exercise navigation |
+| `NumberStepper` | `number_stepper.dart` | Weight/rep adjustment with long-press |
+| `GlowButton` | `glow_button.dart` | Animated button with haptic feedback |
+| `GlassCard` | `glass_card.dart` | Glassmorphic container |
+
+---
+
+## Learning & Improvement
+
+The AI system continuously improves by tracking:
+
+1. **Acceptance Rate**: % of suggestions user accepts
+   - Weight suggestions: Target >70%
+   - Rest suggestions: Target >60%
+   - Fatigue alerts: Track response patterns
+
+2. **Modification Patterns**: When users modify suggestions
+   - If users consistently add +5kg, increase base suggestions
+   - If users consistently reduce rest, shorten recommendations
+
+3. **Performance Correlation**: Does following AI improve results?
+   - Track PRs after accepting vs rejecting suggestions
+   - Adjust confidence scores based on outcomes
+
+### Analytics Views
+```sql
+-- Suggestion acceptance rates per user
+CREATE VIEW ai_suggestion_acceptance_rates AS
+SELECT
+  user_id,
+  suggestion_type,
+  COUNT(*) as total_suggestions,
+  COUNT(*) FILTER (WHERE user_action = 'accepted') as accepted,
+  ROUND(100.0 * COUNT(*) FILTER (WHERE user_action = 'accepted') / COUNT(*), 1) as acceptance_rate
+FROM ai_workout_suggestions
+WHERE user_action IS NOT NULL
+GROUP BY user_id, suggestion_type;
+```
+
+---
+
+## AI-Powered Home Screen Insights
+
+### Overview
+
+The home screen now features AI-powered insights that provide personalized coaching tips, weight trend analysis, and habit recommendations. All AI features are powered by Gemini and cached to minimize API calls.
+
+### Features
+
+#### 1. AI Daily Tips (Coach Tip Card)
+
+**What it does**: Displays a personalized coaching tip based on user's workout history, goals, and time of day.
+
+**Location**: Home screen → Coach Tip tile
+
+**User Flow**:
+```
+1. User opens home screen
+2. Card shows loading state: "Getting your personalized tip..."
+3. Backend checks cache (24h TTL)
+4. If cache miss → Gathers user context → Calls Gemini
+5. Personalized tip appears
+6. User can tap "Ask coach for more" → Opens AI chat
+```
+
+**Context Used for Personalization**:
+- User's fitness goals
+- Last workout type (legs, push, pull, etc.)
+- Days since last workout
+- Current workout streak
+- Most trained muscle groups
+- Time of day (morning/afternoon/evening)
+
+**Example Tips**:
+- Morning after leg day: "Great leg session yesterday! Focus on upper body mobility today to stay balanced."
+- Evening with 5-day streak: "Five days strong! Consider active recovery tomorrow - a 20-min walk does wonders."
+- 3 days since last workout: "It's been a few days since your last workout. Even a 20-minute session helps maintain momentum!"
+
+**API Endpoint**: `GET /insights/{user_id}/daily-tip`
+
+---
+
+#### 2. AI Weight Insights
+
+**What it does**: Analyzes the user's weight trend over 7-14 days and provides personalized feedback and actionable tips.
+
+**Location**: Can be added to Weight Trend tile or Progress screen
+
+**User Flow**:
+```
+1. User has logged weight at least 2 times in the past 14 days
+2. Backend calculates weekly change and direction (losing/gaining/maintaining)
+3. Gemini generates insight based on:
+   - Weight data points
+   - User's primary goal
+   - Target weight (if set)
+   - Current trend direction
+4. Insight displayed with actionable tip
+```
+
+**Example Insights**:
+- Fat loss goal, down 2 lbs: "You're down 2.1 lbs this week! Your consistency is paying off. Try adding an extra serving of protein to maximize muscle retention."
+- Maintaining, muscle building goal: "Your weight is stable this week. To continue building muscle, consider increasing calories by 100-200 on training days."
+- Gaining on fat loss goal: "You've gained 1.2 lbs. Review your weekend eating patterns - that's often where extra calories sneak in."
+
+**API Endpoint**: `GET /insights/{user_id}/weight-insight`
+
+---
+
+#### 3. AI Habit Suggestions
+
+**What it does**: Suggests 2-3 personalized habits based on user's goals and current habits.
+
+**User Flow**:
+```
+1. User views habits section (or first time setting up habits)
+2. Backend checks current active habits
+3. Gemini suggests NEW habits not already tracked
+4. Each suggestion includes:
+   - Habit name
+   - Brief reason why it helps their goal
+5. User can tap to add suggested habit
+```
+
+**Available Habit Templates**:
+- No DoorDash today
+- No eating out
+- No sugary drinks
+- No late-night snacking
+- Cook at home
+- No alcohol
+- Drink 8 glasses water
+- 10k steps
+- Stretch for 10 minutes
+- Sleep by 11pm
+- No processed foods
+- Meal prep Sunday
+- Track all meals
+- Take vitamins
+
+**Example Response**:
+```json
+[
+  {"name": "No late-night snacking", "reason": "Helps control daily calorie intake for fat loss"},
+  {"name": "10k steps daily", "reason": "Boosts NEAT and increases calorie burn by 200-300 cals"},
+  {"name": "Meal prep Sunday", "reason": "Reduces reliance on takeout during busy weekdays"}
+]
+```
+
+**API Endpoint**: `GET /insights/{user_id}/habit-suggestions`
+
+---
+
+### Caching Strategy
+
+All AI insights are cached to minimize Gemini API calls and improve response times:
+
+| Insight Type | Cache Duration | Cache Key |
+|-------------|----------------|-----------|
+| Daily Tip | 24 hours | `daily_tip_{user_id}_{date}` |
+| Weight Insight | 24 hours | `weight_insight_{user_id}` |
+| Habit Suggestions | 1 week (168 hours) | `habit_suggestions_{user_id}` |
+
+**Cache Table**: `ai_insight_cache`
+```sql
+CREATE TABLE ai_insight_cache (
+    id UUID PRIMARY KEY,
+    cache_key VARCHAR(255) UNIQUE,
+    insight TEXT,
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+);
+```
+
+### Fallback Behavior
+
+If Gemini API fails, the system provides fallback responses:
+
+| Insight Type | Fallback Logic |
+|-------------|----------------|
+| Daily Tip | Time-based tips (morning/afternoon/evening) |
+| Weight Insight | Direction-based message (losing/gaining/maintaining) |
+| Habit Suggestions | 3 default habits (water, no snacking, sleep) |
+
+---
+
+## Customizable Home Screen Tiles
+
+### New Tile Types Added
+
+| Tile | Description | Sizes |
+|------|-------------|-------|
+| `weightTrend` | Weekly weight change with trend arrow | compact, half, full |
+| `dailyStats` | Steps + calorie deficit/surplus | compact, half, full |
+| `achievements` | Recent badge + next milestone | compact, half, full |
+| `quickLogWeight` | Inline weight input with one-tap log | half, full |
+| `quickLogMeasurements` | Quick body measurements update | half, full |
+| `habits` | Today's habits with checkboxes | half, full |
+| `heroSection` | Main swipeable hero area | full |
+
+### Tile Features
+
+#### Weight Trend Tile
+- Shows weekly weight change (e.g., "Down 2.3 lbs this week!")
+- Green arrow = losing (good for fat loss)
+- Red arrow = gaining
+- Orange = maintaining
+- Taps through to Progress screen
+
+#### Daily Stats Tile
+- Shows steps from HealthKit/Google Fit
+- Shows calorie deficit (target - consumed + burned)
+- Green = in deficit, Red = surplus
+- Progress bar for 10k step goal
+
+#### Quick Log Weight Tile
+- Shows last logged weight with date
+- Inline number input field
+- One-tap "Log" button
+- Shows weekly trend info (full size)
+
+#### Habits Tile
+- Shows today's habits with checkboxes
+- Quick toggle to mark done/undone
+- Progress indicator (e.g., "3/5 done")
+- Streak display per habit
+- "View All" opens full Habits screen
+
+### Small Screen Optimization
+
+All tiles are optimized for small screens (iPhone SE, older Androids):
+
+| File | Fix Applied |
+|------|-------------|
+| `weight_trend_card.dart` | Wrapped text in `Flexible` with overflow ellipsis |
+| `quick_log_weight_card.dart` | Used `FittedBox` for weight display, `Expanded` for trend text |
+| `daily_stats_card.dart` | Wrapped both texts in `Flexible` |
+| `habits_tile_card.dart` | Wrapped streak display in `Flexible` |
+
+---
+
+## First-Time User Experience: Home Screen AI
+
+### Day 1: New User
+
+```
+1. USER COMPLETES ONBOARDING
+   └─> Goals set (e.g., fat loss)
+   └─> Fitness level assessed
+   └─> Home screen loads
+
+2. HOME SCREEN DISPLAYS
+   └─> Coach Tip card shows:
+       "Getting your personalized tip..."
+   └─> Backend has limited data
+   └─> Gemini generates generic tip based on goals + time of day
+   └─> Shows: "Welcome! Start your day with 10 minutes of stretching..."
+
+3. WEIGHT TREND TILE
+   └─> No weight logs yet
+   └─> Shows: "Log your weight to see trends"
+   └─> Tap opens weight logging sheet
+
+4. USER LOGS FIRST WEIGHT
+   └─> Weight saved to database
+   └─> Tile updates: "185.0 lbs" with "Today" badge
+   └─> No trend shown (need 2+ data points)
+
+5. HABITS TILE
+   └─> No habits set up yet
+   └─> Shows: "Build healthy habits" + "Add Habit" button
+   └─> OR: Backend suggests 3 AI habits based on goals
+```
+
+### Day 3+: Returning User with Data
+
+```
+1. USER OPENS APP
+   └─> Home screen loads
+   └─> Coach Tip fetches from cache (if <24h old)
+   └─> If cache miss → Gemini generates personalized tip
+
+2. COACH TIP DISPLAYS
+   └─> Context: User did legs yesterday, 3-day streak
+   └─> Gemini returns: "Nice leg session! Give them a rest today.
+       Focus on upper body or mobility work."
+   └─> Shows "AI" badge to indicate personalization
+
+3. WEIGHT TREND TILE
+   └─> User has 3 weight logs
+   └─> Shows: "Down 1.2 lbs this week!"
+   └─> Green trending down arrow
+   └─> Tapping → Progress screen with weight insight
+
+4. DAILY STATS TILE
+   └─> Steps from HealthKit: 4,521
+   └─> Calorie deficit calculated: -312 cal
+   └─> Shows progress toward 10k step goal
+
+5. HABITS TILE
+   └─> User has 5 habits
+   └─> Shows 3 incomplete ones first
+   └─> Quick toggle to mark as done
+   └─> Shows: "2/5 done"
+
+6. USER REQUESTS AI HABIT SUGGESTIONS
+   └─> Taps "Get AI Suggestions" in habits screen
+   └─> Backend returns 3 suggestions not already tracked
+   └─> User can tap to add any suggestion
+```
+
+### Data Flow
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        HOME SCREEN                                │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  💡 Coach Tip                                        [AI]   │ │
+│  │                                                              │ │
+│  │  "Focus on progressive overload today. Try adding 2.5kg    │ │
+│  │   to your main compound lifts."                             │ │
+│  │                                                              │ │
+│  │  Ask coach for more →                                       │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+│  ┌──────────────────────┐  ┌──────────────────────┐             │
+│  │  📉 Weight Trend     │  │  📊 Daily Stats      │             │
+│  │  Down 2.3 lbs!       │  │  4,521 steps         │             │
+│  │  View →              │  │  -312 cal deficit    │             │
+│  └──────────────────────┘  └──────────────────────┘             │
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │  ✅ Today's Habits                              2/5 done    │ │
+│  │  [ ] No DoorDash today                                      │ │
+│  │  [ ] Drink 8 glasses water                                  │ │
+│  │  [x] No late-night snacking                          🔥 3   │ │
+│  │  +2 more →                                                   │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 *Last Updated: January 2026*

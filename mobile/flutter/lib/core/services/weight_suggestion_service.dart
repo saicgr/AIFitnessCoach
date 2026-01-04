@@ -3,6 +3,12 @@
 /// Analyzes set performance (RPE, RIR, reps achieved) and suggests
 /// weight adjustments for the next set to maximize workout effectiveness.
 ///
+/// Also provides AI-powered rest time suggestions based on:
+/// - Exercise type (compound vs isolation)
+/// - RPE (Rate of Perceived Exertion)
+/// - Sets remaining
+/// - User fitness goals
+///
 /// Supports both:
 /// - Rule-based suggestions (fast, local)
 /// - AI-powered suggestions via Gemini (smart, uses history)
@@ -10,6 +16,8 @@ library;
 
 import 'package:dio/dio.dart';
 import '../constants/app_colors.dart';
+import '../../data/models/rest_suggestion.dart';
+import '../../data/models/smart_weight_suggestion.dart';
 
 /// RPE (Rate of Perceived Exertion) scale with user-friendly descriptions
 enum RpeLevel {
@@ -166,6 +174,113 @@ class WeightSuggestion {
 
 /// Service for generating weight suggestions based on set performance
 class WeightSuggestionService {
+  /// Session-level cache for smart weight suggestions
+  /// Key format: "exerciseId:targetReps:goal"
+  static final Map<String, SmartWeightSuggestion> _smartWeightCache = {};
+
+  /// Clear the smart weight cache (call when starting new workout)
+  static void clearSmartWeightCache() {
+    _smartWeightCache.clear();
+  }
+
+  /// Get smart weight suggestion for pre-filling exercise weight
+  ///
+  /// This method fetches an AI-powered weight suggestion based on:
+  /// - User's 1RM for this exercise (from strength_records)
+  /// - Target reps and training goal (determines intensity %)
+  /// - Last session performance (RPE-based modifier)
+  /// - Equipment-aware rounding
+  ///
+  /// Results are cached per exercise per session to reduce API calls.
+  ///
+  /// Parameters:
+  /// - [dio]: Dio instance for HTTP requests
+  /// - [userId]: User ID
+  /// - [exerciseId]: Exercise ID (can be empty to use name lookup)
+  /// - [exerciseName]: Exercise name (used if exerciseId is empty)
+  /// - [targetReps]: Target number of reps for the set
+  /// - [goal]: Training goal (strength, hypertrophy, endurance, power)
+  /// - [equipment]: Equipment type for weight rounding
+  /// - [forceRefresh]: Skip cache and fetch fresh data
+  static Future<SmartWeightSuggestion?> getSmartWeight({
+    required Dio dio,
+    required String userId,
+    required String exerciseId,
+    String? exerciseName,
+    required int targetReps,
+    TrainingGoal goal = TrainingGoal.hypertrophy,
+    String equipment = 'dumbbell',
+    bool forceRefresh = false,
+  }) async {
+    // Generate cache key
+    final cacheKey = '$exerciseId:$targetReps:${goal.value}';
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && _smartWeightCache.containsKey(cacheKey)) {
+      print('✅ [SmartWeight] Cache hit for $cacheKey');
+      return _smartWeightCache[cacheKey];
+    }
+
+    try {
+      // Determine which endpoint to use
+      final String endpoint;
+      final Map<String, dynamic> queryParams;
+
+      if (exerciseId.isNotEmpty) {
+        endpoint = '/workouts/smart-weight/$userId/$exerciseId';
+        queryParams = {
+          'target_reps': targetReps,
+          'goal': goal.value,
+          'equipment': equipment,
+        };
+        if (exerciseName != null) {
+          queryParams['exercise_name'] = exerciseName;
+        }
+      } else if (exerciseName != null && exerciseName.isNotEmpty) {
+        endpoint = '/workouts/smart-weight/by-name/$userId';
+        queryParams = {
+          'exercise_name': exerciseName,
+          'target_reps': targetReps,
+          'goal': goal.value,
+          'equipment': equipment,
+        };
+      } else {
+        print('❌ [SmartWeight] No exercise ID or name provided');
+        return null;
+      }
+
+      print('🔍 [SmartWeight] Fetching for $exerciseName (reps: $targetReps, goal: ${goal.value})');
+
+      final response = await dio.get(
+        endpoint,
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final suggestion = SmartWeightSuggestion.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+
+        // Cache the result
+        _smartWeightCache[cacheKey] = suggestion;
+
+        print('✅ [SmartWeight] Got suggestion: ${suggestion.suggestedWeight}kg '
+            '(confidence: ${(suggestion.confidence * 100).toStringAsFixed(0)}%)');
+
+        return suggestion;
+      }
+
+      print('⚠️ [SmartWeight] API returned status ${response.statusCode}');
+      return null;
+    } on DioException catch (e) {
+      print('❌ [SmartWeight] Network error: ${e.message}');
+      return null;
+    } catch (e) {
+      print('❌ [SmartWeight] Error: $e');
+      return null;
+    }
+  }
+
   /// Get AI-powered weight suggestion from the backend
   ///
   /// This method calls the Gemini-powered API endpoint for intelligent
@@ -397,5 +512,177 @@ class WeightSuggestionService {
   /// Get emoji for a RIR value
   static String getRirEmoji(int rir) {
     return RirLevel.fromValue(rir)?.emoji ?? '💪';
+  }
+
+  // =========================================================================
+  // REST TIME SUGGESTIONS
+  // =========================================================================
+
+  /// Get AI-powered rest time suggestion from the backend
+  ///
+  /// This method calls the Gemini-powered API endpoint for intelligent
+  /// rest time suggestions that consider:
+  /// - Exercise type (compound vs isolation)
+  /// - Current RPE (Rate of Perceived Exertion)
+  /// - Sets remaining (fatigue accumulation)
+  /// - User's fitness goals
+  ///
+  /// Falls back to [generateRestSuggestion] if the API call fails.
+  static Future<RestSuggestion?> getRestSuggestion({
+    required Dio dio,
+    required int rpe,
+    required String exerciseType,
+    String? exerciseName,
+    required int setsRemaining,
+    int setsCompleted = 0,
+    required bool isCompound,
+    List<String> userGoals = const [],
+    String? muscleGroup,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/workouts/rest-suggestion',
+        data: {
+          'rpe': rpe,
+          'exercise_type': exerciseType,
+          'exercise_name': exerciseName,
+          'sets_remaining': setsRemaining,
+          'sets_completed': setsCompleted,
+          'is_compound': isCompound,
+          'user_goals': userGoals,
+          'muscle_group': muscleGroup,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return RestSuggestion.fromJson(response.data as Map<String, dynamic>);
+      }
+
+      // API returned non-200, fall back to rule-based
+      return null;
+    } catch (e) {
+      // Log error and fall back to rule-based
+      print('❌ [RestSuggestion] AI suggestion failed: $e');
+      return null;
+    }
+  }
+
+  /// Generate a local rule-based rest suggestion
+  ///
+  /// This is the fast, local fallback used when:
+  /// - AI API is unavailable
+  /// - Need instant response without network call
+  ///
+  /// Logic based on exercise science research:
+  /// - Compound exercises need more rest than isolation
+  /// - Higher RPE means more recovery needed
+  /// - Later sets require more rest due to fatigue
+  static RestSuggestion generateRestSuggestion({
+    required int rpe,
+    required bool isCompound,
+    int setsCompleted = 0,
+    int setsRemaining = 0,
+    List<String> userGoals = const [],
+  }) {
+    // Base rest ranges (in seconds)
+    // Compound exercises need longer rest for CNS recovery
+    int baseMin;
+    int baseMax;
+    int quickOption;
+
+    if (isCompound) {
+      if (rpe >= 9) {
+        // Heavy compound
+        baseMin = 180;
+        baseMax = 300;
+        quickOption = 120;
+      } else if (rpe >= 7) {
+        // Moderate compound
+        baseMin = 120;
+        baseMax = 180;
+        quickOption = 90;
+      } else {
+        // Light compound
+        baseMin = 90;
+        baseMax = 120;
+        quickOption = 60;
+      }
+    } else {
+      // Isolation exercises
+      if (rpe >= 9) {
+        baseMin = 90;
+        baseMax = 120;
+        quickOption = 60;
+      } else if (rpe >= 7) {
+        baseMin = 60;
+        baseMax = 90;
+        quickOption = 45;
+      } else {
+        baseMin = 45;
+        baseMax = 60;
+        quickOption = 30;
+      }
+    }
+
+    // Calculate fatigue multiplier (later sets need more rest)
+    double fatigueMult = 1.0;
+    final setNumber = setsCompleted + 1;
+    if (setNumber >= 6) {
+      fatigueMult = 1.20;
+    } else if (setNumber >= 5) {
+      fatigueMult = 1.15;
+    } else if (setNumber >= 4) {
+      fatigueMult = 1.10;
+    } else if (setNumber >= 3) {
+      fatigueMult = 1.05;
+    }
+
+    // Calculate suggested rest (middle of range, adjusted for fatigue)
+    var suggestedSeconds = ((baseMin + baseMax) / 2 * fatigueMult).round();
+
+    // Round to nearest 15 seconds for cleaner numbers
+    suggestedSeconds = ((suggestedSeconds / 15).round() * 15);
+
+    // Adjust for user goals
+    final goalsLower = userGoals.map((g) => g.toLowerCase()).toList();
+    if (goalsLower.contains('strength')) {
+      // Strength training benefits from longer rest
+      suggestedSeconds = ((suggestedSeconds * 1.1) / 15).round() * 15;
+    } else if (goalsLower.contains('endurance') ||
+        goalsLower.contains('weight_loss')) {
+      // Shorter rest maintains elevated heart rate
+      suggestedSeconds = ((suggestedSeconds * 0.85) / 15).round() * 15;
+    }
+
+    // Determine rest category
+    String restCategory;
+    if (suggestedSeconds <= 60) {
+      restCategory = 'short';
+    } else if (suggestedSeconds <= 120) {
+      restCategory = 'moderate';
+    } else if (suggestedSeconds <= 180) {
+      restCategory = 'long';
+    } else {
+      restCategory = 'extended';
+    }
+
+    // Generate reasoning
+    final movementType = isCompound ? 'compound' : 'isolation';
+    final intensity = rpe >= 9 ? 'high' : (rpe >= 7 ? 'moderate' : 'manageable');
+    var reasoning =
+        'Based on your $intensity effort (RPE $rpe) on this $movementType exercise';
+    if (setNumber >= 4) {
+      reasoning += ', and accounting for fatigue after ${setNumber - 1} sets';
+    }
+    reasoning +=
+        '. This rest duration optimizes muscle recovery while maintaining workout momentum.';
+
+    return RestSuggestion(
+      suggestedSeconds: suggestedSeconds,
+      reasoning: reasoning,
+      quickOptionSeconds: quickOption,
+      restCategory: restCategory,
+      aiPowered: false,
+    );
   }
 }

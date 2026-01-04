@@ -94,7 +94,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
       child: Row(
         children: [
           IconButton(
-            onPressed: () => context.go('/pre-auth-quiz'),
+            onPressed: () => context.go('/weight-projection'),
             icon: Icon(
               Icons.arrow_back_ios_rounded,
               color: textSecondary,
@@ -102,7 +102,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
             ),
           ),
           const Spacer(),
-          // Progress indicator - 80% complete
+          // Progress indicator - 90% complete (quiz done, projection viewed)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -116,7 +116,7 @@ class _PersonalizedPreviewScreenState extends ConsumerState<PersonalizedPreviewS
                 const Icon(Icons.check_circle, color: AppColors.cyan, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  '80% Complete',
+                  '90% Complete',
                   style: TextStyle(
                     color: AppColors.cyan,
                     fontSize: 12,

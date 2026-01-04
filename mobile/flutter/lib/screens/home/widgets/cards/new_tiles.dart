@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/home_layout.dart';
+import '../../../../data/providers/ai_insights_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
@@ -229,9 +230,9 @@ class PersonalRecordsCard extends ConsumerWidget {
 
 /// ============================================================
 /// AI COACH TIP CARD
-/// Daily tip from AI coach (cached)
+/// Daily tip from AI coach (powered by Gemini)
 /// ============================================================
-class AICoachTipCard extends StatelessWidget {
+class AICoachTipCard extends ConsumerWidget {
   final TileSize size;
   final bool isDark;
 
@@ -242,15 +243,14 @@ class AICoachTipCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyanColor = AppColors.cyan;
 
-    // TODO: Connect to actual AI tip provider with caching
-    const tipOfTheDay =
-        "Focus on progressive overload this week. Try adding 2.5kg to your main lifts or doing one extra rep per set.";
+    // Watch the daily tip provider
+    final tipAsync = ref.watch(dailyTipProvider);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -274,39 +274,58 @@ class AICoachTipCard extends StatelessWidget {
                 child: Icon(Icons.tips_and_updates, color: cyanColor, size: 22),
               ),
               const SizedBox(width: 12),
-              Text(
-                'Coach Tip',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+              Expanded(
+                child: Text(
+                  'Coach Tip',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: cyanColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'DAILY',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: cyanColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, color: cyanColor, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      'AI',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: cyanColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            tipOfTheDay,
-            style: TextStyle(
-              fontSize: 14,
-              color: textMuted,
-              height: 1.4,
+          tipAsync.when(
+            data: (tip) => Text(
+              tip ?? _getDefaultTip(),
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+                height: 1.4,
+              ),
+            ),
+            loading: () => _buildLoadingState(textMuted),
+            error: (_, __) => Text(
+              _getDefaultTip(),
+              style: TextStyle(
+                fontSize: 14,
+                color: textMuted,
+                height: 1.4,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -334,6 +353,41 @@ class AICoachTipCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildLoadingState(Color textMuted) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: textMuted,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Getting your personalized tip...',
+          style: TextStyle(
+            fontSize: 14,
+            color: textMuted,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getDefaultTip() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return "Start your day with 10 minutes of stretching to boost energy and flexibility.";
+    } else if (hour < 17) {
+      return "Stay hydrated! Aim for at least 8 glasses of water before dinner.";
+    } else {
+      return "Wind down with some light mobility work to improve tomorrow's workout.";
+    }
   }
 }
 

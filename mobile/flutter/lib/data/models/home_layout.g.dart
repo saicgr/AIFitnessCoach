@@ -53,6 +53,13 @@ const _$TileTypeEnumMap = {
   TileType.progressCharts: 'progressCharts',
   TileType.roiSummary: 'roiSummary',
   TileType.weeklyPlan: 'weeklyPlan',
+  TileType.weightTrend: 'weightTrend',
+  TileType.dailyStats: 'dailyStats',
+  TileType.achievements: 'achievements',
+  TileType.heroSection: 'heroSection',
+  TileType.quickLogWeight: 'quickLogWeight',
+  TileType.quickLogMeasurements: 'quickLogMeasurements',
+  TileType.habits: 'habits',
 };
 
 const _$TileSizeEnumMap = {

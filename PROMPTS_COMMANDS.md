@@ -6,6 +6,24 @@ you would have to populate them by reviewing the code
 use multiple agents to run in parallel 
 -->
 
+<!--  
+So what features are added? how does it work whats the user flow?
+-->
+
+<!-- 
+For the changes that you have done, 
+Have to check implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md with 1. features that are added and 2. how does it work whats the user flow
+
+Be sure to check if the feature already exists when implementing
+
+Make sure if its a smaller screen then there are no overflowing issues
+
+Be sure to check that all items in your plans are implemented -->
+
+<!--  
+
+-->
+
 <!-- --------------------------------------------------- -->
 <!-- REVIEW OF OTHER APP -->
 <!-- 
@@ -18,7 +36,9 @@ For analytics do we have workout bistory per exercise and also per muscle, not s
 
 Compare and contrast every part of the review with this flutter app and see what needs improved and implemented.
 
-Use multiple agents to Implement them all and the plan in parallel. Have to implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md 
+Make sure if its a smaller screen then there are no overflowing issues
+
+Use multiple agents to Implement them all and the plan in parallel. Have to implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md accordingly also don't forget to updae features.md with 1. features that are added and 2. how does it work whats the user flow 
 
 Be sure to check that all items in your plans are implemented
 -->
@@ -36,18 +56,20 @@ Simple Habit tracker (not eating outside, not doordashin, eating healthy, walkin
 
 Compare and contrast every part of the reqest with this flutter app and see what needs improved and implemented.
 
-Use multiple agents to Implement them all and the plan in parallel. Have to implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md 
+Use multiple agents to Implement them all and the plan in parallel. Have to implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md accordingly also don't forget to updae features.md with 1. features that are added and 2. how does it work whats the user flow 
+
+Make sure if its a smaller screen then there are no overflowing issues
 
 Be sure to check that all items in your plans are implemented
 -->
 
 <!-- --------------------------------------------------- -->
 
-<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md -->
+<!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md accordingly also don't forget to updae features.md with 1. features that are added and 2. how does it work whats the user flow  -->
 
 <!-- --------------------------------------------------- -->
 
-<!-- Dont foget to make sure backend API, supabase tables, gemini API calls, backend tests are all integrated properly with this changes and Update Features.md -->
+<!-- Dont foget to make sure backend API, supabase tables, gemini API calls, backend tests are all integrated properly with this changes and Update Features.md accordingly also don't forget to updae features.md with 1. features that are added and 2. how does it work whats the user flow  -->
 
 <!-- --------------------------------------------------- -->
 

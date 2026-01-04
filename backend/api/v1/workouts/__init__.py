@@ -32,10 +32,13 @@ from .exit_tracking import router as exit_tracking_router
 from .program import router as program_router
 from .program_history import router as program_history_router
 from .weight_suggestions import router as weight_suggestions_router
+from .smart_weights import router as smart_weights_router
 from .set_adjustments import router as set_adjustments_router
 from .today import router as today_router
 from .quick import router as quick_router
 from .modifications import router as modifications_router
+from .rest_suggestions import router as rest_suggestions_router
+from .fatigue_alerts import router as fatigue_alerts_router
 
 # Create the combined router
 router = APIRouter()
@@ -81,11 +84,20 @@ router.include_router(program_history_router)
 # AI weight suggestion endpoints
 router.include_router(weight_suggestions_router)
 
+# Smart weight auto-fill endpoints (pre-workout 1RM-based suggestions)
+router.include_router(smart_weights_router)
+
 # Set adjustment endpoints (tracking set modifications during workouts)
 router.include_router(set_adjustments_router)
 
 # Workout modification endpoints (body part exclusion, exercise replacement)
 router.include_router(modifications_router)
+
+# AI rest time suggestion endpoints
+router.include_router(rest_suggestions_router)
+
+# Fatigue detection and next set preview endpoints
+router.include_router(fatigue_alerts_router)
 
 # Re-export commonly used utilities
 from .utils import (

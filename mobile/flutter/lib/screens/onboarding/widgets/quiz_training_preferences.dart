@@ -4,24 +4,32 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// Combined Training Preferences widget for quiz screens.
-/// Includes: Training Split, Workout Type, and Progression Pace
+/// Includes: Training Split, Workout Type, Progression Pace, Sleep Quality, and Obstacles
 /// With colorful cards and learn more functionality.
 class QuizTrainingPreferences extends StatefulWidget {
   final String? selectedSplit;
   final String? selectedWorkoutType;
   final String? selectedProgressionPace;
+  final String? selectedSleepQuality;
+  final Set<String>? selectedObstacles;
   final ValueChanged<String> onSplitChanged;
   final ValueChanged<String> onWorkoutTypeChanged;
   final ValueChanged<String> onProgressionPaceChanged;
+  final ValueChanged<String>? onSleepQualityChanged;
+  final ValueChanged<String>? onObstacleToggle;
 
   const QuizTrainingPreferences({
     super.key,
     required this.selectedSplit,
     required this.selectedWorkoutType,
     required this.selectedProgressionPace,
+    this.selectedSleepQuality,
+    this.selectedObstacles,
     required this.onSplitChanged,
     required this.onWorkoutTypeChanged,
     required this.onProgressionPaceChanged,
+    this.onSleepQualityChanged,
+    this.onObstacleToggle,
   });
 
   @override
@@ -51,6 +59,24 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.success},
     {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},
     {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.orange},
+  ];
+
+  // Sleep quality options
+  static final _sleepQualityOptions = [
+    {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.coral},
+    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.orange},
+    {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.success},
+    {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.cyan},
+  ];
+
+  // Obstacle options
+  static final _obstacleOptions = [
+    {'id': 'time', 'emoji': '⏰', 'label': 'Time'},
+    {'id': 'energy', 'emoji': '💤', 'label': 'Energy'},
+    {'id': 'motivation', 'emoji': '🎯', 'label': 'Motivation'},
+    {'id': 'knowledge', 'emoji': '📚', 'label': 'Knowledge'},
+    {'id': 'diet', 'emoji': '🍔', 'label': 'Diet'},
+    {'id': 'access', 'emoji': '🏠', 'label': 'Access'},
   ];
 
   void _showExplanationSheet(BuildContext context) {
@@ -276,6 +302,20 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   _buildSectionLabel('Weight Progression', textSecondary, 2),
                   const SizedBox(height: 6),
                   _buildPaceChips(isDark, textPrimary, textSecondary),
+
+                  // Section 4: Sleep Quality (only show if callback is provided)
+                  if (widget.onSleepQualityChanged != null) ...[
+                    const SizedBox(height: 16),
+                    _buildSectionLabel('Sleep Quality', textSecondary, 3),
+                    const SizedBox(height: 6),
+                    _buildSleepQualityChips(isDark, textPrimary, textSecondary),
+                  ],
+
+                  // Section 5: Obstacles (only show if callback is provided)
+                  if (widget.onObstacleToggle != null) ...[
+                    const SizedBox(height: 16),
+                    _buildObstaclesSection(isDark, textPrimary, textSecondary),
+                  ],
 
                   const SizedBox(height: 12),
                 ],
@@ -524,6 +564,178 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSleepQualityChips(bool isDark, Color textPrimary, Color textSecondary) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Row(
+      children: _sleepQualityOptions.asMap().entries.map((entry) {
+        final index = entry.key;
+        final option = entry.value;
+        final isSelected = widget.selectedSleepQuality == option['id'];
+        final color = option['color'] as Color;
+
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index < 3 ? 6 : 0),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onSleepQualityChanged?.call(option['id'] as String);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [color.withValues(alpha: 0.8), color],
+                        )
+                      : null,
+                  color: isSelected ? null : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? color : cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6, spreadRadius: 0)]
+                      : null,
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      option['emoji'] as String,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      option['label'] as String,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ).animate(delay: (450 + index * 40).ms).fadeIn().scale(begin: const Offset(0.95, 0.95)),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildObstaclesSection(bool isDark, Color textPrimary, Color textSecondary) {
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final selectedCount = widget.selectedObstacles?.length ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Biggest Obstacles',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (selectedCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$selectedCount/3',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.cyan,
+                  ),
+                ),
+              ),
+          ],
+        ).animate(delay: 500.ms).fadeIn(),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: _obstacleOptions.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final isSelected = widget.selectedObstacles?.contains(option['id']) ?? false;
+            final isDisabled = !isSelected && selectedCount >= 3;
+
+            return GestureDetector(
+              onTap: isDisabled
+                  ? null
+                  : () {
+                      HapticFeedback.selectionClick();
+                      widget.onObstacleToggle?.call(option['id'] as String);
+                    },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: isSelected ? AppColors.cyanGradient : null,
+                  color: isSelected
+                      ? null
+                      : isDisabled
+                          ? (isDark
+                              ? AppColors.glassSurface.withValues(alpha: 0.3)
+                              : AppColorsLight.glassSurface.withValues(alpha: 0.3))
+                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.cyan
+                        : isDisabled
+                            ? cardBorder.withValues(alpha: 0.3)
+                            : cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      option['emoji'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDisabled ? Colors.grey : null,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      option['label'] as String,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : isDisabled
+                                ? textSecondary.withValues(alpha: 0.5)
+                                : textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ).animate(delay: (550 + index * 30).ms).fadeIn().scale(begin: const Offset(0.95, 0.95));
+          }).toList(),
+        ),
+      ],
     );
   }
 }

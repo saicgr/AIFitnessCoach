@@ -43,18 +43,18 @@ CREATE INDEX IF NOT EXISTS idx_fasting_scores_user_date ON fasting_scores(user_i
 -- Enable RLS
 ALTER TABLE fasting_scores ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
+-- RLS Policies (using subquery for performance optimization)
 CREATE POLICY "Users can view own fasting scores"
     ON fasting_scores FOR SELECT
-    USING (auth.uid() = user_id);
+    USING (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "Users can insert own fasting scores"
     ON fasting_scores FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK (user_id = (SELECT auth.uid()));
 
 CREATE POLICY "Users can update own fasting scores"
     ON fasting_scores FOR UPDATE
-    USING (auth.uid() = user_id);
+    USING (user_id = (SELECT auth.uid()));
 
 -- Function to get score trend (change from last week)
 CREATE OR REPLACE FUNCTION get_fasting_score_trend(p_user_id UUID)

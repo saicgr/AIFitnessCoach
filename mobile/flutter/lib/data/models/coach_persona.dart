@@ -303,6 +303,42 @@ class CoachPersona {
         return '💪';
     }
   }
+
+  /// Get a sample message showing how this coach communicates
+  String get sampleMessage {
+    switch (id) {
+      case 'coach_mike':
+        return "💪 Let's GO! You've got this, champ! Time to crush those goals and show 'em what you're made of!";
+      case 'dr_sarah':
+        return "Based on research, progressive overload is key. Let me explain the science behind your optimal rep range...";
+      case 'sergeant_max':
+        return "Drop and give me 20! No excuses. We're building warriors here, not quitters!";
+      case 'zen_maya':
+        return "Remember, fitness is a journey, not a destination. Breathe... feel your body... 🧘";
+      case 'hype_danny':
+        return "YOOO!! 🔥🔥 This workout is gonna be FIRE no cap fr fr!! LET'S GOOOO!!";
+      default:
+        return "Ready to start your fitness journey? Let's do this!";
+    }
+  }
+
+  /// Get personality traits for this coach
+  List<String> get personalityTraits {
+    switch (id) {
+      case 'coach_mike':
+        return ['Motivational', 'High Energy', 'Supportive'];
+      case 'dr_sarah':
+        return ['Analytical', 'Evidence-Based', 'Precise'];
+      case 'sergeant_max':
+        return ['Intense', 'Disciplined', 'No-Nonsense'];
+      case 'zen_maya':
+        return ['Calm', 'Mindful', 'Balanced'];
+      case 'hype_danny':
+        return ['Energetic', 'Fun', 'Gen-Z Vibes'];
+      default:
+        return ['Personalized', 'Adaptive'];
+    }
+  }
 }
 
 /// Available coaching styles for custom coach

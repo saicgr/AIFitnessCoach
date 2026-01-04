@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/branded_program_provider.dart';
+import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -642,6 +643,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
         // Refresh workouts and invalidate to force UI rebuild
         await ref.read(workoutsProvider.notifier).refresh();
         ref.invalidate(workoutsProvider);
+        // Also invalidate todayWorkoutProvider so hero card shows correct workout
+        ref.invalidate(todayWorkoutProvider);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -684,9 +687,11 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       // Small delay to ensure database transaction completes
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Refresh workouts after program update and invalidate to force UI rebuild
+      // Refresh workouts and invalidate to force UI rebuild
       await ref.read(workoutsProvider.notifier).refresh();
       ref.invalidate(workoutsProvider);
+      // Also invalidate todayWorkoutProvider so hero card shows correct workout
+      ref.invalidate(todayWorkoutProvider);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

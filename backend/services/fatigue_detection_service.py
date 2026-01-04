@@ -975,3 +975,547 @@ def get_fatigue_detection_service() -> FatigueDetectionService:
     if _fatigue_detection_service_instance is None:
         _fatigue_detection_service_instance = FatigueDetectionService()
     return _fatigue_detection_service_instance
+
+
+# =============================================================================
+# Standalone Fatigue Detection Function
+# =============================================================================
+
+@dataclass
+class FatigueAlert:
+    """
+    Alert generated when significant fatigue is detected during a workout.
+
+    This is a simplified output designed for real-time UI alerts,
+    containing only the essential information needed to prompt the user.
+
+    Attributes:
+        fatigue_detected: Whether fatigue was detected above threshold
+        severity: 'low', 'moderate', 'high', 'critical'
+        suggested_weight_reduction: Percentage to reduce weight (0-30)
+        suggested_weight_kg: Actual suggested weight in kg
+        reasoning: Human-readable explanation of why fatigue was detected
+        indicators: List of specific fatigue indicators triggered
+        confidence: Confidence score (0-1) in the detection
+    """
+    fatigue_detected: bool
+    severity: Literal["none", "low", "moderate", "high", "critical"]
+    suggested_weight_reduction: int
+    suggested_weight_kg: float
+    reasoning: str
+    indicators: List[str]
+    confidence: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API response."""
+        return {
+            "fatigue_detected": self.fatigue_detected,
+            "severity": self.severity,
+            "suggested_weight_reduction": self.suggested_weight_reduction,
+            "suggested_weight_kg": self.suggested_weight_kg,
+            "reasoning": self.reasoning,
+            "indicators": self.indicators,
+            "confidence": round(self.confidence, 2),
+        }
+
+
+def detect_fatigue(
+    session_sets: List[Dict[str, Any]],
+    current_weight: float,
+    exercise_type: str = "compound",
+    target_reps: Optional[int] = None,
+) -> FatigueAlert:
+    """
+    Standalone function to detect fatigue from session set data.
+
+    This function analyzes the completed sets in the current exercise session
+    and determines if the user is showing signs of fatigue that warrant
+    intervention (weight reduction or exercise modification).
+
+    Triggers for fatigue detection:
+    1. Rep decline >= 20% from target or first set
+    2. RPE increase of 2+ between consecutive sets
+    3. Failed set (0 reps or user marks as failed)
+    4. Weight already reduced mid-exercise
+    5. Multiple high-RPE sets (RPE >= 9)
+
+    Args:
+        session_sets: List of completed sets with structure:
+            [
+                {
+                    "reps": int,           # Reps completed
+                    "weight": float,       # Weight used in kg
+                    "rpe": Optional[int],  # Rate of Perceived Exertion (6-10)
+                    "rir": Optional[int],  # Reps in Reserve (0-5)
+                    "is_failure": bool,    # Whether set was to failure
+                    "target_reps": int,    # Target reps for this set
+                },
+                ...
+            ]
+        current_weight: The current weight being used in kg
+        exercise_type: Type of exercise ('compound', 'isolation', 'bodyweight')
+        target_reps: Optional target reps (overrides per-set target if provided)
+
+    Returns:
+        FatigueAlert with detection result and recommendations
+
+    Example:
+        >>> sets = [
+        ...     {"reps": 10, "weight": 100, "rpe": 7, "target_reps": 10},
+        ...     {"reps": 8, "weight": 100, "rpe": 8, "target_reps": 10},
+        ...     {"reps": 6, "weight": 100, "rpe": 10, "target_reps": 10},  # Fatigue!
+        ... ]
+        >>> alert = detect_fatigue(sets, current_weight=100)
+        >>> print(alert.fatigue_detected)  # True
+        >>> print(alert.severity)  # "high"
+        >>> print(alert.suggested_weight_reduction)  # 15
+    """
+    # Early return if no sets or only one set
+    if not session_sets:
+        return FatigueAlert(
+            fatigue_detected=False,
+            severity="none",
+            suggested_weight_reduction=0,
+            suggested_weight_kg=current_weight,
+            reasoning="No sets completed yet.",
+            indicators=[],
+            confidence=0.5,
+        )
+
+    if len(session_sets) < 2:
+        return FatigueAlert(
+            fatigue_detected=False,
+            severity="none",
+            suggested_weight_reduction=0,
+            suggested_weight_kg=current_weight,
+            reasoning="Only one set completed. Continue with current weight.",
+            indicators=[],
+            confidence=0.5,
+        )
+
+    # Initialize tracking
+    indicators: List[str] = []
+    fatigue_scores: List[float] = []
+    confidence_factors: List[float] = []
+    reasoning_parts: List[str] = []
+
+    # Get reference values
+    first_set = session_sets[0]
+    last_set = session_sets[-1]
+    first_reps = first_set.get("reps", 0)
+    last_reps = last_set.get("reps", 0)
+
+    # Use target reps from parameter or from first set
+    effective_target = target_reps or first_set.get("target_reps", first_reps)
+
+    # --------------------------------------------------------------------------
+    # Trigger 1: Rep decline >= 20% from target or first set
+    # --------------------------------------------------------------------------
+    if effective_target > 0 and last_reps > 0:
+        # Compare to target
+        target_decline = (effective_target - last_reps) / effective_target
+        # Compare to first set
+        first_decline = (first_reps - last_reps) / first_reps if first_reps > 0 else 0
+
+        # Use the more significant decline
+        decline_pct = max(target_decline, first_decline)
+
+        if decline_pct >= 0.30:
+            # Severe rep decline (30%+)
+            indicators.append("severe_rep_decline")
+            fatigue_scores.append(0.85)
+            confidence_factors.append(0.95)
+            reasoning_parts.append(
+                f"Significant rep decline ({round(decline_pct * 100)}%) from "
+                f"{'target' if target_decline > first_decline else 'first set'}"
+            )
+        elif decline_pct >= 0.20:
+            # Moderate rep decline (20%+)
+            indicators.append("rep_decline")
+            fatigue_scores.append(0.65)
+            confidence_factors.append(0.90)
+            reasoning_parts.append(
+                f"Rep count dropped {round(decline_pct * 100)}% from "
+                f"{'target' if target_decline > first_decline else 'first set'}"
+            )
+
+    # --------------------------------------------------------------------------
+    # Trigger 2: RPE increase of 2+ between consecutive sets
+    # --------------------------------------------------------------------------
+    rpe_values = [s.get("rpe") for s in session_sets if s.get("rpe") is not None]
+
+    if len(rpe_values) >= 2:
+        # Check consecutive set RPE increases
+        for i in range(1, len(rpe_values)):
+            rpe_jump = rpe_values[i] - rpe_values[i-1]
+            if rpe_jump >= 2:
+                indicators.append("rpe_spike")
+                fatigue_scores.append(0.70 + (rpe_jump - 2) * 0.1)
+                confidence_factors.append(0.85)
+                reasoning_parts.append(
+                    f"RPE jumped from {rpe_values[i-1]} to {rpe_values[i]} "
+                    f"(+{rpe_jump}) between sets"
+                )
+                break  # Only count the first significant spike
+
+        # Check for sustained high RPE
+        high_rpe_count = sum(1 for r in rpe_values if r >= 9)
+        if high_rpe_count >= 2:
+            if "rpe_spike" not in indicators:
+                indicators.append("sustained_high_rpe")
+                fatigue_scores.append(0.75)
+                confidence_factors.append(0.80)
+                reasoning_parts.append(
+                    f"Multiple sets at high intensity (RPE >= 9 on {high_rpe_count} sets)"
+                )
+
+    # --------------------------------------------------------------------------
+    # Trigger 3: Failed set (0 reps or user marks as failed)
+    # --------------------------------------------------------------------------
+    failed_sets = [
+        i for i, s in enumerate(session_sets)
+        if s.get("reps", 1) == 0 or s.get("is_failure", False)
+    ]
+
+    if failed_sets:
+        indicators.append("failed_set")
+        # Weight failure more heavily if it's the most recent set
+        if len(session_sets) - 1 in failed_sets:
+            fatigue_scores.append(0.90)
+            confidence_factors.append(0.95)
+            reasoning_parts.append("Most recent set resulted in failure")
+        else:
+            fatigue_scores.append(0.70)
+            confidence_factors.append(0.90)
+            reasoning_parts.append(
+                f"Set {failed_sets[0] + 1} resulted in failure"
+            )
+
+    # --------------------------------------------------------------------------
+    # Trigger 4: Weight already reduced mid-exercise
+    # --------------------------------------------------------------------------
+    weights = [s.get("weight", 0) for s in session_sets]
+    if len(weights) >= 2:
+        # Check if weight was reduced at any point
+        weight_reductions = []
+        for i in range(1, len(weights)):
+            if weights[i] < weights[i-1]:
+                reduction_pct = (weights[i-1] - weights[i]) / weights[i-1]
+                weight_reductions.append(reduction_pct)
+
+        if weight_reductions:
+            total_reduction = sum(weight_reductions)
+            indicators.append("weight_reduced")
+            fatigue_scores.append(0.60 + min(total_reduction * 2, 0.3))
+            confidence_factors.append(0.95)
+            reasoning_parts.append(
+                f"Weight was already reduced by {round(total_reduction * 100)}% "
+                f"during this exercise"
+            )
+
+    # --------------------------------------------------------------------------
+    # Trigger 5: Convert RIR to RPE for analysis
+    # --------------------------------------------------------------------------
+    for s in session_sets:
+        rir = s.get("rir")
+        if rir is not None and s.get("rpe") is None:
+            # RIR 0 = RPE 10, RIR 1 = RPE 9, etc.
+            implied_rpe = 10 - rir
+            if implied_rpe >= 9:
+                if "sustained_high_rpe" not in indicators and "rpe_spike" not in indicators:
+                    indicators.append("high_effort_rir")
+                    fatigue_scores.append(0.65)
+                    confidence_factors.append(0.75)
+                    reasoning_parts.append(
+                        f"Set completed with only {rir} rep(s) in reserve"
+                    )
+                    break
+
+    # --------------------------------------------------------------------------
+    # Calculate overall fatigue level and severity
+    # --------------------------------------------------------------------------
+    if not fatigue_scores:
+        return FatigueAlert(
+            fatigue_detected=False,
+            severity="none",
+            suggested_weight_reduction=0,
+            suggested_weight_kg=current_weight,
+            reasoning="Performance looks good. Continue with current weight.",
+            indicators=[],
+            confidence=0.80,
+        )
+
+    # Weighted average of fatigue scores
+    total_weight = sum(confidence_factors)
+    overall_fatigue = sum(
+        score * conf for score, conf in zip(fatigue_scores, confidence_factors)
+    ) / total_weight if total_weight > 0 else 0
+
+    # Clamp to 0-1
+    overall_fatigue = max(0.0, min(1.0, overall_fatigue))
+
+    # Calculate confidence
+    avg_confidence = statistics.mean(confidence_factors) if confidence_factors else 0.5
+    indicator_boost = min(len(indicators) / 3, 1.0) * 0.2
+    overall_confidence = min(avg_confidence + indicator_boost, 1.0)
+
+    # Determine severity
+    if overall_fatigue >= 0.85:
+        severity = "critical"
+    elif overall_fatigue >= 0.70:
+        severity = "high"
+    elif overall_fatigue >= 0.55:
+        severity = "moderate"
+    elif overall_fatigue >= 0.40:
+        severity = "low"
+    else:
+        severity = "none"
+
+    # Determine if we should alert
+    fatigue_detected = severity in ("moderate", "high", "critical")
+
+    # --------------------------------------------------------------------------
+    # Calculate weight reduction recommendation
+    # --------------------------------------------------------------------------
+    if not fatigue_detected:
+        weight_reduction = 0
+    elif severity == "critical":
+        weight_reduction = 25  # 25% reduction for critical fatigue
+    elif severity == "high":
+        weight_reduction = 20  # 20% reduction for high fatigue
+    elif severity == "moderate":
+        weight_reduction = 10  # 10% reduction for moderate fatigue
+    else:
+        weight_reduction = 5   # 5% reduction for low fatigue
+
+    # Adjust based on exercise type (compound lifts need more careful reduction)
+    if exercise_type == "compound":
+        # Be slightly more conservative with compound lifts
+        weight_reduction = max(weight_reduction - 5, 5) if weight_reduction > 0 else 0
+    elif exercise_type == "isolation":
+        # Isolation exercises can handle more aggressive reduction
+        weight_reduction = min(weight_reduction + 5, 30)
+
+    # Calculate actual suggested weight
+    suggested_weight = round(current_weight * (1 - weight_reduction / 100), 1)
+
+    # Round to nearest 2.5kg for practical gym weights
+    suggested_weight = round(suggested_weight / 2.5) * 2.5
+
+    # Build reasoning message
+    if reasoning_parts:
+        reasoning = ". ".join(reasoning_parts[:3]) + "."
+    else:
+        reasoning = "Multiple fatigue indicators detected."
+
+    if fatigue_detected:
+        reasoning += f" Consider reducing weight by {weight_reduction}%."
+
+    logger.info(
+        f"[Fatigue Detection] detect_fatigue result: "
+        f"detected={fatigue_detected}, severity={severity}, "
+        f"reduction={weight_reduction}%, indicators={indicators}"
+    )
+
+    return FatigueAlert(
+        fatigue_detected=fatigue_detected,
+        severity=severity,
+        suggested_weight_reduction=weight_reduction,
+        suggested_weight_kg=suggested_weight,
+        reasoning=reasoning,
+        indicators=indicators,
+        confidence=overall_confidence,
+    )
+
+
+# =============================================================================
+# Next Set Preview Function
+# =============================================================================
+
+@dataclass
+class NextSetPreview:
+    """
+    Preview of recommended parameters for the upcoming set.
+
+    This provides AI-recommended weight and reps for the next set
+    based on current performance, 1RM data, and target intensity.
+
+    Attributes:
+        recommended_weight: Suggested weight in kg for next set
+        recommended_reps: Suggested rep count for next set
+        intensity_percentage: Percentage of estimated 1RM
+        reasoning: Explanation for the recommendation
+        confidence: Confidence in the recommendation (0-1)
+        is_final_set: Whether this is recommended as the final set
+    """
+    recommended_weight: float
+    recommended_reps: int
+    intensity_percentage: float
+    reasoning: str
+    confidence: float
+    is_final_set: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API response."""
+        return {
+            "recommended_weight": round(self.recommended_weight, 1),
+            "recommended_reps": self.recommended_reps,
+            "intensity_percentage": round(self.intensity_percentage, 1),
+            "reasoning": self.reasoning,
+            "confidence": round(self.confidence, 2),
+            "is_final_set": self.is_final_set,
+        }
+
+
+def calculate_next_set_preview(
+    session_sets: List[Dict[str, Any]],
+    current_set_number: int,
+    total_sets: int,
+    target_reps: int,
+    current_weight: float,
+    estimated_1rm: Optional[float] = None,
+    target_intensity: float = 0.75,  # Default 75% of 1RM
+) -> NextSetPreview:
+    """
+    Calculate recommended weight and reps for the next set.
+
+    Uses the Brzycki formula for 1RM estimation if not provided,
+    and adjusts recommendations based on current performance and fatigue.
+
+    Args:
+        session_sets: List of completed sets in current session
+        current_set_number: The set number just completed (1-indexed)
+        total_sets: Total planned sets for this exercise
+        target_reps: Target reps per set
+        current_weight: Current weight being used in kg
+        estimated_1rm: Optional pre-calculated 1RM in kg
+        target_intensity: Target intensity as percentage of 1RM (0.0-1.0)
+
+    Returns:
+        NextSetPreview with recommendations
+
+    Example:
+        >>> preview = calculate_next_set_preview(
+        ...     session_sets=[{"reps": 10, "weight": 100, "rpe": 7}],
+        ...     current_set_number=1,
+        ...     total_sets=4,
+        ...     target_reps=10,
+        ...     current_weight=100
+        ... )
+        >>> print(preview.recommended_weight)  # e.g., 100.0 or 102.5
+    """
+    next_set_number = current_set_number + 1
+    is_final_set = next_set_number >= total_sets
+
+    # If no sets completed, return current parameters
+    if not session_sets:
+        return NextSetPreview(
+            recommended_weight=current_weight,
+            recommended_reps=target_reps,
+            intensity_percentage=target_intensity * 100,
+            reasoning="Starting weight - adjust based on feel.",
+            confidence=0.6,
+            is_final_set=is_final_set,
+        )
+
+    # Get last set data
+    last_set = session_sets[-1]
+    last_reps = last_set.get("reps", target_reps)
+    last_weight = last_set.get("weight", current_weight)
+    last_rpe = last_set.get("rpe")
+    last_rir = last_set.get("rir")
+
+    # Estimate 1RM if not provided (Brzycki formula)
+    if estimated_1rm is None and last_reps > 0 and last_weight > 0:
+        # Brzycki: 1RM = weight * (36 / (37 - reps))
+        if last_reps < 37:
+            estimated_1rm = last_weight * (36 / (37 - last_reps))
+        else:
+            estimated_1rm = last_weight  # Cap at very high reps
+
+    # Calculate effective RIR (from RPE or RIR)
+    effective_rir = None
+    if last_rir is not None:
+        effective_rir = last_rir
+    elif last_rpe is not None:
+        effective_rir = max(0, 10 - last_rpe)
+
+    # Determine adjustment based on performance
+    recommended_weight = last_weight
+    reasoning_parts = []
+    confidence = 0.75
+
+    # Check rep performance
+    rep_ratio = last_reps / target_reps if target_reps > 0 else 1.0
+
+    if effective_rir is not None:
+        if effective_rir >= 4 and rep_ratio >= 1.0:
+            # Too easy - increase weight
+            increment = 2.5 if last_weight < 50 else 5.0
+            recommended_weight = last_weight + increment
+            reasoning_parts.append(f"Previous set was easy (RIR {effective_rir})")
+            confidence = 0.85
+        elif effective_rir >= 2 and rep_ratio >= 0.9:
+            # Good working set - maintain
+            recommended_weight = last_weight
+            reasoning_parts.append("Good intensity, maintain weight")
+            confidence = 0.90
+        elif effective_rir <= 1 or rep_ratio < 0.8:
+            # Struggling - consider reduction
+            if is_final_set:
+                # Push through on final set
+                recommended_weight = last_weight
+                reasoning_parts.append("Final set - push through")
+                confidence = 0.70
+            else:
+                # Reduce for sustainability
+                reduction = 2.5 if last_weight < 50 else 5.0
+                recommended_weight = max(last_weight - reduction, 0)
+                reasoning_parts.append("Fatigue detected, reducing for quality reps")
+                confidence = 0.80
+    else:
+        # No RPE/RIR data - use rep performance alone
+        if rep_ratio >= 1.1:
+            # Exceeded target significantly
+            increment = 2.5
+            recommended_weight = last_weight + increment
+            reasoning_parts.append("Exceeded target reps - try increasing")
+            confidence = 0.70
+        elif rep_ratio < 0.8:
+            # Missed target significantly
+            reduction = 2.5
+            recommended_weight = max(last_weight - reduction, 0)
+            reasoning_parts.append("Below target - reduce for next set")
+            confidence = 0.75
+        else:
+            # Within acceptable range
+            recommended_weight = last_weight
+            reasoning_parts.append("On track - maintain current weight")
+            confidence = 0.80
+
+    # Round to nearest 2.5kg
+    recommended_weight = round(recommended_weight / 2.5) * 2.5
+
+    # Calculate intensity percentage
+    if estimated_1rm and estimated_1rm > 0:
+        intensity_pct = (recommended_weight / estimated_1rm) * 100
+    else:
+        intensity_pct = target_intensity * 100
+
+    # Build reasoning
+    reasoning = ". ".join(reasoning_parts) if reasoning_parts else "Based on previous performance."
+
+    # Adjust reps recommendation based on set number and fatigue
+    recommended_reps = target_reps
+    if is_final_set and effective_rir is not None and effective_rir <= 1:
+        # On final set with low reserves, target same reps but expect fewer
+        reasoning += " Final set - give your best effort."
+
+    return NextSetPreview(
+        recommended_weight=recommended_weight,
+        recommended_reps=recommended_reps,
+        intensity_percentage=intensity_pct,
+        reasoning=reasoning,
+        confidence=confidence,
+        is_final_set=is_final_set,
+    )

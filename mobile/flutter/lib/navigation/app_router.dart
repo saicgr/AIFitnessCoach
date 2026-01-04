@@ -20,6 +20,7 @@ import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/conversational_onboarding_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/personalized_preview_screen.dart';
+import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
@@ -175,6 +176,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Check if on new onboarding flow screens (declare early for use in loading/error checks)
       final isOnPreAuthQuiz = state.matchedLocation == '/pre-auth-quiz';
+      final isOnWeightProjection = state.matchedLocation == '/weight-projection';
       final isOnPreview = state.matchedLocation == '/preview';
       final isOnSignIn = state.matchedLocation == '/sign-in';
       final isOnPricingPreview = state.matchedLocation == '/pricing-preview';
@@ -205,7 +207,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If we're on splash, stay there
         if (isOnSplash) return null;
         // Allow pre-auth screens to stay during loading (sign-in process shouldn't redirect)
-        if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview ||
+        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -218,7 +220,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         // If on sign-in page, stay there to show the error
         if (isOnSignIn) return null;
         // If on other pre-auth pages, stay there
-        if (isOnPreAuthQuiz || isOnPreview || isOnPricingPreview ||
+        if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnPricingPreview ||
             isOnDemoWorkout || isOnPlanPreview || isGuestRoute || isOnStatsWelcome) {
           return null;
         }
@@ -228,16 +230,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isGuestMode = ref.read(guestModeProvider).isGuestMode;
 
       // Helper to get the next step in onboarding flow for logged-in users
+      // NOTE: Conversational onboarding is now SKIPPED - pre-auth quiz collects all data
       String? getNextOnboardingStep(app_user.User user) {
         // Step 1: Coach selection
         if (!user.isCoachSelected) {
           return '/coach-selection';
         }
-        // Step 2: Onboarding conversation
-        if (!user.isOnboardingComplete) {
-          return '/onboarding';
-        }
-        // Step 3: Paywall (after onboarding)
+        // Step 2: Conversational onboarding is SKIPPED
+        // Coach selection now marks onboarding complete and goes directly to paywall/home
+        // if (!user.isOnboardingComplete) {
+        //   return '/onboarding';
+        // }
+        // Step 3: Paywall (after coach selection)
         if (!user.isPaywallComplete) {
           return '/paywall-features';
         }
@@ -314,9 +318,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       //   }
       // }
 
-      // Allow pre-auth quiz, preview, sign-in, and pricing preview screens for non-logged-in users
+      // Allow pre-auth quiz, weight projection, preview, sign-in, and pricing preview screens for non-logged-in users
       // Also allow pre-auth quiz for logged-in users who are starting over (no coach selected)
-      if (isOnPreAuthQuiz || isOnPreview || isOnSignIn || isOnPricingPreview) {
+      if (isOnPreAuthQuiz || isOnWeightProjection || isOnPreview || isOnSignIn || isOnPricingPreview) {
         if (isLoggedIn) {
           final user = authState.user;
           // Allow pre-auth quiz if user is starting over (coach not selected)
@@ -344,8 +348,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             return null; // Allow - user is selecting coach
           }
           // Coach already selected, go to next step
+          // NOTE: Conversational onboarding is SKIPPED - go directly to paywall
           if (user != null) {
-            if (!user.isOnboardingComplete) return '/onboarding';
+            // if (!user.isOnboardingComplete) return '/onboarding';
             if (!user.isPaywallComplete) return '/paywall-features';
           }
           return getHomeRoute();
@@ -622,6 +627,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // Weight Projection - shows goal timeline before preview
+      GoRoute(
+        path: '/weight-projection',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const WeightProjectionScreen(),
+          transitionDuration: const Duration(milliseconds: 500),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.1, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
       // Personalized Preview - shows value before sign-in
       GoRoute(
         path: '/preview',
@@ -782,9 +810,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/home',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: HomeScreen(),
-            ),
+            pageBuilder: (context, state) {
+              // Check if edit mode is requested via query parameter
+              final startEditMode = state.uri.queryParameters['edit'] == 'true';
+              return NoTransitionPage(
+                child: HomeScreen(startEditMode: startEditMode),
+              );
+            },
           ),
           GoRoute(
             path: '/nutrition',

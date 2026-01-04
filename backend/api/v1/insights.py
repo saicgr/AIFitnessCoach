@@ -1,16 +1,24 @@
 """
 User Insights API - AI-generated personalized micro-insights
+
+Includes:
+- General insights (performance, consistency, milestones)
+- Weight insights (weekly weight trend analysis)
+- Daily tips (AI-powered coaching tips)
+- Habit suggestions (personalized habit recommendations)
 """
 
 import logging
+import json
+import hashlib
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.activity_logger import log_user_activity, log_user_error
-from services.gemini_service import GeminiService
+from services.gemini_service import gemini_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -363,3 +371,459 @@ async def update_weekly_progress(user_id: str):
     except Exception as e:
         logger.error(f"Failed to update weekly progress: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== AI-POWERED INSIGHTS ====================
+
+WEIGHT_INSIGHT_PROMPT = """You are a supportive fitness coach AI analyzing a user's weight trend.
+
+## Weight Data (Last 7-14 Days):
+{weight_data}
+
+## User Profile:
+- Primary Goal: {goal}
+- Current Weight: {current_weight} lbs
+- Target Weight: {target_weight} lbs (if applicable)
+- Weekly Change: {weekly_change} lbs ({direction})
+
+## Task:
+Write a brief, encouraging insight (2-3 sentences max) about their weight trend. Include:
+1. Acknowledge their progress (positive OR realistic for setbacks)
+2. One specific, actionable tip
+3. Keep it motivational but honest
+
+## Guidelines:
+- Be conversational and supportive
+- If losing weight on a fat loss goal, celebrate!
+- If gaining on a muscle-building goal, that's good too
+- If stalling, suggest small adjustments
+- NO medical advice
+- NO specific calorie numbers unless mentioned in data
+
+Response (2-3 sentences only):"""
+
+DAILY_TIP_PROMPT = """You are an AI fitness coach providing a personalized daily tip.
+
+## User Context:
+- Goals: {goals}
+- Last Workout Type: {last_workout_type}
+- Days Since Last Workout: {days_since_workout}
+- Current Streak: {streak_days} days
+- Most Trained Muscle Groups: {favorite_muscles}
+- Time of Day: {time_of_day}
+
+## Today's Tip Categories (rotate through these):
+- Progressive overload techniques
+- Recovery and sleep tips
+- Nutrition timing
+- Mind-muscle connection
+- Form reminders
+- Motivation and consistency
+- Rest day activities
+
+## Task:
+Write ONE concise, actionable tip (1-2 sentences) that's relevant to their current situation.
+
+## Guidelines:
+- Be specific and actionable
+- Match the tip to their goals and recent activity
+- Keep it fresh - avoid generic advice
+- Include a specific number or action when possible
+
+Tip:"""
+
+HABIT_SUGGESTION_PROMPT = """You are an AI coach suggesting habits for a user on a {goal} journey.
+
+## Current Habits:
+{current_habits}
+
+## User Context:
+- Goal: {goal}
+- Workout Frequency: {workout_frequency} days/week
+- Pain Points: {pain_points}
+
+## Available Habit Templates:
+- No DoorDash today
+- No eating out
+- No sugary drinks
+- No late-night snacking
+- Cook at home
+- No alcohol
+- Drink 8 glasses water
+- 10k steps
+- Stretch for 10 minutes
+- Sleep by 11pm
+- No processed foods
+- Meal prep Sunday
+- Track all meals
+- Take vitamins
+
+## Task:
+Suggest 2-3 NEW habits from the templates (or create custom ones) that would help them reach their goal.
+Return as JSON array: [{{"name": "habit name", "reason": "brief why"}}]
+
+Response (JSON only):"""
+
+
+@router.get("/{user_id}/weight-insight")
+async def get_weight_insight(user_id: str, force_refresh: bool = False):
+    """
+    Get AI-generated insight about the user's weight trend.
+    Cached for 24 hours unless force_refresh=True.
+    """
+    logger.info(f"Getting weight insight for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check cache first
+        cache_key = f"weight_insight_{user_id}"
+        if not force_refresh:
+            cached = db.client.table("ai_insight_cache").select("*").eq(
+                "cache_key", cache_key
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+
+            if cached.data:
+                logger.info(f"Returning cached weight insight for {user_id}")
+                return {"insight": cached.data[0]["insight"], "cached": True}
+
+        # Get user profile
+        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = user_result.data[0]
+
+        # Get weight history (last 14 days)
+        fourteen_days_ago = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+        weight_result = db.client.table("weight_logs").select("*").eq(
+            "user_id", user_id
+        ).gte("logged_at", fourteen_days_ago).order("logged_at", desc=True).execute()
+
+        weights = weight_result.data if weight_result.data else []
+
+        if len(weights) < 2:
+            return {
+                "insight": "Log your weight a few more times to see personalized insights about your progress!",
+                "cached": False
+            }
+
+        # Calculate trend
+        current_weight = weights[0].get("weight_lbs", 0)
+        oldest_weight = weights[-1].get("weight_lbs", current_weight)
+        weekly_change = current_weight - oldest_weight
+        direction = "losing" if weekly_change < -0.1 else "gaining" if weekly_change > 0.1 else "maintaining"
+
+        # Format weight data
+        weight_data = "\n".join([
+            f"- {w.get('logged_at', 'N/A')[:10]}: {w.get('weight_lbs', 0):.1f} lbs"
+            for w in weights[:10]
+        ])
+
+        # Get user goal
+        goals = user.get("goals", [])
+        goal = goals[0] if goals else "general fitness"
+        target_weight = user.get("preferences", {}).get("target_weight_lbs", "not set")
+
+        # Generate insight
+        prompt = WEIGHT_INSIGHT_PROMPT.format(
+            weight_data=weight_data,
+            goal=goal,
+            current_weight=f"{current_weight:.1f}",
+            target_weight=target_weight,
+            weekly_change=f"{abs(weekly_change):.1f}",
+            direction=direction
+        )
+
+        response = await gemini_service.chat(
+            message=prompt,
+            user_id=user_id,
+            context="weight_insight"
+        )
+
+        insight = response.get("response", _fallback_weight_insight(weekly_change, direction))
+
+        # Cache the result
+        _cache_insight(db, cache_key, insight, hours=24)
+
+        return {"insight": insight, "cached": False}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get weight insight: {e}")
+        return {
+            "insight": _fallback_weight_insight(0, "maintaining"),
+            "cached": False,
+            "error": str(e)
+        }
+
+
+@router.get("/{user_id}/daily-tip")
+async def get_daily_tip(user_id: str, force_refresh: bool = False):
+    """
+    Get AI-generated daily coaching tip.
+    Cached for 24 hours unless force_refresh=True.
+    """
+    logger.info(f"Getting daily tip for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check cache first
+        today = datetime.now().strftime("%Y-%m-%d")
+        cache_key = f"daily_tip_{user_id}_{today}"
+
+        if not force_refresh:
+            cached = db.client.table("ai_insight_cache").select("*").eq(
+                "cache_key", cache_key
+            ).limit(1).execute()
+
+            if cached.data:
+                logger.info(f"Returning cached daily tip for {user_id}")
+                return {"tip": cached.data[0]["insight"], "cached": True}
+
+        # Get user profile
+        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = user_result.data[0]
+
+        # Get recent workout data
+        seven_days_ago = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        workouts_result = db.client.table("workouts").select("*").eq(
+            "user_id", user_id
+        ).gte("scheduled_date", seven_days_ago).order("scheduled_date", desc=True).execute()
+
+        workouts = workouts_result.data if workouts_result.data else []
+        completed = [w for w in workouts if w.get("is_completed")]
+
+        # Calculate context
+        last_workout = completed[0] if completed else None
+        days_since = 0
+        if last_workout:
+            last_date = datetime.strptime(last_workout.get("scheduled_date", today)[:10], "%Y-%m-%d")
+            days_since = (datetime.now() - last_date).days
+
+        # Time of day
+        hour = datetime.now().hour
+        time_of_day = "morning" if hour < 12 else "afternoon" if hour < 17 else "evening"
+
+        # Get streak
+        streak = _calculate_streak(workouts)
+
+        # Favorite muscles (from workout types)
+        muscle_counts: Dict[str, int] = {}
+        for w in completed:
+            wtype = w.get("type", "general")
+            muscle_counts[wtype] = muscle_counts.get(wtype, 0) + 1
+        favorite_muscles = ", ".join(sorted(muscle_counts.keys(), key=lambda x: muscle_counts[x], reverse=True)[:3]) or "general"
+
+        # Generate tip
+        prompt = DAILY_TIP_PROMPT.format(
+            goals=", ".join(user.get("goals", ["general fitness"])),
+            last_workout_type=last_workout.get("type", "none") if last_workout else "none",
+            days_since_workout=days_since,
+            streak_days=streak,
+            favorite_muscles=favorite_muscles,
+            time_of_day=time_of_day
+        )
+
+        response = await gemini_service.chat(
+            message=prompt,
+            user_id=user_id,
+            context="daily_tip"
+        )
+
+        tip = response.get("response", _fallback_daily_tip(days_since, time_of_day))
+
+        # Cache the result (expires at midnight)
+        _cache_insight(db, cache_key, tip, hours=24)
+
+        return {"tip": tip, "cached": False}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get daily tip: {e}")
+        return {
+            "tip": _fallback_daily_tip(0, "morning"),
+            "cached": False,
+            "error": str(e)
+        }
+
+
+@router.get("/{user_id}/habit-suggestions")
+async def get_habit_suggestions(user_id: str, force_refresh: bool = False):
+    """
+    Get AI-generated habit suggestions based on user's goals and current habits.
+    """
+    logger.info(f"Getting habit suggestions for user {user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        # Check cache
+        cache_key = f"habit_suggestions_{user_id}"
+        if not force_refresh:
+            cached = db.client.table("ai_insight_cache").select("*").eq(
+                "cache_key", cache_key
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+
+            if cached.data:
+                try:
+                    suggestions = json.loads(cached.data[0]["insight"])
+                    return {"suggestions": suggestions, "cached": True}
+                except json.JSONDecodeError:
+                    pass
+
+        # Get user profile
+        user_result = db.client.table("users").select("*").eq("id", user_id).execute()
+        if not user_result.data:
+            raise HTTPException(status_code=404, detail="User not found")
+        user = user_result.data[0]
+
+        # Get current habits
+        habits_result = db.client.table("habits").select("name").eq(
+            "user_id", user_id
+        ).eq("is_active", True).execute()
+
+        current_habits = [h["name"] for h in (habits_result.data or [])]
+
+        # Get workout frequency
+        prefs = user.get("preferences", {})
+        workout_frequency = prefs.get("days_per_week", 4) if isinstance(prefs, dict) else 4
+
+        # Primary goal
+        goals = user.get("goals", [])
+        goal = goals[0] if goals else "general fitness"
+
+        # Generate suggestions
+        prompt = HABIT_SUGGESTION_PROMPT.format(
+            goal=goal,
+            current_habits=", ".join(current_habits) if current_habits else "None yet",
+            workout_frequency=workout_frequency,
+            pain_points="staying consistent, avoiding junk food"  # Could be personalized later
+        )
+
+        response = await gemini_service.chat(
+            message=prompt,
+            user_id=user_id,
+            context="habit_suggestions"
+        )
+
+        # Parse JSON from response
+        suggestions = _parse_habit_suggestions(response.get("response", "[]"))
+
+        # Cache
+        _cache_insight(db, cache_key, json.dumps(suggestions), hours=168)  # 1 week
+
+        return {"suggestions": suggestions, "cached": False}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get habit suggestions: {e}")
+        return {
+            "suggestions": _fallback_habit_suggestions(),
+            "cached": False,
+            "error": str(e)
+        }
+
+
+# ==================== HELPER FUNCTIONS ====================
+
+def _cache_insight(db, cache_key: str, insight: str, hours: int = 24):
+    """Cache an insight in the database."""
+    try:
+        expires_at = (datetime.utcnow() + timedelta(hours=hours)).isoformat()
+
+        # Upsert
+        existing = db.client.table("ai_insight_cache").select("id").eq(
+            "cache_key", cache_key
+        ).limit(1).execute()
+
+        data = {
+            "cache_key": cache_key,
+            "insight": insight,
+            "expires_at": expires_at,
+            "updated_at": datetime.utcnow().isoformat()
+        }
+
+        if existing.data:
+            db.client.table("ai_insight_cache").update(data).eq(
+                "id", existing.data[0]["id"]
+            ).execute()
+        else:
+            db.client.table("ai_insight_cache").insert(data).execute()
+
+    except Exception as e:
+        logger.warning(f"Failed to cache insight: {e}")
+
+
+def _calculate_streak(workouts: List[Dict]) -> int:
+    """Calculate workout streak from workout list."""
+    completed_dates = set()
+    for w in workouts:
+        if w.get("is_completed") and w.get("scheduled_date"):
+            completed_dates.add(w["scheduled_date"][:10])
+
+    today = datetime.now().date()
+    streak = 0
+    check_date = today
+
+    while True:
+        if check_date.isoformat() in completed_dates:
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+
+    return streak
+
+
+def _fallback_weight_insight(change: float, direction: str) -> str:
+    """Fallback weight insight if AI fails."""
+    if direction == "losing":
+        return f"You're down {abs(change):.1f} lbs! Keep up the great work with your nutrition and training."
+    elif direction == "gaining":
+        return f"You've gained {abs(change):.1f} lbs. Review your calorie intake and stay consistent with workouts."
+    else:
+        return "Your weight is stable. Consider adjusting calories or workout intensity to see more changes."
+
+
+def _fallback_daily_tip(days_since: int, time_of_day: str) -> str:
+    """Fallback daily tip if AI fails."""
+    tips = {
+        "morning": "Start your day with 10 minutes of stretching to boost energy and flexibility.",
+        "afternoon": "Stay hydrated! Aim for at least 8 glasses of water before dinner.",
+        "evening": "Wind down with some light mobility work to improve tomorrow's workout."
+    }
+
+    if days_since > 3:
+        return "It's been a few days since your last workout. Even a 20-minute session helps maintain momentum!"
+
+    return tips.get(time_of_day, tips["morning"])
+
+
+def _fallback_habit_suggestions() -> List[Dict]:
+    """Fallback habit suggestions if AI fails."""
+    return [
+        {"name": "Drink 8 glasses water", "reason": "Staying hydrated improves workout performance"},
+        {"name": "No late-night snacking", "reason": "Helps control daily calorie intake"},
+        {"name": "Sleep by 11pm", "reason": "Quality sleep is essential for recovery"}
+    ]
+
+
+def _parse_habit_suggestions(response: str) -> List[Dict]:
+    """Parse habit suggestions from AI response."""
+    try:
+        # Try to extract JSON from response
+        start = response.find("[")
+        end = response.rfind("]") + 1
+        if start >= 0 and end > start:
+            json_str = response[start:end]
+            return json.loads(json_str)
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    return _fallback_habit_suggestions()

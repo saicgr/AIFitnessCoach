@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/home_layout.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import 'cards/cards.dart';
 import 'cards/roi_summary_card.dart';
 import 'cards/weekly_plan_card.dart';
 import 'daily_activity_card.dart';
 import 'components/components.dart';
+import 'swipeable_hero_section.dart';
 
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
@@ -82,7 +84,55 @@ class TileFactory {
         return const ROISummaryCard();
       case TileType.weeklyPlan:
         return const WeeklyPlanCard();
+      // New fat loss UX tiles
+      case TileType.weightTrend:
+        return WeightTrendCard(size: tile.size, isDark: isDark);
+      case TileType.dailyStats:
+        return DailyStatsCard(size: tile.size, isDark: isDark);
+      case TileType.achievements:
+        return AchievementsCard(size: tile.size, isDark: isDark);
+      case TileType.heroSection:
+        return _buildHeroSection(context, ref, tile, isDark);
+      case TileType.quickLogWeight:
+        return QuickLogWeightCard(size: tile.size, isDark: isDark);
+      case TileType.quickLogMeasurements:
+        return QuickLogMeasurementsCard(size: tile.size, isDark: isDark);
+      case TileType.habits:
+        return HabitsTileCard(size: tile.size, isDark: isDark);
     }
+  }
+
+  static Widget _buildHeroSection(
+    BuildContext context,
+    WidgetRef ref,
+    HomeTile tile,
+    bool isDark,
+  ) {
+    // Get today's workout from today workout provider
+    return Consumer(
+      builder: (context, ref, child) {
+        final todayWorkoutState = ref.watch(todayWorkoutProvider);
+
+        return todayWorkoutState.when(
+          loading: () => const SwipeableHeroSection(
+            todayWorkout: null,
+            isGenerating: true,
+          ),
+          error: (_, __) => const SwipeableHeroSection(
+            todayWorkout: null,
+            isGenerating: false,
+          ),
+          data: (response) {
+            final isGenerating = response?.isGenerating ?? false;
+            final workout = response?.todayWorkout ?? response?.nextWorkout;
+            return SwipeableHeroSection(
+              todayWorkout: workout?.toWorkout(),
+              isGenerating: isGenerating,
+            );
+          },
+        );
+      },
+    );
   }
 
   /// Build multiple tiles in a row for half-width tiles

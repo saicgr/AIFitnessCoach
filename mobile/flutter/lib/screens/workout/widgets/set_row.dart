@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/weight_suggestion_service.dart';
+import '../../../widgets/glass_card.dart';
+import '../../../widgets/glow_button.dart';
+import '../../../widgets/number_stepper.dart';
 
 /// Equipment-specific weight increments (in kg)
 /// Industry standard increments for realistic gym equipment
@@ -531,6 +534,448 @@ class _SetRowState extends State<SetRow> {
                 size: 28,
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Futuristic Set Row with large touch targets and glowing accents
+///
+/// This is the redesigned version of SetRow with:
+/// - 48px+ touch targets for gym-friendly use
+/// - Long-press for rapid increment
+/// - Glassmorphic design with glowing accents
+/// - Collapsible previous data
+/// - Full-width Complete Set button
+class FuturisticSetRow extends StatefulWidget {
+  final ActiveSetData setData;
+  final bool isCurrentSet;
+  final ValueChanged<ActiveSetData> onDataChanged;
+  final VoidCallback onComplete;
+  final VoidCallback? onDelete;
+  final bool showPrevious;
+  final bool useKg;
+
+  const FuturisticSetRow({
+    super.key,
+    required this.setData,
+    required this.isCurrentSet,
+    required this.onDataChanged,
+    required this.onComplete,
+    this.onDelete,
+    this.showPrevious = true,
+    this.useKg = true,
+  });
+
+  @override
+  State<FuturisticSetRow> createState() => _FuturisticSetRowState();
+}
+
+class _FuturisticSetRowState extends State<FuturisticSetRow> {
+  bool _isPreviousExpanded = false;
+
+  void _cycleSetType() {
+    final types = ['working', 'warmup', 'failure'];
+    final currentIndex = types.indexOf(widget.setData.setType);
+    final nextType = types[(currentIndex + 1) % types.length];
+    widget.onDataChanged(widget.setData.copyWith(setType: nextType));
+    HapticFeedback.lightImpact();
+  }
+
+  Color get _setTypeColor {
+    switch (widget.setData.setType) {
+      case 'warmup':
+        return AppColors.glowOrange;
+      case 'failure':
+        return AppColors.error;
+      default:
+        return AppColors.glowCyan;
+    }
+  }
+
+  String get _setTypeLabel {
+    switch (widget.setData.setType) {
+      case 'warmup':
+        return 'W';
+      case 'failure':
+        return 'F';
+      default:
+        return widget.setData.setNumber.toString();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isCompleted = widget.setData.isCompleted;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // For completed sets, show compact view
+    if (isCompleted) {
+      return _buildCompletedRow(isDark, textColor, mutedColor);
+    }
+
+    // For non-current sets, show pending view
+    if (!widget.isCurrentSet) {
+      return _buildPendingRow(isDark, textColor, mutedColor);
+    }
+
+    // Current active set - full futuristic UI
+    return _buildActiveRow(isDark, textColor, mutedColor);
+  }
+
+  /// Build the full active set row with large controls
+  Widget _buildActiveRow(bool isDark, Color textColor, Color mutedColor) {
+    final weightIncrement = widget.setData.weightIncrement;
+
+    return GlassSurface(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 16,
+      glowColor: _setTypeColor,
+      isActive: true,
+      child: Column(
+        children: [
+          // Set badge and type indicator
+          Row(
+            children: [
+              // Set number badge (tappable to cycle type)
+              GestureDetector(
+                onTap: _cycleSetType,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        _setTypeColor.withOpacity(0.3),
+                        _setTypeColor.withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: _setTypeColor, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _setTypeColor.withOpacity(0.3),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      _setTypeLabel,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: _setTypeColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'SET ${widget.setData.setNumber}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                    color: _setTypeColor,
+                  ),
+                ),
+              ),
+              // 1RM percentage if available
+              if (widget.setData.oneRepMax != null &&
+                  widget.setData.intensityPercent != null)
+                _buildIntensityBadge(),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Weight and Reps inputs - side by side with large steppers
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Responsive spacing for smaller screens
+              final isSmallScreen = constraints.maxWidth < 280;
+              return Row(
+                children: [
+                  // Weight stepper
+                  Expanded(
+                    child: NumberStepper.weight(
+                      value: widget.setData.actualWeight,
+                      onChanged: (value) {
+                        widget.onDataChanged(
+                          widget.setData.copyWith(actualWeight: value),
+                        );
+                      },
+                      step: weightIncrement,
+                      useKg: widget.useKg,
+                    ),
+                  ),
+                  SizedBox(width: isSmallScreen ? 8 : 16),
+                  // Reps stepper
+                  Expanded(
+                    child: NumberStepper.reps(
+                      value: widget.setData.actualReps,
+                      onChanged: (value) {
+                        widget.onDataChanged(
+                          widget.setData.copyWith(actualReps: value),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 20),
+
+          // Complete Set button - full width, prominent
+          GlowButton.complete(
+            onTap: () {
+              HapticFeedback.heavyImpact();
+              widget.onComplete();
+            },
+            setNumber: widget.setData.setNumber,
+            width: double.infinity,
+          ),
+
+          // Collapsible previous data
+          if (widget.showPrevious &&
+              (widget.setData.previousWeight != null ||
+                  widget.setData.previousReps != null))
+            _buildCollapsiblePrevious(mutedColor),
+        ],
+      ),
+    );
+  }
+
+  /// Build the 1RM intensity badge
+  Widget _buildIntensityBadge() {
+    final targetPercent = widget.setData.intensityPercent!;
+    final actualPercent = widget.setData.actualPercentOfMax ?? 0;
+    final isOnTarget = widget.setData.isOnTarget;
+
+    Color percentColor;
+    if (isOnTarget) {
+      percentColor = AppColors.glowGreen;
+    } else if (actualPercent > targetPercent) {
+      percentColor = AppColors.glowOrange;
+    } else {
+      percentColor = AppColors.glowCyan;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: percentColor.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: percentColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$actualPercent%',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: percentColor,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            isOnTarget
+                ? Icons.check_circle
+                : actualPercent > targetPercent
+                    ? Icons.arrow_upward
+                    : Icons.arrow_downward,
+            size: 14,
+            color: percentColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build collapsible previous data section
+  Widget _buildCollapsiblePrevious(Color mutedColor) {
+    final prevWeight = widget.setData.previousWeight;
+    final prevReps = widget.setData.previousReps;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() => _isPreviousExpanded = !_isPreviousExpanded);
+        HapticFeedback.selectionClick();
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _isPreviousExpanded
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              size: 16,
+              color: mutedColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _isPreviousExpanded
+                  ? 'Hide previous'
+                  : 'Previous: ${prevWeight?.toStringAsFixed(1) ?? '-'} ${widget.useKg ? 'kg' : 'lbs'} × ${prevReps ?? '-'} reps',
+              style: TextStyle(
+                fontSize: 12,
+                color: mutedColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build completed set row (compact)
+  Widget _buildCompletedRow(bool isDark, Color textColor, Color mutedColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.glowGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.glowGreen.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Completed checkmark
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.glowGreen.withOpacity(0.2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.glowGreen.withOpacity(0.3),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              size: 20,
+              color: AppColors.glowGreen,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Set info
+          Expanded(
+            child: Text(
+              'Set ${widget.setData.setNumber}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+          ),
+          // Weight
+          Text(
+            '${widget.setData.actualWeight.toStringAsFixed(1)} ${widget.useKg ? 'kg' : 'lbs'}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.glowGreen,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '×',
+            style: TextStyle(fontSize: 12, color: mutedColor),
+          ),
+          const SizedBox(width: 8),
+          // Reps
+          Text(
+            '${widget.setData.actualReps} reps',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.glowGreen,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build pending set row (dimmed)
+  Widget _buildPendingRow(bool isDark, Color textColor, Color mutedColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.03)
+            : Colors.black.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.05),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Pending circle
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: mutedColor.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                widget.setData.setNumber.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: mutedColor.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Set label
+          Expanded(
+            child: Text(
+              'Set ${widget.setData.setNumber}',
+              style: TextStyle(
+                fontSize: 14,
+                color: mutedColor.withOpacity(0.5),
+              ),
+            ),
+          ),
+          // Target values
+          Text(
+            '${widget.setData.targetWeight.toStringAsFixed(0)} ${widget.useKg ? 'kg' : 'lbs'} × ${widget.setData.targetReps}',
+            style: TextStyle(
+              fontSize: 13,
+              color: mutedColor.withOpacity(0.4),
+            ),
+          ),
         ],
       ),
     );

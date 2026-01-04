@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../nutrition/log_meal_sheet.dart';
-import '../../../workout/widgets/quick_workout_sheet.dart';
 
 /// A compact row of quick action buttons for common tasks
 class QuickActionsRow extends ConsumerWidget {
@@ -57,16 +57,7 @@ class QuickActionsRow extends ConsumerWidget {
             ),
             _buildDivider(isDark),
             Expanded(
-              child: _QuickActionButton(
-                icon: Icons.flash_on,
-                label: 'Quick',
-                color: AppColors.orange,
-                onTap: () {
-                  HapticService.light();
-                  showQuickWorkoutSheet(context, ref);
-                },
-                isDark: isDark,
-              ),
+              child: _FastingQuickActionButton(isDark: isDark),
             ),
             _buildDivider(isDark),
             Expanded(
@@ -376,6 +367,86 @@ class _WaterQuickActionButtonState
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: textMuted,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fasting quick action button - shows status or navigates to fasting screen
+class _FastingQuickActionButton extends ConsumerWidget {
+  final bool isDark;
+
+  const _FastingQuickActionButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final fastingState = ref.watch(fastingProvider);
+    final hasFast = fastingState.hasFast;
+
+    // Format elapsed time if fasting
+    String label = 'Fasting';
+    if (hasFast && fastingState.activeFast != null) {
+      final elapsed = fastingState.activeFast!.elapsedMinutes;
+      final hours = elapsed ~/ 60;
+      final mins = elapsed % 60;
+      label = '${hours}h ${mins}m';
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          context.push('/fasting');
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    hasFast ? Icons.timer : Icons.timer_outlined,
+                    size: 22,
+                    color: hasFast ? AppColors.purple : AppColors.orange,
+                  ),
+                  if (hasFast)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: hasFast ? AppColors.purple : textMuted,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

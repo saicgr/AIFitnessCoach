@@ -2,6 +2,7 @@
 ///
 /// Displays the rest countdown between sets or exercises.
 /// Now includes smart weight suggestions based on RPE/RIR!
+/// Also includes AI-powered rest time suggestions.
 library;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/models/rest_suggestion.dart';
+import 'rest_suggestion_card.dart';
 
 /// Rest timer overlay displayed between sets or exercises
 class RestTimerOverlay extends StatelessWidget {
@@ -56,6 +59,18 @@ class RestTimerOverlay extends StatelessWidget {
   /// Callback when user dismisses weight suggestion
   final VoidCallback? onDismissWeightSuggestion;
 
+  /// Rest time suggestion from AI (optional)
+  final RestSuggestion? restSuggestion;
+
+  /// Whether AI is currently fetching a rest suggestion
+  final bool isLoadingRestSuggestion;
+
+  /// Callback when user accepts rest suggestion (updates timer)
+  final ValueChanged<int>? onAcceptRestSuggestion;
+
+  /// Callback when user dismisses rest suggestion
+  final VoidCallback? onDismissRestSuggestion;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -72,6 +87,10 @@ class RestTimerOverlay extends StatelessWidget {
     this.isLoadingWeightSuggestion = false,
     this.onAcceptWeightSuggestion,
     this.onDismissWeightSuggestion,
+    this.restSuggestion,
+    this.isLoadingRestSuggestion = false,
+    this.onAcceptRestSuggestion,
+    this.onDismissRestSuggestion,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -119,6 +138,30 @@ class RestTimerOverlay extends StatelessWidget {
 
               const SizedBox(height: 32),
 
+              // Rest suggestion section (loading or card) - shown first if available
+              if (isRestBetweenSets) ...[
+                if (isLoadingRestSuggestion)
+                  const RestSuggestionLoadingCard()
+                else if (restSuggestion != null)
+                  RestSuggestionCard(
+                    suggestion: restSuggestion!,
+                    onAcceptSuggestion: (seconds) {
+                      HapticFeedback.mediumImpact();
+                      onAcceptRestSuggestion?.call(seconds);
+                    },
+                    onQuickRest: (seconds) {
+                      HapticFeedback.mediumImpact();
+                      onAcceptRestSuggestion?.call(seconds);
+                    },
+                    onDismiss: onDismissRestSuggestion,
+                    isCompact: MediaQuery.of(context).size.height < 700,
+                  ),
+              ],
+
+              // Spacing between rest and weight suggestions
+              if (isRestBetweenSets && (restSuggestion != null || isLoadingRestSuggestion))
+                const SizedBox(height: 16),
+
               // Weight suggestion section (loading or card)
               if (isRestBetweenSets) ...[
                 if (isLoadingWeightSuggestion)
@@ -127,8 +170,12 @@ class RestTimerOverlay extends StatelessWidget {
                   _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark),
               ],
 
-              // AI Coach encouragement message (only if no weight suggestion and not loading)
-              if (restMessage.isNotEmpty && weightSuggestion == null && !isLoadingWeightSuggestion)
+              // AI Coach encouragement message (only if no suggestions and not loading)
+              if (restMessage.isNotEmpty &&
+                  weightSuggestion == null &&
+                  !isLoadingWeightSuggestion &&
+                  restSuggestion == null &&
+                  !isLoadingRestSuggestion)
                 _buildEncouragementMessage(cardBg, textColor),
 
               const SizedBox(height: 24),
