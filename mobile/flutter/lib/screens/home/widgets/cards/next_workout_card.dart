@@ -19,10 +19,14 @@ class NextWorkoutCard extends ConsumerStatefulWidget {
   /// Callback when start button is pressed
   final VoidCallback onStart;
 
+  /// Whether to show the "Upcoming" link (hide on Workouts screen)
+  final bool showUpcomingLink;
+
   const NextWorkoutCard({
     super.key,
     required this.workout,
     required this.onStart,
+    this.showUpcomingLink = true,
   });
 
   @override
@@ -182,86 +186,122 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header badges - tappable to view workout detail
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.selection();
-                      context.push('/workout/${workout.id}');
-                    },
-                    child: Row(
-                      children: [
-                        // Scheduled date badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.cyan.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                  // Header badges row with View Upcoming link
+                  Row(
+                    children: [
+                      // Badges - tappable to view workout detail
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.selection();
+                            context.push('/workout/${workout.id}');
+                          },
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 10,
-                                color: AppColors.cyan,
+                              // Scheduled date badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.cyan.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      size: 10,
+                                      color: AppColors.cyan,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _getScheduledDateLabel(workout.scheduledDate),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.cyan,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _getScheduledDateLabel(workout.scheduledDate),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.cyan,
-                                  letterSpacing: 0.5,
+                              // Workout type badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: typeColor.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  workout.type?.toUpperCase() ?? 'STRENGTH',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: typeColor,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              // Difficulty badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: difficultyColor.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: difficultyColor,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            workout.type?.toUpperCase() ?? 'STRENGTH',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: typeColor,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                      ),
+                      // View Upcoming link (hidden on Workouts screen)
+                      if (widget.showUpcomingLink)
+                        GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            // Navigate to Workouts tab and scroll to upcoming section
+                            context.go('/workouts?scrollTo=upcoming');
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Upcoming',
+                                style: TextStyle(
+                                  color: AppColors.cyan,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: AppColors.cyan,
+                                size: 16,
+                              ),
+                            ],
                         ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: difficultyColor.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: difficultyColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 

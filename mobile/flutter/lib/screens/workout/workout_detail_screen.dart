@@ -1244,9 +1244,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen> {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    // Extract unique short muscle names
+    // Extract unique short muscle names, filtering out empty strings
     final shortMuscles = muscles
         .map(_shortenMuscleName)
+        .where((m) => m.isNotEmpty)
         .toSet()
         .take(6) // Max 6 muscles shown
         .toList();

@@ -818,9 +818,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/workouts',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: WorkoutsScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final scrollTo = state.uri.queryParameters['scrollTo'];
+              return NoTransitionPage(
+                child: WorkoutsScreen(scrollTo: scrollTo),
+              );
+            },
           ),
           GoRoute(
             path: '/progress',

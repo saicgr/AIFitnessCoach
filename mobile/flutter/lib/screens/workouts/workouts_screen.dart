@@ -14,7 +14,10 @@ import '../home/widgets/cards/weekly_progress_card.dart';
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
 class WorkoutsScreen extends ConsumerStatefulWidget {
-  const WorkoutsScreen({super.key});
+  /// Optional parameter to scroll to a specific section
+  final String? scrollTo;
+
+  const WorkoutsScreen({super.key, this.scrollTo});
 
   @override
   ConsumerState<WorkoutsScreen> createState() => _WorkoutsScreenState();
@@ -23,6 +26,8 @@ class WorkoutsScreen extends ConsumerStatefulWidget {
 class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
   // Key for tour target
   final GlobalKey _todaysWorkoutKey = GlobalKey();
+  // Key for upcoming section (for scroll-to functionality)
+  final GlobalKey _upcomingSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -30,7 +35,24 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
     // Check and regenerate workouts if needed when this screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndRegenerateIfNeeded();
+      _scrollToSectionIfNeeded();
     });
+  }
+
+  /// Scroll to a section if scrollTo parameter is provided
+  void _scrollToSectionIfNeeded() {
+    if (widget.scrollTo == 'upcoming' && _upcomingSectionKey.currentContext != null) {
+      // Small delay to ensure the UI is built
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_upcomingSectionKey.currentContext != null) {
+          Scrollable.ensureVisible(
+            _upcomingSectionKey.currentContext!,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
   }
 
   /// Check if user needs more workouts and trigger generation if needed
@@ -247,6 +269,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
                 HapticService.medium();
                 context.push('/active-workout', extra: nextWorkout);
               },
+              showUpcomingLink: false,
             ),
           ),
           const SizedBox(height: 24),
@@ -274,14 +297,17 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen> {
 
         // Upcoming Workouts
         if (laterWorkouts.isNotEmpty) ...[
-          _buildSectionHeader(
-            'UPCOMING',
-            textSecondary,
-            actionText: 'View Schedule',
-            onAction: () {
-              HapticService.light();
-              context.push('/schedule');
-            },
+          Container(
+            key: _upcomingSectionKey,
+            child: _buildSectionHeader(
+              'UPCOMING',
+              textSecondary,
+              actionText: 'View Schedule',
+              onAction: () {
+                HapticService.light();
+                context.push('/schedule');
+              },
+            ),
           ),
           const SizedBox(height: 8),
           ...laterWorkouts.map((workout) => UpcomingWorkoutCard(

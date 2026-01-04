@@ -27,6 +27,7 @@ import 'widgets/daily_activity_card.dart';
 import 'widgets/renewal_reminder_banner.dart';
 import 'widgets/missed_workout_banner.dart';
 import 'widgets/tile_factory.dart';
+import 'widgets/my_program_summary_card.dart';
 
 /// Preset layout templates for quick customization
 class LayoutPreset {
@@ -1611,46 +1612,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isAIGenerating,
   ) {
     return [
-      // View Upcoming link at the top right
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () {
-                  HapticService.light();
-                  context.push('/workouts');
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Upcoming',
-                      style: TextStyle(
-                        color: AppColors.cyan,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right,
-                      color: AppColors.cyan,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-
       // Next Workout Card (hero card - using lazy loading)
       SliverToBoxAdapter(
         child: _buildNextWorkoutSectionLazy(
@@ -1658,6 +1619,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           todayWorkoutState,
           isAIGenerating,
         ),
+      ),
+
+      // My Program Summary - visible access to workout preferences
+      const SliverToBoxAdapter(
+        child: MyProgramSummaryCard(),
       ),
 
       // Quick Actions Row
@@ -1715,7 +1681,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           return _buildFallbackWorkoutCard(context);
         }
 
+        // If workout is being auto-generated, show generating card
+        if (response.isGenerating) {
+          return GeneratingWorkoutsCard(
+            message: response.generationMessage ?? 'Generating your workout...',
+            subtitle: 'This usually takes a few seconds',
+          );
+        }
+
         // Get the workout to display (today's or next upcoming)
+        // Hero card should ALWAYS show a workout
         final workoutSummary = response.todayWorkout ?? response.nextWorkout;
 
         if (workoutSummary != null) {
@@ -1730,16 +1705,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           );
         }
 
-        // No workout available - show rest day or empty state
-        if (response.restDayMessage != null) {
-          return _buildRestDayCard(response.restDayMessage!, response.daysUntilNext);
-        }
-
-        return EmptyWorkoutCard(
-          onGenerate: () {
-            // Navigate to workouts tab which handles generation
-            context.push('/workouts');
-          },
+        // This should rarely happen since backend auto-generates
+        // But as a fallback, show generating card
+        return const GeneratingWorkoutsCard(
+          message: 'Loading your workout...',
+          subtitle: 'Please wait a moment',
         );
       },
     );
@@ -1823,58 +1793,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  /// Build a rest day card
-  Widget _buildRestDayCard(String message, int? daysUntilNext) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.elevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.self_improvement,
-              size: 48,
-              color: AppColors.cyan.withOpacity(0.7),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Rest Day',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => context.push('/workouts'),
-              child: Text(
-                'View Schedule',
-                style: TextStyle(
-                  color: AppColors.cyan,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   /// Build tiles for edit mode with drag-to-reorder and visibility toggles
   List<Widget> _buildEditModeTiles(
@@ -2266,7 +2184,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SectionHeader(
             title: 'UPCOMING',
             subtitle: '${upcomingWorkouts.length} workouts',
-            actionText: 'View All',
+            actionText: 'View Schedule',
             onAction: () {
               HapticService.light();
               context.push('/schedule');

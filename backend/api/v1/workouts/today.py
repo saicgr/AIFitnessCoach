@@ -2,18 +2,24 @@
 Today's Workout API endpoint.
 
 Provides a quick-start experience by returning today's scheduled workout
-or the next upcoming workout if today is a rest day.
+or the next upcoming workout.
+
+IMPORTANT: The hero card should ALWAYS show a workout. If no workouts exist,
+this endpoint will auto-generate them. There is never a scenario where
+the hero card is empty.
 """
 from datetime import datetime, date, timedelta
 from typing import Optional, List
 import json
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.user_context_service import user_context_service
+
+from .utils import parse_json_field
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -39,8 +45,10 @@ class TodayWorkoutResponse(BaseModel):
     has_workout_today: bool
     today_workout: Optional[TodayWorkoutSummary] = None
     next_workout: Optional[TodayWorkoutSummary] = None
-    rest_day_message: Optional[str] = None
     days_until_next: Optional[int] = None
+    # Generation status fields
+    is_generating: bool = False
+    generation_message: Optional[str] = None
 
 
 def _extract_primary_muscles(exercises: list) -> List[str]:
@@ -96,18 +104,42 @@ def _row_to_summary(row: dict) -> TodayWorkoutSummary:
     )
 
 
+def _is_today_a_workout_day(selected_days: List[int]) -> bool:
+    """Check if today is a scheduled workout day for the user."""
+    # Python's weekday(): Monday=0, Sunday=6 - matches our selected_days format
+    today_weekday = date.today().weekday()
+    return today_weekday in selected_days
+
+
+def _get_user_workout_days(user: dict) -> List[int]:
+    """Extract user's workout days from preferences."""
+    preferences = parse_json_field(user.get("preferences"), {})
+    # Try workout_days first (new format), fall back to selected_days (old format)
+    selected_days = preferences.get("workout_days") or preferences.get("selected_days") or [0, 2, 4]
+
+    if not selected_days or not isinstance(selected_days, list):
+        selected_days = [0, 2, 4]  # Default: Mon, Wed, Fri
+
+    return selected_days
+
+
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     user_id: str = Query(..., description="User ID"),
 ) -> TodayWorkoutResponse:
     """
-    Get today's scheduled workout for quick-start experience.
+    Get today's scheduled workout or the next upcoming workout.
 
     Returns:
     - today_workout: Today's workout if scheduled and not completed
-    - next_workout: Next upcoming workout (if today is a rest day)
-    - rest_day_message: Friendly message for rest days
+    - next_workout: Next upcoming workout (always populated if no today workout)
     - days_until_next: Number of days until next workout
+    - is_generating: True if workout is being generated in background
+    - generation_message: Message about generation status
+
+    IMPORTANT: The hero card should ALWAYS show a workout. If no workouts exist,
+    this endpoint will trigger auto-generation. There is never a scenario where
+    the hero card is empty.
 
     This endpoint is optimized for the Quick Start widget on the home screen.
     """
@@ -116,6 +148,17 @@ async def get_today_workout(
     try:
         db = get_supabase_db()
         today_str = date.today().isoformat()
+
+        # Get user to check their workout days
+        user = db.get_user(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        selected_days = _get_user_workout_days(user)
+
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        today_day_name = day_names[date.today().weekday()]
+        logger.info(f"Today is {today_day_name} (weekday={date.today().weekday()}), workout days: {[day_names[d] for d in selected_days]}")
 
         # Get today's workout (not completed)
         today_rows = db.list_workouts(
@@ -127,48 +170,103 @@ async def get_today_workout(
         )
 
         today_workout: Optional[TodayWorkoutSummary] = None
+        next_workout: Optional[TodayWorkoutSummary] = None
         has_workout_today = False
+        is_generating = False
+        generation_message: Optional[str] = None
+        days_until_next: Optional[int] = None
 
         if today_rows:
             today_workout = _row_to_summary(today_rows[0])
             has_workout_today = True
             logger.info(f"Found today's workout: {today_workout.name}")
 
-        # Get next upcoming workout (future dates, not completed)
-        next_workout: Optional[TodayWorkoutSummary] = None
-        days_until_next: Optional[int] = None
-        rest_day_message: Optional[str] = None
+        # Always look for next upcoming workout (for "Your Next Workout" label)
+        tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
+        future_end = (date.today() + timedelta(days=30)).isoformat()
 
-        if not has_workout_today:
-            # Find next upcoming workout
-            tomorrow_str = (date.today() + timedelta(days=1)).isoformat()
-            future_end = (date.today() + timedelta(days=30)).isoformat()
+        future_rows = db.list_workouts(
+            user_id=user_id,
+            from_date=tomorrow_str,
+            to_date=future_end,
+            is_completed=False,
+            limit=1,
+        )
 
-            future_rows = db.list_workouts(
-                user_id=user_id,
-                from_date=tomorrow_str,
-                to_date=future_end,
-                is_completed=False,
-                limit=1,
-            )
+        if future_rows:
+            next_workout = _row_to_summary(future_rows[0])
+            next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
+            days_until_next = (next_date - date.today()).days
+            logger.info(f"Found next workout in {days_until_next} days: {next_workout.name}")
 
-            if future_rows:
-                next_workout = _row_to_summary(future_rows[0])
+        # If NO workouts exist at all (neither today nor future), trigger generation
+        if not has_workout_today and next_workout is None:
+            logger.info(f"No workouts exist for user {user_id}. Triggering auto-generation...")
+            is_generating = True
+            generation_message = "Generating your workout..."
 
-                # Calculate days until next workout
-                next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
-                days_until_next = (next_date - date.today()).days
+            try:
+                from .background import check_and_regenerate_workouts
 
-                logger.info(f"Found next workout in {days_until_next} days: {next_workout.name}")
+                # Create a BackgroundTasks instance for background generation
+                background_tasks = BackgroundTasks()
 
-                # Generate rest day message
-                if days_until_next == 1:
-                    rest_day_message = "Rest day today. Your next workout is tomorrow!"
+                # Trigger regeneration with threshold=0 to force generation
+                regen_result = await check_and_regenerate_workouts(
+                    user_id=user_id,
+                    background_tasks=background_tasks,
+                    threshold_days=0  # Force generation
+                )
+
+                # Run any scheduled background tasks synchronously
+                for task in background_tasks.tasks:
+                    await task()
+
+                logger.info(f"Auto-generation triggered: {regen_result}")
+
+                # Re-fetch workouts after generation
+                today_rows = db.list_workouts(
+                    user_id=user_id,
+                    from_date=today_str,
+                    to_date=today_str,
+                    is_completed=False,
+                    limit=1,
+                )
+
+                if today_rows:
+                    today_workout = _row_to_summary(today_rows[0])
+                    has_workout_today = True
+                    is_generating = False
+                    generation_message = None
+                    logger.info(f"Auto-generated today's workout: {today_workout.name}")
                 else:
-                    rest_day_message = f"Rest day today. Next workout in {days_until_next} days."
-            else:
-                rest_day_message = "No upcoming workouts scheduled. Time to plan your week!"
-                logger.info("No upcoming workouts found")
+                    # Check for next workout
+                    future_rows = db.list_workouts(
+                        user_id=user_id,
+                        from_date=tomorrow_str,
+                        to_date=future_end,
+                        is_completed=False,
+                        limit=1,
+                    )
+
+                    if future_rows:
+                        next_workout = _row_to_summary(future_rows[0])
+                        next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
+                        days_until_next = (next_date - date.today()).days
+                        is_generating = False
+                        generation_message = None
+                        logger.info(f"Auto-generated next workout: {next_workout.name}")
+                    else:
+                        # Generation might still be async
+                        is_generating = regen_result.get("needs_generation", False) or regen_result.get("already_generating", False)
+                        if is_generating:
+                            generation_message = "Your workout is being generated. Refresh in a moment!"
+                        else:
+                            generation_message = "Unable to generate workout. Please try again."
+
+            except Exception as gen_error:
+                logger.error(f"Failed to auto-generate workout: {gen_error}")
+                generation_message = "Failed to generate workout. Please try again."
 
         # Log analytics event for quick start view
         try:
@@ -180,6 +278,7 @@ async def get_today_workout(
                     "workout_id": today_workout.id if today_workout else None,
                     "next_workout_id": next_workout.id if next_workout else None,
                     "days_until_next": days_until_next,
+                    "is_generating": is_generating,
                 },
             )
         except Exception as log_error:
@@ -189,8 +288,9 @@ async def get_today_workout(
             has_workout_today=has_workout_today,
             today_workout=today_workout,
             next_workout=next_workout,
-            rest_day_message=rest_day_message,
             days_until_next=days_until_next,
+            is_generating=is_generating,
+            generation_message=generation_message,
         )
 
     except Exception as e:
