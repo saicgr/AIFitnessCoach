@@ -46,9 +46,10 @@ async def search_users(
         # Search users by name OR username (case-insensitive)
         # Use or filter to search both fields
         # Note: bio column doesn't exist in users table, using empty string as default
+        # Include self in results so users can verify their username exists
         result = supabase.table("users").select(
             "id, name, username, avatar_url"
-        ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").neq("id", user_id).limit(limit).execute()
+        ).or_(f"name.ilike.%{query}%,username.ilike.%{query}%").limit(limit).execute()
 
         logger.info(f"✅ [UserSearch] Found {len(result.data) if result.data else 0} users matching '{query}'")
 
@@ -98,10 +99,12 @@ async def search_users(
             uid = log["user_id"]
             workout_counts[uid] = workout_counts.get(uid, 0) + 1
 
-        # Build results
+        # Build results - put self first if found
         results = []
+        self_result = None
         for user in result.data:
             uid = user["id"]
+            is_self = uid == user_id
             is_following = uid in following_ids
             is_follower = uid in follower_ids
             is_friend = is_following and is_follower
@@ -110,7 +113,7 @@ async def search_users(
             has_pending = uid in pending_sent_map or uid in pending_received_map
             pending_id = pending_sent_map.get(uid) or pending_received_map.get(uid)
 
-            results.append(UserSearchResult(
+            search_result = UserSearchResult(
                 id=uid,
                 name=user.get("name", "Unknown"),
                 username=user.get("username"),
@@ -121,10 +124,20 @@ async def search_users(
                 is_following=is_following,
                 is_follower=is_follower,
                 is_friend=is_friend,
+                is_self=is_self,
                 has_pending_request=has_pending,
                 pending_request_id=pending_id,
                 requires_approval=requires_approval.get(uid, False),
-            ))
+            )
+
+            if is_self:
+                self_result = search_result
+            else:
+                results.append(search_result)
+
+        # Put self at the beginning if found
+        if self_result:
+            results.insert(0, self_result)
 
         return results
     except Exception as e:

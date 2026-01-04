@@ -98,9 +98,19 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   /// Initialize nutrition preferences for a user
   Future<void> initialize(String userId) async {
     // Skip re-initialization if already loaded and onboarding is complete
-    // This prevents re-showing onboarding when navigating back to nutrition screen
+    // The in-memory flag is preserved once set
     if (state.preferences != null && state.onboardingCompleted) {
       debugPrint('🥗 [NutritionPrefsProvider] Already initialized and onboarding complete, skipping');
+      return;
+    }
+
+    // Also skip if we already have preferences with backend flag set
+    // This handles the case where we navigated away and back
+    if (state.preferences?.nutritionOnboardingCompleted == true) {
+      debugPrint('🥗 [NutritionPrefsProvider] Backend flag says complete, skipping reinit');
+      if (!state.onboardingCompleted) {
+        state = state.copyWith(onboardingCompleted: true);
+      }
       return;
     }
 
@@ -141,11 +151,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         }
       }
 
-      // Preserve onboardingCompleted if already true (avoid race condition)
-      // This handles the case where completeOnboarding set it to true but
-      // the backend fetch might return stale data momentarily
+      // Use backend flag as source of truth, preserve in-memory if already set
       final wasOnboardingCompleted = state.onboardingCompleted;
-      final isOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
+      final backendOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
 
       state = state.copyWith(
         preferences: preferences,
@@ -154,11 +162,11 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         weightTrend: weightTrend,
         dynamicTargets: dynamicTargets,
         isLoading: false,
-        onboardingCompleted: wasOnboardingCompleted || isOnboardingCompleted,
+        onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
       );
 
       debugPrint(
-          '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$isOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
+          '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$backendOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Init error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -230,7 +238,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         onboardingCompleted: true,
         isLoading: false,
       );
-      debugPrint('✅ [NutritionPrefsProvider] Onboarding completed');
+      debugPrint('✅ [NutritionPrefsProvider] Onboarding completed (saved to backend)');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Onboarding error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -244,7 +252,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       debugPrint('⏭️ [NutritionPrefsProvider] Skipping onboarding for user $userId');
       await _repository.skipOnboarding(userId: userId);
       state = state.copyWith(onboardingCompleted: true);
-      debugPrint('✅ [NutritionPrefsProvider] Onboarding skipped');
+      debugPrint('✅ [NutritionPrefsProvider] Onboarding skipped (saved to backend)');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Skip onboarding error: $e');
       // Still mark as completed in memory so user isn't bothered again this session

@@ -15,6 +15,7 @@ import '../../widgets/multi_screen_tour_helper.dart';
 import 'widgets/fasting_timer_widget.dart';
 import 'widgets/fasting_zone_timeline.dart';
 import 'widgets/fasting_stats_card.dart';
+import 'widgets/fasting_score_card.dart';
 import 'widgets/fasting_history_list.dart';
 import 'widgets/start_fast_sheet.dart';
 import 'widgets/protocol_selector_chip.dart';
@@ -285,9 +286,9 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                     ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(48),
+                  preferredSize: const Size.fromHeight(52),
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: elevated,
@@ -413,7 +414,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
 
           // Inline controls (only when not fasting)
           if (!hasFast) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Time Schedule Row
             TimeScheduleRow(
@@ -424,7 +425,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
               },
               isDark: isDark,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Start Fast Button
             Padding(
@@ -490,7 +491,13 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             FastingStatsCard(
               stats: fastingState.stats!,
               streak: fastingState.streak,
+              score: fastingState.score,
+              scoreTrend: fastingState.scoreTrend,
+              weightCorrelation: fastingState.weightCorrelation,
               isDark: isDark,
+              onScoreTap: fastingState.score != null
+                  ? () => _showScoreDetails(context, fastingState.score!)
+                  : null,
             ),
         ],
       ),
@@ -749,6 +756,50 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  /// Show detailed fasting score breakdown in a bottom sheet
+  void _showScoreDetails(BuildContext context, FastingScore score) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final fastingState = ref.read(fastingProvider);
+
+    HapticService.light();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Score card with full breakdown
+            FastingScoreCard(
+              score: score,
+              trend: fastingState.scoreTrend,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

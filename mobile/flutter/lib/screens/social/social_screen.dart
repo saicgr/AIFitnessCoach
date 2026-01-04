@@ -121,22 +121,12 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 ),
                 centerTitle: false,
                 actions: [
-                  // Search button
-                  IconButton(
-                    icon: const Icon(Icons.search_rounded),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendSearchScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  // Add friend button
+                  // Username chip (compact, tap to copy)
+                  _buildCompactUserChip(context, isDark, authState.user),
+                  // Find friends button
                   IconButton(
                     icon: const Icon(Icons.person_add_rounded),
+                    tooltip: 'Find Friends',
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       Navigator.push(
@@ -149,29 +139,14 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                   ),
                 ],
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(140),
+                  preferredSize: const Size.fromHeight(116),
                   child: Column(
                     children: [
-                      // Username chip (tap to copy)
-                      _buildUserIdChip(context, isDark, authState.user),
-                      const SizedBox(height: 8),
                       // Stats chips row
                       _buildStatsChips(context, isDark, feedDataAsync),
                       const SizedBox(height: 4),
-                      // Compact tab bar - icons only for space
-                      TabBar(
-                        controller: _tabController,
-                        indicatorColor: AppColors.cyan,
-                        labelColor: isDark ? Colors.white : Colors.black,
-                        unselectedLabelColor: AppColors.textMuted,
-                        indicatorWeight: 3,
-                        tabs: const [
-                          Tab(icon: Icon(Icons.dynamic_feed_rounded, size: 22)),
-                          Tab(icon: Icon(Icons.emoji_events_rounded, size: 22)),
-                          Tab(icon: Icon(Icons.leaderboard_rounded, size: 22)),
-                          Tab(icon: Icon(Icons.people_rounded, size: 22)),
-                        ],
-                      ),
+                      // Modern segmented tab bar
+                      _buildSegmentedTabs(context, isDark),
                     ],
                   ),
                 ),
@@ -188,6 +163,128 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
               ),
               const LeaderboardTab(),
               const FriendsTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabs(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: AnimatedBuilder(
+          animation: _tabController,
+          builder: (context, _) {
+            return Row(
+              children: [
+                _buildTabItem(
+                  context,
+                  index: 0,
+                  icon: Icons.dynamic_feed_rounded,
+                  label: 'Feed',
+                  isDark: isDark,
+                ),
+                _buildTabItem(
+                  context,
+                  index: 1,
+                  icon: Icons.emoji_events_rounded,
+                  label: 'Challenges',
+                  isDark: isDark,
+                ),
+                _buildTabItem(
+                  context,
+                  index: 2,
+                  icon: Icons.leaderboard_rounded,
+                  label: 'Ranks',
+                  isDark: isDark,
+                ),
+                _buildTabItem(
+                  context,
+                  index: 3,
+                  icon: Icons.people_rounded,
+                  label: 'Friends',
+                  isDark: isDark,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem(
+    BuildContext context, {
+    required int index,
+    required IconData icon,
+    required String label,
+    required bool isDark,
+  }) {
+    final isSelected = _tabController.index == index;
+    final animationValue = _tabController.animation?.value ?? 0.0;
+
+    // Calculate selection progress for smooth animation
+    final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
+
+    // Colors
+    final selectedBg = AppColors.cyan;
+    final unselectedBg = Colors.transparent;
+    final selectedFg = isDark ? Colors.black : Colors.white;
+    final unselectedFg = AppColors.textMuted;
+
+    // Interpolate colors based on selection progress
+    final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;
+    final fgColor = Color.lerp(unselectedFg, selectedFg, selectionProgress)!;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _tabController.animateTo(index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: fgColor,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: fgColor,
+                ),
+              ),
             ],
           ),
         ),
@@ -308,7 +405,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     );
   }
 
-  Widget _buildUserIdChip(
+  Widget _buildCompactUserChip(
     BuildContext context,
     bool isDark,
     dynamic user,
@@ -317,76 +414,60 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
     final userId = user?.id as String?;
 
     // Show username if available, otherwise show truncated user ID
-    final displayText = username != null
-        ? '@$username'
-        : (userId != null ? 'ID: ${userId.substring(0, 8)}...' : 'No ID');
-
-    // Copy the full username or user ID
+    final displayText = username ?? (userId?.substring(0, 6) ?? '---');
     final copyText = username ?? userId ?? '';
 
-    final chipBackground = isDark
-        ? AppColors.cyan.withValues(alpha: 0.15)
-        : AppColors.cyan.withValues(alpha: 0.1);
-    final borderColor = AppColors.cyan.withValues(alpha: 0.3);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (copyText.isNotEmpty) {
-              HapticFeedback.lightImpact();
-              Clipboard.setData(ClipboardData(text: copyText));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    username != null
-                        ? 'Username copied: @$username'
-                        : 'User ID copied',
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          if (copyText.isNotEmpty) {
+            HapticFeedback.lightImpact();
+            Clipboard.setData(ClipboardData(text: copyText));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  username != null
+                      ? 'Username copied: @$username'
+                      : 'User ID copied',
                 ),
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: chipBackground,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: borderColor, width: 1),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.cyan.withValues(alpha: 0.15)
+                : AppColors.cyan.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.cyan.withValues(alpha: 0.3),
+              width: 1,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.alternate_email_rounded,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '@$displayText',
+                style: TextStyle(
+                  fontSize: 13,
                   color: AppColors.cyan,
-                  size: 18,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    displayText,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.copy_rounded,
-                  color: AppColors.textMuted,
-                  size: 16,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.copy_rounded,
+                color: AppColors.cyan.withValues(alpha: 0.7),
+                size: 14,
+              ),
+            ],
           ),
         ),
       ),

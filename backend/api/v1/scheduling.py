@@ -169,7 +169,8 @@ class SchedulingHistoryResponse(BaseModel):
 async def get_missed_workouts(
     user_id: str = Query(..., description="User ID"),
     days_back: int = Query(7, ge=1, le=30, description="Days to look back"),
-    include_scheduled: bool = Query(True, description="Include past scheduled workouts not yet marked missed")
+    include_scheduled: bool = Query(True, description="Include past scheduled workouts not yet marked missed"),
+    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC")
 ):
     """
     Get list of missed workouts from the past N days.
@@ -178,23 +179,23 @@ async def get_missed_workouts(
     - Have status 'missed' OR
     - Have scheduled_date in the past and status 'scheduled' (not yet detected as missed)
 
-    Also triggers missed workout detection for the user.
+    Uses timezone_offset to determine the user's "today" correctly.
     """
-    logger.info(f"Getting missed workouts for user {user_id}, days_back={days_back}")
+    logger.info(f"Getting missed workouts for user {user_id}, days_back={days_back}, tz_offset={timezone_offset}")
 
     try:
         db = get_supabase_db()
 
-        # First, detect and mark any newly missed workouts
-        try:
-            db.client.rpc('mark_missed_workouts', {'p_user_id': user_id}).execute()
-        except Exception as e:
-            logger.warning(f"Could not run mark_missed_workouts function: {e}")
-            # Function might not exist yet, continue without it
+        # Calculate user's "today" based on their timezone
+        # timezone_offset is the user's offset from UTC in minutes
+        # e.g., IST (UTC+5:30) sends +330, PST (UTC-8) sends -480
+        # To get user's local time: user_local = utc + offset
+        utc_now = datetime.utcnow()
+        user_now = utc_now + timedelta(minutes=timezone_offset)
+        today = user_now.date()
+        cutoff_date = (user_now - timedelta(days=days_back)).date()
 
-        # Calculate date range
-        cutoff_date = (datetime.now() - timedelta(days=days_back)).date()
-        today = datetime.now().date()
+        logger.info(f"User's today: {today}, cutoff: {cutoff_date}, utc_now: {utc_now}, user_now: {user_now}")
 
         # Build query for missed workouts
         query = db.client.table("workouts").select(
@@ -682,20 +683,35 @@ async def get_skip_reasons():
 
 
 @router.post("/detect-missed")
-async def detect_missed_workouts(user_id: str = Query(..., description="User ID")):
+async def detect_missed_workouts(
+    user_id: str = Query(..., description="User ID"),
+    timezone_offset: int = Query(0, description="User's timezone offset in minutes from UTC (e.g., -480 for PST)")
+):
     """
     Trigger missed workout detection for a user.
 
     Marks any past 'scheduled' workouts as 'missed'.
     Called on app launch or when viewing home screen.
+
+    Uses timezone_offset to determine the user's "today" correctly.
     """
-    logger.info(f"Detecting missed workouts for user {user_id}")
+    logger.info(f"Detecting missed workouts for user {user_id}, tz_offset={timezone_offset}")
 
     try:
         db = get_supabase_db()
-        today = date.today()
+
+        # Calculate user's "today" based on their timezone
+        # timezone_offset is the user's offset from UTC in minutes
+        # e.g., IST (UTC+5:30) sends +330, PST (UTC-8) sends -480
+        # To get user's local time: user_local = utc + offset
+        utc_now = datetime.utcnow()
+        user_now = utc_now + timedelta(minutes=timezone_offset)
+        today = user_now.date()
+
+        logger.info(f"UTC now: {utc_now}, User's local time: {user_now}, User's today: {today}")
 
         # Find and mark missed workouts
+        # Only mark workouts as missed if their scheduled_date is BEFORE user's today
         response = db.client.table("workouts").select("id").eq(
             "user_id", user_id
         ).eq("is_completed", False).eq("status", "scheduled").lt(

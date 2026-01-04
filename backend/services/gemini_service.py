@@ -421,11 +421,30 @@ IMPORTANT:
         # Build scoring criteria based on goals
         scoring_criteria = """
 GOAL-BASED SCORING CRITERIA (score each food 1-10):
-- "build_muscle" / "gain_muscle": High score for high protein (>20g/serving), moderate carbs, quality proteins
-- "lose_weight" / "fat_loss": High score for low calorie density, high fiber, high protein, whole foods
-- "improve_endurance": High score for complex carbs, moderate protein, sustained energy foods
-- "general_fitness" / "stay_active": High score for balanced macros, whole foods, nutrient density
-- "maintain_weight": High score for appropriate calorie density, balanced nutrition
+BE STRICT AND CRITICAL - Most restaurant/fast foods should score 4-6, not 7-8.
+A score of 8-10 should be RARE and only for truly excellent choices.
+
+STRICT SCORING SCALE:
+- 9-10: Exceptional - Homemade whole foods, perfect macro balance, no processed ingredients
+- 7-8: Good - Mostly whole foods, reasonable portions, minor concerns
+- 5-6: Neutral - Average meal, some processed foods, calorie-dense, room for improvement
+- 3-4: Poor - High calorie, processed, missing nutrients, oversized portions
+- 1-2: Very Poor - Fast food, deep fried, excessive sugar/sodium, harmful to goals
+
+GOAL-SPECIFIC SCORING:
+- "build_muscle" / "gain_muscle": Require >25g protein AND quality source for score >7
+- "lose_weight" / "fat_loss": Penalize >500 calories/meal, require fiber >5g for score >7
+- "improve_endurance": Require complex carbs (not refined) for score >7
+- "general_fitness" / "stay_active": Require balanced macros AND whole foods for score >7
+- "maintain_weight": Penalize portions over 600 calories for score >7
+
+AUTOMATIC DEDUCTIONS:
+- Fried foods: -2 points from base score
+- White rice/bread: -1 point (refined carbs)
+- Restaurant portions: -1 point (typically oversized)
+- High sodium (>800mg): -1 point
+- High sugar (>15g): -1 point
+- Processed meats: -1 point
 
 HEALTH FLAGS TO DETECT:
 - High sodium (>500mg/serving): Flag as warning

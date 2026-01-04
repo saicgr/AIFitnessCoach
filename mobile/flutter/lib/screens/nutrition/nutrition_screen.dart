@@ -384,6 +384,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               ),
             ],
           ),
+          // Favorites icon - shows saved/starred foods
+          IconButton(
+            icon: Icon(Icons.star_outline, color: AppColors.yellow),
+            onPressed: () => _showFavoritesSheet(isDark),
+            tooltip: 'Favorites',
+          ),
+          // Analytics icon
+          IconButton(
+            icon: Icon(Icons.insights_outlined, color: textPrimary),
+            onPressed: () => _showAnalyticsSheet(isDark),
+            tooltip: 'Analytics',
+          ),
           IconButton(
             icon: Icon(Icons.settings_outlined, color: textPrimary),
             onPressed: () {
@@ -446,7 +458,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             targets: state.targets,
                             micronutrients: _micronutrientSummary,
                             onRefresh: _loadData,
-                            onLogMeal: () => _showLogMealSheet(isDark),
+                            onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
                             isDark: isDark,
                             calmMode: calmMode,
@@ -487,21 +499,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ),
         ],
       ),
-      // Quick Add FAB - only visible when quickLogMode is enabled
-      floatingActionButton: _userId != null
-          ? Container(
-              key: _logFoodFabKey,
-              child: QuickAddFABSimple(
-                userId: _userId!,
-                onMealLogged: _loadData,
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // FAB removed - using compact meal row and app bar icons instead
     );
   }
 
-  Future<void> _showLogMealSheet(bool isDark) async {
+  Future<void> _showLogMealSheet(bool isDark, {String? mealType}) async {
     // Try local state first, fallback to apiClient
     String? userId = _userId;
     if (userId == null || userId.isEmpty) {
@@ -520,6 +522,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       setState(() => _userId = userId);
     }
 
+    // Convert string to MealType if provided
+    MealType? initialMealType;
+    if (mealType != null) {
+      initialMealType = MealType.values.firstWhere(
+        (t) => t.value == mealType,
+        orElse: () => MealType.lunch,
+      );
+    }
+
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -527,8 +538,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          LogMealSheet(userId: userId!, isDark: isDark),
+      builder: (context) => LogMealSheet(
+        userId: userId!,
+        isDark: isDark,
+        initialMealType: initialMealType,
+      ),
     ).then((_) {
       // Show nav bar when sheet is closed
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -557,6 +571,255 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
       _loadRecipes(_userId!);
     });
+  }
+
+  /// Show analytics in a bottom sheet
+  void _showAnalyticsSheet(bool isDark) {
+    if (_userId == null || _userId!.isEmpty) {
+      debugPrint('Cannot show AnalyticsSheet: userId is null or empty');
+      return;
+    }
+
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Analytics content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      HealthMetricsCard(
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 16),
+                      FoodMoodAnalyticsCard(
+                        userId: _userId!,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+
+  /// Show favorites/saved foods sheet
+  void _showFavoritesSheet(bool isDark) async {
+    if (_userId == null || _userId!.isEmpty) {
+      debugPrint('Cannot show FavoritesSheet: userId is null or empty');
+      return;
+    }
+
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    // Load saved foods
+    final repository = ref.read(nutritionRepositoryProvider);
+    List<SavedFood> savedFoods = [];
+    try {
+      final response = await repository.getSavedFoods(userId: _userId!, limit: 50);
+      savedFoods = response.items;
+    } catch (e) {
+      debugPrint('Error loading saved foods: $e');
+    }
+
+    if (!mounted) return;
+
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.star, color: AppColors.yellow, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Saved Foods',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: savedFoods.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.star_border, size: 48, color: textMuted),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No saved foods yet',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textMuted,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Star foods when logging to save them',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: savedFoods.length,
+                        itemBuilder: (context, index) {
+                          final food = savedFoods[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: teal.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.restaurant, color: teal, size: 20),
+                            ),
+                            title: Text(
+                              food.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: textPrimary,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${food.totalCalories ?? 0} kcal • P: ${food.totalProteinG?.toInt() ?? 0}g',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: textMuted,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(Icons.add_circle, color: teal),
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                // Log the saved food
+                                try {
+                                  await repository.relogSavedFood(
+                                    userId: _userId!,
+                                    savedFoodId: food.id,
+                                    mealType: _getSuggestedMealType(),
+                                  );
+                                  _loadData();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Logged ${food.name}'),
+                                        backgroundColor: teal,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to log: $e')),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+
+  String _getSuggestedMealType() {
+    final hour = DateTime.now().hour;
+    if (hour < 10) return 'breakfast';
+    if (hour < 14) return 'lunch';
+    if (hour < 17) return 'snack';
+    return 'dinner';
   }
 
   Future<void> _logRecipe(RecipeSummary recipe, bool isDark) async {
@@ -792,7 +1055,7 @@ class _DailyTab extends ConsumerStatefulWidget {
   final NutritionTargets? targets;
   final DailyMicronutrientSummary? micronutrients;
   final VoidCallback onRefresh;
-  final VoidCallback onLogMeal;
+  final void Function(String? mealType) onLogMeal;
   final void Function(String) onDeleteMeal;
   final bool isDark;
   final bool calmMode;
@@ -907,137 +1170,153 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     final orange = widget.isDark ? AppColors.orange : AppColorsLight.orange;
     final coral = widget.isDark ? AppColors.coral : AppColorsLight.coral;
 
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: textMuted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.track_changes, color: teal, size: 24),
-                      const SizedBox(width: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.track_changes, color: teal, size: 24),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Your Daily Goals',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                       Text(
-                        'Your Daily Goals',
+                        'Tap settings icon to adjust these targets',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
+                          fontSize: 13,
+                          color: textMuted,
                         ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Goals list
+                      _GoalRow(
+                        icon: Icons.local_fire_department,
+                        label: 'Calories',
+                        value: '${targets?.dailyCalorieTarget ?? 2000}',
+                        unit: 'kcal',
+                        color: teal,
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _GoalRow(
+                        icon: Icons.egg_outlined,
+                        label: 'Protein',
+                        value: '${(targets?.dailyProteinTargetG ?? 150).toInt()}',
+                        unit: 'g',
+                        color: purple,
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _GoalRow(
+                        icon: Icons.grain,
+                        label: 'Carbohydrates',
+                        value: '${(targets?.dailyCarbsTargetG ?? 250).toInt()}',
+                        unit: 'g',
+                        color: orange,
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _GoalRow(
+                        icon: Icons.water_drop_outlined,
+                        label: 'Fat',
+                        value: '${(targets?.dailyFatTargetG ?? 70).toInt()}',
+                        unit: 'g',
+                        color: coral,
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _GoalRow(
+                        icon: Icons.eco_outlined,
+                        label: 'Fiber',
+                        value: '30',
+                        unit: 'g',
+                        color: AppColors.cyan,
+                        isDark: widget.isDark,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap settings icon to adjust these targets',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Goals list
-                  _GoalRow(
-                    icon: Icons.local_fire_department,
-                    label: 'Calories',
-                    value: '${targets?.dailyCalorieTarget ?? 2000}',
-                    unit: 'kcal',
-                    color: teal,
-                    isDark: widget.isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _GoalRow(
-                    icon: Icons.egg_outlined,
-                    label: 'Protein',
-                    value: '${(targets?.dailyProteinTargetG ?? 150).toInt()}',
-                    unit: 'g',
-                    color: purple,
-                    isDark: widget.isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _GoalRow(
-                    icon: Icons.grain,
-                    label: 'Carbohydrates',
-                    value: '${(targets?.dailyCarbsTargetG ?? 250).toInt()}',
-                    unit: 'g',
-                    color: orange,
-                    isDark: widget.isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _GoalRow(
-                    icon: Icons.water_drop_outlined,
-                    label: 'Fat',
-                    value: '${(targets?.dailyFatTargetG ?? 70).toInt()}',
-                    unit: 'g',
-                    color: coral,
-                    isDark: widget.isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _GoalRow(
-                    icon: Icons.eco_outlined,
-                    label: 'Fiber',
-                    value: '30',
-                    unit: 'g',
-                    color: AppColors.cyan,
-                    isDark: widget.isDark,
-                  ),
-                ],
-              ),
-            ),
-
-            // Edit button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/nutrition/settings');
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: teal,
-                    side: BorderSide(color: teal),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.settings, size: 18),
-                  label: const Text('Edit Goals in Settings'),
                 ),
-              ),
-            ),
 
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
+                // Edit button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/nutrition/settings');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: teal,
+                        side: BorderSide(color: teal),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.settings, size: 18),
+                      label: const Text('Edit Goals in Settings'),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+              ],
+            ),
+          ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Show nav bar again when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   /// Show edit targets bottom sheet
@@ -1065,6 +1344,9 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
     final fatController = TextEditingController(
       text: (preferences.targetFatG ?? 65).toString(),
     );
+
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
     showModalBottomSheet(
       context: context,
@@ -1158,7 +1440,10 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      // Show nav bar again when sheet is closed
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
   }
 
   Widget _buildTargetField(
@@ -1222,7 +1507,6 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
   Widget build(BuildContext context) {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final compactMode = prefsState.preferences?.compactTrackerViewEnabled ?? false;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -1238,45 +1522,7 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Compact Energy Header with Quick Add (prioritized at top)
-                _CompactEnergyHeader(
-                  consumed: widget.summary?.totalCalories ?? 0,
-                  target: widget.targets?.dailyCalorieTarget ?? 2000,
-                  onQuickAdd: widget.onLogMeal,
-                  isDark: widget.isDark,
-                  calmMode: widget.calmMode,
-                  summary: widget.summary,
-                  targets: widget.targets,
-                  dynamicTargets: ref.watch(nutritionPreferencesProvider).dynamicTargets,
-                  onMacrosTap: () => _showGoalsInfo(),
-                ).animate().fadeIn().scale(),
-
-                const SizedBox(height: 16),
-
-                // MEAL SECTIONS - MOVED TO TOP for easy logging
-                _MealSections(
-                  meals: widget.summary?.meals ?? [],
-                  onLogMeal: widget.onLogMeal,
-                  onDeleteMeal: widget.onDeleteMeal,
-                  isDark: widget.isDark,
-                  userId: widget.userId,
-                  onFoodSaved: _loadFavorites,
-                ).animate().fadeIn(delay: 50.ms),
-
-                const SizedBox(height: 16),
-
-                // Quick Favorites Bar (inline with meals for quick logging)
-                if (_favorites.isNotEmpty || _isLoadingFavorites) ...[
-                  _QuickFavoritesBar(
-                    favorites: _favorites,
-                    isLoading: _isLoadingFavorites,
-                    onTap: _logFavorite,
-                    isDark: widget.isDark,
-                  ).animate().fadeIn(delay: 75.ms),
-                  const SizedBox(height: 16),
-                ],
-
-                // Nutrition Goals Card - detailed goals with edit/recalculate
+                // 1. GOALS AT TOP - Nutrition Goals Card
                 if (!widget.calmMode)
                   NutritionGoalsCard(
                     targets: widget.targets,
@@ -1284,37 +1530,427 @@ class _DailyTabState extends ConsumerState<_DailyTab> {
                     isDark: widget.isDark,
                     onEdit: () => _showEditTargetsSheet(context),
                     onRecalculate: () => _recalculateTargets(),
-                  ).animate().fadeIn(delay: 100.ms),
+                  ).animate().fadeIn().scale(),
 
-                if (!widget.calmMode) const SizedBox(height: 16),
+                if (!widget.calmMode) const SizedBox(height: 12),
 
-                // Pinned Micronutrients (if available)
+                // 2. PINNED NUTRIENTS - Right after goals
                 if (widget.micronutrients != null &&
                     widget.micronutrients!.pinned.isNotEmpty) ...[
                   _PinnedNutrientsCard(
                     pinned: widget.micronutrients!.pinned,
                     isDark: widget.isDark,
-                  ).animate().fadeIn(delay: 110.ms),
-                  const SizedBox(height: 16),
+                  ).animate().fadeIn(delay: 50.ms),
+                  const SizedBox(height: 12),
                 ],
 
-                // VIEW ANALYTICS - Expandable section to reduce scrolling
-                _ViewAnalyticsSection(
-                  userId: widget.userId,
+                // 3. COMPACT MEAL LOGGING ROW - Quick add buttons for each meal type
+                _CompactMealLogRow(
                   isDark: widget.isDark,
-                  initiallyExpanded: !compactMode && _analyticsExpanded,
-                  onExpandChanged: (expanded) {
-                    setState(() => _analyticsExpanded = expanded);
-                  },
-                ).animate().fadeIn(delay: 125.ms),
+                  onLogMeal: widget.onLogMeal,
+                  meals: widget.summary?.meals ?? [],
+                ).animate().fadeIn(delay: 75.ms),
 
-                const SizedBox(height: 100),
+                const SizedBox(height: 12),
+
+                // 4. LOGGED MEALS ONLY - Show only meals that have been logged
+                if ((widget.summary?.meals ?? []).isNotEmpty) ...[
+                  _LoggedMealsSection(
+                    meals: widget.summary?.meals ?? [],
+                    onDeleteMeal: widget.onDeleteMeal,
+                    isDark: widget.isDark,
+                    userId: widget.userId,
+                    onFoodSaved: _loadFavorites,
+                  ).animate().fadeIn(delay: 100.ms),
+                  const SizedBox(height: 12),
+                ],
+
+                const SizedBox(height: 80),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Show analytics in a bottom sheet
+  void _showAnalyticsSheet(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Hide nav bar while sheet is open
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: textMuted.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Analytics content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      HealthMetricsCard(
+                        isDark: widget.isDark,
+                      ),
+                      const SizedBox(height: 16),
+                      FoodMoodAnalyticsCard(
+                        userId: widget.userId,
+                        isDark: widget.isDark,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).whenComplete(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Compact Meal Log Row - Quick add buttons for each meal type
+// ─────────────────────────────────────────────────────────────────
+
+class _CompactMealLogRow extends StatelessWidget {
+  final bool isDark;
+  final void Function(String mealType) onLogMeal;
+  final List<FoodLog> meals;
+
+  const _CompactMealLogRow({
+    required this.isDark,
+    required this.onLogMeal,
+    required this.meals,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Calculate calories per meal type
+    final mealCalories = <String, int>{};
+    for (final meal in meals) {
+      final type = meal.mealType ?? 'snack';
+      mealCalories[type] = (mealCalories[type] ?? 0) + meal.totalCalories;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _MealQuickAddChip(
+              label: 'Breakfast',
+              emoji: '🍳',
+              mealType: 'breakfast',
+              calories: mealCalories['breakfast'],
+              isDark: isDark,
+              onTap: onLogMeal,
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: textMuted.withValues(alpha: 0.2),
+          ),
+          Expanded(
+            child: _MealQuickAddChip(
+              label: 'Lunch',
+              emoji: '🥗',
+              mealType: 'lunch',
+              calories: mealCalories['lunch'],
+              isDark: isDark,
+              onTap: onLogMeal,
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: textMuted.withValues(alpha: 0.2),
+          ),
+          Expanded(
+            child: _MealQuickAddChip(
+              label: 'Dinner',
+              emoji: '🍽️',
+              mealType: 'dinner',
+              calories: mealCalories['dinner'],
+              isDark: isDark,
+              onTap: onLogMeal,
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 50,
+            color: textMuted.withValues(alpha: 0.2),
+          ),
+          Expanded(
+            child: _MealQuickAddChip(
+              label: 'Snacks',
+              emoji: '🍎',
+              mealType: 'snack',
+              calories: mealCalories['snack'],
+              isDark: isDark,
+              onTap: onLogMeal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MealQuickAddChip extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final String mealType;
+  final int? calories;
+  final bool isDark;
+  final void Function(String mealType) onTap;
+
+  const _MealQuickAddChip({
+    required this.label,
+    required this.emoji,
+    required this.mealType,
+    this.calories,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onTap(mealType),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Emoji with circled + icon
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 28)),
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: teal,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+              ),
+              if (calories != null && calories! > 0)
+                Text(
+                  '${calories}kcal',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: teal,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Logged Meals Section - Shows only meals that have been logged
+// ─────────────────────────────────────────────────────────────────
+
+class _LoggedMealsSection extends StatelessWidget {
+  final List<FoodLog> meals;
+  final void Function(String) onDeleteMeal;
+  final bool isDark;
+  final String userId;
+  final VoidCallback onFoodSaved;
+
+  const _LoggedMealsSection({
+    required this.meals,
+    required this.onDeleteMeal,
+    required this.isDark,
+    required this.userId,
+    required this.onFoodSaved,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Group meals by type
+    final mealsByType = <String, List<FoodLog>>{};
+    for (final meal in meals) {
+      final type = meal.mealType ?? 'snack';
+      mealsByType.putIfAbsent(type, () => []).add(meal);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Today\'s Meals',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...mealsByType.entries.map((entry) {
+            final mealType = entry.key;
+            final typeMeals = entry.value;
+            final totalCal = typeMeals.fold<int>(0, (sum, m) => sum + m.totalCalories);
+            final emoji = _getMealEmoji(mealType);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 16)),
+                      const SizedBox(width: 8),
+                      Text(
+                        mealType.substring(0, 1).toUpperCase() + mealType.substring(1),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '$totalCal kcal',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ...typeMeals.map((meal) => Padding(
+                    padding: const EdgeInsets.only(left: 24, top: 2),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            meal.foodItems.isNotEmpty
+                                ? meal.foodItems.map((f) => f.name).join(', ')
+                                : 'Food',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          '${meal.totalCalories} kcal',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _getMealEmoji(String mealType) {
+    switch (mealType) {
+      case 'breakfast':
+        return '🍳';
+      case 'lunch':
+        return '🥗';
+      case 'dinner':
+        return '🍽️';
+      case 'snack':
+        return '🍎';
+      default:
+        return '🍴';
+    }
   }
 }
 

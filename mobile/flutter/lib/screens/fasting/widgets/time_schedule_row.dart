@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Horizontal row showing start time (tappable) and calculated end time
+/// Compact inline row showing start time (tappable) and calculated end time
 class TimeScheduleRow extends StatelessWidget {
   final DateTime startTime;
   final int durationMinutes;
@@ -25,6 +25,11 @@ class TimeScheduleRow extends StatelessWidget {
 
   String _formatTime(DateTime time) {
     return DateFormat('h:mm a').format(time);
+  }
+
+  String _formatDuration(int minutes) {
+    final hours = minutes ~/ 60;
+    return '${hours}h';
   }
 
   Future<void> _showTimePicker(BuildContext context) async {
@@ -67,135 +72,100 @@ class TimeScheduleRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          // Start Time (tappable)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _showTimePicker(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: GestureDetector(
+        onTap: () => _showTimePicker(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Row(
+            children: [
+              // Start time section
+              Icon(
+                Icons.play_circle_outline_rounded,
+                size: 18,
+                color: purple,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _formatTime(startTime),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.edit_outlined,
+                size: 14,
+                color: textMuted,
+              ),
+
+              // Arrow
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: textMuted,
+                ),
+              ),
+
+              // End time section
+              Icon(
+                Icons.flag_outlined,
+                size: 18,
+                color: AppColors.success,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  _formatTime(endTime),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (_endsNextDay) ...[
+                const SizedBox(width: 2),
+                Text(
+                  '+1',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+
+              const Spacer(),
+
+              // Duration badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cardBorder),
+                  color: purple.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.play_circle_outline_rounded,
-                      size: 20,
-                      color: purple,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'START',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: textMuted,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatTime(startTime),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.edit_outlined,
-                      size: 16,
-                      color: textMuted,
-                    ),
-                  ],
+                child: Text(
+                  _formatDuration(durationMinutes),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: purple,
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-
-          // Arrow indicator
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 20,
-              color: textMuted,
-            ),
-          ),
-
-          // End Time (calculated, read-only)
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.flag_outlined,
-                    size: 20,
-                    color: AppColors.success,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'GOAL',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Text(
-                              _formatTime(endTime),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: textPrimary,
-                              ),
-                            ),
-                            if (_endsNextDay) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                '+1',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: textMuted,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

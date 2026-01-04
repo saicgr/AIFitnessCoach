@@ -21,8 +21,9 @@ import 'widgets/inflammation_analysis_widget.dart';
 import 'widgets/portion_amount_input.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
-Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
-  debugPrint('showLogMealSheet: Starting...');
+/// [initialMealType] - Optional meal type to pre-select (e.g., 'breakfast', 'lunch', 'dinner', 'snack')
+Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType}) async {
+  debugPrint('showLogMealSheet: Starting with initialMealType=$initialMealType');
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
   // Try authStateProvider first, fallback to apiClientProvider for consistency
@@ -43,6 +44,15 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
     return;
   }
 
+  // Convert string to MealType if provided
+  MealType? mealType;
+  if (initialMealType != null) {
+    mealType = MealType.values.firstWhere(
+      (t) => t.value == initialMealType,
+      orElse: () => MealType.lunch,
+    );
+  }
+
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -51,7 +61,11 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => LogMealSheet(userId: userId!, isDark: isDark),
+    builder: (context) => LogMealSheet(
+      userId: userId!,
+      isDark: isDark,
+      initialMealType: mealType,
+    ),
   );
 
   debugPrint('showLogMealSheet: Bottom sheet closed');
@@ -63,8 +77,14 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref) async {
 class LogMealSheet extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
+  final MealType? initialMealType;
 
-  const LogMealSheet({super.key, required this.userId, required this.isDark});
+  const LogMealSheet({
+    super.key,
+    required this.userId,
+    required this.isDark,
+    this.initialMealType,
+  });
 
   @override
   ConsumerState<LogMealSheet> createState() => _LogMealSheetState();
@@ -95,7 +115,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
     super.initState();
     // Describe tab is now at index 0 (default)
     _tabController = TabController(length: 5, vsync: this, initialIndex: 0);
-    _selectedMealType = _getDefaultMealType();
+    // Use initial meal type if provided, otherwise default based on time
+    _selectedMealType = widget.initialMealType ?? _getDefaultMealType();
   }
 
   MealType _getDefaultMealType() {
@@ -413,7 +434,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
       final adjustedCarbs = (_pendingFoodLog!.carbsG * portionMultiplier).round();
       final adjustedFat = (_pendingFoodLog!.fatG * portionMultiplier).round();
 
-      // Log the adjusted food
+      // Calculate adjusted micronutrients (apply portion multiplier)
+      double? adjustMicro(double? value) =>
+          value != null ? value * portionMultiplier : null;
+
+      // Log the adjusted food with micronutrients
       await repository.logAdjustedFood(
         userId: widget.userId,
         mealType: _selectedMealType.value,
@@ -424,6 +449,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
         totalFat: adjustedFat,
         sourceType: 'restaurant',
         notes: 'Portion: ${_getPortionLabel(portionMultiplier)}',
+        // Pass micronutrients from the analysis (with portion adjustment)
+        sodiumMg: adjustMicro(_pendingFoodLog!.sodiumMg),
+        sugarG: adjustMicro(_pendingFoodLog!.sugarG),
+        saturatedFatG: adjustMicro(_pendingFoodLog!.saturatedFatG),
+        cholesterolMg: adjustMicro(_pendingFoodLog!.cholesterolMg),
+        potassiumMg: adjustMicro(_pendingFoodLog!.potassiumMg),
+        vitaminAUg: adjustMicro(_pendingFoodLog!.vitaminAIu != null
+            ? _pendingFoodLog!.vitaminAIu! * 0.3
+            : null), // Convert IU to ug
+        vitaminCMg: adjustMicro(_pendingFoodLog!.vitaminCMg),
+        vitaminDIu: adjustMicro(_pendingFoodLog!.vitaminDIu),
+        calciumMg: adjustMicro(_pendingFoodLog!.calciumMg),
+        ironMg: adjustMicro(_pendingFoodLog!.ironMg),
       );
 
       if (mounted) {
@@ -1211,90 +1249,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet>
           // Loading indicator with streaming progress
           else if (_isLoading)
             Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Animated progress indicator with smooth transitions
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                        builder: (context, value, child) {
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              SizedBox(
-                                width: 80,
-                                height: 80,
-                                child: CircularProgressIndicator(
-                                  value: value > 0 ? value : null,
-                                  strokeWidth: 6,
-                                  color: teal,
-                                  backgroundColor: teal.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              Text(
-                                '$_currentStep/$_totalSteps',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: teal,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Text(
-                          _progressMessage.isNotEmpty ? _progressMessage : 'Analyzing your food...',
-                          key: ValueKey(_progressMessage),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      if (_progressDetail != null) ...[
-                        const SizedBox(height: 8),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Text(
-                            _progressDetail!,
-                            key: ValueKey(_progressDetail),
-                            style: TextStyle(fontSize: 13, color: textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      // Animated progress bar
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeInOut,
-                        builder: (context, value, child) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: value > 0 ? value : null,
-                              backgroundColor: teal.withValues(alpha: 0.2),
-                              valueColor: AlwaysStoppedAnimation(teal),
-                              minHeight: 6,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+              child: _FoodAnalysisLoadingIndicator(
+                currentStep: _currentStep,
+                totalSteps: _totalSteps,
+                progressMessage: _progressMessage,
+                progressDetail: _progressDetail,
+                isDark: isDark,
               ),
             )
           else
@@ -1950,93 +1910,12 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
 
     // Show streaming progress when analyzing
     if (_isAnalyzing) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Animated progress indicator with smooth transitions
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOut,
-                builder: (context, value, child) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: CircularProgressIndicator(
-                          value: value > 0 ? value : null,
-                          strokeWidth: 6,
-                          color: teal,
-                          backgroundColor: teal.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      Text(
-                        '$_currentStep/$_totalSteps',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: teal,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  _progressMessage.isNotEmpty ? _progressMessage : 'Analyzing your food...',
-                  key: ValueKey(_progressMessage),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              if (_progressDetail != null) ...[
-                const SizedBox(height: 8),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    _progressDetail!,
-                    key: ValueKey(_progressDetail),
-                    style: TextStyle(fontSize: 13, color: textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              // Animated progress bar
-              SizedBox(
-                width: 200,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: _totalSteps > 0 ? _currentStep / _totalSteps : 0),
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                  builder: (context, value, child) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: value > 0 ? value : null,
-                        backgroundColor: teal.withValues(alpha: 0.2),
-                        valueColor: AlwaysStoppedAnimation(teal),
-                        minHeight: 6,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+      return _FoodAnalysisLoadingIndicator(
+        currentStep: _currentStep,
+        totalSteps: _totalSteps,
+        progressMessage: _progressMessage,
+        progressDetail: _progressDetail,
+        isDark: isDark,
       );
     }
 
@@ -2145,232 +2024,212 @@ class _DescribeTabState extends ConsumerState<_DescribeTab> {
     final response = _analyzedResponse!;
     final description = widget.controller.text.trim();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with star and edit options
-          Row(
-            children: [
-              const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'AI Estimated Nutrition',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
-                ),
-              ),
-              // Star button to save as favorite
-              IconButton(
-                onPressed: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
-                icon: _isSaving
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: const Color(0xFFFFD93D),
-                        ),
-                      )
-                    : Icon(
-                        _isSaved ? Icons.star : Icons.star_border,
-                        size: 24,
-                        color: _isSaved
-                            ? const Color(0xFFFFD93D)
-                            : textMuted,
-                      ),
-                tooltip: _isSaved ? 'Saved to favorites' : 'Save as favorite',
-              ),
-              TextButton.icon(
-                onPressed: _handleEdit,
-                icon: Icon(Icons.edit, size: 16, color: textMuted),
-                label: Text('Edit', style: TextStyle(color: textMuted)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Mood tracking section
-          _MoodTrackingSection(
-            moodBefore: _moodBefore,
-            moodAfter: _moodAfter,
-            energyLevel: _energyLevel,
-            onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
-            onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
-            onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
-            isDark: isDark,
-          ),
-          const SizedBox(height: 16),
-
-          // Food description
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
+    return Column(
+      children: [
+        // Scrollable content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.restaurant, size: 20, color: textMuted),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    description,
-                    style: TextStyle(color: textPrimary, fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                // Compact header row
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Color(0xFFFFD93D), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AI Estimated',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+                    ),
+                    const Spacer(),
+                    // Star button
+                    GestureDetector(
+                      onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
+                      child: _isSaving
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: const Color(0xFFFFD93D)),
+                            )
+                          : Icon(
+                              _isSaved ? Icons.star : Icons.star_border,
+                              size: 20,
+                              color: _isSaved ? const Color(0xFFFFD93D) : textMuted,
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: _handleEdit,
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text('Edit', style: TextStyle(fontSize: 12, color: textMuted)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // COMPACT MACROS ROW - All 4 in one row with animated calories
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Row(
+                    children: [
+                      // Animated calorie display
+                      _AnimatedCalorieChip(
+                        calories: response.totalCalories,
+                        color: caloriesColor,
+                      ),
+                      _CompactMacroChip(
+                        icon: Icons.fitness_center,
+                        value: '${response.proteinG.toStringAsFixed(0)}g',
+                        unit: 'P',
+                        color: proteinColor,
+                      ),
+                      _CompactMacroChip(
+                        icon: Icons.grain,
+                        value: '${response.carbsG.toStringAsFixed(0)}g',
+                        unit: 'C',
+                        color: carbsColor,
+                      ),
+                      _CompactMacroChip(
+                        icon: Icons.opacity,
+                        value: '${response.fatG.toStringAsFixed(0)}g',
+                        unit: 'F',
+                        color: fatColor,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Food description with inline Goal Score
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Food description
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: elevated,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.restaurant, size: 16, color: textMuted),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                description,
+                                style: TextStyle(color: textPrimary, fontSize: 13),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Compact Goal Score (if available)
+                    if (response.overallMealScore != null) ...[
+                      const SizedBox(width: 8),
+                      _CompactGoalScore(
+                        score: response.overallMealScore!,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Mood tracking (compact)
+                _MoodTrackingSection(
+                  moodBefore: _moodBefore,
+                  moodAfter: _moodAfter,
+                  energyLevel: _energyLevel,
+                  onMoodBeforeChanged: (mood) => setState(() => _moodBefore = mood),
+                  onMoodAfterChanged: (mood) => setState(() => _moodAfter = mood),
+                  onEnergyLevelChanged: (level) => setState(() => _energyLevel = level),
+                  isDark: isDark,
+                ),
+                const SizedBox(height: 12),
+
+                // Collapsible Food Items Section (with updated colors)
+                if (response.foodItems.isNotEmpty)
+                  _CollapsibleFoodItemsSection(
+                    foodItems: response.foodItemsRanked,
+                    isDark: isDark,
+                  ),
+                if (response.foodItems.isNotEmpty)
+                  const SizedBox(height: 12),
+
+                // Micronutrients Section (collapsible)
+                if (_hasMicronutrients(response))
+                  _MicronutrientsSection(response: response, isDark: isDark),
+                if (_hasMicronutrients(response))
+                  const SizedBox(height: 12),
+
+                // AI Suggestion Card (if available)
+                if (response.aiSuggestion != null ||
+                    (response.encouragements != null && response.encouragements!.isNotEmpty) ||
+                    (response.warnings != null && response.warnings!.isNotEmpty))
+                  _AISuggestionCard(
+                    suggestion: response.aiSuggestion,
+                    encouragements: response.encouragements,
+                    warnings: response.warnings,
+                    recommendedSwap: response.recommendedSwap,
+                    isDark: isDark,
+                  ),
+
+                Text(
+                  'AI estimates based on your description',
+                  style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+        ),
 
-          // Overall Meal Score Card (if available)
-          if (response.overallMealScore != null || response.goalAlignmentPercentage != null)
-            _OverallMealScoreCard(
-              score: response.overallMealScore,
-              alignmentPercentage: response.goalAlignmentPercentage,
-              isDark: isDark,
-            ),
-          if (response.overallMealScore != null || response.goalAlignmentPercentage != null)
-            const SizedBox(height: 16),
-
-          // Collapsible Food Items Section
-          if (response.foodItems.isNotEmpty)
-            _CollapsibleFoodItemsSection(
-              foodItems: response.foodItemsRanked,
-              isDark: isDark,
-            ),
-          if (response.foodItems.isNotEmpty)
-            const SizedBox(height: 16),
-
-          // Nutrition cards
-          _RainbowNutritionCard(
-            icon: Icons.local_fire_department,
-            label: 'Calories',
-            value: '${response.totalCalories}',
-            unit: 'kcal',
-            color: caloriesColor,
-            isDark: isDark,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _RainbowNutritionCard(
-                  icon: Icons.fitness_center,
-                  label: 'Protein',
-                  value: response.proteinG.toStringAsFixed(1),
-                  unit: 'g',
-                  color: proteinColor,
-                  isDark: isDark,
-                  compact: true,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _RainbowNutritionCard(
-                  icon: Icons.grain,
-                  label: 'Carbs',
-                  value: response.carbsG.toStringAsFixed(1),
-                  unit: 'g',
-                  color: carbsColor,
-                  isDark: isDark,
-                  compact: true,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _RainbowNutritionCard(
-                  icon: Icons.opacity,
-                  label: 'Fat',
-                  value: response.fatG.toStringAsFixed(1),
-                  unit: 'g',
-                  color: fatColor,
-                  isDark: isDark,
-                  compact: true,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _RainbowNutritionCard(
-                  icon: Icons.eco,
-                  label: 'Fiber',
-                  value: (response.fiberG ?? 0).toStringAsFixed(1),
-                  unit: 'g',
-                  color: fiberColor,
-                  isDark: isDark,
-                  compact: true,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Micronutrients Section (collapsible)
-          if (_hasMicronutrients(response))
-            _MicronutrientsSection(response: response, isDark: isDark),
-          if (_hasMicronutrients(response))
-            const SizedBox(height: 16),
-
-          // AI Suggestion Card (if available)
-          if (response.aiSuggestion != null ||
-              (response.encouragements != null && response.encouragements!.isNotEmpty) ||
-              (response.warnings != null && response.warnings!.isNotEmpty))
-            _AISuggestionCard(
-              suggestion: response.aiSuggestion,
-              encouragements: response.encouragements,
-              warnings: response.warnings,
-              recommendedSwap: response.recommendedSwap,
-              isDark: isDark,
-            ),
-          if (response.aiSuggestion != null ||
-              (response.encouragements != null && response.encouragements!.isNotEmpty) ||
-              (response.warnings != null && response.warnings!.isNotEmpty))
-            const SizedBox(height: 16),
-
-          Text(
-            'These values are AI estimates based on your description.',
-            style: TextStyle(fontSize: 12, color: textMuted, fontStyle: FontStyle.italic),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          // Log button
-          SizedBox(
+        // Fixed Log button at bottom
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _isSaving ? null : _handleLog,
               icon: _isSaving
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     )
-                  : const Icon(Icons.check, size: 20),
+                  : const Icon(Icons.check, size: 18),
               label: Text(
                 _isSaving ? 'Saving...' : 'Log This Meal',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6BCB77),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -3477,6 +3336,209 @@ class _RainbowNutritionCard extends StatelessWidget {
 // Overall Meal Score Card
 // ─────────────────────────────────────────────────────────────────
 
+/// Animated calorie chip with count-up and shimmer effect
+class _AnimatedCalorieChip extends StatefulWidget {
+  final int calories;
+  final Color color;
+
+  const _AnimatedCalorieChip({
+    required this.calories,
+    required this.color,
+  });
+
+  @override
+  State<_AnimatedCalorieChip> createState() => _AnimatedCalorieChipState();
+}
+
+class _AnimatedCalorieChipState extends State<_AnimatedCalorieChip>
+    with TickerProviderStateMixin {
+  late AnimationController _countController;
+  late AnimationController _shimmerController;
+  late Animation<int> _countAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Count-up animation
+    _countController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _countAnimation = IntTween(begin: 0, end: widget.calories).animate(
+      CurvedAnimation(parent: _countController, curve: Curves.easeOutCubic),
+    );
+
+    // Shimmer animation
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+
+    _countController.forward();
+  }
+
+  @override
+  void dispose() {
+    _countController.dispose();
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.local_fire_department, size: 16, color: widget.color),
+          const SizedBox(height: 4),
+          AnimatedBuilder(
+            animation: Listenable.merge([_countAnimation, _shimmerController]),
+            builder: (context, child) {
+              return ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.color,
+                      widget.color.withValues(alpha: 0.5),
+                      Colors.white,
+                      widget.color.withValues(alpha: 0.5),
+                      widget.color,
+                    ],
+                    stops: [
+                      0.0,
+                      _shimmerController.value - 0.3,
+                      _shimmerController.value,
+                      _shimmerController.value + 0.3,
+                      1.0,
+                    ].map((s) => s.clamp(0.0, 1.0)).toList(),
+                  ).createShader(bounds);
+                },
+                blendMode: BlendMode.srcIn,
+                child: Text(
+                  '${_countAnimation.value}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: widget.color,
+                  ),
+                ),
+              );
+            },
+          ),
+          Text(
+            'kcal',
+            style: TextStyle(
+              fontSize: 9,
+              color: widget.color.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact macro chip for the single-row macro display
+class _CompactMacroChip extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String unit;
+  final Color color;
+
+  const _CompactMacroChip({
+    required this.icon,
+    required this.value,
+    required this.unit,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          if (unit.isNotEmpty)
+            Text(
+              unit,
+              style: TextStyle(
+                fontSize: 10,
+                color: color.withValues(alpha: 0.7),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact goal score badge
+class _CompactGoalScore extends StatelessWidget {
+  final int score;
+  final bool isDark;
+
+  const _CompactGoalScore({
+    required this.score,
+    required this.isDark,
+  });
+
+  Color _getScoreColor() {
+    if (score >= 8) return const Color(0xFF6BCB77);  // Green
+    if (score >= 5) return const Color(0xFF5DADE2);  // Blue instead of yellow
+    return const Color(0xFFFF6B6B);  // Red
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scoreColor = _getScoreColor();
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: scoreColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: scoreColor, width: 2),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$score',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: scoreColor,
+            ),
+          ),
+          Text(
+            '/10',
+            style: TextStyle(
+              fontSize: 8,
+              color: scoreColor.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _OverallMealScoreCard extends StatelessWidget {
   final int? score;
   final int? alignmentPercentage;
@@ -3731,7 +3793,7 @@ class _FoodItemRankingCard extends StatelessWidget {
   Color _getScoreColor() {
     if (item.goalScore == null) return Colors.grey;
     if (item.goalScore! >= 8) return const Color(0xFF6BCB77);  // Green
-    if (item.goalScore! >= 5) return const Color(0xFFFFD93D);  // Yellow
+    if (item.goalScore! >= 5) return const Color(0xFF5DADE2);  // Blue (was yellow - hard to see)
     return const Color(0xFFFF6B6B);  // Red
   }
 
@@ -4673,6 +4735,311 @@ class _ConfidenceIndicator extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Animated Food Analysis Loading Indicator
+// ─────────────────────────────────────────────────────────────────
+
+/// A dynamic loading indicator that feels alive even when waiting
+class _FoodAnalysisLoadingIndicator extends StatefulWidget {
+  final int currentStep;
+  final int totalSteps;
+  final String progressMessage;
+  final String? progressDetail;
+  final bool isDark;
+
+  const _FoodAnalysisLoadingIndicator({
+    required this.currentStep,
+    required this.totalSteps,
+    required this.progressMessage,
+    this.progressDetail,
+    required this.isDark,
+  });
+
+  @override
+  State<_FoodAnalysisLoadingIndicator> createState() => _FoodAnalysisLoadingIndicatorState();
+}
+
+class _FoodAnalysisLoadingIndicatorState extends State<_FoodAnalysisLoadingIndicator>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _rotateController;
+  late Animation<double> _pulseAnimation;
+  int _tipIndex = 0;
+  int _dotCount = 0;
+
+  static const _tips = [
+    'AI is identifying ingredients',
+    'Calculating nutritional values',
+    'Checking portion sizes',
+    'Almost there',
+    'Processing your meal',
+    'Analyzing macros',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pulse animation for the progress ring
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    // Rotation for the outer indicator
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+
+    // Cycle through tips every 2.5 seconds
+    _startTipCycler();
+    // Animate dots
+    _startDotAnimator();
+  }
+
+  void _startTipCycler() {
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) {
+        setState(() {
+          _tipIndex = (_tipIndex + 1) % _tips.length;
+        });
+        _startTipCycler();
+      }
+    });
+  }
+
+  void _startDotAnimator() {
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        setState(() {
+          _dotCount = (_dotCount + 1) % 4;
+        });
+        _startDotAnimator();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _rotateController.dispose();
+    super.dispose();
+  }
+
+  String get _dots => '.' * _dotCount + ' ' * (3 - _dotCount);
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final progress = widget.totalSteps > 0 ? widget.currentStep / widget.totalSteps : 0.0;
+
+    // Use the backend message if available, otherwise cycle through tips
+    final displayMessage = widget.progressMessage.isNotEmpty
+        ? widget.progressMessage
+        : _tips[_tipIndex];
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Animated progress ring
+            AnimatedBuilder(
+              animation: Listenable.merge([_pulseAnimation, _rotateController]),
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Rotating outer ring (shows activity)
+                        Transform.rotate(
+                          angle: _rotateController.value * 2 * 3.14159,
+                          child: SizedBox(
+                            width: 100,
+                            height: 100,
+                            child: CircularProgressIndicator(
+                              value: null, // Indeterminate
+                              strokeWidth: 3,
+                              color: teal.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        // Progress ring
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: progress),
+                            duration: const Duration(milliseconds: 500),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, child) {
+                              return CircularProgressIndicator(
+                                value: value > 0 ? value : null,
+                                strokeWidth: 6,
+                                color: teal,
+                                backgroundColor: teal.withValues(alpha: 0.15),
+                                strokeCap: StrokeCap.round,
+                              );
+                            },
+                          ),
+                        ),
+                        // Step counter with pulse
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${widget.currentStep}/${widget.totalSteps}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: teal,
+                              ),
+                            ),
+                            Text(
+                              'steps',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 32),
+
+            // Main message with animated dots
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                '$displayMessage$_dots',
+                key: ValueKey('$displayMessage$_dotCount'),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            // Progress detail if available
+            if (widget.progressDetail != null) ...[
+              const SizedBox(height: 8),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  widget.progressDetail!,
+                  key: ValueKey(widget.progressDetail),
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 24),
+
+            // Animated progress bar with shimmer effect
+            SizedBox(
+              width: 200,
+              child: Stack(
+                children: [
+                  // Background track
+                  Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  // Progress fill
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: progress),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return FractionallySizedBox(
+                        widthFactor: value > 0 ? value : 0.0,
+                        child: Container(
+                          height: 6,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                teal,
+                                teal.withValues(alpha: 0.7),
+                                teal,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Shimmer overlay (activity indicator)
+                  AnimatedBuilder(
+                    animation: _rotateController,
+                    builder: (context, child) {
+                      return Positioned(
+                        left: _rotateController.value * 180,
+                        child: Container(
+                          width: 20,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withValues(alpha: 0.3),
+                                Colors.transparent,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Subtle hint that it's working
+            Text(
+              'This usually takes a few seconds',
+              style: TextStyle(
+                fontSize: 12,
+                color: textMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

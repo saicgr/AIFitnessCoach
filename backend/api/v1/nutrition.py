@@ -214,6 +214,36 @@ class LogDirectRequest(BaseModel):
     total_fiber: Optional[int] = None
     source_type: str = "restaurant"  # restaurant, manual, adjusted
     notes: Optional[str] = None
+    # Micronutrients
+    sodium_mg: Optional[float] = None
+    sugar_g: Optional[float] = None
+    saturated_fat_g: Optional[float] = None
+    cholesterol_mg: Optional[float] = None
+    potassium_mg: Optional[float] = None
+    vitamin_a_ug: Optional[float] = None
+    vitamin_c_mg: Optional[float] = None
+    vitamin_d_iu: Optional[float] = None
+    vitamin_e_mg: Optional[float] = None
+    vitamin_k_ug: Optional[float] = None
+    vitamin_b1_mg: Optional[float] = None
+    vitamin_b2_mg: Optional[float] = None
+    vitamin_b3_mg: Optional[float] = None
+    vitamin_b5_mg: Optional[float] = None
+    vitamin_b6_mg: Optional[float] = None
+    vitamin_b7_ug: Optional[float] = None
+    vitamin_b9_ug: Optional[float] = None
+    vitamin_b12_ug: Optional[float] = None
+    calcium_mg: Optional[float] = None
+    iron_mg: Optional[float] = None
+    magnesium_mg: Optional[float] = None
+    zinc_mg: Optional[float] = None
+    phosphorus_mg: Optional[float] = None
+    copper_mg: Optional[float] = None
+    manganese_mg: Optional[float] = None
+    selenium_ug: Optional[float] = None
+    choline_mg: Optional[float] = None
+    omega3_g: Optional[float] = None
+    omega6_g: Optional[float] = None
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -1278,6 +1308,21 @@ async def log_food_direct(request: LogDirectRequest):
     try:
         db = get_supabase_db()
 
+        # Build micronutrients dict from request
+        micronutrients = {}
+        micronutrient_fields = [
+            'sodium_mg', 'sugar_g', 'saturated_fat_g', 'cholesterol_mg', 'potassium_mg',
+            'vitamin_a_ug', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg', 'vitamin_k_ug',
+            'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg', 'vitamin_b6_mg',
+            'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
+            'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
+            'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+        ]
+        for field in micronutrient_fields:
+            value = getattr(request, field, None)
+            if value is not None:
+                micronutrients[field] = value
+
         # Create food log directly
         created_log = db.create_food_log(
             user_id=request.user_id,
@@ -1290,6 +1335,7 @@ async def log_food_direct(request: LogDirectRequest):
             fiber_g=request.total_fiber,
             ai_feedback=f"Logged via {request.source_type}" + (f": {request.notes}" if request.notes else ""),
             health_score=None,  # No AI scoring for direct logs
+            **micronutrients,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
@@ -1434,6 +1480,25 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
             warnings = food_analysis.get('warnings', [])
             recommended_swap = food_analysis.get('recommended_swap')
 
+            # Extract micronutrients from analysis
+            micronutrients = {}
+            micronutrient_keys = [
+                'sodium_mg', 'sugar_g', 'saturated_fat_g', 'cholesterol_mg', 'potassium_mg',
+                'vitamin_a_ug', 'vitamin_a_iu', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg',
+                'vitamin_k_ug', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg',
+                'vitamin_b6_mg', 'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
+                'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
+                'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+            ]
+            for key in micronutrient_keys:
+                value = food_analysis.get(key)
+                if value is not None:
+                    # Convert vitamin_a_iu to vitamin_a_ug (1 IU = 0.3 ug retinol)
+                    if key == 'vitamin_a_iu':
+                        micronutrients['vitamin_a_ug'] = float(value) * 0.3
+                    else:
+                        micronutrients[key] = float(value) if value else None
+
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
 
@@ -1448,6 +1513,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest):
                 fiber_g=fiber_g,
                 ai_feedback=ai_suggestion,
                 health_score=health_score,
+                **micronutrients,
             )
 
             food_log_id = created_log.get('id') if created_log else "unknown"
@@ -1738,6 +1804,25 @@ async def log_food_from_image_streaming(
             fat_g = food_analysis.get('fat_g', 0.0)
             fiber_g = food_analysis.get('fiber_g', 0.0)
 
+            # Extract micronutrients from analysis
+            micronutrients = {}
+            micronutrient_keys = [
+                'sodium_mg', 'sugar_g', 'saturated_fat_g', 'cholesterol_mg', 'potassium_mg',
+                'vitamin_a_ug', 'vitamin_a_iu', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg',
+                'vitamin_k_ug', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b5_mg',
+                'vitamin_b6_mg', 'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
+                'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
+                'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+            ]
+            for key in micronutrient_keys:
+                value = food_analysis.get(key)
+                if value is not None:
+                    # Convert vitamin_a_iu to vitamin_a_ug (1 IU = 0.3 ug retinol)
+                    if key == 'vitamin_a_iu':
+                        micronutrients['vitamin_a_ug'] = float(value) * 0.3
+                    else:
+                        micronutrients[key] = float(value) if value else None
+
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
 
@@ -1753,6 +1838,7 @@ async def log_food_from_image_streaming(
                 fiber_g=fiber_g,
                 ai_feedback=food_analysis.get('feedback'),
                 health_score=None,
+                **micronutrients,
             )
 
             food_log_id = created_log.get('id') if created_log else "unknown"

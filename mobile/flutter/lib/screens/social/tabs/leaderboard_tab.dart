@@ -5,6 +5,7 @@ import '../../../data/services/leaderboard_service.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/leaderboard_locked_state.dart';
 import '../widgets/leaderboard_rank_card.dart';
@@ -156,21 +157,15 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     return Column(
       children: [
         // Leaderboard Type Tabs
-        Container(
-          color: backgroundColor,
-          child: TabBar(
-            controller: _typeTabController,
-            indicatorColor: AppColors.orange,
-            labelColor: isDark ? Colors.white : Colors.black,
-            unselectedLabelColor: AppColors.textMuted,
-            isScrollable: true,
-            tabs: [
-              _buildTypeTab('🏆', 'Masters'),
-              _buildTypeTab('🏋️', 'Volume'),
-              _buildTypeTab('🔥', 'Streaks'),
-              _buildTypeTab('⚡', 'This Week'),
-            ],
-          ),
+        SegmentedTabBar(
+          controller: _typeTabController,
+          showIcons: false,
+          tabs: const [
+            SegmentedTabItem(label: '🏆 Masters'),
+            SegmentedTabItem(label: '🏋️ Volume'),
+            SegmentedTabItem(label: '🔥 Streaks'),
+            SegmentedTabItem(label: '⚡ Week'),
+          ],
         ),
 
         // Filter Chips
@@ -183,19 +178,6 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
               : _buildLeaderboardList(context, isDark),
         ),
       ],
-    );
-  }
-
-  Widget _buildTypeTab(String emoji, String label) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 6),
-          Text(label),
-        ],
-      ),
     );
   }
 

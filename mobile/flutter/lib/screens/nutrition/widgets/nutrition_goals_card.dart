@@ -189,8 +189,10 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
-          // Adjustment reason if dynamic targets are active
-          if (dynamicTargets?.adjustmentReason != null) ...[
+          // Adjustment reason - only show if it's NOT the default "base_targets"
+          // (i.e., only show when there's an actual adjustment like "training_day" or "rest_day")
+          if (dynamicTargets?.adjustmentReason != null &&
+              dynamicTargets!.adjustmentReason != 'base_targets') ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
@@ -204,7 +206,7 @@ class NutritionGoalsCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      dynamicTargets?.adjustmentReason ?? '',
+                      _getAdjustmentReasonDisplay(dynamicTargets!.adjustmentReason),
                       style: TextStyle(
                         fontSize: 12,
                         color: teal,
@@ -234,6 +236,19 @@ class NutritionGoalsCard extends ConsumerWidget {
         return '🥗 Eat Healthier';
       case NutritionGoal.recomposition:
         return '🎯 Body Recomposition';
+    }
+  }
+
+  String _getAdjustmentReasonDisplay(String reason) {
+    switch (reason) {
+      case 'training_day':
+        return 'Targets adjusted for your workout today';
+      case 'rest_day':
+        return 'Rest day - lower calorie target';
+      case 'fasting_day':
+        return 'Fasting day - targets adjusted';
+      default:
+        return reason;
     }
   }
 }

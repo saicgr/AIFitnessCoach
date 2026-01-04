@@ -196,3 +196,40 @@ Map<String, dynamic> _$FastingStatsToJson(FastingStats instance) =>
       'longest_fast_minutes': instance.longestFastMinutes,
       'total_fasting_minutes': instance.totalFastingMinutes,
     };
+
+FastingScore _$FastingScoreFromJson(Map<String, dynamic> json) => FastingScore(
+  id: json['id'] as String?,
+  userId: json['user_id'] as String,
+  score: (json['score'] as num).toInt(),
+  completionComponent: (json['completion_component'] as num?)?.toDouble() ?? 0,
+  streakComponent: (json['streak_component'] as num?)?.toDouble() ?? 0,
+  durationComponent: (json['duration_component'] as num?)?.toDouble() ?? 0,
+  weeklyComponent: (json['weekly_component'] as num?)?.toDouble() ?? 0,
+  protocolComponent: (json['protocol_component'] as num?)?.toDouble() ?? 0,
+  currentStreak: (json['current_streak'] as num?)?.toInt() ?? 0,
+  fastsThisWeek: (json['fasts_this_week'] as num?)?.toInt() ?? 0,
+  weeklyGoal: (json['weekly_goal'] as num?)?.toInt() ?? 5,
+  completionRate: (json['completion_rate'] as num?)?.toDouble() ?? 0,
+  avgDurationMinutes: (json['avg_duration_minutes'] as num?)?.toInt() ?? 0,
+  recordedAt: json['recorded_at'] == null
+      ? null
+      : DateTime.parse(json['recorded_at'] as String),
+);
+
+Map<String, dynamic> _$FastingScoreToJson(FastingScore instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'score': instance.score,
+      'completion_component': instance.completionComponent,
+      'streak_component': instance.streakComponent,
+      'duration_component': instance.durationComponent,
+      'weekly_component': instance.weeklyComponent,
+      'protocol_component': instance.protocolComponent,
+      'current_streak': instance.currentStreak,
+      'fasts_this_week': instance.fastsThisWeek,
+      'weekly_goal': instance.weeklyGoal,
+      'completion_rate': instance.completionRate,
+      'avg_duration_minutes': instance.avgDurationMinutes,
+      'recorded_at': instance.recordedAt?.toIso8601String(),
+    };

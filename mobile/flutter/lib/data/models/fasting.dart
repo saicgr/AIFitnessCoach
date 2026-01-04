@@ -537,6 +537,170 @@ class FastingStats {
   Map<String, dynamic> toJson() => _$FastingStatsToJson(this);
 }
 
+/// Fasting score with breakdown components
+@JsonSerializable()
+class FastingScore {
+  final String? id;
+  @JsonKey(name: 'user_id')
+  final String userId;
+
+  /// Overall score 0-100
+  final int score;
+
+  /// Individual components (each 0-100 before weighting)
+  @JsonKey(name: 'completion_component')
+  final double completionComponent; // 30% weight
+  @JsonKey(name: 'streak_component')
+  final double streakComponent; // 25% weight
+  @JsonKey(name: 'duration_component')
+  final double durationComponent; // 20% weight
+  @JsonKey(name: 'weekly_component')
+  final double weeklyComponent; // 15% weight
+  @JsonKey(name: 'protocol_component')
+  final double protocolComponent; // 10% weight
+
+  /// Snapshot stats
+  @JsonKey(name: 'current_streak')
+  final int currentStreak;
+  @JsonKey(name: 'fasts_this_week')
+  final int fastsThisWeek;
+  @JsonKey(name: 'weekly_goal')
+  final int weeklyGoal;
+  @JsonKey(name: 'completion_rate')
+  final double completionRate;
+  @JsonKey(name: 'avg_duration_minutes')
+  final int avgDurationMinutes;
+
+  @JsonKey(name: 'recorded_at')
+  final DateTime? recordedAt;
+
+  const FastingScore({
+    this.id,
+    required this.userId,
+    required this.score,
+    this.completionComponent = 0,
+    this.streakComponent = 0,
+    this.durationComponent = 0,
+    this.weeklyComponent = 0,
+    this.protocolComponent = 0,
+    this.currentStreak = 0,
+    this.fastsThisWeek = 0,
+    this.weeklyGoal = 5,
+    this.completionRate = 0,
+    this.avgDurationMinutes = 0,
+    this.recordedAt,
+  });
+
+  /// Get score tier label
+  String get tierLabel {
+    if (score >= 90) return 'Elite';
+    if (score >= 75) return 'Advanced';
+    if (score >= 60) return 'Intermediate';
+    if (score >= 40) return 'Beginner';
+    return 'Starting';
+  }
+
+  /// Get tier color
+  Color get tierColor {
+    if (score >= 90) return const Color(0xFFFFD700); // Gold
+    if (score >= 75) return const Color(0xFF9C27B0); // Purple
+    if (score >= 60) return const Color(0xFF2196F3); // Blue
+    if (score >= 40) return const Color(0xFF4CAF50); // Green
+    return const Color(0xFF9E9E9E); // Gray
+  }
+
+  /// Calculate score from stats and streak
+  static FastingScore calculate({
+    required String userId,
+    required FastingStats stats,
+    required FastingStreak streak,
+    double avgProtocolDifficulty = 0.5, // 0-1 scale, 0.5 = 16:8
+  }) {
+    // 1. Completion component (30%): Based on completion rate
+    final completionComp = stats.completionRate.clamp(0.0, 100.0);
+
+    // 2. Streak component (25%): Capped at 30 days = 100%
+    final streakComp = ((streak.currentStreak / 30) * 100).clamp(0.0, 100.0);
+
+    // 3. Duration component (20%): Avg duration vs 16h goal
+    // 16h = 100%, scale linearly
+    final avgHours = stats.avgDurationMinutes / 60;
+    final durationComp = ((avgHours / 16) * 100).clamp(0.0, 100.0);
+
+    // 4. Weekly component (15%): Fasts this week vs goal
+    final weeklyGoal = streak.weeklyGoalFasts > 0 ? streak.weeklyGoalFasts : 5;
+    final weeklyComp =
+        ((streak.fastsThisWeek / weeklyGoal) * 100).clamp(0.0, 100.0);
+
+    // 5. Protocol component (10%): Difficulty multiplier
+    // 12h = 0.3, 16h = 0.5, 18h = 0.6, 20h = 0.75, 24h+ = 1.0
+    final protocolComp = (avgProtocolDifficulty * 100).clamp(0.0, 100.0);
+
+    // Calculate weighted score
+    final totalScore = (completionComp * 0.30 +
+            streakComp * 0.25 +
+            durationComp * 0.20 +
+            weeklyComp * 0.15 +
+            protocolComp * 0.10)
+        .round()
+        .clamp(0, 100);
+
+    return FastingScore(
+      userId: userId,
+      score: totalScore,
+      completionComponent: completionComp,
+      streakComponent: streakComp,
+      durationComponent: durationComp,
+      weeklyComponent: weeklyComp,
+      protocolComponent: protocolComp,
+      currentStreak: streak.currentStreak,
+      fastsThisWeek: streak.fastsThisWeek,
+      weeklyGoal: weeklyGoal,
+      completionRate: stats.completionRate,
+      avgDurationMinutes: stats.avgDurationMinutes.round(),
+      recordedAt: DateTime.now(),
+    );
+  }
+
+  factory FastingScore.fromJson(Map<String, dynamic> json) =>
+      _$FastingScoreFromJson(json);
+  Map<String, dynamic> toJson() => _$FastingScoreToJson(this);
+}
+
+/// Score trend info
+class FastingScoreTrend {
+  final int currentScore;
+  final int previousScore;
+  final int scoreChange;
+  final String trend; // 'up', 'down', 'stable'
+
+  const FastingScoreTrend({
+    required this.currentScore,
+    required this.previousScore,
+    required this.scoreChange,
+    required this.trend,
+  });
+
+  bool get isUp => trend == 'up';
+  bool get isDown => trend == 'down';
+  bool get isStable => trend == 'stable';
+
+  String get changeText {
+    if (scoreChange == 0) return 'No change';
+    final sign = scoreChange > 0 ? '+' : '';
+    return '$sign$scoreChange from last week';
+  }
+
+  factory FastingScoreTrend.fromJson(Map<String, dynamic> json) {
+    return FastingScoreTrend(
+      currentScore: json['current_score'] as int? ?? 0,
+      previousScore: json['previous_score'] as int? ?? 0,
+      scoreChange: json['score_change'] as int? ?? 0,
+      trend: json['trend'] as String? ?? 'stable',
+    );
+  }
+}
+
 /// Result of ending a fast
 class FastEndResult {
   final FastingRecord record;

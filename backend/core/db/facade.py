@@ -524,19 +524,21 @@ class SupabaseDB:
         fiber_g: float = 0,
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
+        **micronutrients,
     ) -> Optional[Dict[str, Any]]:
         """Create a food log entry from AI analysis."""
         return self._nutrition_db.create_food_log(
-            user_id,
-            meal_type,
-            food_items,
-            total_calories,
-            protein_g,
-            carbs_g,
-            fat_g,
-            fiber_g,
-            ai_feedback,
-            health_score,
+            user_id=user_id,
+            meal_type=meal_type,
+            food_items=food_items,
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            ai_feedback=ai_feedback,
+            health_score=health_score,
+            **micronutrients,
         )
 
     def get_food_log(self, log_id: str) -> Optional[Dict[str, Any]]:

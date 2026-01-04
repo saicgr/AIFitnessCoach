@@ -180,12 +180,16 @@ class SchedulingRepository {
     try {
       debugPrint('Getting missed workouts for user: $userId');
 
+      // Get the user's timezone offset in minutes
+      final timezoneOffset = DateTime.now().timeZoneOffset.inMinutes;
+
       final response = await _apiClient.get(
         '${ApiConstants.scheduling}/missed',
         queryParameters: {
           'user_id': userId,
           'days_back': daysBack,
           'include_scheduled': includeScheduled,
+          'timezone_offset': timezoneOffset,
         },
       );
 
@@ -322,9 +326,15 @@ class SchedulingRepository {
   /// Trigger missed workout detection
   Future<int> detectMissedWorkouts(String userId) async {
     try {
+      // Get the user's timezone offset in minutes
+      final timezoneOffset = DateTime.now().timeZoneOffset.inMinutes;
+
       final response = await _apiClient.post(
         '${ApiConstants.scheduling}/detect-missed',
-        queryParameters: {'user_id': userId},
+        queryParameters: {
+          'user_id': userId,
+          'timezone_offset': timezoneOffset,
+        },
       );
 
       if (response.statusCode == 200) {

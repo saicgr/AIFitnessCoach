@@ -659,28 +659,84 @@ class _NutrientRow extends StatelessWidget {
 // Nutrient Detail Sheet - Shows detailed info when tapped
 // ─────────────────────────────────────────────────────────────────
 
-class NutrientDetailSheet extends StatelessWidget {
+class NutrientDetailSheet extends StatefulWidget {
   final NutrientProgress nutrient;
   final String userId;
   final bool isDark;
+  final List<String>? currentPinnedNutrients;
+  final VoidCallback? onPinChanged;
 
   const NutrientDetailSheet({
     super.key,
     required this.nutrient,
     required this.userId,
     required this.isDark,
+    this.currentPinnedNutrients,
+    this.onPinChanged,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+  State<NutrientDetailSheet> createState() => _NutrientDetailSheetState();
+}
 
-    final statusColor = _getStatusColor(nutrient.statusEnum);
+class _NutrientDetailSheetState extends State<NutrientDetailSheet> {
+  bool _isPinning = false;
+  late bool _isPinned;
+
+  @override
+  void initState() {
+    super.initState();
+    _isPinned = widget.currentPinnedNutrients?.contains(widget.nutrient.nutrientKey) ?? false;
+  }
+
+  Future<void> _togglePin() async {
+    if (_isPinning) return;
+
+    setState(() => _isPinning = true);
+
+    try {
+      // TODO: Call repository to update pinned nutrients
+      // For now, just toggle locally
+      setState(() {
+        _isPinned = !_isPinned;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isPinned
+                ? '${widget.nutrient.displayName} added to pinned nutrients'
+                : '${widget.nutrient.displayName} removed from pinned nutrients'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        widget.onPinChanged?.call();
+      }
+    } catch (e) {
+      debugPrint('Error toggling pin: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update pinned nutrients')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isPinning = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nearBlack = widget.isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary =
+        widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+
+    final statusColor = _getStatusColor(widget.nutrient.statusEnum);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -705,7 +761,7 @@ class NutrientDetailSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Header
+          // Header with pin button
           Row(
             children: [
               Expanded(
@@ -713,7 +769,7 @@ class NutrientDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nutrient.displayName,
+                      widget.nutrient.displayName,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -722,7 +778,7 @@ class NutrientDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getCategoryLabel(nutrient.categoryEnum),
+                      _getCategoryLabel(widget.nutrient.categoryEnum),
                       style: TextStyle(
                         fontSize: 14,
                         color: textSecondary,
@@ -731,6 +787,25 @@ class NutrientDetailSheet extends StatelessWidget {
                   ],
                 ),
               ),
+              // Pin button
+              IconButton(
+                onPressed: _isPinning ? null : _togglePin,
+                icon: _isPinning
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: teal,
+                        ),
+                      )
+                    : Icon(
+                        _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        color: _isPinned ? teal : textMuted,
+                      ),
+                tooltip: _isPinned ? 'Unpin nutrient' : 'Pin to dashboard',
+              ),
+              const SizedBox(width: 8),
               // Status badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -739,7 +814,7 @@ class NutrientDetailSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _getStatusLabel(nutrient.statusEnum),
+                  _getStatusLabel(widget.nutrient.statusEnum),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -768,7 +843,7 @@ class NutrientDetailSheet extends StatelessWidget {
                     Column(
                       children: [
                         Text(
-                          nutrient.formattedCurrent,
+                          widget.nutrient.formattedCurrent,
                           style: TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
@@ -797,7 +872,7 @@ class NutrientDetailSheet extends StatelessWidget {
                     Column(
                       children: [
                         Text(
-                          nutrient.formattedTarget,
+                          widget.nutrient.formattedTarget,
                           style: TextStyle(
                             fontSize: 36,
                             fontWeight: FontWeight.bold,
@@ -805,7 +880,7 @@ class NutrientDetailSheet extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Target ${nutrient.unit}',
+                          'Target ${widget.nutrient.unit}',
                           style: TextStyle(
                             fontSize: 12,
                             color: textMuted,
@@ -820,13 +895,13 @@ class NutrientDetailSheet extends StatelessWidget {
 
                 // 3-Tier Progress bar with floor/target/ceiling markers
                 _ThreeTierProgressBar(
-                  currentValue: nutrient.currentValue,
-                  floorValue: nutrient.floorValue,
-                  targetValue: nutrient.targetValue,
-                  ceilingValue: nutrient.ceilingValue,
-                  unit: nutrient.unit,
+                  currentValue: widget.nutrient.currentValue,
+                  floorValue: widget.nutrient.floorValue,
+                  targetValue: widget.nutrient.targetValue,
+                  ceilingValue: widget.nutrient.ceilingValue,
+                  unit: widget.nutrient.unit,
                   statusColor: statusColor,
-                  isDark: isDark,
+                  isDark: widget.isDark,
                 ),
               ],
             ),
@@ -835,8 +910,8 @@ class NutrientDetailSheet extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Top Contributors (if available)
-          if (nutrient.topContributors != null &&
-              nutrient.topContributors!.isNotEmpty) ...[
+          if (widget.nutrient.topContributors != null &&
+              widget.nutrient.topContributors!.isNotEmpty) ...[
             Text(
               'TOP CONTRIBUTORS',
               style: TextStyle(
@@ -847,7 +922,7 @@ class NutrientDetailSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...nutrient.topContributors!.take(3).map((contributor) {
+            ...widget.nutrient.topContributors!.take(3).map((contributor) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -871,7 +946,7 @@ class NutrientDetailSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${contributor['contribution']?.toStringAsFixed(1) ?? '0'} ${nutrient.unit}',
+                      '${contributor['contribution']?.toStringAsFixed(1) ?? '0'} ${widget.nutrient.unit}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -898,7 +973,7 @@ class NutrientDetailSheet extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    _getNutrientInfo(nutrient.nutrientKey),
+                    _getNutrientInfo(widget.nutrient.nutrientKey),
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,

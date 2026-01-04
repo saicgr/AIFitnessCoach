@@ -372,6 +372,36 @@ class NutritionRepository {
     int? totalFiber,
     String sourceType = 'restaurant',
     String? notes,
+    // Micronutrients (optional)
+    double? sodiumMg,
+    double? sugarG,
+    double? saturatedFatG,
+    double? cholesterolMg,
+    double? potassiumMg,
+    double? vitaminAUg,
+    double? vitaminCMg,
+    double? vitaminDIu,
+    double? vitaminEMg,
+    double? vitaminKUg,
+    double? vitaminB1Mg,
+    double? vitaminB2Mg,
+    double? vitaminB3Mg,
+    double? vitaminB5Mg,
+    double? vitaminB6Mg,
+    double? vitaminB7Ug,
+    double? vitaminB9Ug,
+    double? vitaminB12Ug,
+    double? calciumMg,
+    double? ironMg,
+    double? magnesiumMg,
+    double? zincMg,
+    double? phosphorusMg,
+    double? copperMg,
+    double? manganeseMg,
+    double? seleniumUg,
+    double? cholineMg,
+    double? omega3G,
+    double? omega6G,
   }) async {
     try {
       final response = await _client.post(
@@ -387,6 +417,36 @@ class NutritionRepository {
           if (totalFiber != null) 'total_fiber': totalFiber,
           'source_type': sourceType,
           if (notes != null) 'notes': notes,
+          // Micronutrients
+          if (sodiumMg != null) 'sodium_mg': sodiumMg,
+          if (sugarG != null) 'sugar_g': sugarG,
+          if (saturatedFatG != null) 'saturated_fat_g': saturatedFatG,
+          if (cholesterolMg != null) 'cholesterol_mg': cholesterolMg,
+          if (potassiumMg != null) 'potassium_mg': potassiumMg,
+          if (vitaminAUg != null) 'vitamin_a_ug': vitaminAUg,
+          if (vitaminCMg != null) 'vitamin_c_mg': vitaminCMg,
+          if (vitaminDIu != null) 'vitamin_d_iu': vitaminDIu,
+          if (vitaminEMg != null) 'vitamin_e_mg': vitaminEMg,
+          if (vitaminKUg != null) 'vitamin_k_ug': vitaminKUg,
+          if (vitaminB1Mg != null) 'vitamin_b1_mg': vitaminB1Mg,
+          if (vitaminB2Mg != null) 'vitamin_b2_mg': vitaminB2Mg,
+          if (vitaminB3Mg != null) 'vitamin_b3_mg': vitaminB3Mg,
+          if (vitaminB5Mg != null) 'vitamin_b5_mg': vitaminB5Mg,
+          if (vitaminB6Mg != null) 'vitamin_b6_mg': vitaminB6Mg,
+          if (vitaminB7Ug != null) 'vitamin_b7_ug': vitaminB7Ug,
+          if (vitaminB9Ug != null) 'vitamin_b9_ug': vitaminB9Ug,
+          if (vitaminB12Ug != null) 'vitamin_b12_ug': vitaminB12Ug,
+          if (calciumMg != null) 'calcium_mg': calciumMg,
+          if (ironMg != null) 'iron_mg': ironMg,
+          if (magnesiumMg != null) 'magnesium_mg': magnesiumMg,
+          if (zincMg != null) 'zinc_mg': zincMg,
+          if (phosphorusMg != null) 'phosphorus_mg': phosphorusMg,
+          if (copperMg != null) 'copper_mg': copperMg,
+          if (manganeseMg != null) 'manganese_mg': manganeseMg,
+          if (seleniumUg != null) 'selenium_ug': seleniumUg,
+          if (cholineMg != null) 'choline_mg': cholineMg,
+          if (omega3G != null) 'omega3_g': omega3G,
+          if (omega6G != null) 'omega6_g': omega6G,
         },
       );
       return LogFoodResponse.fromJson(response.data);
@@ -450,19 +510,22 @@ class NutritionRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
           if (line.isEmpty) {
             // End of event
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
@@ -584,19 +647,22 @@ class NutritionRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
           if (line.isEmpty) {
             // End of event
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
@@ -720,21 +786,24 @@ class NutritionRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
       debugPrint('🔍 [Nutrition-Text] Starting to read SSE stream...');
-      await for (final chunk in stream.transform(transformer)) {
-        debugPrint('🔍 [Nutrition-Text] SSE chunk: ${chunk.length} bytes');
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+        debugPrint('🔍 [Nutrition-Text] SSE chunk: ${bytes.length} bytes');
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
           if (line.isEmpty) {
             // End of event
             if (eventType.isNotEmpty && eventData.isNotEmpty) {
@@ -882,19 +951,22 @@ class NutritionRepository {
         ),
       );
 
-      final stream = response.data.stream as Stream<List<int>>;
-      final transformer = StreamTransformer<List<int>, String>.fromHandlers(
-        handleData: (data, sink) {
-          sink.add(utf8.decode(data));
-        },
-      );
+      // Handle the response stream properly - cast to ResponseBody first
+      final responseBody = response.data as ResponseBody;
 
       String eventType = '';
       String eventData = '';
+      String buffer = '';
 
-      await for (final chunk in stream.transform(transformer)) {
-        // Parse SSE format
-        for (final line in chunk.split('\n')) {
+      await for (final bytes in responseBody.stream) {
+        // Decode bytes to string and add to buffer
+        buffer += utf8.decode(bytes);
+
+        // Process complete lines from buffer
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
           if (line.isEmpty) {
             // End of event
             if (eventType.isNotEmpty && eventData.isNotEmpty) {

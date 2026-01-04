@@ -176,42 +176,6 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Exercise preview strip at top - tappable to view workout detail
-            if (exercises.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  HapticService.selection();
-                  context.push('/workout/${workout.id}');
-                },
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: glassSurface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(15),
-                    ),
-                  ),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    itemCount: exercises.length,
-                    itemBuilder: (context, index) {
-                      final exercise = exercises[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ExerciseImageThumbnail(
-                          exercise: exercise,
-                          size: 44,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
             // Main card content
             Padding(
               padding: const EdgeInsets.all(20),
@@ -409,6 +373,42 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                 ],
               ),
             ),
+
+            // Exercise preview strip at bottom - tappable to view workout detail
+            if (exercises.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/workout/${workout.id}');
+                },
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: glassSurface,
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(15),
+                    ),
+                  ),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    itemCount: exercises.length,
+                    itemBuilder: (context, index) {
+                      final exercise = exercises[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ExerciseImageThumbnail(
+                          exercise: exercise,
+                          size: 44,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
           ],
         ),
       ),

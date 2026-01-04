@@ -33,6 +33,36 @@ class NutritionDB(BaseDB):
         fiber_g: float = 0,
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
+        # Micronutrients
+        sodium_mg: Optional[float] = None,
+        sugar_g: Optional[float] = None,
+        saturated_fat_g: Optional[float] = None,
+        cholesterol_mg: Optional[float] = None,
+        potassium_mg: Optional[float] = None,
+        vitamin_a_ug: Optional[float] = None,
+        vitamin_c_mg: Optional[float] = None,
+        vitamin_d_iu: Optional[float] = None,
+        vitamin_e_mg: Optional[float] = None,
+        vitamin_k_ug: Optional[float] = None,
+        vitamin_b1_mg: Optional[float] = None,
+        vitamin_b2_mg: Optional[float] = None,
+        vitamin_b3_mg: Optional[float] = None,
+        vitamin_b5_mg: Optional[float] = None,
+        vitamin_b6_mg: Optional[float] = None,
+        vitamin_b7_ug: Optional[float] = None,
+        vitamin_b9_ug: Optional[float] = None,
+        vitamin_b12_ug: Optional[float] = None,
+        calcium_mg: Optional[float] = None,
+        iron_mg: Optional[float] = None,
+        magnesium_mg: Optional[float] = None,
+        zinc_mg: Optional[float] = None,
+        phosphorus_mg: Optional[float] = None,
+        copper_mg: Optional[float] = None,
+        manganese_mg: Optional[float] = None,
+        selenium_ug: Optional[float] = None,
+        choline_mg: Optional[float] = None,
+        omega3_g: Optional[float] = None,
+        omega6_g: Optional[float] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Create a food log entry from AI analysis.
@@ -48,6 +78,7 @@ class NutritionDB(BaseDB):
             fiber_g: Grams of fiber
             ai_feedback: AI-generated feedback on the meal
             health_score: Health score (0-100)
+            + micronutrients: vitamins, minerals, etc.
 
         Returns:
             Created food log record or None
@@ -64,6 +95,45 @@ class NutritionDB(BaseDB):
             "ai_feedback": ai_feedback,
             "health_score": health_score,
         }
+
+        # Add micronutrients if provided (only include non-None values)
+        micronutrients = {
+            "sodium_mg": sodium_mg,
+            "sugar_g": sugar_g,
+            "saturated_fat_g": saturated_fat_g,
+            "cholesterol_mg": cholesterol_mg,
+            "potassium_mg": potassium_mg,
+            "vitamin_a_ug": vitamin_a_ug,
+            "vitamin_c_mg": vitamin_c_mg,
+            "vitamin_d_iu": vitamin_d_iu,
+            "vitamin_e_mg": vitamin_e_mg,
+            "vitamin_k_ug": vitamin_k_ug,
+            "vitamin_b1_mg": vitamin_b1_mg,
+            "vitamin_b2_mg": vitamin_b2_mg,
+            "vitamin_b3_mg": vitamin_b3_mg,
+            "vitamin_b5_mg": vitamin_b5_mg,
+            "vitamin_b6_mg": vitamin_b6_mg,
+            "vitamin_b7_ug": vitamin_b7_ug,
+            "vitamin_b9_ug": vitamin_b9_ug,
+            "vitamin_b12_ug": vitamin_b12_ug,
+            "calcium_mg": calcium_mg,
+            "iron_mg": iron_mg,
+            "magnesium_mg": magnesium_mg,
+            "zinc_mg": zinc_mg,
+            "phosphorus_mg": phosphorus_mg,
+            "copper_mg": copper_mg,
+            "manganese_mg": manganese_mg,
+            "selenium_ug": selenium_ug,
+            "choline_mg": choline_mg,
+            "omega3_g": omega3_g,
+            "omega6_g": omega6_g,
+        }
+
+        # Only add non-None micronutrients to data
+        for key, value in micronutrients.items():
+            if value is not None:
+                data[key] = value
+
         result = self.client.table("food_logs").insert(data).execute()
         return result.data[0] if result.data else None
 

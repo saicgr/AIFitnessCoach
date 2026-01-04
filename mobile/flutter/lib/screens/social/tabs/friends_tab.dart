@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/friend_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/pending_request_card.dart';
@@ -132,20 +133,14 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         if (_pendingCount > 0) _buildPendingRequestsSection(isDark),
 
         // Sub-tabs for Friends, Followers, Following
-        Container(
-          color: backgroundColor,
-          child: TabBar(
-            controller: _friendsTabController,
-            indicatorColor: AppColors.cyan,
-            labelColor: isDark ? Colors.white : Colors.black,
-            unselectedLabelColor: AppColors.textMuted,
-            isScrollable: false,
-            tabs: const [
-              Tab(text: 'Friends'),
-              Tab(text: 'Followers'),
-              Tab(text: 'Following'),
-            ],
-          ),
+        SegmentedTabBar(
+          controller: _friendsTabController,
+          showIcons: false,
+          tabs: const [
+            SegmentedTabItem(label: 'Friends', icon: Icons.people_rounded),
+            SegmentedTabItem(label: 'Followers', icon: Icons.person_add_rounded),
+            SegmentedTabItem(label: 'Following', icon: Icons.person_rounded),
+          ],
         ),
 
         // Tab content

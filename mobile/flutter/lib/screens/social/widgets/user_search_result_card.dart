@@ -29,6 +29,7 @@ class UserSearchResultCard extends StatelessWidget {
     final isFollowing = user['is_following'] as bool? ?? false;
     final isFollower = user['is_follower'] as bool? ?? false;
     final isFriend = user['is_friend'] as bool? ?? false;
+    final isSelf = user['is_self'] as bool? ?? false;
     final hasPendingRequest = user['has_pending_request'] as bool? ?? false;
     final requiresApproval = user['requires_approval'] as bool? ?? false;
     final suggestionReason = user['suggestion_reason'] as String?;
@@ -93,11 +94,13 @@ class UserSearchResultCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (isFriend)
+                    if (isSelf)
+                      _buildBadge('YOU', AppColors.green)
+                    else if (isFriend)
                       _buildBadge('FRIEND', AppColors.cyan),
-                    if (isFollower && !isFriend)
+                    if (!isSelf && isFollower && !isFriend)
                       _buildBadge('FOLLOWS YOU', AppColors.purple),
-                    if (requiresApproval && !isFriend && !hasPendingRequest)
+                    if (!isSelf && requiresApproval && !isFriend && !hasPendingRequest)
                       const Icon(
                         Icons.lock_outline_rounded,
                         size: 16,
@@ -184,13 +187,14 @@ class UserSearchResultCard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Action button
-          _buildActionButton(
-            isFollowing: isFollowing,
-            isFriend: isFriend,
-            hasPendingRequest: hasPendingRequest,
-            requiresApproval: requiresApproval,
-          ),
+          // Action button (not shown for self)
+          if (!isSelf)
+            _buildActionButton(
+              isFollowing: isFollowing,
+              isFriend: isFriend,
+              hasPendingRequest: hasPendingRequest,
+              requiresApproval: requiresApproval,
+            ),
         ],
       ),
     );

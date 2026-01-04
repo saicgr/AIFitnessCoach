@@ -215,6 +215,10 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
               autofocus: true,
               textInputAction: TextInputAction.search,
               onChanged: (value) {
+                // Auto-switch to Search tab when typing
+                if (value.isNotEmpty && _tabController.index != 0) {
+                  _tabController.animateTo(0);
+                }
                 _performSearch(value);
               },
               decoration: InputDecoration(
@@ -246,17 +250,8 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       ),
       body: Column(
         children: [
-          // Tabs
-          TabBar(
-            controller: _tabController,
-            indicatorColor: AppColors.cyan,
-            labelColor: isDark ? Colors.white : Colors.black,
-            unselectedLabelColor: AppColors.textMuted,
-            tabs: const [
-              Tab(text: 'Search'),
-              Tab(text: 'Suggestions'),
-            ],
-          ),
+          // Modern segmented tabs
+          _buildSegmentedTabs(isDark),
 
           // Content
           Expanded(
@@ -269,6 +264,108 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSegmentedTabs(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: AnimatedBuilder(
+          animation: _tabController,
+          builder: (context, _) {
+            return Row(
+              children: [
+                _buildTabButton(
+                  index: 0,
+                  icon: Icons.search_rounded,
+                  label: 'Search',
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 4),
+                _buildTabButton(
+                  index: 1,
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Suggestions',
+                  isDark: isDark,
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabButton({
+    required int index,
+    required IconData icon,
+    required String label,
+    required bool isDark,
+  }) {
+    final animationValue = _tabController.animation?.value ?? 0.0;
+    final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
+
+    final selectedBg = AppColors.cyan;
+    final unselectedBg = Colors.transparent;
+    final selectedFg = isDark ? Colors.black : Colors.white;
+    final unselectedFg = AppColors.textMuted;
+
+    final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;
+    final fgColor = Color.lerp(unselectedFg, selectedFg, selectionProgress)!;
+    final isSelected = _tabController.index == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _tabController.animateTo(index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: fgColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: fgColor,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -16,9 +16,11 @@ ASAP:
 
 ISSUES:
 51. Use Flexbox to prevent all screensize issues
-
+52. I clicked nutrition tab, I finished nutrition onboarding, I wne to fasting screen finished fasting onbaording and then went back to nutrititon tab but then nutrition onbaording stared again, what is going on? I had multiple claude sessions to fix this and it still is not fixed
+53. 
 
 <!-- NEW FEATURES IN APP -->
+2. Thats a solid rep for the next o=workout can you try increasing the weight 10 more lbs?
 3. Hi ! I suspect it's complicated and certainly not on the Roadmap but it would be huge if we had training adapted to the women's cycle. Related to Apple health for example. A woman having phases where performance will differ.
 
 But you already do a crazy job and thank you for all that :)

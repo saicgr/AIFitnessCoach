@@ -85,6 +85,7 @@ class UserSearchResult(BaseModel):
     is_following: bool = False
     is_follower: bool = False
     is_friend: bool = False
+    is_self: bool = False  # True if this is the current user
     has_pending_request: bool = False
     pending_request_id: Optional[str] = None
     requires_approval: bool = False  # Whether this user requires follow approval

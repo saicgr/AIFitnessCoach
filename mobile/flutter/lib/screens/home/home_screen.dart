@@ -1611,19 +1611,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     bool isAIGenerating,
   ) {
     return [
-      // Fitness Score Card
-      const SliverToBoxAdapter(child: FitnessScoreCard()),
-
-      // Mood Picker Card
-      const SliverToBoxAdapter(child: MoodPickerCard()),
-
-      // Daily Activity Card
-      const SliverToBoxAdapter(child: DailyActivityCard()),
-
-      // View Upcoming link above the workout card
+      // View Upcoming link at the top right
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -1660,7 +1651,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
 
-      // Next Workout Card (using lazy loading)
+      // Next Workout Card (hero card - using lazy loading)
       SliverToBoxAdapter(
         child: _buildNextWorkoutSectionLazy(
           context,
@@ -1679,6 +1670,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
       ),
+
+      // Fitness Score Card
+      const SliverToBoxAdapter(child: FitnessScoreCard()),
+
+      // Mood Picker Card
+      const SliverToBoxAdapter(child: MoodPickerCard()),
+
+      // Daily Activity Card
+      const SliverToBoxAdapter(child: DailyActivityCard()),
 
       // Note: YOUR WEEK and UPCOMING sections have been moved to Workouts tab
     ];

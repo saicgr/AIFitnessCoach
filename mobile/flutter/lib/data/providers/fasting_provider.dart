@@ -14,6 +14,9 @@ class FastingState {
   final FastingPreferences? preferences;
   final FastingStreak? streak;
   final FastingStats? stats;
+  final FastingScore? score;
+  final FastingScoreTrend? scoreTrend;
+  final WeightCorrelationSummary? weightCorrelation;
   final List<FastingRecord> history;
   final bool isLoading;
   final String? error;
@@ -24,6 +27,9 @@ class FastingState {
     this.preferences,
     this.streak,
     this.stats,
+    this.score,
+    this.scoreTrend,
+    this.weightCorrelation,
     this.history = const [],
     this.isLoading = false,
     this.error,
@@ -35,6 +41,9 @@ class FastingState {
     FastingPreferences? preferences,
     FastingStreak? streak,
     FastingStats? stats,
+    FastingScore? score,
+    FastingScoreTrend? scoreTrend,
+    WeightCorrelationSummary? weightCorrelation,
     List<FastingRecord>? history,
     bool? isLoading,
     String? error,
@@ -47,6 +56,9 @@ class FastingState {
       preferences: preferences ?? this.preferences,
       streak: streak ?? this.streak,
       stats: stats ?? this.stats,
+      score: score ?? this.score,
+      scoreTrend: scoreTrend ?? this.scoreTrend,
+      weightCorrelation: weightCorrelation ?? this.weightCorrelation,
       history: history ?? this.history,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
@@ -127,11 +139,33 @@ class FastingNotifier extends StateNotifier<FastingState> {
       final stats = results[3] as FastingStats;
       final history = results[4] as List<FastingRecord>;
 
+      // Load weight correlation separately (optional data)
+      WeightCorrelationSummary? weightCorrelation;
+      try {
+        final weightResponse = await _repository.getWeightCorrelation(userId: userId);
+        weightCorrelation = weightResponse.summary;
+      } catch (e) {
+        debugPrint('⚠️ [FastingProvider] Weight correlation load error (non-fatal): $e');
+      }
+
+      // Calculate fasting score (done after we have stats and streak)
+      FastingScore? score;
+      FastingScoreTrend? scoreTrend;
+      try {
+        score = await _repository.calculateFastingScore(userId);
+        scoreTrend = await _repository.getScoreTrend(userId);
+      } catch (e) {
+        debugPrint('⚠️ [FastingProvider] Score calculation error (non-fatal): $e');
+      }
+
       state = state.copyWith(
         activeFast: activeFast,
         preferences: preferences,
         streak: streak,
         stats: stats,
+        score: score,
+        scoreTrend: scoreTrend,
+        weightCorrelation: weightCorrelation,
         history: history,
         isLoading: false,
         onboardingCompleted: preferences?.fastingOnboardingCompleted ?? false,
@@ -142,7 +176,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
         _startRefreshTimer();
       }
 
-      debugPrint('✅ [FastingProvider] Initialized: hasFast=${activeFast != null}, onboarded=${preferences?.fastingOnboardingCompleted}');
+      debugPrint('✅ [FastingProvider] Initialized: hasFast=${activeFast != null}, onboarded=${preferences?.fastingOnboardingCompleted}, score=${score?.score}');
     } catch (e) {
       debugPrint('❌ [FastingProvider] Init error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -197,15 +231,30 @@ class FastingNotifier extends StateNotifier<FastingState> {
       // Stop refresh timer
       _stopRefreshTimer();
 
-      // Refresh streak and stats
+      // Refresh streak, stats, and recalculate score
       final streak = await _repository.getStreak(userId);
       final stats = await _repository.getStats(userId: userId);
       final history = await _repository.getFastingHistory(userId: userId, limit: 10);
+
+      // Recalculate and sync fasting score after fast completion
+      FastingScore? score;
+      FastingScoreTrend? scoreTrend;
+      try {
+        score = await _repository.calculateFastingScore(userId);
+        // Sync to database for historical tracking
+        await _repository.syncFastingScore(userId: userId, score: score);
+        scoreTrend = await _repository.getScoreTrend(userId);
+        debugPrint('📊 [FastingProvider] Score updated: ${score.score}');
+      } catch (e) {
+        debugPrint('⚠️ [FastingProvider] Score sync error (non-fatal): $e');
+      }
 
       state = state.copyWith(
         clearActiveFast: true,
         streak: streak,
         stats: stats,
+        score: score,
+        scoreTrend: scoreTrend,
         history: history,
         isLoading: false,
       );

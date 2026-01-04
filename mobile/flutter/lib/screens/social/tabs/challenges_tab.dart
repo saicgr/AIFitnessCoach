@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/segmented_tab_bar.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/empty_state.dart';
 
@@ -38,18 +39,13 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
     return Column(
       children: [
         // Sub-tabs for Active vs Discover
-        Container(
-          color: backgroundColor,
-          child: TabBar(
-            controller: _challengeTabController,
-            indicatorColor: AppColors.orange,
-            labelColor: isDark ? Colors.white : Colors.black,
-            unselectedLabelColor: AppColors.textMuted,
-            tabs: const [
-              Tab(text: 'My Challenges'),
-              Tab(text: 'Discover'),
-            ],
-          ),
+        SegmentedTabBar(
+          controller: _challengeTabController,
+          showIcons: false,
+          tabs: const [
+            SegmentedTabItem(label: 'My Challenges', icon: Icons.emoji_events_rounded),
+            SegmentedTabItem(label: 'Discover', icon: Icons.explore_rounded),
+          ],
         ),
 
         // Tab content

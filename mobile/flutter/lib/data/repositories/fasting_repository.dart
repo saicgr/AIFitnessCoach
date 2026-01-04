@@ -543,6 +543,117 @@ class FastingRepository {
       rethrow;
     }
   }
+
+  // ============================================
+  // Fasting Score
+  // ============================================
+
+  /// Calculate fasting score from current stats and streak
+  ///
+  /// This is calculated locally in Dart for instant display.
+  /// Call [syncFastingScore] to save to Supabase for historical tracking.
+  Future<FastingScore> calculateFastingScore(String userId) async {
+    try {
+      debugPrint('🎯 [Fasting] Calculating fasting score for $userId');
+
+      // Fetch current stats and streak
+      final stats = await getStats(userId: userId);
+      final streak = await getStreak(userId);
+
+      // Calculate average protocol difficulty based on average duration
+      // 12h = 0.3, 16h = 0.5, 18h = 0.6, 20h = 0.75, 24h+ = 1.0
+      final avgHours = stats.avgDurationMinutes / 60;
+      double protocolDifficulty;
+      if (avgHours >= 24) {
+        protocolDifficulty = 1.0;
+      } else if (avgHours >= 20) {
+        protocolDifficulty = 0.75;
+      } else if (avgHours >= 18) {
+        protocolDifficulty = 0.6;
+      } else if (avgHours >= 16) {
+        protocolDifficulty = 0.5;
+      } else if (avgHours >= 12) {
+        protocolDifficulty = 0.3;
+      } else {
+        protocolDifficulty = 0.2;
+      }
+
+      final score = FastingScore.calculate(
+        userId: userId,
+        stats: stats,
+        streak: streak,
+        avgProtocolDifficulty: protocolDifficulty,
+      );
+
+      debugPrint('✅ [Fasting] Score calculated: ${score.score} (${score.tierLabel})');
+      return score;
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error calculating fasting score: $e');
+      rethrow;
+    }
+  }
+
+  /// Sync fasting score to Supabase for historical tracking
+  ///
+  /// Should be called after completing a fast or daily.
+  /// Uses upsert to update today's score if already exists.
+  Future<FastingScore> syncFastingScore({
+    required String userId,
+    required FastingScore score,
+  }) async {
+    try {
+      debugPrint('💾 [Fasting] Syncing fasting score for $userId: ${score.score}');
+      final response = await _client.post(
+        '/fasting/score',
+        data: score.toJson(),
+      );
+      debugPrint('✅ [Fasting] Score synced successfully');
+      return FastingScore.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error syncing fasting score: $e');
+      // Don't rethrow - score sync failure shouldn't break the app
+      return score;
+    }
+  }
+
+  /// Get fasting score trend (current vs last week)
+  Future<FastingScoreTrend> getScoreTrend(String userId) async {
+    try {
+      debugPrint('📈 [Fasting] Getting score trend for $userId');
+      final response = await _client.get('/fasting/score/trend/$userId');
+      debugPrint('✅ [Fasting] Score trend retrieved');
+      return FastingScoreTrend.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting score trend: $e');
+      // Return default trend on error
+      return const FastingScoreTrend(
+        currentScore: 0,
+        previousScore: 0,
+        scoreChange: 0,
+        trend: 'stable',
+      );
+    }
+  }
+
+  /// Get historical fasting scores
+  Future<List<FastingScore>> getScoreHistory({
+    required String userId,
+    int days = 30,
+  }) async {
+    try {
+      debugPrint('📊 [Fasting] Getting score history for $userId (last $days days)');
+      final response = await _client.get(
+        '/fasting/score/history/$userId',
+        queryParameters: {'days': days},
+      );
+      final data = response.data as List;
+      debugPrint('✅ [Fasting] Retrieved ${data.length} score records');
+      return data.map((json) => FastingScore.fromJson(json)).toList();
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting score history: $e');
+      return [];
+    }
+  }
 }
 
 // ============================================
