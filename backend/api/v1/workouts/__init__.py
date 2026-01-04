@@ -41,7 +41,14 @@ from .modifications import router as modifications_router
 router = APIRouter()
 
 # Include all sub-routers
-# CRUD operations (basic CRUD)
+# IMPORTANT: Static routes must be included BEFORE dynamic routes like /{workout_id}
+# Today's workout endpoint (quick start widget) - must come before CRUD
+router.include_router(today_router)
+
+# Quick workout endpoints (5-15 min workouts for busy users) - must come before CRUD
+router.include_router(quick_router)
+
+# CRUD operations (basic CRUD) - has /{workout_id} which would match "today" and "quick"
 router.include_router(crud_router)
 
 # Generation endpoints
@@ -76,12 +83,6 @@ router.include_router(weight_suggestions_router)
 
 # Set adjustment endpoints (tracking set modifications during workouts)
 router.include_router(set_adjustments_router)
-
-# Today's workout endpoint (quick start widget)
-router.include_router(today_router)
-
-# Quick workout endpoints (5-15 min workouts for busy users)
-router.include_router(quick_router)
 
 # Workout modification endpoints (body part exclusion, exercise replacement)
 router.include_router(modifications_router)
